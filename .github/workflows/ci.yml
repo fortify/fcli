@@ -76,7 +76,9 @@ jobs:
       shell: cmd
       
     - name: Basic test of native fcli
-      run: fcli.exe --help && fcli.exe fod --help
+      run: |
+        .\fcli.exe --help 
+        .\fcli.exe fod --help
 
     - name: Create zip
       run: 7z a fcli-windows.zip fcli.exe
