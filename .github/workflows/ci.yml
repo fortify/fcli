@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - '**'
+       
+env:
+  native_image_opts: --verbose --initialize-at-build-time=org.apache.logging.slf4j.Log4jLogger
           
 jobs:
   build:
@@ -36,7 +39,7 @@ jobs:
           path: ./
 
       - name: Create native soctool
-        run: native-image --verbose -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
 
       - name: Create tarball
         run: tar -zcvf "fcli-${{ matrix.os }}.tar.gz" fcli
@@ -65,7 +68,7 @@ jobs:
     - name: Create native soctool
       run: >-
         "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-        ${{ env.JAVA_HOME }}\bin\native-image.cmd --verbose -jar .\artifact\fcli.jar fcli
+        ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar fcli
       shell: cmd
 
     - name: Create zip
