@@ -24,22 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.command;
 
-import java.util.Collection;
-
-import com.fortify.cli.command.util.AbstractCommandWithSubcommands;
-import com.fortify.cli.command.util.SubcommandOf;
-
-import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+@Singleton
 @Command(name = "fcli", description = "Command-line interface for working with various Fortify products", mixinStandardHelpOptions = true)
-public class RootCommand extends AbstractCommandWithSubcommands {
+public class RootCommand {
 	@Option(names = { "-v", "--verbose" }, description = "...")
 	boolean verbose;
-
-	@Inject
-	public RootCommand(@SubcommandOf(RootCommand.class) Collection<?> subcommands) {
-		super(subcommands);
-	}
 }

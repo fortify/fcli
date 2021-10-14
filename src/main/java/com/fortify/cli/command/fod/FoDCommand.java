@@ -24,22 +24,14 @@
  ******************************************************************************/
 package com.fortify.cli.command.fod;
 
-import java.util.Collection;
-
 import com.fortify.cli.command.RootCommand;
-import com.fortify.cli.command.util.AbstractCommandWithSubcommands;
 import com.fortify.cli.command.util.SubcommandOf;
 
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 
 @Singleton
 @SubcommandOf(RootCommand.class)
 @Command(name = "fod", description = "Perform FoD operations", mixinStandardHelpOptions = true)
-public class FoDCommand extends AbstractCommandWithSubcommands {
-	@Inject
-	public FoDCommand(@SubcommandOf(FoDCommand.class) Collection<?> subcommands) {
-		super(subcommands);
-	}
+public class FoDCommand {
 }

@@ -32,5 +32,5 @@ import jakarta.inject.Qualifier;
 @Qualifier 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SubcommandOf {
-    Class<? extends ISubcommandsProvider> value();
+    Class<?> value();
 }
