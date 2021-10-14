@@ -27,18 +27,19 @@ package com.fortify.cli.command.fod;
 import java.util.Collection;
 
 import com.fortify.cli.command.RootCommand;
-import com.fortify.cli.command.util.ISubcommandsProvider;
+import com.fortify.cli.command.util.AbstractCommandWithSubcommands;
 import com.fortify.cli.command.util.SubcommandOf;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.Getter;
 import picocli.CommandLine.Command;
 
 @Singleton
 @SubcommandOf(RootCommand.class)
 @Command(name = "fod", description = "Perform FoD operations", mixinStandardHelpOptions = true)
-public class FoDCommand implements ISubcommandsProvider {
-	@Inject @ReflectiveAccess @SubcommandOf(FoDCommand.class) @Getter private Collection<?> subcommands;
+public class FoDCommand extends AbstractCommandWithSubcommands {
+	@Inject
+	public FoDCommand(@SubcommandOf(FoDCommand.class) Collection<?> subcommands) {
+		super(subcommands);
+	}
 }

@@ -22,24 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command;
+package com.fortify.cli.command.util;
 
 import java.util.Collection;
 
-import com.fortify.cli.command.util.AbstractCommandWithSubcommands;
-import com.fortify.cli.command.util.SubcommandOf;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-import jakarta.inject.Inject;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-
-@Command(name = "fcli", description = "Command-line interface for working with various Fortify products", mixinStandardHelpOptions = true)
-public class RootCommand extends AbstractCommandWithSubcommands {
-	@Option(names = { "-v", "--verbose" }, description = "...")
-	boolean verbose;
-
-	@Inject
-	public RootCommand(@SubcommandOf(RootCommand.class) Collection<?> subcommands) {
-		super(subcommands);
-	}
+@RequiredArgsConstructor
+public abstract class AbstractCommandWithSubcommands implements ISubcommandsProvider {
+	@Getter private final Collection<?> subcommands;
 }
