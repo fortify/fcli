@@ -43,7 +43,7 @@ jobs:
         run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
         
       - name: Basic test of native fcli
-        run: fcli --help && fcli fod --help
+        run: ./fcli --help && ./fcli fod --help
 
       - name: Create tarball
         run: tar -zcvf "fcli-${{ matrix.os }}.tar.gz" fcli
