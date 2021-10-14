@@ -41,6 +41,9 @@ jobs:
 
       - name: Create native fcli
         run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
+        
+      - name: Basic test of native fcli
+        run: fcli --help && fcli fod --help
 
       - name: Create tarball
         run: tar -zcvf "fcli-${{ matrix.os }}.tar.gz" fcli
@@ -71,6 +74,9 @@ jobs:
         "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
         ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar fcli
       shell: cmd
+      
+    - name: Basic test of native fcli
+      run: fcli.exe --help && fcli.exe fod --help
 
     - name: Create zip
       run: 7z a fcli-windows.zip fcli.exe
