@@ -48,6 +48,11 @@ java {
     targetCompatibility = JavaVersion.toVersion("11")
 }
 
+shadowJar {
+   archiveBaseName.set('fcli')
+   archiveClassifier.set('')
+   archiveVersion.set('')
+}
 
 /*
 jib {

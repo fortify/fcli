@@ -13,7 +13,7 @@ jobs:
       - run: ./gradlew build
       - uses: actions/upload-artifact@v2
         with:
-          path: build/libs/fcli-*-all.jar
+          path: build/libs/fcli.jar
 
   release_nix:
     name: native-image-nix
@@ -36,7 +36,7 @@ jobs:
           path: ./
 
       - name: Create native soctool
-        run: native-image --verbose -jar ./artifact/fcli-*-all.jar fcli
+        run: native-image --verbose -jar ./artifact/fcli.jar fcli
 
       - name: Create tarball
         run: tar -zcvf "fcli-${{ matrix.os }}.tar.gz" fcli
@@ -65,7 +65,7 @@ jobs:
     - name: Create native soctool
       run: >-
         "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-        ${{ env.JAVA_HOME }}\bin\native-image.cmd --verbose -jar .\artifact\fcli-*-all.jar fcli
+        ${{ env.JAVA_HOME }}\bin\native-image.cmd --verbose -jar .\artifact\fcli.jar fcli
       shell: cmd
 
     - name: Create zip
