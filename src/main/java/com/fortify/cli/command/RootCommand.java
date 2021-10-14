@@ -29,6 +29,7 @@ import java.util.Collection;
 import com.fortify.cli.command.util.ISubcommandsProvider;
 import com.fortify.cli.command.util.SubcommandOf;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -39,5 +40,5 @@ public class RootCommand implements ISubcommandsProvider {
 	@Option(names = { "-v", "--verbose" }, description = "...")
 	boolean verbose;
 
-	@Inject @SubcommandOf(RootCommand.class) @Getter private Collection<?> subcommands;
+	@Inject @ReflectiveAccess @SubcommandOf(RootCommand.class) @Getter private Collection<?> subcommands;
 }
