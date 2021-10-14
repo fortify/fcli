@@ -1,0 +1,76 @@
+name: Build and release
+on:
+  push:
+    branches:
+      - '**'
+          
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: ./gradlew build
+      - uses: actions/upload-artifact@v2
+        with:
+          path: build/libs/fcli-*-all.jar
+
+  release_nix:
+    name: native-image-nix
+    #if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, macos-10.15]
+    steps:
+      - uses: DeLaGuardo/setup-graalvm@3
+        with:
+          graalvm-version: '20.0.0.java11'
+
+      - name: Install GraalVM's native-image extension
+        run: gu install native-image
+
+      - uses: actions/download-artifact@v2
+        with:
+          path: ./
+
+      - name: Create native soctool
+        run: native-image --verbose -jar ./artifact/fcli-*-all.jar fcli
+
+      - name: Create tarball
+        run: tar -zcvf "fcli-${{ matrix.os }}.tar.gz" fcli
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: fcli-*.tar.gz
+
+  release_win:
+    name: native-image-win
+    #if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: windows-2019
+    steps:
+    - uses: DeLaGuardo/setup-graalvm@3
+      with:
+        graalvm-version: '20.0.0.java11'
+
+    - name: Install GraalVM's native-image extension
+      run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
+
+    - uses: actions/download-artifact@v2
+      with:
+        path: ./
+
+    - name: Create native soctool
+      run: >-
+        "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
+        ${{ env.JAVA_HOME }}\bin\native-image.cmd --verbose -jar .\artifact\fcli-*-all.jar fcli
+      shell: cmd
+
+    - name: Create zip
+      run: 7z a fcli-windows.zip fcli.exe
+
+    - uses: actions/upload-artifact@v2
+      with:
+        path: fcli-windows.zip

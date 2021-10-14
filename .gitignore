@@ -1,0 +1,45 @@
+*.csv
+*.json
+*.sarif
+
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+bin/
+
+### Sample scans & logs ###
+samples/**/scans/**
+samples/**/logs/**
+
+*.fpr
+FortifyImportExportUtility-common/lombok.config FortifyImportExportUtility-common-from/lombok.config FortifyImportExportUtility-common-to/lombok.config FortifyImportExportUtility-from-fod-plugin/lombok.config FortifyImportExportUtility-from-mock-plugin/lombok.config FortifyImportExportUtility-from-ssc-plugin/lombok.config FortifyImportExportUtility-to-file-plugin/lombok.config FortifyImportExportUtility-to-mock-plugin/lombok.config
+lombok.config
