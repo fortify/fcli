@@ -1,2 +1,3 @@
-
 rootProject.name="fcli"
+//include 'rest-client-ssc'
+//include 'rest-client-fod'

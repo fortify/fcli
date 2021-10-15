@@ -1,0 +1,110 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1:21.2.0",
+    "title": "Fortify Software Security Center download API"
+  },
+  "host": "localhost",
+  "basePath": "/ssc",
+  "schemes": [
+    "https"
+  ],
+  "tags": [
+    {
+      "name": "download-controller",
+      "description": "Download controller"
+    }
+  ],
+  "paths": {
+    "/download/currentStateFprDownload.html": {
+      "get": {
+        "tags": [
+          "download-controller"
+        ],
+        "summary": "Download project version current state",
+        "operationId": "downloadCurrentState",
+        "produces": [
+          "application/xml"
+        ],
+        "parameters": [
+          {
+            "name": "mat",
+            "in": "query",
+            "description": "One-time download token",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Project version ID",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "includeSource",
+            "in": "query",
+            "description": "Include sources",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        }
+      }
+    },
+    "/download/artifactDownload.html": {
+      "get": {
+        "tags": [
+          "download-controller"
+        ],
+        "summary": "Download scan artifact of a given id",
+        "operationId": "downloadScanArtifact",
+        "produces": [
+          "application/octet-stream"
+        ],
+        "parameters": [
+          {
+            "name": "mat",
+            "in": "query",
+            "description": "One-time download token",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Scan artifact ID",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "includeSource",
+            "in": "query",
+            "description": "Include sources",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        }
+      }
+    }
+  }
+}

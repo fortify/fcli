@@ -2,14 +2,11 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.0.0"
     id("io.micronaut.application") version "2.0.6"
     //id("com.google.cloud.tools.jib") version "2.8.0"
+    id "org.openapi.generator" version "5.2.1" apply false
 }
 
 version = "0.1"
 group = "com.fortify.cli"
-
-repositories {
-    mavenCentral()
-}
 
 micronaut {
     testRuntime("junit5")
@@ -19,9 +16,15 @@ micronaut {
     }
 }
 
+allprojects {
+	repositories {
+    	mavenCentral()
+	}
+}
+
 dependencies {
-	compileOnly 'org.projectlombok:lombok:1.16.20'
-    annotationProcessor "org.projectlombok:lombok:1.16.20"
+	//compileOnly 'org.projectlombok:lombok:1.16.20'
+    //annotationProcessor "org.projectlombok:lombok:1.16.20"
     annotationProcessor("info.picocli:picocli-codegen")
     implementation("info.picocli:picocli")
     implementation("io.micronaut:micronaut-runtime")
@@ -29,13 +32,13 @@ dependencies {
     //implementation("io.micronaut.xml:micronaut-jackson-xml")
     implementation("javax.annotation:javax.annotation-api")
     compileOnly("org.graalvm.nativeimage:svm")
-
-    implementation("io.micronaut:micronaut-validation")
-
-    //testImplementation("io.micronaut:micronaut-http-client")
-
+    
+    //implementation project(':rest-client-ssc')
+    //implementation project(':rest-client-fod')
+    
+    implementation platform('com.fortify.client.api:fortify-client-api-bom:6.1.0.RELEASE')
+    implementation 'com.fortify.client.api:client-api-ssc'
 }
-
 
 application {
     mainClass.set("com.fortify.cli.FortifyCLI")
@@ -51,6 +54,70 @@ shadowJar {
    archiveVersion.set('')
 }
 
+
+/*
+ext {
+	openApiSpecSrcDir = 'src/main/spec'
+}
+configure(subprojects.findAll {new File(it.projectDir, "${openApiSpecSrcDir}").exists()}) {
+	apply plugin: 'java-library'
+	apply plugin: 'org.openapi.generator'
+	
+	dependencies {
+		implementation("io.swagger:swagger-annotations:1.6.2")
+	    implementation("com.google.code.findbugs:jsr305:3.0.2")
+	    implementation("com.squareup.okhttp3:okhttp:4.9.1")
+	    implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
+	    implementation("com.google.code.gson:gson:2.8.6")
+	    implementation("io.gsonfire:gson-fire:1.8.4")
+	    implementation("javax.annotation:javax.annotation-api:1.3.2")
+	}
+
+	task generateClients() {
+		tasks.compileJava.dependsOn(it)
+	    fileTree("${openApiSpecSrcDir}").files.each { 
+	    	spec -> {
+	    		dependsOn (tasks.create([name: "generateClient.${spec.name}", type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask], {
+		            generatorName = "java"
+					inputSpec = "${buildDir}/generated/spec/${spec.name}/${spec.name}" //
+					outputDir = "${buildDir}/generated/client/${spec.name}"
+					invokerPackage = "com.fortify.cli.client.${spec.name - ~/\.\w+$/}"
+					apiPackage = "com.fortify.cli.client.${spec.name - ~/\.\w+$/}.api"
+					modelPackage = "com.fortify.cli.client.${spec.name - ~/\.\w+$/}.model"
+					generateModelDocumentation = false
+				    generateModelTests = false
+				    generateApiDocumentation = false
+				    generateApiTests = false
+					configOptions = [
+				        dateLibrary: "java8",
+				        library: "okhttp-gson"
+				    ]
+				    globalProperties = [
+				        models: "",
+				        apis: "",
+				        supportingFiles: "",
+				    ]
+		        }).dependsOn (tasks.create([name: "fixAndCopySwaggerSpecs.${spec.name}", type: Sync], {
+		        	description 'Read spec-rest.json and remove « and » characters. Write modified file to task temporaryDir'
+				    into("${buildDir}/generated/spec/${spec.name}") // We need to use spec.name here to avoid Gradle warnings
+				    from("${openApiSpecSrcDir}/${spec.name}") {
+				        filteringCharset = "UTF-8"
+				        filter({ String s -> s.replaceAll(/[\u00ab\u00bb]/, "")})    // [«»]
+				    }
+		        })))
+		        sourceSets {
+				    main {
+				        java {
+				            srcDir "${buildDir}/generated/client/${spec.name}/src/main/java"
+				            srcDir "${buildDir}/generated/client/${spec.name}/src/main/resources"
+				        }
+				    }
+				}
+	        }
+	    }
+	}
+}
+*/
 /*
 jib {
     to {
