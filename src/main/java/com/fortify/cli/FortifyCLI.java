@@ -5,8 +5,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.impl.LogFactoryImpl;
+import org.apache.commons.logging.impl.SimpleLog;
+
 import com.fortify.cli.command.RootCommand;
 import com.fortify.cli.command.util.SubcommandOf;
+import com.oracle.svm.core.annotate.Substitute;
+import com.oracle.svm.core.annotate.TargetClass;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
@@ -57,5 +64,23 @@ public class FortifyCLI {
 	public static void main(String[] args) {
 		int exitCode = execute(RootCommand.class, args);
 		System.exit(exitCode);
+	}
+	
+	@TargetClass(LogFactory.class)
+	static final class LogFactorySubstituted {
+	    @Substitute
+	    protected static LogFactory newFactory(final String factoryClass,
+	                                           final ClassLoader classLoader,
+	                                           final ClassLoader contextClassLoader) {
+	        return new LogFactoryImpl();
+	    }
+	}
+
+	@TargetClass(LogFactoryImpl.class)
+	static final class LogFactoryImplSubstituted {
+	    @Substitute
+	    private Log discoverLogImplementation(String logCategory) {
+	        return new SimpleLog(logCategory);
+	    }
 	}
 }
