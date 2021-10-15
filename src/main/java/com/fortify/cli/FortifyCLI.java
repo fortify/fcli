@@ -45,7 +45,7 @@ public class FortifyCLI {
 	}
 
 	private static final Map<Class<?>, List<Object>> getParentToSubcommandsMap(ApplicationContext context) {
-    	// Restrict to only SubcommandOf-annotated beans
+		// TODO: Use proper Qualifier to get only SubcommandOf-annotated beans instead of filtering manually
 		Collection<BeanDefinition<?>> beanDefinitions = context.getBeanDefinitions(Qualifiers.any());
 		return beanDefinitions.stream()
 			.filter(bd->bd.hasAnnotation(SubcommandOf.class))

@@ -29,8 +29,8 @@ import java.lang.annotation.RetentionPolicy;
 
 import jakarta.inject.Qualifier;
 
-@Qualifier 
+@Qualifier
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SubcommandOf {
-    Class<?> value();
+	Class<?> value();
 }
