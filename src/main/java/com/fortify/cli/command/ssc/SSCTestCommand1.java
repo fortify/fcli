@@ -29,6 +29,7 @@ import java.util.Date;
 import com.fortify.cli.command.util.SubcommandOf;
 import com.google.gson.Gson;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -89,21 +90,21 @@ public class SSCTestCommand1 implements Runnable {
 		return (String) ((JsonNode)r.getBody()).getObject().optQuery("/links/next/href");
 	}
 
-	@Data @Builder
+	@Data @Builder @ReflectiveAccess
 	public static final class SSCTokenRequest {
-		private String type;
-		private String description;
+		@ReflectiveAccess private String type;
+		@ReflectiveAccess private String description;
 	}
 	
-	@Data
+	@Data @ReflectiveAccess
 	public static final class SSCTokenResponse {
-		private SSCTokenData data;
-		@Data
+		@ReflectiveAccess private SSCTokenData data;
+		@Data @ReflectiveAccess
 		public static final class SSCTokenData {
-			private Date terminalDate;
-		    private Date creationDate;
-		    private String type;
-		    private String token;
+			@ReflectiveAccess private Date terminalDate;
+			@ReflectiveAccess private Date creationDate;
+			@ReflectiveAccess private String type;
+			@ReflectiveAccess private String token;
 		}
 	}
 }
