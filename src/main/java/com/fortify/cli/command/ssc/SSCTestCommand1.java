@@ -29,6 +29,9 @@ import java.util.Date;
 import com.fortify.cli.command.util.SubcommandOf;
 
 import jakarta.inject.Singleton;
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.PagedList;
 import kong.unirest.Unirest;
 import lombok.Builder;
 import lombok.Data;
@@ -62,15 +65,27 @@ public class SSCTestCommand1 implements Runnable {
 		System.out.println(response.body());
 		*/
 	
-		SSCTokenResponse response = Unirest.post("http://localhost:2111/ssc/api/v1/tokens")
+		SSCTokenResponse tokenResponse = Unirest.post("http://localhost:2111/ssc/api/v1/tokens")
 			.accept("application/json")
 			.header("Content-Type", "application/json")
 			.basicAuth("ssc", "Fortify123!")
 			.body(SSCTokenRequest.builder().type("UnifiedLoginToken").build())
 			.asObject(SSCTokenResponse.class).getBody();
-		System.out.println(response);
+		System.out.println(tokenResponse);
+		Unirest.get("http://localhost:2111/ssc/api/v1/events?limit=10")
+		.accept("application/json")
+		.header("Content-Type", "application/json")
+		.header("Authorization", "FortifyToken "+tokenResponse.getData().getToken())
+		.asPaged(
+				r->r.asJson(),
+				r->getNextPageLink(r))
+		.stream().map(HttpResponse::getBody).forEach(System.out::println);
 	}
 	
+	private String getNextPageLink(HttpResponse<Object> r) {
+		return (String) ((JsonNode)r.getBody()).getObject().optQuery("/links/next/href");
+	}
+
 	@Data @Builder
 	public static final class SSCTokenRequest {
 		private String type;
