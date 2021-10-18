@@ -26,10 +26,11 @@ package com.fortify.cli.command.ssc;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Data;
 
-@Data @Builder
+@Data @Builder @Introspected
 public final class SSCTokenRequest {
 	@JsonProperty private String type;
 	@JsonProperty private String description;

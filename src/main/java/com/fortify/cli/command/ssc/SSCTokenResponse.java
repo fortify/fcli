@@ -28,12 +28,13 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.micronaut.core.annotation.Introspected;
 import lombok.Data;
 
-@Data
+@Data @Introspected
 public final class SSCTokenResponse {
 	@JsonProperty SSCTokenResponse.SSCTokenData data;
-	@Data
+	@Data @Introspected
 	public static final class SSCTokenData {
 		@JsonProperty private Date terminalDate;
 		@JsonProperty private Date creationDate;
