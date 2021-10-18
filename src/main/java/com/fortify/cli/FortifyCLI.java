@@ -5,8 +5,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.impl.LogFactoryImpl;
+import org.apache.commons.logging.impl.SimpleLog;
+import org.graalvm.nativeimage.hosted.Feature;
+import org.graalvm.nativeimage.hosted.RuntimeReflection;
+
 import com.fortify.cli.command.RootCommand;
 import com.fortify.cli.command.util.SubcommandOf;
+import com.oracle.svm.core.annotate.AutomaticFeature;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
@@ -57,5 +64,15 @@ public class FortifyCLI {
 	public static void main(String[] args) {
 		int exitCode = execute(RootCommand.class, args);
 		System.exit(exitCode);
+	}
+	
+	@AutomaticFeature
+	class RuntimeReflectionRegistrationFeature implements Feature {
+		public void beforeAnalysis(BeforeAnalysisAccess access) {
+			RuntimeReflection.register(String.class);
+			RuntimeReflection.register(LogFactoryImpl.class);
+			RuntimeReflection.register(LogFactory.class);
+			RuntimeReflection.register(SimpleLog.class);
+		}
 	}
 }
