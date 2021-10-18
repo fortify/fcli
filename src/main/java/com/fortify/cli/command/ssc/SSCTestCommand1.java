@@ -92,19 +92,19 @@ public class SSCTestCommand1 implements Runnable {
 
 	@Data @Builder @ReflectiveAccess
 	public static final class SSCTokenRequest {
-		@ReflectiveAccess private String type;
-		@ReflectiveAccess private String description;
+		private String type;
+		private String description;
 	}
 	
 	@Data @ReflectiveAccess
 	public static final class SSCTokenResponse {
-		@ReflectiveAccess private SSCTokenData data;
+		private SSCTokenData data;
 		@Data @ReflectiveAccess
 		public static final class SSCTokenData {
-			@ReflectiveAccess private Date terminalDate;
-			@ReflectiveAccess private Date creationDate;
-			@ReflectiveAccess private String type;
-			@ReflectiveAccess private String token;
+			private Date terminalDate;
+			private Date creationDate;
+			private String type;
+			private String token;
 		}
 	}
 }
