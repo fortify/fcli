@@ -27,6 +27,7 @@ package com.fortify.cli.command.ssc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.command.util.SubcommandOf;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.HttpResponse;
@@ -40,7 +41,7 @@ import picocli.CommandLine.Command;
 @SubcommandOf(SSCCommand.class)
 @Command(name = "test1", description = "SSC test 1", mixinStandardHelpOptions = true)
 public class SSCTestCommand1 implements Runnable {
-	@Inject
+	@Inject @ReflectiveAccess
 	private ObjectMapper objectMapper;
 	
 	@Override @SneakyThrows
