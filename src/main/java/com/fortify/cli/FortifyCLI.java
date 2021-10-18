@@ -69,8 +69,11 @@ public class FortifyCLI {
 		public void beforeAnalysis(BeforeAnalysisAccess access) {
 			RuntimeReflection.register(String.class);
 			RuntimeReflection.register(LogFactoryImpl.class);
+			RuntimeReflection.register(LogFactoryImpl.class.getDeclaredConstructors());
 			RuntimeReflection.register(LogFactory.class);
+			RuntimeReflection.register(LogFactory.class.getDeclaredConstructors());
 			RuntimeReflection.register(SimpleLog.class);
+			RuntimeReflection.register(SimpleLog.class.getDeclaredConstructors());
 		}
 	}
 }
