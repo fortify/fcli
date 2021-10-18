@@ -26,7 +26,6 @@ package com.fortify.cli.command.ssc;
 
 import java.util.Date;
 
-import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.command.util.SubcommandOf;
 import com.google.gson.Gson;
 
@@ -90,13 +89,13 @@ public class SSCTestCommand1 implements Runnable {
 		return (String) ((JsonNode)r.getBody()).getObject().optQuery("/links/next/href");
 	}
 
-	@Data @Builder @Reflectable(allowWrite=true)
+	@Data @Builder
 	public static final class SSCTokenRequest {
 		private String type;
 		private String description;
 	}
 	
-	@Data @Reflectable(allowWrite=true)
+	@Data
 	public static final class SSCTokenResponse {
 		private SSCTokenData data;
 		@Data

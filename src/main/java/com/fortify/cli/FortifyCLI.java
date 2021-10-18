@@ -12,6 +12,8 @@ import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
 import com.fortify.cli.command.RootCommand;
+import com.fortify.cli.command.ssc.SSCTestCommand1.SSCTokenRequest;
+import com.fortify.cli.command.ssc.SSCTestCommand1.SSCTokenResponse;
 import com.fortify.cli.command.util.SubcommandOf;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
@@ -74,6 +76,14 @@ public class FortifyCLI {
 			RuntimeReflection.register(LogFactory.class.getDeclaredConstructors());
 			RuntimeReflection.register(SimpleLog.class);
 			RuntimeReflection.register(SimpleLog.class.getDeclaredConstructors());
+			RuntimeReflection.register(SSCTokenRequest.class);
+			RuntimeReflection.register(SSCTokenRequest.class.getDeclaredConstructors());
+			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredMethods());
+			RuntimeReflection.register(SSCTokenRequest.class.getDeclaredFields());
+			RuntimeReflection.register(SSCTokenResponse.class);
+			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredConstructors());
+			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredMethods());
+			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredFields());
 		}
 	}
 }
