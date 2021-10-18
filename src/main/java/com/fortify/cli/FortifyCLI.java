@@ -76,6 +76,7 @@ public class FortifyCLI {
 			RuntimeReflection.register(LogFactory.class.getDeclaredConstructors());
 			RuntimeReflection.register(SimpleLog.class);
 			RuntimeReflection.register(SimpleLog.class.getDeclaredConstructors());
+			/*
 			RuntimeReflection.register(SSCTokenRequest.class);
 			RuntimeReflection.register(SSCTokenRequest.class.getDeclaredConstructors());
 			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredMethods());
@@ -84,6 +85,8 @@ public class FortifyCLI {
 			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredConstructors());
 			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredMethods());
 			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredFields());
+			*/
+			
 		}
 	}
 }
