@@ -53,12 +53,10 @@ public class FortifyCLI {
 	}
 
 	private static final Map<Class<?>, List<Object>> getParentToSubcommandsMap(ApplicationContext context) {
-		// TODO: Use proper Qualifier to get only SubcommandOf-annotated beans instead
-		// of filtering manually
-		Collection<BeanDefinition<?>> beanDefinitions = context.getBeanDefinitions(Qualifiers.any());
-		return beanDefinitions.stream().filter(bd -> bd.hasAnnotation(SubcommandOf.class))
-				.collect(Collectors.groupingBy(bd -> bd.getAnnotation(SubcommandOf.class).classValue().get(),
-						Collectors.mapping(context::getBean, Collectors.toList())));
+		Collection<BeanDefinition<?>> beanDefinitions = context.getBeanDefinitions(Qualifiers.byStereotype(SubcommandOf.class));
+		return beanDefinitions.stream().collect(
+			Collectors.groupingBy(bd -> bd.getAnnotation(SubcommandOf.class).classValue().get(),
+			                      Collectors.mapping(context::getBean, Collectors.toList())));
 	}
 
 	public static void main(String[] args) {
@@ -67,7 +65,7 @@ public class FortifyCLI {
 	}
 	
 	@AutomaticFeature
-	class RuntimeReflectionRegistrationFeature implements Feature {
+	public static final class RuntimeReflectionRegistrationFeature implements Feature {
 		public void beforeAnalysis(BeforeAnalysisAccess access) {
 			RuntimeReflection.register(String.class);
 			RuntimeReflection.register(LogFactoryImpl.class);
