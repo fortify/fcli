@@ -24,28 +24,21 @@
  ******************************************************************************/
 package com.fortify.cli.command.ssc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.command.util.SubcommandOf;
 
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
-import kong.unirest.Unirest;
-import kong.unirest.jackson.JacksonObjectMapper;
+import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @Singleton
 @SubcommandOf(SSCCommand.class)
 @Command(name = "test1", description = "SSC test 1", mixinStandardHelpOptions = true)
 public class SSCTestCommand1 implements Runnable {
-	private final ObjectMapper objectMapper;
-	
-	@Inject
-	public SSCTestCommand1(ObjectMapper objectMapper) {
-		this.objectMapper = objectMapper;
-	}
+	@Mixin SSCConnectionMixin sscConnectionMixin;
 
 	@Override @SneakyThrows
 	public void run() {
@@ -70,18 +63,21 @@ public class SSCTestCommand1 implements Runnable {
 		System.out.println(response.body());
 		*/
 		
+		
+		sscConnectionMixin.executeWithConnection(this::executeRequest);
+	}
+	
+	private Void executeRequest(UnirestInstance unirest) {
 		SSCTokenRequest tokenRequest = SSCTokenRequest.builder().type("UnifiedLoginToken").build();
 		System.out.println("tokenRequest: "+tokenRequest);
-		System.out.println("asJson: "+objectMapper.writeValueAsString(tokenRequest));
-		Unirest.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
-		SSCTokenResponse tokenResponse = Unirest.post("http://localhost:2111/ssc/api/v1/tokens")
+		SSCTokenResponse tokenResponse = unirest.post("/api/v1/tokens")
 			.accept("application/json")
 			.header("Content-Type", "application/json")
 			.basicAuth("ssc", "Fortify123!")
 			.body(tokenRequest)
 			.asObject(SSCTokenResponse.class).getBody();
 		System.out.println(tokenResponse);
-		Unirest.get("http://localhost:2111/ssc/api/v1/events?limit=10")
+		unirest.get("http://localhost:2111/ssc/api/v1/events?limit=10")
 		.accept("application/json")
 		.header("Content-Type", "application/json")
 		.header("Authorization", "FortifyToken "+tokenResponse.getData().getToken())
@@ -89,6 +85,7 @@ public class SSCTestCommand1 implements Runnable {
 				r->r.asJson(),
 				r->getNextPageLink(r))
 		.stream().map(HttpResponse::getBody).forEach(System.out::println);
+		return null;
 	}
 	
 	private String getNextPageLink(HttpResponse<Object> r) {

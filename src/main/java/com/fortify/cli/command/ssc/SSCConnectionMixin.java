@@ -24,19 +24,33 @@
  ******************************************************************************/
 package com.fortify.cli.command.ssc;
 
-import java.util.Date;
+import java.util.function.Function;
 
-import io.micronaut.core.annotation.Introspected;
-import lombok.Data;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Data @Introspected
-public final class SSCTokenResponse {
-	private SSCTokenResponse.SSCTokenData data;
-	@Data @Introspected
-	public static final class SSCTokenData {
-		private Date terminalDate;
-		private Date creationDate;
-		private String type;
-		private String token;
+import jakarta.inject.Inject;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestInstance;
+import kong.unirest.jackson.JacksonObjectMapper;
+import picocli.CommandLine.Option;
+
+public class SSCConnectionMixin {
+	private final ObjectMapper objectMapper;
+	
+	@Option(names = {"--ssc-url"}, description = "SSC URL", required = true)
+	private String sscUrl;
+	
+	@Inject
+	public SSCConnectionMixin(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
+	}
+	
+	public <T> T executeWithConnection(Function<UnirestInstance, T> requestExecutor) {
+		try (UnirestInstance unirest = Unirest.spawnInstance()) {
+			unirest.config()
+				.setObjectMapper(new JacksonObjectMapper(objectMapper))
+				.defaultBaseUrl(sscUrl);
+			return requestExecutor.apply(unirest);
+		}
 	}
 }
