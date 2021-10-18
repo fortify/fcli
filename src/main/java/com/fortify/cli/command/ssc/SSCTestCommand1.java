@@ -28,10 +28,10 @@ import java.util.Date;
 
 import com.fortify.cli.command.util.SubcommandOf;
 
+import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Singleton;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
-import kong.unirest.PagedList;
 import kong.unirest.Unirest;
 import lombok.Builder;
 import lombok.Data;
@@ -86,13 +86,13 @@ public class SSCTestCommand1 implements Runnable {
 		return (String) ((JsonNode)r.getBody()).getObject().optQuery("/links/next/href");
 	}
 
-	@Data @Builder
+	@Data @Builder @Introspected
 	public static final class SSCTokenRequest {
 		private String type;
 		private String description;
 	}
 	
-	@Data
+	@Data @Introspected
 	public static final class SSCTokenResponse {
 		private SSCTokenData data;
 		@Data

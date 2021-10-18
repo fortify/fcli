@@ -23,8 +23,10 @@ allprojects {
 }
 
 dependencies {
+	// Lombok dependency & annotation processor
 	compileOnly 'org.projectlombok:lombok:1.16.20'
     annotationProcessor "org.projectlombok:lombok:1.16.20"
+    
     annotationProcessor("info.picocli:picocli-codegen")
     implementation("info.picocli:picocli")
     implementation("io.micronaut:micronaut-runtime")
