@@ -24,23 +24,76 @@
  ******************************************************************************/
 package com.fortify.cli.command.ssc;
 
+import java.util.Date;
+
 import com.fortify.cli.command.util.SubcommandOf;
-import com.fortify.client.ssc.api.SSCApplicationVersionAPI;
-import com.fortify.client.ssc.connection.SSCAuthenticatingRestConnection;
 
 import jakarta.inject.Singleton;
+import lombok.Builder;
+import lombok.Data;
+import lombok.SneakyThrows;
+import okhttp3.Credentials;
 import picocli.CommandLine.Command;
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.Body;
+import retrofit2.http.Header;
+import retrofit2.http.Headers;
+import retrofit2.http.POST;
 
 @Singleton
 @SubcommandOf(SSCCommand.class)
 @Command(name = "test1", description = "SSC test 1", mixinStandardHelpOptions = true)
 public class SSCTestCommand1 implements Runnable {
-	@Override
+	@Override @SneakyThrows
 	public void run() {
-		System.out.println(SSCAuthenticatingRestConnection.builder()
-			.baseUrl("http://localhost:2111/ssc").user("ssc").password("Fortify123!")
-			.build()
-			.api(SSCApplicationVersionAPI.class).
-			queryApplicationVersions().build().getAll());
+		/*
+		 * System.out.println(SSCAuthenticatingRestConnection.builder()
+		 * .baseUrl("http://localhost:2111/ssc").user("ssc").password("Fortify123!")
+		 * .build() .api(SSCApplicationVersionAPI.class).
+		 * queryApplicationVersions().build().getAll());
+		 */
+
+		Retrofit retrofit = new Retrofit.Builder()
+			.baseUrl("http://localhost:2111/ssc/")
+			.addConverterFactory(GsonConverterFactory.create())
+			.build();
+		String auth = Credentials.basic("ssc", "Fortify123!");
+		System.out.println(auth);
+		Call<SSCTokenResponse> createTokenCall = retrofit.create(SSCTokenOps.class).createToken(
+				auth,
+				SSCTokenRequest.builder().type("UnifiedLoginToken").build());
+		Response<SSCTokenResponse> response = createTokenCall.execute();
+		System.out.println(response);
+		System.out.println(response.body());
+	}
+	
+	public static interface SSCTokenOps {
+		@POST("api/v1/tokens")
+		@Headers({
+		    "Accept: application/json",
+		    "Content-Type: application/json"
+		})
+		public Call<SSCTokenResponse> createToken(@Header("Authorization") String auth, @Body SSCTokenRequest tokenRequest);
+	}
+	
+	@Data @Builder
+	public static final class SSCTokenRequest {
+		private String type;
+		private String description;
+	}
+	
+	@Data
+	public static final class SSCTokenResponse {
+		private SSCTokenData data;
+		@Data
+		public static final class SSCTokenData {
+			private Date terminalDate;
+		    private Date creationDate;
+		    private String type;
+		    private String token;
+		}
 	}
 }
