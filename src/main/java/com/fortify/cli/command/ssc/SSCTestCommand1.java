@@ -26,9 +26,9 @@ package com.fortify.cli.command.ssc;
 
 import java.util.Date;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.command.util.SubcommandOf;
 
-import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Singleton;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -86,13 +86,13 @@ public class SSCTestCommand1 implements Runnable {
 		return (String) ((JsonNode)r.getBody()).getObject().optQuery("/links/next/href");
 	}
 
-	@Data @Builder @Introspected
+	@Data @Builder @Reflectable
 	public static final class SSCTokenRequest {
 		private String type;
 		private String description;
 	}
 	
-	@Data @Introspected
+	@Data @Reflectable
 	public static final class SSCTokenResponse {
 		private SSCTokenData data;
 		@Data
