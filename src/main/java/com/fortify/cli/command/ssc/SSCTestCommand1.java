@@ -29,6 +29,7 @@ import java.util.Date;
 import com.fortify.cli.command.util.SubcommandOf;
 
 import jakarta.inject.Singleton;
+import kong.unirest.Unirest;
 import lombok.Builder;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -55,7 +56,7 @@ public class SSCTestCommand1 implements Runnable {
 		 * .build() .api(SSCApplicationVersionAPI.class).
 		 * queryApplicationVersions().build().getAll());
 		 */
-
+		/*
 		Retrofit retrofit = new Retrofit.Builder()
 			.baseUrl("http://localhost:2111/ssc/")
 			.addConverterFactory(GsonConverterFactory.create())
@@ -68,15 +69,15 @@ public class SSCTestCommand1 implements Runnable {
 		Response<SSCTokenResponse> response = createTokenCall.execute();
 		System.out.println(response);
 		System.out.println(response.body());
-	}
+		*/
 	
-	public static interface SSCTokenOps {
-		@POST("api/v1/tokens")
-		@Headers({
-		    "Accept: application/json",
-		    "Content-Type: application/json"
-		})
-		public Call<SSCTokenResponse> createToken(@Header("Authorization") String auth, @Body SSCTokenRequest tokenRequest);
+		SSCTokenResponse response = Unirest.post("http://localhost:2111/ssc/api/v1/tokens")
+			.accept("application/json")
+			.header("Content-Type", "application/json")
+			.basicAuth("ssc", "Fortify123!")
+			.body(SSCTokenRequest.builder().type("UnifiedLoginToken").build())
+			.asObject(SSCTokenResponse.class).getBody();
+		System.out.println(response);
 	}
 	
 	@Data @Builder
