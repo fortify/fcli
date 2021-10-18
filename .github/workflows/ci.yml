@@ -69,7 +69,7 @@ jobs:
     - name: Create native fcli
       run: >-
         "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-        mkdir native-image/win &&
+        mkdir native-image\win &&
         ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar native-image\win\fcli
       shell: cmd
       
