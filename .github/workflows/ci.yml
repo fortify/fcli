@@ -5,7 +5,7 @@ on:
       - '**'
        
 env:
-  native_image_opts: --verbose --enable-http --enable-https -H:ReflectionConfigurationFiles=build/classes/java/main/META-INF/graal/reflect.json
+  native_image_opts: --verbose --enable-http --enable-https
 #  native_image_opts: --verbose --initialize-at-build-time=org.apache.logging.slf4j.Log4jLogger,org.apache.logging.log4j.spi.AbstractLogger,org.apache.logging.log4j.core.Logger,org.apache.logging.log4j.Level,org.apache.logging.slf4j.Log4jLoggerFactory
           
 jobs:
