@@ -33,16 +33,7 @@ import kong.unirest.Unirest;
 import lombok.Builder;
 import lombok.Data;
 import lombok.SneakyThrows;
-import okhttp3.Credentials;
 import picocli.CommandLine.Command;
-import retrofit2.Call;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.http.Body;
-import retrofit2.http.Header;
-import retrofit2.http.Headers;
-import retrofit2.http.POST;
 
 @Singleton
 @SubcommandOf(SSCCommand.class)
