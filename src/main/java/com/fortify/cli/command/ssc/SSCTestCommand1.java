@@ -28,6 +28,7 @@ import java.util.Date;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.command.util.SubcommandOf;
+import com.google.gson.Gson;
 
 import jakarta.inject.Singleton;
 import kong.unirest.HttpResponse;
@@ -65,11 +66,14 @@ public class SSCTestCommand1 implements Runnable {
 		System.out.println(response.body());
 		*/
 	
+		SSCTokenRequest tokenRequest = SSCTokenRequest.builder().type("UnifiedLoginToken").build();
+		System.out.println("tokenRequest: "+tokenRequest);
+		System.out.println("asJson: "+new Gson().toJson(tokenRequest));
 		SSCTokenResponse tokenResponse = Unirest.post("http://localhost:2111/ssc/api/v1/tokens")
 			.accept("application/json")
 			.header("Content-Type", "application/json")
 			.basicAuth("ssc", "Fortify123!")
-			.body(SSCTokenRequest.builder().type("UnifiedLoginToken").build())
+			.body(tokenRequest)
 			.asObject(SSCTokenResponse.class).getBody();
 		System.out.println(tokenResponse);
 		Unirest.get("http://localhost:2111/ssc/api/v1/events?limit=10")
@@ -86,13 +90,13 @@ public class SSCTestCommand1 implements Runnable {
 		return (String) ((JsonNode)r.getBody()).getObject().optQuery("/links/next/href");
 	}
 
-	@Data @Builder @Reflectable
+	@Data @Builder @Reflectable(allowWrite=true)
 	public static final class SSCTokenRequest {
 		private String type;
 		private String description;
 	}
 	
-	@Data @Reflectable
+	@Data @Reflectable(allowWrite=true)
 	public static final class SSCTokenResponse {
 		private SSCTokenData data;
 		@Data
