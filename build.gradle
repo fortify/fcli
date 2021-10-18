@@ -31,6 +31,8 @@ dependencies {
     implementation("io.micronaut.picocli:micronaut-picocli")
     //implementation("io.micronaut.xml:micronaut-jackson-xml")
     implementation("javax.annotation:javax.annotation-api")
+    runtimeOnly("ch.qos.logback:logback-classic:1.2.6")
+    runtimeOnly("org.slf4j:jcl-over-slf4j:1.7.32")
     compileOnly("org.graalvm.nativeimage:svm")
     
     //implementation project(':rest-client-ssc')
