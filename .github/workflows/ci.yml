@@ -40,17 +40,14 @@ jobs:
           path: ./
 
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
+        run: mkdir -p native-image/${{ matrix.os }} && native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar native-image/${{ matrix.os }}/fcli
         
       - name: Basic test of native fcli
-        run: ./fcli --help && ./fcli fod --help
-
-      - name: Create tarball
-        run: tar -zcvf "fcli-${{ matrix.os }}.tar.gz" fcli
+        run: ./native-image/${{ matrix.os }}/fcli --help && ./native-image/${{ matrix.os }}/fcli fod --help
 
       - uses: actions/upload-artifact@v2
         with:
-          path: fcli-*.tar.gz
+          path: ./native-image
 
   release_win:
     name: native-image-win
@@ -72,17 +69,15 @@ jobs:
     - name: Create native fcli
       run: >-
         "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-        ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar fcli
+        mkdir native-image/win
+        ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar native-image\win\fcli
       shell: cmd
       
     - name: Basic test of native fcli
       run: |
-        .\fcli.exe --help 
-        .\fcli.exe fod --help
-
-    - name: Create zip
-      run: 7z a fcli-windows.zip fcli.exe
+        .\native-image\win\fcli.exe --help 
+        .\native-image\win\fcli.exe fod --help
 
     - uses: actions/upload-artifact@v2
       with:
-        path: fcli-windows.zip
+        path: ./native-image
