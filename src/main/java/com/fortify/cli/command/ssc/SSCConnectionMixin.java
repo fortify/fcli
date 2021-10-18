@@ -32,25 +32,46 @@ import jakarta.inject.Inject;
 import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
 import kong.unirest.jackson.JacksonObjectMapper;
+import lombok.Getter;
 import picocli.CommandLine.Option;
 
 public class SSCConnectionMixin {
-	private final ObjectMapper objectMapper;
+	@Getter private final ObjectMapper objectMapper;
 	
 	@Option(names = {"--ssc-url"}, description = "SSC URL", required = true)
-	private String sscUrl;
+	@Getter private String sscUrl;
+	
+	@Option(names = {"--ssc-user"}, description = "SSC User", required = true)
+	@Getter private String sscUser;
+	
+	@Option(names = {"--ssc-password"}, description = "SSC Password", required = true)
+	@Getter private String sscPassword;
 	
 	@Inject
 	public SSCConnectionMixin(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
 	}
 	
-	public <T> T executeWithConnection(Function<UnirestInstance, T> requestExecutor) {
+	public <T> T executeWithUnirest(Function<UnirestInstance, T> requestExecutor) {
 		try (UnirestInstance unirest = Unirest.spawnInstance()) {
 			unirest.config()
 				.setObjectMapper(new JacksonObjectMapper(objectMapper))
-				.defaultBaseUrl(sscUrl);
+				.defaultBaseUrl(sscUrl)
+				.addDefaultHeader("Authorization", "FortifyToken "+getAuthToken(unirest));
 			return requestExecutor.apply(unirest);
 		}
+	}
+
+	private String getAuthToken(UnirestInstance unirest) {
+		SSCTokenRequest tokenRequest = SSCTokenRequest.builder().type("UnifiedLoginToken").build();
+		System.out.println("tokenRequest: "+tokenRequest);
+		SSCTokenResponse tokenResponse = unirest.post("/api/v1/tokens")
+			.accept("application/json")
+			.header("Content-Type", "application/json")
+			.basicAuth(sscUser, sscPassword)
+			.body(tokenRequest)
+			.asObject(SSCTokenResponse.class).getBody();
+		System.out.println(tokenResponse);
+		return tokenResponse.getData().getToken();
 	}
 }

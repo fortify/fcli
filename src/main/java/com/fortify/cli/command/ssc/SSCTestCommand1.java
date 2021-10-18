@@ -64,23 +64,13 @@ public class SSCTestCommand1 implements Runnable {
 		*/
 		
 		
-		sscConnectionMixin.executeWithConnection(this::executeRequest);
+		sscConnectionMixin.executeWithUnirest(this::executeRequest);
 	}
 	
 	private Void executeRequest(UnirestInstance unirest) {
-		SSCTokenRequest tokenRequest = SSCTokenRequest.builder().type("UnifiedLoginToken").build();
-		System.out.println("tokenRequest: "+tokenRequest);
-		SSCTokenResponse tokenResponse = unirest.post("/api/v1/tokens")
-			.accept("application/json")
-			.header("Content-Type", "application/json")
-			.basicAuth("ssc", "Fortify123!")
-			.body(tokenRequest)
-			.asObject(SSCTokenResponse.class).getBody();
-		System.out.println(tokenResponse);
-		unirest.get("http://localhost:2111/ssc/api/v1/events?limit=10")
+		unirest.get("/api/v1/events?limit=10")
 		.accept("application/json")
 		.header("Content-Type", "application/json")
-		.header("Authorization", "FortifyToken "+tokenResponse.getData().getToken())
 		.asPaged(
 				r->r.asJson(),
 				r->getNextPageLink(r))
