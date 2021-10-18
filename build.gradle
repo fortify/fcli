@@ -27,8 +27,8 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok:1.16.20'
     annotationProcessor "org.projectlombok:lombok:1.16.20"
     
-    //implementation group: 'com.formkiq', name: 'graalvm-annotations', version:'1.0.0'
-    //annotationProcessor 'com.formkiq:graalvm-annotations-processor:1.0.0'
+    implementation group: 'com.formkiq', name: 'graalvm-annotations', version:'1.0.0'
+    annotationProcessor 'com.formkiq:graalvm-annotations-processor:1.0.0'
     
     // Picocli dependency and annotation processor
     annotationProcessor("info.picocli:picocli-codegen")
@@ -57,9 +57,6 @@ dependencies {
     //implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     
     implementation 'com.konghq:unirest-java:3.11.09'
-    
-    
-    
 }
 
 application {
