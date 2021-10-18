@@ -26,18 +26,18 @@ package com.fortify.cli.command.ssc;
 
 import java.util.Date;
 
-import com.formkiq.graalvm.annotations.Reflectable;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 
-@Data @Reflectable(allowWrite=true)
+@Data
 public final class SSCTokenResponse {
-	private SSCTokenResponse.SSCTokenData data;
-	@Data @Reflectable(allowWrite=true)
+	@JsonProperty SSCTokenResponse.SSCTokenData data;
+	@Data
 	public static final class SSCTokenData {
-		private Date terminalDate;
-	    private Date creationDate;
-	    private String type;
-	    private String token;
+		@JsonProperty private Date terminalDate;
+		@JsonProperty private Date creationDate;
+		@JsonProperty private String type;
+		@JsonProperty private String token;
 	}
 }

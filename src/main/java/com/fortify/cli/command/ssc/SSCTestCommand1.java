@@ -24,13 +24,15 @@
  ******************************************************************************/
 package com.fortify.cli.command.ssc;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.command.util.SubcommandOf;
-import com.google.gson.Gson;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
+import kong.unirest.jackson.JacksonObjectMapper;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 
@@ -38,6 +40,9 @@ import picocli.CommandLine.Command;
 @SubcommandOf(SSCCommand.class)
 @Command(name = "test1", description = "SSC test 1", mixinStandardHelpOptions = true)
 public class SSCTestCommand1 implements Runnable {
+	@Inject
+	private ObjectMapper objectMapper;
+	
 	@Override @SneakyThrows
 	public void run() {
 		/*
@@ -60,10 +65,11 @@ public class SSCTestCommand1 implements Runnable {
 		System.out.println(response);
 		System.out.println(response.body());
 		*/
-	
+		
 		SSCTokenRequest tokenRequest = SSCTokenRequest.builder().type("UnifiedLoginToken").build();
 		System.out.println("tokenRequest: "+tokenRequest);
-		System.out.println("asJson: "+new Gson().toJson(tokenRequest));
+		System.out.println("asJson: "+objectMapper.writeValueAsString(tokenRequest));
+		Unirest.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
 		SSCTokenResponse tokenResponse = Unirest.post("http://localhost:2111/ssc/api/v1/tokens")
 			.accept("application/json")
 			.header("Content-Type", "application/json")

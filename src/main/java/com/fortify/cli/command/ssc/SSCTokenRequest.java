@@ -24,13 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.command.ssc;
 
-import com.formkiq.graalvm.annotations.Reflectable;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Builder;
 import lombok.Data;
 
-@Data @Builder @Reflectable(allowWrite=true)
+@Data @Builder
 public final class SSCTokenRequest {
-	private String type;
-	private String description;
+	@JsonProperty private String type;
+	@JsonProperty private String description;
 }

@@ -27,8 +27,8 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok:1.16.20'
     annotationProcessor "org.projectlombok:lombok:1.16.20"
     
-    implementation group: 'com.formkiq', name: 'graalvm-annotations', version:'1.0.0'
-    annotationProcessor 'com.formkiq:graalvm-annotations-processor:1.0.0'
+    //implementation group: 'com.formkiq', name: 'graalvm-annotations', version:'1.0.0'
+    //annotationProcessor 'com.formkiq:graalvm-annotations-processor:1.0.0'
     
     // Picocli dependency and annotation processor
     annotationProcessor("info.picocli:picocli-codegen")
@@ -37,7 +37,7 @@ dependencies {
     // Micronaut dependencies
     implementation("io.micronaut:micronaut-runtime")
     implementation("io.micronaut.picocli:micronaut-picocli")
-    //implementation("io.micronaut.xml:micronaut-jackson-xml")
+    implementation("io.micronaut.xml:micronaut-jackson-xml")
     implementation("javax.annotation:javax.annotation-api")
     
     // Logging dependencies
@@ -56,7 +56,8 @@ dependencies {
     //implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     //implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     
-    implementation 'com.konghq:unirest-java:3.11.09'
+    implementation 'com.konghq:unirest-java:3.13.0'
+    implementation 'com.konghq:unirest-objectmapper-jackson:3.13.0'
 }
 
 application {
