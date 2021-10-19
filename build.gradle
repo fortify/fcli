@@ -1,147 +1,80 @@
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.0.0"
-    id("io.micronaut.application") version "2.0.6"
-    //id("com.google.cloud.tools.jib") version "2.8.0"
-    id "org.openapi.generator" version "5.2.1" apply false
+	id("com.github.johnrengelman.shadow") version "7.0.0"
+	id("io.micronaut.application") version "2.0.6" apply false
+	id("io.micronaut.library") version "2.0.6" apply false
+	id 'eclipse'
 }
 
 version = "0.1"
 group = "com.fortify.cli"
 
-micronaut {
-    testRuntime("junit5")
-    processing {
-        incremental(true)
-        annotations("com.fortify.cli.*")
-    }
-}
-
-allprojects {
-	repositories {
-    	mavenCentral()
-	}
-}
-
-dependencies {
-	// Lombok dependency & annotation processor
-	compileOnly 'org.projectlombok:lombok:1.16.20'
-    annotationProcessor "org.projectlombok:lombok:1.16.20"
-    
-    //implementation group: 'com.formkiq', name: 'graalvm-annotations', version:'1.0.0'
-    //annotationProcessor 'com.formkiq:graalvm-annotations-processor:1.0.0'
-    
-    // Picocli dependency and annotation processor
-    annotationProcessor("info.picocli:picocli-codegen")
-    implementation("info.picocli:picocli")
-    
-    // Micronaut dependencies
-    implementation("io.micronaut:micronaut-runtime")
-    implementation("io.micronaut.picocli:micronaut-picocli")
-    //implementation("io.micronaut.xml:micronaut-jackson-xml")
-    implementation("javax.annotation:javax.annotation-api")
-    
-    // Logging dependencies
-    runtimeOnly("ch.qos.logback:logback-classic:1.2.6")
-    runtimeOnly("org.slf4j:jcl-over-slf4j:1.7.32")
-    
-    // GraalVM dependency
-    compileOnly("org.graalvm.nativeimage:svm")
-    
-    //implementation project(':rest-client-ssc')
-    //implementation project(':rest-client-fod')
-    
-    //implementation platform('com.fortify.client.api:fortify-client-api-bom:6.1.0.RELEASE')
-    //implementation 'com.fortify.client.api:client-api-ssc'
-    //implementation(platform("com.squareup.okhttp3:okhttp-bom:5.0.0-alpha.2"))
-    //implementation 'com.squareup.retrofit2:retrofit:2.9.0'
-    //implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
-    
-    implementation 'com.konghq:unirest-java:3.13.0'
-    implementation 'com.konghq:unirest-objectmapper-jackson:3.13.0'
+apply plugin: "io.micronaut.application"
+subprojects {
+	apply plugin: "io.micronaut.library"
+	apply plugin: 'eclipse'
 }
 
 application {
-    mainClass.set("com.fortify.cli.FortifyCLI")
+	mainClass.set("com.fortify.cli.FortifyCLI")
 }
-java {
-    sourceCompatibility = JavaVersion.toVersion("11")
-    targetCompatibility = JavaVersion.toVersion("11")
-}
-
 shadowJar {
    archiveBaseName.set('fcli')
    archiveClassifier.set('')
    archiveVersion.set('')
 }
 
-
-/*
-ext {
-	openApiSpecSrcDir = 'src/main/spec'
-}
-configure(subprojects.findAll {new File(it.projectDir, "${openApiSpecSrcDir}").exists()}) {
-	apply plugin: 'java-library'
-	apply plugin: 'org.openapi.generator'
+allprojects {
+	java {
+		sourceCompatibility = JavaVersion.toVersion("11")
+		targetCompatibility = JavaVersion.toVersion("11")
+	}
+	micronaut {
+		testRuntime("junit5")
+		processing {
+			incremental(true)
+			annotations("com.fortify.cli.*")
+		}
+	}
 	
-	dependencies {
-		implementation("io.swagger:swagger-annotations:1.6.2")
-	    implementation("com.google.code.findbugs:jsr305:3.0.2")
-	    implementation("com.squareup.okhttp3:okhttp:4.9.1")
-	    implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
-	    implementation("com.google.code.gson:gson:2.8.6")
-	    implementation("io.gsonfire:gson-fire:1.8.4")
-	    implementation("javax.annotation:javax.annotation-api:1.3.2")
+	repositories {
+		mavenCentral()
 	}
 
-	task generateClients() {
-		tasks.compileJava.dependsOn(it)
-	    fileTree("${openApiSpecSrcDir}").files.each { 
-	    	spec -> {
-	    		dependsOn (tasks.create([name: "generateClient.${spec.name}", type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask], {
-		            generatorName = "java"
-					inputSpec = "${buildDir}/generated/spec/${spec.name}/${spec.name}" //
-					outputDir = "${buildDir}/generated/client/${spec.name}"
-					invokerPackage = "com.fortify.cli.client.${spec.name - ~/\.\w+$/}"
-					apiPackage = "com.fortify.cli.client.${spec.name - ~/\.\w+$/}.api"
-					modelPackage = "com.fortify.cli.client.${spec.name - ~/\.\w+$/}.model"
-					generateModelDocumentation = false
-				    generateModelTests = false
-				    generateApiDocumentation = false
-				    generateApiTests = false
-					configOptions = [
-				        dateLibrary: "java8",
-				        library: "okhttp-gson"
-				    ]
-				    globalProperties = [
-				        models: "",
-				        apis: "",
-				        supportingFiles: "",
-				    ]
-		        }).dependsOn (tasks.create([name: "fixAndCopySwaggerSpecs.${spec.name}", type: Sync], {
-		        	description 'Read spec-rest.json and remove « and » characters. Write modified file to task temporaryDir'
-				    into("${buildDir}/generated/spec/${spec.name}") // We need to use spec.name here to avoid Gradle warnings
-				    from("${openApiSpecSrcDir}/${spec.name}") {
-				        filteringCharset = "UTF-8"
-				        filter({ String s -> s.replaceAll(/[\u00ab\u00bb]/, "")})    // [«»]
-				    }
-		        })))
-		        sourceSets {
-				    main {
-				        java {
-				            srcDir "${buildDir}/generated/client/${spec.name}/src/main/java"
-				            srcDir "${buildDir}/generated/client/${spec.name}/src/main/resources"
-				        }
-				    }
-				}
-	        }
-	    }
+	dependencies {
+		// Lombok dependency & annotation processor
+		compileOnly 'org.projectlombok:lombok:1.16.20'
+		annotationProcessor "org.projectlombok:lombok:1.16.20"
+		
+		// Picocli dependency and annotation processor
+		annotationProcessor("info.picocli:picocli-codegen")
+		implementation("info.picocli:picocli")
+		
+		// Micronaut dependencies
+		implementation("io.micronaut:micronaut-runtime")
+		implementation("io.micronaut.picocli:micronaut-picocli")
+		implementation("javax.annotation:javax.annotation-api")
+		
+		implementation 'com.konghq:unirest-java:3.13.0'
+		implementation 'com.konghq:unirest-objectmapper-jackson:3.13.0'
 	}
 }
-*/
-/*
-jib {
-    to {
-        image = "gcr.io/myapp/jib-image"
-    }
+configure(allprojects.findAll {it.name != 'fcli-common'}) {
+    dependencies {
+		implementation project(':fcli-common')
+	}
 }
-*/
+
+dependencies {
+	runtimeOnly project(':fcli-ssc')
+	runtimeOnly project(':fcli-fod')
+	runtimeOnly project(':fcli-sast')
+	runtimeOnly project(':fcli-dast')
+	runtimeOnly project(':fcli-workflow')
+	
+	// Logging dependencies
+	runtimeOnly("ch.qos.logback:logback-classic:1.2.6")
+	runtimeOnly("org.slf4j:jcl-over-slf4j:1.7.32")
+	
+	// GraalVM dependency
+	compileOnly("org.graalvm.nativeimage:svm")
+}

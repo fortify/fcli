@@ -1,3 +1,7 @@
 rootProject.name="fcli"
-//include 'rest-client-ssc'
-//include 'rest-client-fod'
+include 'fcli-common'
+include 'fcli-ssc'
+include 'fcli-fod'
+include 'fcli-sast'
+include 'fcli-dast'
+include 'fcli-workflow'

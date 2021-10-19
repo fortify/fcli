@@ -1,9 +1,10 @@
 package com.fortify.cli;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.LogFactoryImpl;
@@ -12,6 +13,7 @@ import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
 import com.fortify.cli.command.RootCommand;
+import com.fortify.cli.command.util.DefaultValueProvider;
 import com.fortify.cli.command.util.SubcommandOf;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
@@ -27,7 +29,9 @@ public class FortifyCLI {
 		try (ApplicationContext context = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
 			RootCommand rootCommand = context.getBean(RootCommand.class);
 			MicronautFactory factory = new MicronautFactory(context);
-			CommandLine commandLine = new CommandLine(rootCommand, factory).setCaseInsensitiveEnumValuesAllowed(true)
+			CommandLine commandLine = new CommandLine(rootCommand, factory)
+					.setCaseInsensitiveEnumValuesAllowed(true)
+					.setDefaultValueProvider(new DefaultValueProvider())
 					.setUsageHelpAutoWidth(true);
 			addSubcommands(context, factory, commandLine, rootCommand);
 			return commandLine.execute(args);
@@ -46,17 +50,29 @@ public class FortifyCLI {
 		if (subcommands != null) {
 			for (Object subcommand : subcommands) {
 				CommandLine subCommandLine = new CommandLine(subcommand, factory);
-				addSubcommands(parentToSubcommandsMap, factory, subCommandLine, subcommand);
 				commandLine.addSubcommand(subCommandLine);
+				addSubcommands(parentToSubcommandsMap, factory, subCommandLine, subcommand);
 			}
 		}
 	}
 
 	private static final Map<Class<?>, List<Object>> getParentToSubcommandsMap(ApplicationContext context) {
 		Collection<BeanDefinition<?>> beanDefinitions = context.getBeanDefinitions(Qualifiers.byStereotype(SubcommandOf.class));
+		/* Disabled for now as for some reason compilation intermittently fails on this statement
 		return beanDefinitions.stream().collect(
 			Collectors.groupingBy(bd -> bd.getAnnotation(SubcommandOf.class).classValue().get(),
 			                      Collectors.mapping(context::getBean, Collectors.toList())));
+		*/
+		var parentToSubcommandsMap = new LinkedHashMap<Class<?>, List<Object>>();
+		beanDefinitions.forEach(bd -> addMultiValueEntry(
+				parentToSubcommandsMap, 
+				bd.getAnnotation(SubcommandOf.class).classValue().get(),
+				context.getBean(bd)));
+		return parentToSubcommandsMap;
+	}
+
+	private static <K, V> void addMultiValueEntry(LinkedHashMap<K, List<V>> map, K key, V value) {
+		map.computeIfAbsent(key, k->new LinkedList<V>()).add(value);
 	}
 
 	public static void main(String[] args) {
@@ -67,6 +83,7 @@ public class FortifyCLI {
 	@AutomaticFeature
 	public static final class RuntimeReflectionRegistrationFeature implements Feature {
 		public void beforeAnalysis(BeforeAnalysisAccess access) {
+			// TODO Review whether these are all necessary
 			RuntimeReflection.register(String.class);
 			RuntimeReflection.register(LogFactoryImpl.class);
 			RuntimeReflection.register(LogFactoryImpl.class.getDeclaredConstructors());
@@ -74,17 +91,6 @@ public class FortifyCLI {
 			RuntimeReflection.register(LogFactory.class.getDeclaredConstructors());
 			RuntimeReflection.register(SimpleLog.class);
 			RuntimeReflection.register(SimpleLog.class.getDeclaredConstructors());
-			/*
-			RuntimeReflection.register(SSCTokenRequest.class);
-			RuntimeReflection.register(SSCTokenRequest.class.getDeclaredConstructors());
-			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredMethods());
-			RuntimeReflection.register(SSCTokenRequest.class.getDeclaredFields());
-			RuntimeReflection.register(SSCTokenResponse.class);
-			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredConstructors());
-			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredMethods());
-			RuntimeReflection.register(SSCTokenResponse.class.getDeclaredFields());
-			*/
-			
 		}
 	}
 }
