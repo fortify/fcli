@@ -32,6 +32,7 @@ import com.fortify.cli.command.session.LoginUserCredentialOptions;
 import com.fortify.cli.command.session.SessionLoginRootCommand;
 import com.fortify.cli.command.util.SubcommandOf;
 import com.fortify.cli.ssc.rest.connection.SSCRestConnectionConfig;
+import com.fortify.cli.ssc.rest.connection.SSCRestConnectionConfig.SSCAuthType;
 import com.fortify.cli.ssc.rest.connection.SSCTokenRequest;
 import com.fortify.cli.ssc.rest.connection.SSCTokenResponse;
 
@@ -77,23 +78,34 @@ public class SSCLoginCommand extends AbstractSessionLoginCommand {
 	@Override
 	protected Object login() {
 		SSCRestConnectionConfig config = getRestConnectionConfig();
+		SSCTokenResponse tokenResponse = null;
+		if ( config.getAuthType()==SSCAuthType.USER ) {
+			tokenResponse = authenticateWithUserCredentials(config);
+			if ( !config.isAllowRenew() ) {
+				clearUserCredentials(config);
+			}
+		}
+		return new SSCLoginSessionData(config, tokenResponse);
+	}
+
+	private void clearUserCredentials(SSCRestConnectionConfig config) {
+		Arrays.fill(config.getPassword(), 'x');
+		config.setPassword(null);
+		config.setUser(null);
+	}
+	
+	private SSCTokenResponse authenticateWithUserCredentials(SSCRestConnectionConfig config) {
 		SSCTokenRequest tokenRequest = SSCTokenRequest.builder().type("UnifiedLoginToken").build();
 		UnirestInstance unirestInstance = getUnirestInstance();
 		unirestInstance.config().defaultBaseUrl(config.getUrl());
-		SSCTokenResponse tokenResponse = unirestInstance.post("/api/v1/tokens")
+		return unirestInstance.post("/api/v1/tokens")
 				.accept("application/json")
 				.header("Content-Type", "application/json")
 				.basicAuth(config.getUser(), new String(config.getPassword()))
 				.body(tokenRequest)
 				.asObject(SSCTokenResponse.class).getBody();
-		if ( !config.isAllowRenew() ) {
-			Arrays.fill(config.getPassword(), 'x');
-			config.setPassword(null);
-			config.setUser(null);
-		}
-		return new SSCLoginSessionData(config, tokenResponse);
 	}
-	
+
 	private final SSCRestConnectionConfig getRestConnectionConfig() {
 		SSCRestConnectionConfig config = new SSCRestConnectionConfig();
 		connectionOptions.configure(config);

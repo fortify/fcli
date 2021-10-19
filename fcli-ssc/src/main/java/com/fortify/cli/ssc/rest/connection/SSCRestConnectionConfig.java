@@ -34,4 +34,12 @@ import lombok.EqualsAndHashCode;
 public class SSCRestConnectionConfig extends AbstractRestConnectionWithUserCredentialsConfig {
 	private boolean allowRenew;
 	private char[] token;
+	
+	public final SSCAuthType getAuthType() {
+		return token!=null && token.length>0 ? SSCAuthType.TOKEN : SSCAuthType.USER;
+	}
+	
+	public static enum SSCAuthType {
+		TOKEN, USER
+	}
 }

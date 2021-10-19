@@ -24,7 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.command.session;
 
+import java.nio.file.Paths;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.util.FcliHomeHelper;
 
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
@@ -45,10 +48,12 @@ public abstract class AbstractSessionLoginCommand implements Runnable {
 	
 	@Override @SneakyThrows
 	public final void run() {
-		String connectionId = loginSessionProducerMixin.getConnectionId(getLoginSessionType());
+		String loginSessionType = getLoginSessionType();
+		String connectionId = loginSessionProducerMixin.getConnectionId(loginSessionType);
 		Object loginData = login();
-		String json = objectMapper.writeValueAsString(loginData);
-		System.out.println(String.format("Creating login session %s: %s", connectionId, json));
+		String loginDataJson = objectMapper.writeValueAsString(loginData);
+		System.out.println(String.format("Creating login session %s: %s", connectionId, loginDataJson));
+		FcliHomeHelper.saveFile(Paths.get("loginSessions", loginSessionType, connectionId), loginDataJson);
 	}
 	
 	protected UnirestInstance getUnirestInstance() {
