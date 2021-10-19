@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.command.session;
 
+import java.util.Arrays;
+
 import com.fortify.cli.command.session.AbstractSessionLoginCommand;
 import com.fortify.cli.command.session.LoginConnectionOptions;
 import com.fortify.cli.command.session.LoginUserCredentialOptions;
@@ -84,6 +86,11 @@ public class SSCLoginCommand extends AbstractSessionLoginCommand {
 				.basicAuth(config.getUser(), new String(config.getPassword()))
 				.body(tokenRequest)
 				.asObject(SSCTokenResponse.class).getBody();
+		if ( !config.isAllowRenew() ) {
+			Arrays.fill(config.getPassword(), 'x');
+			config.setPassword(null);
+			config.setUser(null);
+		}
 		return new SSCLoginSessionData(config, tokenResponse);
 	}
 	
