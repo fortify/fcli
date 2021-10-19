@@ -27,6 +27,8 @@ package com.fortify.cli.ssc.command;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.ssc.rest.connection.SSCTokenRequest;
+import com.fortify.cli.ssc.rest.connection.SSCTokenResponse;
 
 import jakarta.inject.Inject;
 import kong.unirest.Unirest;

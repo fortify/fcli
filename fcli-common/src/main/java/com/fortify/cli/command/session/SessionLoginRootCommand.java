@@ -27,11 +27,13 @@ package com.fortify.cli.command.session;
 import com.fortify.cli.command.RootCommand;
 import com.fortify.cli.command.util.SubcommandOf;
 
+import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 
 @Singleton
 @SubcommandOf(RootCommand.class)
 @Command(name = "login", description = "Login to Fortify systems")
+@Order(10)
 public class SessionLoginRootCommand {
 }

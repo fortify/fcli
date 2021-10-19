@@ -22,23 +22,49 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.rest.connection;
 
-import com.fortify.cli.rest.connection.AbstractRestConnectionWithUserCredentialsConfig;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestInstance;
+import kong.unirest.jackson.JacksonObjectMapper;
 import lombok.Getter;
-import picocli.CommandLine.Option;
 
-public class LoginUserCredentialOptions {
-	@Option(names = {"--user", "-u"}, required = true)
-	@Getter private String user;
+@Singleton
+public class UnirestInstanceFactory {
+	@Getter private final ObjectMapper objectMapper;
+	private final Map<String, UnirestInstance> instances = new HashMap<>();
 	
-	@Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
-	@Getter private char[] password;
+	@Inject
+	public UnirestInstanceFactory(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
+	}
 	
-	public final <T extends AbstractRestConnectionWithUserCredentialsConfig> T configure(T config) {
-		config.setUser(getUser());
-		config.setPassword(getPassword());
-		return config;
+	public final UnirestInstance getUnirestInstance(String name) {
+		return instances.computeIfAbsent(name, this::createUnirestInstance);
+	}
+	
+	public final void closeUnirestInstance(String name) {
+		UnirestInstance instance = instances.remove(name);
+		instance.close();
+	}
+	
+	private final UnirestInstance createUnirestInstance(String name) {
+		UnirestInstance instance = Unirest.spawnInstance();
+		instance.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
+		return instance;
+	}
+	
+	@PreDestroy
+	public void close() {
+		instances.keySet().parallelStream().collect(Collectors.toSet()).forEach(this::closeUnirestInstance);
 	}
 }

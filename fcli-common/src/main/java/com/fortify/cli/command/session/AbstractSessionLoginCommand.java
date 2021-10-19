@@ -22,21 +22,39 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.command;
+package com.fortify.cli.command.session;
 
-import java.util.Date;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.micronaut.core.annotation.Introspected;
-import lombok.Data;
+import jakarta.inject.Inject;
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import picocli.CommandLine.Mixin;
 
-@Data @Introspected
-public final class SSCTokenResponse {
-	private SSCTokenResponse.SSCTokenData data;
-	@Data @Introspected
-	public static final class SSCTokenData {
-		private Date terminalDate;
-		private Date creationDate;
-		private String type;
-		private String token;
+public abstract class AbstractSessionLoginCommand implements Runnable {
+	@Getter private ObjectMapper objectMapper;
+	
+	@Inject
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
 	}
+	
+	@Mixin
+	@Getter private LoginSessionProducerMixin loginSessionProducerMixin;
+	
+	@Override @SneakyThrows
+	public final void run() {
+		String connectionId = loginSessionProducerMixin.getConnectionId(getLoginSessionType());
+		Object loginData = login();
+		String json = objectMapper.writeValueAsString(loginData);
+		System.out.println(String.format("Creating login session %s: %s", connectionId, json));
+	}
+	
+	protected UnirestInstance getUnirestInstance() {
+		return loginSessionProducerMixin.getUnirestInstance(getLoginSessionType());
+	}
+	
+	protected abstract String getLoginSessionType();
+	protected abstract Object login();
 }

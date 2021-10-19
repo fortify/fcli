@@ -24,21 +24,28 @@
  ******************************************************************************/
 package com.fortify.cli.command.session;
 
-import com.fortify.cli.rest.connection.AbstractRestConnectionWithUserCredentialsConfig;
-
 import lombok.Getter;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.ParentCommand;
 
-public class LoginUserCredentialOptions {
-	@Option(names = {"--user", "-u"}, required = true)
-	@Getter private String user;
+public abstract class AbstractSessionLogoutCommand implements Runnable {
+	@Mixin
+	@Getter private LoginSessionConsumerMixin loginSessionConsumerMixin;
 	
-	@Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
-	@Getter private char[] password;
+	@ParentCommand SessionLogoutRootCommand parent;
 	
-	public final <T extends AbstractRestConnectionWithUserCredentialsConfig> T configure(T config) {
-		config.setUser(getUser());
-		config.setPassword(getPassword());
-		return config;
+	@Override
+	public final void run() {
+		if ( parent.isLogoutAll() ) {
+			System.out.println(String.format("Logging out all %s sessions", getLoginSessionType()));
+		} else {
+			String connectionId = loginSessionConsumerMixin.getConnectionId(getLoginSessionType());
+			preDestroy(connectionId);
+			System.out.println("Logging out session "+connectionId);
+		}
 	}
+	
+	protected abstract String getLoginSessionType();
+	
+	protected void preDestroy(String sessionId) {};
 }

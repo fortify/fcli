@@ -24,10 +24,23 @@
  ******************************************************************************/
 package com.fortify.cli.command.session;
 
+import com.fortify.cli.rest.connection.UnirestInstanceFactory;
+
+import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 
-public class LoginSessionAliasMixin {
-	@ArgGroup(heading = "Optional connection alias%n", order = 1000)
-    @Getter private LoginSessionAliasOptions aliasOptions;
+public class LoginSessionConsumerMixin extends AbstractLoginSessionMixin {
+	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
+    @Getter private LoginSessionConsumerNameOptions nameOptions;
+	
+	@Inject
+	public LoginSessionConsumerMixin(UnirestInstanceFactory unirestInstanceFactory) {
+		super(unirestInstanceFactory);
+	}
+	
+	@Override
+	protected String getSessionName() {
+		return nameOptions==null ? "default" : nameOptions.getSessionName();
+	}
 }

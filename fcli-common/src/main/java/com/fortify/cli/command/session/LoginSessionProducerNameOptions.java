@@ -22,14 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.command;
+package com.fortify.cli.command.session;
 
-import io.micronaut.core.annotation.Introspected;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import picocli.CommandLine.Option;
 
-@Data @Builder @Introspected
-public final class SSCTokenRequest {
-	private String type;
-	private String description;
+public class LoginSessionProducerNameOptions {
+	@Option(names = {"--login-session-name", "-n"}, required = false, defaultValue = "default")
+	@Getter private String sessionName;
 }

@@ -1,6 +1,5 @@
 package com.fortify.cli;
 
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,6 +19,7 @@ import com.oracle.svm.core.annotate.AutomaticFeature;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
+import io.micronaut.core.order.OrderUtil;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import picocli.CommandLine;
@@ -57,18 +57,24 @@ public class FortifyCLI {
 	}
 
 	private static final Map<Class<?>, List<Object>> getParentToSubcommandsMap(ApplicationContext context) {
-		Collection<BeanDefinition<?>> beanDefinitions = context.getBeanDefinitions(Qualifiers.byStereotype(SubcommandOf.class));
+		final var beanDefinitions = context.getBeanDefinitions(Qualifiers.byStereotype(SubcommandOf.class));
+		
 		/* Disabled for now as for some reason compilation intermittently fails on this statement
 		return beanDefinitions.stream().collect(
 			Collectors.groupingBy(bd -> bd.getAnnotation(SubcommandOf.class).classValue().get(),
 			                      Collectors.mapping(context::getBean, Collectors.toList())));
 		*/
 		var parentToSubcommandsMap = new LinkedHashMap<Class<?>, List<Object>>();
-		beanDefinitions.forEach(bd -> addMultiValueEntry(
+		beanDefinitions.stream().sorted(FortifyCLI::compare).forEach(bd ->
+			addMultiValueEntry(
 				parentToSubcommandsMap, 
 				bd.getAnnotation(SubcommandOf.class).classValue().get(),
 				context.getBean(bd)));
 		return parentToSubcommandsMap;
+	}
+	
+	private static int compare(BeanDefinition<?> bd1, BeanDefinition<?> bd2) {
+		return Integer.compare(OrderUtil.getOrder(bd1.getAnnotationMetadata()), OrderUtil.getOrder(bd2.getAnnotationMetadata()));
 	}
 
 	private static <K, V> void addMultiValueEntry(LinkedHashMap<K, List<V>> map, K key, V value) {

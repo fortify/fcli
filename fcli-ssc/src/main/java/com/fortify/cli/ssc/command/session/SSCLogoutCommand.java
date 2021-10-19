@@ -22,12 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.ssc.command.session;
 
-import lombok.Getter;
-import picocli.CommandLine.Option;
+import com.fortify.cli.command.session.AbstractSessionLogoutCommand;
+import com.fortify.cli.command.session.SessionLogoutRootCommand;
+import com.fortify.cli.command.util.SubcommandOf;
 
-public class LoginSessionAliasOptions {
-	@Option(names = {"--alias", "-a"}, required = false)
-	@Getter private String alias;
+import jakarta.inject.Singleton;
+import picocli.CommandLine.Command;
+
+@Singleton
+@SubcommandOf(SessionLogoutRootCommand.class)
+@Command(name = "ssc", description = "Logout from SSC", sortOptions = false)
+public class SSCLogoutCommand extends AbstractSessionLogoutCommand {
+
+	@Override
+	public String getLoginSessionType() {
+		return "ssc";
+	}
+	
+	@Override
+	protected void preDestroy(String sessionId) {
+		// TODO Delete token from SSC if applicable
+	}
+
 }

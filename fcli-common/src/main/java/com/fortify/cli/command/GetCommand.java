@@ -26,11 +26,13 @@ package com.fortify.cli.command;
 
 import com.fortify.cli.command.util.SubcommandOf;
 
+import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 
 @Singleton
 @SubcommandOf(RootCommand.class)
 @Command(name = "get", description = "Get data from Fortify systems and resources")
+@Order(50)
 public class GetCommand {
 }

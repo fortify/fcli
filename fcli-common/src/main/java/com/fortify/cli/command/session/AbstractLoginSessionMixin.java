@@ -24,45 +24,25 @@
  ******************************************************************************/
 package com.fortify.cli.command.session;
 
-import com.fortify.cli.rest.connection.AbstractRestConnectionConfig;
+import com.fortify.cli.rest.connection.UnirestInstanceFactory;
 
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Option;
 
-/**
- * Configure connection options to a remote system
- * Usually this would be included in a {@link SessionLoginRootCommand} implementation
- * as follows:
- * <pre>
- * {@code
- *   {@literal @}ArgGroup(exclusive = false, multiplicity = "1", heading = "<System> Connection Options:%n")
- *   {@literal @}Getter private LoginConnectionOptions conn;
- * }
- * </pre>
- * @author Ruud Senden
- */
-public class LoginConnectionOptions {
-	@Option(names = {"--url"}, required = true, order=1)
-	@Getter private String url;
+public abstract class AbstractLoginSessionMixin {
+	@Getter private final UnirestInstanceFactory unirestInstanceFactory;
 	
-	@Option(names = {"--proxy-url"}, required = false, order=2)
-	@Getter private String proxyUrl;
+	public AbstractLoginSessionMixin(UnirestInstanceFactory unirestInstanceFactory) {
+		this.unirestInstanceFactory = unirestInstanceFactory;
+	}
 	
-	@Option(names = {"--proxy-user"}, required = false, order=3)
-	@Getter private String proxyUser;
+	public final String getConnectionId(String loginSessionType) {
+		return String.format("%s.%s", loginSessionType, getSessionName());
+	}
 	
-	@Option(names = {"--proxy-password"}, required = false, interactive = true, echo = false, order=4)
-	@Getter private char[] proxyPassword;
-	
-	@Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=5)
-	@Getter private boolean insecure;
-	
-	public final <T extends AbstractRestConnectionConfig> T configure(T config) {
-		config.setUrl(getUrl());
-		config.setProxyUrl(getProxyUrl());
-		config.setProxyUser(getProxyUser());
-		config.setProxyPassword(getProxyPassword());
-		config.setInsecure(isInsecure());
-		return config;
+	protected abstract String getSessionName();
+
+	public final UnirestInstance getUnirestInstance(String loginSessionType) {
+		return unirestInstanceFactory.getUnirestInstance(getConnectionId(loginSessionType));
 	}
 }

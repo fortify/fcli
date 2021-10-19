@@ -22,23 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.ssc.rest.connection;
 
-import com.fortify.cli.rest.connection.AbstractRestConnectionWithUserCredentialsConfig;
+import io.micronaut.core.annotation.Introspected;
+import lombok.Builder;
+import lombok.Data;
 
-import lombok.Getter;
-import picocli.CommandLine.Option;
-
-public class LoginUserCredentialOptions {
-	@Option(names = {"--user", "-u"}, required = true)
-	@Getter private String user;
-	
-	@Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
-	@Getter private char[] password;
-	
-	public final <T extends AbstractRestConnectionWithUserCredentialsConfig> T configure(T config) {
-		config.setUser(getUser());
-		config.setPassword(getPassword());
-		return config;
-	}
+@Data @Builder @Introspected
+public final class SSCTokenRequest {
+	private String type;
+	private String description;
 }

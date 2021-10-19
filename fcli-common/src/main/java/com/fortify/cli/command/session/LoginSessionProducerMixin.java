@@ -24,21 +24,23 @@
  ******************************************************************************/
 package com.fortify.cli.command.session;
 
-import com.fortify.cli.rest.connection.AbstractRestConnectionWithUserCredentialsConfig;
+import com.fortify.cli.rest.connection.UnirestInstanceFactory;
 
+import jakarta.inject.Inject;
 import lombok.Getter;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.ArgGroup;
 
-public class LoginUserCredentialOptions {
-	@Option(names = {"--user", "-u"}, required = true)
-	@Getter private String user;
+public class LoginSessionProducerMixin extends AbstractLoginSessionMixin {
+	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
+    @Getter private LoginSessionProducerNameOptions nameOptions;
 	
-	@Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
-	@Getter private char[] password;
+	@Inject
+	public LoginSessionProducerMixin(UnirestInstanceFactory unirestInstanceFactory) {
+		super(unirestInstanceFactory);
+	}
 	
-	public final <T extends AbstractRestConnectionWithUserCredentialsConfig> T configure(T config) {
-		config.setUser(getUser());
-		config.setPassword(getPassword());
-		return config;
+	@Override
+	protected String getSessionName() {
+		return nameOptions==null ? "default" : nameOptions.getSessionName();
 	}
 }
