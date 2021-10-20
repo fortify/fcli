@@ -43,8 +43,7 @@ public class UnirestInstanceFactory {
 	@Getter private final ObjectMapper objectMapper;
 	private final Map<String, UnirestInstance> instances = new HashMap<>();
 	
-	@Inject
-	public UnirestInstanceFactory(ObjectMapper objectMapper) {
+	@Inject public UnirestInstanceFactory(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
 	}
 	

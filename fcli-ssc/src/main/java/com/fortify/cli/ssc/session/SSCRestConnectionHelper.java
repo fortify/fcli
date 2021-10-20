@@ -27,12 +27,19 @@ package com.fortify.cli.ssc.session;
 import java.util.Date;
 
 import com.fortify.cli.rest.connection.AbstractRestConnectionHelper;
+import com.fortify.cli.rest.connection.UnirestInstanceFactory;
+import com.fortify.cli.session.LoginSessionHelper;
 import com.fortify.cli.ssc.rest.connection.SSCTokenResponse.SSCTokenData;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
 public class SSCRestConnectionHelper extends AbstractRestConnectionHelper<SSCLoginSessionData> {
+	@Inject public SSCRestConnectionHelper(UnirestInstanceFactory unirestInstanceFactory, LoginSessionHelper loginSessionHelper) {
+		super(unirestInstanceFactory, loginSessionHelper);
+	}
+
 	@Override
 	public final String getLoginSessionType() {
 		return "ssc";

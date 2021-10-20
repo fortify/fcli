@@ -26,12 +26,10 @@ package com.fortify.cli.session.command;
 
 import com.fortify.cli.session.LoginSessionHelper;
 
-import jakarta.inject.Inject;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public abstract class AbstractCommandWithLoginSessionHelper {
-	@Getter private LoginSessionHelper loginSessionHelper;
-	@Inject public final void inject(LoginSessionHelper loginSessionHelper) {
-		this.loginSessionHelper = loginSessionHelper;
-	}
+	@Getter private final LoginSessionHelper loginSessionHelper;
 }

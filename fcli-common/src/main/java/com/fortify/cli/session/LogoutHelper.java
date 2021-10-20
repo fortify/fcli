@@ -35,10 +35,10 @@ import lombok.Getter;
 
 @Singleton
 public final class LogoutHelper {
-	@Getter private LoginSessionHelper loginSessionHelper;
+	@Getter private final LoginSessionHelper loginSessionHelper;
 	@Getter private Map<String, ILogoutManager> logoutManagers;
 	
-	@Inject public final void inject(LoginSessionHelper loginSessionHelper) {
+	@Inject public LogoutHelper(LoginSessionHelper loginSessionHelper) {
 		this.loginSessionHelper = loginSessionHelper;
 	}
 	

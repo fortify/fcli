@@ -40,8 +40,9 @@ import lombok.SneakyThrows;
 
 @Singleton
 public final class LoginSessionHelper {
-	@Getter private ObjectMapper objectMapper;
-	@Inject public final void inject(ObjectMapper objectMapper) {
+	@Getter private final ObjectMapper objectMapper;
+	
+	@Inject public LoginSessionHelper(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
 	}
 

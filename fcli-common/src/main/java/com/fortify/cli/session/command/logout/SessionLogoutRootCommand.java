@@ -28,6 +28,7 @@ import java.util.List;
 
 import com.fortify.cli.command.RootCommand;
 import com.fortify.cli.command.util.SubcommandOf;
+import com.fortify.cli.session.LoginSessionHelper;
 import com.fortify.cli.session.LogoutHelper;
 import com.fortify.cli.session.command.AbstractCommandWithLoginSessionHelper;
 
@@ -47,8 +48,10 @@ import picocli.CommandLine.Spec;
 @Command(name = "logout", description = "Logout from Fortify systems")
 @Order(11)
 public class SessionLogoutRootCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter private LogoutHelper logoutHelper;
-	@Inject public final void inject(LogoutHelper logoutHelper) {
+	@Getter private final LogoutHelper logoutHelper;
+	
+	@Inject public SessionLogoutRootCommand(LoginSessionHelper loginSessionHelper, LogoutHelper logoutHelper) {
+		super(loginSessionHelper);
 		this.logoutHelper = logoutHelper;
 	}
 	

@@ -24,18 +24,20 @@
  ******************************************************************************/
 package com.fortify.cli.session.command.login;
 
+import com.fortify.cli.session.LoginSessionHelper;
 import com.fortify.cli.session.LogoutHelper;
 import com.fortify.cli.session.command.AbstractCommandWithLoginSessionHelper;
 
-import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 public abstract class AbstractSessionLoginCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter private LogoutHelper logoutHelper;
-	@Inject public final void inject(LogoutHelper logoutHelper) {
+	@Getter private final LogoutHelper logoutHelper;
+	
+	public AbstractSessionLoginCommand(LoginSessionHelper loginSessionHelper, LogoutHelper logoutHelper) {
+		super(loginSessionHelper);
 		this.logoutHelper = logoutHelper;
 	}
 	
