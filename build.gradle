@@ -50,6 +50,7 @@ allprojects {
 		implementation("info.picocli:picocli")
 		
 		annotationProcessor("io.micronaut:micronaut-inject-java")
+		annotationProcessor("io.micronaut:micronaut-graal")
 		
 		// Micronaut dependencies
 		implementation("io.micronaut:micronaut-runtime")
