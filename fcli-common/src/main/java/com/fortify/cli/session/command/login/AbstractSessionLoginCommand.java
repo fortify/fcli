@@ -27,16 +27,15 @@ package com.fortify.cli.session.command.login;
 import com.fortify.cli.session.LogoutHelper;
 import com.fortify.cli.session.command.AbstractCommandWithLoginSessionHelper;
 
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
-@Introspected
 public abstract class AbstractSessionLoginCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter @Inject LogoutHelper logoutHelper;
+	@Getter @Inject @ReflectiveAccess private LogoutHelper logoutHelper;
 	
 	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
     @Getter private LoginSessionNameOptions loginSessionNameOptions;
