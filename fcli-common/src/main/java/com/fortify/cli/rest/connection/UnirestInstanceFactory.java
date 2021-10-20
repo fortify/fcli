@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -40,13 +41,8 @@ import lombok.Getter;
 
 @Singleton
 public class UnirestInstanceFactory {
-	@Getter private final ObjectMapper objectMapper;
+	@Getter @Inject @ReflectiveAccess ObjectMapper objectMapper;
 	private final Map<String, UnirestInstance> instances = new HashMap<>();
-	
-	@Inject
-	public UnirestInstanceFactory(ObjectMapper objectMapper) {
-		this.objectMapper = objectMapper;
-	}
 	
 	public final UnirestInstance getUnirestInstance(String name) {
 		return instances.computeIfAbsent(name, this::createUnirestInstance);

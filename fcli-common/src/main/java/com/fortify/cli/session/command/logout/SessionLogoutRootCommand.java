@@ -49,11 +49,10 @@ import picocli.CommandLine.Spec;
 @Order(11)
 public class SessionLogoutRootCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
 	@Getter @Inject @ReflectiveAccess LogoutHelper logoutHelper;
+	@Spec @ReflectiveAccess CommandSpec spec;
 	
 	@Option(names = {"--all", "-a"}, required = false, defaultValue = "false", scope = ScopeType.INHERIT)
-	@Getter private boolean logoutAll;
-	
-	@Spec CommandSpec spec;
+	@Getter @ReflectiveAccess boolean logoutAll;
 	
 	@Override
 	public void run() {

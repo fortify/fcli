@@ -26,6 +26,7 @@ package com.fortify.cli.session.command.login;
 
 import com.fortify.cli.rest.connection.AbstractRestConnectionConfig;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
@@ -43,19 +44,19 @@ import picocli.CommandLine.Option;
  */
 public class LoginConnectionOptions {
 	@Option(names = {"--url"}, required = true, order=1)
-	@Getter private String url;
+	@Getter @ReflectiveAccess String url;
 	
 	@Option(names = {"--proxy-url"}, required = false, order=2)
-	@Getter private String proxyUrl;
+	@Getter @ReflectiveAccess String proxyUrl;
 	
 	@Option(names = {"--proxy-user"}, required = false, order=3)
-	@Getter private String proxyUser;
+	@Getter @ReflectiveAccess String proxyUser;
 	
 	@Option(names = {"--proxy-password"}, required = false, interactive = true, echo = false, order=4)
-	@Getter private char[] proxyPassword;
+	@Getter @ReflectiveAccess char[] proxyPassword;
 	
 	@Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=5)
-	@Getter private boolean insecure;
+	@Getter @ReflectiveAccess boolean insecure;
 	
 	public final <T extends AbstractRestConnectionConfig> T configure(T config) {
 		config.setUrl(getUrl());
