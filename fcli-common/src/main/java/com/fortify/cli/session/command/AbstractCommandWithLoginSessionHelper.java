@@ -26,10 +26,11 @@ package com.fortify.cli.session.command;
 
 import com.fortify.cli.session.LoginSessionHelper;
 
+import io.micronaut.core.annotation.Introspected;
+import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
+@Introspected
 public abstract class AbstractCommandWithLoginSessionHelper {
-	@Getter private final LoginSessionHelper loginSessionHelper;
+	@Getter @Inject LoginSessionHelper loginSessionHelper;
 }

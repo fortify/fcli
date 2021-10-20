@@ -28,8 +28,6 @@ import java.util.Arrays;
 
 import com.fortify.cli.command.util.SubcommandOf;
 import com.fortify.cli.rest.connection.UnirestInstanceFactory;
-import com.fortify.cli.session.LoginSessionHelper;
-import com.fortify.cli.session.LogoutHelper;
 import com.fortify.cli.session.command.login.AbstractSessionLoginCommand;
 import com.fortify.cli.session.command.login.LoginConnectionOptions;
 import com.fortify.cli.session.command.login.LoginUserCredentialOptions;
@@ -52,10 +50,8 @@ import picocli.CommandLine.Option;
 @SubcommandOf(SessionLoginRootCommand.class)
 @Command(name = "ssc", description = "Login to SSC", sortOptions = false)
 public class SSCLoginCommand extends AbstractSessionLoginCommand {
-	@Getter private final UnirestInstanceFactory unirestInstanceFactory;
-	
-	@Inject public SSCLoginCommand(LoginSessionHelper loginSessionHelper, LogoutHelper logoutHelper, UnirestInstanceFactory unirestInstanceFactory) {
-		super(loginSessionHelper, logoutHelper);
+	@Getter private UnirestInstanceFactory unirestInstanceFactory;
+	@Inject public void setUnirestInstanceFactory(UnirestInstanceFactory unirestInstanceFactory) {
 		this.unirestInstanceFactory = unirestInstanceFactory;
 	}
 	

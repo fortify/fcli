@@ -29,18 +29,15 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 
-@Singleton
+@Singleton @Introspected
 public final class LogoutHelper {
-	@Getter private final LoginSessionHelper loginSessionHelper;
+	@Getter @Inject LoginSessionHelper loginSessionHelper;
 	@Getter private Map<String, ILogoutManager> logoutManagers;
-	
-	@Inject public LogoutHelper(LoginSessionHelper loginSessionHelper) {
-		this.loginSessionHelper = loginSessionHelper;
-	}
 	
 	@Inject
 	public void setLogoutManagers(Collection<ILogoutManager> logoutManagers) {

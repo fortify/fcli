@@ -28,10 +28,10 @@ import java.util.List;
 
 import com.fortify.cli.command.RootCommand;
 import com.fortify.cli.command.util.SubcommandOf;
-import com.fortify.cli.session.LoginSessionHelper;
 import com.fortify.cli.session.LogoutHelper;
 import com.fortify.cli.session.command.AbstractCommandWithLoginSessionHelper;
 
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Order;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -43,17 +43,12 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ScopeType;
 import picocli.CommandLine.Spec;
 
-@Singleton
+@Singleton @Introspected
 @SubcommandOf(RootCommand.class)
 @Command(name = "logout", description = "Logout from Fortify systems")
 @Order(11)
 public class SessionLogoutRootCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter private final LogoutHelper logoutHelper;
-	
-	@Inject public SessionLogoutRootCommand(LoginSessionHelper loginSessionHelper, LogoutHelper logoutHelper) {
-		super(loginSessionHelper);
-		this.logoutHelper = logoutHelper;
-	}
+	@Getter @Inject LogoutHelper logoutHelper;
 	
 	@Option(names = {"--all", "-a"}, required = false, defaultValue = "false", scope = ScopeType.INHERIT)
 	@Getter private boolean logoutAll;

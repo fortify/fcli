@@ -25,12 +25,9 @@
 package com.fortify.cli.ssc.session.command;
 
 import com.fortify.cli.command.util.SubcommandOf;
-import com.fortify.cli.session.LoginSessionHelper;
-import com.fortify.cli.session.LogoutHelper;
 import com.fortify.cli.session.command.logout.AbstractSessionLogoutCommand;
 import com.fortify.cli.session.command.logout.SessionLogoutRootCommand;
 
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 
@@ -38,10 +35,6 @@ import picocli.CommandLine.Command;
 @SubcommandOf(SessionLogoutRootCommand.class)
 @Command(name = "ssc", description = "Logout from SSC", sortOptions = false)
 public class SSCLogoutCommand extends AbstractSessionLogoutCommand {
-
-	@Inject public SSCLogoutCommand(LoginSessionHelper loginSessionHelper, LogoutHelper logoutHelper) {
-		super(loginSessionHelper, logoutHelper);
-	}
 
 	@Override
 	public String getLoginSessionType() {
