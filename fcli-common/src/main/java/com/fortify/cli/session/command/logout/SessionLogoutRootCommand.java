@@ -31,8 +31,8 @@ import com.fortify.cli.command.util.SubcommandOf;
 import com.fortify.cli.session.LogoutHelper;
 import com.fortify.cli.session.command.AbstractCommandWithLoginSessionHelper;
 
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Order;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
@@ -43,12 +43,12 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ScopeType;
 import picocli.CommandLine.Spec;
 
-@Singleton @Introspected
+@Singleton
 @SubcommandOf(RootCommand.class)
 @Command(name = "logout", description = "Logout from Fortify systems")
 @Order(11)
 public class SessionLogoutRootCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter @Inject LogoutHelper logoutHelper;
+	@Getter @Inject @ReflectiveAccess LogoutHelper logoutHelper;
 	
 	@Option(names = {"--all", "-a"}, required = false, defaultValue = "false", scope = ScopeType.INHERIT)
 	@Getter private boolean logoutAll;
