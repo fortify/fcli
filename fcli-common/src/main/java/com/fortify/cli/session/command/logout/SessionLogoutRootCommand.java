@@ -31,6 +31,7 @@ import com.fortify.cli.command.util.SubcommandOf;
 import com.fortify.cli.session.LogoutHelper;
 import com.fortify.cli.session.command.AbstractCommandWithLoginSessionHelper;
 
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Order;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -42,7 +43,7 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ScopeType;
 import picocli.CommandLine.Spec;
 
-@Singleton
+@Singleton @Introspected
 @SubcommandOf(RootCommand.class)
 @Command(name = "logout", description = "Logout from Fortify systems")
 @Order(11)

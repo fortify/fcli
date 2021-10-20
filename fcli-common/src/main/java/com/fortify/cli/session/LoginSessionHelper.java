@@ -33,12 +33,13 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.util.FcliHomeHelper;
 
+import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
-@Singleton
+@Singleton @Introspected
 public final class LoginSessionHelper {
 	@Getter @Inject ObjectMapper objectMapper;
 
