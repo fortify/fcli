@@ -24,10 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.session.command.consumer;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
+@ReflectiveAccess
 public class LoginSessionConsumerNameOptions {
 	@Option(names = {"--login-session"}, required = false, defaultValue = "default")
-	@Getter protected String sessionName;
+	@Getter private String sessionName;
 }

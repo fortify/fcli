@@ -39,9 +39,9 @@ import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
-@Singleton
+@Singleton @ReflectiveAccess
 public final class LoginSessionHelper {
-	@Getter @Inject @ReflectiveAccess ObjectMapper objectMapper;
+	@Getter @Inject private ObjectMapper objectMapper;
 
 	@SneakyThrows // TODO Do we want to use SneakyThrows?
 	public final void saveData(String loginSessionType, String loginSessionName, Object loginSessionData) {

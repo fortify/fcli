@@ -34,9 +34,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 
-@Singleton
+@Singleton @ReflectiveAccess
 public final class LogoutHelper {
-	@Getter @Inject @ReflectiveAccess LoginSessionHelper loginSessionHelper;
+	@Getter @Inject private LoginSessionHelper loginSessionHelper;
 	@Getter private Map<String, ILogoutManager> logoutManagers;
 	
 	@Inject

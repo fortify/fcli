@@ -34,8 +34,9 @@ import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
+@ReflectiveAccess
 public abstract class AbstractSessionLoginCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter @Inject @ReflectiveAccess LogoutHelper logoutHelper;
+	@Getter @Inject private LogoutHelper logoutHelper;
 	
 	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
     @Getter protected LoginSessionNameOptions loginSessionNameOptions;

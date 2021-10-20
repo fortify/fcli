@@ -43,12 +43,12 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ScopeType;
 import picocli.CommandLine.Spec;
 
-@Singleton
+@Singleton @ReflectiveAccess
 @SubcommandOf(RootCommand.class)
 @Command(name = "logout", description = "Logout from Fortify systems")
 @Order(11)
 public class SessionLogoutRootCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter @Inject @ReflectiveAccess LogoutHelper logoutHelper;
+	@Getter @Inject private LogoutHelper logoutHelper;
 	
 	@Option(names = {"--all", "-a"}, required = false, defaultValue = "false", scope = ScopeType.INHERIT)
 	@Getter protected boolean logoutAll;

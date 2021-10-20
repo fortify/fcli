@@ -31,9 +31,10 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 
+@ReflectiveAccess
 public abstract class AbstractRestConnectionHelper<D> implements ILogoutManager {
-	@Getter @Inject @ReflectiveAccess UnirestInstanceFactory unirestInstanceFactory;
-	@Getter @Inject @ReflectiveAccess LoginSessionHelper loginSessionHelper;
+	@Getter @Inject private UnirestInstanceFactory unirestInstanceFactory;
+	@Getter @Inject private LoginSessionHelper loginSessionHelper;
 	
 	@Override
 	public final void logout(String loginSessionName) {

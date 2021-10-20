@@ -34,13 +34,11 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ParentCommand;
 
+@ReflectiveAccess
 public abstract class AbstractSessionLogoutCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter @Inject @ReflectiveAccess LogoutHelper logoutHelper;
-	
-	@Mixin
-	@Getter protected LoginSessionConsumerMixin<?> loginSessionConsumerMixin;
-	
-	@ParentCommand protected SessionLogoutRootCommand parent;
+	@Getter @Inject private LogoutHelper logoutHelper;
+	@Getter @Mixin private LoginSessionConsumerMixin<?> loginSessionConsumerMixin;
+	@ParentCommand private SessionLogoutRootCommand parent;
 	
 	@Override
 	public final void run() {

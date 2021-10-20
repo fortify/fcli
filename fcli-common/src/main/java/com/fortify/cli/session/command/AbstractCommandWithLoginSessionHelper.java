@@ -30,6 +30,7 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 
+@ReflectiveAccess
 public abstract class AbstractCommandWithLoginSessionHelper {
-	@Getter @Inject @ReflectiveAccess LoginSessionHelper loginSessionHelper;
+	@Getter @Inject private LoginSessionHelper loginSessionHelper;
 }
