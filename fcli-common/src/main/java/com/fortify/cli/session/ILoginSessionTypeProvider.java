@@ -22,30 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.session;
 
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
-import picocli.CommandLine.ParentCommand;
-
-public abstract class AbstractSessionLogoutCommand implements Runnable {
-	@Mixin
-	@Getter private LoginSessionConsumerMixin loginSessionConsumerMixin;
-	
-	@ParentCommand SessionLogoutRootCommand parent;
-	
-	@Override
-	public final void run() {
-		if ( parent.isLogoutAll() ) {
-			System.out.println(String.format("Logging out all %s sessions", getLoginSessionType()));
-		} else {
-			String connectionId = loginSessionConsumerMixin.getConnectionId(getLoginSessionType());
-			preDestroy(connectionId);
-			System.out.println("Logging out session "+connectionId);
-		}
-	}
-	
-	protected abstract String getLoginSessionType();
-	
-	protected void preDestroy(String sessionId) {};
+public interface ILoginSessionTypeProvider {
+	public String getLoginSessionType();
 }

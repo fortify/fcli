@@ -22,37 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.session.command.logout;
 
-import com.fortify.cli.command.RootCommand;
-import com.fortify.cli.command.util.SubcommandOf;
+import com.fortify.cli.session.LogoutHelper;
+import com.fortify.cli.session.command.AbstractCommandWithLoginSessionHelper;
+import com.fortify.cli.session.command.consumer.LoginSessionConsumerMixin;
 
-import io.micronaut.core.annotation.Order;
-import jakarta.inject.Singleton;
+import jakarta.inject.Inject;
 import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.ParameterException;
-import picocli.CommandLine.ScopeType;
-import picocli.CommandLine.Spec;
+import lombok.Setter;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.ParentCommand;
 
-@Singleton
-@SubcommandOf(RootCommand.class)
-@Command(name = "logout", description = "Logout from Fortify systems")
-@Order(11)
-public class SessionLogoutRootCommand implements Runnable {
-	@Option(names = {"--all", "-a"}, required = false, defaultValue = "false", scope = ScopeType.INHERIT)
-	@Getter private boolean logoutAll;
+public abstract class AbstractSessionLogoutCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
+	@Getter @Setter(onMethod_= {@Inject}) private LogoutHelper logoutHelper;
 	
-	@Spec CommandSpec spec;
+	@Mixin
+	@Getter private LoginSessionConsumerMixin<?> loginSessionConsumerMixin;
+	
+	@ParentCommand SessionLogoutRootCommand parent;
 	
 	@Override
-	public void run() {
-		if ( !logoutAll ) {
-			throw new ParameterException(spec.commandLine(), "Either subcommand or --all flag must be given");
+	public final void run() {
+		if ( parent.isLogoutAll() ) {
+			System.out.println(String.format("Logging out all %s sessions", getLoginSessionType()));
+			getLoginSessionHelper().list(getLoginSessionType()).forEach(this::logoutAndDestroy);
 		} else {
-			System.out.println("Clearing all login sessions");
+			String loginSessionName = loginSessionConsumerMixin.getLoginSessionName();
+			logoutAndDestroy(loginSessionName);
 		}
 	}
+	
+	private final void logoutAndDestroy(String loginSessionName) {
+		String loginSessionType = getLoginSessionType();
+		logoutHelper.logoutAndDestroy(loginSessionType, loginSessionName);
+	}
+	
+	protected abstract String getLoginSessionType();
 }

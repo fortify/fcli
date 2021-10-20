@@ -22,23 +22,27 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.command.session;
+package com.fortify.cli.ssc.session.command;
 
 import java.util.Arrays;
 
-import com.fortify.cli.command.session.AbstractSessionLoginCommand;
-import com.fortify.cli.command.session.LoginConnectionOptions;
-import com.fortify.cli.command.session.LoginUserCredentialOptions;
-import com.fortify.cli.command.session.SessionLoginRootCommand;
 import com.fortify.cli.command.util.SubcommandOf;
+import com.fortify.cli.rest.connection.UnirestInstanceFactory;
+import com.fortify.cli.session.command.login.AbstractSessionLoginCommand;
+import com.fortify.cli.session.command.login.LoginConnectionOptions;
+import com.fortify.cli.session.command.login.LoginUserCredentialOptions;
+import com.fortify.cli.session.command.login.SessionLoginRootCommand;
 import com.fortify.cli.ssc.rest.connection.SSCRestConnectionConfig;
 import com.fortify.cli.ssc.rest.connection.SSCRestConnectionConfig.SSCAuthType;
 import com.fortify.cli.ssc.rest.connection.SSCTokenRequest;
 import com.fortify.cli.ssc.rest.connection.SSCTokenResponse;
+import com.fortify.cli.ssc.session.SSCLoginSessionData;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.Setter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -47,6 +51,8 @@ import picocli.CommandLine.Option;
 @SubcommandOf(SessionLoginRootCommand.class)
 @Command(name = "ssc", description = "Login to SSC", sortOptions = false)
 public class SSCLoginCommand extends AbstractSessionLoginCommand {
+	@Getter @Setter(onMethod_= {@Inject}) private UnirestInstanceFactory unirestInstanceFactory;
+	
 	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC connection options:%n", order = 1)
 	@Getter private SSCLoginConnectionOptions connectionOptions;
 	
@@ -96,7 +102,7 @@ public class SSCLoginCommand extends AbstractSessionLoginCommand {
 	
 	private SSCTokenResponse authenticateWithUserCredentials(SSCRestConnectionConfig config) {
 		SSCTokenRequest tokenRequest = SSCTokenRequest.builder().type("UnifiedLoginToken").build();
-		UnirestInstance unirestInstance = getUnirestInstance();
+		UnirestInstance unirestInstance = unirestInstanceFactory.getUnirestInstance(getConnectionId());
 		unirestInstance.config().defaultBaseUrl(config.getUrl());
 		return unirestInstance.post("/api/v1/tokens")
 				.accept("application/json")
@@ -104,6 +110,10 @@ public class SSCLoginCommand extends AbstractSessionLoginCommand {
 				.basicAuth(config.getUser(), new String(config.getPassword()))
 				.body(tokenRequest)
 				.asObject(SSCTokenResponse.class).getBody();
+	}
+
+	private String getConnectionId() {
+		return String.format("%s/%s", getLoginSessionType(), getLoginSessionName());
 	}
 
 	private final SSCRestConnectionConfig getRestConnectionConfig() {

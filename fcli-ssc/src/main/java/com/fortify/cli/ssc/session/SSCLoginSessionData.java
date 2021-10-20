@@ -22,12 +22,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.ssc.session;
 
-import lombok.Getter;
-import picocli.CommandLine.Option;
+import com.fortify.cli.ssc.rest.connection.SSCRestConnectionConfig;
+import com.fortify.cli.ssc.rest.connection.SSCTokenResponse;
 
-public class LoginSessionConsumerNameOptions {
-	@Option(names = {"--login-session"}, required = false, defaultValue = "default")
-	@Getter private String sessionName;
+import io.micronaut.core.annotation.Introspected;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data @Introspected @NoArgsConstructor @AllArgsConstructor
+public class SSCLoginSessionData {
+	private SSCRestConnectionConfig config;
+	private SSCTokenResponse cachedTokenResponse;
 }

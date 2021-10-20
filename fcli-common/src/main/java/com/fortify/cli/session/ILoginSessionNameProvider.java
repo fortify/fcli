@@ -22,27 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.session;
 
-import com.fortify.cli.rest.connection.UnirestInstanceFactory;
-
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
-
-public abstract class AbstractLoginSessionMixin {
-	@Getter private final UnirestInstanceFactory unirestInstanceFactory;
-	
-	public AbstractLoginSessionMixin(UnirestInstanceFactory unirestInstanceFactory) {
-		this.unirestInstanceFactory = unirestInstanceFactory;
-	}
-	
-	public final String getConnectionId(String loginSessionType) {
-		return String.format("%s.%s", loginSessionType, getSessionName());
-	}
-	
-	protected abstract String getSessionName();
-
-	public final UnirestInstance getUnirestInstance(String loginSessionType) {
-		return unirestInstanceFactory.getUnirestInstance(getConnectionId(loginSessionType));
-	}
+public interface ILoginSessionNameProvider {
+	public String getLoginSessionName();
 }

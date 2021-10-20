@@ -22,25 +22,34 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.rest.connection;
 
-import com.fortify.cli.rest.connection.UnirestInstanceFactory;
+import com.fortify.cli.session.ILogoutManager;
+import com.fortify.cli.session.LoginSessionHelper;
 
 import jakarta.inject.Inject;
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
+import lombok.Setter;
 
-public class LoginSessionConsumerMixin extends AbstractLoginSessionMixin {
-	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
-    @Getter private LoginSessionConsumerNameOptions nameOptions;
-	
-	@Inject
-	public LoginSessionConsumerMixin(UnirestInstanceFactory unirestInstanceFactory) {
-		super(unirestInstanceFactory);
-	}
+public abstract class AbstractRestConnectionHelper<D> implements ILogoutManager {
+	@Getter @Setter(onMethod_= {@Inject}) private UnirestInstanceFactory unirestInstanceFactory;
+	@Getter @Setter(onMethod_= {@Inject}) private LoginSessionHelper loginSessionHelper;
 	
 	@Override
-	protected String getSessionName() {
-		return nameOptions==null ? "default" : nameOptions.getSessionName();
+	public final void logout(String loginSessionName) {
+		logout(getLoginSessionData(loginSessionName));
 	}
+
+	private D getLoginSessionData(String loginSessionName) {
+		return loginSessionHelper.getData(getLoginSessionType(), loginSessionName, getSessionDataClass());
+	}
+	
+	protected abstract Class<D> getSessionDataClass();
+
+	/**
+	 * This method may be overridden by concrete implementations to log out from the target system.
+	 * For example, this could terminate the current session or invalidate a temporary authentication token.
+	 * @param sessionData Data identifying the login session to be logged out
+	 */
+	public void logout(D sessionData) {}
 }

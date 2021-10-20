@@ -22,18 +22,54 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.session.command.logout;
+
+import java.util.List;
 
 import com.fortify.cli.command.RootCommand;
 import com.fortify.cli.command.util.SubcommandOf;
+import com.fortify.cli.session.LogoutHelper;
+import com.fortify.cli.session.command.AbstractCommandWithLoginSessionHelper;
 
 import io.micronaut.core.annotation.Order;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.Getter;
+import lombok.Setter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.ScopeType;
+import picocli.CommandLine.Spec;
 
 @Singleton
 @SubcommandOf(RootCommand.class)
-@Command(name = "login", description = "Login to Fortify systems")
-@Order(10)
-public class SessionLoginRootCommand {
+@Command(name = "logout", description = "Logout from Fortify systems")
+@Order(11)
+public class SessionLogoutRootCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
+	@Getter @Setter(onMethod_= {@Inject}) private LogoutHelper logoutHelper;
+	
+	@Option(names = {"--all", "-a"}, required = false, defaultValue = "false", scope = ScopeType.INHERIT)
+	@Getter private boolean logoutAll;
+	
+	@Spec CommandSpec spec;
+	
+	@Override
+	public void run() {
+		if ( !logoutAll ) {
+			throw new ParameterException(spec.commandLine(), "Either subcommand or --all flag must be given");
+		} else {
+			System.out.println("Deleting all login sessions");
+			getLoginSessionHelper().listByLoginSessionType().forEach(this::logoutAndDestroy);
+		}
+	}
+	
+	private final void logoutAndDestroy(String loginSessionType, List<String> loginSessionNames) {
+		loginSessionNames.forEach(loginSessionName->logoutAndDestroy(loginSessionType, loginSessionName));
+	}
+
+	private final void logoutAndDestroy(String loginSessionType, String loginSessionName) {
+		logoutHelper.logoutAndDestroy(loginSessionType, loginSessionName);
+	}
 }

@@ -22,16 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.util;
+package com.fortify.cli.session.command.consumer;
 
-public class EncryptionHelper {
-	public static final String encrypt(String source) {
-		if ( source==null ) { return null; }
-		return source;
-	}
-	
-	public static final String decrypt(String source) {
-		if ( source==null ) { return null; }
-		return source;
-	}
+import lombok.Getter;
+import picocli.CommandLine.Option;
+
+public class LoginSessionConsumerNameOptions {
+	@Option(names = {"--login-session"}, required = false, defaultValue = "default")
+	@Getter private String sessionName;
 }

@@ -22,18 +22,31 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.command.session;
+package com.fortify.cli.session;
 
-import com.fortify.cli.ssc.rest.connection.SSCRestConnectionConfig;
-import com.fortify.cli.ssc.rest.connection.SSCTokenResponse;
+import java.util.Collection;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import io.micronaut.core.annotation.Introspected;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data @Introspected @NoArgsConstructor @AllArgsConstructor
-public class SSCLoginSessionData {
-	private SSCRestConnectionConfig config;
-	private SSCTokenResponse cachedTokenResponse;
+@Singleton
+public final class LogoutHelper {
+	@Getter @Setter(onMethod_= {@Inject}) private LoginSessionHelper loginSessionHelper;
+	@Getter private Map<String, ILogoutManager> logoutManagers;
+	
+	@Inject
+	public void setLogoutManagers(Collection<ILogoutManager> logoutManagers) {
+		this.logoutManagers = logoutManagers.parallelStream().collect(
+			Collectors.toMap(ILogoutManager::getLoginSessionType, Function.identity()));
+	}
+	
+	public final void logoutAndDestroy(String loginSessionType, String loginSessionName) {
+		logoutManagers.get(loginSessionType).logout(loginSessionName);
+		getLoginSessionHelper().destroy(loginSessionType, loginSessionName);
+	}
 }

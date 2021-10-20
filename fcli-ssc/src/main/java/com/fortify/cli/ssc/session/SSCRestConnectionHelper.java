@@ -22,44 +22,39 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.ssc.session;
 
-import java.nio.file.Paths;
+import java.util.Date;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.util.FcliHomeHelper;
+import com.fortify.cli.rest.connection.AbstractRestConnectionHelper;
+import com.fortify.cli.ssc.rest.connection.SSCTokenResponse.SSCTokenData;
 
-import jakarta.inject.Inject;
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.Mixin;
+import jakarta.inject.Singleton;
 
-public abstract class AbstractSessionLoginCommand implements Runnable {
-	@Getter private ObjectMapper objectMapper;
-	
-	@Inject
-	public void setObjectMapper(ObjectMapper objectMapper) {
-		this.objectMapper = objectMapper;
+@Singleton
+public class SSCRestConnectionHelper extends AbstractRestConnectionHelper<SSCLoginSessionData> {
+	@Override
+	public final String getLoginSessionType() {
+		return "ssc";
+	}
+
+	@Override
+	protected Class<SSCLoginSessionData> getSessionDataClass() {
+		return SSCLoginSessionData.class;
 	}
 	
-	@Mixin
-	@Getter private LoginSessionProducerMixin loginSessionProducerMixin;
-	
-	@Override @SneakyThrows
-	public final void run() {
-		String loginSessionType = getLoginSessionType();
-		String connectionId = loginSessionProducerMixin.getConnectionId(loginSessionType);
-		Object loginData = login();
-		String loginDataJson = objectMapper.writeValueAsString(loginData);
-		System.out.println(String.format("Creating login session %s: %s", connectionId, loginDataJson));
-		FcliHomeHelper.saveFile(Paths.get("loginSessions", loginSessionType, connectionId), loginDataJson);
+	@Override
+	public void logout(SSCLoginSessionData sessionData) {
+		var cachedTokenResponse = sessionData.getCachedTokenResponse();
+		var tokenData = cachedTokenResponse==null ? null : cachedTokenResponse.getData();
+		if ( tokenData!=null ) {
+			logout(tokenData);
+		}
 	}
-	
-	protected UnirestInstance getUnirestInstance() {
-		return loginSessionProducerMixin.getUnirestInstance(getLoginSessionType());
+
+	private void logout(SSCTokenData tokenData) {
+		if ( tokenData.getTerminalDate().after(new Date())) {
+			System.out.println("Logging out from SSC");
+		}
 	}
-	
-	protected abstract String getLoginSessionType();
-	protected abstract Object login();
 }

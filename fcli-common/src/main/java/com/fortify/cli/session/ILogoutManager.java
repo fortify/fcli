@@ -22,25 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.session;
 
-import com.fortify.cli.rest.connection.UnirestInstanceFactory;
-
-import jakarta.inject.Inject;
-import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
-
-public class LoginSessionProducerMixin extends AbstractLoginSessionMixin {
-	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
-    @Getter private LoginSessionProducerNameOptions nameOptions;
-	
-	@Inject
-	public LoginSessionProducerMixin(UnirestInstanceFactory unirestInstanceFactory) {
-		super(unirestInstanceFactory);
-	}
-	
-	@Override
-	protected String getSessionName() {
-		return nameOptions==null ? "default" : nameOptions.getSessionName();
-	}
+public interface ILogoutManager extends ILoginSessionTypeProvider {
+	public void logout(String loginSessionName);
 }

@@ -22,12 +22,22 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.command.session;
+package com.fortify.cli.ssc.session.command;
 
-import lombok.Getter;
-import picocli.CommandLine.Option;
+import com.fortify.cli.command.util.SubcommandOf;
+import com.fortify.cli.session.command.logout.AbstractSessionLogoutCommand;
+import com.fortify.cli.session.command.logout.SessionLogoutRootCommand;
 
-public class LoginSessionProducerNameOptions {
-	@Option(names = {"--login-session-name", "-n"}, required = false, defaultValue = "default")
-	@Getter private String sessionName;
+import jakarta.inject.Singleton;
+import picocli.CommandLine.Command;
+
+@Singleton
+@SubcommandOf(SessionLogoutRootCommand.class)
+@Command(name = "ssc", description = "Logout from SSC", sortOptions = false)
+public class SSCLogoutCommand extends AbstractSessionLogoutCommand {
+
+	@Override
+	public String getLoginSessionType() {
+		return "ssc";
+	}
 }

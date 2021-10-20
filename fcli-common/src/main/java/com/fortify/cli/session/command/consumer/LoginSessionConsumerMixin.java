@@ -22,16 +22,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.util;
+package com.fortify.cli.session.command.consumer;
 
-public class EncryptionHelper {
-	public static final String encrypt(String source) {
-		if ( source==null ) { return null; }
-		return source;
-	}
+import com.fortify.cli.session.ILoginSessionNameProvider;
+
+import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
+
+public class LoginSessionConsumerMixin<C> implements ILoginSessionNameProvider {
+	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
+    @Getter private LoginSessionConsumerNameOptions nameOptions;
 	
-	public static final String decrypt(String source) {
-		if ( source==null ) { return null; }
-		return source;
+	@Override
+	public String getLoginSessionName() {
+		return nameOptions==null ? "default" : nameOptions.getSessionName();
 	}
 }

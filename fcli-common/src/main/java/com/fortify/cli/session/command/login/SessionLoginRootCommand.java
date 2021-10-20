@@ -22,28 +22,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.command.session;
+package com.fortify.cli.session.command.login;
 
-import com.fortify.cli.command.session.AbstractSessionLogoutCommand;
-import com.fortify.cli.command.session.SessionLogoutRootCommand;
+import com.fortify.cli.command.RootCommand;
 import com.fortify.cli.command.util.SubcommandOf;
 
+import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 
 @Singleton
-@SubcommandOf(SessionLogoutRootCommand.class)
-@Command(name = "ssc", description = "Logout from SSC", sortOptions = false)
-public class SSCLogoutCommand extends AbstractSessionLogoutCommand {
-
-	@Override
-	public String getLoginSessionType() {
-		return "ssc";
-	}
-	
-	@Override
-	protected void preDestroy(String sessionId) {
-		// TODO Delete token from SSC if applicable
-	}
-
+@SubcommandOf(RootCommand.class)
+@Command(name = "login", description = "Login to Fortify systems")
+@Order(10)
+public class SessionLoginRootCommand {
 }
