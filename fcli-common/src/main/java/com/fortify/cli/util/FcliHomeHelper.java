@@ -24,11 +24,12 @@ public class FcliHomeHelper {
 		return Path.of(fortifyHomeUri, SSC_CLI_CONFIG_DIR_NAME);
 	}
 	
-	public static final void saveEncryptedFile(Path relativePath, String contents) throws IOException {
+	public static final void saveSecuredFile(Path relativePath, String contents) throws IOException {
 		saveFile(relativePath, EncryptionHelper.encrypt(contents));
+		// TODO Where possible, allow only owner r/w access
 	}
 	
-	public static final String readEncryptedFile(Path relativePath, boolean failIfNotReadable) throws IOException {
+	public static final String readSecuredFile(Path relativePath, boolean failIfNotReadable) throws IOException {
 		return EncryptionHelper.decrypt(readFile(relativePath, failIfNotReadable));
 	}
 	

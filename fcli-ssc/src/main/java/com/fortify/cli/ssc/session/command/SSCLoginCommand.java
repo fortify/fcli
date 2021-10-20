@@ -54,24 +54,26 @@ public class SSCLoginCommand extends AbstractSessionLoginCommand {
 	@Getter @Setter(onMethod_= {@Inject}) private UnirestInstanceFactory unirestInstanceFactory;
 	
 	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC connection options:%n", order = 1)
-	@Getter private SSCLoginConnectionOptions connectionOptions;
+	@Getter private LoginConnectionOptions connectionOptions;
 	
-	@ArgGroup(exclusive = true, multiplicity = "1", order = 2)
-    @Getter private SSCCredentials credentials;
+	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC authentication options:%n", order = 2)
+    @Getter private SSCAuthOptions authOptions;
 	
-	static class SSCLoginConnectionOptions extends LoginConnectionOptions {
-		@Option(names = {"--allow-renew", "-r"}, description = "Allow SSC token renewal", order = 5) 
+	static class SSCAuthOptions {
+		@ArgGroup(exclusive = true, multiplicity = "1", order = 3)
+	    @Getter private SSCCredentialOptions credentialOptions;
+		@Option(names = {"--allow-renew", "-r"}, description = "Allow SSC token renewal", order = 4) 
     	@Getter private boolean allowRenew;
 	}
 	
-    static class SSCCredentials {
-    	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC User credentials:%n", order = 3) 
-    	@Getter private LoginUserCredentialOptions user = new LoginUserCredentialOptions();
-    	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC Token credentials:%n", order = 4) 
-    	@Getter private TokenCredentials token = new TokenCredentials();
+    static class SSCCredentialOptions {
+    	@ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
+    	@Getter private LoginUserCredentialOptions userOptions = new LoginUserCredentialOptions();
+    	@ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
+    	@Getter private TokenOptions tokenOptions = new TokenOptions();
     }
     
-    static class TokenCredentials {
+    static class TokenOptions {
     	@Option(names = {"--token", "-t"}, required = true, interactive = true, arity = "0..1", echo = false) 
     	@Getter private char[] token;
     }
@@ -119,9 +121,9 @@ public class SSCLoginCommand extends AbstractSessionLoginCommand {
 	private final SSCRestConnectionConfig getRestConnectionConfig() {
 		SSCRestConnectionConfig config = new SSCRestConnectionConfig();
 		connectionOptions.configure(config);
-		credentials.user.configure(config);
-		config.setToken(credentials.token.getToken());
-		config.setAllowRenew(connectionOptions.isAllowRenew());
+		authOptions.getCredentialOptions().getUserOptions().configure(config);
+		config.setToken(authOptions.getCredentialOptions().getTokenOptions().getToken());
+		config.setAllowRenew(authOptions.isAllowRenew());
 		return config;
 	}
 }

@@ -46,12 +46,12 @@ public final class LoginSessionHelper {
 	@SneakyThrows // TODO Do we want to use SneakyThrows?
 	public final void saveData(String loginSessionType, String loginSessionName, Object loginSessionData) {
 		String loginSessionDataJson = objectMapper.writeValueAsString(loginSessionData);
-		FcliHomeHelper.saveEncryptedFile(Paths.get("loginSessions", loginSessionType, loginSessionName), loginSessionDataJson);
+		FcliHomeHelper.saveSecuredFile(Paths.get("loginSessions", loginSessionType, loginSessionName), loginSessionDataJson);
 	}
 	
 	@SneakyThrows // TODO Do we want to use SneakyThrows?
 	public final <T> T getData(String loginSessionType, String loginSessionName, Class<T> returnType) {
-		String loginSessionDataJson = FcliHomeHelper.readEncryptedFile(Paths.get("loginSessions", loginSessionType, loginSessionName), false);
+		String loginSessionDataJson = FcliHomeHelper.readSecuredFile(Paths.get("loginSessions", loginSessionType, loginSessionName), false);
 		if ( loginSessionDataJson==null ) {
 			throw new IllegalArgumentException(String.format("Login session %s for %s does not exist", loginSessionName, loginSessionType));
 		}
