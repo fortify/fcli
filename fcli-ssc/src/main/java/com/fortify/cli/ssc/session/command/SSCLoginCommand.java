@@ -42,7 +42,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -51,7 +50,10 @@ import picocli.CommandLine.Option;
 @SubcommandOf(SessionLoginRootCommand.class)
 @Command(name = "ssc", description = "Login to SSC", sortOptions = false)
 public class SSCLoginCommand extends AbstractSessionLoginCommand {
-	@Getter @Setter(onMethod_= {@Inject}) private UnirestInstanceFactory unirestInstanceFactory;
+	@Getter private UnirestInstanceFactory unirestInstanceFactory;
+	@Inject public void setUnirestInstanceFactory(UnirestInstanceFactory unirestInstanceFactory) {
+		this.unirestInstanceFactory = unirestInstanceFactory;
+	}
 	
 	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC connection options:%n", order = 1)
 	@Getter private LoginConnectionOptions connectionOptions;

@@ -6,8 +6,10 @@ import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.stream.Stream;
 
 import io.micronaut.core.util.StringUtils;
@@ -26,7 +28,6 @@ public class FcliHomeHelper {
 	
 	public static final void saveSecuredFile(Path relativePath, String contents) throws IOException {
 		saveFile(relativePath, EncryptionHelper.encrypt(contents));
-		// TODO Where possible, allow only owner r/w access
 	}
 	
 	public static final String readSecuredFile(Path relativePath, boolean failIfNotReadable) throws IOException {
@@ -34,13 +35,23 @@ public class FcliHomeHelper {
 	}
 	
 	public static final void saveFile(Path relativePath, String contents) throws IOException {
-		// FIXME: make sure the file is not world writable
-		// see FileSystem.supportedFileAttributeViews() and AttributeView
-		// for possible multiplatform solution
 		final Path filePath = getFcliHomePath().resolve(relativePath);
 		final Path parentDir = filePath.getParent();
 		if (!Files.exists(parentDir)) {
 			Files.createDirectories(parentDir);
+		}
+		writeFileWithOwnerOnlyPermissions(filePath, contents);
+	}
+
+	private static void writeFileWithOwnerOnlyPermissions(final Path filePath, final String contents) throws IOException {
+		Files.writeString(filePath, "", CREATE, WRITE, TRUNCATE_EXISTING);
+		if ( FileSystems.getDefault().supportedFileAttributeViews().contains("posix") ) {
+			Files.setPosixFilePermissions(filePath, PosixFilePermissions.fromString("rw-------"));
+		} else {
+			File file = filePath.toFile();
+			file.setExecutable(false, false);
+			file.setReadable(true, true);
+			file.setWritable(true, true);
 		}
 		Files.writeString(filePath, contents, CREATE, WRITE, TRUNCATE_EXISTING);
 	}
