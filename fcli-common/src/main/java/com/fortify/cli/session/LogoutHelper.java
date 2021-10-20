@@ -32,11 +32,10 @@ import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
-import lombok.Setter;
 
 @Singleton
 public final class LogoutHelper {
-	@Getter @Setter(onMethod_= {@Inject}) private LoginSessionHelper loginSessionHelper;
+	@Getter @Inject LoginSessionHelper loginSessionHelper;
 	@Getter private Map<String, ILogoutManager> logoutManagers;
 	
 	@Inject

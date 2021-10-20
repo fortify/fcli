@@ -36,12 +36,11 @@ import com.fortify.cli.util.FcliHomeHelper;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
 
 @Singleton
 public final class LoginSessionHelper {
-	@Getter @Setter(onMethod_= {@Inject}) private ObjectMapper objectMapper;
+	@Getter @Inject ObjectMapper objectMapper;
 
 	@SneakyThrows // TODO Do we want to use SneakyThrows?
 	public final void saveData(String loginSessionType, String loginSessionName, Object loginSessionData) {

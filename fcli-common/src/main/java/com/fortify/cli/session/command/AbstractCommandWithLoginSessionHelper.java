@@ -28,8 +28,7 @@ import com.fortify.cli.session.LoginSessionHelper;
 
 import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
 
 public abstract class AbstractCommandWithLoginSessionHelper {
-	@Getter @Setter(onMethod_= {@Inject}) private LoginSessionHelper loginSessionHelper;
+	@Getter @Inject LoginSessionHelper loginSessionHelper;
 }

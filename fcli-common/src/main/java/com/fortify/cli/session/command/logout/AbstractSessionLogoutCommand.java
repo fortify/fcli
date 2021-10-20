@@ -30,12 +30,11 @@ import com.fortify.cli.session.command.consumer.LoginSessionConsumerMixin;
 
 import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ParentCommand;
 
 public abstract class AbstractSessionLogoutCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter @Setter(onMethod_= {@Inject}) private LogoutHelper logoutHelper;
+	@Getter @Inject LogoutHelper logoutHelper;
 	
 	@Mixin
 	@Getter private LoginSessionConsumerMixin<?> loginSessionConsumerMixin;

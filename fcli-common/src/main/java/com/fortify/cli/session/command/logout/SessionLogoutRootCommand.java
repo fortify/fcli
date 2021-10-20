@@ -35,7 +35,6 @@ import io.micronaut.core.annotation.Order;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -48,7 +47,7 @@ import picocli.CommandLine.Spec;
 @Command(name = "logout", description = "Logout from Fortify systems")
 @Order(11)
 public class SessionLogoutRootCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter @Setter(onMethod_= {@Inject}) private LogoutHelper logoutHelper;
+	@Getter @Inject LogoutHelper logoutHelper;
 	
 	@Option(names = {"--all", "-a"}, required = false, defaultValue = "false", scope = ScopeType.INHERIT)
 	@Getter private boolean logoutAll;

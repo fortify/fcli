@@ -29,11 +29,10 @@ import com.fortify.cli.session.LoginSessionHelper;
 
 import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
 
 public abstract class AbstractRestConnectionHelper<D> implements ILogoutManager {
-	@Getter @Setter(onMethod_= {@Inject}) private UnirestInstanceFactory unirestInstanceFactory;
-	@Getter @Setter(onMethod_= {@Inject}) private LoginSessionHelper loginSessionHelper;
+	@Getter @Inject UnirestInstanceFactory unirestInstanceFactory;
+	@Getter @Inject LoginSessionHelper loginSessionHelper;
 	
 	@Override
 	public final void logout(String loginSessionName) {

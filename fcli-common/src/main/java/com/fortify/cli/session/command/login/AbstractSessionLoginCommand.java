@@ -29,13 +29,12 @@ import com.fortify.cli.session.command.AbstractCommandWithLoginSessionHelper;
 
 import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 public abstract class AbstractSessionLoginCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter @Setter(onMethod_= {@Inject}) private LogoutHelper logoutHelper;
+	@Getter @Inject LogoutHelper logoutHelper;
 	
 	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
     @Getter private LoginSessionNameOptions loginSessionNameOptions;
@@ -50,7 +49,7 @@ public abstract class AbstractSessionLoginCommand extends AbstractCommandWithLog
 		String loginSessionType = getLoginSessionType();
 		String loginSessionName = getLoginSessionName();
 		if ( getLoginSessionHelper().exists(loginSessionType, loginSessionName) ) {
-			// Log out from previous session before creaing a new session
+			// Log out from previous session before creating a new session
 			getLogoutHelper().logoutAndDestroy(loginSessionType, loginSessionName);
 		}
 		Object loginSessionData = login();
