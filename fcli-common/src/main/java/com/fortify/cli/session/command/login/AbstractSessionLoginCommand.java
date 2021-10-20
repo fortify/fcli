@@ -38,11 +38,11 @@ public abstract class AbstractSessionLoginCommand extends AbstractCommandWithLog
 	@Getter @Inject @ReflectiveAccess LogoutHelper logoutHelper;
 	
 	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
-    @Getter @ReflectiveAccess LoginSessionNameOptions loginSessionNameOptions;
+    @Getter protected LoginSessionNameOptions loginSessionNameOptions;
 	
 	private static class LoginSessionNameOptions {
 		@Option(names = {"--login-session-name", "-n"}, required = false, defaultValue = "default")
-		@Getter @ReflectiveAccess String loginSessionName;
+		@Getter protected String loginSessionName;
 	}
 	
 	@Override @SneakyThrows

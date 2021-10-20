@@ -26,13 +26,12 @@ package com.fortify.cli.session.command.consumer;
 
 import com.fortify.cli.session.ILoginSessionNameProvider;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 
 public class LoginSessionConsumerMixin<C> implements ILoginSessionNameProvider {
 	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
-    @Getter @ReflectiveAccess LoginSessionConsumerNameOptions nameOptions;
+    @Getter protected LoginSessionConsumerNameOptions nameOptions;
 	
 	@Override
 	public String getLoginSessionName() {

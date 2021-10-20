@@ -26,16 +26,15 @@ package com.fortify.cli.session.command.login;
 
 import com.fortify.cli.rest.connection.AbstractRestConnectionWithUserCredentialsConfig;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
 public class LoginUserCredentialOptions {
 	@Option(names = {"--user", "-u"}, required = true)
-	@Getter @ReflectiveAccess String user;
+	@Getter protected String user;
 	
 	@Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
-	@Getter @ReflectiveAccess char[] password;
+	@Getter protected char[] password;
 	
 	public final <T extends AbstractRestConnectionWithUserCredentialsConfig> T configure(T config) {
 		config.setUser(getUser());

@@ -36,8 +36,11 @@ import picocli.CommandLine.ParentCommand;
 
 public abstract class AbstractSessionLogoutCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
 	@Getter @Inject @ReflectiveAccess LogoutHelper logoutHelper;
-	@Getter @Mixin @ReflectiveAccess LoginSessionConsumerMixin<?> loginSessionConsumerMixin;
-	@ParentCommand @ReflectiveAccess SessionLogoutRootCommand parent;
+	
+	@Mixin
+	@Getter protected LoginSessionConsumerMixin<?> loginSessionConsumerMixin;
+	
+	@ParentCommand protected SessionLogoutRootCommand parent;
 	
 	@Override
 	public final void run() {
