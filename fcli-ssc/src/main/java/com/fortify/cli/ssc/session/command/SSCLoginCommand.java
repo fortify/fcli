@@ -51,7 +51,7 @@ import picocli.CommandLine.Option;
 @Command(name = "ssc", description = "Login to SSC", sortOptions = false)
 public class SSCLoginCommand extends AbstractSessionLoginCommand {
 	@Getter private UnirestInstanceFactory unirestInstanceFactory;
-	@Inject public void setUnirestInstanceFactory(UnirestInstanceFactory unirestInstanceFactory) {
+	@Inject public final void inject(UnirestInstanceFactory unirestInstanceFactory) {
 		this.unirestInstanceFactory = unirestInstanceFactory;
 	}
 	

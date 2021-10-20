@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.util.FcliHomeHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
@@ -41,7 +40,10 @@ import lombok.SneakyThrows;
 
 @Singleton
 public final class LoginSessionHelper {
-	@Getter @Inject @ReflectiveAccess private ObjectMapper objectMapper;
+	@Getter private ObjectMapper objectMapper;
+	@Inject public final void inject(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
+	}
 
 	@SneakyThrows // TODO Do we want to use SneakyThrows?
 	public final void saveData(String loginSessionType, String loginSessionName, Object loginSessionData) {

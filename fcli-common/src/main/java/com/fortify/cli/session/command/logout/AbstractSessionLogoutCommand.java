@@ -28,14 +28,16 @@ import com.fortify.cli.session.LogoutHelper;
 import com.fortify.cli.session.command.AbstractCommandWithLoginSessionHelper;
 import com.fortify.cli.session.command.consumer.LoginSessionConsumerMixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ParentCommand;
 
 public abstract class AbstractSessionLogoutCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter @Inject @ReflectiveAccess private LogoutHelper logoutHelper;
+	@Getter private LogoutHelper logoutHelper;
+	@Inject public final void inject(LogoutHelper logoutHelper) {
+		this.logoutHelper = logoutHelper;
+	}
 	
 	@Mixin
 	@Getter private LoginSessionConsumerMixin<?> loginSessionConsumerMixin;

@@ -27,13 +27,17 @@ package com.fortify.cli.rest.connection;
 import com.fortify.cli.session.ILogoutManager;
 import com.fortify.cli.session.LoginSessionHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 
 public abstract class AbstractRestConnectionHelper<D> implements ILogoutManager {
-	@Getter @Inject @ReflectiveAccess private UnirestInstanceFactory unirestInstanceFactory;
-	@Getter @Inject @ReflectiveAccess private LoginSessionHelper loginSessionHelper;
+	@Getter private UnirestInstanceFactory unirestInstanceFactory;
+	@Getter private LoginSessionHelper loginSessionHelper;
+	
+	@Inject public final void inject(UnirestInstanceFactory unirestInstanceFactory, LoginSessionHelper loginSessionHelper) {
+		this.unirestInstanceFactory = unirestInstanceFactory;
+		this.loginSessionHelper = loginSessionHelper;
+	}
 	
 	@Override
 	public final void logout(String loginSessionName) {
