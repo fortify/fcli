@@ -22,31 +22,45 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.session;
+package com.fortify.cli.ssc.rest.unirest;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import com.fortify.cli.session.ILogoutHandler;
+import com.fortify.cli.session.LoginSessionHelper;
+import com.fortify.cli.ssc.rest.data.SSCLoginSessionData;
+import com.fortify.cli.ssc.rest.data.SSCTokenResponse;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import kong.unirest.RequestBodyEntity;
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public final class LogoutHelper {
+public class SSCLogoutHandler implements ILogoutHandler {
 	@Getter @Inject private LoginSessionHelper loginSessionHelper;
-	@Getter private Map<String, ILogoutHandler> logoutHandlers;
-	
-	@Inject
-	public void setLogoutManagers(Collection<ILogoutHandler> logoutHandlers) {
-		this.logoutHandlers = logoutHandlers.parallelStream().collect(
-			Collectors.toMap(ILogoutHandler::getLoginSessionType, Function.identity()));
+	@Getter @Inject private SSCUnirestRunner unirestRunner;
+
+	@Override
+	public final void logout(String loginSessionName) {
+		SSCLoginSessionData data = loginSessionHelper.getData(getLoginSessionType(), loginSessionName, SSCLoginSessionData.class);
+		unirestRunner.runWithUnirest(loginSessionName, unirestInstance->logout(unirestInstance, data));
 	}
 	
-	public final void logoutAndDestroy(String loginSessionType, String loginSessionName) {
-		logoutHandlers.get(loginSessionType).logout(loginSessionName);
-		getLoginSessionHelper().destroy(loginSessionType, loginSessionName);
+	private final Void logout(UnirestInstance unirestInstance, SSCLoginSessionData loginSessionData) {
+		SSCTokenResponse cachedTokenResponse = loginSessionData.getCachedTokenResponse();
+		if ( cachedTokenResponse != null ) {
+			String token = String.valueOf(cachedTokenResponse.getData().getToken());
+			String body = "{\"tokens\": [\""+token+"\"]}";
+			System.out.println(body);
+			RequestBodyEntity request = unirestInstance.post("/api/v1/tokens/action/revoke").body(body).contentType("application/json");
+			System.out.println(request.asString().getBody());
+		}
+		return null;
+	}
+
+	@Override
+	public String getLoginSessionType() {
+		return "ssc";
 	}
 }

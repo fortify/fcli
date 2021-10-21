@@ -22,24 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.rest.connection;
-
-import com.fortify.cli.rest.connection.AbstractRestConnectionWithUserCredentialsConfig;
+package com.fortify.cli.rest.data;
 
 import io.micronaut.core.annotation.Introspected;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
-@Data @EqualsAndHashCode(callSuper = true) @Introspected
-public class SSCRestConnectionConfig extends AbstractRestConnectionWithUserCredentialsConfig {
-	private boolean allowRenew;
-	private char[] token;
-	
-	public final SSCAuthType getAuthType() {
-		return token!=null && token.length>0 ? SSCAuthType.TOKEN : SSCAuthType.USER;
-	}
-	
-	public static enum SSCAuthType {
-		TOKEN, USER
-	}
+@Data @Introspected
+public class BasicConnectionConfig implements IBasicConnectionConfig {
+	private String  url;
+	private String  proxyHost;
+	private Integer proxyPort;
+	private String  proxyUser;
+	private char[]  proxyPassword;
+	private boolean insecureModeEnabled;
 }

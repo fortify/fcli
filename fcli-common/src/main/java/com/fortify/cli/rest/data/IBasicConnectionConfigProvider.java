@@ -22,18 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.session;
+package com.fortify.cli.rest.data;
 
-import com.fortify.cli.ssc.rest.connection.SSCRestConnectionConfig;
-import com.fortify.cli.ssc.rest.connection.SSCTokenResponse;
-
-import io.micronaut.core.annotation.Introspected;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data @Introspected @NoArgsConstructor @AllArgsConstructor
-public class SSCLoginSessionData {
-	private SSCRestConnectionConfig config;
-	private SSCTokenResponse cachedTokenResponse;
+public interface IBasicConnectionConfigProvider {
+	public IBasicConnectionConfig getBasicConnectionConfig();
 }

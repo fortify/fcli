@@ -22,8 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.session;
+package com.fortify.cli.ssc.rest.data;
 
-public interface ILogoutManager extends ILoginSessionTypeProvider {
-	public void logout(String loginSessionName);
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fortify.cli.rest.data.IBasicConnectionConfig;
+import com.fortify.cli.rest.data.IBasicConnectionConfigProvider;
+
+import io.micronaut.core.annotation.Introspected;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data @Introspected @NoArgsConstructor @AllArgsConstructor @JsonIgnoreProperties(ignoreUnknown = true)
+public class SSCLoginSessionData implements IBasicConnectionConfigProvider {
+	private SSCConnectionConfig config;
+	private SSCTokenResponse cachedTokenResponse;
+	
+	@Override
+	public IBasicConnectionConfig getBasicConnectionConfig() {
+		return config.getBasicConnectionConfig();
+	}
 }

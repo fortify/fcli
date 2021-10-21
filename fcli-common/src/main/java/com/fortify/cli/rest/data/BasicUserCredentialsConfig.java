@@ -22,14 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.rest.connection;
+package com.fortify.cli.rest.data;
 
 import io.micronaut.core.annotation.Introspected;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
-@Data @EqualsAndHashCode(callSuper = true) @Introspected
-public abstract class AbstractRestConnectionWithUserCredentialsConfig extends AbstractRestConnectionConfig {
+@Data @Introspected
+public class BasicUserCredentialsConfig implements IBasicUserCredentialsConfig {
 	private String user;
 	private char[] password;
 }

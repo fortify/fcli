@@ -24,50 +24,35 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.command;
 
+import com.fortify.cli.command.RootCommand;
 import com.fortify.cli.command.util.SubcommandOf;
+import com.fortify.cli.session.command.consumer.LoginSessionConsumerMixin;
+import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Singleton
-@SubcommandOf(SSCCommand.class)
-@Command(name = "test1", description = "SSC test 1")
+@Singleton @ReflectiveAccess
+@SubcommandOf(RootCommand.class)
+@Command(name = "ssc-test", description = "SSC test 1")
 public class SSCTestCommand1 implements Runnable {
-	@Mixin SSCConnectionMixin sscConnectionMixin;
+	@Getter @Inject private SSCUnirestRunner unirestRunner;
+	@Getter @Mixin private LoginSessionConsumerMixin loginSessionConsumerMixin;
 
 	@Override @SneakyThrows
 	public void run() {
-		/*
-		 * System.out.println(SSCAuthenticatingRestConnection.builder()
-		 * .baseUrl("http://localhost:2111/ssc").user("ssc").password("Fortify123!")
-		 * .build() .api(SSCApplicationVersionAPI.class).
-		 * queryApplicationVersions().build().getAll());
-		 */
-		/*
-		Retrofit retrofit = new Retrofit.Builder()
-			.baseUrl("http://localhost:2111/ssc/")
-			.addConverterFactory(GsonConverterFactory.create())
-			.build();
-		String auth = Credentials.basic("ssc", "Fortify123!");
-		System.out.println(auth);
-		Call<SSCTokenResponse> createTokenCall = retrofit.create(SSCTokenOps.class).createToken(
-				auth,
-				SSCTokenRequest.builder().type("UnifiedLoginToken").build());
-		Response<SSCTokenResponse> response = createTokenCall.execute();
-		System.out.println(response);
-		System.out.println(response.body());
-		*/
-		
-		
-		sscConnectionMixin.executeWithUnirest(this::executeRequest);
+		unirestRunner.runWithUnirest(loginSessionConsumerMixin.getLoginSessionName(), this::runWithUnirest);
 	}
 	
-	private Void executeRequest(UnirestInstance unirest) {
+	private Void runWithUnirest(UnirestInstance unirest) {
 		unirest.get("/api/v1/events?limit=10")
 		.accept("application/json")
 		.header("Content-Type", "application/json")

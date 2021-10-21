@@ -24,7 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.session.command.login;
 
-import com.fortify.cli.rest.connection.AbstractRestConnectionConfig;
+import com.fortify.cli.rest.data.BasicConnectionConfig;
+import com.fortify.cli.rest.data.IBasicConnectionConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -41,28 +42,31 @@ import picocli.CommandLine.Option;
  * </pre>
  * @author Ruud Senden
  */
-public class LoginConnectionOptions {
+public class LoginConnectionOptions implements IBasicConnectionConfig {
 	@Option(names = {"--url"}, required = true, order=1)
 	@Getter private String url;
 	
-	@Option(names = {"--proxy-url"}, required = false, order=2)
-	@Getter private String proxyUrl;
+	@Option(names = {"--proxy-host"}, required = false, order=2)
+	@Getter private String proxyHost;
 	
-	@Option(names = {"--proxy-user"}, required = false, order=3)
+	@Option(names = {"--proxy-port"}, required = false, order=3)
+	@Getter private Integer proxyPort;
+	
+	@Option(names = {"--proxy-user"}, required = false, order=4)
 	@Getter private String proxyUser;
 	
-	@Option(names = {"--proxy-password"}, required = false, interactive = true, echo = false, order=4)
+	@Option(names = {"--proxy-password"}, required = false, interactive = true, echo = false, order=5)
 	@Getter private char[] proxyPassword;
 	
-	@Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=5)
-	@Getter private boolean insecure;
+	@Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
+	@Getter private boolean insecureModeEnabled;
 	
-	public final <T extends AbstractRestConnectionConfig> T configure(T config) {
+	public final void configure(BasicConnectionConfig config) {
 		config.setUrl(getUrl());
-		config.setProxyUrl(getProxyUrl());
+		config.setProxyHost(getProxyHost());
+		config.setProxyPort(getProxyPort());
 		config.setProxyUser(getProxyUser());
 		config.setProxyPassword(getProxyPassword());
-		config.setInsecure(isInsecure());
-		return config;
+		config.setInsecureModeEnabled(isInsecureModeEnabled());
 	}
 }

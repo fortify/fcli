@@ -22,45 +22,25 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.rest.connection;
+package com.fortify.cli.ssc.rest.data;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Date;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.annotation.PreDestroy;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import kong.unirest.Unirest;
-import kong.unirest.UnirestInstance;
-import kong.unirest.jackson.JacksonObjectMapper;
-import lombok.Getter;
+import io.micronaut.core.annotation.Introspected;
+import lombok.Data;
 
-@Singleton
-public class UnirestInstanceFactory {
-	@Getter @Inject @ReflectiveAccess ObjectMapper objectMapper;
-	private final Map<String, UnirestInstance> instances = new HashMap<>();
-	
-	public final UnirestInstance getUnirestInstance(String name) {
-		return instances.computeIfAbsent(name, this::createUnirestInstance);
-	}
-	
-	public final void closeUnirestInstance(String name) {
-		UnirestInstance instance = instances.remove(name);
-		instance.close();
-	}
-	
-	private final UnirestInstance createUnirestInstance(String name) {
-		UnirestInstance instance = Unirest.spawnInstance();
-		instance.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
-		return instance;
-	}
-	
-	@PreDestroy
-	public void close() {
-		instances.keySet().parallelStream().collect(Collectors.toSet()).forEach(this::closeUnirestInstance);
+@Data @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
+public final class SSCTokenResponse {
+	private SSCTokenResponse.SSCTokenData data;
+	@Data @Introspected
+	public static final class SSCTokenData {
+		private int id;
+		private Date terminalDate;
+		private Date creationDate;
+		private String type;
+		private char[] token;
+		private String _href;
 	}
 }

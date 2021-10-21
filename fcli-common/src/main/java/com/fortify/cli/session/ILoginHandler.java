@@ -22,14 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.rest.connection;
+package com.fortify.cli.session;
 
-import io.micronaut.core.annotation.Introspected;
-import lombok.Builder;
-import lombok.Data;
-
-@Data @Builder @Introspected
-public final class SSCTokenRequest {
-	private String type;
-	private String description;
+public interface ILoginHandler<C> {
+	public void login(String loginSessionName, C connectionConfigData);
 }

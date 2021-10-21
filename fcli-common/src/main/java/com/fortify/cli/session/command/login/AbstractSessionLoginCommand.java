@@ -24,20 +24,17 @@
  ******************************************************************************/
 package com.fortify.cli.session.command.login;
 
-import com.fortify.cli.session.LogoutHelper;
+import com.fortify.cli.session.ILoginHandler;
 import com.fortify.cli.session.command.AbstractCommandWithLoginSessionHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-public abstract class AbstractSessionLoginCommand extends AbstractCommandWithLoginSessionHelper implements Runnable {
-	@Getter @Inject private LogoutHelper logoutHelper;
-	
+public abstract class AbstractSessionLoginCommand<C> extends AbstractCommandWithLoginSessionHelper implements Runnable {
 	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
     @Getter protected LoginSessionNameOptions loginSessionNameOptions;
 	
@@ -48,14 +45,7 @@ public abstract class AbstractSessionLoginCommand extends AbstractCommandWithLog
 	
 	@Override @SneakyThrows
 	public final void run() {
-		String loginSessionType = getLoginSessionType();
-		String loginSessionName = getLoginSessionName();
-		if ( getLoginSessionHelper().exists(loginSessionType, loginSessionName) ) {
-			// Log out from previous session before creating a new session
-			getLogoutHelper().logoutAndDestroy(loginSessionType, loginSessionName);
-		}
-		Object loginSessionData = login();
-		getLoginSessionHelper().saveData(loginSessionType, loginSessionName, loginSessionData);
+		getLoginHandler().login(getLoginSessionName(), getConnectionConfig());
 	}
 	
 	public final String getLoginSessionName() {
@@ -63,5 +53,6 @@ public abstract class AbstractSessionLoginCommand extends AbstractCommandWithLog
 	}
 	
 	protected abstract String getLoginSessionType();
-	protected abstract Object login();
+	protected abstract C getConnectionConfig();
+	protected abstract ILoginHandler<C> getLoginHandler();
 }

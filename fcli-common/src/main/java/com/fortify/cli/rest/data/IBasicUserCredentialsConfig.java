@@ -22,35 +22,9 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.rest.connection;
+package com.fortify.cli.rest.data;
 
-import com.fortify.cli.session.ILogoutManager;
-import com.fortify.cli.session.LoginSessionHelper;
-
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import lombok.Getter;
-
-@ReflectiveAccess
-public abstract class AbstractRestConnectionHelper<D> implements ILogoutManager {
-	@Getter @Inject private UnirestInstanceFactory unirestInstanceFactory;
-	@Getter @Inject private LoginSessionHelper loginSessionHelper;
-	
-	@Override
-	public final void logout(String loginSessionName) {
-		logout(getLoginSessionData(loginSessionName));
-	}
-
-	private D getLoginSessionData(String loginSessionName) {
-		return loginSessionHelper.getData(getLoginSessionType(), loginSessionName, getSessionDataClass());
-	}
-	
-	protected abstract Class<D> getSessionDataClass();
-
-	/**
-	 * This method may be overridden by concrete implementations to log out from the target system.
-	 * For example, this could terminate the current session or invalidate a temporary authentication token.
-	 * @param sessionData Data identifying the login session to be logged out
-	 */
-	public void logout(D sessionData) {}
+public interface IBasicUserCredentialsConfig {
+	public String getUser();
+	public char[] getPassword();
 }

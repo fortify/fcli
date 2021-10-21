@@ -29,11 +29,17 @@ import com.fortify.cli.session.ILoginSessionNameProvider;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-public class LoginSessionConsumerMixin<C> implements ILoginSessionNameProvider {
+public class LoginSessionConsumerMixin implements ILoginSessionNameProvider {
 	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
     @Getter private LoginSessionConsumerNameOptions nameOptions;
+	
+	static class LoginSessionConsumerNameOptions {
+		@Option(names = {"--login-session"}, required = false, defaultValue = "default")
+		@Getter private String sessionName;
+	}
 	
 	@Override
 	public String getLoginSessionName() {

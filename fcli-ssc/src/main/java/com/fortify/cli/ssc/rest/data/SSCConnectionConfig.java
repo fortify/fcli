@@ -22,39 +22,36 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.session;
+package com.fortify.cli.ssc.rest.data;
 
-import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fortify.cli.rest.data.BasicConnectionConfig;
+import com.fortify.cli.rest.data.BasicUserCredentialsConfig;
+import com.fortify.cli.rest.data.IBasicConnectionConfigProvider;
 
-import com.fortify.cli.rest.connection.AbstractRestConnectionHelper;
-import com.fortify.cli.ssc.rest.connection.SSCTokenResponse.SSCTokenData;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.util.StringUtils;
+import lombok.Data;
 
-import jakarta.inject.Singleton;
-
-@Singleton
-public class SSCRestConnectionHelper extends AbstractRestConnectionHelper<SSCLoginSessionData> {
-	@Override
-	public final String getLoginSessionType() {
-		return "ssc";
-	}
-
-	@Override
-	protected Class<SSCLoginSessionData> getSessionDataClass() {
-		return SSCLoginSessionData.class;
+@Data @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
+public class SSCConnectionConfig implements IBasicConnectionConfigProvider {
+	private final BasicConnectionConfig basicConnectionConfig = new BasicConnectionConfig();
+	private final BasicUserCredentialsConfig basicUserCredentialsConfig = new BasicUserCredentialsConfig();
+	private boolean renewAllowed;
+	private char[] token;
+	
+	@JsonIgnore public final SSCAuthType getAuthType() {
+		return token!=null && token.length>0 ? SSCAuthType.TOKEN : SSCAuthType.USER;
 	}
 	
-	@Override
-	public void logout(SSCLoginSessionData sessionData) {
-		var cachedTokenResponse = sessionData.getCachedTokenResponse();
-		var tokenData = cachedTokenResponse==null ? null : cachedTokenResponse.getData();
-		if ( tokenData!=null ) {
-			logout(tokenData);
-		}
+	public static enum SSCAuthType {
+		TOKEN, USER
 	}
 
-	private void logout(SSCTokenData tokenData) {
-		if ( tokenData.getTerminalDate().after(new Date())) {
-			System.out.println("Logging out from SSC");
-		}
+	@JsonIgnore public final boolean hasUserCredentialsConfig() {
+		return basicUserCredentialsConfig!=null 
+				&& StringUtils.isNotEmpty(basicUserCredentialsConfig.getUser())
+				&& basicUserCredentialsConfig.getPassword()!=null;
 	}
 }

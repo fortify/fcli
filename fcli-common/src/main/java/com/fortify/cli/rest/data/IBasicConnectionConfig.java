@@ -22,14 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.session.command.consumer;
+package com.fortify.cli.rest.data;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Option;
-
-@ReflectiveAccess
-public class LoginSessionConsumerNameOptions {
-	@Option(names = {"--login-session"}, required = false, defaultValue = "default")
-	@Getter private String sessionName;
+public interface IBasicConnectionConfig {
+	public String  getUrl();
+	public String  getProxyHost();
+	public Integer getProxyPort();
+	public String  getProxyUser();
+	public char[]  getProxyPassword();
+	public boolean isInsecureModeEnabled();
 }

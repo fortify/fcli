@@ -22,21 +22,26 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.rest.connection;
+package com.fortify.cli.rest.unirest;
 
-import java.util.Date;
+import java.util.function.Function;
 
-import io.micronaut.core.annotation.Introspected;
-import lombok.Data;
+import kong.unirest.UnirestInstance;
 
-@Data @Introspected
-public final class SSCTokenResponse {
-	private SSCTokenResponse.SSCTokenData data;
-	@Data @Introspected
-	public static final class SSCTokenData {
-		private Date terminalDate;
-		private Date creationDate;
-		private String type;
-		private String token;
-	}
+/**
+ * This interface provides methods for running functions that take a
+ * {@link UnirestInstance} as input.
+ * 
+ * @author Ruud Senden
+ */
+public interface IUnirestRunner {
+	/**
+	 * Run the given runner with a {@link UnirestInstance} that has been configured
+	 * based on the data available in the given login session 
+	 * @param <R> Return type
+	 * @param loginSessionName Name of the login session to use
+	 * @param runner to perform the actual work with a given {@link UnirestInstance}
+	 * @return Return value of runner
+	 */
+	public <R> R runWithUnirest(String loginSessionName, Function<UnirestInstance, R> runner);
 }

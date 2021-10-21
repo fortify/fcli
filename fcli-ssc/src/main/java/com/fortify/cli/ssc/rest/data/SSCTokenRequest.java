@@ -22,16 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.rest.connection;
+package com.fortify.cli.ssc.rest.data;
 
 import io.micronaut.core.annotation.Introspected;
+import lombok.Builder;
 import lombok.Data;
 
-@Data @Introspected
-public abstract class AbstractRestConnectionConfig {
-	private String url;
-	private String proxyUrl;
-	private String proxyUser;
-	private char[] proxyPassword;
-	private boolean insecure;
+@Data @Builder @Introspected
+public final class SSCTokenRequest {
+	private String type;
+	private String description;
 }

@@ -22,17 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.command;
+package com.fortify.cli.session;
 
-import com.fortify.cli.command.RootCommand;
-import com.fortify.cli.command.util.SubcommandOf;
-
-import jakarta.inject.Singleton;
-import picocli.CommandLine.Command;
-
-@Singleton
-@SubcommandOf(RootCommand.class)
-@Command(name = "ssc", description = "Perform SSC operations")
-public class SSCCommand {
-
+public interface ILogoutHandler extends ILoginSessionTypeProvider {
+	public void logout(String loginSessionName);
 }

@@ -24,21 +24,21 @@
  ******************************************************************************/
 package com.fortify.cli.session.command.login;
 
-import com.fortify.cli.rest.connection.AbstractRestConnectionWithUserCredentialsConfig;
+import com.fortify.cli.rest.data.BasicUserCredentialsConfig;
+import com.fortify.cli.rest.data.IBasicUserCredentialsConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-public class LoginUserCredentialOptions {
+public class LoginUserCredentialOptions implements IBasicUserCredentialsConfig {
 	@Option(names = {"--user", "-u"}, required = true)
 	@Getter protected String user;
 	
 	@Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
 	@Getter protected char[] password;
 	
-	public final <T extends AbstractRestConnectionWithUserCredentialsConfig> T configure(T config) {
+	public final void configure(BasicUserCredentialsConfig config) {
 		config.setUser(getUser());
 		config.setPassword(getPassword());
-		return config;
 	}
 }
