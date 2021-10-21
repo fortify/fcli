@@ -25,5 +25,5 @@
 package com.fortify.cli.rest.data;
 
 public interface IBasicConnectionConfigProvider {
-	public IBasicConnectionConfig getBasicConnectionConfig();
+	public BasicConnectionConfig getBasicConnectionConfig();
 }

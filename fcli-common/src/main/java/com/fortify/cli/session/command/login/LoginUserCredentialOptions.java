@@ -25,12 +25,11 @@
 package com.fortify.cli.session.command.login;
 
 import com.fortify.cli.rest.data.BasicUserCredentialsConfig;
-import com.fortify.cli.rest.data.IBasicUserCredentialsConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-public class LoginUserCredentialOptions implements IBasicUserCredentialsConfig {
+public class LoginUserCredentialOptions {
 	@Option(names = {"--user", "-u"}, required = true)
 	@Getter protected String user;
 	

@@ -25,7 +25,6 @@
 package com.fortify.cli.session.command.login;
 
 import com.fortify.cli.rest.data.BasicConnectionConfig;
-import com.fortify.cli.rest.data.IBasicConnectionConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -42,7 +41,7 @@ import picocli.CommandLine.Option;
  * </pre>
  * @author Ruud Senden
  */
-public class LoginConnectionOptions implements IBasicConnectionConfig {
+public class LoginConnectionOptions {
 	@Option(names = {"--url"}, required = true, order=1)
 	@Getter private String url;
 	

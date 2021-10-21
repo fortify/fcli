@@ -33,7 +33,6 @@ import java.util.Date;
 import org.apache.commons.codec.binary.Base64;
 
 import com.fortify.cli.rest.data.BasicUserCredentialsConfig;
-import com.fortify.cli.rest.data.IBasicUserCredentialsConfig;
 import com.fortify.cli.rest.unirest.AbstractUnirestRunner;
 import com.fortify.cli.ssc.rest.data.SSCConnectionConfig;
 import com.fortify.cli.ssc.rest.data.SSCLoginSessionData;
@@ -111,7 +110,7 @@ public class SSCUnirestRunner extends AbstractUnirestRunner<SSCLoginSessionData>
 		if ( !config.hasUserCredentialsConfig() ) {
 			throw new IllegalStateException("No login credentials available");
 		}
-		IBasicUserCredentialsConfig ucConfig = config.getBasicUserCredentialsConfig();
+		BasicUserCredentialsConfig ucConfig = config.getBasicUserCredentialsConfig();
 		return unirestInstance.post("/api/v1/tokens")
 				.accept("application/json")
 				.header("Content-Type", "application/json")

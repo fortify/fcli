@@ -27,7 +27,7 @@ package com.fortify.cli.rest.unirest;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.rest.data.IBasicConnectionConfig;
+import com.fortify.cli.rest.data.BasicConnectionConfig;
 import com.fortify.cli.rest.data.IBasicConnectionConfigProvider;
 import com.fortify.cli.session.LoginSessionHelper;
 
@@ -104,7 +104,7 @@ public abstract class AbstractUnirestRunner<D> implements IUnirestRunner {
 	private final void _configure(String loginSessionName, D loginSessionData, UnirestInstance unirestInstance) {
 		if ( loginSessionData instanceof IBasicConnectionConfigProvider ) {
 			IBasicConnectionConfigProvider csp = (IBasicConnectionConfigProvider)loginSessionData;
-			IBasicConnectionConfig cs = csp.getBasicConnectionConfig();
+			BasicConnectionConfig cs = csp.getBasicConnectionConfig();
 			unirestInstance.config()
 				.defaultBaseUrl(cs.getUrl())
 				.verifySsl(cs.isInsecureModeEnabled());

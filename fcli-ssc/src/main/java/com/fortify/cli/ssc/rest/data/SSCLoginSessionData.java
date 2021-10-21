@@ -25,7 +25,7 @@
 package com.fortify.cli.ssc.rest.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fortify.cli.rest.data.IBasicConnectionConfig;
+import com.fortify.cli.rest.data.BasicConnectionConfig;
 import com.fortify.cli.rest.data.IBasicConnectionConfigProvider;
 
 import io.micronaut.core.annotation.Introspected;
@@ -39,7 +39,7 @@ public class SSCLoginSessionData implements IBasicConnectionConfigProvider {
 	private SSCTokenResponse cachedTokenResponse;
 	
 	@Override
-	public IBasicConnectionConfig getBasicConnectionConfig() {
+	public BasicConnectionConfig getBasicConnectionConfig() {
 		return config.getBasicConnectionConfig();
 	}
 }

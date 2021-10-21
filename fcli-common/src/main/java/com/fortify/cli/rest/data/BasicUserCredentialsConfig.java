@@ -28,7 +28,7 @@ import io.micronaut.core.annotation.Introspected;
 import lombok.Data;
 
 @Data @Introspected
-public class BasicUserCredentialsConfig implements IBasicUserCredentialsConfig {
+public class BasicUserCredentialsConfig {
 	private String user;
 	private char[] password;
 }
