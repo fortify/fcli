@@ -72,11 +72,30 @@ jobs:
         mkdir native-image\win &&
         ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar native-image\win\fcli
       shell: cmd
-      
+            
     - name: Basic test of native fcli
       run: |
         .\native-image\win\fcli.exe --help 
         .\native-image\win\fcli.exe fod --help
+
+    - name: Download UPX
+      uses: carlosperate/download-file-action@v1.0.3
+      with:
+        file-url: https://github.com/upx/upx/releases/download/v3.96/upx-3.96-win64.zip
+        file-name: upx.zip
+        location: .
+
+    - name: Unzip UPX
+      uses: TonyBogdanov/zip@1.0
+      with:
+        args: unzip -qq .\\upx.zip -d .\\upx
+
+    - name: Basic test of (compressed) native fcli
+      run: |
+        mkdir .\native-image\win\compressed
+        .\upx\upx-3.96-win64\upx.exe -o .\native-image\win\compressed\fcli.exe .\native-image\win\fcli.exe
+        .\native-image\win\compressed\fcli.exe --help 
+        .\native-image\win\compressed\fcli.exe fod --help
 
     - uses: actions/upload-artifact@v2
       with:
