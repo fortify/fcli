@@ -30,11 +30,11 @@ import com.fortify.cli.rest.data.BasicConnectionConfig;
 import com.fortify.cli.rest.data.BasicUserCredentialsConfig;
 import com.fortify.cli.rest.data.IBasicConnectionConfigProvider;
 
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 
-@ReflectiveAccess @Introspected @JsonIgnoreProperties(ignoreUnknown = true) 
+@ReflectiveAccess // Jackson is unable to write basicConnectionConfig field with @Introspected, so we use @ReflectiveAccess instead   
+@JsonIgnoreProperties(ignoreUnknown = true) 
 public class SSCConnectionConfig implements IBasicConnectionConfigProvider {
 	private BasicConnectionConfig basicConnectionConfig;
 	private BasicUserCredentialsConfig basicUserCredentialsConfig;
