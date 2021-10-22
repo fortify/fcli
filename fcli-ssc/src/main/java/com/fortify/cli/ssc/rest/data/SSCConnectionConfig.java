@@ -32,9 +32,9 @@ import com.fortify.cli.rest.data.IBasicConnectionConfigProvider;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.util.StringUtils;
+import lombok.Data;
 
-@Introspected
-@JsonIgnoreProperties(ignoreUnknown = true) 
+@Introspected @Data @JsonIgnoreProperties(ignoreUnknown = true) 
 public class SSCConnectionConfig implements IBasicConnectionConfigProvider {
 	private BasicConnectionConfig basicConnectionConfig;
 	private BasicUserCredentialsConfig basicUserCredentialsConfig;
@@ -45,37 +45,5 @@ public class SSCConnectionConfig implements IBasicConnectionConfigProvider {
 		return basicUserCredentialsConfig!=null 
 				&& StringUtils.isNotEmpty(basicUserCredentialsConfig.getUser())
 				&& basicUserCredentialsConfig.getPassword()!=null;
-	}
-
-	public final BasicConnectionConfig getBasicConnectionConfig() {
-		return basicConnectionConfig;
-	}
-
-	public final void setBasicConnectionConfig(BasicConnectionConfig basicConnectionConfig) {
-		this.basicConnectionConfig = basicConnectionConfig;
-	}
-
-	public final BasicUserCredentialsConfig getBasicUserCredentialsConfig() {
-		return basicUserCredentialsConfig;
-	}
-
-	public final void setBasicUserCredentialsConfig(BasicUserCredentialsConfig basicUserCredentialsConfig) {
-		this.basicUserCredentialsConfig = basicUserCredentialsConfig;
-	}
-
-	public final boolean isRenewAllowed() {
-		return renewAllowed;
-	}
-
-	public final void setRenewAllowed(boolean renewAllowed) {
-		this.renewAllowed = renewAllowed;
-	}
-
-	public final char[] getToken() {
-		return token;
-	}
-
-	public final void setToken(char[] token) {
-		this.token = token;
 	}
 }
