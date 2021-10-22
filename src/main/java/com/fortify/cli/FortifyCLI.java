@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.LogFactoryImpl;
@@ -11,7 +12,7 @@ import org.apache.commons.logging.impl.SimpleLog;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
-import com.fortify.cli.command.RootCommand;
+import com.fortify.cli.command.FCLIRootCommand;
 import com.fortify.cli.command.util.DefaultValueProvider;
 import com.fortify.cli.command.util.SubcommandOf;
 import com.oracle.svm.core.annotate.AutomaticFeature;
@@ -27,7 +28,7 @@ import picocli.CommandLine;
 public class FortifyCLI {
 	private static int execute(Class<?> clazz, String[] args) {
 		try (ApplicationContext context = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
-			RootCommand rootCommand = context.getBean(RootCommand.class);
+			FCLIRootCommand rootCommand = context.getBean(FCLIRootCommand.class);
 			MicronautFactory factory = new MicronautFactory(context);
 			CommandLine commandLine = new CommandLine(rootCommand, factory)
 					.setCaseInsensitiveEnumValuesAllowed(true)
@@ -39,7 +40,7 @@ public class FortifyCLI {
 	}
 
 	private static void addSubcommands(ApplicationContext context, MicronautFactory factory, CommandLine commandLine,
-			RootCommand rootCommand) {
+			FCLIRootCommand rootCommand) {
 		Map<Class<?>, List<Object>> parentToSubcommandsMap = getParentToSubcommandsMap(context);
 		addSubcommands(parentToSubcommandsMap, factory, commandLine, rootCommand);
 	}
@@ -50,7 +51,11 @@ public class FortifyCLI {
 		if (subcommands != null) {
 			for (Object subcommand : subcommands) {
 				CommandLine subCommandLine = new CommandLine(subcommand, factory);
-				commandLine.addSubcommand(subCommandLine);
+				try {
+					commandLine.addSubcommand(subCommandLine);
+				} catch ( RuntimeException e ) {
+					throw new RuntimeException("Error while adding command class "+subcommand.getClass().getName(), e);
+				}
 				addSubcommands(parentToSubcommandsMap, factory, subCommandLine, subcommand);
 			}
 		}
@@ -65,12 +70,21 @@ public class FortifyCLI {
 			                      Collectors.mapping(context::getBean, Collectors.toList())));
 		*/
 		var parentToSubcommandsMap = new LinkedHashMap<Class<?>, List<Object>>();
-		beanDefinitions.stream().sorted(FortifyCLI::compare).forEach(bd ->
+		beanDefinitions.stream().sorted(FortifyCLI::compare).forEach(bd -> {
+			//System.out.println("Parent: "+getParentCommandClazz(bd)+", child: "+bd.getBeanType());
 			addMultiValueEntry(
 				parentToSubcommandsMap, 
-				bd.getAnnotation(SubcommandOf.class).classValue().get(),
-				context.getBean(bd)));
+				getParentCommandClazz(bd),
+				context.getBean(bd)); } );
 		return parentToSubcommandsMap;
+	}
+
+	private static final Class<?> getParentCommandClazz(BeanDefinition<?> bd) {
+		Optional<Class<?>> optClazz = bd.getAnnotation(SubcommandOf.class).classValue();
+		if ( !optClazz.isPresent() ) {
+			throw new IllegalStateException("No parent command found for class "+bd.getBeanType().getName());
+		}
+		return optClazz.get();
 	}
 	
 	private static int compare(BeanDefinition<?> bd1, BeanDefinition<?> bd2) {
@@ -82,7 +96,7 @@ public class FortifyCLI {
 	}
 
 	public static void main(String[] args) {
-		int exitCode = execute(RootCommand.class, args);
+		int exitCode = execute(FCLIRootCommand.class, args);
 		System.exit(exitCode);
 	}
 	
