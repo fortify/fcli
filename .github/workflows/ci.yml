@@ -85,12 +85,13 @@ jobs:
         file-name: upx.zip
         location: .
 
-    - name: Unzip UPX
-      uses: TonyBogdanov/zip@1.0
+    - name: Extract UPX
+      uses: Amadevus/pwsh-script@v2.0.1
       with:
-        args: unzip -qq .\\upx.zip -d .\\upx
+        script: |
+          Expand-Archive -Path .\upx.zip -DestinationPath .\
 
-    - name: Basic test of (compressed) native fcli
+    - name: Compress and basic test of (compressed) native fcli
       run: |
         mkdir .\native-image\win\compressed
         .\upx\upx-3.96-win64\upx.exe -o .\native-image\win\compressed\fcli.exe .\native-image\win\fcli.exe
