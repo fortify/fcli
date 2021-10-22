@@ -36,8 +36,8 @@ import lombok.Data;
 
 @Data @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
 public class SSCConnectionConfig implements IBasicConnectionConfigProvider {
-	private BasicConnectionConfig basicConnectionConfig = new BasicConnectionConfig();
-	private BasicUserCredentialsConfig basicUserCredentialsConfig = new BasicUserCredentialsConfig();
+	private BasicConnectionConfig basicConnectionConfig;
+	private BasicUserCredentialsConfig basicUserCredentialsConfig;
 	private boolean renewAllowed;
 	private char[] token;
 	
