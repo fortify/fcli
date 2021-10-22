@@ -48,13 +48,17 @@ public class SSCLogoutHandler implements ILogoutHandler {
 	}
 	
 	private final Void logout(UnirestInstance unirestInstance, SSCLoginSessionData loginSessionData) {
-		SSCTokenResponse cachedTokenResponse = loginSessionData.getCachedTokenResponse();
-		if ( cachedTokenResponse != null ) {
-			String token = String.valueOf(cachedTokenResponse.getData().getToken());
-			String body = "{\"tokens\": [\""+token+"\"]}";
-			System.out.println(body);
-			RequestBodyEntity request = unirestInstance.post("/api/v1/tokens/action/revoke").body(body).contentType("application/json");
-			System.out.println(request.asString().getBody());
+		try {
+			SSCTokenResponse cachedTokenResponse = loginSessionData.getCachedTokenResponse();
+			if ( cachedTokenResponse != null ) {
+				String token = String.valueOf(cachedTokenResponse.getData().getToken());
+				String body = "{\"tokens\": [\""+token+"\"]}";
+				System.out.println(body);
+				RequestBodyEntity request = unirestInstance.post("/api/v1/tokens/action/revoke").body(body).contentType("application/json");
+				System.out.println(request.asString().getBody());
+			}
+		} catch ( RuntimeException e ) {
+			System.out.println("Error deserializing token:" + e.getMessage());
 		}
 		return null;
 	}
