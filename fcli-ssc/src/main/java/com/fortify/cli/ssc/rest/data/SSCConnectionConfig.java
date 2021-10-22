@@ -31,9 +31,10 @@ import com.fortify.cli.rest.data.BasicUserCredentialsConfig;
 import com.fortify.cli.rest.data.IBasicConnectionConfigProvider;
 
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 
-@Introspected @JsonIgnoreProperties(ignoreUnknown = true)
+@ReflectiveAccess @Introspected @JsonIgnoreProperties(ignoreUnknown = true) 
 public class SSCConnectionConfig implements IBasicConnectionConfigProvider {
 	private BasicConnectionConfig basicConnectionConfig;
 	private BasicUserCredentialsConfig basicUserCredentialsConfig;
