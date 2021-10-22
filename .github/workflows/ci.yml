@@ -94,7 +94,7 @@ jobs:
     - name: Compress and basic test of (compressed) native fcli
       run: |
         mkdir .\native-image\win\compressed
-        .\upx\upx-3.96-win64\upx.exe -o .\native-image\win\compressed\fcli.exe .\native-image\win\fcli.exe
+        .\upx-3.96-win64\upx.exe -o .\native-image\win\compressed\fcli.exe .\native-image\win\fcli.exe
         .\native-image\win\compressed\fcli.exe --help 
         .\native-image\win\compressed\fcli.exe fod --help
 
