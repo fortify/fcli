@@ -30,24 +30,16 @@ import com.fortify.cli.rest.data.BasicConnectionConfig;
 import com.fortify.cli.rest.data.BasicUserCredentialsConfig;
 import com.fortify.cli.rest.data.IBasicConnectionConfigProvider;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.util.StringUtils;
 
-@ReflectiveAccess // Jackson is unable to write basicConnectionConfig field with @Introspected, so we use @ReflectiveAccess instead   
+@Introspected
 @JsonIgnoreProperties(ignoreUnknown = true) 
 public class SSCConnectionConfig implements IBasicConnectionConfigProvider {
 	private BasicConnectionConfig basicConnectionConfig;
 	private BasicUserCredentialsConfig basicUserCredentialsConfig;
 	private boolean renewAllowed;
 	private char[] token;
-	
-	@JsonIgnore public final SSCAuthType getAuthType() {
-		return token!=null && token.length>0 ? SSCAuthType.TOKEN : SSCAuthType.USER;
-	}
-	
-	public static enum SSCAuthType {
-		TOKEN, USER
-	}
 
 	@JsonIgnore public final boolean hasUserCredentialsConfig() {
 		return basicUserCredentialsConfig!=null 
