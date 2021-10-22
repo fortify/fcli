@@ -46,4 +46,14 @@ public class SSCConnectionConfig implements IBasicConnectionConfigProvider {
 				&& StringUtils.isNotEmpty(basicUserCredentialsConfig.getUser())
 				&& basicUserCredentialsConfig.getPassword()!=null;
 	}
+	
+	@JsonIgnore public final BasicConnectionConfig getNonNullBasicConnectionConfig() {
+		basicConnectionConfig = basicConnectionConfig==null ? new BasicConnectionConfig() : basicConnectionConfig;
+		return basicConnectionConfig;
+	}
+	
+	@JsonIgnore public final BasicUserCredentialsConfig getNonNullBasicUserCredentialsConfig() {
+		basicUserCredentialsConfig = basicUserCredentialsConfig==null ? new BasicUserCredentialsConfig() : basicUserCredentialsConfig;
+		return basicUserCredentialsConfig;
+	}
 }

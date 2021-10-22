@@ -41,6 +41,6 @@ public class SSCLoginSessionData implements IBasicConnectionConfigProvider {
 	
 	@Override @JsonIgnore
 	public BasicConnectionConfig getBasicConnectionConfig() {
-		return config.getBasicConnectionConfig();
+		return config.getNonNullBasicConnectionConfig();
 	}
 }

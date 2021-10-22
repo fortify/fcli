@@ -80,8 +80,8 @@ public class SSCLoginCommand extends AbstractSessionLoginCommand<SSCConnectionCo
 	@Override
 	protected final SSCConnectionConfig getConnectionConfig() {
 		SSCConnectionConfig config = new SSCConnectionConfig();
-		connectionOptions.configure(config.getBasicConnectionConfig());
-		authOptions.getCredentialOptions().getUserOptions().configure(config.getBasicUserCredentialsConfig());
+		connectionOptions.configure(config.getNonNullBasicConnectionConfig());
+		authOptions.getCredentialOptions().getUserOptions().configure(config.getNonNullBasicUserCredentialsConfig());
 		config.setToken(authOptions.getCredentialOptions().getTokenOptions().getToken());
 		config.setRenewAllowed(authOptions.isRenewAllowed());
 		return config;

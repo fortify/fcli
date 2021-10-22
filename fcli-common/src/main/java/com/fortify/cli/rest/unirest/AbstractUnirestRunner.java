@@ -105,6 +105,7 @@ public abstract class AbstractUnirestRunner<D> implements IUnirestRunner {
 		if ( loginSessionData instanceof IBasicConnectionConfigProvider ) {
 			IBasicConnectionConfigProvider csp = (IBasicConnectionConfigProvider)loginSessionData;
 			BasicConnectionConfig cs = csp.getBasicConnectionConfig();
+			if ( cs == null ) { throw new IllegalArgumentException("Connection configuration may not be null"); }
 			unirestInstance.config()
 				.defaultBaseUrl(cs.getUrl())
 				.verifySsl(cs.isInsecureModeEnabled());
