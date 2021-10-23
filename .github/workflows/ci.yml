@@ -19,14 +19,11 @@ jobs:
         with:
           path: build/libs/fcli.jar
 
-  release_nix:
-    name: native-image-nix
+  native_linux:
+    name: native-image-linux
     #if: startsWith(github.ref, 'refs/tags/')
     needs: build
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-18.04, macos-10.15]
+    runs-on: ubuntu-18.04
     steps:
       - uses: DeLaGuardo/setup-graalvm@3
         with:
@@ -40,15 +37,47 @@ jobs:
           path: ./
 
       - name: Create native fcli
-        run: mkdir -p native-image/${{ matrix.os }} && native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar native-image/${{ matrix.os }}/fcli
+        run: mkdir -p native-image/linux && native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar native-image/linux/fcli
         
       - name: Compress native fcli
         uses: crazy-max/ghaction-upx@v1
         with:
-          files: native-image/${{ matrix.os }}/fcli
+          files: native-image/linux/fcli
         
       - name: Basic test of native fcli
-        run: ./native-image/${{ matrix.os }}/fcli --help && ./native-image/${{ matrix.os }}/fcli fod --help
+        run: ./native-image/linux/fcli --help && ./native-image/linux/fcli get --help
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./native-image
+          
+  native_mac:
+    name: native-image-mac
+    needs: build
+    runs-on: macos-10.15
+    steps:
+      - uses: DeLaGuardo/setup-graalvm@3
+        with:
+          graalvm-version: '21.2.0.java11'
+
+      - name: Install GraalVM's native-image extension
+        run: gu install native-image
+
+      - uses: actions/download-artifact@v2
+        with:
+          path: ./
+
+      - name: Create native fcli
+        run: mkdir -p native-image/linux && native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar native-image/mac/fcli
+       
+      # Not supported on Mac  
+      #- name: Compress native fcli
+      #  uses: crazy-max/ghaction-upx@v1
+      #  with:
+      #    files: native-image/mac/fcli
+        
+      - name: Basic test of native fcli
+        run: ./native-image/mac/fcli --help && ./native-image/mac/fcli get --help
 
       - uses: actions/upload-artifact@v2
         with:
@@ -56,7 +85,6 @@ jobs:
 
   release_win:
     name: native-image-win
-    #if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: windows-2019
     steps:
@@ -81,12 +109,12 @@ jobs:
     - name: Compress native fcli
       uses: crazy-max/ghaction-upx@v1
       with:
-        files: native-image\win\fcli
+        files: native-image\win\fcli.exe
       
     - name: Basic test of native fcli
       run: |
         .\native-image\win\fcli.exe --help 
-        .\native-image\win\fcli.exe fod --help
+        .\native-image\win\fcli.exe get --help
 
     - uses: actions/upload-artifact@v2
       with:
