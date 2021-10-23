@@ -68,7 +68,7 @@ jobs:
           path: ./
 
       - name: Create native fcli
-        run: mkdir -p native-image/linux && native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar native-image/mac/fcli
+        run: mkdir -p native-image/mac && native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar native-image/mac/fcli
        
       # Not supported on Mac  
       #- name: Compress native fcli
