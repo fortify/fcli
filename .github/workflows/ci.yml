@@ -40,9 +40,9 @@ jobs:
         run: mkdir -p native-image/linux && native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar native-image/linux/fcli
         
       - name: Compress native fcli
-        uses: crazy-max/ghaction-upx@v1
+        uses: svenstaro/upx-action@v2
         with:
-          files: native-image/linux/fcli
+          file: native-image/linux/fcli
         
       - name: Basic test of native fcli
         run: ./native-image/linux/fcli --help && ./native-image/linux/fcli get --help
@@ -70,11 +70,10 @@ jobs:
       - name: Create native fcli
         run: mkdir -p native-image/mac && native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar native-image/mac/fcli
        
-      # Not supported on Mac  
-      #- name: Compress native fcli
-      #  uses: crazy-max/ghaction-upx@v1
-      #  with:
-      #    files: native-image/mac/fcli
+      - name: Compress native fcli
+        uses: svenstaro/upx-action@v2
+        with:
+          file: native-image/mac/fcli
         
       - name: Basic test of native fcli
         run: ./native-image/mac/fcli --help && ./native-image/mac/fcli get --help
@@ -107,9 +106,9 @@ jobs:
       shell: cmd
       
     - name: Compress native fcli
-      uses: crazy-max/ghaction-upx@v1
+      uses: svenstaro/upx-action@v2
       with:
-        files: native-image\win\fcli.exe
+        file: native-image\win\fcli.exe
       
     - name: Basic test of native fcli
       run: |
