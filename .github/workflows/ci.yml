@@ -104,12 +104,14 @@ jobs:
         mkdir native-image\win &&
         ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar native-image\win\fcli
       shell: cmd
+
       
     - name: Compress native fcli
       uses: svenstaro/upx-action@v2
       with:
         file: native-image\win\fcli.exe
       
+
     - name: Basic test of native fcli
       run: |
         .\native-image\win\fcli.exe --help 
