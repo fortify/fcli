@@ -57,8 +57,10 @@ allprojects {
 		implementation("io.micronaut.picocli:micronaut-picocli")
 		implementation("javax.annotation:javax.annotation-api")
 		
-		implementation 'com.konghq:unirest-java:3.13.0'
-		implementation 'com.konghq:unirest-objectmapper-jackson:3.13.0'
+		implementation('com.konghq:unirest-java:3.13.0') {
+			exclude group: 'com.google.code.gson', module: 'gson' // We use Jackson, so no need for Gson
+		}
+		implementation('com.konghq:unirest-objectmapper-jackson:3.13.0')
 	}
 }
 configure(allprojects.findAll {it.name != 'fcli-common'}) {

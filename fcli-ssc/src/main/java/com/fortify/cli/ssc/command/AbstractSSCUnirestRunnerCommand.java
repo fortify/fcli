@@ -22,48 +22,31 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.command.entity;
+package com.fortify.cli.ssc.command;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.command.session.consumer.LoginSessionConsumerMixin;
-import com.fortify.cli.command.util.SubcommandOf;
-import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCGetCommand;
 import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Singleton @ReflectiveAccess
-@SubcommandOf(SSCGetCommand.class)
-@Command(name = "test", description = "Get some test data from SSC")
-public class SSCGetTestCommand1 implements Runnable {
+@ReflectiveAccess
+public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
+	@Getter @Inject private ObjectMapper objectMapper;
 	@Getter @Inject private SSCUnirestRunner unirestRunner;
-	@Getter @Mixin private LoginSessionConsumerMixin loginSessionConsumerMixin;
+	@Getter @Mixin  private LoginSessionConsumerMixin loginSessionConsumerMixin;
 
 	@Override @SneakyThrows
-	public void run() {
+	public final void run() {
+		// TODO Do we want to do anything with the results, like formatting it based on output options?
+		//      Or do we let the actual implementation handle this?
 		unirestRunner.runWithUnirest(loginSessionConsumerMixin.getLoginSessionName(), this::runWithUnirest);
 	}
 	
-	private Void runWithUnirest(UnirestInstance unirest) {
-		unirest.get("/api/v1/events?limit=10")
-		.accept("application/json")
-		.header("Content-Type", "application/json")
-		.asPaged(
-				r->r.asJson(),
-				r->getNextPageLink(r))
-		.stream().map(HttpResponse::getBody).forEach(System.out::println);
-		return null;
-	}
-	
-	private String getNextPageLink(HttpResponse<Object> r) {
-		return (String) ((JsonNode)r.getBody()).getObject().optQuery("/links/next/href");
-	}
+	protected abstract Void runWithUnirest(UnirestInstance unirest);
 }

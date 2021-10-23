@@ -22,53 +22,33 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.command.entity;
+package com.fortify.cli.command.config;
 
 import com.fortify.cli.command.util.SubcommandOf;
-import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
-import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand;
-import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCGetCommand;
-import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCUpdateCommand;
 
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.AutoComplete;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Spec;
 
-public class SSCApplicationVersionEntityCommands {
-	public static final String ENTITY = "version";
-	
-	@Singleton
-	@SubcommandOf(SSCGetCommand.class)
-	@Command(name = ENTITY, description = "Get "+ENTITY+" data from SSC")
-	public static final class Get implements Runnable {
-		@Override
-		public void run() {
-		}
-	}
-	
-	@Singleton
-	@SubcommandOf(SSCCreateCommand.class)
-	@Command(name = ENTITY, description = "Create "+ENTITY+" in SSC")
-	public static final class Create implements Runnable {
-		@Override
-		public void run() {
-		}
-	}
-	
-	@Singleton
-	@SubcommandOf(SSCUpdateCommand.class)
-	@Command(name = ENTITY, description = "Update "+ENTITY+" in SSC")
-	public static final class Update implements Runnable {
-		@Override
-		public void run() {
-		}
-	}
-	
-	@Singleton
-	@SubcommandOf(SSCDeleteCommand.class)
-	@Command(name = ENTITY, description = "Delete "+ENTITY+" from SSC")
-	public static final class Delete implements Runnable {
-		@Override
-		public void run() {
-		}
+@ReflectiveAccess
+@SubcommandOf(RootConfigCommand.class)
+@Command(name = "generate-completion", description = {
+		"Generate bash/zsh completion script for ${ROOT-COMMAND-NAME:-the root command of this command}.",
+		"Run the following command to give `${ROOT-COMMAND-NAME:-$PARENTCOMMAND}` TAB completion in the current shell:",
+		"", 
+		"  source <(${PARENT-COMMAND-FULL-NAME:-$PARENTCOMMAND} ${COMMAND-NAME})", 
+		"" })
+public final class AutoCompleteGenerationCommand implements Runnable {
+	@Spec CommandLine.Model.CommandSpec spec;
+
+	public void run() {
+		String script = AutoComplete.bash(spec.root().name(), spec.root().commandLine());
+		// not PrintWriter.println: scripts with Windows line separators fail in strange
+		// ways!
+		spec.commandLine().getOut().print(script);
+		spec.commandLine().getOut().print('\n');
+		spec.commandLine().getOut().flush();
 	}
 }
