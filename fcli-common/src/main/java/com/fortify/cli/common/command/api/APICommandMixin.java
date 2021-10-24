@@ -24,13 +24,29 @@
  ******************************************************************************/
 package com.fortify.cli.common.command.api;
 
-import com.fortify.cli.common.command.util.SubcommandOf;
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Singleton;
-import picocli.CommandLine.Command;
-
-@Singleton @ReflectiveAccess
-@SubcommandOf(RootApiCommand.class)
-@Command(name = "delete", description = "Send a DELETE request to a Fortify API")
-public class ApiDeleteCommand {}
+public class APICommandMixin {
+	@Parameters(index = "0") String uri;
+	
+	@Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
+	@Getter private String httpMethod;
+	
+	@Option(names = {"--data", "-d"}, required = false)
+	@Getter private String data;
+	
+	// TODO Add options for content-type, ...?
+	
+	public final <R> R execute(UnirestInstance unirest, Class<R> returnType) {
+		// TODO How to handle different response types, i.e. JSON, HTML, XML, ...
+		//      Maybe have command class provide a map with accepted content types mapped to return type?
+		var request = unirest.request(httpMethod, uri);
+		var response = data==null ? request.asObject(returnType) : request.body(data).asObject(returnType);
+		// TODO Check response status
+		return response.getBody();
+	}
+	
+}

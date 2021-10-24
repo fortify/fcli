@@ -22,15 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command.api;
+package com.fortify.cli.fod.command.api;
 
+import com.fortify.cli.common.command.api.APICommandMixin;
+import com.fortify.cli.common.command.api.RootApiCommand;
 import com.fortify.cli.common.command.util.SubcommandOf;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
-@Singleton @ReflectiveAccess
+@Singleton
 @SubcommandOf(RootApiCommand.class)
-@Command(name = "put", description = "Send a PUT request to a Fortify API")
-public class ApiPutCommand {}
+@Command(name = "fod", description = "Invoke FoD REST API")
+public final class FoDApiCommand /*extends AbstractFoDUnirestRunnerCommand*/ {
+	@Mixin private APICommandMixin apiCommand;
+	
+	/*
+	@Override
+	protected Void runWithUnirest(UnirestInstance unirest) {
+		System.out.println(apiCommand.execute(unirest, ObjectNode.class));
+		return null;
+	}
+	*/
+    
+}

@@ -22,15 +22,29 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command.api;
+package com.fortify.cli.ssc.command.api;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.command.api.APICommandMixin;
+import com.fortify.cli.common.command.api.RootApiCommand;
 import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
+import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
-@Singleton @ReflectiveAccess
+@Singleton
 @SubcommandOf(RootApiCommand.class)
-@Command(name = "get", description = "Send a GET request to a Fortify API")
-public class ApiGetCommand {}
+@Command(name = "ssc", description = "Invoke SSC REST API")
+public final class SSCApiCommand extends AbstractSSCUnirestRunnerCommand {
+	@Mixin private APICommandMixin apiCommand;
+	
+	@Override
+	protected Void runWithUnirest(UnirestInstance unirest) {
+		System.out.println(apiCommand.execute(unirest, ObjectNode.class));
+		return null;
+	}
+    
+}
