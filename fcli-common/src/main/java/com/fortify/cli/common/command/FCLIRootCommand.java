@@ -33,7 +33,7 @@ import picocli.CommandLine.ScopeType;
 	scope = ScopeType.INHERIT, 
 	mixinStandardHelpOptions = true, 
 	usageHelpAutoWidth = true,
-	footer = "%n(c) Copyright 2021 Mico Focus", 
+	footer = "%n(c) Copyright 2021 Micro Focus", 
 	showAtFileInUsageHelp = true, 
 	description = "Command-line interface for working with various Fortify products")
 public class FCLIRootCommand {}
