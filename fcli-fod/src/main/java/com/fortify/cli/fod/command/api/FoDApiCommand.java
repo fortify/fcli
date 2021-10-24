@@ -41,7 +41,7 @@ public final class FoDApiCommand /*extends AbstractFoDUnirestRunnerCommand*/ {
 	/*
 	@Override
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		System.out.println(apiCommand.execute(unirest, ObjectNode.class));
+		System.out.println(apiCommand.prepareRequest(unirest).asObject(ObjectNode.class).getBody().toPrettyString());
 		return null;
 	}
 	*/

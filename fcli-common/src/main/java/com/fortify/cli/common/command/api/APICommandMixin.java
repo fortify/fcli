@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.command.api;
 
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -38,15 +39,12 @@ public class APICommandMixin {
 	@Option(names = {"--data", "-d"}, required = false)
 	@Getter private String data;
 	
-	// TODO Add options for content-type, ...?
+	// TODO Add options for content-type, arbitrary headers, ...?
 	
-	public final <R> R execute(UnirestInstance unirest, Class<R> returnType) {
-		// TODO How to handle different response types, i.e. JSON, HTML, XML, ...
-		//      Maybe have command class provide a map with accepted content types mapped to return type?
+	public final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
 		var request = unirest.request(httpMethod, uri);
-		var response = data==null ? request.asObject(returnType) : request.body(data).asObject(returnType);
-		// TODO Check response status
-		return response.getBody();
+		// TODO Add Content-Type & accept headers
+		return data==null ? request : request.body(data);
 	}
 	
 }
