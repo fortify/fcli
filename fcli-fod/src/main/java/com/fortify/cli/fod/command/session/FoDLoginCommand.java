@@ -24,10 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.session;
 
-import com.fortify.cli.command.session.login.AbstractSessionLoginCommand;
-import com.fortify.cli.command.session.login.RootLoginCommand;
-import com.fortify.cli.command.util.SubcommandOf;
-import com.fortify.cli.session.ILoginHandler;
+import com.fortify.cli.common.command.session.login.AbstractSessionLoginCommand;
+import com.fortify.cli.common.command.session.login.RootLoginCommand;
+import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.session.ILoginHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;

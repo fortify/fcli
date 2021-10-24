@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.rest.unirest;
 
-import com.fortify.cli.session.ILogoutHandler;
-import com.fortify.cli.session.LoginSessionHelper;
+import com.fortify.cli.common.session.ILogoutHandler;
+import com.fortify.cli.common.session.LoginSessionHelper;
 import com.fortify.cli.ssc.rest.data.SSCLoginSessionData;
 import com.fortify.cli.ssc.rest.data.SSCTokenResponse;
 

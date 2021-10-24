@@ -32,8 +32,8 @@ import java.util.Date;
 
 import org.apache.commons.codec.binary.Base64;
 
-import com.fortify.cli.rest.data.BasicUserCredentialsConfig;
-import com.fortify.cli.rest.unirest.AbstractUnirestRunner;
+import com.fortify.cli.common.rest.data.BasicUserCredentialsConfig;
+import com.fortify.cli.common.rest.unirest.AbstractUnirestRunner;
 import com.fortify.cli.ssc.rest.data.SSCConnectionConfig;
 import com.fortify.cli.ssc.rest.data.SSCLoginSessionData;
 import com.fortify.cli.ssc.rest.data.SSCTokenRequest;

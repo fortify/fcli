@@ -26,9 +26,9 @@ package com.fortify.cli.ssc.rest.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fortify.cli.rest.data.BasicConnectionConfig;
-import com.fortify.cli.rest.data.BasicUserCredentialsConfig;
-import com.fortify.cli.rest.data.IBasicConnectionConfigProvider;
+import com.fortify.cli.common.rest.data.BasicConnectionConfig;
+import com.fortify.cli.common.rest.data.BasicUserCredentialsConfig;
+import com.fortify.cli.common.rest.data.IBasicConnectionConfigProvider;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.util.StringUtils;

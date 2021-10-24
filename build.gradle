@@ -74,7 +74,7 @@ dependencies {
 	runtimeOnly project(':fcli-fod')
 	runtimeOnly project(':fcli-sast')
 	runtimeOnly project(':fcli-dast')
-	runtimeOnly project(':fcli-workflow')
+	runtimeOnly project(':fcli-run')
 	
 	// Logging dependencies
 	runtimeOnly("ch.qos.logback:logback-classic:1.2.6")

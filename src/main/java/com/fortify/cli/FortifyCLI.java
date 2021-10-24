@@ -12,9 +12,9 @@ import org.apache.commons.logging.impl.SimpleLog;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
-import com.fortify.cli.command.FCLIRootCommand;
-import com.fortify.cli.command.util.DefaultValueProvider;
-import com.fortify.cli.command.util.SubcommandOf;
+import com.fortify.cli.common.command.FCLIRootCommand;
+import com.fortify.cli.common.command.util.DefaultValueProvider;
+import com.fortify.cli.common.command.util.SubcommandOf;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
@@ -70,12 +70,15 @@ public class FortifyCLI {
 			                      Collectors.mapping(context::getBean, Collectors.toList())));
 		*/
 		var parentToSubcommandsMap = new LinkedHashMap<Class<?>, List<Object>>();
-		beanDefinitions.stream().sorted(FortifyCLI::compare).forEach(bd -> {
-			//System.out.println("Parent: "+getParentCommandClazz(bd)+", child: "+bd.getBeanType());
-			addMultiValueEntry(
-				parentToSubcommandsMap, 
-				getParentCommandClazz(bd),
-				context.getBean(bd)); } );
+		beanDefinitions.stream()
+			// TODO Filter by enabled-products 
+			.sorted(FortifyCLI::compare)
+			.forEach(bd ->
+				addMultiValueEntry(
+						parentToSubcommandsMap, 
+						getParentCommandClazz(bd),
+						context.getBean(bd)));
+		// TODO Remove commands that do not have any runnable or callable children (because those have been filtered based on product 
 		return parentToSubcommandsMap;
 	}
 

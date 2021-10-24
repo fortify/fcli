@@ -25,7 +25,7 @@
 package com.fortify.cli.ssc.command.entity;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.SubcommandOf;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand;

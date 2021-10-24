@@ -24,13 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.entity;
 
-import com.fortify.cli.command.entity.RootCreateCommand;
-import com.fortify.cli.command.entity.RootDeleteCommand;
-import com.fortify.cli.command.entity.RootDownloadCommand;
-import com.fortify.cli.command.entity.RootGetCommand;
-import com.fortify.cli.command.entity.RootUpdateCommand;
-import com.fortify.cli.command.entity.RootUploadCommand;
-import com.fortify.cli.command.util.SubcommandOf;
+import com.fortify.cli.common.command.entity.RootCreateCommand;
+import com.fortify.cli.common.command.entity.RootDeleteCommand;
+import com.fortify.cli.common.command.entity.RootDownloadCommand;
+import com.fortify.cli.common.command.entity.RootGetCommand;
+import com.fortify.cli.common.command.entity.RootUpdateCommand;
+import com.fortify.cli.common.command.entity.RootUploadCommand;
+import com.fortify.cli.common.command.util.SubcommandOf;
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
