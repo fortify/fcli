@@ -22,12 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.command.entity;
+package com.fortify.cli.ssc.command.api;
 
+import com.fortify.cli.common.command.api.ApiDeleteCommand;
+import com.fortify.cli.common.command.api.ApiGetCommand;
+import com.fortify.cli.common.command.api.ApiPostCommand;
+import com.fortify.cli.common.command.api.ApiPutCommand;
 import com.fortify.cli.common.command.util.SubcommandOf;
-import com.fortify.cli.common.command.entity.RootApiCommand.*;
-import java.lang.String;
-
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;

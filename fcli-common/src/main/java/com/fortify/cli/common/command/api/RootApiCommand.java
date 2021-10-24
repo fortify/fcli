@@ -22,55 +22,20 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.command.entity;
+package com.fortify.cli.common.command.api;
 
+import com.fortify.cli.common.command.FCLIRootCommand;
+import com.fortify.cli.common.command.RootCommandsOrderByGroup;
 import com.fortify.cli.common.command.util.SubcommandOf;
-import com.fortify.cli.common.command.entity.RootApiCommand.*;
-import java.lang.String;
 
-
+import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 
-public class FoDApiCommands {
-    private static final String NAME = "fod";
-	private static final String DESC = "FoD REST API";
 
-    private static void workInProgress(String from){
-        System.out.println(String.format("Work in progress. (%s)", from));
-    }
-
-    @Singleton
-	@SubcommandOf(ApiGetCommand.class)
-	@Command(name = NAME, description = "GET data by calling a "+DESC)
-	public static final class Get implements Runnable{
-		@Override
-        public void run() { workInProgress("GET FoD"); }
-	}
-
-    @Singleton
-	@SubcommandOf(ApiPostCommand.class)
-	@Command(name = NAME, description = "POST data to a "+DESC)
-	public static final class Post implements Runnable{
-		@Override
-        public void run() { workInProgress("POST FoD"); }
-	}
-
-    @Singleton
-	@SubcommandOf(ApiPutCommand.class)
-	@Command(name = NAME, description = "PUT/Update data to a "+DESC)
-	public static final class Put implements Runnable{
-		@Override
-        public void run() { workInProgress("PUT FoD"); }
-	}
-
-    @Singleton
-	@SubcommandOf(ApiDeleteCommand.class)
-	@Command(name = NAME, description = "DELETE data from a "+DESC)
-	public static final class Delete implements Runnable{
-		@Override
-        public void run() { workInProgress("DELETE FoD"); }
-	}
-
-
+@Singleton
+@SubcommandOf(FCLIRootCommand.class)
+@Command(name = "api", description = "Make arbitrary calls to Fortify REST APIs")
+@Order(RootCommandsOrderByGroup.API)
+public class RootApiCommand {
 }
