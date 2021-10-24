@@ -25,7 +25,7 @@
 package com.fortify.cli.ssc.command;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.command.session.consumer.LoginSessionConsumerMixin;
+import com.fortify.cli.common.command.session.consumer.LoginSessionConsumerMixin;
 import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

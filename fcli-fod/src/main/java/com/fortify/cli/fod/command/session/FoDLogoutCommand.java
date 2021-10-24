@@ -24,9 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.session;
 
-import com.fortify.cli.command.session.logout.AbstractSessionLogoutCommand;
-import com.fortify.cli.command.session.logout.RootLogoutCommand;
-import com.fortify.cli.command.util.SubcommandOf;
+import com.fortify.cli.common.command.session.logout.AbstractSessionLogoutCommand;
+import com.fortify.cli.common.command.session.logout.RootLogoutCommand;
+import com.fortify.cli.common.command.util.SubcommandOf;
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;

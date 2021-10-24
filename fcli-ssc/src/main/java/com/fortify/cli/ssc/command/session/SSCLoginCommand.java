@@ -24,12 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.command.session;
 
-import com.fortify.cli.command.session.login.AbstractSessionLoginCommand;
-import com.fortify.cli.command.session.login.LoginConnectionOptions;
-import com.fortify.cli.command.session.login.LoginUserCredentialOptions;
-import com.fortify.cli.command.session.login.RootLoginCommand;
-import com.fortify.cli.command.util.SubcommandOf;
-import com.fortify.cli.session.ILoginHandler;
+import com.fortify.cli.common.command.session.login.AbstractSessionLoginCommand;
+import com.fortify.cli.common.command.session.login.LoginConnectionOptions;
+import com.fortify.cli.common.command.session.login.LoginUserCredentialOptions;
+import com.fortify.cli.common.command.session.login.RootLoginCommand;
+import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.session.ILoginHandler;
 import com.fortify.cli.ssc.rest.data.SSCConnectionConfig;
 import com.fortify.cli.ssc.rest.unirest.SSCLoginHandler;
 
