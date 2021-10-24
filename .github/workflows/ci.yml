@@ -13,15 +13,67 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - run: ./gradlew build
-      - uses: actions/upload-artifact@v2
+      - name: Check-out source code
+        uses: actions/checkout@v2
+        
+      - name: PROD - Prepare GitHub release
+        id: create_prod_release
+        uses: GoogleCloudPlatform/release-please-action@v2
+        if: github.ref == 'refs/heads/main'
         with:
-          path: build/libs/fcli.jar
+          command: github-release
+          release-type: simple
+          package-name: ${{ github.event.repository.name }}  
+          
+      - name: PROD - Define release info
+        if: steps.create_prod_release.outputs.release_created
+        run: |
+          tag=${{steps.create_prod_release.outputs.tag_name}}
+          version=${{steps.create_prod_release.outputs.version}}
+          major=${{steps.create_prod_release.outputs.major}}
+          minor=${{steps.create_prod_release.outputs.minor}}
+          patch=${{steps.create_prod_release.outputs.patch}}  
+          echo DO_BUILD=true >> $GITHUB_ENV
+          echo DO_RELEASE=true >> $GITHUB_ENV
+          echo DO_PROD_RELEASE=true >> $GITHUB_ENV
+          echo RELEASE_TAG=${tag} >> $GITHUB_ENV
+          echo RELEASE_VERSION=${version} >> $GITHUB_ENV
+          
+      - name: DEV - Define release info
+        if: startsWith(github.ref, 'refs/heads/') && !env.DO_PROD_RELEASE
+        run: |
+          branch="${GITHUB_REF#refs/heads/}"
+          tag="dev_${branch//[^a-zA-Z0-9_.-]/.}" # Replace all special characters by a dot
+          version="0.$(date +'%Y%m%d.%H%M%S')-${tag}"
+          echo DO_BUILD=true >> $GITHUB_ENV # We always want to do a build if we're building a branch
+          echo BRANCH=${branch} >> $GITHUB_ENV
+          echo RELEASE_TAG=${tag} >> $GITHUB_ENV
+          echo RELEASE_VERSION=${version} >> $GITHUB_ENV
+          
+          if git ls-remote --exit-code origin refs/tags/${tag} >/dev/null 2>&1; then
+            echo "Found tag ${tag}, development release will be published"
+            echo DO_RELEASE=true >> $GITHUB_ENV
+            echo DO_DEV_RELEASE=true >> $GITHUB_ENV
+          else 
+            echo "Tag ${tag} does not exist, no development release will be published"
+          fi 
+      
+      - name: Build release ${{env.RELEASE_VERSION}}
+        if: env.DO_BUILD
+        run: ./gradlew clean build dist distThirdParty -Pversion=%{{
+        
+      - name: Publish build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: build/dist/*
+          
+    outputs:
+      do_release: ${{ env.DO_RELEASE }}
+      do_dev_release: ${{ env.DO_RELEASE }}
+      release_tag: ${{ env.RELEASE_TAG }}
 
   native_linux:
     name: native-image-linux
-    #if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-18.04
     steps:
@@ -82,7 +134,7 @@ jobs:
         with:
           path: ./native-image
 
-  release_win:
+  native_win:
     name: native-image-win
     needs: build
     runs-on: windows-2019
@@ -120,3 +172,50 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         path: ./native-image
+        
+  release:
+    name: release
+    needs: [build, native_linux, native_mac, native_win]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check-out source code
+        uses: actions/checkout@v2
+        
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: ./
+          
+      - name: PROD - Prepare release PR
+        uses: GoogleCloudPlatform/release-please-action@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          command: release-pr
+          release-type: simple
+          package-name: ${{ github.event.repository.name }}
+          
+      - name: DEV - Prepare GitHub release 
+        if: needs.build.outputs.do_dev_release
+        run: |
+          gh release delete ${{ needs.build.outputs.release_tag }} -y || true
+          gh release create ${{ needs.build.outputs.release_tag }} -p -t "Development Release - ${GITHUB_REF#refs/heads/} branch" -n 'See `Assets` section below for latest build artifacts'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: DEV - Update ${{ needs.build.outputs.release_tag }} tag
+        uses: richardsimko/update-tag@v1
+        if: needs.build.outputs.do_dev_release
+        with:
+          tag_name: ${{ needs.build.outputs.release_tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          
+      - name: Upload assets to release
+        if: needs.build.outputs.do_release
+        run: |
+          files=$(find "./artifact" -type f -printf "%p ")
+          gh release upload "${{ needs.build.outputs.release_tag }}" $files --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     
+     
