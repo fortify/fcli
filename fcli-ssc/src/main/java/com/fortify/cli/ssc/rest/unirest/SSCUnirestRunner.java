@@ -33,7 +33,7 @@ import java.util.Date;
 import org.apache.commons.codec.binary.Base64;
 
 import com.fortify.cli.common.rest.data.BasicUserCredentialsConfig;
-import com.fortify.cli.common.rest.unirest.AbstractUnirestRunner;
+import com.fortify.cli.common.rest.unirest.AbstractLoginSessionUnirestRunner;
 import com.fortify.cli.ssc.rest.data.SSCConnectionConfig;
 import com.fortify.cli.ssc.rest.data.SSCLoginSessionData;
 import com.fortify.cli.ssc.rest.data.SSCTokenRequest;
@@ -45,7 +45,7 @@ import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
-public class SSCUnirestRunner extends AbstractUnirestRunner<SSCLoginSessionData> {
+public class SSCUnirestRunner extends AbstractLoginSessionUnirestRunner<SSCLoginSessionData> {
 	@Override
 	protected void configure(String loginSessionName, SSCLoginSessionData loginSessionData, UnirestInstance unirestInstance) {
 		SSCConnectionConfig config = loginSessionData.getConfig();

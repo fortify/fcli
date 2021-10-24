@@ -26,23 +26,74 @@ package com.fortify.cli.dast.rest.unirest;
 
 import java.util.function.Function;
 
-import com.fortify.cli.common.rest.unirest.IUnirestRunner;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.rest.unirest.UnirestRunner;
+import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public class SCDastUnirestRunner implements IUnirestRunner {
-
-	@Override
+public abstract class SCDastUnirestRunner {
+	@Getter @Inject private UnirestRunner unirestRunner;
+	@Getter @Inject private SSCUnirestRunner sscUnirestRunner;
+	
 	public <R> R runWithUnirest(String sscLoginSessionName, Function<UnirestInstance, R> runner) {
-		// To get token from SSC Unirest instance: 
-		// System.out.println(unirest.config().getDefaultHeaders().get("Authorization").stream().filter(h->h.startsWith("FortifyToken")).findFirst().orElseThrow());
-		
+		return sscUnirestRunner.runWithUnirest(sscLoginSessionName, sscUnirest -> {
+			String scDastApiUrl = getSCDastApiUrlFromSSC(sscUnirest);
+			String authHeader = sscUnirest.config().getDefaultHeaders().get("Authorization").stream().filter(h->h.startsWith("FortifyToken")).findFirst().orElseThrow();
+			return unirestRunner.runWithUnirest(scDastUnirest->{
+				scDastUnirest.config().defaultBaseUrl(scDastApiUrl).setDefaultHeader("Authorization", authHeader);
+				return runner.apply(scDastUnirest);
+			});
+		});
+	}
+
+	private String getSCDastApiUrlFromSSC(UnirestInstance sscUnirest) {
+		ObjectNode configData = sscUnirest.get("/api/v1/configuration?group=edast").asObject(ObjectNode.class).getBody(); // TODO Check response code
+		System.out.println(configData.toPrettyString());
+		//unirestRunner.getObjectMapper()
+		//configData.get("data").get("properties").spliterator().h(p->p.get("name"))
+		// TODO Get SC DAST URL from response; see sample output below
 		return null;
 	}
 	
-	
-	
+/*
+{
+  "data": {
+    "properties": [
+      {
+        "name": "edast.enabled",
+        "value": "true",
+        "group": "edast",
+        "subGroup": "",
+        "description": "Enable ScanCentral DAST",
+        "appliedAfterRestarting": false,
+        "version": 4,
+        "propertyType": "BOOLEAN",
+        "groupSwitchEnabled": true,
+        "required": false,
+        "protectedOption": false
+      },
+      {
+        "name": "edast.server.url",
+        "value": "http://52.175.230.110:5000/api/",
+        "group": "edast",
+        "subGroup": "",
+        "description": "ScanCentral DAST server URL",
+        "appliedAfterRestarting": false,
+        "version": 14,
+        "propertyType": "URL",
+        "groupSwitchEnabled": false,
+        "required": true,
+        "protectedOption": false
+      }
+    ]
+  },
+  "responseCode": 200
+}	
+*/
 }

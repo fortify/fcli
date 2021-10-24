@@ -26,22 +26,41 @@ package com.fortify.cli.common.rest.unirest;
 
 import java.util.function.Function;
 
-import kong.unirest.UnirestInstance;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-/**
- * This interface provides methods for running functions that take a
- * {@link UnirestInstance} as input.
- * 
- * @author Ruud Senden
- */
-public interface IUnirestRunner {
-	/**
-	 * Run the given runner with a {@link UnirestInstance} that has been configured
-	 * based on the data available in the given login session 
-	 * @param <R> Return type
-	 * @param loginSessionName Name of the login session to use
-	 * @param runner to perform the actual work with a given {@link UnirestInstance}
-	 * @return Return value of runner
-	 */
-	public <R> R runWithUnirest(String loginSessionName, Function<UnirestInstance, R> runner);
+import io.micronaut.core.annotation.ReflectiveAccess;
+import jakarta.inject.Inject;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestInstance;
+import kong.unirest.jackson.JacksonObjectMapper;
+import lombok.Getter;
+
+//TODO For now this class instantiates a new UnirestInstance on every call to runWithUnirest,
+//which should be OK when running individual commands but less performant when running
+//multiple commands in a composite command or workflow.
+@ReflectiveAccess
+public class UnirestRunner {
+	@Getter @Inject private ObjectMapper objectMapper;
+	
+	private final UnirestInstance createUnirestInstance() {
+		UnirestInstance instance = Unirest.spawnInstance();
+		instance.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
+		return instance;
+	}
+	
+	public <R> R runWithUnirest(Function<UnirestInstance, R> runner) {
+		if ( runner == null ) {
+			throw new IllegalStateException("Unirest runner may not be null");
+		}
+		try ( var unirestInstance = createUnirestInstance() ) {
+			return runner.apply(unirestInstance);
+		}
+	}
+	
+	public <R> R runWithUnirest(IUnirestConfigurer configurer, Function<UnirestInstance, R> runner) {
+		return runWithUnirest(unirest -> {
+			configurer.configure(unirest);
+			return runner.apply(unirest);
+		});
+	}
 }

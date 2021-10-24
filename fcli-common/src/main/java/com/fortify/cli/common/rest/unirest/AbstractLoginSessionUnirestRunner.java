@@ -42,8 +42,9 @@ import lombok.Getter;
 // TODO For now this class instantiates a new UnirestInstance on every call to runWithUnirest,
 //      which should be OK when running individual commands but less performant when running
 //      multiple commands in a composite command or workflow.
+// TODO Refactor to use UnirestRunner in combination with a LoginSessionUnirestConfigurer
 @ReflectiveAccess
-public abstract class AbstractUnirestRunner<D> implements IUnirestRunner {
+public abstract class AbstractLoginSessionUnirestRunner<D> {
 	@Getter @Inject private ObjectMapper objectMapper;
 	@Getter @Inject private LoginSessionHelper loginSessionHelper;
 	
@@ -82,7 +83,6 @@ public abstract class AbstractUnirestRunner<D> implements IUnirestRunner {
 	 * @return Return value of runner; note that this return value shouldn't contain any reference to the 
 	 *         {@link UnirestInstance} as that might be closed once this call returns.
 	 */
-	@Override
 	public <R> R runWithUnirest(String loginSessionName, Function<UnirestInstance, R> runner) {
 		D loginSessionData = getLoginSessionData(loginSessionName);
 		if ( loginSessionData==null ) { 
