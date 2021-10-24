@@ -1,4 +1,6 @@
 plugins {
+	id('com.github.jk1.dependency-license-report') version '1.16'
+	id "org.kordamp.gradle.markdown" version "2.2.0"
 	id("com.github.johnrengelman.shadow") version "7.0.0"
 	id("io.micronaut.application") version "2.0.6" apply false
 	id("io.micronaut.library") version "2.0.6" apply false
@@ -82,4 +84,24 @@ dependencies {
 	
 	// GraalVM dependency
 	compileOnly("org.graalvm.nativeimage:svm")
+}
+
+ext {
+	gradleHelpersLocation = "https://raw.githubusercontent.com/fortify-ps/gradle-helpers/1.6"
+	thirdPartyBaseName = "${rootProject.name}"
+}
+apply from: "${gradleHelpersLocation}/thirdparty-helper.gradle"
+apply from: "${gradleHelpersLocation}/readme2html.gradle"
+
+task dist(type: Copy) {
+	dependsOn 'build', 'readme2html'
+	from "${buildDir}/html"
+	from("${projectDir}") {
+		include "config/**/*"
+		include "LICENSE.TXT"
+	}
+	from("${buildDir}/${libsDirName}") {
+		include "${rootProject.name}.jar"
+	}
+	into "$buildDir/dist"
 }
