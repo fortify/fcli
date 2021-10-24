@@ -224,5 +224,12 @@ jobs:
           gh release upload "${{ needs.build.outputs.release_tag }}" $files --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Delete artifacts if uploaded to release
+        if: needs.build.outputs.do_release
+        uses: geekyeggo/delete-artifact@v1
+        with:
+          name: artifact
+          failOnError: false
      
      
