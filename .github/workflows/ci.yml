@@ -89,19 +89,22 @@ jobs:
           path: ./
 
       - name: Create native fcli
-        run: mkdir -p native-image/linux && native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar native-image/linux/fcli
+        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
         
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
         with:
-          file: native-image/linux/fcli
+          file: fcli
         
       - name: Basic test of native fcli
-        run: ./native-image/linux/fcli --help && ./native-image/linux/fcli get --help
+        run: ./fcli --help && ./fcli get --help
+        
+      - name: Package native fcli
+        run: tar -zcvf fcli-linux.tgz ./fcli
 
       - uses: actions/upload-artifact@v2
         with:
-          path: ./native-image
+          path: ./fcli-linux.tgz
           
   native_mac:
     name: native-image-mac
@@ -120,19 +123,22 @@ jobs:
           path: ./
 
       - name: Create native fcli
-        run: mkdir -p native-image/mac && native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar native-image/mac/fcli
+        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
        
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
         with:
-          file: native-image/mac/fcli
+          file: fcli
         
       - name: Basic test of native fcli
-        run: ./native-image/mac/fcli --help && ./native-image/mac/fcli get --help
+        run: ./fcli --help && ./fcli get --help
+        
+      - name: Package native fcli
+        run: tar -zcvf fcli-mac.tgz ./fcli
 
       - uses: actions/upload-artifact@v2
         with:
-          path: ./native-image
+          path: ./fcli-mac.tgz
 
   native_win:
     name: native-image-win
@@ -153,25 +159,26 @@ jobs:
     - name: Create native fcli
       run: >-
         "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-        mkdir native-image\win &&
-        ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar native-image\win\fcli
+        ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar fcli
       shell: cmd
 
       
     - name: Compress native fcli
       uses: svenstaro/upx-action@v2
       with:
-        file: native-image\win\fcli.exe
+        file: fcli.exe
       
-
     - name: Basic test of native fcli
       run: |
-        .\native-image\win\fcli.exe --help 
-        .\native-image\win\fcli.exe get --help
+        .\fcli.exe --help 
+        .\fcli.exe get --help
+        
+    - name: Package native fcli
+      run: 7z a fcli-windows.zip fcli.exe
 
     - uses: actions/upload-artifact@v2
       with:
-        path: ./native-image
+        path: ./fcli-windows.zip
         
   release:
     name: release
