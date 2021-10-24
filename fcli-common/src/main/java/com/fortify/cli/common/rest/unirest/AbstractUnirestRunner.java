@@ -64,6 +64,9 @@ public abstract class AbstractUnirestRunner<D> implements IUnirestRunner {
 	 *         {@link UnirestInstance} as that might be closed once this call returns.
 	 */
 	public <R> R runWithUnirest(String loginSessionName, D loginSessionData, Function<UnirestInstance, R> runner) {
+		if ( loginSessionData == null ) {
+			throw new IllegalStateException("Login session data may not be null");
+		}
 		try ( var unirestInstance = createUnirestInstance() ) {
 			_configure(loginSessionName, loginSessionData, unirestInstance);
 			return runner.apply(unirestInstance);
@@ -81,7 +84,11 @@ public abstract class AbstractUnirestRunner<D> implements IUnirestRunner {
 	 */
 	@Override
 	public <R> R runWithUnirest(String loginSessionName, Function<UnirestInstance, R> runner) {
-		return runWithUnirest(loginSessionName, getLoginSessionData(loginSessionName), runner);
+		D loginSessionData = getLoginSessionData(loginSessionName);
+		if ( loginSessionData==null ) { 
+			throw new IllegalStateException("No active login session "+loginSessionName+" found for "+getLoginSessionType()); 
+		}
+		return runWithUnirest(loginSessionName, loginSessionData, runner);
 	}
 	
 	/**

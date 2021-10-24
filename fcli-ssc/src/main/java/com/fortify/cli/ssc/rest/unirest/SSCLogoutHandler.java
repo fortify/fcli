@@ -27,12 +27,10 @@ package com.fortify.cli.ssc.rest.unirest;
 import com.fortify.cli.common.session.ILogoutHandler;
 import com.fortify.cli.common.session.LoginSessionHelper;
 import com.fortify.cli.ssc.rest.data.SSCLoginSessionData;
-import com.fortify.cli.ssc.rest.data.SSCTokenResponse;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import kong.unirest.RequestBodyEntity;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
@@ -44,19 +42,15 @@ public class SSCLogoutHandler implements ILogoutHandler {
 	@Override
 	public final void logout(String loginSessionName) {
 		SSCLoginSessionData data = loginSessionHelper.getData(getLoginSessionType(), loginSessionName, SSCLoginSessionData.class);
-		unirestRunner.runWithUnirest(loginSessionName, unirestInstance->logout(unirestInstance, data));
+		if ( data.hasActiveCachedTokenResponse() ) {
+			unirestRunner.runWithUnirest(loginSessionName, unirestInstance->logout(unirestInstance, data));
+		}
 	}
 	
 	private final Void logout(UnirestInstance unirestInstance, SSCLoginSessionData loginSessionData) {
 		try {
-			SSCTokenResponse cachedTokenResponse = loginSessionData.getCachedTokenResponse();
-			if ( cachedTokenResponse != null ) {
-				String token = String.valueOf(cachedTokenResponse.getData().getToken());
-				String body = "{\"tokens\": [\""+token+"\"]}";
-				System.out.println(body);
-				RequestBodyEntity request = unirestInstance.post("/api/v1/tokens/action/revoke").body(body).contentType("application/json");
-				System.out.println(request.asString().getBody());
-			}
+			// TODO Current SSC versions don't allow current token to be invalidated
+			// TODO Invalidate token if username/password are available in login  session data 
 		} catch ( RuntimeException e ) {
 			System.out.println("Error deserializing token:" + e.getMessage());
 		}

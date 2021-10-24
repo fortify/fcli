@@ -52,10 +52,7 @@ public final class LoginSessionHelper {
 	@SneakyThrows // TODO Do we want to use SneakyThrows?
 	public final <T> T getData(String loginSessionType, String loginSessionName, Class<T> returnType) {
 		String loginSessionDataJson = FcliHomeHelper.readSecuredFile(Paths.get("loginSessions", loginSessionType, loginSessionName), false);
-		if ( loginSessionDataJson==null ) {
-			throw new IllegalArgumentException(String.format("Login session %s for %s does not exist", loginSessionName, loginSessionType));
-		}
-		return objectMapper.readValue(loginSessionDataJson, returnType);
+		return loginSessionDataJson==null ? null : objectMapper.readValue(loginSessionDataJson, returnType);
 	}
 	
 	public final boolean exists(String loginSessionType, String loginSessionName) {

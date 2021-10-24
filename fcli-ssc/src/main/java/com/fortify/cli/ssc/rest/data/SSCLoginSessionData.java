@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.rest.data;
 
+import java.util.Date;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fortify.cli.common.rest.data.BasicConnectionConfig;
@@ -42,5 +44,10 @@ public class SSCLoginSessionData implements IBasicConnectionConfigProvider {
 	@Override @JsonIgnore
 	public BasicConnectionConfig getBasicConnectionConfig() {
 		return config.getNonNullBasicConnectionConfig();
+	}
+	
+	@JsonIgnore
+	public final boolean hasActiveCachedTokenResponse() {
+		return cachedTokenResponse!=null && cachedTokenResponse.getData()!=null && cachedTokenResponse.getData().getTerminalDate().after(new Date()); 
 	}
 }
