@@ -48,9 +48,15 @@ import kong.unirest.UnirestInstance;
 public class SSCUnirestRunner extends AbstractUnirestRunner<SSCLoginSessionData> {
 	@Override
 	protected void configure(String loginSessionName, SSCLoginSessionData loginSessionData, UnirestInstance unirestInstance) {
-		char[] token = null;
 		SSCConnectionConfig config = loginSessionData.getConfig();
-		// TODO Add null check on config? Shouldn't happen, but still...
+		if ( config==null ) {
+			throw new IllegalStateException("SSC connection configuration may not be null");
+		}
+		setTokenHeader(unirestInstance, getSSCLoginToken(loginSessionName, loginSessionData, unirestInstance, config));
+	}
+
+	private char[] getSSCLoginToken(String loginSessionName, SSCLoginSessionData loginSessionData, UnirestInstance unirestInstance, SSCConnectionConfig config) {
+		char[] token = null;
 		if ( config.getToken()!=null ) {
 			token = toBase64Token(loginSessionData.getConfig().getToken());
 		} else {
@@ -73,7 +79,7 @@ public class SSCUnirestRunner extends AbstractUnirestRunner<SSCLoginSessionData>
 			getLoginSessionHelper().saveData(getLoginSessionType(), loginSessionName, loginSessionData);
 			token = tokenResponse.getData().getToken();
 		}
-		setTokenHeader(unirestInstance, token);
+		return token;
 	}
 	
 	/**
@@ -118,37 +124,6 @@ public class SSCUnirestRunner extends AbstractUnirestRunner<SSCLoginSessionData>
 				.body(tokenRequest)
 				.asObject(SSCTokenResponse.class).getBody();
 	}
-	
-	/*
-	@Override
-	protected Object login() {
-		SSCConnectionConfig config = getRestConnectionConfig();
-		SSCTokenResponse tokenResponse = null;
-		if ( config.getAuthType()==SSCAuthType.USER ) {
-			tokenResponse = authenticateWithUserCredentials(config);
-			if ( !config.isAllowRenew() ) {
-				clearUserCredentials(config);
-			}
-		}
-		return new SSCLoginSessionData(config, tokenResponse);
-	}
-	
-	@Override
-	public void logout(SSCLoginSessionData sessionData) {
-		var cachedTokenResponse = sessionData.getCachedTokenResponse();
-		var tokenData = cachedTokenResponse==null ? null : cachedTokenResponse.getData();
-		if ( tokenData!=null ) {
-			logout(tokenData);
-		}
-	}
-
-	private void logout(SSCTokenData tokenData) {
-		if ( tokenData.getTerminalDate().after(new Date())) {
-			System.out.println("Logging out from SSC");
-		}
-	}
-		
-	*/
 
 	@Override
 	public final String getLoginSessionType() {
