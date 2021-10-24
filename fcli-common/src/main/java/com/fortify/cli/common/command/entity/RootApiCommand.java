@@ -22,15 +22,42 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command;
+package com.fortify.cli.common.command.entity;
 
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		SESSION  = 200,
-		ENTITY   = 300,
-		SCAN     = 400,
-		RUN      = 500,
-		SOFTWARE = 600,
-		API = 700;
+import com.fortify.cli.common.command.FCLIRootCommand;
+import com.fortify.cli.common.command.RootCommandsOrderByGroup;
+import com.fortify.cli.common.command.util.SubcommandOf;
+
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import jakarta.inject.Singleton;
+import picocli.CommandLine.Command;
+
+
+@Singleton
+@SubcommandOf(FCLIRootCommand.class)
+@Command(name = "api", description = "Make calls to Fortify REST APIs")
+@Order(RootCommandsOrderByGroup.API)
+public class RootApiCommand {
+    
+    @Singleton @ReflectiveAccess
+	@SubcommandOf(RootApiCommand.class)
+	@Command(name = "delete", description = "Delete from a Fortify API.")
+	public static class ApiDeleteCommand {}
+
+    @Singleton @ReflectiveAccess
+	@SubcommandOf(RootApiCommand.class)
+	@Command(name = "get", description = "Get data from a Fortify API.")
+	public static class ApiGetCommand {}
+	
+	@Singleton @ReflectiveAccess
+	@SubcommandOf(RootApiCommand.class)
+	@Command(name = "post", description = "POST/create data to a Fortify API.")
+	public static class ApiPostCommand {}
+	
+	@Singleton @ReflectiveAccess
+	@SubcommandOf(RootApiCommand.class)
+	@Command(name = "put", description = "PUT/update data to a Fortify API.")
+	public static class ApiPutCommand {}
+	
 }
