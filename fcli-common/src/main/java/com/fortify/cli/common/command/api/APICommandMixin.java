@@ -40,7 +40,7 @@ public class APICommandMixin {
 	@Getter private String httpMethod;
 	
 	@Option(names = {"--data", "-d"}, required = false)
-	@Getter private String data;
+	@Getter private String data; // TODO Add ability to read data from file
 	
 	// TODO Add options for content-type, arbitrary headers, ...?
 	
