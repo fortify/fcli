@@ -37,7 +37,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public abstract class SCDastUnirestRunner {
+public class SCDastUnirestRunner {
 	@Getter @Inject private UnirestRunner unirestRunner;
 	@Getter @Inject private SSCUnirestRunner sscUnirestRunner;
 	
