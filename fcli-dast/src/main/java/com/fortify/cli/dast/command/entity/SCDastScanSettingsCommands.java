@@ -25,12 +25,15 @@
 package com.fortify.cli.dast.command.entity;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.command.entity.scdast.SCDastScanSettingsOptions;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
 
 public class SCDastScanSettingsCommands {
     private static final String NAME = "scan-settings";
@@ -38,11 +41,32 @@ public class SCDastScanSettingsCommands {
 
     @Singleton
     @SubcommandOf(SCDastEntityRootCommands.SCDASTGetCommand.class)
-    @CommandLine.Command(name = NAME, description = "Get " + DESC + " from SC DAST")
+    @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
     public static final class Get extends AbstractSCDastUnirestRunnerCommand {
+        @ArgGroup(exclusive = false, heading = "Filter scan settings:%n", order = 1)
+        @Getter private SCDastScanSettingsOptions scanSettingsOptions;
+
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
-            System.out.println(unirest.get("api/v2/application-version-scan-settings/scan-settings-summary-list")
+            String urlPath = "/api/v2/application-version-scan-settings/scan-settings-summary-list";
+            String urlParams = "";
+
+            if(scanSettingsOptions != null){
+                if (scanSettingsOptions.getSearchText() != null){
+                    urlParams += String.format("searchText=%s&",scanSettingsOptions.getSearchText());
+                }
+                if(scanSettingsOptions.getStartDate() != null){
+                    urlParams += String.format("modifiedStartDate=%s&",scanSettingsOptions.getStartDate());
+                }
+                if(scanSettingsOptions.getEndDate() != null){
+                    urlParams += String.format("modifiedEndDate=%s&",scanSettingsOptions.getEndDate());
+                }
+                if(scanSettingsOptions.getScanType() != null){
+                    urlParams += String.format("scanType=%s&",scanSettingsOptions.getScanType());
+                }
+            }
+
+            System.out.println(unirest.get(urlPath + "?" + urlParams)
                     .accept("application/json")
                     .header("Content-Type", "application/json")
                     .asObject(ObjectNode.class)

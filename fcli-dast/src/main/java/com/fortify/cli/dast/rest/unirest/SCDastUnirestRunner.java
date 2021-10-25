@@ -53,7 +53,7 @@ public class SCDastUnirestRunner {
 				scDastUnirest.config()
 						.defaultBaseUrl(scDastApiUrl)
 						.setDefaultHeader("Authorization", authHeader)
-						.verifySsl(false);
+						.verifySsl(false); //TODO: Variabilize
 				return runner.apply(scDastUnirest);
 			});
 		});
