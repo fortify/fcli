@@ -26,9 +26,11 @@ package com.fortify.cli.common.command.session.login;
 
 import com.fortify.cli.common.rest.data.BasicUserCredentialsConfig;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
+@ReflectiveAccess
 public class LoginUserCredentialOptions {
 	@Option(names = {"--user", "-u"}, required = true)
 	@Getter protected String user;

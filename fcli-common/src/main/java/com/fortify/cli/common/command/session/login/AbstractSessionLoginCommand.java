@@ -38,6 +38,7 @@ public abstract class AbstractSessionLoginCommand<C> extends AbstractCommandWith
 	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
     @Getter protected LoginSessionNameOptions loginSessionNameOptions;
 	
+	@ReflectiveAccess
 	private static class LoginSessionNameOptions {
 		@Option(names = {"--login-session-name", "-n"}, required = false, defaultValue = "default")
 		@Getter protected String loginSessionName;
