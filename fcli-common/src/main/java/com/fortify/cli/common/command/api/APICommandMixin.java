@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.command.api;
 
+import io.micronaut.core.util.StringUtils;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -31,7 +32,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class APICommandMixin {
-	@Parameters(index = "0") String uri;
+	@Parameters(index = "0", arity = "1..1") String uri;
 	
 	@Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
 	@Getter private String httpMethod;
@@ -42,6 +43,9 @@ public class APICommandMixin {
 	// TODO Add options for content-type, arbitrary headers, ...?
 	
 	public final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
+		if ( StringUtils.isEmpty(uri) ) {
+			throw new IllegalArgumentException("Uri must be specified");
+		}
 		var request = unirest.request(httpMethod, uri);
 		// TODO Add Content-Type & accept headers
 		return data==null ? request : request.body(data);

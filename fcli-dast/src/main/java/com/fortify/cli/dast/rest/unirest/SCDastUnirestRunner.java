@@ -26,11 +26,14 @@ package com.fortify.cli.dast.rest.unirest;
 
 import java.util.function.Function;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.rest.unirest.UnirestRunner;
 import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
+import com.jayway.jsonpath.JsonPath;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import io.micronaut.core.util.StringUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
@@ -54,11 +57,19 @@ public class SCDastUnirestRunner {
 
 	private String getSCDastApiUrlFromSSC(UnirestInstance sscUnirest) {
 		ObjectNode configData = sscUnirest.get("/api/v1/configuration?group=edast").asObject(ObjectNode.class).getBody(); // TODO Check response code
-		System.out.println(configData.toPrettyString());
-		//unirestRunner.getObjectMapper()
-		//configData.get("data").get("properties").spliterator().h(p->p.get("name"))
-		// TODO Get SC DAST URL from response; see sample output below
-		return null;
+		
+		// TODO Can we simplify this without all these intermediate arrays? 
+		ArrayNode properties = JsonPath.read(configData, "$.data.properties");
+		ArrayNode scDastEnabledArray = JsonPath.read(properties, "$.[?(@.name=='edast.enabled')].value");
+		if ( !scDastEnabledArray.hasNonNull(0) || !scDastEnabledArray.get(0).asBoolean(false) ) {
+			throw new IllegalStateException("ScanCentral DAST must be enabled in SSC");
+		}
+		ArrayNode scDastUrlArray = JsonPath.read(properties, "$.[?(@.name=='edast.server.url')].value");
+		String scDastUrl = !scDastUrlArray.hasNonNull(0) ? null : scDastUrlArray.get(0).asText();
+		if ( StringUtils.isEmpty(scDastUrl) ) {
+			throw new IllegalStateException("SSC returns an empty ScanCentral DAST URL");
+		}
+		return scDastUrl;
 	}
 	
 /*

@@ -22,34 +22,45 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.dast.command.api;
+package com.fortify.cli.common.rest.jsonpath;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.command.api.APICommandMixin;
-import com.fortify.cli.common.command.api.RootApiCommand;
-import com.fortify.cli.common.command.util.SubcommandOf;
-import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
+import java.util.EnumSet;
+import java.util.Set;
 
-import jakarta.inject.Singleton;
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
+import com.jayway.jsonpath.spi.json.JsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
+import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
-@Singleton
-@SubcommandOf(RootApiCommand.class)
-@Command(name = "sc-dast", description = "Invoke ScanCentral DAST REST API") // TODO Do we create nested level? (i.e. sc dast instead of sc-dast)
-public final class SCDastApiCommand extends AbstractSCDastUnirestRunnerCommand {
-	@Mixin private APICommandMixin apiCommand;
-	
-	@Override
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		HttpRequest<?> request = apiCommand.prepareRequest(unirest);
-		System.out.println(request.getHttpMethod().name() + " " + request.getUrl());
-		var response = request.asObject(ObjectNode.class);
-		System.out.println(response.getStatus() + " " + response.getStatusText());
-		System.out.println(response.getBody());
-		return null;
+import io.micronaut.context.annotation.Context;
+import jakarta.inject.Inject;
+
+@Context
+public class JsonPathConfigurer {
+	@Inject
+	public JsonPathConfigurer(ObjectMapper objectMapper) {
+		Configuration.setDefaults(new Configuration.Defaults() {
+
+		    private final JsonProvider jsonProvider = new JacksonJsonNodeJsonProvider(objectMapper);
+		    private final MappingProvider mappingProvider = new JacksonMappingProvider(objectMapper);
+		      
+		    @Override
+		    public JsonProvider jsonProvider() {
+		        return jsonProvider;
+		    }
+
+		    @Override
+		    public MappingProvider mappingProvider() {
+		        return mappingProvider;
+		    }
+		    
+		    @Override
+		    public Set<Option> options() {
+		        return EnumSet.noneOf(Option.class);
+		    }
+		});
 	}
-    
 }
