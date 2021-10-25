@@ -56,11 +56,4 @@ public class UnirestRunner {
 			return runner.apply(unirestInstance);
 		}
 	}
-	
-	public <R> R runWithUnirest(IUnirestConfigurer configurer, Function<UnirestInstance, R> runner) {
-		return runWithUnirest(unirest -> {
-			configurer.configure(unirest);
-			return runner.apply(unirest);
-		});
-	}
 }
