@@ -25,7 +25,7 @@
 package com.fortify.cli.workflow.command;
 
 import com.fortify.cli.common.command.run.RootRunCommand;
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;

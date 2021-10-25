@@ -26,7 +26,7 @@ package com.fortify.cli.fod.command.api;
 
 import com.fortify.cli.common.command.api.APICommandMixin;
 import com.fortify.cli.common.command.api.RootApiCommand;
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;

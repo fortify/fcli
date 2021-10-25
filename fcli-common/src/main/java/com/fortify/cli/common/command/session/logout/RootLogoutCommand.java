@@ -29,7 +29,7 @@ import java.util.List;
 import com.fortify.cli.common.command.FCLIRootCommand;
 import com.fortify.cli.common.command.session.AbstractCommandWithLoginSessionHelper;
 import com.fortify.cli.common.command.session.SessionCommandsOrder;
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.session.LogoutHelper;
 
 import io.micronaut.core.annotation.Order;

@@ -26,7 +26,7 @@ package com.fortify.cli.common.command.config;
 
 import com.fortify.cli.common.command.FCLIRootCommand;
 import com.fortify.cli.common.command.RootCommandsOrderByGroup;
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;
@@ -34,7 +34,7 @@ import picocli.CommandLine.Command;
 
 @Singleton
 @SubcommandOf(FCLIRootCommand.class)
-@Command(name = "config", description = "Manage configuration settings for fcli and other tools")
+@Command(name = "config", description = "Manage configuration settings for fcli and other tools", sortOptions = true)
 @Order(RootCommandsOrderByGroup.CONFIG)
 public class RootConfigCommand {
 }

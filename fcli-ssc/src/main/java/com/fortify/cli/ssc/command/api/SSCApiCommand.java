@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.command.api;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.api.APICommandMixin;
 import com.fortify.cli.common.command.api.RootApiCommand;
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 
 import jakarta.inject.Singleton;

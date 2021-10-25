@@ -22,18 +22,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command.entity;
+package com.fortify.cli.common.command.util.annotation;
 
-import com.fortify.cli.common.command.FCLIRootCommand;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-import io.micronaut.core.annotation.Order;
-import jakarta.inject.Singleton;
-import picocli.CommandLine.Command;
+import jakarta.inject.Qualifier;
 
-@Singleton
-@SubcommandOf(FCLIRootCommand.class)
-@Command(name = "update", description = "Update data in various Fortify systems")
-@Order(EntityCommandsOrder.UPDATE)
-public class RootUpdateCommand {
+@Qualifier
+@Retention(RetentionPolicy.RUNTIME)
+public @interface SubcommandOf {
+	Class<?> value();
 }

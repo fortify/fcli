@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.entity;
 
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.fod.command.entity.FoDEntityRootCommands.FoDCreateCommand;
 import com.fortify.cli.fod.command.entity.FoDEntityRootCommands.FoDDeleteCommand;
 import com.fortify.cli.fod.command.entity.FoDEntityRootCommands.FoDGetCommand;

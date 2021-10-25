@@ -26,7 +26,7 @@ package com.fortify.cli.ssc.command.session;
 
 import com.fortify.cli.common.command.session.logout.AbstractSessionLogoutCommand;
 import com.fortify.cli.common.command.session.logout.RootLogoutCommand;
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;

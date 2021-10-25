@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.sast.command.scan;
 
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.sast.command.SastScanCommand;
 
 import io.micronaut.core.annotation.Order;

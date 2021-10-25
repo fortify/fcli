@@ -14,12 +14,18 @@ import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
 import com.fortify.cli.common.command.FCLIRootCommand;
 import com.fortify.cli.common.command.util.DefaultValueProvider;
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.AlphaFeature;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.alpha.AlphaFeaturesHelper;
+import com.fortify.cli.common.config.product.EnabledProductsHelper;
+import com.fortify.cli.common.config.product.Product;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -71,7 +77,10 @@ public class FortifyCLI {
 		*/
 		var parentToSubcommandsMap = new LinkedHashMap<Class<?>, List<Object>>();
 		beanDefinitions.stream()
-			// TODO Filter by enabled-products 
+		// TODO Instead of filtering disabled commands, it would be better to replace these with a generic, hidden command
+		//      that tells the user that the command has been disabled (and for what reason). Requires some more research 
+		//      though on how to proprly do this.
+			.filter(bd->isEnabled(context, bd)) 
 			.sorted(FortifyCLI::compare)
 			.forEach(bd ->
 				addMultiValueEntry(
@@ -80,6 +89,21 @@ public class FortifyCLI {
 						context.getBean(bd)));
 		// TODO Remove commands that do not have any runnable or callable children (because those have been filtered based on product 
 		return parentToSubcommandsMap;
+	}
+
+	private static boolean isEnabled(ApplicationContext context, BeanDefinition<?> bd) {
+		return isRequiredProductEnabled(context, bd) && isNotAlphaOrAllowed(context, bd);
+	}
+
+	private static boolean isNotAlphaOrAllowed(ApplicationContext context, BeanDefinition<?> bd) {
+		return !bd.hasAnnotation(AlphaFeature.class) || context.getBean(AlphaFeaturesHelper.class).isAlphaFeaturesEnabled();	
+	}
+	
+	private static boolean isRequiredProductEnabled(ApplicationContext context, BeanDefinition<?> bd) {
+		AnnotationValue<RequiresProduct> annotation = bd.getAnnotation(RequiresProduct.class);
+		if ( annotation==null ) { return true; }
+		var enabledProductsHelper = context.getBean(EnabledProductsHelper.class);
+		return enabledProductsHelper.isProductEnabled(annotation.enumValue(Product.class));
 	}
 
 	private static final Class<?> getParentCommandClazz(BeanDefinition<?> bd) {

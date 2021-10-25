@@ -22,18 +22,23 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command.entity;
+package com.fortify.cli.common.command.util.annotation;
 
-import com.fortify.cli.common.command.FCLIRootCommand;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import static java.lang.annotation.ElementType.TYPE;
 
-import io.micronaut.core.annotation.Order;
-import jakarta.inject.Singleton;
-import picocli.CommandLine.Command;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@Singleton
-@SubcommandOf(FCLIRootCommand.class)
-@Command(name = "update", description = "Update data in various Fortify systems")
-@Order(EntityCommandsOrder.UPDATE)
-public class RootUpdateCommand {
+import com.fortify.cli.common.config.product.Product;
+
+import jakarta.inject.Qualifier;
+
+@Qualifier
+@Retention(RetentionPolicy.RUNTIME)
+@Target(TYPE)
+// @Repeatable Potentially we could make this repeatable if we want to require multiple products, i.e. requires SC-SAST and SSC
+public @interface RequiresProduct {
+	Product value();
+	// Product[] or(); If we want to require one of multiple products, we could add an or-property
 }

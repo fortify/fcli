@@ -30,7 +30,7 @@ import com.fortify.cli.common.command.entity.RootDownloadCommand;
 import com.fortify.cli.common.command.entity.RootGetCommand;
 import com.fortify.cli.common.command.entity.RootUpdateCommand;
 import com.fortify.cli.common.command.entity.RootUploadCommand;
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;

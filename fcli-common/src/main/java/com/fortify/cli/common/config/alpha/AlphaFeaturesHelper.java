@@ -22,18 +22,33 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command.entity;
+package com.fortify.cli.common.config.alpha;
 
-import com.fortify.cli.common.command.FCLIRootCommand;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.FcliConfig;
 
-import io.micronaut.core.annotation.Order;
+import io.micronaut.core.util.StringUtils;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import picocli.CommandLine.Command;
 
 @Singleton
-@SubcommandOf(FCLIRootCommand.class)
-@Command(name = "update", description = "Update data in various Fortify systems")
-@Order(EntityCommandsOrder.UPDATE)
-public class RootUpdateCommand {
+public class AlphaFeaturesHelper {
+	private static final String CONFIG_KEY = "enable-alpha-features";
+	private final FcliConfig config;
+	
+	@Inject
+	public AlphaFeaturesHelper(FcliConfig config) {
+		this.config = config;
+	}
+	
+	public boolean isAlphaFeaturesEnabled() {
+		String configValue = config.get(CONFIG_KEY);
+		return StringUtils.isEmpty(configValue)
+			? false
+			: Boolean.valueOf(configValue);
+	}
+	
+	public void setAlphaFeaturesEnabled(boolean enabled) {
+		String configValue = Boolean.toString(enabled);
+		config.set(CONFIG_KEY, configValue);
+	}
 }

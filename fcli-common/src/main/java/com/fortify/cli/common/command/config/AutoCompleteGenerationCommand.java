@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.command.config;
 
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.AutoComplete;

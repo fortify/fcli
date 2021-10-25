@@ -22,18 +22,45 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command.entity;
+package com.fortify.cli.common.config.product;
 
-import com.fortify.cli.common.command.FCLIRootCommand;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import io.micronaut.core.annotation.Order;
+import com.fortify.cli.common.config.FcliConfig;
+
+import io.micronaut.core.util.StringUtils;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import picocli.CommandLine.Command;
 
 @Singleton
-@SubcommandOf(FCLIRootCommand.class)
-@Command(name = "update", description = "Update data in various Fortify systems")
-@Order(EntityCommandsOrder.UPDATE)
-public class RootUpdateCommand {
+public class EnabledProductsHelper {
+	private static final String CONFIG_KEY = "enabled-products";
+	private final FcliConfig config;
+	
+	@Inject
+	public EnabledProductsHelper(FcliConfig config) {
+		this.config = config;
+	}
+	
+	public Set<Product> getEnabledProducts() {
+		String configValue = config.get(CONFIG_KEY);
+		return StringUtils.isEmpty(configValue)
+			? new HashSet<>(Arrays.asList(Product.values()))
+			: Stream.of(configValue.split(",")).map(Product::valueOf).collect(Collectors.toSet());
+	}
+	
+	public void setEnabledProducts(Product[] products) {
+		String configValue = Stream.of(products).flatMap(Product::thisAndDependenciesStream)
+				.map(Product::name).collect(Collectors.joining( "," ));
+		config.set(CONFIG_KEY, configValue);
+	}
+
+	public boolean isProductEnabled(Optional<Product> optProduct) {
+		return optProduct.isEmpty() || getEnabledProducts().contains(optProduct.get());
+	}
 }

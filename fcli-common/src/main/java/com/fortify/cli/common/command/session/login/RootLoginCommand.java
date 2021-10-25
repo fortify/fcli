@@ -26,7 +26,7 @@ package com.fortify.cli.common.command.session.login;
 
 import com.fortify.cli.common.command.FCLIRootCommand;
 import com.fortify.cli.common.command.session.SessionCommandsOrder;
-import com.fortify.cli.common.command.util.SubcommandOf;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;

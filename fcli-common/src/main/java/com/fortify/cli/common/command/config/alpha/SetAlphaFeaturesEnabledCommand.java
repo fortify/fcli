@@ -22,38 +22,55 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.command.session;
+package com.fortify.cli.common.command.config.alpha;
 
-import com.fortify.cli.common.command.session.login.AbstractSessionLoginCommand;
-import com.fortify.cli.common.command.session.login.RootLoginCommand;
+import com.fortify.cli.common.command.config.RootConfigCommand;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.session.ILoginHandler;
+import com.fortify.cli.common.config.alpha.AlphaFeaturesHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Singleton;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
 
-@Singleton @ReflectiveAccess
-@SubcommandOf(RootLoginCommand.class)
-@Command(name = "fod", description = "Login to FoD", sortOptions = false)
-public class FoDLoginCommand extends AbstractSessionLoginCommand<Object> {
-
-	@Override
-	protected String getLoginSessionType() {
-		return "fod";
-	}
-
-	@Override
-	protected Object getConnectionConfig() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected ILoginHandler<Object> getLoginHandler() {
-		// TODO Auto-generated method stub
-		return null;
+// TODO Add list of products to help output
+// TODO Add completionCandidates
+@ReflectiveAccess
+@SubcommandOf(RootConfigCommand.class)
+@Command(name = "enable-alpha-features", description = {
+		"Configure whether alpha features of fcli are enabled or not.",
+		"Please be aware that alpha features may be highly unstable",
+		"or not functioning at all, and may never make it to an actual",
+		"production-level feature."
+		})
+public class SetAlphaFeaturesEnabledCommand implements Runnable {
+	private final AlphaFeaturesHelper helper;
+	
+	@Parameters(index = "0", arity = "1..1", description = "Valid values: true, false")
+	private boolean alphaFeaturesEnabled;
+	
+	@Inject
+	public SetAlphaFeaturesEnabledCommand(AlphaFeaturesHelper helper) {
+		this.helper = helper;
 	}
 	
+	@Override
+	public void run() {
+		helper.setAlphaFeaturesEnabled(alphaFeaturesEnabled);
+	}
+	/*
+	private static final class ProductConverter implements ITypeConverter<Product> {
+		@Override
+		public Product convert(String value) throws Exception {
+			return Product.valueOfIdentifier(value);
+		}
+	}
 	
+	private static final class ProductCompletionCandidates implements Iterable<String> {
+		@Override
+		public Iterator<String> iterator() {
+			return Arrays.asList(Product.identifiers()).iterator();
+		}
+	}
+	*/
 }
