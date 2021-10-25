@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.command.api;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -31,6 +32,7 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+@ReflectiveAccess
 public class APICommandMixin {
 	@Parameters(index = "0", arity = "1..1") String uri;
 	
