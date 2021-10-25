@@ -24,37 +24,20 @@
  ******************************************************************************/
 package com.fortify.cli.dast.command.entity;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.command.entity.RootGetCommand;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
-import kong.unirest.HttpResponse;
-import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
-public class SCDASTScanSettingsCommands {
-    private static final String NAME = "scan-settings";
-    private static final String DESC = "DAST scan settings";
-
+public class SCDastEntityRootCommands {
     @Singleton
-    @SubcommandOf(SCDASTEntityRootCommands.SCDASTGetCommand.class)
-    @CommandLine.Command(name = NAME, description = "Get " + DESC + " from SC DAST")
-    public static final class get extends AbstractSCDastUnirestRunnerCommand {
-        @SneakyThrows
-        protected Void runWithUnirest(UnirestInstance unirest) {
-            System.out.println(unirest.get("https://edast-ctrl.ekseed.org:8070/api/v2/application-version-scan-settings/scan-settings-summary-list")
-                    .accept("application/json")
-                    .header("Content-Type", "application/json")
-                    .asObject(ObjectNode.class)
-                    .getBody()
-                    .get("items")
-                    .toPrettyString());
-
-            return null;
-        }
-
-    }
-
-
+    @ReflectiveAccess
+    @SubcommandOf(RootGetCommand.class)
+    @Command(name = ProductIdentifiers.SC_DAST, description = "Get entity data from SC DAST")
+    @RequiresProduct(Product.SC_DAST) //TODO make it repeatable (should also require SSC) (Or perhaps, SC_DAST already requires SSC, so implied)
+    public static class SCDASTGetCommand {}
 }

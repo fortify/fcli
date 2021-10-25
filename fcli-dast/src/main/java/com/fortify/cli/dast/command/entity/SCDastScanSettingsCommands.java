@@ -24,20 +24,36 @@
  ******************************************************************************/
 package com.fortify.cli.dast.command.entity;
 
-import com.fortify.cli.common.command.entity.RootGetCommand;
-import com.fortify.cli.common.command.util.annotation.RequiresProduct;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.config.product.Product;
-import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import jakarta.inject.Singleton;
-import picocli.CommandLine.Command;
+import kong.unirest.UnirestInstance;
+import lombok.SneakyThrows;
+import picocli.CommandLine;
 
-public class SCDASTEntityRootCommands {
+public class SCDastScanSettingsCommands {
+    private static final String NAME = "scan-settings";
+    private static final String DESC = "DAST scan settings";
+
     @Singleton
-    @ReflectiveAccess
-    @SubcommandOf(RootGetCommand.class)
-    @Command(name = ProductIdentifiers.SC_DAST, description = "Get entity data from SC DAST")
-    @RequiresProduct(Product.SC_DAST) //TODO make it repeatable (should also require SSC) (Or perhaps, SC_DAST already requires SSC, so implied)
-    public static class SCDASTGetCommand {}
+    @SubcommandOf(SCDastEntityRootCommands.SCDASTGetCommand.class)
+    @CommandLine.Command(name = NAME, description = "Get " + DESC + " from SC DAST")
+    public static final class Get extends AbstractSCDastUnirestRunnerCommand {
+        @SneakyThrows
+        protected Void runWithUnirest(UnirestInstance unirest) {
+            System.out.println(unirest.get("api/v2/application-version-scan-settings/scan-settings-summary-list")
+                    .accept("application/json")
+                    .header("Content-Type", "application/json")
+                    .asObject(ObjectNode.class)
+                    .getBody()
+                    .get("items")
+                    .toPrettyString());
+
+            return null;
+        }
+
+    }
+
+
 }
