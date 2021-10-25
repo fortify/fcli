@@ -30,7 +30,10 @@ import com.fortify.cli.common.command.entity.RootDownloadCommand;
 import com.fortify.cli.common.command.entity.RootGetCommand;
 import com.fortify.cli.common.command.entity.RootUpdateCommand;
 import com.fortify.cli.common.command.entity.RootUploadCommand;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
@@ -38,31 +41,37 @@ import picocli.CommandLine.Command;
 public class FoDEntityRootCommands {
 	@Singleton
 	@SubcommandOf(RootGetCommand.class)
-	@Command(name = "fod", description = "Get entity data from FoD")
+	@Command(name = ProductIdentifiers.FOD, description = "Get entity data from FoD")
+	@RequiresProduct(Product.FOD)
 	public static final class FoDGetCommand {}
 	
 	@Singleton
 	@SubcommandOf(RootCreateCommand.class)
-	@Command(name = "fod", description = "Create entities in FoD")
+	@Command(name = ProductIdentifiers.FOD, description = "Create entities in FoD")
+	@RequiresProduct(Product.FOD)
 	public static final class FoDCreateCommand {}
 	
 	@Singleton
 	@SubcommandOf(RootUpdateCommand.class)
-	@Command(name = "fod", description = "Update entities in FoD")
+	@Command(name = ProductIdentifiers.FOD, description = "Update entities in FoD")
+	@RequiresProduct(Product.FOD)
 	public static final class FoDUpdateCommand {}
 	
 	@Singleton
 	@SubcommandOf(RootDeleteCommand.class)
-	@Command(name = "fod", description = "Delete entities from FoD")
+	@Command(name = ProductIdentifiers.FOD, description = "Delete entities from FoD")
+	@RequiresProduct(Product.FOD)
 	public static final class FoDDeleteCommand {}
 	
 	@Singleton
 	@SubcommandOf(RootUploadCommand.class)
-	@Command(name = "fod", description = "Upload data FoD")
+	@Command(name = ProductIdentifiers.FOD, description = "Upload data FoD")
+	@RequiresProduct(Product.FOD)
 	public static final class FoDUploadCommand {}
 	
 	@Singleton
 	@SubcommandOf(RootDownloadCommand.class)
-	@Command(name = "fod", description = "Download data from FoD")
+	@Command(name = ProductIdentifiers.FOD, description = "Download data from FoD")
+	@RequiresProduct(Product.FOD)
 	public static final class FoDDownloadCommand {}
 }

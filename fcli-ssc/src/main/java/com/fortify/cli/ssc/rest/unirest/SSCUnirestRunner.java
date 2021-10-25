@@ -32,6 +32,7 @@ import java.util.Date;
 
 import org.apache.commons.codec.binary.Base64;
 
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 import com.fortify.cli.common.rest.data.BasicUserCredentialsConfig;
 import com.fortify.cli.common.rest.unirest.AbstractLoginSessionUnirestRunner;
 import com.fortify.cli.ssc.rest.data.SSCConnectionConfig;
@@ -127,7 +128,7 @@ public class SSCUnirestRunner extends AbstractLoginSessionUnirestRunner<SSCLogin
 
 	@Override
 	public final String getLoginSessionType() {
-		return "ssc";
+		return ProductIdentifiers.SSC;
 	}
 
 	@Override

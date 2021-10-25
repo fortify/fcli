@@ -26,7 +26,10 @@ package com.fortify.cli.fod.command.api;
 
 import com.fortify.cli.common.command.api.APICommandMixin;
 import com.fortify.cli.common.command.api.RootApiCommand;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
@@ -34,7 +37,8 @@ import picocli.CommandLine.Mixin;
 
 @Singleton
 @SubcommandOf(RootApiCommand.class)
-@Command(name = "fod", description = "Invoke FoD REST API")
+@Command(name = ProductIdentifiers.FOD, description = "Invoke FoD REST API")
+@RequiresProduct(Product.FOD)
 public final class FoDApiCommand /*extends AbstractFoDUnirestRunnerCommand*/ {
 	@Mixin private APICommandMixin apiCommand;
 	

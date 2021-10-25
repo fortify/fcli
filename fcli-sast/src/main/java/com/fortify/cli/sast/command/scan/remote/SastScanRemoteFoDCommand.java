@@ -24,7 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.sast.command.scan.remote;
 
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 import com.fortify.cli.sast.command.scan.SastScanRemoteCommand;
 
 import io.micronaut.core.annotation.Order;
@@ -34,7 +37,8 @@ import picocli.CommandLine.Option;
 
 @Singleton
 @SubcommandOf(SastScanRemoteCommand.class)
-@Command(name = "fod", description = "Submit scan to FoD")
+@Command(name = ProductIdentifiers.FOD, description = "Submit scan to FoD")
+@RequiresProduct(Product.FOD)
 @Order(SastScanRemoteCommandsOrder.FOD)
 public class SastScanRemoteFoDCommand {
 	@Option(names = {"--build-id", "-b"})

@@ -26,6 +26,8 @@ package com.fortify.cli.ssc.command;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.command.session.consumer.LoginSessionConsumerMixin;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
+import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -36,6 +38,7 @@ import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
+@RequiresProduct(Product.SSC)
 public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
 	@Getter @Inject private ObjectMapper objectMapper;
 	@Getter @Inject private SSCUnirestRunner unirestRunner;

@@ -35,10 +35,17 @@ import lombok.Getter;
  *
  */
 public enum Product {
-	SSC("ssc"),
-	FOD("fod"),
-	SC_SAST("sc-sast"),
-	SC_DAST("sc-dast", SSC);
+	SSC(ProductIdentifiers.SSC),
+	FOD(ProductIdentifiers.FOD),
+	SC_SAST(ProductIdentifiers.SC_SAST),
+	SC_DAST(ProductIdentifiers.SC_DAST, SSC);
+	
+	public static class ProductIdentifiers {
+        public static final String SSC     = "ssc";
+        public static final String FOD     = "fod";
+        public static final String SC_DAST = "sc-dast";
+        public static final String SC_SAST = "sc-sast";
+    }
 	
 	@Getter private final String identifier;
 	@Getter private final Product[] dependentOn;

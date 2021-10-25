@@ -30,7 +30,10 @@ import com.fortify.cli.common.command.entity.RootDownloadCommand;
 import com.fortify.cli.common.command.entity.RootGetCommand;
 import com.fortify.cli.common.command.entity.RootUpdateCommand;
 import com.fortify.cli.common.command.entity.RootUploadCommand;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
@@ -39,31 +42,37 @@ import picocli.CommandLine.Command;
 public class SSCEntityRootCommands {
 	@Singleton @ReflectiveAccess
 	@SubcommandOf(RootGetCommand.class)
-	@Command(name = "ssc", description = "Get entity data from SSC")
+	@Command(name = ProductIdentifiers.SSC, description = "Get entity data from SSC")
+	@RequiresProduct(Product.SSC)
 	public static class SSCGetCommand {}
 	
 	@Singleton @ReflectiveAccess
 	@SubcommandOf(RootCreateCommand.class)
-	@Command(name = "ssc", description = "Create entities in SSC")
+	@Command(name = ProductIdentifiers.SSC, description = "Create entities in SSC")
+	@RequiresProduct(Product.SSC)
 	public static class SSCCreateCommand {}
 	
 	@Singleton @ReflectiveAccess
 	@SubcommandOf(RootUpdateCommand.class)
-	@Command(name = "ssc", description = "Update entities in SSC")
+	@Command(name = ProductIdentifiers.SSC, description = "Update entities in SSC")
+	@RequiresProduct(Product.SSC)
 	public static class SSCUpdateCommand {}
 	
 	@Singleton @ReflectiveAccess
 	@SubcommandOf(RootDeleteCommand.class)
-	@Command(name = "ssc", description = "Delete entities from SSC")
+	@Command(name = ProductIdentifiers.SSC, description = "Delete entities from SSC")
+	@RequiresProduct(Product.SSC)
 	public static class SSCDeleteCommand {}
 	
 	@Singleton @ReflectiveAccess
 	@SubcommandOf(RootUploadCommand.class)
-	@Command(name = "ssc", description = "Upload data SSC")
+	@Command(name = ProductIdentifiers.SSC, description = "Upload data SSC")
+	@RequiresProduct(Product.SSC)
 	public static class SSCUploadCommand {}
 	
 	@Singleton @ReflectiveAccess
 	@SubcommandOf(RootDownloadCommand.class)
-	@Command(name = "ssc", description = "Download data from SSC")
+	@Command(name = ProductIdentifiers.SSC, description = "Download data from SSC")
+	@RequiresProduct(Product.SSC)
 	public static class SSCDownloadCommand {}
 }

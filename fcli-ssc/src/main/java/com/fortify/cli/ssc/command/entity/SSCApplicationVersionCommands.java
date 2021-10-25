@@ -25,7 +25,9 @@
 package com.fortify.cli.ssc.command.entity;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand;
@@ -44,6 +46,7 @@ public class SSCApplicationVersionCommands {
 	@Singleton
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, description = "Get "+DESC+" from SSC")
+	@RequiresProduct(Product.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand {
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
@@ -64,6 +67,7 @@ public class SSCApplicationVersionCommands {
 	@Singleton
 	@SubcommandOf(SSCCreateCommand.class)
 	@Command(name = NAME, description = "Create "+DESC+" in SSC")
+	@RequiresProduct(Product.SSC)
 	public static final class Create extends AbstractSSCUnirestRunnerCommand {
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
@@ -75,6 +79,7 @@ public class SSCApplicationVersionCommands {
 	@Singleton
 	@SubcommandOf(SSCUpdateCommand.class)
 	@Command(name = NAME, description = "Update "+DESC+" in SSC")
+	@RequiresProduct(Product.SSC)
 	public static final class Update extends AbstractSSCUnirestRunnerCommand {
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
@@ -86,6 +91,7 @@ public class SSCApplicationVersionCommands {
 	@Singleton
 	@SubcommandOf(SSCDeleteCommand.class)
 	@Command(name = NAME, description = "Delete "+DESC+" from SSC")
+	@RequiresProduct(Product.SSC)
 	public static final class Delete extends AbstractSSCUnirestRunnerCommand {
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {

@@ -31,6 +31,7 @@ import com.fortify.cli.common.command.session.login.RootLoginCommand;
 import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 import com.fortify.cli.common.session.ILoginHandler;
 import com.fortify.cli.ssc.rest.data.SSCConnectionConfig;
 import com.fortify.cli.ssc.rest.unirest.SSCLoginHandler;
@@ -45,8 +46,8 @@ import picocli.CommandLine.Option;
 
 @Singleton @ReflectiveAccess
 @SubcommandOf(RootLoginCommand.class) 
+@Command(name = ProductIdentifiers.SSC, description = "Login to SSC", sortOptions = false)
 @RequiresProduct(Product.SSC)
-@Command(name = "ssc", description = "Login to SSC", sortOptions = false)
 public class SSCLoginCommand extends AbstractSessionLoginCommand<SSCConnectionConfig> {
 	@Getter @Inject private SSCLoginHandler sscLoginHandler;
 	
@@ -77,7 +78,7 @@ public class SSCLoginCommand extends AbstractSessionLoginCommand<SSCConnectionCo
 	
 	@Override
 	protected String getLoginSessionType() {
-		return "ssc";
+		return ProductIdentifiers.SSC;
 	}
 	
 	@Override

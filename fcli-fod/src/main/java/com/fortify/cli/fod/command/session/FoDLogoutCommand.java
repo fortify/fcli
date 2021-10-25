@@ -26,18 +26,22 @@ package com.fortify.cli.fod.command.session;
 
 import com.fortify.cli.common.command.session.logout.AbstractSessionLogoutCommand;
 import com.fortify.cli.common.command.session.logout.RootLogoutCommand;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 
 @Singleton
 @SubcommandOf(RootLogoutCommand.class)
-@Command(name = "fod", description = "Logout from FoD", sortOptions = false)
+@Command(name = ProductIdentifiers.FOD, description = "Logout from FoD", sortOptions = false)
+@RequiresProduct(Product.FOD)
 public class FoDLogoutCommand extends AbstractSessionLogoutCommand {
 
 	@Override
 	public String getLoginSessionType() {
-		return "fod";
+		return ProductIdentifiers.FOD;
 	}
 }

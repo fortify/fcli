@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.rest.unirest;
 
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 import com.fortify.cli.common.session.ILoginHandler;
 import com.fortify.cli.common.session.LoginSessionHelper;
 import com.fortify.cli.common.session.LogoutHelper;
@@ -43,7 +44,7 @@ public class SSCLoginHandler implements ILoginHandler<SSCConnectionConfig> {
 	@Getter @Inject private LogoutHelper logoutHelper;
 
 	public final String getLoginSessionType() {
-		return "ssc";
+		return ProductIdentifiers.SSC;
 	}
 
 	@Override

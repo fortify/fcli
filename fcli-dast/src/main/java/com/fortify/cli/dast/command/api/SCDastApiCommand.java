@@ -27,7 +27,10 @@ package com.fortify.cli.dast.command.api;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.api.APICommandMixin;
 import com.fortify.cli.common.command.api.RootApiCommand;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 
 import jakarta.inject.Singleton;
@@ -38,7 +41,8 @@ import picocli.CommandLine.Mixin;
 
 @Singleton
 @SubcommandOf(RootApiCommand.class)
-@Command(name = "sc-dast", description = "Invoke ScanCentral DAST REST API") // TODO Do we create nested level? (i.e. sc dast instead of sc-dast)
+@Command(name = ProductIdentifiers.SC_DAST, description = "Invoke ScanCentral DAST REST API")
+@RequiresProduct(Product.SC_DAST)
 public final class SCDastApiCommand extends AbstractSCDastUnirestRunnerCommand {
 	@Mixin private APICommandMixin apiCommand;
 	

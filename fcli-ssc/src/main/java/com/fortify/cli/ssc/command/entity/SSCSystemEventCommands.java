@@ -25,7 +25,9 @@
 package com.fortify.cli.ssc.command.entity;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCGetCommand;
 
@@ -41,6 +43,7 @@ public class SSCSystemEventCommands {
 	@Singleton
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, description = "Get "+DESC+" data from SSC")
+	@RequiresProduct(Product.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand {
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {

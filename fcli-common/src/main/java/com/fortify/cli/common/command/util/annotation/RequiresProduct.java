@@ -26,6 +26,7 @@ package com.fortify.cli.common.command.util.annotation;
 
 import static java.lang.annotation.ElementType.TYPE;
 
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -37,6 +38,7 @@ import jakarta.inject.Qualifier;
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
 @Target(TYPE)
+@Inherited
 // @Repeatable Potentially we could make this repeatable if we want to require multiple products, i.e. requires SC-SAST and SSC
 public @interface RequiresProduct {
 	Product value();

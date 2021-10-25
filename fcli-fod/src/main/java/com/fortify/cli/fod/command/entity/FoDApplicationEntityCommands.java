@@ -24,7 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.entity;
 
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.fod.command.entity.FoDEntityRootCommands.FoDCreateCommand;
 import com.fortify.cli.fod.command.entity.FoDEntityRootCommands.FoDDeleteCommand;
 import com.fortify.cli.fod.command.entity.FoDEntityRootCommands.FoDGetCommand;
@@ -39,6 +41,7 @@ public class FoDApplicationEntityCommands {
 	@Singleton
 	@SubcommandOf(FoDGetCommand.class)
 	@Command(name = ENTITY, description = "Get "+ENTITY+" data from FoD")
+	@RequiresProduct(Product.FOD)
 	public static final class Get implements Runnable {
 		@Override
 		public void run() {
@@ -48,6 +51,7 @@ public class FoDApplicationEntityCommands {
 	@Singleton
 	@SubcommandOf(FoDCreateCommand.class)
 	@Command(name = ENTITY, description = "Create "+ENTITY+" in FoD")
+	@RequiresProduct(Product.FOD)
 	public static final class Create implements Runnable {
 		@Override
 		public void run() {
@@ -57,6 +61,7 @@ public class FoDApplicationEntityCommands {
 	@Singleton
 	@SubcommandOf(FoDUpdateCommand.class)
 	@Command(name = ENTITY, description = "Update "+ENTITY+" in FoD")
+	@RequiresProduct(Product.FOD)
 	public static final class Update implements Runnable {
 		@Override
 		public void run() {
@@ -66,6 +71,7 @@ public class FoDApplicationEntityCommands {
 	@Singleton
 	@SubcommandOf(FoDDeleteCommand.class)
 	@Command(name = ENTITY, description = "Delete "+ENTITY+" from FoD")
+	@RequiresProduct(Product.FOD)
 	public static final class Delete implements Runnable {
 		@Override
 		public void run() {

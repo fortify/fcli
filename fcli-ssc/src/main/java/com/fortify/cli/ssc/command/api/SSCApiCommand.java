@@ -27,7 +27,10 @@ package com.fortify.cli.ssc.command.api;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.api.APICommandMixin;
 import com.fortify.cli.common.command.api.RootApiCommand;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 
 import jakarta.inject.Singleton;
@@ -37,7 +40,8 @@ import picocli.CommandLine.Mixin;
 
 @Singleton
 @SubcommandOf(RootApiCommand.class)
-@Command(name = "ssc", description = "Invoke SSC REST API")
+@Command(name = ProductIdentifiers.SSC, description = "Invoke SSC REST API")
+@RequiresProduct(Product.SSC)
 public final class SSCApiCommand extends AbstractSSCUnirestRunnerCommand {
 	@Mixin private APICommandMixin apiCommand;
 	

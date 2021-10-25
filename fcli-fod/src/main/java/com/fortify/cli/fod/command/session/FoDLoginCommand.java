@@ -26,7 +26,10 @@ package com.fortify.cli.fod.command.session;
 
 import com.fortify.cli.common.command.session.login.AbstractSessionLoginCommand;
 import com.fortify.cli.common.command.session.login.RootLoginCommand;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 import com.fortify.cli.common.session.ILoginHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -35,12 +38,13 @@ import picocli.CommandLine.Command;
 
 @Singleton @ReflectiveAccess
 @SubcommandOf(RootLoginCommand.class)
-@Command(name = "fod", description = "Login to FoD", sortOptions = false)
+@Command(name = ProductIdentifiers.FOD, description = "Login to FoD", sortOptions = false)
+@RequiresProduct(Product.FOD)
 public class FoDLoginCommand extends AbstractSessionLoginCommand<Object> {
 
 	@Override
 	protected String getLoginSessionType() {
-		return "fod";
+		return ProductIdentifiers.FOD;
 	}
 
 	@Override

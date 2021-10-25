@@ -26,18 +26,22 @@ package com.fortify.cli.ssc.command.session;
 
 import com.fortify.cli.common.command.session.logout.AbstractSessionLogoutCommand;
 import com.fortify.cli.common.command.session.logout.RootLogoutCommand;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 
 @Singleton
 @SubcommandOf(RootLogoutCommand.class)
-@Command(name = "ssc", description = "Logout from SSC", sortOptions = false)
+@Command(name = ProductIdentifiers.SSC, description = "Logout from SSC", sortOptions = false)
+@RequiresProduct(Product.SSC)
 public class SSCLogoutCommand extends AbstractSessionLogoutCommand {
 
 	@Override
 	public String getLoginSessionType() {
-		return "ssc";
+		return ProductIdentifiers.SSC;
 	}
 }
