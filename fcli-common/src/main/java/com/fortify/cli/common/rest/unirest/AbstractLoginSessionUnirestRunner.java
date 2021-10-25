@@ -114,7 +114,7 @@ public abstract class AbstractLoginSessionUnirestRunner<D> {
 			BasicConnectionConfig cs = csp.getBasicConnectionConfig();
 			if ( cs == null ) { throw new IllegalArgumentException("Connection configuration may not be null"); }
 			unirestInstance.config()
-				.defaultBaseUrl(cs.getUrl())
+				.defaultBaseUrl(normalizeUrl(cs.getUrl()))
 				.verifySsl(cs.isInsecureModeEnabled());
 			if ( StringUtils.isNotEmpty(cs.getProxyHost()) ) {
 				unirestInstance.config().proxy(cs.getProxyHost(), cs.getProxyPort(), cs.getProxyUser(), 
@@ -124,6 +124,11 @@ public abstract class AbstractLoginSessionUnirestRunner<D> {
 		configure(loginSessionName, loginSessionData, unirestInstance);
 	}
 	
+	protected String normalizeUrl(String url) {
+		// We remove any trailing slashes, assuming that most users will specify relative URL's starting with /
+		return url.replaceAll("/+$", "");
+	}
+
 	/**
 	 * Subclasses must implement this method to perform any additional configuration of the given
 	 * {@link UnirestInstance} based on the given login session data.
