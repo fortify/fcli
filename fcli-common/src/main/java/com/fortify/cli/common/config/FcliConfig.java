@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.util.FcliHomeHelper;
 
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.util.StringUtils;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -113,7 +114,8 @@ public class FcliConfig {
 		config.put(configProperty.getKey(), configProperty.getValue()); 
 	}
 	
-	@AllArgsConstructor @NoArgsConstructor @Data
+	@Data @AllArgsConstructor @NoArgsConstructor
+	@Introspected
 	private static final class ConfigProperty {
 		private String key, value;
 	}
