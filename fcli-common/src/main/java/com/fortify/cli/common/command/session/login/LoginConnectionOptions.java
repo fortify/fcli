@@ -26,6 +26,7 @@ package com.fortify.cli.common.command.session.login;
 
 import com.fortify.cli.common.rest.data.BasicConnectionConfig;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
@@ -41,6 +42,7 @@ import picocli.CommandLine.Option;
  * </pre>
  * @author Ruud Senden
  */
+@ReflectiveAccess
 public class LoginConnectionOptions {
 	@Option(names = {"--url"}, required = true, order=1)
 	@Getter private String url;
