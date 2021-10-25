@@ -28,9 +28,9 @@ import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.rest.json.JacksonJsonNodeHelper;
 import com.fortify.cli.common.rest.unirest.UnirestRunner;
 import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
-import com.jayway.jsonpath.JsonPath;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
@@ -41,6 +41,7 @@ import lombok.Getter;
 
 @Singleton @ReflectiveAccess
 public class SCDastUnirestRunner {
+	@Getter @Inject private JacksonJsonNodeHelper jsonHelper;
 	@Getter @Inject private UnirestRunner unirestRunner;
 	@Getter @Inject private SSCUnirestRunner sscUnirestRunner;
 	
@@ -56,56 +57,36 @@ public class SCDastUnirestRunner {
 	}
 
 	private String getSCDastApiUrlFromSSC(UnirestInstance sscUnirest) {
-		ObjectNode configData = sscUnirest.get("/api/v1/configuration?group=edast").asObject(ObjectNode.class).getBody(); // TODO Check response code
-		
-		// TODO Can we simplify this without all these intermediate arrays? 
-		ArrayNode properties = JsonPath.read(configData, "$.data.properties");
-		ArrayNode scDastEnabledArray = JsonPath.read(properties, "$.[?(@.name=='edast.enabled')].value");
-		if ( !scDastEnabledArray.hasNonNull(0) || !scDastEnabledArray.get(0).asBoolean(false) ) {
+		ArrayNode properties = getSCDastConfigurationProperties(sscUnirest);
+		checkSCDastIsEnabled(properties);
+		String scDastUrl = getSCDastUrlFromProperties(properties);
+		return normalizeSCDastUrl(scDastUrl);
+	}
+
+	private final ArrayNode getSCDastConfigurationProperties(UnirestInstance sscUnirest) {
+		// TODO Check response code
+		ObjectNode configData = sscUnirest.get("/api/v1/configuration?group=edast").asObject(ObjectNode.class).getBody(); 
+		ArrayNode properties = jsonHelper.getPath(configData, "$.data.properties", ArrayNode.class);
+		return properties;
+	}
+	
+	private void checkSCDastIsEnabled(ArrayNode properties) {
+		Boolean scDastEnabled = jsonHelper.getPath(properties, "$.[?(@.name=='edast.enabled')].value", Boolean.class);
+		if ( !Boolean.TRUE.equals(scDastEnabled) ) {
 			throw new IllegalStateException("ScanCentral DAST must be enabled in SSC");
 		}
-		ArrayNode scDastUrlArray = JsonPath.read(properties, "$.[?(@.name=='edast.server.url')].value");
-		String scDastUrl = !scDastUrlArray.hasNonNull(0) ? null : scDastUrlArray.get(0).asText();
+	}
+	
+	private String getSCDastUrlFromProperties(ArrayNode properties) {
+		String scDastUrl = jsonHelper.getPath(properties, "$.[?(@.name=='edast.server.url')].value", String.class);
 		if ( StringUtils.isEmpty(scDastUrl) ) {
 			throw new IllegalStateException("SSC returns an empty ScanCentral DAST URL");
 		}
+		return scDastUrl;
+	}
+	
+	private String normalizeSCDastUrl(String scDastUrl) {
 		// We remove '/api' and any trailing slashes from the URL as most users will specify relative URL's starting with /api/v2/...
 		return scDastUrl.replaceAll("/api/?$","").replaceAll("/+$", "");
 	}
-	
-/*
-{
-  "data": {
-    "properties": [
-      {
-        "name": "edast.enabled",
-        "value": "true",
-        "group": "edast",
-        "subGroup": "",
-        "description": "Enable ScanCentral DAST",
-        "appliedAfterRestarting": false,
-        "version": 4,
-        "propertyType": "BOOLEAN",
-        "groupSwitchEnabled": true,
-        "required": false,
-        "protectedOption": false
-      },
-      {
-        "name": "edast.server.url",
-        "value": "http://52.175.230.110:5000/api/",
-        "group": "edast",
-        "subGroup": "",
-        "description": "ScanCentral DAST server URL",
-        "appliedAfterRestarting": false,
-        "version": 14,
-        "propertyType": "URL",
-        "groupSwitchEnabled": false,
-        "required": true,
-        "protectedOption": false
-      }
-    ]
-  },
-  "responseCode": 200
-}	
-*/
 }

@@ -22,45 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.rest.jsonpath;
+package com.fortify.cli.common.rest.json;
 
 import java.util.EnumSet;
-import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.ParseContext;
 import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
-import com.jayway.jsonpath.spi.json.JsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
-import com.jayway.jsonpath.spi.mapper.MappingProvider;
 
-import io.micronaut.context.annotation.Context;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
-@Context
-public class JsonPathConfigurer {
+/**
+ * This bean provides utility methods for working with Jackson JsonNode trees.
+ * 
+ * @author Ruud Senden
+ *
+ */
+@Singleton
+public class JacksonJsonNodeHelper {
+	private final ParseContext parseContext;
+
 	@Inject
-	public JsonPathConfigurer(ObjectMapper objectMapper) {
-		Configuration.setDefaults(new Configuration.Defaults() {
-
-		    private final JsonProvider jsonProvider = new JacksonJsonNodeJsonProvider(objectMapper);
-		    private final MappingProvider mappingProvider = new JacksonMappingProvider(objectMapper);
-		      
-		    @Override
-		    public JsonProvider jsonProvider() {
-		        return jsonProvider;
-		    }
-
-		    @Override
-		    public MappingProvider mappingProvider() {
-		        return mappingProvider;
-		    }
-		    
-		    @Override
-		    public Set<Option> options() {
-		        return EnumSet.noneOf(Option.class);
-		    }
-		});
+	public JacksonJsonNodeHelper(ObjectMapper objectMapper) {
+		this.parseContext = JsonPath.using(Configuration.builder()
+				.jsonProvider(new JacksonJsonNodeJsonProvider(objectMapper))
+				.mappingProvider(new JacksonMappingProvider(objectMapper))
+				.options(EnumSet.noneOf(Option.class))
+				.build());
+	}
+	
+	public final <R> R getPath(Object input, String path, Class<R> returnClazz) {
+		return parseContext.parse(input).read(path, returnClazz);
 	}
 }
