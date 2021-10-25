@@ -25,30 +25,36 @@
 package com.fortify.cli.dast.command.entity;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.config.product.Product;
-import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands;
+import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import jakarta.inject.Singleton;
+import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 
-public class DASTScanSettingsCommands {
+public class SCDASTScanSettingsCommands {
     private static final String NAME = "scan-settings";
-    private static final String DESC = "DAST scan settings list";
+    private static final String DESC = "DAST scan settings";
 
     @Singleton
-    @SubcommandOf(SSCEntityRootCommands.SSCGetCommand.class)
-    @CommandLine.Command(name = NAME, description = "Get "+DESC+" from SSC")
-    @RequiresProduct(Product.SSC)
-    @RequiresProduct(Product.SC_DAST)
-    public static final class Get extends AbstractSSCUnirestRunnerCommand {
+    @SubcommandOf(SCDASTEntityRootCommands.SCDASTGetCommand.class)
+    @CommandLine.Command(name = NAME, description = "Get " + DESC + " from SC DAST")
+    public static final class get extends AbstractSCDastUnirestRunnerCommand {
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
+            System.out.println(unirest.get("https://edast-ctrl.ekseed.org:8070/api/v2/application-version-scan-settings/scan-settings-summary-list")
+                    .accept("application/json")
+                    .header("Content-Type", "application/json")
+                    .asObject(ObjectNode.class)
+                    .getBody()
+                    .get("items")
+                    .toPrettyString());
 
             return null;
         }
+
     }
+
+
 }

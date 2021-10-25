@@ -50,7 +50,10 @@ public class SCDastUnirestRunner {
 			String scDastApiUrl = getSCDastApiUrlFromSSC(sscUnirest);
 			String authHeader = sscUnirest.config().getDefaultHeaders().get("Authorization").stream().filter(h->h.startsWith("FortifyToken")).findFirst().orElseThrow();
 			return unirestRunner.runWithUnirest(scDastUnirest->{
-				scDastUnirest.config().defaultBaseUrl(scDastApiUrl).setDefaultHeader("Authorization", authHeader);
+				scDastUnirest.config()
+						.defaultBaseUrl(scDastApiUrl)
+						.setDefaultHeader("Authorization", authHeader)
+						.verifySsl(false);
 				return runner.apply(scDastUnirest);
 			});
 		});
