@@ -34,9 +34,7 @@ import com.fortify.cli.common.session.LoginSessionHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import jakarta.inject.Inject;
-import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
-import kong.unirest.jackson.JacksonObjectMapper;
 import lombok.Getter;
 
 // TODO For now this class instantiates a new UnirestInstance on every call to runWithUnirest,
@@ -45,14 +43,9 @@ import lombok.Getter;
 // TODO Refactor to use UnirestRunner in combination with a LoginSessionUnirestConfigurer
 @ReflectiveAccess
 public abstract class AbstractLoginSessionUnirestRunner<D> {
+	@Getter @Inject private UnirestRunner unirestRunner;
 	@Getter @Inject private ObjectMapper objectMapper;
 	@Getter @Inject private LoginSessionHelper loginSessionHelper;
-	
-	private final UnirestInstance createUnirestInstance() {
-		UnirestInstance instance = Unirest.spawnInstance();
-		instance.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
-		return instance;
-	}
 	
 	/**
 	 * Run the given runner with a {@link UnirestInstance} that has been configured
@@ -68,10 +61,10 @@ public abstract class AbstractLoginSessionUnirestRunner<D> {
 		if ( loginSessionData == null ) {
 			throw new IllegalStateException("Login session data may not be null");
 		}
-		try ( var unirestInstance = createUnirestInstance() ) {
-			_configure(loginSessionName, loginSessionData, unirestInstance);
-			return runner.apply(unirestInstance);
-		}
+		return unirestRunner.runWithUnirest(unirest -> {
+			_configure(loginSessionName, loginSessionData, unirest);
+			return runner.apply(unirest);
+		});
 	}
 	
 	/**
