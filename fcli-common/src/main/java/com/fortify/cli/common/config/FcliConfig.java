@@ -116,7 +116,7 @@ public class FcliConfig {
 	
 	@Data @AllArgsConstructor @NoArgsConstructor
 	@Introspected
-	private static final class ConfigProperty {
+	protected static final class ConfigProperty {
 		private String key, value;
 	}
 }
