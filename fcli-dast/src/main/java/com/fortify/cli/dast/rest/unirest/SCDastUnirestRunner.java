@@ -69,7 +69,8 @@ public class SCDastUnirestRunner {
 		if ( StringUtils.isEmpty(scDastUrl) ) {
 			throw new IllegalStateException("SSC returns an empty ScanCentral DAST URL");
 		}
-		return scDastUrl;
+		// We remove '/api' and any trailing slashes from the URL as most users will specify relative URL's starting with /api/v2/...
+		return scDastUrl.replaceAll("/api/?$","").replaceAll("/+$", "");
 	}
 	
 /*
