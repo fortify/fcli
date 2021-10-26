@@ -37,6 +37,7 @@ import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCGetCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCUpdateCommand;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -52,10 +53,12 @@ public class SSCApplicationVersionCommands {
 
 
 	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, aliases = {ALIAS},description = "Get "+DESC+" from SSC")
 	@RequiresProduct(Product.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand {
+
 		@Mixin  private static PrintHelperOptions printHelperOptions;
 
 		@SneakyThrows
