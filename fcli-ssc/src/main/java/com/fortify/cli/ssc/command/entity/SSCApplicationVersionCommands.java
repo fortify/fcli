@@ -29,8 +29,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.config.product.Product;
-import com.fortify.cli.common.util.printer.PrintHelper;
-import com.fortify.cli.common.util.printer.PrintHelperOptions;
+import com.fortify.cli.common.util.printer.PrintHelperMixin;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand;
@@ -40,15 +39,13 @@ import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCUpdateCommand
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 public class SSCApplicationVersionCommands {
 	private static final String NAME = "application-versions";
-	private static final String ALIAS = "avs";
+	private static final String ALIAS = "versions";
 	private static final String DESC = "application versions";
 
 
@@ -59,7 +56,7 @@ public class SSCApplicationVersionCommands {
 	@RequiresProduct(Product.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand {
 
-		@Mixin private static PrintHelperOptions printHelperOptions;
+		@Mixin private static PrintHelperMixin printHelperMixin;
 
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
@@ -70,7 +67,7 @@ public class SSCApplicationVersionCommands {
 					.getBody()
 					.get("data");
 
-			PrintHelper.printToFormat(printHelperOptions.getFormat(), response);
+			printHelperMixin.printToFormat(response);
 
 			return null;
 		}

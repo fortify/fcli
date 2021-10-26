@@ -26,6 +26,7 @@ package com.fortify.cli.common.util.printer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
@@ -93,11 +94,19 @@ public class PrintHelper {
         System.out.println("Not yet implemented.");
     }
 
+//    private SimpleTreeNode walker (ObjectNode node){
+//        if(node == null){
+//            return null;
+//        }
+//
+//    }
     // TODO: Actually implement code to make tree output work
     public static final void printTree(JsonNode json){
         SimpleTreeNode rootNode = new SimpleTreeNode("I'm the root!");
         rootNode.addChild(new SimpleTreeNode("I'm a child..."));
         rootNode.addChild(new SimpleTreeNode("I'm an other child..."));
+
+
 
         new ListingTreePrinter().print(rootNode);
 
