@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.entity.scdast.SCDastScanSettingsOptions;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.util.printer.PrintHelperMixin;
+import com.fortify.cli.common.output.OutputWriterMixin;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
@@ -51,7 +51,7 @@ public class SCDastScanSettingsCommands {
         @Getter private SCDastScanSettingsOptions scanSettingsOptions;
 
         @Mixin
-        private PrintHelperMixin printHelperMixin;
+        private OutputWriterMixin outputWriterMixin;
 
 
         @SneakyThrows
@@ -81,7 +81,7 @@ public class SCDastScanSettingsCommands {
                     .getBody()
                     .get("items");
 
-            printHelperMixin.printToFormat(response);
+            outputWriterMixin.printToFormat(response);
 
             return null;
         }

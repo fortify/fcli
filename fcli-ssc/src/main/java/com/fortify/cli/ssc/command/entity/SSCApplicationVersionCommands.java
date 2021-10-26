@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.config.product.Product;
-import com.fortify.cli.common.util.printer.PrintHelperMixin;
+import com.fortify.cli.common.output.OutputWriterMixin;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand;
@@ -56,7 +56,7 @@ public class SSCApplicationVersionCommands {
 	@RequiresProduct(Product.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand {
 
-		@Mixin private static PrintHelperMixin printHelperMixin;
+		@Mixin private static OutputWriterMixin outputWriterMixin;
 
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
@@ -67,7 +67,7 @@ public class SSCApplicationVersionCommands {
 					.getBody()
 					.get("data");
 
-			printHelperMixin.printToFormat(response);
+			outputWriterMixin.printToFormat(response);
 
 			return null;
 		}

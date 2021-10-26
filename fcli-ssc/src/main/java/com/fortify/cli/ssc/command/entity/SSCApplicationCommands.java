@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.config.product.Product;
-import com.fortify.cli.common.util.printer.PrintHelperMixin;
+import com.fortify.cli.common.output.OutputWriterMixin;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand;
@@ -39,10 +39,8 @@ import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCUpdateCommand
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
-
-import java.util.ArrayList;
+import picocli.CommandLine.Mixin;
 
 public class SSCApplicationCommands {
 	private static final String NAME = "applications";
@@ -55,8 +53,7 @@ public class SSCApplicationCommands {
 	@RequiresProduct(Product.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand {
 
-		@CommandLine.Mixin
-		private static PrintHelperMixin printHelperMixin;
+		@Mixin private OutputWriterMixin outputWriterMixin;
 
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
@@ -67,7 +64,7 @@ public class SSCApplicationCommands {
 					.getBody()
 					.get("data");
 
-			printHelperMixin.printToFormat(response);
+			outputWriterMixin.printToFormat(response);
 
 			return null;
 		}
