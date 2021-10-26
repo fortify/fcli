@@ -1,4 +1,4 @@
-package com.fortify.cli.common.command.entity.scdast;
+package com.fortify.cli.dast.command.entity.scdast.scansettings;
 
 import com.fortify.cli.common.command.auth.login.AuthLoginCommand;
 
@@ -16,7 +16,7 @@ import picocli.CommandLine.Option;
  *   {@literal @}Getter private SCDASTScanSettingsOptions conn;
  * }
  * </pre>
- * @author Alex Gendry
+ * @author Ruud Senden
  */
 @ReflectiveAccess
 public class SCDastScanSettingsOptions {
