@@ -52,14 +52,14 @@ public class SSCApplicationVersionCommands {
 	private static final String DESC = "application versions";
 
 
-	//@Singleton
-	//@ReflectiveAccess
+
+	@ReflectiveAccess
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, aliases = {ALIAS},description = "Get "+DESC+" from SSC")
 	@RequiresProduct(Product.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand {
 
-		@Mixin  private static PrintHelperOptions printHelperOptions;
+		@Mixin private static PrintHelperOptions printHelperOptions;
 
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
