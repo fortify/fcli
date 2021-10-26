@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.entity.scdast.SCDastScanSettingsOptions;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.output.OutputFilterOptions;
 import com.fortify.cli.common.output.OutputWriterMixin;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 
@@ -48,8 +49,11 @@ public class SCDastScanSettingsCommands {
     @SubcommandOf(SCDastEntityRootCommands.SCDASTGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
     public static final class Get extends AbstractSCDastUnirestRunnerCommand {
-        @ArgGroup(exclusive = false, heading = "Filter scan settings:%n", order = 1)
+        @ArgGroup(exclusive = false, heading = "Filter scan settings:%n", order = 10)
         @Getter private SCDastScanSettingsOptions scanSettingsOptions;
+
+        @ArgGroup(exclusive = false, heading = "Output filter options :%n", order = 20)
+        @Getter private OutputFilterOptions outputFilterOptions;
 
         @Mixin
         private OutputWriterMixin outputWriterMixin;
@@ -82,6 +86,7 @@ public class SCDastScanSettingsCommands {
                     .getBody()
                     .get("items");
 
+            response = outputFilterOptions.filterOutput(response);
             outputWriterMixin.printToFormat(response);
 
             return null;
