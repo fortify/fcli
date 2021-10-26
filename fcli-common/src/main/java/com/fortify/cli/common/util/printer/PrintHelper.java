@@ -94,12 +94,6 @@ public class PrintHelper {
         System.out.println("Not yet implemented.");
     }
 
-//    private SimpleTreeNode walker (ObjectNode node){
-//        if(node == null){
-//            return null;
-//        }
-//
-//    }
     // TODO: Actually implement code to make tree output work
     public static final void printTree(JsonNode json){
         SimpleTreeNode rootNode = new SimpleTreeNode("I'm the root!");
