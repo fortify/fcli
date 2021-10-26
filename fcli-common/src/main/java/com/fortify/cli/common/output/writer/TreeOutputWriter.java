@@ -22,18 +22,26 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command.util.annotation;
+package com.fortify.cli.common.output.writer;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Qualifier;
-import jakarta.inject.Singleton;
+import hu.webarticum.treeprinter.ListingTreePrinter;
+import hu.webarticum.treeprinter.SimpleTreeNode;
 
-@Qualifier
-@Singleton
-@Retention(RetentionPolicy.RUNTIME)
-public @interface SubcommandOf {
-	Class<?> value() ;
+public class TreeOutputWriter implements IOutputWriter {
+
+	@Override
+	public void write(JsonNode jsonNode) {
+		SimpleTreeNode rootNode = new SimpleTreeNode("I'm the root!");
+        rootNode.addChild(new SimpleTreeNode("I'm a child..."));
+        rootNode.addChild(new SimpleTreeNode("I'm an other child..."));
+
+
+
+        new ListingTreePrinter().print(rootNode);
+
+        System.out.println("Not yet implemented.");
+	}
+
 }

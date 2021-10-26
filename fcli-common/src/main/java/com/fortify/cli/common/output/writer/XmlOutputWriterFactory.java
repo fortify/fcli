@@ -22,18 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command.util.annotation;
+package com.fortify.cli.common.output.writer;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+public class XmlOutputWriterFactory implements IOutputWriterFactory {
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Qualifier;
-import jakarta.inject.Singleton;
+	@Override
+	public IOutputWriter createOutputWriter() {
+		return new XmlOutputWriter();
+	}
 
-@Qualifier
-@Singleton
-@Retention(RetentionPolicy.RUNTIME)
-public @interface SubcommandOf {
-	Class<?> value() ;
 }

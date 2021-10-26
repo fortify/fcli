@@ -22,18 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command.util.annotation;
+package com.fortify.cli.common.output;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import com.fortify.cli.common.output.writer.CsvOutputWriterFactory;
+import com.fortify.cli.common.output.writer.IOutputWriterFactory;
+import com.fortify.cli.common.output.writer.JsonOutputWriterFactory;
+import com.fortify.cli.common.output.writer.TableOutputWriterFactory;
+import com.fortify.cli.common.output.writer.TreeOutputWriterFactory;
+import com.fortify.cli.common.output.writer.XmlOutputWriterFactory;
+import com.fortify.cli.common.output.writer.YamlOutputWriterFactory;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Qualifier;
-import jakarta.inject.Singleton;
+import lombok.Getter;
 
-@Qualifier
-@Singleton
-@Retention(RetentionPolicy.RUNTIME)
-public @interface SubcommandOf {
-	Class<?> value() ;
+public enum OutputFormat {
+	json(new JsonOutputWriterFactory()), 
+	yaml(new YamlOutputWriterFactory()), 
+	table(new TableOutputWriterFactory()), 
+	tree(new TreeOutputWriterFactory()), 
+	xml(new XmlOutputWriterFactory()), 
+	csv(new CsvOutputWriterFactory());
+	
+	@Getter private final IOutputWriterFactory outputWriterFactory;
+	private OutputFormat(IOutputWriterFactory outputWriterFactory) {
+		this.outputWriterFactory = outputWriterFactory;
+	}
 }

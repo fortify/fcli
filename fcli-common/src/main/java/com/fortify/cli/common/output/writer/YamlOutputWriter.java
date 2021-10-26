@@ -22,18 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command.util.annotation;
+package com.fortify.cli.common.output.writer;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import static java.lang.System.exit;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Qualifier;
-import jakarta.inject.Singleton;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
-@Qualifier
-@Singleton
-@Retention(RetentionPolicy.RUNTIME)
-public @interface SubcommandOf {
-	Class<?> value() ;
+public class YamlOutputWriter implements IOutputWriter {
+
+	@Override
+	public void write(JsonNode jsonNode) {
+		try {
+            System.out.print(new YAMLMapper().writeValueAsString(jsonNode));
+        } catch (JsonProcessingException e){
+            System.out.println(e);
+            exit(1);
+        }
+	}
+
 }
