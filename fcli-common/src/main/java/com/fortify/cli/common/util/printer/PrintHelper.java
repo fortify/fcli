@@ -26,7 +26,6 @@ package com.fortify.cli.common.util.printer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
@@ -45,6 +44,7 @@ public class PrintHelper {
     public static final void printToFormat(String format, JsonNode json){
         switch(format.toLowerCase()){
             case "yaml":
+            case "yml":
                 printYaml(json);
                 break;
             case "table":
@@ -56,6 +56,10 @@ public class PrintHelper {
             case "tree":
                 printTree(json);
                 break;
+            case "xml":
+                PrintXmlHelper.printXml(json, true);
+                break;
+
             default:
                 System.out.println("INVALID FORMAT! Accepted formats are: json, table, tree, yaml.");
         }

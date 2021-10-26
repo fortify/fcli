@@ -20,9 +20,9 @@ application {
 	mainClass.set("com.fortify.cli.FortifyCLI")
 }
 shadowJar {
-   archiveBaseName.set('fcli')
-   archiveClassifier.set('')
-   archiveVersion.set('')
+	archiveBaseName.set('fcli')
+	archiveClassifier.set('')
+	archiveVersion.set('')
 }
 
 allprojects {
@@ -37,7 +37,7 @@ allprojects {
 			annotations("com.fortify.cli.*")
 		}
 	}
-	
+
 	repositories {
 		mavenCentral()
 	}
@@ -46,40 +46,41 @@ allprojects {
 		// Lombok dependency & annotation processor
 		compileOnly 'org.projectlombok:lombok:1.16.20'
 		annotationProcessor "org.projectlombok:lombok:1.16.20"
-		
+
 		// Picocli dependency and annotation processor
 		annotationProcessor("info.picocli:picocli-codegen")
 		implementation("info.picocli:picocli")
-		
+
 		annotationProcessor("io.micronaut:micronaut-inject-java")
 		annotationProcessor("io.micronaut:micronaut-graal")
-		
+
 		// Micronaut dependencies
 		implementation("io.micronaut:micronaut-runtime")
 		implementation("io.micronaut.picocli:micronaut-picocli")
 		implementation("javax.annotation:javax.annotation-api")
-		
+
 		// Logback dependency to allow us to configure logging programmatically
 		implementation("ch.qos.logback:logback-classic:1.2.6")
-		
+
 		implementation('com.konghq:unirest-java:3.13.0') {
 			exclude group: 'com.google.code.gson', module: 'gson' // We use Jackson, so no need for Gson
 		}
 		implementation('com.konghq:unirest-objectmapper-jackson:3.13.0')
-		
+
 		implementation('com.jayway.jsonpath:json-path:2.6.0') {
 			exclude group: 'net.minidev', module: 'json-smart'
 		}
 
 		// for yaml support and generating trees/tables
 		implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.11.2')
+		implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.0")
 		implementation('com.google.code.gson:gson:2.8.8')
 		implementation('hu.webarticum:tree-printer:1.3')
 		implementation('com.github.freva:ascii-table:1.2.0')
 	}
 }
 configure(allprojects.findAll {it.name != 'fcli-common'}) {
-    dependencies {
+	dependencies {
 		implementation project(':fcli-common')
 	}
 }
@@ -90,11 +91,11 @@ dependencies {
 	runtimeOnly project(':fcli-sast')
 	runtimeOnly project(':fcli-dast')
 	runtimeOnly project(':fcli-run')
-	
+
 	// Logging dependencies
 	runtimeOnly("ch.qos.logback:logback-classic:1.2.6")
 	runtimeOnly("org.slf4j:jcl-over-slf4j:1.7.32")
-	
+
 	// GraalVM dependency
 	compileOnly("org.graalvm.nativeimage:svm")
 }

@@ -24,16 +24,20 @@
  ******************************************************************************/
 package com.fortify.cli.dast.command.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.entity.scdast.SCDastScanSettingsOptions;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.util.printer.PrintHelperMixin;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 public class SCDastScanSettingsCommands {
     private static final String NAME = "scan-settings";
@@ -45,6 +49,10 @@ public class SCDastScanSettingsCommands {
     public static final class Get extends AbstractSCDastUnirestRunnerCommand {
         @ArgGroup(exclusive = false, heading = "Filter scan settings:%n", order = 1)
         @Getter private SCDastScanSettingsOptions scanSettingsOptions;
+
+        @Mixin
+        private PrintHelperMixin printHelperMixin;
+
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
@@ -66,13 +74,14 @@ public class SCDastScanSettingsCommands {
                 }
             }
 
-            System.out.println(unirest.get(urlPath + "?" + urlParams)
+            JsonNode response = unirest.get(urlPath + "?" + urlParams)
                     .accept("application/json")
                     .header("Content-Type", "application/json")
                     .asObject(ObjectNode.class)
                     .getBody()
-                    .get("items")
-                    .toPrettyString());
+                    .get("items");
+
+            printHelperMixin.printToFormat(response);
 
             return null;
         }
