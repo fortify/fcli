@@ -28,9 +28,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 import jakarta.inject.Qualifier;
+import jakarta.inject.Singleton;
 
 @Qualifier
+@Singleton
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SubcommandOf {
-	Class<?> value();
+	Class<?> value() ;
 }
