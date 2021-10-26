@@ -22,27 +22,42 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command;
+package com.fortify.cli;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import com.fortify.cli.common.command.log.LogOptionsMixin;
 
-import jakarta.inject.Singleton;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.ScopeType;
 
-@Singleton
-@Command(name = "fcli", 
-	scope = ScopeType.INHERIT, 
-	mixinStandardHelpOptions = true, 
-	usageHelpAutoWidth = true,
-	footer = "%n(c) Copyright 2021 Micro Focus", 
-	showAtFileInUsageHelp = true, 
-	description = "Command-line interface for working with various Fortify products")
-public class FCLIRootCommand {
-	// Setting up logging is handled in the main class by a separate Picocli instance, to allow
-	// for setting up logging early in the process. In order to have our main command structure
-	// not complain about any logging options, we define them here even though we don't actually
-	// do anything with these options here.
-	@Mixin LogOptionsMixin logOptions; 
+public class FortifyCLILogHelper {
+	private static final PrintWriter DUMMY_WRITER = new PrintWriter(new StringWriter());
+	public static final void configureLogging(String[] args) {
+		CommandLine commandLine = new CommandLine(SetupLoggingCommand.class)
+				.setOut(DUMMY_WRITER)
+				.setErr(DUMMY_WRITER)
+				.setUnmatchedArgumentsAllowed(true)
+				.setUnmatchedOptionsArePositionalParams(true)
+				.setExpandAtFiles(true);
+		commandLine.execute(args);
+				
+		// TODO Do an initial parse of the command line arguments to configure logging
+		//      This could be either a simple for-loop to find logging-specific options,
+		//      or could utilize a simple Picocli instance that's configured to ignore
+		//      unknown arguments. Note that any logging options should also be added to
+		//      FCLIRootCommand (without actually doing anything with them)
+	}
+	
+	@Command()
+	public static final class SetupLoggingCommand implements Runnable {
+		@Mixin LogOptionsMixin logOptionsMixin;
+		
+		@Override
+		public void run() {
+			logOptionsMixin.configureLogging();
+		}
+	}
 }

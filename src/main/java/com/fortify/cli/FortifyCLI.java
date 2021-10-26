@@ -1,132 +1,46 @@
 package com.fortify.cli;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 import org.apache.commons.logging.impl.SimpleLog;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
-import com.fortify.cli.common.command.FCLIRootCommand;
-import com.fortify.cli.common.command.util.DefaultValueProvider;
-import com.fortify.cli.common.command.util.annotation.AlphaFeature;
-import com.fortify.cli.common.command.util.annotation.RequiresProduct;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.config.alpha.AlphaFeaturesHelper;
-import com.fortify.cli.common.config.product.EnabledProductsHelper;
-import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.command.CommandLineExecutor;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
-import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.order.OrderUtil;
-import io.micronaut.inject.BeanDefinition;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import picocli.CommandLine;
 
 public class FortifyCLI {
-	private static int execute(Class<?> clazz, String[] args) {
-		try (ApplicationContext context = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
-			FCLIRootCommand rootCommand = context.getBean(FCLIRootCommand.class);
-			MicronautFactory factory = new MicronautFactory(context);
-			CommandLine commandLine = new CommandLine(rootCommand, factory)
-					.setCaseInsensitiveEnumValuesAllowed(true)
-					.setDefaultValueProvider(new DefaultValueProvider())
-					.setUsageHelpAutoWidth(true);
-			addSubcommands(context, factory, commandLine, rootCommand);
-			return commandLine.execute(args);
-		}
-	}
-
-	private static void addSubcommands(ApplicationContext context, MicronautFactory factory, CommandLine commandLine,
-			FCLIRootCommand rootCommand) {
-		Map<Class<?>, List<Object>> parentToSubcommandsMap = getParentToSubcommandsMap(context);
-		addSubcommands(parentToSubcommandsMap, factory, commandLine, rootCommand);
-	}
-
-	private static final void addSubcommands(Map<Class<?>, List<Object>> parentToSubcommandsMap,
-			MicronautFactory factory, CommandLine commandLine, Object command) {
-		List<Object> subcommands = parentToSubcommandsMap.get(command.getClass());
-		if (subcommands != null) {
-			for (Object subcommand : subcommands) {
-				CommandLine subCommandLine = new CommandLine(subcommand, factory);
-				try {
-					commandLine.addSubcommand(subCommandLine);
-				} catch ( RuntimeException e ) {
-					throw new RuntimeException("Error while adding command class "+subcommand.getClass().getName(), e);
-				}
-				addSubcommands(parentToSubcommandsMap, factory, subCommandLine, subcommand);
-			}
-		}
-	}
-
-	private static final Map<Class<?>, List<Object>> getParentToSubcommandsMap(ApplicationContext context) {
-		final var beanDefinitions = context.getBeanDefinitions(Qualifiers.byStereotype(SubcommandOf.class));
-		
-		/* Disabled for now as for some reason compilation intermittently fails on this statement
-		return beanDefinitions.stream().collect(
-			Collectors.groupingBy(bd -> bd.getAnnotation(SubcommandOf.class).classValue().get(),
-			                      Collectors.mapping(context::getBean, Collectors.toList())));
-		*/
-		var parentToSubcommandsMap = new LinkedHashMap<Class<?>, List<Object>>();
-		beanDefinitions.stream()
-		// TODO Instead of filtering disabled commands, it would be better to replace these with a generic, hidden command
-		//      that tells the user that the command has been disabled (and for what reason). Requires some more research 
-		//      though on how to proprly do this.
-			.filter(bd->isEnabled(context, bd)) 
-			.sorted(FortifyCLI::compare)
-			.forEach(bd ->
-				addMultiValueEntry(
-						parentToSubcommandsMap, 
-						getParentCommandClazz(bd),
-						context.getBean(bd)));
-		// TODO Remove commands that do not have any runnable or callable children (because those have been filtered based on product 
-		return parentToSubcommandsMap;
-	}
-
-	private static boolean isEnabled(ApplicationContext context, BeanDefinition<?> bd) {
-		return isRequiredProductEnabled(context, bd) && isNotAlphaOrAllowed(context, bd);
-	}
-
-	private static boolean isNotAlphaOrAllowed(ApplicationContext context, BeanDefinition<?> bd) {
-		return !bd.hasAnnotation(AlphaFeature.class) || context.getBean(AlphaFeaturesHelper.class).isAlphaFeaturesEnabled();	
-	}
-	
-	private static boolean isRequiredProductEnabled(ApplicationContext context, BeanDefinition<?> bd) {
-		AnnotationValue<RequiresProduct> annotation = bd.getAnnotation(RequiresProduct.class);
-		if ( annotation==null ) { return true; }
-		var enabledProductsHelper = context.getBean(EnabledProductsHelper.class);
-		return enabledProductsHelper.isProductEnabled(annotation.enumValue(Product.class));
-	}
-
-	private static final Class<?> getParentCommandClazz(BeanDefinition<?> bd) {
-		Optional<Class<?>> optClazz = bd.getAnnotation(SubcommandOf.class).classValue();
-		if ( !optClazz.isPresent() ) {
-			throw new IllegalStateException("No parent command found for class "+bd.getBeanType().getName());
-		}
-		return optClazz.get();
-	}
-	
-	private static int compare(BeanDefinition<?> bd1, BeanDefinition<?> bd2) {
-		return Integer.compare(OrderUtil.getOrder(bd1.getAnnotationMetadata()), OrderUtil.getOrder(bd2.getAnnotationMetadata()));
-	}
-
-	private static <K, V> void addMultiValueEntry(LinkedHashMap<K, List<V>> map, K key, V value) {
-		map.computeIfAbsent(key, k->new LinkedList<V>()).add(value);
-	}
-
+	/**
+	 * This is the main entry point for executing the Fortify CLI. It will configure logging and
+	 * then get a {@link CommandLineExecutor} instance from Micronaut, which will perform the
+	 * actual work in its {@link CommandLineExecutor#execute(String[])} method.
+	 * @param args Command line options passed to Fortify CLI
+	 */
 	public static void main(String[] args) {
-		int exitCode = execute(FCLIRootCommand.class, args);
-		System.exit(exitCode);
+		FortifyCLILogHelper.configureLogging(args);
+		System.exit(execute(args));
 	}
 	
+	/**
+	 * This method starts the Micronaut {@link ApplicationContext}, then invokes the 
+	 * {@link CommandLineExecutor#execute(String[])} method on the {@link CommandLineExecutor}
+	 * singleton retrieved from the Micronaut {@link ApplicationContext}
+	 * @param args Command line options passed to Fortify CLI
+	 * @return exit code
+	 */
+	private static int execute(String[] args) {
+		try (ApplicationContext context = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
+			CommandLineExecutor runner = context.getBean(CommandLineExecutor.class);
+			return runner.execute(args);
+		}
+	}
+	
+	/**
+	 * Register classes for runtime reflection in GraalVM native images
+	 */
 	@AutomaticFeature
 	public static final class RuntimeReflectionRegistrationFeature implements Feature {
 		public void beforeAnalysis(BeforeAnalysisAccess access) {

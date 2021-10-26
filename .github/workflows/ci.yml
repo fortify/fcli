@@ -182,6 +182,7 @@ jobs:
         
   release:
     name: release
+    if: github.ref == 'refs/heads/main'
     needs: [build, native_linux, native_mac, native_win]
     runs-on: ubuntu-latest
     steps:
@@ -195,7 +196,6 @@ jobs:
           
       - name: PROD - Prepare release PR
         uses: GoogleCloudPlatform/release-please-action@v2
-        if: github.ref == 'refs/heads/main'
         with:
           command: release-pr
           release-type: simple
