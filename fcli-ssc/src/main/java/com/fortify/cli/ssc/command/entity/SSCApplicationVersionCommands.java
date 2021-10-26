@@ -24,10 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.command.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.util.printer.PrintHelper;
+import com.fortify.cli.common.util.printer.PrintHelperOptions;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand;
@@ -36,37 +39,43 @@ import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCUpdateCommand
 
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 public class SSCApplicationVersionCommands {
 	private static final String NAME = "application-versions";
+	private static final String ALIAS = "avs";
 	private static final String DESC = "application versions";
-	
+
+
 	@Singleton
 	@SubcommandOf(SSCGetCommand.class)
-	@Command(name = NAME, description = "Get "+DESC+" from SSC")
+	@Command(name = NAME, aliases = {ALIAS},description = "Get "+DESC+" from SSC")
 	@RequiresProduct(Product.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand {
+		@Mixin  private static PrintHelperOptions printHelperOptions;
+
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
-			System.out.println(
-				unirest.get("/api/v1/projectVersions?limit=-1")
+			JsonNode response = unirest.get("/api/v1/projectVersions?limit=-1")
 					.accept("application/json")
 					.header("Content-Type", "application/json")
 					.asObject(ObjectNode.class)
 					.getBody()
-					.get("data")
-					.toPrettyString()
-			);
-			
+					.get("data");
+
+			PrintHelper.printToFormat(printHelperOptions.getFormat(), response);
+
 			return null;
 		}
 	}
 	
 	@Singleton
 	@SubcommandOf(SSCCreateCommand.class)
-	@Command(name = NAME, description = "Create "+DESC+" in SSC")
+	@Command(name = NAME, aliases = {ALIAS}, description = "Create "+DESC+" in SSC")
 	@RequiresProduct(Product.SSC)
 	public static final class Create extends AbstractSSCUnirestRunnerCommand {
 		@SneakyThrows
@@ -78,7 +87,7 @@ public class SSCApplicationVersionCommands {
 	
 	@Singleton
 	@SubcommandOf(SSCUpdateCommand.class)
-	@Command(name = NAME, description = "Update "+DESC+" in SSC")
+	@Command(name = NAME, aliases = {ALIAS}, description = "Update "+DESC+" in SSC")
 	@RequiresProduct(Product.SSC)
 	public static final class Update extends AbstractSSCUnirestRunnerCommand {
 		@SneakyThrows
@@ -90,7 +99,7 @@ public class SSCApplicationVersionCommands {
 	
 	@Singleton
 	@SubcommandOf(SSCDeleteCommand.class)
-	@Command(name = NAME, description = "Delete "+DESC+" from SSC")
+	@Command(name = NAME, aliases = {ALIAS}, description = "Delete "+DESC+" from SSC")
 	@RequiresProduct(Product.SSC)
 	public static final class Delete extends AbstractSSCUnirestRunnerCommand {
 		@SneakyThrows

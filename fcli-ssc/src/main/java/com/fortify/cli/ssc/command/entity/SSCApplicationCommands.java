@@ -39,13 +39,16 @@ import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 
+import java.util.ArrayList;
+
 public class SSCApplicationCommands {
 	private static final String NAME = "applications";
 	private static final String DESC = "applications";
+	private static final String ALIAS = "apps";
 	
 	@Singleton
 	@SubcommandOf(SSCGetCommand.class)
-	@Command(name = NAME, description = "Get "+DESC+" from SSC")
+	@Command(name = NAME, description = "Get "+DESC+" from SSC", aliases = {ALIAS})
 	@RequiresProduct(Product.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand {
 		@SneakyThrows
