@@ -59,6 +59,9 @@ allprojects {
 		implementation("io.micronaut.picocli:micronaut-picocli")
 		implementation("javax.annotation:javax.annotation-api")
 		
+		// Logback dependency to allow us to configure logging programmatically
+		implementation("ch.qos.logback:logback-classic:1.2.6")
+		
 		implementation('com.konghq:unirest-java:3.13.0') {
 			exclude group: 'com.google.code.gson', module: 'gson' // We use Jackson, so no need for Gson
 		}
