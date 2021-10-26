@@ -52,8 +52,8 @@ public class SSCApplicationVersionCommands {
 	private static final String DESC = "application versions";
 
 
-	@Singleton
-	@ReflectiveAccess
+	//@Singleton
+	//@ReflectiveAccess
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, aliases = {ALIAS},description = "Get "+DESC+" from SSC")
 	@RequiresProduct(Product.SSC)
