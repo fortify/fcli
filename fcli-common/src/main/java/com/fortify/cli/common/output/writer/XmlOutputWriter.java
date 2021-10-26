@@ -33,7 +33,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.SneakyThrows;
 
 public class XmlOutputWriter implements IOutputWriter {
-	private final boolean pretty = false;
+	private final boolean pretty = true;
 
 	@Override @SneakyThrows
 	public void write(JsonNode jsonNode) {
