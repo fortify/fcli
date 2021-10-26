@@ -33,10 +33,9 @@ import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 import com.fortify.cli.common.session.ILoginHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 
-@Singleton @ReflectiveAccess
+@ReflectiveAccess
 @SubcommandOf(RootLoginCommand.class)
 @Command(name = ProductIdentifiers.FOD, description = "Login to FoD", sortOptions = false)
 @RequiresProduct(Product.FOD)

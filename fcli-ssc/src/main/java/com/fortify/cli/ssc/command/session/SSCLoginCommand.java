@@ -38,13 +38,12 @@ import com.fortify.cli.ssc.rest.unirest.SSCLoginHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Singleton @ReflectiveAccess
+@ReflectiveAccess
 @SubcommandOf(RootLoginCommand.class) 
 @Command(name = ProductIdentifiers.SSC, description = "Login to SSC", sortOptions = false)
 @RequiresProduct(Product.SSC)

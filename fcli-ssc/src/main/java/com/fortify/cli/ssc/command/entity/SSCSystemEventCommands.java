@@ -31,7 +31,7 @@ import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCGetCommand;
 
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
@@ -40,7 +40,7 @@ public class SSCSystemEventCommands {
     private static final String NAME = "system-events";
     private static final String DESC = "system events";
 	
-	@Singleton
+    @ReflectiveAccess
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, description = "Get "+DESC+" data from SSC")
 	@RequiresProduct(Product.SSC)

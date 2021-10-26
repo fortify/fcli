@@ -28,10 +28,10 @@ import com.fortify.cli.common.command.scan.RootSastCommand;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import io.micronaut.core.annotation.Order;
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
-@Singleton
+@ReflectiveAccess
 @SubcommandOf(RootSastCommand.class)
 @Command(name = "scan", description = "Scan build session or package locally, using ScanCentral SAST, or on FoD")
 @Order(SastCommandsOrder.SCAN)

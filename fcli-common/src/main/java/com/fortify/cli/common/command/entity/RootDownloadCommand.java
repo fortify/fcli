@@ -28,10 +28,10 @@ import com.fortify.cli.common.command.FCLIRootCommand;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import io.micronaut.core.annotation.Order;
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
-@Singleton
+@ReflectiveAccess
 @SubcommandOf(FCLIRootCommand.class)
 @Command(name = "download", description = "Download data from Fortify systems")
 @Order(EntityCommandsOrder.DOWNLOAD)

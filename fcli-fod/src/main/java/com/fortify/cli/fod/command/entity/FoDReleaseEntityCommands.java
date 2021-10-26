@@ -32,13 +32,13 @@ import com.fortify.cli.fod.command.entity.FoDEntityRootCommands.FoDDeleteCommand
 import com.fortify.cli.fod.command.entity.FoDEntityRootCommands.FoDGetCommand;
 import com.fortify.cli.fod.command.entity.FoDEntityRootCommands.FoDUpdateCommand;
 
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 public class FoDReleaseEntityCommands {
 	private static final String ENTITY = "release";
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(FoDGetCommand.class)
 	@Command(name = ENTITY, description = "Get "+ENTITY+" data from FoD")
 	@RequiresProduct(Product.FOD)
@@ -48,7 +48,7 @@ public class FoDReleaseEntityCommands {
 		}
 	}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(FoDCreateCommand.class)
 	@Command(name = ENTITY, description = "Create "+ENTITY+" in FoD")
 	@RequiresProduct(Product.FOD)
@@ -58,7 +58,7 @@ public class FoDReleaseEntityCommands {
 		}
 	}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(FoDUpdateCommand.class)
 	@Command(name = ENTITY, description = "Update "+ENTITY+" in FoD")
 	@RequiresProduct(Product.FOD)
@@ -68,7 +68,7 @@ public class FoDReleaseEntityCommands {
 		}
 	}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(FoDDeleteCommand.class)
 	@Command(name = ENTITY, description = "Delete "+ENTITY+" from FoD")
 	@RequiresProduct(Product.FOD)

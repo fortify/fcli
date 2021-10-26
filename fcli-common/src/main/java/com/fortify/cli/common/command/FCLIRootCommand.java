@@ -26,12 +26,14 @@ package com.fortify.cli.common.command;
 
 import com.fortify.cli.common.command.log.LogOptionsMixin;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ScopeType;
 
 @Singleton
+@ReflectiveAccess
 @Command(name = "fcli", 
 	scope = ScopeType.INHERIT, 
 	mixinStandardHelpOptions = true, 

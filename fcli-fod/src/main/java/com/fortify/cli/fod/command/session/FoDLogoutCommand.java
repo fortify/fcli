@@ -31,10 +31,10 @@ import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
-@Singleton
+@ReflectiveAccess
 @SubcommandOf(RootLogoutCommand.class)
 @Command(name = ProductIdentifiers.FOD, description = "Logout from FoD", sortOptions = false)
 @RequiresProduct(Product.FOD)

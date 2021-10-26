@@ -29,10 +29,10 @@ import com.fortify.cli.common.command.RootCommandsOrderByGroup;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import io.micronaut.core.annotation.Order;
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
-@Singleton
+@ReflectiveAccess
 @SubcommandOf(FCLIRootCommand.class)
 @Command(name = "config", description = "Manage configuration settings for fcli and other tools", sortOptions = true)
 @Order(RootCommandsOrderByGroup.CONFIG)

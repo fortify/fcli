@@ -35,7 +35,6 @@ import com.fortify.cli.common.session.LogoutHelper;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
@@ -44,7 +43,7 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ScopeType;
 import picocli.CommandLine.Spec;
 
-@Singleton @ReflectiveAccess
+@ReflectiveAccess
 @SubcommandOf(FCLIRootCommand.class)
 @Command(name = "logout", description = "Logout from Fortify systems")
 @Order(SessionCommandsOrder.LOGOUT)

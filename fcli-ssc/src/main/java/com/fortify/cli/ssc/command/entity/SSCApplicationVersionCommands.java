@@ -34,7 +34,7 @@ import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCGetCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCUpdateCommand;
 
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
@@ -43,7 +43,7 @@ public class SSCApplicationVersionCommands {
 	private static final String NAME = "application-versions";
 	private static final String DESC = "application versions";
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, description = "Get "+DESC+" from SSC")
 	@RequiresProduct(Product.SSC)
@@ -64,7 +64,7 @@ public class SSCApplicationVersionCommands {
 		}
 	}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(SSCCreateCommand.class)
 	@Command(name = NAME, description = "Create "+DESC+" in SSC")
 	@RequiresProduct(Product.SSC)
@@ -76,7 +76,7 @@ public class SSCApplicationVersionCommands {
 		}
 	}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(SSCUpdateCommand.class)
 	@Command(name = NAME, description = "Update "+DESC+" in SSC")
 	@RequiresProduct(Product.SSC)
@@ -88,7 +88,7 @@ public class SSCApplicationVersionCommands {
 		}
 	}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(SSCDeleteCommand.class)
 	@Command(name = NAME, description = "Delete "+DESC+" from SSC")
 	@RequiresProduct(Product.SSC)

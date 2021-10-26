@@ -35,41 +35,41 @@ import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 public class FoDEntityRootCommands {
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(RootGetCommand.class)
 	@Command(name = ProductIdentifiers.FOD, description = "Get entity data from FoD")
 	@RequiresProduct(Product.FOD)
 	public static final class FoDGetCommand {}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(RootCreateCommand.class)
 	@Command(name = ProductIdentifiers.FOD, description = "Create entities in FoD")
 	@RequiresProduct(Product.FOD)
 	public static final class FoDCreateCommand {}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(RootUpdateCommand.class)
 	@Command(name = ProductIdentifiers.FOD, description = "Update entities in FoD")
 	@RequiresProduct(Product.FOD)
 	public static final class FoDUpdateCommand {}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(RootDeleteCommand.class)
 	@Command(name = ProductIdentifiers.FOD, description = "Delete entities from FoD")
 	@RequiresProduct(Product.FOD)
 	public static final class FoDDeleteCommand {}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(RootUploadCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Upload data FoD")
+	@Command(name = ProductIdentifiers.FOD, description = "Upload data to FoD")
 	@RequiresProduct(Product.FOD)
 	public static final class FoDUploadCommand {}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(RootDownloadCommand.class)
 	@Command(name = ProductIdentifiers.FOD, description = "Download data from FoD")
 	@RequiresProduct(Product.FOD)

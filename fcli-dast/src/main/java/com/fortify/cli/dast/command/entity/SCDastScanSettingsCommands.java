@@ -28,7 +28,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.entity.scdast.SCDastScanSettingsOptions;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
-import jakarta.inject.Singleton;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -39,7 +40,7 @@ public class SCDastScanSettingsCommands {
     private static final String NAME = "scan-settings";
     private static final String DESC = "DAST scan settings";
 
-    @Singleton
+    @ReflectiveAccess
     @SubcommandOf(SCDastEntityRootCommands.SCDASTGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
     public static final class Get extends AbstractSCDastUnirestRunnerCommand {

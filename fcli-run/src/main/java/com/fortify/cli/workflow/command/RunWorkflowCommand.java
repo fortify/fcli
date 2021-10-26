@@ -28,10 +28,10 @@ import com.fortify.cli.common.command.run.RootRunCommand;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import io.micronaut.core.annotation.Order;
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
-@Singleton
+@ReflectiveAccess
 @SubcommandOf(RootRunCommand.class)
 @Command(name = "workflow", description = "Run fcli workflow defined in YAML file")
 @Order(RunCommandsOrder.WORKFLOW)
