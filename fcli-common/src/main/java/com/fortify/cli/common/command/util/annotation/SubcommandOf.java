@@ -34,7 +34,7 @@ import jakarta.inject.Singleton;
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
 @Singleton
-@ReflectiveAccess
 public @interface SubcommandOf {
+	@ReflectiveAccess
 	Class<?> value();
 }
