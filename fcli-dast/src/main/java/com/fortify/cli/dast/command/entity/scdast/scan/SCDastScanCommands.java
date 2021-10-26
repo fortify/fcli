@@ -15,7 +15,9 @@ import kong.unirest.JsonResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.ArgGroup;
 
 public class SCDastScanCommands {
     private static final String NAME = "scan";
@@ -23,34 +25,25 @@ public class SCDastScanCommands {
 
     @ReflectiveAccess
     @SubcommandOf(SCDastEntityRootCommands.SCDASTScanCommand.class)
-    @CommandLine.Command(name = NAME, description = "Start " + DESC + " using SC DAST")
+    @Command(name = NAME, description = "Start " + DESC + " using SC DAST")
     public static final class Get extends AbstractSCDastUnirestRunnerCommand {
 
-        @CommandLine.ArgGroup(exclusive = false, heading = "Scan options:%n", order = 1)
+        @ArgGroup(exclusive = false, heading = "Scan options:%n", order = 1)
         @Getter
         private SCDastScanOptions scanOptions;
 
-        @CommandLine.Mixin
+        @Mixin
         private OutputWriterMixin outputWriterMixin;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
-            JsonMapper jsonMapper = new JsonMapper();
-            ObjectMapper objectMapper = new ObjectMapper();
             String urlPath = "/api/v2/scans/start-scan-cicd";
-
-            ObjectNode body = objectMapper.createObjectNode();
-            body.set("cicdToken", objectMapper.convertValue(getScanOptions().getCicdToken(), JsonNode.class));
-            if(getScanOptions() != null) {
-                if (getScanOptions().getScanName() != null) {
-                    body.set("name", objectMapper.convertValue(getScanOptions().getScanName(), JsonNode.class));
-                }
-            }
-
+            String body = scanOptions.getJsonBody();
+            System.out.println(body);
             JsonNode response = unirest.post(urlPath)
                     .accept("application/json")
                     .header("Content-Type", "application/json")
-                    .body(jsonMapper.writeValueAsString(body))
+                    .body(body)
                     .asObject(ObjectNode.class)
                     .getBody();
 
