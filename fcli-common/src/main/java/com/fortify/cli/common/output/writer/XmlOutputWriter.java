@@ -38,14 +38,19 @@ public class XmlOutputWriter implements IOutputWriter {
 	@Override @SneakyThrows
 	public void write(JsonNode jsonNode) {
 		XmlMapper xmlMapper = new XmlMapper();
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode root = objectMapper.createObjectNode();
-        root.set("item", jsonNode);
+
+        if(! (jsonNode instanceof ObjectNode)){
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode root = objectMapper.createObjectNode();
+            root.set("item", jsonNode);
+
+            jsonNode = root;
+        }
 
         if (pretty){
             xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
         }
-        String xmlString = xmlMapper.writeValueAsString(root).replace("ObjectNode", "content");
+        String xmlString = xmlMapper.writeValueAsString(jsonNode).replace("ObjectNode", "content");
 
         System.out.println(xmlString);
 	}

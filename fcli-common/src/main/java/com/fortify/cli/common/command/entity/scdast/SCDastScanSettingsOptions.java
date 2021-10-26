@@ -20,6 +20,7 @@ import picocli.CommandLine.Option;
  */
 @ReflectiveAccess
 public class SCDastScanSettingsOptions {
+
     @Option(names = {"-s","--search-text"}, description = "The text to filter results by.")
     @Getter private String searchText;
 
