@@ -22,15 +22,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command;
+package com.fortify.cli.common.auth;
 
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		ENTITY   = 300,
-		SCAN     = 400,
-		RUN      = 500,
-		SOFTWARE = 600,
-		API = 700;
+import java.util.Collection;
+import java.util.stream.Collectors;
+
+import com.fortify.cli.common.command.auth.AbstractCommandWithAuthSessionPersistenceHelper;
+
+public abstract class AbstractAuthSessionSummaryProvider extends AbstractCommandWithAuthSessionPersistenceHelper implements IAuthSessionSummaryProvider {
+	@Override
+	public Collection<AuthSessionSummary> getAuthSessionSummaries() {
+		return getAuthSessionPersistenceHelper()
+				.list(getAuthSessionType()).stream()
+				.map(this::getAuthSessionSummary)
+				.collect(Collectors.toList());
+	}
+	
+	protected abstract AuthSessionSummary getAuthSessionSummary(String authSessionName);
 }

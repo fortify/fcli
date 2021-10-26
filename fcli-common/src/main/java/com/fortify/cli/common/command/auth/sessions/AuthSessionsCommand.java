@@ -22,15 +22,40 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command;
+package com.fortify.cli.common.command.auth.sessions;
 
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		ENTITY   = 300,
-		SCAN     = 400,
-		RUN      = 500,
-		SOFTWARE = 600,
-		API = 700;
+import java.util.Collection;
+
+import com.fortify.cli.common.auth.AuthSessionSummary;
+import com.fortify.cli.common.auth.IAuthSessionSummaryProvider;
+import com.fortify.cli.common.command.auth.AuthCommandsOrder;
+import com.fortify.cli.common.command.auth.RootAuthCommand;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import jakarta.inject.Inject;
+import picocli.CommandLine.Command;
+
+@ReflectiveAccess
+@SubcommandOf(RootAuthCommand.class)
+@Command(name = "sessions", description = "Get information related to authentication sessions.")
+@Order(AuthCommandsOrder.LOGIN)
+public class AuthSessionsCommand implements Runnable {
+	@Inject private Collection<IAuthSessionSummaryProvider> authSessionSummaryProviders;
+
+	@Override
+	public void run() {
+		authSessionSummaryProviders.forEach(this::printSummary);
+	}
+
+	private void printSummary(IAuthSessionSummaryProvider authSessionSummaryProvider) {
+		authSessionSummaryProvider.getAuthSessionSummaries().forEach(this::outputSummary);
+	}
+
+	private void outputSummary(AuthSessionSummary authSessionSummary) {
+		System.out.println(authSessionSummary);
+	}
+	
+	
 }

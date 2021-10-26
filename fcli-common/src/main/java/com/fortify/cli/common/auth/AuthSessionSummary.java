@@ -22,15 +22,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command;
+package com.fortify.cli.common.auth;
 
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		ENTITY   = 300,
-		SCAN     = 400,
-		RUN      = 500,
-		SOFTWARE = 600,
-		API = 700;
+import java.util.Date;
+
+import io.micronaut.core.annotation.Introspected;
+import lombok.Builder;
+import lombok.Data;
+
+@Data @Introspected @Builder
+public class AuthSessionSummary {
+	public static final Date EXPIRES_UNKNOWN = null;
+	public static final Date EXPIRES_NEVER = new Date(Long.MAX_VALUE);
+	private String name;
+	private Date created;
+	private Date expires;
 }

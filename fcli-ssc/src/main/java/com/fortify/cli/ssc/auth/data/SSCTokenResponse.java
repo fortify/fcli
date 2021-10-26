@@ -22,15 +22,25 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command;
+package com.fortify.cli.ssc.auth.data;
 
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		ENTITY   = 300,
-		SCAN     = 400,
-		RUN      = 500,
-		SOFTWARE = 600,
-		API = 700;
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import io.micronaut.core.annotation.Introspected;
+import lombok.Data;
+
+@Data @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
+public final class SSCTokenResponse {
+	private SSCTokenResponse.SSCTokenData data;
+	@Data @Introspected
+	public static final class SSCTokenData {
+		private int id;
+		private Date terminalDate;
+		private Date creationDate;
+		private String type;
+		private char[] token;
+		private String _href;
+	}
 }

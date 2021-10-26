@@ -34,50 +34,50 @@ import org.apache.commons.codec.binary.Base64;
 
 import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 import com.fortify.cli.common.rest.data.BasicUserCredentialsConfig;
-import com.fortify.cli.common.rest.unirest.AbstractLoginSessionUnirestRunner;
+import com.fortify.cli.common.rest.unirest.AbstractAuthSessionUnirestRunner;
+import com.fortify.cli.ssc.auth.data.SSCAuthSessionData;
+import com.fortify.cli.ssc.auth.data.SSCTokenRequest;
+import com.fortify.cli.ssc.auth.data.SSCTokenResponse;
+import com.fortify.cli.ssc.auth.data.SSCTokenResponse.SSCTokenData;
 import com.fortify.cli.ssc.rest.data.SSCConnectionConfig;
-import com.fortify.cli.ssc.rest.data.SSCLoginSessionData;
-import com.fortify.cli.ssc.rest.data.SSCTokenRequest;
-import com.fortify.cli.ssc.rest.data.SSCTokenResponse;
-import com.fortify.cli.ssc.rest.data.SSCTokenResponse.SSCTokenData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
-public class SSCUnirestRunner extends AbstractLoginSessionUnirestRunner<SSCLoginSessionData> {
+public class SSCUnirestRunner extends AbstractAuthSessionUnirestRunner<SSCAuthSessionData> {
 	@Override
-	protected void configure(String loginSessionName, SSCLoginSessionData loginSessionData, UnirestInstance unirestInstance) {
-		SSCConnectionConfig config = loginSessionData.getConfig();
+	protected void configure(String authSessionName, SSCAuthSessionData authSessionData, UnirestInstance unirestInstance) {
+		SSCConnectionConfig config = authSessionData.getConfig();
 		if ( config==null ) {
 			throw new IllegalStateException("SSC connection configuration may not be null");
 		}
-		setTokenHeader(unirestInstance, getSSCLoginToken(loginSessionName, loginSessionData, unirestInstance, config));
+		setTokenHeader(unirestInstance, getSSCLoginToken(authSessionName, authSessionData, unirestInstance, config));
 	}
 
-	private char[] getSSCLoginToken(String loginSessionName, SSCLoginSessionData loginSessionData, UnirestInstance unirestInstance, SSCConnectionConfig config) {
+	private char[] getSSCLoginToken(String authSessionName, SSCAuthSessionData authSessionData, UnirestInstance unirestInstance, SSCConnectionConfig config) {
 		char[] token = null;
 		if ( config.getToken()!=null ) {
-			token = toBase64Token(loginSessionData.getConfig().getToken());
+			token = toBase64Token(authSessionData.getConfig().getToken());
 		} else {
-			SSCTokenResponse cachedTokenResponse = loginSessionData.getCachedTokenResponse();
+			SSCTokenResponse cachedTokenResponse = authSessionData.getCachedTokenResponse();
 			if ( cachedTokenResponse!=null ) {
 				SSCTokenData tokenData = cachedTokenResponse.getData();
 				if ( tokenData.getTerminalDate().after(new Date()) ) {
 					token = tokenData.getToken();
 				} else if ( !config.isRenewAllowed() ) {
-					throw new IllegalStateException(String.format("Login session %s for %s has expired, please login again", loginSessionName, getLoginSessionType()));
+					throw new IllegalStateException(String.format("Login session %s for %s has expired, please login again", authSessionName, getAuthSessionType()));
 				}
 			} 
 		}
 		if ( token==null && config.hasUserCredentialsConfig() ) {
 			SSCTokenResponse tokenResponse = generateToken(unirestInstance, config);
-			loginSessionData.setCachedTokenResponse(tokenResponse);
+			authSessionData.setCachedTokenResponse(tokenResponse);
 			if ( !config.isRenewAllowed() ) {
 				clearUserCredentials(config.getBasicUserCredentialsConfig());
 			}
-			getLoginSessionHelper().saveData(getLoginSessionType(), loginSessionName, loginSessionData);
+			getAuthSessionPersistenceHelper().saveData(getAuthSessionType(), authSessionName, authSessionData);
 			token = tokenResponse.getData().getToken();
 		}
 		return token;
@@ -127,12 +127,12 @@ public class SSCUnirestRunner extends AbstractLoginSessionUnirestRunner<SSCLogin
 	}
 
 	@Override
-	public final String getLoginSessionType() {
+	public final String getAuthSessionType() {
 		return ProductIdentifiers.SSC;
 	}
 
 	@Override
-	protected Class<SSCLoginSessionData> getLoginSessionDataClass() {
-		return SSCLoginSessionData.class;
+	protected Class<SSCAuthSessionData> getAuthSessionDataClass() {
+		return SSCAuthSessionData.class;
 	}
 }

@@ -22,41 +22,39 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.dast.command;
+package com.fortify.cli.common.command.auth.logout;
 
-import com.fortify.cli.dast.rest.unirest.SCDastUnirestRunner;
+import com.fortify.cli.common.auth.LogoutHelper;
+import com.fortify.cli.common.command.auth.AbstractCommandWithAuthSessionPersistenceHelper;
+import com.fortify.cli.common.command.auth.consumer.AuthSessionConsumerMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.ArgGroup;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.ParentCommand;
 
 @ReflectiveAccess
-public abstract class AbstractSCDastUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private SCDastUnirestRunner unirestRunner;
+public abstract class AbstractAuthLogoutCommand extends AbstractCommandWithAuthSessionPersistenceHelper implements Runnable {
+	@Getter @Inject private LogoutHelper logoutHelper;
+	@Getter @Mixin private AuthSessionConsumerMixin authSessionConsumerMixin;
+	@ParentCommand private AuthLogoutCommand parent;
 	
-	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
-    @Getter private AuthSessionConsumerNameOptions nameOptions;
-	
-	static class AuthSessionConsumerNameOptions {
-		@Option(names = {"--ssc-auth-session"}, required = false, defaultValue = "default")
-		@Getter private String sscAuthSessionName;
-	}
-	
-	public String getSSCAuthSessionName() {
-		return nameOptions==null ? "default" : nameOptions.getSscAuthSessionName();
-	}
-
-	@Override @SneakyThrows
+	@Override
 	public final void run() {
-		// TODO Do we want to do anything with the results, like formatting it based on output options?
-		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(getSSCAuthSessionName(), this::runWithUnirest);
+		if ( parent.isLogoutAll() ) {
+			System.out.println(String.format("Logging out all %s sessions", getAuthSessionType()));
+			getAuthSessionPersistenceHelper().list(getAuthSessionType()).forEach(this::logoutAndDestroy);
+		} else {
+			String authSessionName = authSessionConsumerMixin.getAuthSessionName();
+			logoutAndDestroy(authSessionName);
+		}
 	}
 	
-	protected abstract Void runWithUnirest(UnirestInstance unirest);
+	private final void logoutAndDestroy(String authSessionName) {
+		String authSessionType = getAuthSessionType();
+		logoutHelper.logoutAndDestroy(authSessionType, authSessionName);
+	}
 	
+	protected abstract String getAuthSessionType();
 }

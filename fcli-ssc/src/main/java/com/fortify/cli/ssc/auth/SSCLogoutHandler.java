@@ -22,41 +22,45 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.dast.command;
+package com.fortify.cli.ssc.auth;
 
-import com.fortify.cli.dast.rest.unirest.SCDastUnirestRunner;
+import com.fortify.cli.common.auth.AuthSessionPersistenceHelper;
+import com.fortify.cli.common.auth.ILogoutHandler;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
+import com.fortify.cli.ssc.auth.data.SSCAuthSessionData;
+import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.ArgGroup;
-import picocli.CommandLine.Option;
 
-@ReflectiveAccess
-public abstract class AbstractSCDastUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private SCDastUnirestRunner unirestRunner;
-	
-	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
-    @Getter private AuthSessionConsumerNameOptions nameOptions;
-	
-	static class AuthSessionConsumerNameOptions {
-		@Option(names = {"--ssc-auth-session"}, required = false, defaultValue = "default")
-		@Getter private String sscAuthSessionName;
+@Singleton @ReflectiveAccess
+public class SSCLogoutHandler implements ILogoutHandler {
+	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
+	@Getter @Inject private SSCUnirestRunner unirestRunner;
+
+	@Override
+	public final void logout(String authSessionName) {
+		SSCAuthSessionData data = authSessionPersistenceHelper.getData(getAuthSessionType(), authSessionName, SSCAuthSessionData.class);
+		if ( data.hasActiveCachedTokenResponse() ) {
+			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
+		}
 	}
 	
-	public String getSSCAuthSessionName() {
-		return nameOptions==null ? "default" : nameOptions.getSscAuthSessionName();
+	private final Void logout(UnirestInstance unirestInstance, SSCAuthSessionData authSessionData) {
+		try {
+			// TODO Current SSC versions don't allow current token to be invalidated
+			// TODO Invalidate token if username/password are available in login  session data 
+		} catch ( RuntimeException e ) {
+			System.out.println("Error deserializing token:" + e.getMessage());
+		}
+		return null;
 	}
 
-	@Override @SneakyThrows
-	public final void run() {
-		// TODO Do we want to do anything with the results, like formatting it based on output options?
-		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(getSSCAuthSessionName(), this::runWithUnirest);
+	@Override
+	public String getAuthSessionType() {
+		return ProductIdentifiers.SSC;
 	}
-	
-	protected abstract Void runWithUnirest(UnirestInstance unirest);
-	
 }

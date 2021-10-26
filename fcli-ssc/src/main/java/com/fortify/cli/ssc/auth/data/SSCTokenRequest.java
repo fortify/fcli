@@ -22,15 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command;
+package com.fortify.cli.ssc.auth.data;
 
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		ENTITY   = 300,
-		SCAN     = 400,
-		RUN      = 500,
-		SOFTWARE = 600,
-		API = 700;
+import io.micronaut.core.annotation.Introspected;
+import lombok.Builder;
+import lombok.Data;
+
+@Data @Builder @Introspected
+public final class SSCTokenRequest {
+	private String type;
+	private String description;
 }

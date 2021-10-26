@@ -22,15 +22,26 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command;
+package com.fortify.cli.fod.command.auth;
 
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		ENTITY   = 300,
-		SCAN     = 400,
-		RUN      = 500,
-		SOFTWARE = 600,
-		API = 700;
+import com.fortify.cli.common.command.auth.logout.AbstractAuthLogoutCommand;
+import com.fortify.cli.common.command.auth.logout.AuthLogoutCommand;
+import com.fortify.cli.common.command.util.annotation.RequiresProduct;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine.Command;
+
+@ReflectiveAccess
+@SubcommandOf(AuthLogoutCommand.class)
+@Command(name = ProductIdentifiers.FOD, description = "Logout from FoD", sortOptions = false)
+@RequiresProduct(Product.FOD)
+public class FoDLogoutCommand extends AbstractAuthLogoutCommand {
+
+	@Override
+	public String getAuthSessionType() {
+		return ProductIdentifiers.FOD;
+	}
 }

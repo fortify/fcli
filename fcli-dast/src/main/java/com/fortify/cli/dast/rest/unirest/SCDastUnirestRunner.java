@@ -45,8 +45,8 @@ public class SCDastUnirestRunner {
 	@Getter @Inject private UnirestRunner unirestRunner;
 	@Getter @Inject private SSCUnirestRunner sscUnirestRunner;
 	
-	public <R> R runWithUnirest(String sscLoginSessionName, Function<UnirestInstance, R> runner) {
-		return sscUnirestRunner.runWithUnirest(sscLoginSessionName, sscUnirest -> {
+	public <R> R runWithUnirest(String sscAuthSessionName, Function<UnirestInstance, R> runner) {
+		return sscUnirestRunner.runWithUnirest(sscAuthSessionName, sscUnirest -> {
 			String scDastApiUrl = getSCDastApiUrlFromSSC(sscUnirest);
 			String authHeader = sscUnirest.config().getDefaultHeaders().get("Authorization").stream().filter(h->h.startsWith("FortifyToken")).findFirst().orElseThrow();
 			return unirestRunner.runWithUnirest(scDastUnirest->{

@@ -22,15 +22,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command;
+package com.fortify.cli.common.command.auth;
 
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		ENTITY   = 300,
-		SCAN     = 400,
-		RUN      = 500,
-		SOFTWARE = 600,
-		API = 700;
+import com.fortify.cli.common.command.FCLIRootCommand;
+import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine.Command;
+
+@ReflectiveAccess
+@SubcommandOf(FCLIRootCommand.class)
+@Command(name = "auth", description = "Manage authentication sessions")
+@Order(AuthCommandsOrder.LOGIN)
+public class RootAuthCommand {
 }

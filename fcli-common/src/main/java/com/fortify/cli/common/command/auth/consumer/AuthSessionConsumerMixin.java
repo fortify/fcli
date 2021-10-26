@@ -22,15 +22,27 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command;
+package com.fortify.cli.common.command.auth.consumer;
 
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		ENTITY   = 300,
-		SCAN     = 400,
-		RUN      = 500,
-		SOFTWARE = 600,
-		API = 700;
+import com.fortify.cli.common.auth.IAuthSessionNameProvider;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Option;
+
+@ReflectiveAccess
+public class AuthSessionConsumerMixin implements IAuthSessionNameProvider {
+	@ArgGroup(heading = "Optional authentication session name:%n", order = 1000)
+    @Getter private AuthSessionConsumerNameOptions nameOptions;
+	
+	static class AuthSessionConsumerNameOptions {
+		@Option(names = {"--auth-session"}, required = false, defaultValue = "default")
+		@Getter private String sessionName;
+	}
+	
+	@Override
+	public String getAuthSessionName() {
+		return nameOptions==null ? "default" : nameOptions.getSessionName();
+	}
 }

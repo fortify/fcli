@@ -22,15 +22,38 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.command;
+package com.fortify.cli.common.command.auth.login;
 
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		ENTITY   = 300,
-		SCAN     = 400,
-		RUN      = 500,
-		SOFTWARE = 600,
-		API = 700;
+import com.fortify.cli.common.auth.ILoginHandler;
+import com.fortify.cli.common.command.auth.AbstractCommandWithAuthSessionPersistenceHelper;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Option;
+
+@ReflectiveAccess
+public abstract class AbstractAuthLoginCommand<C> extends AbstractCommandWithAuthSessionPersistenceHelper implements Runnable {
+	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
+    @Getter protected AuthSessionNameOptions authSessionNameOptions;
+	
+	@ReflectiveAccess
+	private static class AuthSessionNameOptions {
+		@Option(names = {"--auth-session-name", "-n"}, required = false, defaultValue = "default")
+		@Getter protected String authSessionName;
+	}
+	
+	@Override @SneakyThrows
+	public final void run() {
+		getLoginHandler().login(getAuthSessionName(), getConnectionConfig());
+	}
+	
+	public final String getAuthSessionName() {
+		return authSessionNameOptions==null ? "default" : authSessionNameOptions.getAuthSessionName();
+	}
+	
+	protected abstract String getAuthSessionType();
+	protected abstract C getConnectionConfig();
+	protected abstract ILoginHandler<C> getLoginHandler();
 }
