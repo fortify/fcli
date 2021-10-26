@@ -24,10 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.command.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.util.printer.PrintHelperMixin;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand;
@@ -37,6 +39,7 @@ import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCUpdateCommand
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 import java.util.ArrayList;
@@ -51,18 +54,21 @@ public class SSCApplicationCommands {
 	@Command(name = NAME, description = "Get "+DESC+" from SSC", aliases = {ALIAS})
 	@RequiresProduct(Product.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand {
+
+		@CommandLine.Mixin
+		private static PrintHelperMixin printHelperMixin;
+
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
-			System.out.println(
-				unirest.get("/api/v1/projects?limit=-1")
+			JsonNode response = unirest.get("/api/v1/projects?limit=-1")
 					.accept("application/json")
 					.header("Content-Type", "application/json")
 					.asObject(ObjectNode.class)
 					.getBody()
-					.get("data")
-					.toPrettyString()
-			);
-			
+					.get("data");
+
+			printHelperMixin.printToFormat(response);
+
 			return null;
 		}
 	}
