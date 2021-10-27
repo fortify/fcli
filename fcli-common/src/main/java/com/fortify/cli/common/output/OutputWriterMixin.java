@@ -24,4 +24,5 @@ public class OutputWriterMixin {
         format.getOutputWriterFactory().createOutputWriter().write(response);
     }
 
+    //TODO: allow printToFormat with (String response)
 }
