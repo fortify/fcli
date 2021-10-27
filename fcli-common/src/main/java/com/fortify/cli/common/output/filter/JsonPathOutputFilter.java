@@ -22,17 +22,37 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output;
+package com.fortify.cli.common.output.filter;
 
-import com.fortify.cli.common.output.filter.*;
-import lombok.Getter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import io.micronaut.json.tree.JsonArray;
+import net.minidev.json.JSONArray;
 
-public enum OutputFilter {
-	xpath(new xPathOutputFilterFactory()),
-	jsonpath(new jsonPathOutputFilterFactory());
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathFactory;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-	@Getter private final IOutputFilterFactory outputFilterFactory;
-	private OutputFilter(IOutputFilterFactory outputWriterFactory) {
-		this.outputFilterFactory = outputWriterFactory;
+public class JsonPathOutputFilter {
+
+	public static JsonNode filter(JsonNode jsonNode, String expression) {
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		DocumentContext jsonContext = JsonPath.parse(jsonNode.toString());
+
+		ObjectNode root = objectMapper.createObjectNode();
+
+		//root.set("value", );
+
+		return objectMapper.valueToTree(jsonContext.read(expression));
 	}
+
 }

@@ -7,6 +7,7 @@ import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
 import com.fortify.cli.common.command.util.output.OutputWriterMixin;
 import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
 import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
+import com.fortify.cli.common.output.OutputFilterOptions;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
@@ -41,6 +42,9 @@ public class SCDastScanCommands {
 
         @Mixin
         private OutputWriterMixin outputWriterMixin;
+
+        @ArgGroup(exclusive = false, heading = "Filter Output:%n", order = 10)
+        @Getter private OutputFilterOptions outputFilterOptions;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
@@ -83,6 +87,9 @@ public class SCDastScanCommands {
                     .getBody()
                     .get(dataNode);
 
+            if (outputFilterOptions != null ){
+                response = outputFilterOptions.filterOutput(response);
+            }
             outputWriterMixin.printToFormat(response);
 
             return null;

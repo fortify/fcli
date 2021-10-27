@@ -35,6 +35,7 @@ import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.common.json.transformer.FieldBasedTransformer;
 import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
 import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
+import com.fortify.cli.common.output.OutputFilterOptions;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
@@ -45,7 +46,9 @@ import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCUpdateCommand
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -70,6 +73,9 @@ public class SSCApplicationCommands {
 	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IJsonNodeTransformerSupplier {
 		@Mixin private OutputWriterMixin outputWriterMixin;
 
+		@CommandLine.ArgGroup(exclusive = false, heading = "Filter Output:%n", order = 10)
+		@Getter private OutputFilterOptions outputFilterOptions;
+
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
 			JsonNode response = unirest.get("/api/v1/projects?limit=-1")
@@ -79,6 +85,9 @@ public class SSCApplicationCommands {
 					.getBody()
 					.get("data");
 
+			if (outputFilterOptions != null ){
+				response = outputFilterOptions.filterOutput(response);
+			}
 			outputWriterMixin.printToFormat(response);
 
 			return null;

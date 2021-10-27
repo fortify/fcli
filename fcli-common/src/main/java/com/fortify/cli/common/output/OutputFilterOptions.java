@@ -1,20 +1,20 @@
 package com.fortify.cli.common.output;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.filter.JsonPathOutputFilter;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
-import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 public class OutputFilterOptions {
-    @CommandLine.Option(names = {"--filter-language"}, description = "Filters output using any of this language: ${COMPLETION-CANDIDATES}", order = 2)
-    @Getter private OutputFilter filter;
+    @Option(names = {"--JSONPath"}, description = "Filters output using JSONPath", order = 1)
+    @Getter private String jsonPath;
 
-    @CommandLine.Option(names = {"--expression"}, description = "Filter output expression", order = 1)
-    @Getter private String expression;
+//    @Option(names = {"--XPath"}, description = "Filter using XPath", order = 2)
+//    @Getter private String xPath;
 
     public JsonNode filterOutput(JsonNode response){
-        return filter.getOutputFilterFactory().createOutputFilter().filter(response, expression);
+        return JsonPathOutputFilter.filter(response, jsonPath);
     }
 
 }

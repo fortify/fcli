@@ -74,6 +74,9 @@ public class TreeOutputWriter implements IOutputWriter {
                     treeNode.addChild(childNode);
                 }
             }
+        } else if(inputNode.getNodeType() == JsonNodeType.NUMBER || inputNode.getNodeType() == JsonNodeType.STRING ) {
+            SimpleTreeNode childNode = new SimpleTreeNode( inputNode.asText());
+            treeNode.addChild(childNode);
         }
 
     }

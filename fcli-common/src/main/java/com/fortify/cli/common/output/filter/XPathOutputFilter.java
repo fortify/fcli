@@ -24,11 +24,38 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.filter;
 
-public class jsonPathOutputFilterFactory implements IOutputFilterFactory {
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
+import lombok.SneakyThrows;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
-	@Override
-	public IOutputFilter createOutputFilter() {
-		return new jsonPathOutputFilter();
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+import java.io.StringReader;
+import java.util.List;
+
+public class XPathOutputFilter{
+
+	@SneakyThrows
+	public JsonNode filter(JsonNode jsonNode, String expression) {
+		XPath xPath = XPathFactory.newInstance().newXPath();
+		XmlMapper xmlMapper = new XmlMapper();
+
+		DocumentContext jsonContext = JsonPath.parse(jsonNode.toString());
+		List<String> output = jsonContext.read(expression);
+
+		ObjectMapper mapper = new ObjectMapper();
+		ArrayNode array = mapper.valueToTree(output);
+
+		return array;
 	}
 
 }
