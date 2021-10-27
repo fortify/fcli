@@ -37,13 +37,13 @@ import lombok.Data;
 @Data @Builder
 public class OutputWriterConfig {
 	@Builder.Default private Supplier<Writer> writerSupplier = ()->new PrintWriter(System.out);
-	private IJsonNodeTransformer mapper;
+	private IJsonNodeTransformer transformer;
 	private boolean headersEnabled;
 	
 	public final IHeaderProvider getHeaderProvider(boolean required) {
 		IHeaderProvider result = null;
-		if ( mapper instanceof IHeaderProvider ) {
-			result = (IHeaderProvider)mapper;
+		if ( transformer instanceof IHeaderProvider ) {
+			result = (IHeaderProvider)transformer;
 		} else if ( required ) { 
 			throw new IllegalArgumentException("Header provider not available");
 		}
