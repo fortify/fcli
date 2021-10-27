@@ -6,6 +6,7 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
+@ReflectiveAccess
 public class OutputFilterOptions {
     @Option(names = {"--JSONPath"}, description = "Filters output using JSONPath", order = 1)
     @Getter private String jsonPath;
