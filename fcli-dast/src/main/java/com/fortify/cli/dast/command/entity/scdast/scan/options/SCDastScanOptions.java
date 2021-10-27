@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.command.auth.login.AuthLoginCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -20,8 +19,8 @@ import java.io.File;
 @ReflectiveAccess
 public class SCDastScanOptions {
 
-    @Option(names = {"-cicd","--cicd-roken"}, description = "The CI/CD token to run the scan with.", required = true)
-    @Getter private String cicdToken;
+    @Option(names = {"-settings","--settings-id","--settings-identifier"}, description = "The Settings Identifier to run the scan with.", required = true)
+    @Getter private String settingsId;
 
     @Option(names = {"-n","--scan-name"}, description = "The name of the SC DAST scan")
     @Getter private String scanName;
@@ -35,7 +34,7 @@ public class SCDastScanOptions {
         ObjectMapper objectMapper = new ObjectMapper();
 
         ObjectNode body = objectMapper.createObjectNode();
-        body.set("cicdToken", objectMapper.convertValue(getCicdToken(), JsonNode.class));
+        body.set("cicdToken", objectMapper.convertValue(getSettingsId(), JsonNode.class));
 
         if (getScanName() != null) {
             body.set("name", objectMapper.convertValue(getScanName(), JsonNode.class));

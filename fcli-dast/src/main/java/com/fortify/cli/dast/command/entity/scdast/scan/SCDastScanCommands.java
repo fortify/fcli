@@ -101,7 +101,7 @@ public class SCDastScanCommands {
         protected Void runWithUnirest(UnirestInstance unirest) {
             String urlPath = "/api/v2/scans/start-scan-cicd";
             String body = scanOptions.getJsonBody();
-            System.out.println(body);
+
             JsonNode response = unirest.post(urlPath)
                     .accept("application/json")
                     .header("Content-Type", "application/json")
