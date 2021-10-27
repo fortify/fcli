@@ -24,11 +24,29 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.writer;
 
-public class XmlOutputWriterFactory implements IOutputWriterFactory {
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.util.function.Supplier;
 
-	@Override
-	public IOutputWriter createOutputWriter() {
-		return new XmlOutputWriter();
+import com.fortify.cli.common.json.mapper.IHeaderProvider;
+import com.fortify.cli.common.json.mapper.IJacksonJsonNodeMapper;
+
+import lombok.Builder;
+import lombok.Data;
+
+@Data @Builder
+public class OutputWriterConfig {
+	@Builder.Default private Supplier<Writer> writerSupplier = ()->new PrintWriter(System.out);
+	private IJacksonJsonNodeMapper mapper;
+	private boolean headersEnabled;
+	
+	public final IHeaderProvider getHeaderProvider(boolean required) {
+		IHeaderProvider result = null;
+		if ( mapper instanceof IHeaderProvider ) {
+			result = (IHeaderProvider)mapper;
+		} else if ( required ) { 
+			throw new IllegalArgumentException("Header provider not available");
+		}
+		return result;
 	}
-
 }

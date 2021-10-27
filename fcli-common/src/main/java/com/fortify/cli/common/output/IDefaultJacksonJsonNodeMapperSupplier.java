@@ -22,15 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.output;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.mapper.FieldMapperFactory;
+import com.fortify.cli.common.json.mapper.IJacksonJsonNodeMapper;
 
-public class CsvOutputWriter implements IOutputWriter {
-
-	@Override
-	public void write(JsonNode jsonNode) {
-		System.out.println(jsonNode.toPrettyString());
-	}
-
+public interface IDefaultJacksonJsonNodeMapperSupplier {
+	public IJacksonJsonNodeMapper getJacksonJsonNodeMapper(FieldMapperFactory fieldMapperFactory, OutputFormat format);
 }

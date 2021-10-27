@@ -22,13 +22,25 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.output.writer.json;
 
-public class CsvOutputWriterFactory implements IOutputWriterFactory {
+import java.util.function.Function;
+
+import com.fortify.cli.common.json.mapper.FieldMapper.PropertyPathToHeaderMapper;
+import com.fortify.cli.common.output.writer.IOutputWriter;
+import com.fortify.cli.common.output.writer.IOutputWriterFactory;
+import com.fortify.cli.common.output.writer.OutputWriterConfig;
+
+public class JsonOutputWriterFactory implements IOutputWriterFactory {
 
 	@Override
-	public IOutputWriter createOutputWriter() {
-		return new CsvOutputWriter();
+	public IOutputWriter createOutputWriter(OutputWriterConfig config) {
+		return new JsonOutputWriter(config);
+	}
+	
+	@Override
+	public Function<String, String> getDefaultPropertyPathToHeaderMapper() {
+		return PropertyPathToHeaderMapper::camelCase;
 	}
 
 }

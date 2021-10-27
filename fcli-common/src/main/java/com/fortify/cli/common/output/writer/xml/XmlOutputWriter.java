@@ -22,24 +22,38 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.output.writer.xml;
 
-import static java.lang.System.exit;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fortify.cli.common.output.writer.IOutputWriter;
+import com.fortify.cli.common.output.writer.OutputWriterConfig;
 
-public class YamlOutputWriter implements IOutputWriter {
+import lombok.SneakyThrows;
 
-	@Override
+public class XmlOutputWriter implements IOutputWriter {
+	private final boolean pretty = true;
+
+	public XmlOutputWriter(OutputWriterConfig config) {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override @SneakyThrows
 	public void write(JsonNode jsonNode) {
-		try {
-            System.out.print(new YAMLMapper().writeValueAsString(jsonNode));
-        } catch (JsonProcessingException e){
-            System.out.println(e);
-            exit(1);
+		XmlMapper xmlMapper = new XmlMapper();
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode root = objectMapper.createObjectNode();
+        root.set("item", jsonNode);
+
+        if (pretty){
+            xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
         }
+        String xmlString = xmlMapper.writeValueAsString(root).replace("ObjectNode", "content");
+
+        System.out.println(xmlString);
 	}
 
 }

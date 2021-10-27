@@ -29,6 +29,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.config.product.Product;
+import com.fortify.cli.common.json.mapper.FieldMapperFactory;
+import com.fortify.cli.common.json.mapper.IJacksonJsonNodeMapper;
+import com.fortify.cli.common.output.IDefaultJacksonJsonNodeMapperSupplier;
+import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.OutputWriterMixin;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
@@ -52,7 +56,7 @@ public class SSCApplicationCommands {
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, description = "Get "+DESC+" from SSC", aliases = {ALIAS})
 	@RequiresProduct(Product.SSC)
-	public static final class Get extends AbstractSSCUnirestRunnerCommand {
+	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IDefaultJacksonJsonNodeMapperSupplier {
 
 		@Mixin private OutputWriterMixin outputWriterMixin;
 
@@ -68,6 +72,11 @@ public class SSCApplicationCommands {
 			outputWriterMixin.printToFormat(response);
 
 			return null;
+		}
+
+		@Override
+		public IJacksonJsonNodeMapper getJacksonJsonNodeMapper(FieldMapperFactory fieldMapperFactory, OutputFormat format) {
+			return fieldMapperFactory.createFromString(format.getOutputWriterFactory().getDefaultPropertyPathToHeaderMapper(), "id,name");
 		}
 	}
 	

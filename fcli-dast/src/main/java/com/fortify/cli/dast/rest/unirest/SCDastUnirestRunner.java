@@ -28,7 +28,7 @@ import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.rest.json.JacksonJsonNodeHelper;
+import com.fortify.cli.common.json.JacksonJsonNodeHelper;
 import com.fortify.cli.common.rest.unirest.UnirestRunner;
 import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
 

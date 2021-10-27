@@ -22,9 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.output.writer.tree;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.writer.IOutputWriter;
+import com.fortify.cli.common.output.writer.OutputWriterConfig;
 
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import hu.webarticum.treeprinter.ListingTreePrinter;
@@ -35,7 +37,11 @@ import java.util.Map;
 
 public class TreeOutputWriter implements IOutputWriter {
 
-    @Override
+	public TreeOutputWriter(OutputWriterConfig config) {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
 	public void write(JsonNode jsonNode) {
         SimpleTreeNode rootNode = new SimpleTreeNode("-+-");
         treeBuilder(rootNode, jsonNode, null);

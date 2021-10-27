@@ -22,15 +22,25 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.output.writer.yaml;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.function.Function;
 
-public class JsonOutputWriter implements IOutputWriter {
+import com.fortify.cli.common.json.mapper.FieldMapper.PropertyPathToHeaderMapper;
+import com.fortify.cli.common.output.writer.IOutputWriter;
+import com.fortify.cli.common.output.writer.IOutputWriterFactory;
+import com.fortify.cli.common.output.writer.OutputWriterConfig;
+
+public class YamlOutputWriterFactory implements IOutputWriterFactory {
 
 	@Override
-	public void write(JsonNode jsonNode) {
-		System.out.println(jsonNode.toPrettyString());
+	public IOutputWriter createOutputWriter(OutputWriterConfig config) {
+		return new YamlOutputWriter(config);
+	}
+	
+	@Override
+	public Function<String, String> getDefaultPropertyPathToHeaderMapper() {
+		return PropertyPathToHeaderMapper::snakeCase;
 	}
 
 }

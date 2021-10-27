@@ -22,13 +22,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.output.writer.json;
 
-public class TableOutputWriterFactory implements IOutputWriterFactory {
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.writer.IOutputWriter;
+import com.fortify.cli.common.output.writer.OutputWriterConfig;
+
+public class JsonOutputWriter implements IOutputWriter {
+
+	public JsonOutputWriter(OutputWriterConfig config) {
+		// TODO Auto-generated constructor stub
+	}
 
 	@Override
-	public IOutputWriter createOutputWriter() {
-		return new TableOutputWriter();
+	public void write(JsonNode jsonNode) {
+		System.out.println(jsonNode.toPrettyString());
 	}
 
 }
