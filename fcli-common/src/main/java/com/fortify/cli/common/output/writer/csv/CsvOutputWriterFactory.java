@@ -22,11 +22,25 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.output.writer.csv;
 
 import java.util.function.Function;
 
-public interface IOutputWriterFactory {
-	public IOutputWriter createOutputWriter(OutputWriterConfig config);
-	public Function<String, String> getDefaultPropertyPathToHeaderMapper();
+import com.fortify.cli.common.json.mapper.FieldMapper.PropertyPathToHeaderMapper;
+import com.fortify.cli.common.output.writer.IOutputWriter;
+import com.fortify.cli.common.output.writer.IOutputWriterFactory;
+import com.fortify.cli.common.output.writer.OutputWriterConfig;
+
+public class CsvOutputWriterFactory implements IOutputWriterFactory {
+
+	@Override
+	public IOutputWriter createOutputWriter(OutputWriterConfig config) {
+		return new CsvOutputWriter(config);
+	}
+	
+	@Override
+	public Function<String, String> getDefaultPropertyPathToHeaderMapper() {
+		return PropertyPathToHeaderMapper::humanReadable;
+	}
+
 }

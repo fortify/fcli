@@ -22,11 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.output.writer.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.writer.IOutputWriter;
+import com.fortify.cli.common.output.writer.OutputWriterConfig;
 
-public class CsvOutputWriter implements IOutputWriter {
+public class JsonOutputWriter implements IOutputWriter {
+
+	public JsonOutputWriter(OutputWriterConfig config) {
+		// TODO Auto-generated constructor stub
+	}
 
 	@Override
 	public void write(JsonNode jsonNode) {

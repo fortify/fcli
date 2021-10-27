@@ -22,11 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.json.mapper;
 
-import java.util.function.Function;
+import com.fasterxml.jackson.databind.JsonNode;
 
-public interface IOutputWriterFactory {
-	public IOutputWriter createOutputWriter(OutputWriterConfig config);
-	public Function<String, String> getDefaultPropertyPathToHeaderMapper();
+public class IdentityMapper implements IJacksonJsonNodeMapper {
+	@Override
+	public JsonNode convert(JsonNode input) {
+		return input;
+	}
 }

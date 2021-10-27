@@ -22,41 +22,42 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.rest.json;
+package com.fortify.cli.common.json.mapper;
 
-import java.util.EnumSet;
+import java.util.function.Function;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.ParseContext;
-import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
+import com.fortify.cli.common.json.JacksonJsonNodeHelper;
 
+import io.micronaut.core.util.StringUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-/**
- * This bean provides utility methods for working with Jackson JsonNode trees.
- * 
- * @author Ruud Senden
- *
- */
 @Singleton
-public class JacksonJsonNodeHelper {
-	private final ParseContext parseContext;
-
+public class FieldMapperFactory {
+	private final JacksonJsonNodeHelper jacksonJsonNodeHelper;
+	
 	@Inject
-	public JacksonJsonNodeHelper(ObjectMapper objectMapper) {
-		this.parseContext = JsonPath.using(Configuration.builder()
-				.jsonProvider(new JacksonJsonNodeJsonProvider(objectMapper))
-				.mappingProvider(new JacksonMappingProvider(objectMapper))
-				.options(EnumSet.noneOf(Option.class))
-				.build());
+	public FieldMapperFactory(JacksonJsonNodeHelper jacksonJsonNodeHelper) {
+		this.jacksonJsonNodeHelper = jacksonJsonNodeHelper;
 	}
 	
-	public final <R> R getPath(Object input, String path, Class<R> returnClazz) {
-		return parseContext.parse(input).read(path, returnClazz);
+	public final FieldMapper createFromString(Function<String, String> propertyPathToHeaderMapper, String fieldMapperString) {
+		if ( StringUtils.isEmpty(fieldMapperString) ) { return null; } // TODO: null or empty FieldMapper?
+		FieldMapper fieldMapper = new FieldMapper(jacksonJsonNodeHelper, propertyPathToHeaderMapper);
+		String[] fieldMappings = fieldMapperString.split(",");
+		for (String fieldMapping : fieldMappings) {
+			String[] elts = fieldMapping.split("##");
+			switch (elts.length) {
+			case 0: throw new IllegalStateException("This shouldn't happen");
+			case 1: fieldMapper.addField(elts[0]); break;
+			case 2: fieldMapper.addField(elts[0], elts[1]); break;
+			default: throw new IllegalArgumentException("Each field mapping may contain at most one '##' separator");
+			}
+		}
+		return fieldMapper;
+	}
+	
+	public final FieldMapper createEmpty(Function<String, String> propertyPathToHeaderMapper) {
+		return new FieldMapper(jacksonJsonNodeHelper, propertyPathToHeaderMapper);
 	}
 }
