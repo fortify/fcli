@@ -60,7 +60,7 @@ public class CsvOutputWriter implements IOutputWriter {
 	@Override @SneakyThrows
 	public void write(JsonNode jsonNode) {
 		try ( Writer writer = config.getWriterSupplier().get() ) {
-			objectWriter.writeValue(writer, config.getMapper().convert(jsonNode));
+			objectWriter.writeValue(writer, config.getMapper().transform(jsonNode));
 		}
 	}
 

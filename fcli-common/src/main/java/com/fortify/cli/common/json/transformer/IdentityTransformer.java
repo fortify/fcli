@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public class IdentityTransformer implements IJsonNodeTransformer {
 	@Override
-	public JsonNode convert(JsonNode input) {
+	public JsonNode transform(JsonNode input) {
 		return input;
 	}
 }
