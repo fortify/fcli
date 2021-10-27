@@ -6,6 +6,8 @@ import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.output.OutputWriterMixin;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
+import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastGetScanOptions;
+import com.fortify.cli.dast.command.entity.scdast.scanstatus.options.SCDastGetScanStatusOptions;
 import com.fortify.cli.dast.command.entity.types.ScanStatusTypes;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -26,15 +28,15 @@ public class SCDastScanStatusCommands {
     @SubcommandOf(SCDastEntityRootCommands.SCDASTGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
     public static final class Get extends AbstractSCDastUnirestRunnerCommand {
-        @Option(names = {"-id", "--scan-id"}, description = "The scan id")
-        @Getter private String scanId;
+        @CommandLine.ArgGroup(exclusive = false, heading = "Get a specific scan:%n", order = 1)
+        @Getter private SCDastGetScanStatusOptions scanStatusOptions;
 
         @Mixin
         private OutputWriterMixin outputWriterMixin;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
-            String urlPath = "/api/v2/scans/"+ getScanId() + "/scan-summary";
+            String urlPath = "/api/v2/scans/"+ scanStatusOptions.getScanId() + "/scan-summary";
 
             JsonNode response = unirest.get(urlPath)
                     .accept("application/json")

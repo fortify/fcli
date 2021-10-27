@@ -1,4 +1,4 @@
-package com.fortify.cli.dast.command.entity.scdast.scan.list;
+package com.fortify.cli.dast.command.entity.scdast.scan.options;
 
 import com.fortify.cli.dast.command.entity.types.ScanStatusTypes;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -11,9 +11,9 @@ import picocli.CommandLine.Option;
  * @author Ruud Senden
  */
 @ReflectiveAccess
-public class SCDastScanListOptions {
+public class SCDastGetScanListOptions {
 
-    @Option(names = {"-s","--search-text"}, description = "The text to filter results by")
+    @Option(names = {"-st","--search-text"}, description = "The text to filter results by")
     @Getter private String searchText;
 
     @Option(names = {"-sd","--start-date"}, description = "The started on start date range")

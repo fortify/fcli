@@ -6,17 +6,16 @@ import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.output.OutputWriterMixin;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
+import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastGetScanListOptions;
+import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastGetScanOptions;
+import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastScanOptions;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ArgGroup;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Spec;
-import picocli.CommandLine.Model.CommandSpec;
 
 
 public class SCDastScanCommands {
@@ -27,26 +26,57 @@ public class SCDastScanCommands {
     @SubcommandOf(SCDastEntityRootCommands.SCDASTGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
     public static final class Get extends AbstractSCDastUnirestRunnerCommand {
-        @Spec CommandSpec spec;
 
-        @Option(names = {"-id", "--scan-id"}, description = "The scan id")
-        @Getter private String scanId;
+        @ArgGroup(exclusive = false, heading = "Get a specific scan:%n", order = 1)
+        @Getter private SCDastGetScanOptions scanOptions;
+
+
+        @ArgGroup(exclusive = false, heading = "Filter multiple scans:%n", order = 2)
+        @Getter private SCDastGetScanListOptions scanListOptions;
 
         @Mixin
         private OutputWriterMixin outputWriterMixin;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
-            if (getScanId() == null) {throw new CommandLine.ParameterException(spec.commandLine(),"Missing Scan Id");}
+            String urlPath = "/api/v2/scans/scan-summary-list";
+            String urlParams = "";
+            String dataNode;
 
-            String urlPath = "/api/v2/scans/"+ getScanId() + "/scan-summary";
+            if (scanOptions != null){
+                urlPath = "/api/v2/scans/"+ scanOptions.getScanId() + "/scan-summary";
+                dataNode = "item";
+            }
+            else {
+                dataNode = "items";
+                if(scanListOptions != null) {
+                    if (scanListOptions.getSearchText() != null) {
+                        urlParams += String.format("searchText=%s&",scanListOptions.getSearchText());
+                    }
+                    if(scanListOptions.getStartDate() != null) {
+                        urlParams += String.format("startedOnStartDate=%s&",scanListOptions.getStartDate());
+                    }
+                    if(scanListOptions.getEndDate() != null) {
+                        urlParams += String.format("startedOnEndDate=%s&",scanListOptions.getEndDate());
+                    }
+                    if(scanListOptions.getOrderBy() != null) {
+                        urlParams += String.format("orderBy=%s&",scanListOptions.getOrderBy());
+                    }
+                    if(scanListOptions.getOrderByDirection() != null) {
+                        urlParams += String.format("orderByDirection=%s&",scanListOptions.getOrderByDirection());
+                    }
+                    if(scanListOptions.getScanStatus() != null) {
+                        urlParams += String.format("scanStatusType=%s&",scanListOptions.getScanStatus());
+                    }
+                }
+            }
 
-            JsonNode response = unirest.get(urlPath)
+            JsonNode response = unirest.get(urlPath + "?" + urlParams)
                     .accept("application/json")
                     .header("Content-Type", "application/json")
                     .asObject(ObjectNode.class)
                     .getBody()
-                    .get("item");
+                    .get(dataNode);
 
             outputWriterMixin.printToFormat(response);
 

@@ -1,4 +1,4 @@
-package com.fortify.cli.dast.command.entity.scdast.scansettings.list;
+package com.fortify.cli.dast.command.entity.scdast.scansettings.options;
 
 import com.fortify.cli.common.command.auth.login.AuthLoginCommand;
 
@@ -19,9 +19,9 @@ import picocli.CommandLine.Option;
  * @author Ruud Senden
  */
 @ReflectiveAccess
-public class SCDastScanSettingsListOptions {
+public class SCDastGetScanSettingsListOptions {
 
-    @Option(names = {"-s","--search-text"}, description = "The text to filter results by.")
+    @Option(names = {"-st","--search-text"}, description = "The text to filter results by.")
     @Getter private String searchText;
 
     @Option(names = {"-sd","--start-date"}, description = "The modified start date range.")
@@ -30,6 +30,7 @@ public class SCDastScanSettingsListOptions {
     @Option(names = {"-ed","--end-date"}, description = "The modified end date range.")
     @Getter private String endDate;
 
-    @Option(names = {"-t","--scan-type"}, description = "The specific ScanTypes to filter results. [ Standard, WorkflowDriven, AMI ]")
-    @Getter private String scanType; //TODO: set to enum
+    private enum ScanTypes {Standard, WorkflowDriven, AMI}
+    @Option(names = {"-t","--scan-type"}, description = "The specific ScanTypes to filter results. [ ${COMPLETION-CANDIDATES} ]")
+    @Getter private ScanTypes scanType;
 }
