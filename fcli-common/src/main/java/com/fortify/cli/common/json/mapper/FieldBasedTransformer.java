@@ -27,6 +27,8 @@ package com.fortify.cli.common.json.mapper;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -37,16 +39,16 @@ import com.fortify.cli.common.json.JacksonJsonNodeHelper;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-public class FieldMapper implements IJacksonJsonNodeMapper, IHeaderProvider {
+public class FieldBasedTransformer implements IJsonNodeTransformer, IHeaderProvider {
 	private final LinkedHashMap<String, String> pathToHeaderMapping = new LinkedHashMap<>();
 	private final JacksonJsonNodeHelper jacksonJsonNodeHelper;
-	private final Function<String, String> propertyPathToHeaderMapper;
+	private final Function<String, String> fieldNameformatter;
 	@Getter @Accessors(fluent=true) private boolean hasExplicitHeaders = false;
 	
-	public static final class PropertyPathToHeaderMapper {
+	public static final class FieldNameFormatter {
 		public static final String humanReadable(String propertyPath) {
 			String normalizedWithSpaces = normalize(propertyPath).replace('.', ' ');
-			return normalizedWithSpaces.substring(0, 1).toUpperCase() + normalizedWithSpaces.substring(1);
+			return capitalize(normalizedWithSpaces);
 		}
 		
 		public static final String snakeCase(String propertyPath) {
@@ -54,8 +56,8 @@ public class FieldMapper implements IJacksonJsonNodeMapper, IHeaderProvider {
 		}
 		
 		public static final String pascalCase(String propertyPath) {
-			// TODO Implement properly
-			return normalize(propertyPath).replace('.', '_');
+			String[] elts = normalize(propertyPath).split("\\.");
+			return Stream.of(elts).map(FieldNameFormatter::capitalize).collect(Collectors.joining());
 		}
 		
 		public static final String camelCase(String propertyPath) {
@@ -67,20 +69,26 @@ public class FieldMapper implements IJacksonJsonNodeMapper, IHeaderProvider {
 			// This is assuming that the input is not using uppercase words
 			return s.replaceAll("[^a-zA-Z0-9 ]", "").replaceAll("([A-Z])", ".$1").toLowerCase();
 		}
+		
+		private static final String capitalize(String s) {
+			return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
+		}
 	}
 	
-	public FieldMapper(JacksonJsonNodeHelper jacksonJsonNodeHelper, Function<String, String> propertyPathToHeaderMapper) {
+	public FieldBasedTransformer(JacksonJsonNodeHelper jacksonJsonNodeHelper, Function<String, String> fieldNameformatter) {
 		this.jacksonJsonNodeHelper = jacksonJsonNodeHelper;
-		this.propertyPathToHeaderMapper = propertyPathToHeaderMapper;
+		this.fieldNameformatter = fieldNameformatter;
 	}
 	
-	public final void addField(String propertyPath) {
-		pathToHeaderMapping.put(propertyPath, propertyPathToHeaderMapper.apply(propertyPath));
+	public final FieldBasedTransformer addField(String propertyPath) {
+		pathToHeaderMapping.put(propertyPath, fieldNameformatter.apply(propertyPath));
+		return this;
 	}
 
-	public final void addField(String propertyPath, String header) {
+	public final FieldBasedTransformer addField(String propertyPath, String header) {
 		pathToHeaderMapping.put(propertyPath, header);
 		hasExplicitHeaders = true;
+		return this;
 	}
 	
 	@Override

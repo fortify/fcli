@@ -28,12 +28,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.command.util.output.AbstractJsonNodeTransformerSupplier;
+import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
+import com.fortify.cli.common.command.util.output.OutputWriterMixin;
 import com.fortify.cli.common.config.product.Product;
-import com.fortify.cli.common.json.mapper.FieldMapperFactory;
-import com.fortify.cli.common.json.mapper.IJacksonJsonNodeMapper;
-import com.fortify.cli.common.output.IDefaultJacksonJsonNodeMapperSupplier;
+import com.fortify.cli.common.json.mapper.FieldBasedTransformer;
+import com.fortify.cli.common.json.mapper.FieldBasedTransformerFactory;
+import com.fortify.cli.common.json.mapper.IJsonNodeTransformer;
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.output.OutputWriterMixin;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand;
@@ -52,12 +54,20 @@ public class SSCApplicationCommands {
 	private static final String DESC = "applications";
 	private static final String ALIAS = "apps";
 	
+	public static final class TransformerSupplier extends AbstractJsonNodeTransformerSupplier {
+		@Override
+		protected void addColumns(OutputFormat format, FieldBasedTransformer transformer) {
+			transformer
+				.addField("id")
+				.addField("name");
+		}
+	}
+	
 	@ReflectiveAccess
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, description = "Get "+DESC+" from SSC", aliases = {ALIAS})
 	@RequiresProduct(Product.SSC)
-	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IDefaultJacksonJsonNodeMapperSupplier {
-
+	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IJsonNodeTransformerSupplier {
 		@Mixin private OutputWriterMixin outputWriterMixin;
 
 		@SneakyThrows
@@ -75,8 +85,8 @@ public class SSCApplicationCommands {
 		}
 
 		@Override
-		public IJacksonJsonNodeMapper getJacksonJsonNodeMapper(FieldMapperFactory fieldMapperFactory, OutputFormat format) {
-			return fieldMapperFactory.createFromString(format.getOutputWriterFactory().getDefaultPropertyPathToHeaderMapper(), "id,name");
+		public IJsonNodeTransformer getJsonNodeTransformer(FieldBasedTransformerFactory fieldBasedTransformerFactory, OutputFormat format) {
+			return new TransformerSupplier().getJsonNodeTransformer(fieldBasedTransformerFactory, format);
 		}
 	}
 	

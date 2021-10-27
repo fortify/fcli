@@ -28,8 +28,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.command.util.output.AbstractJsonNodeTransformerSupplier;
+import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
+import com.fortify.cli.common.command.util.output.OutputWriterMixin;
 import com.fortify.cli.common.config.product.Product;
-import com.fortify.cli.common.output.OutputWriterMixin;
+import com.fortify.cli.common.json.mapper.FieldBasedTransformer;
+import com.fortify.cli.common.json.mapper.FieldBasedTransformerFactory;
+import com.fortify.cli.common.json.mapper.IJsonNodeTransformer;
+import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand;
@@ -48,13 +54,21 @@ public class SSCApplicationVersionCommands {
 	private static final String ALIAS = "versions";
 	private static final String DESC = "application versions";
 
-
+	public static final class TransformerSupplier extends AbstractJsonNodeTransformerSupplier {
+		@Override
+		protected void addColumns(OutputFormat format, FieldBasedTransformer transformer) {
+			transformer
+				.addField("id")
+				.addField("project.name")
+				.addField("name");
+		}
+	}
 
 	@ReflectiveAccess
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, aliases = {ALIAS},description = "Get "+DESC+" from SSC")
 	@RequiresProduct(Product.SSC)
-	public static final class Get extends AbstractSSCUnirestRunnerCommand {
+	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IJsonNodeTransformerSupplier {
 
 		@Mixin private static OutputWriterMixin outputWriterMixin;
 
@@ -70,6 +84,11 @@ public class SSCApplicationVersionCommands {
 			outputWriterMixin.printToFormat(response);
 
 			return null;
+		}
+
+		@Override
+		public IJsonNodeTransformer getJsonNodeTransformer(FieldBasedTransformerFactory fieldBasedTransformerFactory, OutputFormat format) {
+			return new TransformerSupplier().getJsonNodeTransformer(fieldBasedTransformerFactory, format);
 		}
 	}
 	

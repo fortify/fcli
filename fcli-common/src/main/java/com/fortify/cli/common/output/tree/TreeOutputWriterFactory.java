@@ -22,13 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.json.mapper;
+package com.fortify.cli.common.output.tree;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.IOutputWriter;
+import com.fortify.cli.common.output.IOutputWriterFactory;
+import com.fortify.cli.common.output.OutputWriterConfig;
 
-public class IdentityMapper implements IJacksonJsonNodeMapper {
+public class TreeOutputWriterFactory implements IOutputWriterFactory {
+
 	@Override
-	public JsonNode convert(JsonNode input) {
-		return input;
+	public IOutputWriter createOutputWriter(OutputWriterConfig config) {
+		return new TreeOutputWriter(config);
 	}
+
 }

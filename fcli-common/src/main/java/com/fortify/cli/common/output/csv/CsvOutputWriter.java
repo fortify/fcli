@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.csv;
+package com.fortify.cli.common.output.csv;
 
 import java.io.Writer;
 
@@ -32,8 +32,8 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fortify.cli.common.json.mapper.IHeaderProvider;
-import com.fortify.cli.common.output.writer.IOutputWriter;
-import com.fortify.cli.common.output.writer.OutputWriterConfig;
+import com.fortify.cli.common.output.IOutputWriter;
+import com.fortify.cli.common.output.OutputWriterConfig;
 
 import lombok.SneakyThrows;
 

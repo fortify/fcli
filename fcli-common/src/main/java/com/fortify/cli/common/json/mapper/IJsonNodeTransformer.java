@@ -26,6 +26,6 @@ package com.fortify.cli.common.json.mapper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public interface IJacksonJsonNodeMapper {
+public interface IJsonNodeTransformer {
 	public JsonNode convert(JsonNode input);
 }

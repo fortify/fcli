@@ -22,24 +22,43 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.tree;
+package com.fortify.cli.common.output.xml;
 
-import java.util.function.Function;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fortify.cli.common.output.IOutputWriter;
+import com.fortify.cli.common.output.OutputWriterConfig;
 
-import com.fortify.cli.common.json.mapper.FieldMapper.PropertyPathToHeaderMapper;
-import com.fortify.cli.common.output.writer.IOutputWriter;
-import com.fortify.cli.common.output.writer.IOutputWriterFactory;
-import com.fortify.cli.common.output.writer.OutputWriterConfig;
+import lombok.SneakyThrows;
 
-public class TreeOutputWriterFactory implements IOutputWriterFactory {
+public class XmlOutputWriter implements IOutputWriter {
+	private final boolean pretty = true;
 
-	@Override
-	public IOutputWriter createOutputWriter(OutputWriterConfig config) {
-		return new TreeOutputWriter(config);
+	public XmlOutputWriter(OutputWriterConfig config) {
+		// TODO Auto-generated constructor stub
 	}
 
-	@Override
-	public Function<String, String> getDefaultPropertyPathToHeaderMapper() {
-		return PropertyPathToHeaderMapper::humanReadable;
+	@Override @SneakyThrows
+	public void write(JsonNode jsonNode) {
+		XmlMapper xmlMapper = new XmlMapper();
+
+        if(! (jsonNode instanceof ObjectNode)){
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode root = objectMapper.createObjectNode();
+            root.set("item", jsonNode);
+
+            jsonNode = root;
+        }
+
+        if (pretty){
+            xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        }
+        String xmlString = xmlMapper.writeValueAsString(jsonNode).replace("ObjectNode", "content");
+
+        System.out.println(xmlString);
 	}
+
 }

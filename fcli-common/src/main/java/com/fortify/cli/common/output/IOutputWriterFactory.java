@@ -22,31 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.output;
 
-import java.io.PrintWriter;
-import java.io.Writer;
-import java.util.function.Supplier;
-
-import com.fortify.cli.common.json.mapper.IHeaderProvider;
-import com.fortify.cli.common.json.mapper.IJacksonJsonNodeMapper;
-
-import lombok.Builder;
-import lombok.Data;
-
-@Data @Builder
-public class OutputWriterConfig {
-	@Builder.Default private Supplier<Writer> writerSupplier = ()->new PrintWriter(System.out);
-	private IJacksonJsonNodeMapper mapper;
-	private boolean headersEnabled;
-	
-	public final IHeaderProvider getHeaderProvider(boolean required) {
-		IHeaderProvider result = null;
-		if ( mapper instanceof IHeaderProvider ) {
-			result = (IHeaderProvider)mapper;
-		} else if ( required ) { 
-			throw new IllegalArgumentException("Header provider not available");
-		}
-		return result;
-	}
+public interface IOutputWriterFactory {
+	public IOutputWriter createOutputWriter(OutputWriterConfig config);
 }

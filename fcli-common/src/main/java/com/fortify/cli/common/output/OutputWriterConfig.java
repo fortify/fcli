@@ -24,9 +24,29 @@
  ******************************************************************************/
 package com.fortify.cli.common.output;
 
-import com.fortify.cli.common.json.mapper.FieldMapperFactory;
-import com.fortify.cli.common.json.mapper.IJacksonJsonNodeMapper;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.util.function.Supplier;
 
-public interface IDefaultJacksonJsonNodeMapperSupplier {
-	public IJacksonJsonNodeMapper getJacksonJsonNodeMapper(FieldMapperFactory fieldMapperFactory, OutputFormat format);
+import com.fortify.cli.common.json.mapper.IHeaderProvider;
+import com.fortify.cli.common.json.mapper.IJsonNodeTransformer;
+
+import lombok.Builder;
+import lombok.Data;
+
+@Data @Builder
+public class OutputWriterConfig {
+	@Builder.Default private Supplier<Writer> writerSupplier = ()->new PrintWriter(System.out);
+	private IJsonNodeTransformer mapper;
+	private boolean headersEnabled;
+	
+	public final IHeaderProvider getHeaderProvider(boolean required) {
+		IHeaderProvider result = null;
+		if ( mapper instanceof IHeaderProvider ) {
+			result = (IHeaderProvider)mapper;
+		} else if ( required ) { 
+			throw new IllegalArgumentException("Header provider not available");
+		}
+		return result;
+	}
 }

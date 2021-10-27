@@ -22,43 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.xml;
+package com.fortify.cli.common.json.mapper;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fortify.cli.common.output.writer.IOutputWriter;
-import com.fortify.cli.common.output.writer.OutputWriterConfig;
 
-import lombok.SneakyThrows;
-
-public class XmlOutputWriter implements IOutputWriter {
-	private final boolean pretty = true;
-
-	public XmlOutputWriter(OutputWriterConfig config) {
-		// TODO Auto-generated constructor stub
+public class IdentityTransformer implements IJsonNodeTransformer {
+	@Override
+	public JsonNode convert(JsonNode input) {
+		return input;
 	}
-
-	@Override @SneakyThrows
-	public void write(JsonNode jsonNode) {
-		XmlMapper xmlMapper = new XmlMapper();
-
-        if(! (jsonNode instanceof ObjectNode)){
-            ObjectMapper objectMapper = new ObjectMapper();
-            ObjectNode root = objectMapper.createObjectNode();
-            root.set("item", jsonNode);
-
-            jsonNode = root;
-        }
-
-        if (pretty){
-            xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        }
-        String xmlString = xmlMapper.writeValueAsString(jsonNode).replace("ObjectNode", "content");
-
-        System.out.println(xmlString);
-	}
-
 }
