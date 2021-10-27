@@ -22,25 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.xml;
+package com.fortify.cli.common.output.json;
 
-import java.util.function.Function;
+import com.fortify.cli.common.output.IOutputWriter;
+import com.fortify.cli.common.output.IOutputWriterFactory;
+import com.fortify.cli.common.output.OutputWriterConfig;
 
-import com.fortify.cli.common.json.mapper.FieldMapper.PropertyPathToHeaderMapper;
-import com.fortify.cli.common.output.writer.IOutputWriter;
-import com.fortify.cli.common.output.writer.IOutputWriterFactory;
-import com.fortify.cli.common.output.writer.OutputWriterConfig;
-
-public class XmlOutputWriterFactory implements IOutputWriterFactory {
+public class JsonOutputWriterFactory implements IOutputWriterFactory {
 
 	@Override
 	public IOutputWriter createOutputWriter(OutputWriterConfig config) {
-		return new XmlOutputWriter(config);
-	}
-	
-	@Override
-	public Function<String, String> getDefaultPropertyPathToHeaderMapper() {
-		return PropertyPathToHeaderMapper::pascalCase;
+		return new JsonOutputWriter(config);
 	}
 
 }

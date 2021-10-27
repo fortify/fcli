@@ -22,11 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.command.util.output;
 
-import java.util.function.Function;
+import com.fortify.cli.common.json.mapper.FieldBasedTransformerFactory;
+import com.fortify.cli.common.json.mapper.IJsonNodeTransformer;
+import com.fortify.cli.common.output.OutputFormat;
 
-public interface IOutputWriterFactory {
-	public IOutputWriter createOutputWriter(OutputWriterConfig config);
-	public Function<String, String> getDefaultPropertyPathToHeaderMapper();
+public interface IJsonNodeTransformerSupplier {
+	public IJsonNodeTransformer getJsonNodeTransformer(FieldBasedTransformerFactory fieldBasedTransformerFactory, OutputFormat format);
 }

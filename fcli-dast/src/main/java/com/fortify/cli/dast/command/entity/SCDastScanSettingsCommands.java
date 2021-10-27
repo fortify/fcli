@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.entity.scdast.SCDastScanSettingsOptions;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.output.OutputWriterMixin;
+import com.fortify.cli.common.command.util.output.OutputWriterMixin;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

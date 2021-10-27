@@ -22,11 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output;
+package com.fortify.cli.common.output.yaml;
 
-import com.fortify.cli.common.json.mapper.FieldMapperFactory;
-import com.fortify.cli.common.json.mapper.IJacksonJsonNodeMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.fortify.cli.common.output.IOutputWriter;
+import com.fortify.cli.common.output.OutputWriterConfig;
 
-public interface IDefaultJacksonJsonNodeMapperSupplier {
-	public IJacksonJsonNodeMapper getJacksonJsonNodeMapper(FieldMapperFactory fieldMapperFactory, OutputFormat format);
+import lombok.SneakyThrows;
+
+public class YamlOutputWriter implements IOutputWriter {
+
+	public YamlOutputWriter(OutputWriterConfig config) {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override @SneakyThrows
+	public void write(JsonNode jsonNode) {
+		System.out.print(new YAMLMapper().writeValueAsString(jsonNode));
+	}
+
 }

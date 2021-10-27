@@ -27,7 +27,6 @@ package com.fortify.cli.common.command.util.annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Qualifier;
 import jakarta.inject.Singleton;
 

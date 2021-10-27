@@ -22,24 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.yaml;
+package com.fortify.cli.common.output;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.fortify.cli.common.output.writer.IOutputWriter;
-import com.fortify.cli.common.output.writer.OutputWriterConfig;
-
-import lombok.SneakyThrows;
-
-public class YamlOutputWriter implements IOutputWriter {
-
-	public YamlOutputWriter(OutputWriterConfig config) {
-		// TODO Auto-generated constructor stub
-	}
-
-	@Override @SneakyThrows
-	public void write(JsonNode jsonNode) {
-		System.out.print(new YAMLMapper().writeValueAsString(jsonNode));
-	}
-
+public interface IOutputWriterFactory {
+	public IOutputWriter createOutputWriter(OutputWriterConfig config);
 }

@@ -22,38 +22,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.xml;
+package com.fortify.cli.common.json.mapper;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fortify.cli.common.output.writer.IOutputWriter;
-import com.fortify.cli.common.output.writer.OutputWriterConfig;
 
-import lombok.SneakyThrows;
-
-public class XmlOutputWriter implements IOutputWriter {
-	private final boolean pretty = true;
-
-	public XmlOutputWriter(OutputWriterConfig config) {
-		// TODO Auto-generated constructor stub
-	}
-
-	@Override @SneakyThrows
-	public void write(JsonNode jsonNode) {
-		XmlMapper xmlMapper = new XmlMapper();
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode root = objectMapper.createObjectNode();
-        root.set("item", jsonNode);
-
-        if (pretty){
-            xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        }
-        String xmlString = xmlMapper.writeValueAsString(root).replace("ObjectNode", "content");
-
-        System.out.println(xmlString);
-	}
-
+public interface IJsonNodeTransformer {
+	public JsonNode convert(JsonNode input);
 }

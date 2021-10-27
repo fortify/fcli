@@ -22,24 +22,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.tree;
+package com.fortify.cli.common.output;
 
-import java.util.function.Function;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import com.fortify.cli.common.json.mapper.FieldMapper.PropertyPathToHeaderMapper;
-import com.fortify.cli.common.output.writer.IOutputWriter;
-import com.fortify.cli.common.output.writer.IOutputWriterFactory;
-import com.fortify.cli.common.output.writer.OutputWriterConfig;
-
-public class TreeOutputWriterFactory implements IOutputWriterFactory {
-
-	@Override
-	public IOutputWriter createOutputWriter(OutputWriterConfig config) {
-		return new TreeOutputWriter(config);
-	}
-
-	@Override
-	public Function<String, String> getDefaultPropertyPathToHeaderMapper() {
-		return PropertyPathToHeaderMapper::humanReadable;
-	}
+public interface IOutputWriter {
+	public void write(JsonNode jsonNode);
 }

@@ -24,26 +24,34 @@
  ******************************************************************************/
 package com.fortify.cli.common.output;
 
-import com.fortify.cli.common.output.writer.IOutputWriterFactory;
-import com.fortify.cli.common.output.writer.csv.CsvOutputWriterFactory;
-import com.fortify.cli.common.output.writer.json.JsonOutputWriterFactory;
-import com.fortify.cli.common.output.writer.table.TableOutputWriterFactory;
-import com.fortify.cli.common.output.writer.tree.TreeOutputWriterFactory;
-import com.fortify.cli.common.output.writer.xml.XmlOutputWriterFactory;
-import com.fortify.cli.common.output.writer.yaml.YamlOutputWriterFactory;
+import java.util.function.Function;
+
+import com.fortify.cli.common.json.mapper.FieldBasedTransformer.FieldNameFormatter;
+import com.fortify.cli.common.output.csv.CsvOutputWriterFactory;
+import com.fortify.cli.common.output.json.JsonOutputWriterFactory;
+import com.fortify.cli.common.output.table.TableOutputWriterFactory;
+import com.fortify.cli.common.output.tree.TreeOutputWriterFactory;
+import com.fortify.cli.common.output.xml.XmlOutputWriterFactory;
+import com.fortify.cli.common.output.yaml.YamlOutputWriterFactory;
 
 import lombok.Getter;
 
 public enum OutputFormat {
-	json(new JsonOutputWriterFactory()), 
-	yaml(new YamlOutputWriterFactory()), 
-	table(new TableOutputWriterFactory()), 
-	tree(new TreeOutputWriterFactory()), 
-	xml(new XmlOutputWriterFactory()), 
-	csv(new CsvOutputWriterFactory());
+	json (OutputType.TECHNICAL,    new JsonOutputWriterFactory(),  FieldNameFormatter::camelCase), 
+	yaml (OutputType.TECHNICAL,    new YamlOutputWriterFactory(),  FieldNameFormatter::snakeCase), 
+	table(OutputType.TEXT_COLUMNS, new TableOutputWriterFactory(), FieldNameFormatter::humanReadable), 
+	tree (OutputType.TEXT_ROWS,    new TreeOutputWriterFactory(),  FieldNameFormatter::humanReadable), 
+	xml  (OutputType.TECHNICAL,    new XmlOutputWriterFactory(),   FieldNameFormatter::camelCase), 
+	csv  (OutputType.TEXT_COLUMNS, new CsvOutputWriterFactory(),   FieldNameFormatter::humanReadable);
 	
-	@Getter private final IOutputWriterFactory outputWriterFactory;
-	private OutputFormat(IOutputWriterFactory outputWriterFactory) {
+	@Getter private final OutputType               outputType; 
+	@Getter private final IOutputWriterFactory     outputWriterFactory;
+	@Getter private final Function<String, String> fieldNameFormatter;
+	private OutputFormat(OutputType outputType, IOutputWriterFactory outputWriterFactory, Function<String, String> fieldNameformatter) {
+		this.outputType = outputType;
 		this.outputWriterFactory = outputWriterFactory;
+		this.fieldNameFormatter = fieldNameformatter;
 	}
+	
+	public static enum OutputType { TEXT_ROWS, TEXT_COLUMNS, TECHNICAL }
 }

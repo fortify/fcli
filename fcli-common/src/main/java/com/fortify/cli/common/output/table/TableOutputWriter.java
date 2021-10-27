@@ -22,14 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.table;
+package com.fortify.cli.common.output.table;
 
 import java.util.Arrays;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.writer.IOutputWriter;
-import com.fortify.cli.common.output.writer.OutputWriterConfig;
+import com.fortify.cli.common.output.IOutputWriter;
+import com.fortify.cli.common.output.OutputWriterConfig;
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
 import com.github.freva.asciitable.HorizontalAlign;

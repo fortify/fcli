@@ -22,18 +22,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.tree;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.writer.IOutputWriter;
-import com.fortify.cli.common.output.writer.OutputWriterConfig;
-
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import hu.webarticum.treeprinter.ListingTreePrinter;
-import hu.webarticum.treeprinter.SimpleTreeNode;
+package com.fortify.cli.common.output.tree;
 
 import java.util.Iterator;
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fortify.cli.common.output.IOutputWriter;
+import com.fortify.cli.common.output.OutputWriterConfig;
+
+import hu.webarticum.treeprinter.ListingTreePrinter;
+import hu.webarticum.treeprinter.SimpleTreeNode;
 
 public class TreeOutputWriter implements IOutputWriter {
 
@@ -45,7 +45,7 @@ public class TreeOutputWriter implements IOutputWriter {
 	public void write(JsonNode jsonNode) {
         SimpleTreeNode rootNode = new SimpleTreeNode("-+-");
         treeBuilder(rootNode, jsonNode, null);
-        new ListingTreePrinter().createBuilder().ascii().build().print(rootNode);  // print with ascii
+        ListingTreePrinter.createBuilder().ascii().build().print(rootNode);  // print with ascii
         //new ListingTreePrinter().print(rootNode); // print with unicode
 	}
 

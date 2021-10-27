@@ -33,31 +33,31 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class FieldMapperFactory {
+public class FieldBasedTransformerFactory {
 	private final JacksonJsonNodeHelper jacksonJsonNodeHelper;
 	
 	@Inject
-	public FieldMapperFactory(JacksonJsonNodeHelper jacksonJsonNodeHelper) {
+	public FieldBasedTransformerFactory(JacksonJsonNodeHelper jacksonJsonNodeHelper) {
 		this.jacksonJsonNodeHelper = jacksonJsonNodeHelper;
 	}
 	
-	public final FieldMapper createFromString(Function<String, String> propertyPathToHeaderMapper, String fieldMapperString) {
+	public final FieldBasedTransformer createFromString(Function<String, String> fieldNameformatter, String fieldMapperString) {
 		if ( StringUtils.isEmpty(fieldMapperString) ) { return null; } // TODO: null or empty FieldMapper?
-		FieldMapper fieldMapper = new FieldMapper(jacksonJsonNodeHelper, propertyPathToHeaderMapper);
+		FieldBasedTransformer fieldBasedTransformer = new FieldBasedTransformer(jacksonJsonNodeHelper, fieldNameformatter);
 		String[] fieldMappings = fieldMapperString.split(",");
 		for (String fieldMapping : fieldMappings) {
 			String[] elts = fieldMapping.split("##");
 			switch (elts.length) {
 			case 0: throw new IllegalStateException("This shouldn't happen");
-			case 1: fieldMapper.addField(elts[0]); break;
-			case 2: fieldMapper.addField(elts[0], elts[1]); break;
+			case 1: fieldBasedTransformer.addField(elts[0]); break;
+			case 2: fieldBasedTransformer.addField(elts[0], elts[1]); break;
 			default: throw new IllegalArgumentException("Each field mapping may contain at most one '##' separator");
 			}
 		}
-		return fieldMapper;
+		return fieldBasedTransformer;
 	}
 	
-	public final FieldMapper createEmpty(Function<String, String> propertyPathToHeaderMapper) {
-		return new FieldMapper(jacksonJsonNodeHelper, propertyPathToHeaderMapper);
+	public final FieldBasedTransformer createEmpty(Function<String, String> fieldNameformatter) {
+		return new FieldBasedTransformer(jacksonJsonNodeHelper, fieldNameformatter);
 	}
 }
