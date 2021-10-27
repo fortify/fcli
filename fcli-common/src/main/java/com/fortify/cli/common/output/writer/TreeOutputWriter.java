@@ -26,22 +26,47 @@ package com.fortify.cli.common.output.writer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import hu.webarticum.treeprinter.ListingTreePrinter;
 import hu.webarticum.treeprinter.SimpleTreeNode;
 
+import java.util.Iterator;
+import java.util.Map;
+
 public class TreeOutputWriter implements IOutputWriter {
 
-	@Override
+    @Override
 	public void write(JsonNode jsonNode) {
-		SimpleTreeNode rootNode = new SimpleTreeNode("I'm the root!");
-        rootNode.addChild(new SimpleTreeNode("I'm a child..."));
-        rootNode.addChild(new SimpleTreeNode("I'm an other child..."));
-
-
-
-        new ListingTreePrinter().print(rootNode);
-
-        System.out.println("Not yet implemented.");
+        SimpleTreeNode rootNode = new SimpleTreeNode("-+-");
+        treeBuilder(rootNode, jsonNode, null);
+        new ListingTreePrinter().createBuilder().ascii().build().print(rootNode);  // print with ascii
+        //new ListingTreePrinter().print(rootNode); // print with unicode
 	}
+
+    private static void treeBuilder(SimpleTreeNode treeNode, JsonNode inputNode, String firstLevelLabelSuffix){
+        firstLevelLabelSuffix = (firstLevelLabelSuffix == null) ? "" : firstLevelLabelSuffix;
+        if( inputNode.getNodeType() == JsonNodeType.ARRAY){
+            int cnt = 0;
+            for (JsonNode n: inputNode) {
+                SimpleTreeNode childNode = new SimpleTreeNode(String.format("#%d:%s", cnt, firstLevelLabelSuffix) );
+                treeBuilder(childNode, n, null);
+                treeNode.addChild(childNode);
+                cnt++;
+            }
+        }else if(inputNode.getNodeType() == JsonNodeType.OBJECT){
+            for (Iterator<Map.Entry<String, JsonNode>> it = inputNode.fields(); it.hasNext(); ) {
+                Map.Entry<String, JsonNode> n = it.next();
+                if(n.getValue().getNodeType() != JsonNodeType.OBJECT){
+                    SimpleTreeNode childNode = new SimpleTreeNode( n.getKey() + ": " + n.getValue().asText());
+                    treeNode.addChild(childNode);
+                }else if(n.getValue().getNodeType() == JsonNodeType.OBJECT){
+                    SimpleTreeNode childNode = new SimpleTreeNode(n.getKey());
+                    treeBuilder(childNode, n.getValue(), null);
+                    treeNode.addChild(childNode);
+                }
+            }
+        }
+
+    }
 
 }
