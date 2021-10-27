@@ -32,9 +32,9 @@ import com.fortify.cli.common.command.util.output.AbstractJsonNodeTransformerSup
 import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
 import com.fortify.cli.common.command.util.output.OutputWriterMixin;
 import com.fortify.cli.common.config.product.Product;
-import com.fortify.cli.common.json.mapper.FieldBasedTransformer;
-import com.fortify.cli.common.json.mapper.FieldBasedTransformerFactory;
-import com.fortify.cli.common.json.mapper.IJsonNodeTransformer;
+import com.fortify.cli.common.json.transformer.FieldBasedTransformer;
+import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
+import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;

@@ -22,13 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.json.mapper;
+package com.fortify.cli.common.json.transformer;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Collection;
 
-public class IdentityTransformer implements IJsonNodeTransformer {
-	@Override
-	public JsonNode convert(JsonNode input) {
-		return input;
-	}
+public interface IHeaderProvider {
+	public Collection<String> getHeaders();
+	public boolean hasExplicitHeaders();
 }

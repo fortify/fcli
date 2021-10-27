@@ -24,10 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.common.command.util.output;
 
-import com.fortify.cli.common.json.mapper.FieldBasedTransformer;
-import com.fortify.cli.common.json.mapper.FieldBasedTransformerFactory;
-import com.fortify.cli.common.json.mapper.IJsonNodeTransformer;
-import com.fortify.cli.common.json.mapper.IdentityTransformer;
+import com.fortify.cli.common.json.transformer.FieldBasedTransformer;
+import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
+import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
+import com.fortify.cli.common.json.transformer.IdentityTransformer;
 import com.fortify.cli.common.output.OutputFormat;
 
 public class AbstractJsonNodeTransformerSupplier implements IJsonNodeTransformerSupplier {

@@ -22,10 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.json.mapper;
+package com.fortify.cli.common.json.transformer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public interface IJsonNodeTransformer {
-	public JsonNode convert(JsonNode input);
+public class IdentityTransformer implements IJsonNodeTransformer {
+	@Override
+	public JsonNode convert(JsonNode input) {
+		return input;
+	}
 }

@@ -26,7 +26,7 @@ package com.fortify.cli.common.output;
 
 import java.util.function.Function;
 
-import com.fortify.cli.common.json.mapper.FieldBasedTransformer.FieldNameFormatter;
+import com.fortify.cli.common.json.transformer.FieldBasedTransformer.FieldNameFormatter;
 import com.fortify.cli.common.output.csv.CsvOutputWriterFactory;
 import com.fortify.cli.common.output.json.JsonOutputWriterFactory;
 import com.fortify.cli.common.output.table.TableOutputWriterFactory;
