@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.fortify.cli.common.json.mapper.IHeaderProvider;
+import com.fortify.cli.common.json.transformer.IHeaderProvider;
 import com.fortify.cli.common.output.IOutputWriter;
 import com.fortify.cli.common.output.OutputWriterConfig;
 
