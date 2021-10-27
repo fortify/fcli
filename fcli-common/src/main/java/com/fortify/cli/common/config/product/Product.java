@@ -38,7 +38,8 @@ public enum Product {
 	SSC(ProductIdentifiers.SSC),
 	FOD(ProductIdentifiers.FOD),
 	SC_SAST(ProductIdentifiers.SC_SAST),
-	SC_DAST(ProductIdentifiers.SC_DAST, SSC);
+	SC_DAST(ProductIdentifiers.SC_DAST, SSC),
+	ALL("all", SSC, FOD, SC_SAST, SC_DAST);
 	
 	public static class ProductIdentifiers {
         public static final String SSC     = "ssc";
