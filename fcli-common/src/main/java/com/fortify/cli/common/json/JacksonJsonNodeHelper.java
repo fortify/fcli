@@ -22,32 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.json;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.EnumSet;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.ParseContext;
+import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
-import lombok.SneakyThrows;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
-public class XmlOutputWriter implements IOutputWriter {
-	private final boolean pretty = true;
+/**
+ * This bean provides utility methods for working with Jackson JsonNode trees.
+ * 
+ * @author Ruud Senden
+ *
+ */
+@Singleton
+public class JacksonJsonNodeHelper {
+	private final ParseContext parseContext;
 
-	@Override @SneakyThrows
-	public void write(JsonNode jsonNode) {
-		XmlMapper xmlMapper = new XmlMapper();
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode root = objectMapper.createObjectNode();
-        root.set("item", jsonNode);
-
-        if (pretty){
-            xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        }
-        String xmlString = xmlMapper.writeValueAsString(root).replace("ObjectNode", "content");
-
-        System.out.println(xmlString);
+	@Inject
+	public JacksonJsonNodeHelper(ObjectMapper objectMapper) {
+		this.parseContext = JsonPath.using(Configuration.builder()
+				.jsonProvider(new JacksonJsonNodeJsonProvider(objectMapper))
+				.mappingProvider(new JacksonMappingProvider(objectMapper))
+				.options(EnumSet.noneOf(Option.class))
+				.build());
 	}
-
+	
+	public final <R> R getPath(Object input, String path, Class<R> returnClazz) {
+		return parseContext.parse(input).read(path, returnClazz);
+	}
 }

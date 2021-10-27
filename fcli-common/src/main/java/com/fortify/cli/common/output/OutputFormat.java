@@ -24,13 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.common.output;
 
-import com.fortify.cli.common.output.writer.CsvOutputWriterFactory;
 import com.fortify.cli.common.output.writer.IOutputWriterFactory;
-import com.fortify.cli.common.output.writer.JsonOutputWriterFactory;
-import com.fortify.cli.common.output.writer.TableOutputWriterFactory;
-import com.fortify.cli.common.output.writer.TreeOutputWriterFactory;
-import com.fortify.cli.common.output.writer.XmlOutputWriterFactory;
-import com.fortify.cli.common.output.writer.YamlOutputWriterFactory;
+import com.fortify.cli.common.output.writer.csv.CsvOutputWriterFactory;
+import com.fortify.cli.common.output.writer.json.JsonOutputWriterFactory;
+import com.fortify.cli.common.output.writer.table.TableOutputWriterFactory;
+import com.fortify.cli.common.output.writer.tree.TreeOutputWriterFactory;
+import com.fortify.cli.common.output.writer.xml.XmlOutputWriterFactory;
+import com.fortify.cli.common.output.writer.yaml.YamlOutputWriterFactory;
 
 import lombok.Getter;
 

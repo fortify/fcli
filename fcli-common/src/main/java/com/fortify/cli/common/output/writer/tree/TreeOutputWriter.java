@@ -22,13 +22,32 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.output.writer.tree;
 
-public class TableOutputWriterFactory implements IOutputWriterFactory {
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.writer.IOutputWriter;
+import com.fortify.cli.common.output.writer.OutputWriterConfig;
+
+import hu.webarticum.treeprinter.ListingTreePrinter;
+import hu.webarticum.treeprinter.SimpleTreeNode;
+
+public class TreeOutputWriter implements IOutputWriter {
+
+	public TreeOutputWriter(OutputWriterConfig config) {
+		// TODO Auto-generated constructor stub
+	}
 
 	@Override
-	public IOutputWriter createOutputWriter() {
-		return new TableOutputWriter();
+	public void write(JsonNode jsonNode) {
+		SimpleTreeNode rootNode = new SimpleTreeNode("I'm the root!");
+        rootNode.addChild(new SimpleTreeNode("I'm a child..."));
+        rootNode.addChild(new SimpleTreeNode("I'm an other child..."));
+
+
+
+        new ListingTreePrinter().print(rootNode);
+
+        System.out.println("Not yet implemented.");
 	}
 
 }

@@ -22,26 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.output.writer.table;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.function.Function;
 
-import hu.webarticum.treeprinter.ListingTreePrinter;
-import hu.webarticum.treeprinter.SimpleTreeNode;
+import com.fortify.cli.common.json.mapper.FieldMapper.PropertyPathToHeaderMapper;
+import com.fortify.cli.common.output.writer.IOutputWriter;
+import com.fortify.cli.common.output.writer.IOutputWriterFactory;
+import com.fortify.cli.common.output.writer.OutputWriterConfig;
 
-public class TreeOutputWriter implements IOutputWriter {
+public class TableOutputWriterFactory implements IOutputWriterFactory {
 
 	@Override
-	public void write(JsonNode jsonNode) {
-		SimpleTreeNode rootNode = new SimpleTreeNode("I'm the root!");
-        rootNode.addChild(new SimpleTreeNode("I'm a child..."));
-        rootNode.addChild(new SimpleTreeNode("I'm an other child..."));
-
-
-
-        new ListingTreePrinter().print(rootNode);
-
-        System.out.println("Not yet implemented.");
+	public IOutputWriter createOutputWriter(OutputWriterConfig config) {
+		return new TableOutputWriter(config);
 	}
 
+	@Override
+	public Function<String, String> getDefaultPropertyPathToHeaderMapper() {
+		return PropertyPathToHeaderMapper::humanReadable;
+	}
 }

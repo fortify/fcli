@@ -22,13 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer;
+package com.fortify.cli.common.json.mapper;
 
-public class YamlOutputWriterFactory implements IOutputWriterFactory {
+import java.util.Collection;
 
-	@Override
-	public IOutputWriter createOutputWriter() {
-		return new YamlOutputWriter();
-	}
-
+public interface IHeaderProvider {
+	public Collection<String> getHeaders();
+	public boolean hasExplicitHeaders();
 }
