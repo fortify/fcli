@@ -50,8 +50,8 @@ public class CsvOutputWriter implements IOutputWriter {
 		IHeaderProvider headerProvider = config.getHeaderProvider(true);
 		CsvSchema.Builder schemaBuilder = CsvSchema.builder();
 		headerProvider.getHeaders().forEach(schemaBuilder::addColumn);
-		CsvSchema schema = schemaBuilder.build();
-		schema.withUseHeader(config.isHeadersEnabled());
+		CsvSchema schema = schemaBuilder.build()
+				.withUseHeader(config.isHeadersEnabled());
 		return new CsvMapper()
 				.enable(JsonGenerator.Feature.IGNORE_UNKNOWN)
 				.writer(schema);
