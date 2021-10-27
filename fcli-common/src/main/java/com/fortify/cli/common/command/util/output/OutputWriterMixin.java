@@ -43,12 +43,12 @@ public class OutputWriterMixin {
 
 	private OutputWriterConfig createConfig() {
 		return OutputWriterConfig.builder()
-				.mapper(getFieldMapper())
+				.transformer(getJsonNodeTransformer())
 				.headersEnabled(isWithHeaders())
 				.build();
 	}
 
-	private IJsonNodeTransformer getFieldMapper() {
+	private IJsonNodeTransformer getJsonNodeTransformer() {
 		if ( StringUtils.isNotEmpty(fields) ) {
 			return fieldBasedTransformerFactory.createFromString(format.getFieldNameFormatter(), fields);
 		} else {
