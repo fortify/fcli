@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.output.OutputWriterMixin;
+import com.fortify.cli.common.util.JsonNodeFilterHelper;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
 import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastGetScanOptions;
@@ -19,6 +20,8 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
+
+import java.util.Set;
 
 public class SCDastScanStatusCommands {
     private static final String NAME = "scan-status";
@@ -37,18 +40,22 @@ public class SCDastScanStatusCommands {
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
             String urlPath = "/api/v2/scans/"+ scanStatusOptions.getScanId() + "/scan-summary";
+            Set<String> outputFields = Set.of("scanStatusType");
 
             JsonNode response = unirest.get(urlPath)
                     .accept("application/json")
                     .header("Content-Type", "application/json")
                     .asObject(ObjectNode.class)
                     .getBody()
-                    .get("item")
-                    .get("scanStatusType");
+                    .get("item");
 
-            String status = ScanStatusTypes.values()[Integer.parseInt(response.asText()) - 1].toString();
+            JsonNodeFilterHelper.filterJsonNode(response, outputFields);
+            int scanStatusInt = Integer.parseInt(response.get("scanStatusType").toString());
+            ((ObjectNode) response).put(
+                    "scanStatusTypeString",
+                    ScanStatusTypes.getStatusString(scanStatusInt -1));
 
-            System.out.println(status);
+            outputWriterMixin.printToFormat(response);
 
             return null;
         }

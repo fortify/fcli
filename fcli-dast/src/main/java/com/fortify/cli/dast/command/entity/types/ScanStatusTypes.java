@@ -9,7 +9,7 @@ public enum ScanStatusTypes {
 	ImportingScanResults, ImportScanResultsFailed, FailedToStart, PausingScan,
 	ResumingScan, CompletingScan, ResumeScanQueued, ForcedComplete, FailedToResume, LicenseUnavailable;
 
-	public String getStatusName(Integer index){
+	public static String getStatusString(Integer index){
 		return ScanStatusTypes.values()[index].toString();
 	}
 
