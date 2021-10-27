@@ -97,7 +97,7 @@ public class FieldBasedTransformer implements IJsonNodeTransformer, IHeaderProvi
 	}
 	
 	@Override
-	public final JsonNode convert(JsonNode input) {
+	public final JsonNode transform(JsonNode input) {
 		if ( input==null ) { return null; }
 		if ( input instanceof ObjectNode ) {
 			return convertObjectNode((ObjectNode)input);
@@ -126,7 +126,7 @@ public class FieldBasedTransformer implements IJsonNodeTransformer, IHeaderProvi
 
 	private final ArrayNode convertArrayNode(ArrayNode input) {
 		ArrayNode output = new ArrayNode(JsonNodeFactory.instance);
-		input.forEach(jsonNode->output.add(convert(jsonNode)));
+		input.forEach(jsonNode->output.add(transform(jsonNode)));
 		return output;
 	}
 }
