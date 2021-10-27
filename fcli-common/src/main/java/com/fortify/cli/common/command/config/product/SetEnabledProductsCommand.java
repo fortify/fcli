@@ -38,8 +38,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Parameters;
 
-// TODO Add list of products to help output
-// TODO Add completionCandidates
 @ReflectiveAccess
 @SubcommandOf(RootConfigCommand.class)
 @Command(name = "enabled-products", description = {

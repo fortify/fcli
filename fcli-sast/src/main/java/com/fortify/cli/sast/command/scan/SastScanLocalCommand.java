@@ -28,10 +28,10 @@ import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.sast.command.SastScanCommand;
 
 import io.micronaut.core.annotation.Order;
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
-@Singleton
+@ReflectiveAccess
 @SubcommandOf(SastScanCommand.class)
 @Command(name = "local", description = "Perform a local scan")
 @Order(SastScanCommandsOrder.LOCAL)

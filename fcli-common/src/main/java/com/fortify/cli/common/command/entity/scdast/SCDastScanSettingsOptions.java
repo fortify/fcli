@@ -1,13 +1,14 @@
 package com.fortify.cli.common.command.entity.scdast;
 
-import com.fortify.cli.common.command.session.login.RootLoginCommand;
+import com.fortify.cli.common.command.auth.login.AuthLoginCommand;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
 /**
  * Configure options for retrieving SC DAST Scan Settings
- * Usually this would be included in a {@link RootLoginCommand} implementation
+ * Usually this would be included in a {@link AuthLoginCommand} implementation
  * as follows:
  * <pre>
  * {@code

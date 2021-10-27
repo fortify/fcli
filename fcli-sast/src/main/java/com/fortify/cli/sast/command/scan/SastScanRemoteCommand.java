@@ -28,11 +28,11 @@ import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.sast.command.SastScanCommand;
 
 import io.micronaut.core.annotation.Order;
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Singleton
+@ReflectiveAccess
 @SubcommandOf(SastScanCommand.class)
 @Command(name = "remote", description = "Perform a remote scan")
 @Order(SastScanCommandsOrder.REMOTE)

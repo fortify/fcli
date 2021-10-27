@@ -31,11 +31,11 @@ import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 import com.fortify.cli.sast.command.scan.SastScanRemoteCommand;
 
 import io.micronaut.core.annotation.Order;
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Singleton
+@ReflectiveAccess
 @SubcommandOf(SastScanRemoteCommand.class)
 @Command(name = ProductIdentifiers.FOD, description = "Submit scan to FoD")
 @RequiresProduct(Product.FOD)

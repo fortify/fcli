@@ -39,22 +39,22 @@ public abstract class AbstractSCDastUnirestRunnerCommand implements Runnable {
 	@Getter @Inject private SCDastUnirestRunner unirestRunner;
 	
 	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
-    @Getter private LoginSessionConsumerNameOptions nameOptions;
+    @Getter private AuthSessionConsumerNameOptions nameOptions;
 	
-	static class LoginSessionConsumerNameOptions {
-		@Option(names = {"--ssc-login-session"}, required = false, defaultValue = "default")
-		@Getter private String sscLoginSessionName;
+	static class AuthSessionConsumerNameOptions {
+		@Option(names = {"--ssc-auth-session"}, required = false, defaultValue = "default")
+		@Getter private String sscAuthSessionName;
 	}
 	
-	public String getSSCLoginSessionName() {
-		return nameOptions==null ? "default" : nameOptions.getSscLoginSessionName();
+	public String getSSCAuthSessionName() {
+		return nameOptions==null ? "default" : nameOptions.getSscAuthSessionName();
 	}
 
 	@Override @SneakyThrows
 	public final void run() {
 		// TODO Do we want to do anything with the results, like formatting it based on output options?
 		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(getSSCLoginSessionName(), this::runWithUnirest);
+		unirestRunner.runWithUnirest(getSSCAuthSessionName(), this::runWithUnirest);
 	}
 	
 	protected abstract Void runWithUnirest(UnirestInstance unirest);

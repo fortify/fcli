@@ -36,41 +36,40 @@ import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 
 public class SSCEntityRootCommands {
-	@Singleton @ReflectiveAccess
+	@ReflectiveAccess
 	@SubcommandOf(RootGetCommand.class)
 	@Command(name = ProductIdentifiers.SSC, description = "Get entity data from SSC")
 	@RequiresProduct(Product.SSC)
 	public static class SSCGetCommand {}
 	
-	@Singleton @ReflectiveAccess
+	@ReflectiveAccess
 	@SubcommandOf(RootCreateCommand.class)
 	@Command(name = ProductIdentifiers.SSC, description = "Create entities in SSC")
 	@RequiresProduct(Product.SSC)
 	public static class SSCCreateCommand {}
 	
-	@Singleton @ReflectiveAccess
+	@ReflectiveAccess
 	@SubcommandOf(RootUpdateCommand.class)
 	@Command(name = ProductIdentifiers.SSC, description = "Update entities in SSC")
 	@RequiresProduct(Product.SSC)
 	public static class SSCUpdateCommand {}
 	
-	@Singleton @ReflectiveAccess
+	@ReflectiveAccess
 	@SubcommandOf(RootDeleteCommand.class)
 	@Command(name = ProductIdentifiers.SSC, description = "Delete entities from SSC")
 	@RequiresProduct(Product.SSC)
 	public static class SSCDeleteCommand {}
 	
-	@Singleton @ReflectiveAccess
+	@ReflectiveAccess
 	@SubcommandOf(RootUploadCommand.class)
 	@Command(name = ProductIdentifiers.SSC, description = "Upload data SSC")
 	@RequiresProduct(Product.SSC)
 	public static class SSCUploadCommand {}
 	
-	@Singleton @ReflectiveAccess
+	@ReflectiveAccess
 	@SubcommandOf(RootDownloadCommand.class)
 	@Command(name = ProductIdentifiers.SSC, description = "Download data from SSC")
 	@RequiresProduct(Product.SSC)

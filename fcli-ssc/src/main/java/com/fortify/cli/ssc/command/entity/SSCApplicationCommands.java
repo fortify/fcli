@@ -36,6 +36,7 @@ import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCDeleteCommand
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCGetCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCUpdateCommand;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
@@ -47,7 +48,7 @@ public class SSCApplicationCommands {
 	private static final String DESC = "applications";
 	private static final String ALIAS = "apps";
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, description = "Get "+DESC+" from SSC", aliases = {ALIAS})
 	@RequiresProduct(Product.SSC)
@@ -70,7 +71,7 @@ public class SSCApplicationCommands {
 		}
 	}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(SSCCreateCommand.class)
 	@Command(name = NAME, description = "Create "+DESC+" in SSC")
 	@RequiresProduct(Product.SSC)
@@ -94,7 +95,7 @@ public class SSCApplicationCommands {
 		}
 	}
 	
-	@Singleton
+	@ReflectiveAccess
 	@SubcommandOf(SSCDeleteCommand.class)
 	@Command(name = NAME, description = "Delete "+DESC+" from SSC")
 	@RequiresProduct(Product.SSC)

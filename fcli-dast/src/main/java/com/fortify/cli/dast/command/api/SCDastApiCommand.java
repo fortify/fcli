@@ -33,13 +33,13 @@ import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Singleton
+@ReflectiveAccess
 @SubcommandOf(RootApiCommand.class)
 @Command(name = ProductIdentifiers.SC_DAST, description = "Invoke ScanCentral DAST REST API")
 @RequiresProduct(Product.SC_DAST)

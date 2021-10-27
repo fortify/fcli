@@ -29,12 +29,11 @@ import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 
 public class SCDastEntityRootCommands {
-    @Singleton
     @ReflectiveAccess
     @SubcommandOf(RootGetCommand.class)
     @Command(name = ProductIdentifiers.SC_DAST, description = "Get entity data from SC DAST")

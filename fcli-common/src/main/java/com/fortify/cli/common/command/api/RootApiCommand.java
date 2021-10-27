@@ -29,11 +29,11 @@ import com.fortify.cli.common.command.RootCommandsOrderByGroup;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 
 import io.micronaut.core.annotation.Order;
-import jakarta.inject.Singleton;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 
-@Singleton
+@ReflectiveAccess
 @SubcommandOf(FCLIRootCommand.class)
 @Command(name = "api", description = "Make arbitrary calls to Fortify REST APIs")
 @Order(RootCommandsOrderByGroup.API)

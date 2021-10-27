@@ -25,7 +25,7 @@
 package com.fortify.cli.ssc.command;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.command.session.consumer.LoginSessionConsumerMixin;
+import com.fortify.cli.common.command.auth.consumer.AuthSessionConsumerMixin;
 import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
@@ -42,13 +42,13 @@ import picocli.CommandLine.Mixin;
 public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
 	@Getter @Inject private ObjectMapper objectMapper;
 	@Getter @Inject private SSCUnirestRunner unirestRunner;
-	@Getter @Mixin  private LoginSessionConsumerMixin loginSessionConsumerMixin;
+	@Getter @Mixin  private AuthSessionConsumerMixin authSessionConsumerMixin;
 
 	@Override @SneakyThrows
 	public final void run() {
 		// TODO Do we want to do anything with the results, like formatting it based on output options?
 		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(loginSessionConsumerMixin.getLoginSessionName(), this::runWithUnirest);
+		unirestRunner.runWithUnirest(authSessionConsumerMixin.getAuthSessionName(), this::runWithUnirest);
 	}
 	
 	protected abstract Void runWithUnirest(UnirestInstance unirest);
