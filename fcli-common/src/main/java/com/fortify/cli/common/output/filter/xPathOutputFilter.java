@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fortify.cli.common.output.writer.IOutputWriter;
 import lombok.SneakyThrows;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -39,9 +38,8 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import java.io.StringReader;
 
-public class xPathOutputFilter implements IOutputFilter {
+public class xPathOutputFilter{
 
-	@Override
 	@SneakyThrows
 	public JsonNode filter(JsonNode jsonNode, String expression) {
 		XPath xPath = XPathFactory.newInstance().newXPath();
