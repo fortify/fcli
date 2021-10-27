@@ -1,13 +1,12 @@
 
-package com.fortify.cli.dast.command.entity.scdast.scan;
+package com.fortify.cli.dast.command.entity.scdast.scan.list;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.output.OutputWriterMixin;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
-import com.fortify.cli.dast.command.entity.scdast.scansettings.SCDastScanSettingsCommands;
-import com.fortify.cli.dast.command.entity.scdast.scansettings.SCDastScanSettingsOptions;
+import com.fortify.cli.dast.command.entity.scdast.scan.SCDastScanCommands;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

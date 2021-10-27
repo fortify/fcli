@@ -1,4 +1,4 @@
-package com.fortify.cli.dast.command.entity.scdast.scansettings;
+package com.fortify.cli.dast.command.entity.scdast.scansettings.list;
 
 import com.fortify.cli.common.command.auth.login.AuthLoginCommand;
 
@@ -19,7 +19,7 @@ import picocli.CommandLine.Option;
  * @author Ruud Senden
  */
 @ReflectiveAccess
-public class SCDastScanSettingsOptions {
+public class SCDastScanSettingsListOptions {
 
     @Option(names = {"-s","--search-text"}, description = "The text to filter results by.")
     @Getter private String searchText;

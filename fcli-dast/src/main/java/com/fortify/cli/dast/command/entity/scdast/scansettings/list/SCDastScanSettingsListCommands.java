@@ -1,5 +1,5 @@
 
-package com.fortify.cli.dast.command.entity.scdast.scansettings;
+package com.fortify.cli.dast.command.entity.scdast.scansettings.list;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -7,7 +7,7 @@ import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.output.OutputWriterMixin;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 
-import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
+import com.fortify.cli.dast.command.entity.scdast.scansettings.SCDastScanSettingsCommands;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -25,7 +25,7 @@ public class SCDastScanSettingsListCommands {
     @Command(name = NAME, description = "Get list of " + DESC + " from SC DAST")
     public static final class Get extends AbstractSCDastUnirestRunnerCommand {
         @ArgGroup(exclusive = false, heading = "Filter scan settings:%n", order = 1)
-        @Getter private SCDastScanSettingsOptions scanSettingsOptions;
+        @Getter private SCDastScanSettingsListOptions scanSettingsOptions;
 
         @Mixin
         private OutputWriterMixin outputWriterMixin;

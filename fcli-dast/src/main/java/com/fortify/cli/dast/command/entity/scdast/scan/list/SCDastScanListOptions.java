@@ -1,7 +1,5 @@
-package com.fortify.cli.dast.command.entity.scdast.scan;
+package com.fortify.cli.dast.command.entity.scdast.scan.list;
 
-import com.fortify.cli.common.command.auth.login.AuthLoginCommand;
-import com.fortify.cli.common.output.OutputFormat;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;

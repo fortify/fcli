@@ -1,5 +1,5 @@
 
-package com.fortify.cli.dast.command.entity.scdast.scan;
+package com.fortify.cli.dast.command.entity.scdast.scan.list;
 
 import com.fortify.cli.common.output.writer.*;
 import lombok.Getter;
