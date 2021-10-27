@@ -3,11 +3,16 @@ package com.fortify.cli.dast.command.entity.scdast.scanresults;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.output.OutputWriterMixin;
+import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
+import com.fortify.cli.common.command.util.output.OutputWriterMixin;
+import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
+import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
+import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.util.JsonNodeFilterHelper;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
 import com.fortify.cli.dast.command.entity.scdast.scanresults.options.SCDastGetScanResultsOptions;
+import com.fortify.cli.ssc.command.entity.SSCApplicationCommands;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -27,7 +32,7 @@ public class SCDastScanResultsCommands {
     @ReflectiveAccess
     @SubcommandOf(SCDastEntityRootCommands.SCDASTGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
-    public static final class Get extends AbstractSCDastUnirestRunnerCommand {
+    public static final class Get extends AbstractSCDastUnirestRunnerCommand implements IJsonNodeTransformerSupplier {
         @ArgGroup(exclusive = false, heading = "Get results from a specific scan:%n", order = 1)
         @Getter private SCDastGetScanResultsOptions scanResultsOptions;
 
@@ -50,6 +55,11 @@ public class SCDastScanResultsCommands {
             outputWriterMixin.printToFormat(response);
 
             return null;
+        }
+
+        @Override
+        public IJsonNodeTransformer getJsonNodeTransformer(FieldBasedTransformerFactory fieldBasedTransformerFactory, OutputFormat format) {
+            return new SSCApplicationCommands.TransformerSupplier().getJsonNodeTransformer(fieldBasedTransformerFactory, format);
         }
     }
 }
