@@ -3,13 +3,7 @@ package com.fortify.cli.dast.command.entity.scdast.scansettings;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.command.util.output.AbstractJsonNodeTransformerSupplier;
-import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
-import com.fortify.cli.common.command.util.output.OutputWriterMixin;
-import com.fortify.cli.common.json.transformer.FieldBasedTransformer;
-import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
-import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
-import com.fortify.cli.common.output.OutputFormat;
+import com.fortify.cli.common.output.OutputWriterMixin;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
 import com.fortify.cli.dast.command.entity.scdast.scansettings.options.SCDastGetScanSettingsListOptions;
@@ -39,6 +33,9 @@ public class SCDastScanSettingsCommands {
 
         @Mixin
         private OutputWriterMixin outputWriterMixin;
+
+        @ArgGroup(exclusive = false, heading = "Filter Output:%n", order = 2)
+        @Getter private OutputFilterOptions outputFilterOptions;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
@@ -74,6 +71,7 @@ public class SCDastScanSettingsCommands {
 
             if (dataNode != null){response = response.get(dataNode);}
 
+            response = outputFilterOptions.filterOutput(response);
             outputWriterMixin.printToFormat(response);
 
             return null;

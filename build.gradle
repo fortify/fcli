@@ -68,7 +68,7 @@ allprojects {
 		implementation('com.konghq:unirest-objectmapper-jackson:3.13.0')
 
 		implementation('com.jayway.jsonpath:json-path:2.6.0') {
-			exclude group: 'net.minidev', module: 'json-smart'
+			//exclude group: 'net.minidev', module: 'json-smart'
 		}
 
 		// for yaml support and generating trees/tables
