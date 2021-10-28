@@ -4,10 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
-import com.fortify.cli.common.command.util.output.OutputWriterMixin;
+import com.fortify.cli.common.command.util.output.OutputOptionsHandler;
 import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
 import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
-import com.fortify.cli.common.output.OutputFilterOptions;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
@@ -41,10 +40,7 @@ public class SCDastScanCommands {
         @Getter private SCDastGetScanListOptions scanListOptions;
 
         @Mixin
-        private OutputWriterMixin outputWriterMixin;
-
-        @ArgGroup(exclusive = false, heading = "Filter Output:%n", order = 10)
-        @Getter private OutputFilterOptions outputFilterOptions;
+        @Getter private OutputOptionsHandler outputOptionsHandler;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
@@ -87,10 +83,7 @@ public class SCDastScanCommands {
                     .getBody()
                     .get(dataNode);
 
-            if (outputFilterOptions != null ){
-                response = outputFilterOptions.filterOutput(response);
-            }
-            outputWriterMixin.printToFormat(response);
+            outputOptionsHandler.printToFormat(response);
 
             return null;
         }
@@ -111,7 +104,7 @@ public class SCDastScanCommands {
         private SCDastScanOptions scanOptions;
 
         @Mixin
-        private OutputWriterMixin outputWriterMixin;
+        private OutputOptionsHandler outputOptionsHandler;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
@@ -125,7 +118,7 @@ public class SCDastScanCommands {
                     .asObject(ObjectNode.class)
                     .getBody();
 
-            outputWriterMixin.printToFormat(response);
+            outputOptionsHandler.printToFormat(response);
 
             return null;
         }

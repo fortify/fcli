@@ -4,10 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
-import com.fortify.cli.common.command.util.output.OutputWriterMixin;
+import com.fortify.cli.common.command.util.output.OutputOptionsHandler;
 import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
 import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
-import com.fortify.cli.common.output.OutputFilterOptions;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
@@ -18,7 +17,7 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ArgGroup;
 
@@ -36,11 +35,9 @@ public class SCDastScanSettingsCommands {
         @ArgGroup(exclusive = false, heading = "Filter multiple scan settings:%n", order = 2)
         @Getter private SCDastGetScanSettingsListOptions scanSettingsListOptions;
 
-        @Mixin
-        private OutputWriterMixin outputWriterMixin;
 
-        @ArgGroup(exclusive = false, heading = "Filter Output:%n", order = 10)
-        @Getter private OutputFilterOptions outputFilterOptions;
+        @CommandLine.Mixin
+        @Getter private OutputOptionsHandler outputOptionsHandler;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
@@ -76,10 +73,7 @@ public class SCDastScanSettingsCommands {
 
             if (dataNode != null){response = response.get(dataNode);}
 
-            if (outputFilterOptions != null ){
-                response = outputFilterOptions.filterOutput(response);
-            }
-            outputWriterMixin.printToFormat(response);
+            outputOptionsHandler.printToFormat(response);
 
             return null;
         }

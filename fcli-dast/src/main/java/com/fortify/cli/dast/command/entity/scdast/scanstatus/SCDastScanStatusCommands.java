@@ -4,15 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
-import com.fortify.cli.common.command.util.output.OutputWriterMixin;
+import com.fortify.cli.common.command.util.output.OutputOptionsHandler;
 import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
 import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
-import com.fortify.cli.common.output.OutputFilterOptions;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.util.JsonNodeFilterHelper;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
-import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastGetScanOptions;
 import com.fortify.cli.dast.command.entity.scdast.scanstatus.options.SCDastGetScanStatusOptions;
 import com.fortify.cli.dast.command.entity.types.ScanStatusTypes;
 import com.fortify.cli.ssc.command.entity.SSCApplicationCommands;
@@ -22,10 +20,6 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Spec;
 
 import java.util.Set;
 
@@ -40,11 +34,8 @@ public class SCDastScanStatusCommands {
         @CommandLine.ArgGroup(exclusive = false, heading = "Get a specific scan:%n", order = 1)
         @Getter private SCDastGetScanStatusOptions scanStatusOptions;
 
-        @Mixin
-        private OutputWriterMixin outputWriterMixin;
-
-        @CommandLine.ArgGroup(exclusive = false, heading = "Filter Output:%n", order = 10)
-        @Getter private OutputFilterOptions outputFilterOptions;
+        @CommandLine.Mixin
+        @Getter private OutputOptionsHandler outputOptionsHandler;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
@@ -64,10 +55,7 @@ public class SCDastScanStatusCommands {
                     "scanStatusTypeString",
                     ScanStatusTypes.getStatusString(scanStatusInt -1));
 
-            if (outputFilterOptions != null ){
-                response = outputFilterOptions.filterOutput(response);
-            }
-            outputWriterMixin.printToFormat(response);
+            outputOptionsHandler.printToFormat(response);
 
             return null;
         }

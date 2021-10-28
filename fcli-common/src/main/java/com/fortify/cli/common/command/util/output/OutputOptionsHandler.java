@@ -6,6 +6,7 @@ import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.OutputWriterConfig;
 
+import com.fortify.cli.common.output.filter.JsonPathOutputFilter;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import jakarta.inject.Inject;
@@ -15,29 +16,35 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-public class OutputWriterMixin {
+public class OutputOptionsHandler {
 	@Inject FieldBasedTransformerFactory fieldBasedTransformerFactory;
 	@Spec(Spec.Target.MIXEE) CommandSpec mixee;
 
     @CommandLine.Option(names = {"--fmt", "--format"},
             description = "Output format. Possible values: ${COMPLETION-CANDIDATES}.",
-            defaultValue = "json", required = false, order=1)
+            defaultValue = "json", order=1)
     @Getter
     private OutputFormat format;
 
     @CommandLine.Option(names = {"--fields"},
             description = "Define the fields to be included in the output, together with optional header names",
-            required = false, order=2)
+            order=2)
     @Getter
     private String fields;
     
     @CommandLine.Option(names = {"--with-headers"},
             description = "For column-based outputs, whether to output headers",
-            required = false, order=3, defaultValue = "false")
+            order=3, defaultValue = "false")
     @Getter
     private boolean withHeaders;
 
+	@CommandLine.Option(names = {"--json-path"}, description = "Filters output using JSONPath", order = 1)
+	@Getter private String jsonPath;
+
     public void printToFormat(JsonNode response) {
+		if (jsonPath != null ){
+			response = filterOutput(response);
+		}
         format.getOutputWriterFactory().createOutputWriter(createConfig()).write(response);
     }
 
@@ -46,6 +53,9 @@ public class OutputWriterMixin {
 				.transformer(getJsonNodeTransformer())
 				.headersEnabled(isWithHeaders())
 				.build();
+	}
+	public JsonNode filterOutput(JsonNode response){
+		return JsonPathOutputFilter.filter(response, jsonPath);
 	}
 
 	private IJsonNodeTransformer getJsonNodeTransformer() {
@@ -62,3 +72,5 @@ public class OutputWriterMixin {
 	}
 
 }
+
+
