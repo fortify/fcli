@@ -31,8 +31,11 @@ import lombok.Getter;
 /**
  * This enum lists all (server) products currently supported by fcli. 
  * 
+ * TODO Rename to something that better reflects the fact that this now also contains groups of products like 'all',
+ *      for example 'ProductOrGroup'
+ * TODO Add an 'on-prem' group and maybe 'cirrus' group that enables the appropriate products.
+ * 
  * @author Ruud Senden
- *
  */
 public enum Product {
 	SSC(ProductIdentifiers.SSC),

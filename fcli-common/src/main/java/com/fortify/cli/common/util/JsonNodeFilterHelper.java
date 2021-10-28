@@ -1,11 +1,17 @@
 package com.fortify.cli.common.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.JacksonJsonNodeHelper;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+
+/**
+ * TODO This class should move under the com.fortify.cli.common.json package
+ * TODO Functionality provided by this class should potentially be integrated into {@link JacksonJsonNodeHelper}
+ */
 public class JsonNodeFilterHelper {
 
     public static void filterJsonNode (JsonNode node, Set<String> outputFields){

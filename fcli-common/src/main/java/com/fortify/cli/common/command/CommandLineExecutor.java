@@ -51,6 +51,17 @@ import jakarta.inject.Singleton;
 import lombok.Getter;
 import picocli.CommandLine;
 
+/**
+ * This class is responsible for actually running the (sub-)commands 
+ * specified on the command line by generating a {@link CommandLine}
+ * instance containing an {@link FCLIRootCommand} instance and the 
+ * full sub-command hierarchy underneath that, based on the {@link SubcommandOf}
+ * annotation. Once the {@link CommandLine} has been constructed,
+ * it will be executed in order to have picocli invoke the appropriate
+ * sub-command.
+ * 
+ * @author Ruud Senden
+ */
 @Singleton
 public class CommandLineExecutor {
 	@Getter private final FCLIRootCommand rootCommand;

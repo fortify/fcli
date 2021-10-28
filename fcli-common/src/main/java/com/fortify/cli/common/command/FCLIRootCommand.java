@@ -32,6 +32,16 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.ScopeType;
 
+/**
+ * This is the root command for the fcli application, defining common properties
+ * like help options mixin and help footer that will be inherited by all
+ * sub-commands. Other than that, it also includes the {@link LogOptionsMixin}
+ * to avoid picocli from complaining about not recognizing those options.
+ * Actual logging setup will already have been completed before this command
+ * is even loaded, so the logging options themselves are not being processed here. 
+ * 
+ * @author Ruud Senden
+ */
 @Singleton
 @ReflectiveAccess
 @Command(name = "fcli", 

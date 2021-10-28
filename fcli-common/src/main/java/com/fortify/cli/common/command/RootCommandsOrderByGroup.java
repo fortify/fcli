@@ -24,6 +24,18 @@
  ******************************************************************************/
 package com.fortify.cli.common.command;
 
+import com.fortify.cli.common.command.entity.EntityCommandsOrder;
+
+/**
+ * This class defines the order of top-level command groups, with 
+ * each group representing either a single top-level command or
+ * a group of top-level commands. As an example, {@link #ENTITY}
+ * is a group of entity-related commands providing CRUD operations,
+ * with {@link EntityCommandsOrder} defining the relative order
+ * of the individual commands in this group.
+ * 
+ * @author Ruud Senden
+ */
 public final class RootCommandsOrderByGroup {
 	public static final int 
 		CONFIG   = 100,
@@ -32,5 +44,5 @@ public final class RootCommandsOrderByGroup {
 		SCAN     = 400,
 		RUN      = 500,
 		SOFTWARE = 600,
-		API = 700;
+		API      = 700;
 }

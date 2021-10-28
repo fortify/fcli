@@ -32,6 +32,14 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Spec;
 
+/**
+ * TODO Move this command to its own sub-package for consistency with the other config sub-commands.
+ * 
+ * This command is responsible for generating bash/zsh completion scripts, allowing users to use the 
+ * TAB key to see and auto-complete options and sub-commands.
+ * 
+ * @author Ruud Senden
+ */
 @ReflectiveAccess
 @SubcommandOf(RootConfigCommand.class)
 @Command(name = "generate-completion", description = {
