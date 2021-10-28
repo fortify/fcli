@@ -28,8 +28,8 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.function.Supplier;
 
-import com.fortify.cli.common.json.transformer.IHeaderProvider;
-import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
+import com.fortify.cli.common.json.transform.IHeaderProvider;
+import com.fortify.cli.common.json.transform.IJsonNodeTransformer;
 
 import lombok.Builder;
 import lombok.Data;

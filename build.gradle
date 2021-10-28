@@ -17,7 +17,7 @@ subprojects {
 }
 
 application {
-	mainClass.set("com.fortify.cli.FortifyCLI")
+	mainClass.set("com.fortify.cli.app.FortifyCLI")
 }
 shadowJar {
 	archiveBaseName.set('fcli')

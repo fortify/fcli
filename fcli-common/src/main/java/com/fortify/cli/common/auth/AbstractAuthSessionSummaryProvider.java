@@ -27,7 +27,7 @@ package com.fortify.cli.common.auth;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import com.fortify.cli.common.command.auth.AbstractCommandWithAuthSessionPersistenceHelper;
+import com.fortify.cli.common.picocli.command.auth.AbstractCommandWithAuthSessionPersistenceHelper;
 
 public abstract class AbstractAuthSessionSummaryProvider extends AbstractCommandWithAuthSessionPersistenceHelper implements IAuthSessionSummaryProvider {
 	@Override

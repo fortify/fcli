@@ -32,7 +32,7 @@ import java.util.Date;
 
 import org.apache.commons.codec.binary.Base64;
 
-import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
+import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.rest.data.BasicUserCredentialsConfig;
 import com.fortify.cli.common.rest.unirest.AbstractAuthSessionUnirestRunner;
 import com.fortify.cli.ssc.auth.data.SSCAuthSessionData;

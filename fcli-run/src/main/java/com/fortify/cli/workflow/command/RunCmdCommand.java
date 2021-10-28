@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.workflow.command;
 
-import com.fortify.cli.common.command.run.RootRunCommand;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.command.run.RootRunCommand;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;

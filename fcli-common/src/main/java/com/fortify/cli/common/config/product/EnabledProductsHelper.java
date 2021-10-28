@@ -47,20 +47,20 @@ public class EnabledProductsHelper {
 		this.config = config;
 	}
 	
-	public Set<Product> getEnabledProducts() {
+	public Set<ProductOrGroup> getEnabledProducts() {
 		String configValue = config.get(CONFIG_KEY);
 		return StringUtils.isEmpty(configValue)
-			? new HashSet<>(Arrays.asList(Product.values()))
-			: Stream.of(configValue.split(",")).map(Product::valueOf).collect(Collectors.toSet());
+			? new HashSet<>(Arrays.asList(ProductOrGroup.values()))
+			: Stream.of(configValue.split(",")).map(ProductOrGroup::valueOf).collect(Collectors.toSet());
 	}
 	
-	public void setEnabledProducts(Product[] products) {
-		String configValue = Stream.of(products).flatMap(Product::thisAndDependenciesStream)
-				.map(Product::name).collect(Collectors.joining( "," ));
+	public void setEnabledProducts(ProductOrGroup[] products) {
+		String configValue = Stream.of(products).flatMap(ProductOrGroup::thisAndDependenciesStream)
+				.map(ProductOrGroup::name).collect(Collectors.joining( "," ));
 		config.set(CONFIG_KEY, configValue);
 	}
 
-	public boolean isProductEnabled(Optional<Product> optProduct) {
+	public boolean isProductEnabled(Optional<ProductOrGroup> optProduct) {
 		return optProduct.isEmpty() || getEnabledProducts().contains(optProduct.get());
 	}
 }

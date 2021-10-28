@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.util.FcliHomeHelper;
+import com.fortify.cli.common.home.FcliHomeHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;

@@ -25,12 +25,12 @@
 package com.fortify.cli.dast.command.api;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.command.api.APICommandMixin;
-import com.fortify.cli.common.command.api.RootApiCommand;
-import com.fortify.cli.common.command.util.annotation.RequiresProduct;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.config.product.Product;
-import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
+import com.fortify.cli.common.config.product.ProductOrGroup;
+import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
+import com.fortify.cli.common.picocli.annotation.RequiresProduct;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.command.api.APICommandOptionsHandler;
+import com.fortify.cli.common.picocli.command.api.RootApiCommand;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -42,9 +42,9 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 @SubcommandOf(RootApiCommand.class)
 @Command(name = ProductIdentifiers.SC_DAST, description = "Invoke ScanCentral DAST REST API")
-@RequiresProduct(Product.SC_DAST)
+@RequiresProduct(ProductOrGroup.SC_DAST)
 public final class SCDastApiCommand extends AbstractSCDastUnirestRunnerCommand {
-	@Mixin private APICommandMixin apiCommand;
+	@Mixin private APICommandOptionsHandler apiCommand;
 	
 	@Override
 	protected Void runWithUnirest(UnirestInstance unirest) {

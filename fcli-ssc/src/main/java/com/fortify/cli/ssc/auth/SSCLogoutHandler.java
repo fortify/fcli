@@ -26,7 +26,7 @@ package com.fortify.cli.ssc.auth;
 
 import com.fortify.cli.common.auth.AuthSessionPersistenceHelper;
 import com.fortify.cli.common.auth.ILogoutHandler;
-import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
+import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.ssc.auth.data.SSCAuthSessionData;
 import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
 

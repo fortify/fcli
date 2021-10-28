@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.sast.command.scan.remote;
 
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.sast.command.scan.SastScanRemoteCommand;
 
 import io.micronaut.core.annotation.Order;

@@ -2,17 +2,18 @@ package com.fortify.cli.dast.command.entity.scdast.scanresults;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
-import com.fortify.cli.common.command.util.output.OutputOptionsHandler;
-import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
-import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
+import com.fortify.cli.common.json.JsonNodeFilterHelper;
+import com.fortify.cli.common.json.transform.FieldBasedTransformerFactory;
+import com.fortify.cli.common.json.transform.IJsonNodeTransformer;
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.util.JsonNodeFilterHelper;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.component.output.IJsonNodeTransformerSupplier;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
 import com.fortify.cli.dast.command.entity.scdast.scanresults.options.SCDastGetScanResultsOptions;
-import com.fortify.cli.ssc.command.entity.SSCApplicationCommands;
+import com.fortify.cli.ssc.command.crud.SSCApplicationCommands;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

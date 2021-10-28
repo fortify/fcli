@@ -35,9 +35,6 @@ import com.fortify.cli.common.output.OutputWriterConfig;
 import hu.webarticum.treeprinter.ListingTreePrinter;
 import hu.webarticum.treeprinter.SimpleTreeNode;
 
-import java.util.Iterator;
-import java.util.Map;
-
 public class TreeOutputWriter implements IOutputWriter {
 
 	public TreeOutputWriter(OutputWriterConfig config) {

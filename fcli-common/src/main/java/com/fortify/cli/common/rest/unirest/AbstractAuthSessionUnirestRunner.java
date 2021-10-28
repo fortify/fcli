@@ -40,7 +40,6 @@ import lombok.Getter;
 // TODO For now this class instantiates a new UnirestInstance on every call to runWithUnirest,
 //      which should be OK when running individual commands but less performant when running
 //      multiple commands in a composite command or workflow.
-// TODO Refactor to use UnirestRunner in combination with a AuthSessionUnirestConfigurer
 @ReflectiveAccess
 public abstract class AbstractAuthSessionUnirestRunner<D> {
 	@Getter @Inject private UnirestRunner unirestRunner;

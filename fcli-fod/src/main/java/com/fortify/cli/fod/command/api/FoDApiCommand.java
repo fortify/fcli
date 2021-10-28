@@ -24,12 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.api;
 
-import com.fortify.cli.common.command.api.APICommandMixin;
-import com.fortify.cli.common.command.api.RootApiCommand;
-import com.fortify.cli.common.command.util.annotation.RequiresProduct;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.config.product.Product;
-import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
+import com.fortify.cli.common.config.product.ProductOrGroup;
+import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
+import com.fortify.cli.common.picocli.annotation.RequiresProduct;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.command.api.APICommandOptionsHandler;
+import com.fortify.cli.common.picocli.command.api.RootApiCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
@@ -38,9 +38,9 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 @SubcommandOf(RootApiCommand.class)
 @Command(name = ProductIdentifiers.FOD, description = "Invoke FoD REST API")
-@RequiresProduct(Product.FOD)
+@RequiresProduct(ProductOrGroup.FOD)
 public final class FoDApiCommand /*extends AbstractFoDUnirestRunnerCommand*/ {
-	@Mixin private APICommandMixin apiCommand;
+	@Mixin private APICommandOptionsHandler apiCommand;
 	
 	/*
 	@Override

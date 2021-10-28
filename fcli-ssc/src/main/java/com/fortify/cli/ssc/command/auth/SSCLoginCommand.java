@@ -25,14 +25,14 @@
 package com.fortify.cli.ssc.command.auth;
 
 import com.fortify.cli.common.auth.ILoginHandler;
-import com.fortify.cli.common.command.auth.login.AbstractAuthLoginCommand;
-import com.fortify.cli.common.command.auth.login.LoginConnectionOptions;
-import com.fortify.cli.common.command.auth.login.LoginUserCredentialOptions;
-import com.fortify.cli.common.command.auth.login.AuthLoginCommand;
-import com.fortify.cli.common.command.util.annotation.RequiresProduct;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.config.product.Product;
-import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
+import com.fortify.cli.common.config.product.ProductOrGroup;
+import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
+import com.fortify.cli.common.picocli.annotation.RequiresProduct;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.command.auth.login.AbstractAuthLoginCommand;
+import com.fortify.cli.common.picocli.command.auth.login.AuthLoginCommand;
+import com.fortify.cli.common.picocli.command.auth.login.LoginConnectionOptions;
+import com.fortify.cli.common.picocli.command.auth.login.LoginUserCredentialOptions;
 import com.fortify.cli.ssc.auth.SSCLoginHandler;
 import com.fortify.cli.ssc.rest.data.SSCConnectionConfig;
 
@@ -46,7 +46,7 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @SubcommandOf(AuthLoginCommand.class) 
 @Command(name = ProductIdentifiers.SSC, description = "Login to SSC", sortOptions = false)
-@RequiresProduct(Product.SSC)
+@RequiresProduct(ProductOrGroup.SSC)
 public class SSCLoginCommand extends AbstractAuthLoginCommand<SSCConnectionConfig> {
 	@Getter @Inject private SSCLoginHandler sscLoginHandler;
 	

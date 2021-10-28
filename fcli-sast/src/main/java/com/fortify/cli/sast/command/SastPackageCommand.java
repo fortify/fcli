@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.sast.command;
 
-import com.fortify.cli.common.command.scan.RootSastCommand;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.command.scan.RootSastCommand;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;

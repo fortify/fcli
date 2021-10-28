@@ -26,7 +26,7 @@ package com.fortify.cli.ssc.auth;
 
 import com.fortify.cli.common.auth.AbstractAuthSessionSummaryProvider;
 import com.fortify.cli.common.auth.AuthSessionSummary;
-import com.fortify.cli.common.config.product.Product.ProductIdentifiers;
+import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.ssc.auth.data.SSCAuthSessionData;
 
 import jakarta.inject.Singleton;
