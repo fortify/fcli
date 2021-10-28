@@ -59,6 +59,7 @@ public class FortifyCLILogHelper {
 				.setErr(DUMMY_WRITER)
 				.setUnmatchedArgumentsAllowed(true)
 				.setUnmatchedOptionsArePositionalParams(true)
+				.setDefaultValueProvider(new DefaultValueProvider())
 				.setExpandAtFiles(true);
 		commandLine.execute(args);
 	}
