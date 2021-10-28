@@ -36,6 +36,16 @@ import com.oracle.svm.core.annotate.AutomaticFeature;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 
+/**
+ * <p>This class provides the {@link #main(String[])} entrypoint into the application. 
+ * It first configures logging and then loads the {@link CommandLineExecutor} class to
+ * actually execute commands based on provided command line arguments.</p>
+ * 
+ * <p>This class is also responsible for registering some GraalVM features, allowing
+ * the application to run properly as GraalVM native images.</p>
+ * 
+ * @author Ruud Senden
+ */
 public class FortifyCLI {
 	/**
 	 * This is the main entry point for executing the Fortify CLI. It will configure logging and

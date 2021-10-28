@@ -28,13 +28,31 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import com.fortify.cli.common.command.log.LogOptionsMixin;
+import com.fortify.cli.common.command.util.DefaultValueProvider;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
+/**
+ * This class is responsible for setting up logging. It simply sets up a
+ * small {@link CommandLine} instance with a single {@link SetupLoggingCommand}
+ * that looks for logging parameters as defined in {@link LogOptionsMixin}
+ * while ignoring everything else (including any sub-commands) on the command 
+ * line; this essentially means that this command will always run. Upon execution,
+ * the {@link SetupLoggingCommand} will simply invoke {@link LogOptionsMixin#configureLogging()}
+ * to actually configure the logging. All output from this small {@link CommandLine}
+ * implementation will be suppressed by sending the output to a dummy {@link PrintWriter}. 
+ * 
+ * @author Ruud Senden
+ */
 public class FortifyCLILogHelper {
 	private static final PrintWriter DUMMY_WRITER = new PrintWriter(new StringWriter());
+	
+	/**
+	 * Configure logging based on the provided command line arguments.
+	 * @param args Arguments passed on the command line
+	 */
 	public static final void configureLogging(String[] args) {
 		CommandLine commandLine = new CommandLine(SetupLoggingCommand.class)
 				.setOut(DUMMY_WRITER)
@@ -43,18 +61,22 @@ public class FortifyCLILogHelper {
 				.setUnmatchedOptionsArePositionalParams(true)
 				.setExpandAtFiles(true);
 		commandLine.execute(args);
-				
-		// TODO Do an initial parse of the command line arguments to configure logging
-		//      This could be either a simple for-loop to find logging-specific options,
-		//      or could utilize a simple Picocli instance that's configured to ignore
-		//      unknown arguments. Note that any logging options should also be added to
-		//      FCLIRootCommand (without actually doing anything with them)
 	}
 	
+	/**
+	 * {@link Command} implementation for setting up logging, based on the
+	 * options and functionality provided by {@link LogOptionsMixin}.
+	 * 
+	 * @author Ruud Senden
+	 */
 	@Command()
 	public static final class SetupLoggingCommand implements Runnable {
 		@Mixin LogOptionsMixin logOptionsMixin;
 		
+		/**
+		 * Configure logging by calling the {@link LogOptionsMixin#configureLogging()}
+		 * method.
+		 */
 		@Override
 		public void run() {
 			logOptionsMixin.configureLogging();
