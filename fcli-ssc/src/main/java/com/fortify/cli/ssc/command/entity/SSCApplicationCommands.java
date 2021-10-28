@@ -30,12 +30,11 @@ import com.fortify.cli.common.command.util.annotation.RequiresProduct;
 import com.fortify.cli.common.command.util.annotation.SubcommandOf;
 import com.fortify.cli.common.command.util.output.AbstractJsonNodeTransformerSupplier;
 import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
-import com.fortify.cli.common.command.util.output.OutputWriterMixin;
+import com.fortify.cli.common.command.util.output.OutputOptionsHandler;
 import com.fortify.cli.common.config.product.Product;
 import com.fortify.cli.common.json.transformer.FieldBasedTransformer;
 import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
 import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
-import com.fortify.cli.common.output.OutputFilterOptions;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.entity.SSCEntityRootCommands.SSCCreateCommand;
@@ -50,7 +49,6 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 
 public class SSCApplicationCommands {
 	private static final String NAME = "applications";
@@ -71,10 +69,10 @@ public class SSCApplicationCommands {
 	@Command(name = NAME, description = "Get "+DESC+" from SSC", aliases = {ALIAS})
 	@RequiresProduct(Product.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IJsonNodeTransformerSupplier {
-		@Mixin private OutputWriterMixin outputWriterMixin;
 
-		@CommandLine.ArgGroup(exclusive = false, heading = "Filter Output:%n", order = 10)
-		@Getter private OutputFilterOptions outputFilterOptions;
+
+		@CommandLine.Mixin
+		@Getter private OutputOptionsHandler outputOptionsHandler;
 
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
@@ -85,10 +83,7 @@ public class SSCApplicationCommands {
 					.getBody()
 					.get("data");
 
-			if (outputFilterOptions != null ){
-				response = outputFilterOptions.filterOutput(response);
-			}
-			outputWriterMixin.printToFormat(response);
+			outputOptionsHandler.printToFormat(response);
 
 			return null;
 		}

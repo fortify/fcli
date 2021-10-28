@@ -37,6 +37,7 @@ import com.fortify.cli.common.output.yaml.YamlOutputWriterFactory;
 import lombok.Getter;
 
 public enum OutputFormat {
+	@Getter
 	json (OutputType.TECHNICAL,    new JsonOutputWriterFactory(),  FieldNameFormatter::camelCase), 
 	yaml (OutputType.TECHNICAL,    new YamlOutputWriterFactory(),  FieldNameFormatter::snakeCase), 
 	table(OutputType.TEXT_COLUMNS, new TableOutputWriterFactory(), FieldNameFormatter::humanReadable), 
@@ -47,11 +48,11 @@ public enum OutputFormat {
 	@Getter private final OutputType               outputType; 
 	@Getter private final IOutputWriterFactory     outputWriterFactory;
 	@Getter private final Function<String, String> fieldNameFormatter;
-	private OutputFormat(OutputType outputType, IOutputWriterFactory outputWriterFactory, Function<String, String> fieldNameformatter) {
+	OutputFormat(OutputType outputType, IOutputWriterFactory outputWriterFactory, Function<String, String> fieldNameformatter) {
 		this.outputType = outputType;
 		this.outputWriterFactory = outputWriterFactory;
 		this.fieldNameFormatter = fieldNameformatter;
 	}
 	
-	public static enum OutputType { TEXT_ROWS, TEXT_COLUMNS, TECHNICAL }
+	public enum OutputType { TEXT_ROWS, TEXT_COLUMNS, TECHNICAL }
 }

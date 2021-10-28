@@ -39,7 +39,8 @@ import picocli.CommandLine.ScopeType;
 	mixinStandardHelpOptions = true, 
 	usageHelpAutoWidth = true,
 	footer = "%n(c) Copyright 2021 Micro Focus", 
-	showAtFileInUsageHelp = true, 
+	showAtFileInUsageHelp = true,
+    optionListHeading = "%nOptions:%n",
 	description = "Command-line interface for working with various Fortify products")
 public class FCLIRootCommand {
 	// Setting up logging is handled in the main class by a separate Picocli instance, to allow
