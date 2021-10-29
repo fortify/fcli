@@ -1,4 +1,4 @@
-package com.fortify.cli.dast.command.entity.scdast.scanstatus.options;
+package com.fortify.cli.dast.command.crud.scdast.scanstatus.options;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;

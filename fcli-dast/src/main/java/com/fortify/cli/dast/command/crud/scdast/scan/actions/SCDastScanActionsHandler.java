@@ -1,18 +1,15 @@
-package com.fortify.cli.dast.command.entity.scdast.scan.actions;
+package com.fortify.cli.dast.command.crud.scdast.scan.actions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.util.JsonNodeFilterHandler;
-import com.fortify.cli.dast.command.entity.types.ScanStatusTypes;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
-import javax.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;

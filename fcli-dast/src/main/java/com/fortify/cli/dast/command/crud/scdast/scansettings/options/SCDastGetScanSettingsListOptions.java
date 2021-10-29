@@ -1,4 +1,4 @@
-package com.fortify.cli.dast.command.entity.scdast.scansettings.options;
+package com.fortify.cli.dast.command.crud.scdast.scansettings.options;
 
 import com.fortify.cli.common.picocli.command.auth.login.AuthLoginCommand;
 

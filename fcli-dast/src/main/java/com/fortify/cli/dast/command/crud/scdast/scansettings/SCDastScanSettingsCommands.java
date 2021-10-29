@@ -1,4 +1,4 @@
-package com.fortify.cli.dast.command.entity.scdast.scansettings;
+package com.fortify.cli.dast.command.crud.scdast.scansettings;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -9,9 +9,9 @@ import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.component.output.IJsonNodeTransformerSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
-import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
-import com.fortify.cli.dast.command.entity.scdast.scansettings.options.SCDastGetScanSettingsListOptions;
-import com.fortify.cli.dast.command.entity.scdast.scansettings.options.SCDastGetScanSettingsOptions;
+import com.fortify.cli.dast.command.crud.SCDastEntityRootCommands;
+import com.fortify.cli.dast.command.crud.scdast.scansettings.options.SCDastGetScanSettingsListOptions;
+import com.fortify.cli.dast.command.crud.scdast.scansettings.options.SCDastGetScanSettingsOptions;
 import com.fortify.cli.ssc.command.crud.SSCApplicationCommands;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

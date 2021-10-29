@@ -1,4 +1,4 @@
-package com.fortify.cli.dast.command.entity;
+package com.fortify.cli.dast.command.crud;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;

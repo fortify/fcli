@@ -1,5 +1,5 @@
 
-package com.fortify.cli.dast.command.entity.types;
+package com.fortify.cli.dast.command.crud.scdast.scanstatus.types;
 
 public enum ScanStatusTypes {
 	Queued, Pending, Paused, Running, Complete, Interrupted, Unknown,
