@@ -9,11 +9,12 @@ import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.component.output.IJsonNodeTransformerSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
-import com.fortify.cli.dast.command.crud.SCDastEntityRootCommands;
-import com.fortify.cli.dast.command.crud.scdast.scan.options.SCDastGetScanListOptions;
-import com.fortify.cli.dast.command.crud.scdast.scan.options.SCDastGetScanOptions;
-import com.fortify.cli.dast.command.crud.scdast.scan.options.SCDastScanOptions;
+import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
+import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastGetScanListOptions;
+import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastGetScanOptions;
+import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastScanOptions;
 import com.fortify.cli.ssc.command.crud.SSCApplicationCommands;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
