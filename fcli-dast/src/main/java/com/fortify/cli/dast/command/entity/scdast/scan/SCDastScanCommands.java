@@ -2,19 +2,18 @@ package com.fortify.cli.dast.command.entity.scdast.scan;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.command.util.annotation.SubcommandOf;
-import com.fortify.cli.common.command.util.output.IJsonNodeTransformerSupplier;
-import com.fortify.cli.common.command.util.output.OutputOptionsHandler;
-import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
-import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
+import com.fortify.cli.common.json.transform.FieldBasedTransformerFactory;
+import com.fortify.cli.common.json.transform.IJsonNodeTransformer;
 import com.fortify.cli.common.output.OutputFormat;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.component.output.IJsonNodeTransformerSupplier;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
 import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastGetScanListOptions;
 import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastGetScanOptions;
 import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastScanOptions;
-import com.fortify.cli.dast.command.entity.scdast.scanstatus.actions.SCDastScanStatusActionsHandler;
-import com.fortify.cli.ssc.command.entity.SSCApplicationCommands;
+import com.fortify.cli.ssc.command.crud.SSCApplicationCommands;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -31,7 +30,7 @@ public class SCDastScanCommands {
     @ReflectiveAccess
     @SubcommandOf(SCDastEntityRootCommands.SCDASTGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
-    public static final class Get extends AbstractSCDastUnirestRunnerCommand implements IJsonNodeTransformerSupplier  {
+    public static final class Get extends AbstractSCDastUnirestRunnerCommand implements IJsonNodeTransformerSupplier {
 
         @ArgGroup(exclusive = false, heading = "Get a specific scan:%n", order = 1)
         @Getter private SCDastGetScanOptions scanOptions;
