@@ -26,6 +26,7 @@ package com.fortify.cli.common.json.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+@FunctionalInterface
 public interface IJsonNodeTransformer {
 	public JsonNode transform(JsonNode input);
 }

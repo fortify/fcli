@@ -28,25 +28,11 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.function.Supplier;
 
-import com.fortify.cli.common.json.transform.IHeaderProvider;
-import com.fortify.cli.common.json.transform.IJsonNodeTransformer;
-
 import lombok.Builder;
 import lombok.Data;
 
 @Data @Builder
 public class OutputWriterConfig {
 	@Builder.Default private Supplier<Writer> writerSupplier = ()->new PrintWriter(System.out);
-	private IJsonNodeTransformer transformer;
 	private boolean headersEnabled;
-	
-	public final IHeaderProvider getHeaderProvider(boolean required) {
-		IHeaderProvider result = null;
-		if ( transformer instanceof IHeaderProvider ) {
-			result = (IHeaderProvider)transformer;
-		} else if ( required ) { 
-			throw new IllegalArgumentException("Header provider not available");
-		}
-		return result;
-	}
 }

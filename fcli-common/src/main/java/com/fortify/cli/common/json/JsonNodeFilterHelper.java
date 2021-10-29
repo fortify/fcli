@@ -8,9 +8,9 @@ import java.util.Set;
 
 
 /**
- * TODO This class should move under the com.fortify.cli.common.json package
- * TODO Functionality provided by this class should potentially be integrated into {@link JacksonJsonNodeHelper}
+ * @deprecated Command implementations should implement IDefaultOutputFieldsSupplier or IDefaultOutputColumnsSupplier instead, others should use com.fortify.cli.common.json.transform.fields.PredefinedFieldsTransformer 
  */
+@Deprecated(forRemoval = true)
 public class JsonNodeFilterHelper {
 
     public static void filterJsonNode (JsonNode node, Set<String> outputFields){

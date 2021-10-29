@@ -27,14 +27,10 @@ package com.fortify.cli.ssc.command.crud;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.json.transform.FieldBasedTransformer;
-import com.fortify.cli.common.json.transform.FieldBasedTransformerFactory;
-import com.fortify.cli.common.json.transform.IJsonNodeTransformer;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.AbstractJsonNodeTransformerSupplier;
-import com.fortify.cli.common.picocli.component.output.IJsonNodeTransformerSupplier;
+import com.fortify.cli.common.picocli.component.output.IDefaultOutputColumnsSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.crud.SSCCrudRootCommands.SSCCreateCommand;
@@ -54,22 +50,16 @@ public class SSCApplicationVersionCommands {
 	private static final String NAME = "application-versions";
 	private static final String ALIAS = "versions";
 	private static final String DESC = "application versions";
-
-	public static final class TransformerSupplier extends AbstractJsonNodeTransformerSupplier {
-		@Override
-		protected void addColumns(OutputFormat format, FieldBasedTransformer transformer) {
-			transformer
-				.addField("id")
-				.addField("project.name")
-				.addField("name");
-		}
+	
+	private static final String _getDefaultOutputColumns() {
+		return "id#project.name#name";
 	}
 
 	@ReflectiveAccess
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, aliases = {ALIAS},description = "Get "+DESC+" from SSC")
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IJsonNodeTransformerSupplier {
+	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IDefaultOutputColumnsSupplier {
 
 
 		@CommandLine.Mixin
@@ -84,14 +74,14 @@ public class SSCApplicationVersionCommands {
 					.getBody()
 					.get("data");
 
-			outputOptionsHandler.printToFormat(response);
+			outputOptionsHandler.write(response);
 
 			return null;
 		}
 
 		@Override
-		public IJsonNodeTransformer getJsonNodeTransformer(FieldBasedTransformerFactory fieldBasedTransformerFactory, OutputFormat format) {
-			return new TransformerSupplier().getJsonNodeTransformer(fieldBasedTransformerFactory, format);
+		public String getDefaultOutputColumns(OutputFormat outputFormat) {
+			return _getDefaultOutputColumns();
 		}
 	}
 	

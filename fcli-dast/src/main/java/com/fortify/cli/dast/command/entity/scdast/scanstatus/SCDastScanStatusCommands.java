@@ -1,19 +1,16 @@
 package com.fortify.cli.dast.command.entity.scdast.scanstatus;
 
+import java.util.Set;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonNodeFilterHelper;
-import com.fortify.cli.common.json.transform.FieldBasedTransformerFactory;
-import com.fortify.cli.common.json.transform.IJsonNodeTransformer;
-import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IJsonNodeTransformerSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
 import com.fortify.cli.dast.command.entity.scdast.scanstatus.options.SCDastGetScanStatusOptions;
 import com.fortify.cli.dast.command.entity.types.ScanStatusTypes;
-import com.fortify.cli.ssc.command.crud.SSCApplicationCommands;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -22,8 +19,6 @@ import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-import java.util.Set;
-
 public class SCDastScanStatusCommands {
     private static final String NAME = "scan-status";
     private static final String DESC = "DAST scan status";
@@ -31,7 +26,7 @@ public class SCDastScanStatusCommands {
     @ReflectiveAccess
     @SubcommandOf(SCDastEntityRootCommands.SCDASTGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
-    public static final class Get extends AbstractSCDastUnirestRunnerCommand implements IJsonNodeTransformerSupplier {
+    public static final class Get extends AbstractSCDastUnirestRunnerCommand {
         @CommandLine.ArgGroup(exclusive = false, heading = "Get a specific scan:%n", order = 1)
         @Getter private SCDastGetScanStatusOptions scanStatusOptions;
 
@@ -56,14 +51,9 @@ public class SCDastScanStatusCommands {
                     "scanStatusTypeString",
                     ScanStatusTypes.getStatusString(scanStatusInt -1));
 
-            outputOptionsHandler.printToFormat(response);
+            outputOptionsHandler.write(response);
 
             return null;
-        }
-
-        @Override
-        public IJsonNodeTransformer getJsonNodeTransformer(FieldBasedTransformerFactory fieldBasedTransformerFactory, OutputFormat format) {
-            return new SSCApplicationCommands.TransformerSupplier().getJsonNodeTransformer(fieldBasedTransformerFactory, format);
         }
     }
 }
