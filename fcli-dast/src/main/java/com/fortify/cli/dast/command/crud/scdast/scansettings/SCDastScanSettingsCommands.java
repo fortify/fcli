@@ -2,25 +2,20 @@ package com.fortify.cli.dast.command.crud.scdast.scansettings;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.transform.FieldBasedTransformerFactory;
-import com.fortify.cli.common.json.transform.IJsonNodeTransformer;
-import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IJsonNodeTransformerSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.crud.SCDastEntityRootCommands;
 import com.fortify.cli.dast.command.crud.scdast.scansettings.options.SCDastGetScanSettingsListOptions;
 import com.fortify.cli.dast.command.crud.scdast.scansettings.options.SCDastGetScanSettingsOptions;
-import com.fortify.cli.ssc.command.crud.SSCApplicationCommands;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Mixin;
 
 public class SCDastScanSettingsCommands {
     private static final String NAME = "scan-settings";
@@ -29,7 +24,7 @@ public class SCDastScanSettingsCommands {
     @ReflectiveAccess
     @SubcommandOf(SCDastEntityRootCommands.SCDASTGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
-    public static final class Get extends AbstractSCDastUnirestRunnerCommand implements IJsonNodeTransformerSupplier {
+    public static final class Get extends AbstractSCDastUnirestRunnerCommand {
         @ArgGroup(exclusive = false, heading = "Get a specific scan settings:%n", order = 1)
         @Getter private SCDastGetScanSettingsOptions scanSettingsOptions;
 
@@ -37,7 +32,7 @@ public class SCDastScanSettingsCommands {
         @Getter private SCDastGetScanSettingsListOptions scanSettingsListOptions;
 
 
-        @CommandLine.Mixin
+        @Mixin
         @Getter private OutputOptionsHandler outputOptionsHandler;
 
         @SneakyThrows
@@ -74,14 +69,9 @@ public class SCDastScanSettingsCommands {
 
             if (dataNode != null){response = response.get(dataNode);}
 
-            outputOptionsHandler.printToFormat(response);
+            outputOptionsHandler.write(response);
 
             return null;
-        }
-
-        @Override
-        public IJsonNodeTransformer getJsonNodeTransformer(FieldBasedTransformerFactory fieldBasedTransformerFactory, OutputFormat format) {
-            return new SSCApplicationCommands.TransformerSupplier().getJsonNodeTransformer(fieldBasedTransformerFactory, format);
         }
     }
 }

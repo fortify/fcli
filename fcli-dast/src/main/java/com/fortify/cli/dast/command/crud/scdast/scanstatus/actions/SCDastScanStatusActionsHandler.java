@@ -27,7 +27,7 @@ public class SCDastScanStatusActionsHandler {
         int scanStatusInt = Integer.parseInt(response.get("scanStatusType").toString());
         ((ObjectNode) response).put(
                 "scanStatusTypeString",
-                ScanStatusTypes.getStatusString(scanStatusInt -1).replace("\"",""));
+                ScanStatusTypes.getStatusString(scanStatusInt).replace("\"",""));
 
         return response;
     }

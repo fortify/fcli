@@ -25,6 +25,9 @@
 package com.fortify.cli.common.json;
 
 import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,8 +59,8 @@ public class JacksonJsonNodeHelper {
 				.build());
 	}
 	
-	public static final <R> R evaluateJsonPath(Object input, String path, Class<R> returnClazz) {
-		return INSTANCE.parseContext.parse(input).read(path, returnClazz);
+	public static final <R> R evaluateJsonPath(Object input, String path, Class<R> returnClass) {
+		return INSTANCE.parseContext.parse(input).read(path, returnClass);
 	}
 	
 	public static final ObjectNode getFirstObjectNode(JsonNode input) {
@@ -72,5 +75,15 @@ public class JacksonJsonNodeHelper {
 			}
 		}
 		throw new IllegalArgumentException("Input must be an ObjectNode or array of ObjectNodes");
+	}
+
+	public static JsonNode filterJsonNode (JsonNode node, Set<String> outputFields){
+		Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields();
+		while (nodeFields.hasNext()) {
+			Map.Entry<String, JsonNode> nodeField = nodeFields.next();
+			if( !outputFields.contains(nodeField.getKey())) { nodeFields.remove(); }
+		}
+
+		return node;
 	}
 }

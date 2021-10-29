@@ -2,7 +2,7 @@ package com.fortify.cli.dast.command.crud.scdast.scan.actions;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.util.JsonNodeFilterHandler;
+import com.fortify.cli.common.json.JacksonJsonNodeHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
@@ -35,7 +35,7 @@ public class SCDastScanActionsHandler {
         JsonNode response = getScanSummary(scanId);
 
         Set<String> outputFields = new HashSet<>(Arrays.asList(fields));
-        JsonNodeFilterHandler.filterJsonNode(response, outputFields);
+        JacksonJsonNodeHelper.filterJsonNode(response, outputFields);
 
         return response;
     }

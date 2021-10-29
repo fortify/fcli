@@ -68,20 +68,24 @@ public class SCDastUnirestRunner {
 	private final ArrayNode getSCDastConfigurationProperties(UnirestInstance sscUnirest) {
 		// TODO Check response code
 		ObjectNode configData = sscUnirest.get("/api/v1/configuration?group=edast").asObject(ObjectNode.class).getBody(); 
-		ArrayNode properties = JacksonJsonNodeHelper.evaluateJsonPath(configData, "$.data.properties", ArrayNode.class);
-		return properties;
+		
+		return JacksonJsonNodeHelper.evaluateJsonPath(configData, "$.data.properties", ArrayNode.class);
 	}
 	
 	private void checkSCDastIsEnabled(ArrayNode properties) {
-		Boolean scDastEnabled = JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.enabled')].value", Boolean.class);
-		if ( !Boolean.TRUE.equals(scDastEnabled) ) {
+		boolean scDastEnabled = Boolean.parseBoolean(JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.enabled')].value", ArrayNode.class).get(0)
+				.toString()
+				.replace("\"",""));
+		if (!scDastEnabled) {
 			throw new IllegalStateException("ScanCentral DAST must be enabled in SSC");
 		}
 	}
 	
 	private String getSCDastUrlFromProperties(ArrayNode properties) {
-		String scDastUrl = JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.server.url')].value", String.class);
-		if ( StringUtils.isEmpty(scDastUrl) ) {
+		String scDastUrl = JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.server.url')].value", ArrayNode.class).get(0)
+				.toString()
+				.replace("\"","");
+		if ( scDastUrl.isEmpty() ) {
 			throw new IllegalStateException("SSC returns an empty ScanCentral DAST URL");
 		}
 		return scDastUrl;
