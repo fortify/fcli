@@ -13,6 +13,7 @@ import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
 import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastGetScanListOptions;
 import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastGetScanOptions;
 import com.fortify.cli.dast.command.entity.scdast.scan.options.SCDastScanOptions;
+import com.fortify.cli.dast.command.entity.scdast.scanstatus.actions.SCDastScanStatusActionsHandler;
 import com.fortify.cli.ssc.command.entity.SSCApplicationCommands;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -88,6 +89,7 @@ public class SCDastScanCommands {
             return null;
         }
 
+
         @Override
         public IJsonNodeTransformer getJsonNodeTransformer(FieldBasedTransformerFactory fieldBasedTransformerFactory, OutputFormat format) {
             return new SSCApplicationCommands.TransformerSupplier().getJsonNodeTransformer(fieldBasedTransformerFactory, format);
@@ -122,6 +124,7 @@ public class SCDastScanCommands {
 
             return null;
         }
+
 
         @Override
         public IJsonNodeTransformer getJsonNodeTransformer(FieldBasedTransformerFactory fieldBasedTransformerFactory, OutputFormat format) {

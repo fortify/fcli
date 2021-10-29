@@ -8,20 +8,17 @@ import com.fortify.cli.common.command.util.output.OutputOptionsHandler;
 import com.fortify.cli.common.json.transformer.FieldBasedTransformerFactory;
 import com.fortify.cli.common.json.transformer.IJsonNodeTransformer;
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.util.JsonNodeFilterHelper;
 import com.fortify.cli.dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.dast.command.entity.SCDastEntityRootCommands;
-import com.fortify.cli.dast.command.entity.scdast.scanresults.options.SCDastGetScanResultsOptions;
+import com.fortify.cli.dast.command.entity.scdast.scanresults.actions.SCDastScanResultsActionsHandler;
+import com.fortify.cli.dast.command.entity.scdast.scanresults.options.SCDastScanResultsOptions;
 import com.fortify.cli.ssc.command.entity.SSCApplicationCommands;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
-
-import java.util.Set;
 
 public class SCDastScanResultsCommands {
     private static final String NAME = "scan-results";
@@ -52,6 +49,7 @@ public class SCDastScanResultsCommands {
 
             return null;
         }
+
 
         @Override
         public IJsonNodeTransformer getJsonNodeTransformer(FieldBasedTransformerFactory fieldBasedTransformerFactory, OutputFormat format) {
