@@ -64,8 +64,8 @@ public class OutputOptionsHandler {
 	
 	protected JsonNode applyMixeeTransformation(JsonNode data) {
 		Object mixeeUserObject = mixee.userObject();
-		if ( mixeeUserObject instanceof IOutputFormatBasedTransformer ) {
-			data = ((IOutputFormatBasedTransformer)mixeeUserObject).transform(format, data);
+		if ( mixeeUserObject instanceof IOutputPreTransformer ) {
+			data = ((IOutputPreTransformer)mixeeUserObject).transform(format, data);
 		}
 		return data;
 	}
