@@ -22,9 +22,8 @@ public class OutputOptionsHandler {
 
     @CommandLine.Option(names = {"--fmt", "--format"},
             description = "Output format. Possible values: ${COMPLETION-CANDIDATES}.",
-            defaultValue = "json", order=1)
-    @Getter
-    private OutputFormat format;
+            order=1)
+    private OutputFormat outputFormat;
 
     @CommandLine.Option(names = {"--fields"},
             description = "Define the fields to be included in the output, together with optional header names",
@@ -47,11 +46,24 @@ public class OutputOptionsHandler {
 	@Getter private String jsonPath;
 
     public void write(JsonNode response) {
-        getOutputWriter().write(transform(response));
+    	OutputFormat format = getOutputFormat();
+        getOutputWriter(format).write(transform(response, format));
+    }
+    
+    protected OutputFormat getOutputFormat() {
+    	Object mixeeUserObject = mixee.userObject();
+    	OutputFormat result = this.outputFormat;
+    	if ( result == null && mixeeUserObject instanceof IDefaultOutputFormatSupplier ) {
+    		result = ((IDefaultOutputFormatSupplier)mixeeUserObject).getDefaultOutputFormat();
+    	}
+    	if ( result == null ) {
+    		result = OutputFormat.table;
+    	}
+    	return result;
     }
 
-	private IOutputWriter getOutputWriter() {
-		return format.getOutputWriterFactory().createOutputWriter(createConfig());
+	private IOutputWriter getOutputWriter(OutputFormat outputFormat) {
+		return outputFormat.getOutputWriterFactory().createOutputWriter(createConfig());
 	}
 
 	private OutputWriterConfig createConfig() {
@@ -61,54 +73,54 @@ public class OutputOptionsHandler {
 				.build();
 	}
 	
-	protected JsonNode transform(JsonNode data) {
-		data = applyMixeeTransformation(data);
-		data = applyJsonPathTransformation(data);
-		data = applyFieldsTransformation(data);
-		data = applyFlattenTransformation(data);
+	protected JsonNode transform(JsonNode data, OutputFormat outputFormat) {
+		data = applyMixeeTransformation(data, outputFormat);
+		data = applyJsonPathTransformation(data, outputFormat);
+		data = applyFieldsTransformation(data, outputFormat);
+		data = applyFlattenTransformation(data, outputFormat);
 		return data;
 	}
 	
-	protected JsonNode applyMixeeTransformation(JsonNode data) {
+	protected JsonNode applyMixeeTransformation(JsonNode data, OutputFormat outputFormat) {
 		Object mixeeUserObject = mixee.userObject();
 		if ( mixeeUserObject instanceof IOutputPreTransformer ) {
-			data = ((IOutputPreTransformer)mixeeUserObject).transform(format, data);
+			data = ((IOutputPreTransformer)mixeeUserObject).transform(outputFormat, data);
 		}
 		return data;
 	}
 	
-	protected JsonNode applyJsonPathTransformation(JsonNode data) {
+	protected JsonNode applyJsonPathTransformation(JsonNode data, OutputFormat outputFormat) {
 		if ( StringUtils.isNotEmpty(jsonPath) ) {
 			data = new JsonPathTransformer(jsonPath).transform(data);
 		}
 		return data;
 	}
 	
-	protected JsonNode applyFieldsTransformation(JsonNode data) {
-		String _fields = getFields();
+	protected JsonNode applyFieldsTransformation(JsonNode data, OutputFormat outputFormat) {
+		String _fields = getFields(outputFormat);
 		if ( StringUtils.isNotEmpty(_fields) && !"all".equals(_fields)) {
-			data = PredefinedFieldsTransformerFactory.createFromString(format.getFieldNameFormatter(), _fields).transform(data);
-		} else if ( format.getOutputType()==OutputType.TEXT_COLUMNS ) {
-			data = new FlattenTransformer(format.getFieldNameFormatter(), ".", false).transform(data);
+			data = PredefinedFieldsTransformerFactory.createFromString(outputFormat.getFieldNameFormatter(), _fields).transform(data);
+		} else if ( outputFormat.getOutputType()==OutputType.TEXT_COLUMNS ) {
+			data = new FlattenTransformer(outputFormat.getFieldNameFormatter(), ".", false).transform(data);
 		}
 		return data;
 	}
 	
-	protected JsonNode applyFlattenTransformation(JsonNode data) {
+	protected JsonNode applyFlattenTransformation(JsonNode data, OutputFormat outputFormat2) {
 		if ( flatten ) {
-			data = new FlattenTransformer(format.getFieldNameFormatter(), ".", false).transform(data);
+			data = new FlattenTransformer(outputFormat.getFieldNameFormatter(), ".", false).transform(data);
 		}
 		return data;
 	}
 
-	private String getFields() {
+	private String getFields(OutputFormat outputFormat) {
 		String _fields = fields;
 		if ( StringUtils.isEmpty(_fields) ) {
 			Object mixeeUserObject = mixee.userObject();
 			if ( mixeeUserObject instanceof IDefaultOutputFieldsSupplier ) {
-				_fields = ((IDefaultOutputFieldsSupplier)mixeeUserObject).getDefaultOutputFields(format);
-			} else if ( format.getOutputType()==OutputType.TEXT_COLUMNS && mixeeUserObject instanceof IDefaultOutputColumnsSupplier ) {
-				_fields = ((IDefaultOutputColumnsSupplier)mixeeUserObject).getDefaultOutputColumns(format);
+				_fields = ((IDefaultOutputFieldsSupplier)mixeeUserObject).getDefaultOutputFields(outputFormat);
+			} else if ( outputFormat.getOutputType()==OutputType.TEXT_COLUMNS && mixeeUserObject instanceof IDefaultOutputColumnsSupplier ) {
+				_fields = ((IDefaultOutputColumnsSupplier)mixeeUserObject).getDefaultOutputColumns(outputFormat);
 			}
 		}
 		return _fields;

@@ -41,7 +41,6 @@ import com.fortify.cli.ssc.command.crud.SSCCrudRootCommands.SSCUpdateCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -60,10 +59,7 @@ public class SSCApplicationCommands {
 	@Command(name = NAME, description = "Get "+DESC+" from SSC", aliases = {ALIAS})
 	@RequiresProduct(ProductOrGroup.SSC)
 	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IDefaultOutputColumnsSupplier {
-
-
-		@CommandLine.Mixin
-		@Getter private OutputOptionsHandler outputOptionsHandler;
+		@CommandLine.Mixin private OutputOptionsHandler outputOptionsHandler;
 
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {

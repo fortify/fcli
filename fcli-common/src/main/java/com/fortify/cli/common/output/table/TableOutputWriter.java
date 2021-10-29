@@ -24,53 +24,76 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.table;
 
-import java.util.Arrays;
-import java.util.List;
+import java.io.Writer;
+import java.util.Iterator;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JacksonJsonNodeHelper;
 import com.fortify.cli.common.output.IOutputWriter;
 import com.fortify.cli.common.output.OutputWriterConfig;
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
 import com.github.freva.asciitable.HorizontalAlign;
 
+import lombok.SneakyThrows;
+
 public class TableOutputWriter implements IOutputWriter {
+	private final OutputWriterConfig config;
 
 	public TableOutputWriter(OutputWriterConfig config) {
-		// TODO Auto-generated constructor stub
+		this.config = config;
 	}
 
-	@Override
+	@Override @SneakyThrows
 	public void write(JsonNode jsonNode) {
-		class Planet{
-            int num;
-            String name;
-            double diameter;
-            double mass;
-            String atmosphere;
-            public Planet(int num, String name, double diameter, double mass, String atmosphere){
-                this.num = num;
-                this.name = name;
-                this.diameter = diameter;
-                this.mass = mass;
-                this.atmosphere = atmosphere;
-            }
-        }
-        List<Planet> planets = Arrays.asList(
-                new Planet(1, "Mercury", 0.382, 0.06, "minimal"),
-                new Planet(2, "Venus", 0.949, 0.82, "Carbon dioxide, Nitrogen"),
-                new Planet(3, "Earth", 1.0, 1.0, "Nitrogen, Oxygen, Argon"),
-                new Planet(4, "Mars", 0.532, 0.11, "Carbon dioxide, Nitrogen, Argon"));
-
-        Character[] borderStyles = AsciiTable.NO_BORDERS;
-        System.out.println(AsciiTable.getTable(borderStyles, planets, Arrays.asList(
-                new Column().dataAlign(HorizontalAlign.CENTER).header("#").with(planet -> Integer.toString(planet.num)),
-                new Column().dataAlign(HorizontalAlign.LEFT).header("Name").with(planet -> planet.name),
-                new Column().dataAlign(HorizontalAlign.CENTER).header("Diameter").with(planet -> String.format("%.03f", planet.diameter)),
-                new Column().dataAlign(HorizontalAlign.CENTER).header("Mass").with(planet -> String.format("%.02f", planet.mass)),
-                new Column().dataAlign(HorizontalAlign.LEFT).header("Atmosphere").with(planet -> planet.atmosphere))));
-
-        System.out.println("Not yet implemented.");
+		ObjectNode firstObjectNode = JacksonJsonNodeHelper.getFirstObjectNode(jsonNode);
+		if ( firstObjectNode!=null ) {
+			String[] columns = getColumns(firstObjectNode);
+			String[][] data = getData(jsonNode, columns);
+			try ( Writer writer = config.getWriterSupplier().get() ) {
+				writer.write(getTable(columns, data));
+			}
+		}
+		
 	}
+
+	private String getTable(String[] columns, String[][] data) {
+		Column[] columnObjects = Stream.of(columns).map(columnName->
+				new Column()
+					.dataAlign(HorizontalAlign.LEFT)
+					.headerAlign(HorizontalAlign.LEFT)
+					.header(config.isHeadersEnabled()?columnName:null))
+					.toArray(Column[]::new);
+		return AsciiTable.getTable(AsciiTable.NO_BORDERS, columnObjects, data); 
+	}
+
+	private String[] getColumns(ObjectNode firstObjectNode) {
+		return asStream(firstObjectNode.fieldNames()).toArray(String[]::new);
+	}
+	
+	private String[][] getData(JsonNode jsonNode, String[] columns) {
+		if ( jsonNode.isObject() ) {
+			return new String[][] { getNodeData(jsonNode, columns) };
+		} else if ( jsonNode.isArray() ) {
+			return asStream(jsonNode.iterator()).map(elt->getNodeData(elt, columns)).toArray(String[][]::new);
+		} else {
+			throw new IllegalArgumentException("Input must either be a ObjectNode or ArrayNode");
+		}
+	}
+	
+	private String[] getNodeData(JsonNode jsonNode, String[] columns) {
+		if ( !jsonNode.isObject() ) {
+			throw new IllegalArgumentException("Input must either be a ObjectNode or ArrayNode");
+		}
+		return Stream.of(columns).map(jsonNode::get).map(JsonNode::asText).toArray(String[]::new);
+	}
+
+	private static final <T> Stream<T> asStream(Iterator<T> sourceIterator) {
+		Iterable<T> iterable = () -> sourceIterator;
+        return StreamSupport.stream(iterable.spliterator(), false);
+    }
 
 }
