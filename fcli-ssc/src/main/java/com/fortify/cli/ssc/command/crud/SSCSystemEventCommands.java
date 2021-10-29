@@ -26,14 +26,18 @@ package com.fortify.cli.ssc.command.crud;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
+import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.component.output.IDefaultOutputColumnsSupplier;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.crud.SSCCrudRootCommands.SSCGetCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 public class SSCSystemEventCommands {
@@ -44,17 +48,23 @@ public class SSCSystemEventCommands {
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, description = "Get "+DESC+" data from SSC")
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static final class Get extends AbstractSSCUnirestRunnerCommand {
+	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IDefaultOutputColumnsSupplier {
+		@CommandLine.Mixin private OutputOptionsHandler outputOptionsHandler;
+		
+		@Override
+		public String getDefaultOutputColumns(OutputFormat outputFormat) {
+			return "eventDate#userName#eventType#projectVersionId#entityId";
+		}
+		
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
-			System.out.println(
+			outputOptionsHandler.write(
 				unirest.get("/api/v1/events?limit=-1")
 					.accept("application/json")
 					.header("Content-Type", "application/json")
 					.asObject(ObjectNode.class)
 					.getBody()
 					.get("data")
-					.toPrettyString()
 			);
 			
 			return null;
