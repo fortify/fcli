@@ -31,6 +31,12 @@ public class OutputOptionsHandler {
             order=2)
     private String fields;
     
+    @CommandLine.Option(names = {"--flatten"},
+            description = "For non-column-based outputs, whether to flatten the structure",
+            order=3, defaultValue = "false")
+    @Getter
+    private boolean flatten;
+    
     @CommandLine.Option(names = {"--with-headers"},
             description = "For column-based outputs, whether to output headers",
             order=3, defaultValue = "false")
@@ -59,6 +65,7 @@ public class OutputOptionsHandler {
 		data = applyMixeeTransformation(data);
 		data = applyJsonPathTransformation(data);
 		data = applyFieldsTransformation(data);
+		data = applyFlattenTransformation(data);
 		return data;
 	}
 	
@@ -79,11 +86,17 @@ public class OutputOptionsHandler {
 	
 	protected JsonNode applyFieldsTransformation(JsonNode data) {
 		String _fields = getFields();
-		if ( StringUtils.isEmpty(_fields) || ("all".equals(_fields) && format.getOutputType()==OutputType.TEXT_COLUMNS) ) {
-			data = new FlattenTransformer(format.getFieldNameFormatter(), ".", false).transform(data);
-		} else if ( StringUtils.isNotEmpty(_fields) ) {
-			// TODO do we really need to pass field name formatter here? Or can we just have the writer rename the fields?
+		if ( StringUtils.isNotEmpty(_fields) && !"all".equals(_fields)) {
 			data = PredefinedFieldsTransformerFactory.createFromString(format.getFieldNameFormatter(), _fields).transform(data);
+		} else if ( format.getOutputType()==OutputType.TEXT_COLUMNS ) {
+			data = new FlattenTransformer(format.getFieldNameFormatter(), ".", false).transform(data);
+		}
+		return data;
+	}
+	
+	protected JsonNode applyFlattenTransformation(JsonNode data) {
+		if ( flatten ) {
+			data = new FlattenTransformer(format.getFieldNameFormatter(), ".", false).transform(data);
 		}
 		return data;
 	}
