@@ -1,4 +1,4 @@
-package com.fortify.cli.dast.command.crud.scdast.scan;
+package com.fortify.cli.dast.command.entity.scdast.scan;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;

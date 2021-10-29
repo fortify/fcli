@@ -26,7 +26,7 @@ package com.fortify.cli.common.output;
 
 import java.util.function.Function;
 
-import com.fortify.cli.common.json.transform.FieldBasedTransformer.FieldNameFormatter;
+import com.fortify.cli.common.json.transform.PropertyPathFormatter;
 import com.fortify.cli.common.output.csv.CsvOutputWriterFactory;
 import com.fortify.cli.common.output.json.JsonOutputWriterFactory;
 import com.fortify.cli.common.output.table.TableOutputWriterFactory;
@@ -38,12 +38,12 @@ import lombok.Getter;
 
 public enum OutputFormat {
 	@Getter
-	json (OutputType.TECHNICAL,    new JsonOutputWriterFactory(),  FieldNameFormatter::camelCase), 
-	yaml (OutputType.TECHNICAL,    new YamlOutputWriterFactory(),  FieldNameFormatter::snakeCase), 
-	table(OutputType.TEXT_COLUMNS, new TableOutputWriterFactory(), FieldNameFormatter::humanReadable), 
-	tree (OutputType.TEXT_ROWS,    new TreeOutputWriterFactory(),  FieldNameFormatter::humanReadable), 
-	xml  (OutputType.TECHNICAL,    new XmlOutputWriterFactory(),   FieldNameFormatter::camelCase), 
-	csv  (OutputType.TEXT_COLUMNS, new CsvOutputWriterFactory(),   FieldNameFormatter::humanReadable);
+	json (OutputType.TECHNICAL,    new JsonOutputWriterFactory(),  PropertyPathFormatter::camelCase), 
+	yaml (OutputType.TECHNICAL,    new YamlOutputWriterFactory(),  PropertyPathFormatter::snakeCase), 
+	table(OutputType.TEXT_COLUMNS, new TableOutputWriterFactory(), PropertyPathFormatter::humanReadable), 
+	tree (OutputType.TEXT_ROWS,    new TreeOutputWriterFactory(),  PropertyPathFormatter::humanReadable), 
+	xml  (OutputType.TECHNICAL,    new XmlOutputWriterFactory(),   PropertyPathFormatter::camelCase), 
+	csv  (OutputType.TEXT_COLUMNS, new CsvOutputWriterFactory(),   PropertyPathFormatter::humanReadable);
 	
 	@Getter private final OutputType               outputType; 
 	@Getter private final IOutputWriterFactory     outputWriterFactory;

@@ -22,12 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.component.output;
+package com.fortify.cli.common.json.transform.identity;
 
-import com.fortify.cli.common.json.transform.FieldBasedTransformerFactory;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.transform.IJsonNodeTransformer;
-import com.fortify.cli.common.output.OutputFormat;
 
-public interface IJsonNodeTransformerSupplier {
-	public IJsonNodeTransformer getJsonNodeTransformer(FieldBasedTransformerFactory fieldBasedTransformerFactory, OutputFormat format);
+public class IdentityTransformer implements IJsonNodeTransformer {
+	@Override
+	public JsonNode transform(JsonNode input) {
+		return input;
+	}
 }

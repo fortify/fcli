@@ -41,7 +41,6 @@ import lombok.Getter;
 
 @Singleton @ReflectiveAccess
 public class SCDastUnirestRunner {
-	@Getter @Inject private JacksonJsonNodeHelper jsonHelper;
 	@Getter @Inject private UnirestRunner unirestRunner;
 	@Getter @Inject private SSCUnirestRunner sscUnirestRunner;
 	
@@ -69,19 +68,19 @@ public class SCDastUnirestRunner {
 	private final ArrayNode getSCDastConfigurationProperties(UnirestInstance sscUnirest) {
 		// TODO Check response code
 		ObjectNode configData = sscUnirest.get("/api/v1/configuration?group=edast").asObject(ObjectNode.class).getBody(); 
-		ArrayNode properties = jsonHelper.getPath(configData, "$.data.properties", ArrayNode.class);
+		ArrayNode properties = JacksonJsonNodeHelper.evaluateJsonPath(configData, "$.data.properties", ArrayNode.class);
 		return properties;
 	}
 	
 	private void checkSCDastIsEnabled(ArrayNode properties) {
-		Boolean scDastEnabled = jsonHelper.getPath(properties, "$.[?(@.name=='edast.enabled')].value", Boolean.class);
+		Boolean scDastEnabled = JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.enabled')].value", Boolean.class);
 		if ( !Boolean.TRUE.equals(scDastEnabled) ) {
 			throw new IllegalStateException("ScanCentral DAST must be enabled in SSC");
 		}
 	}
 	
 	private String getSCDastUrlFromProperties(ArrayNode properties) {
-		String scDastUrl = jsonHelper.getPath(properties, "$.[?(@.name=='edast.server.url')].value", String.class);
+		String scDastUrl = JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.server.url')].value", String.class);
 		if ( StringUtils.isEmpty(scDastUrl) ) {
 			throw new IllegalStateException("SSC returns an empty ScanCentral DAST URL");
 		}

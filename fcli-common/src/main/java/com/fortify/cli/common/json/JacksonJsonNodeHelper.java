@@ -26,7 +26,10 @@ package com.fortify.cli.common.json;
 
 import java.util.EnumSet;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
@@ -34,21 +37,18 @@ import com.jayway.jsonpath.ParseContext;
 import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
 /**
  * This bean provides utility methods for working with Jackson JsonNode trees.
  * 
  * @author Ruud Senden
  *
  */
-@Singleton
 public class JacksonJsonNodeHelper {
+	private final ObjectMapper objectMapper = new ObjectMapper();
 	private final ParseContext parseContext;
+	private static final JacksonJsonNodeHelper INSTANCE = new JacksonJsonNodeHelper();
 
-	@Inject
-	public JacksonJsonNodeHelper(ObjectMapper objectMapper) {
+	public JacksonJsonNodeHelper() {
 		this.parseContext = JsonPath.using(Configuration.builder()
 				.jsonProvider(new JacksonJsonNodeJsonProvider(objectMapper))
 				.mappingProvider(new JacksonMappingProvider(objectMapper))
@@ -56,7 +56,21 @@ public class JacksonJsonNodeHelper {
 				.build());
 	}
 	
-	public final <R> R getPath(Object input, String path, Class<R> returnClazz) {
-		return parseContext.parse(input).read(path, returnClazz);
+	public static final <R> R evaluateJsonPath(Object input, String path, Class<R> returnClazz) {
+		return INSTANCE.parseContext.parse(input).read(path, returnClazz);
+	}
+	
+	public static final ObjectNode getFirstObjectNode(JsonNode input) {
+		if ( input instanceof ObjectNode ) {
+			return (ObjectNode)input;
+		} else if ( input instanceof ArrayNode ) {
+			ArrayNode array = (ArrayNode)input;
+			if ( array.size()==0 ) { return null; }
+			JsonNode node = array.get(0);
+			if ( node instanceof ObjectNode ) {
+				return (ObjectNode)node;
+			}
+		}
+		throw new IllegalArgumentException("Input must be an ObjectNode or array of ObjectNodes");
 	}
 }

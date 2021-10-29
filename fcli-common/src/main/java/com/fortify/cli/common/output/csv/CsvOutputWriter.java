@@ -29,9 +29,10 @@ import java.io.Writer;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.fortify.cli.common.json.transform.IHeaderProvider;
+import com.fortify.cli.common.json.JacksonJsonNodeHelper;
 import com.fortify.cli.common.output.IOutputWriter;
 import com.fortify.cli.common.output.OutputWriterConfig;
 
@@ -39,28 +40,33 @@ import lombok.SneakyThrows;
 
 public class CsvOutputWriter implements IOutputWriter {
 	private final OutputWriterConfig config;
-	private final ObjectWriter objectWriter;
+	private ObjectWriter objectWriter;
 
 	public CsvOutputWriter(OutputWriterConfig config) {
 		this.config = config;
-		this.objectWriter = createObjectWriter(config); 
 	}
 
-	private ObjectWriter createObjectWriter(OutputWriterConfig config) {
-		IHeaderProvider headerProvider = config.getHeaderProvider(true);
-		CsvSchema.Builder schemaBuilder = CsvSchema.builder();
-		headerProvider.getHeaders().forEach(schemaBuilder::addColumn);
-		CsvSchema schema = schemaBuilder.build()
-				.withUseHeader(config.isHeadersEnabled());
-		return new CsvMapper()
-				.enable(JsonGenerator.Feature.IGNORE_UNKNOWN)
-				.writer(schema);
+	private ObjectWriter getObjectWriter(JsonNode input) {
+		if ( objectWriter==null ) {
+			ObjectNode firstObjectNode = JacksonJsonNodeHelper.getFirstObjectNode(input);
+			if ( firstObjectNode!=null ) {
+				CsvSchema.Builder schemaBuilder = CsvSchema.builder();
+				firstObjectNode.fieldNames().forEachRemaining(schemaBuilder::addColumn);
+				CsvSchema schema = schemaBuilder.build()
+						.withUseHeader(config.isHeadersEnabled());
+				objectWriter = new CsvMapper()
+						.enable(JsonGenerator.Feature.IGNORE_UNKNOWN)
+						.writer(schema);
+			}
+		}
+		return objectWriter;
 	}
 
 	@Override @SneakyThrows
 	public void write(JsonNode jsonNode) {
+		ObjectWriter objectWriter = getObjectWriter(jsonNode);
 		try ( Writer writer = config.getWriterSupplier().get() ) {
-			objectWriter.writeValue(writer, config.getTransformer().transform(jsonNode));
+			objectWriter.writeValue(writer, jsonNode);
 		}
 	}
 
