@@ -13,7 +13,7 @@ import picocli.CommandLine.Option;
 public class SCDastGetScanStatusOptions {
 
     @Option(names = {"-id", "--scan-id"}, description = "The scan id")
-    @Getter private String scanId;
+    @Getter private int scanId;
 
 
 }
