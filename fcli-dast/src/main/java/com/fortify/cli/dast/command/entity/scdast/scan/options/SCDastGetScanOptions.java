@@ -1,6 +1,5 @@
 package com.fortify.cli.dast.command.entity.scdast.scan.options;
 
-import com.fortify.cli.dast.command.entity.types.ScanStatusTypes;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
