@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -47,7 +48,7 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
  *
  */
 public class JacksonJsonNodeHelper {
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private static final ObjectMapper objectMapper = _createObjectMapper();
 	private final ParseContext parseContext;
 	private static final JacksonJsonNodeHelper INSTANCE = new JacksonJsonNodeHelper();
 
@@ -59,6 +60,14 @@ public class JacksonJsonNodeHelper {
 				.build());
 	}
 	
+	private static final ObjectMapper _createObjectMapper() {
+		ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+        objectMapper.configure(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS, true);
+        return objectMapper;
+	}
+
 	public static final <R> R evaluateJsonPath(Object input, String path, Class<R> returnClass) {
 		return INSTANCE.parseContext.parse(input).read(path, returnClass);
 	}

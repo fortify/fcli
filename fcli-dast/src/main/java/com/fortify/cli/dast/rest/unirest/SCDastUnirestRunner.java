@@ -33,7 +33,6 @@ import com.fortify.cli.common.rest.unirest.UnirestRunner;
 import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import io.micronaut.core.util.StringUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
@@ -73,18 +72,14 @@ public class SCDastUnirestRunner {
 	}
 	
 	private void checkSCDastIsEnabled(ArrayNode properties) {
-		boolean scDastEnabled = Boolean.parseBoolean(JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.enabled')].value", ArrayNode.class).get(0)
-				.toString()
-				.replace("\"",""));
+		boolean scDastEnabled = JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.enabled')].value", Boolean.class);
 		if (!scDastEnabled) {
 			throw new IllegalStateException("ScanCentral DAST must be enabled in SSC");
 		}
 	}
 	
 	private String getSCDastUrlFromProperties(ArrayNode properties) {
-		String scDastUrl = JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.server.url')].value", ArrayNode.class).get(0)
-				.toString()
-				.replace("\"","");
+		String scDastUrl = JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.server.url')].value", String.class);
 		if ( scDastUrl.isEmpty() ) {
 			throw new IllegalStateException("SSC returns an empty ScanCentral DAST URL");
 		}
