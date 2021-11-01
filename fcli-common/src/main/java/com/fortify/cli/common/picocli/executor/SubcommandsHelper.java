@@ -37,6 +37,7 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -49,6 +50,7 @@ import picocli.CommandLine.Model.CommandSpec;
  * 
  * @author Ruud Senden
  */
+@Singleton
 public class SubcommandsHelper {
 	private final LinkedHashMap<Class<?>, List<Object>> parentToSubcommandsMap = new LinkedHashMap<>();
 	private final LinkedHashMap<Class<?>, Boolean> hasRunnableSubcommands = new LinkedHashMap<>();
