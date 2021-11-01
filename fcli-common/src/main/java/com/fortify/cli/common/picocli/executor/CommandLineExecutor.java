@@ -28,6 +28,7 @@ import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.FCLIRootCommand;
 import com.fortify.cli.common.picocli.util.DefaultValueProvider;
 
+import io.micronaut.context.annotation.Executable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -60,7 +61,7 @@ public class CommandLineExecutor {
 		this.micronautFactorySupplier = micronautFactorySupplier;
 	}
 	
-	@PostConstruct
+	@PostConstruct @Executable
 	public void createCommandLine() {
 		this.commandLine = new CommandLine(rootCommand, micronautFactorySupplier.getMicronautFactory())
 				.setCaseInsensitiveEnumValuesAllowed(true)

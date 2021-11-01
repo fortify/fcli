@@ -33,6 +33,7 @@ import java.util.concurrent.Callable;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.PostConstruct;
@@ -118,8 +119,8 @@ public class SubcommandsHelper {
 		}
 	}
 	
-	@PostConstruct
-	private final void build() {
+	@PostConstruct @Executable
+	public final void build() {
 		applicationContext.getBeanDefinitions(Qualifiers.byStereotype(SubcommandOf.class))
 			.stream()
 			.sorted(CommandBeanComparator.INSTANCE)
