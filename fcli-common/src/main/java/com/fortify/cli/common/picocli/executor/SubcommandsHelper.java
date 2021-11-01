@@ -42,6 +42,13 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 
+/**
+ * This class is responsible for generating the subcommands hierarchy.
+ * 
+ * TODO Clean up this class
+ * 
+ * @author Ruud Senden
+ */
 public class SubcommandsHelper {
 	private final LinkedHashMap<Class<?>, List<Object>> parentToSubcommandsMap = new LinkedHashMap<>();
 	private final LinkedHashMap<Class<?>, Boolean> hasRunnableSubcommands = new LinkedHashMap<>();
@@ -58,10 +65,21 @@ public class SubcommandsHelper {
 		this.micronautFactorySupplier = micronautFactorySupplier;
 	}
 	
+	/**
+	 * Add the full hierarchy of sub-commands to the given {@link CommandLine} instance.
+	 * @param rootCommandLine to which to add the full sub-command hierarchy
+	 */
 	public final void addSubcommands(CommandLine rootCommandLine) {
 		addSubcommands(rootCommandLine, rootCommandLine.getCommand());
 	}
 	
+	/**
+	 * Add the partial sub-command hierarchy for the given command to the given
+	 * {@link CommandLine} instance.
+	 * 
+	 * @param commandLine to which to add the partial sub-command hierarchy
+	 * @param command for which to generate the sub-command hierarchy
+	 */
 	private final void addSubcommands(CommandLine commandLine, Object command) {
 		List<Object> subcommands = parentToSubcommandsMap.get(command.getClass());
 		if (subcommands != null) {
@@ -71,6 +89,13 @@ public class SubcommandsHelper {
 		}
 	}
 
+	/**
+	 * Add a single sub-command tree for the given command to the given {@link CommandLine} instance.
+	 * If the command has no runnable sub-commands, it will be replaced by a {@link DisabledCommand}
+	 * instance.
+	 * @param commandLine TODO
+	 * @param subcommand TODO
+	 */
 	private void addSubcommand(CommandLine commandLine, Object subcommand) {
 		CommandLine subCommandLine = new CommandLine(subcommand, micronautFactorySupplier.getMicronautFactory());
 		boolean isSubCommandEnabled = Boolean.TRUE.equals(hasRunnableSubcommands.get(subcommand.getClass())) || enabledCommandBeansHelper.isAlphaFeaturesEnabled();
