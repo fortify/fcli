@@ -22,29 +22,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command;
+package com.fortify.cli.sast.command;
 
-import com.fortify.cli.common.picocli.command.crud.CRUDCommandsOrder;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.command.sast.RootSastCommand;
 
-/**
- * This class defines the order of top-level command groups, with 
- * each group representing either a single top-level command or
- * a group of top-level commands. As an example, {@link #CRUD}
- * is a group of entity-related commands providing CRUD operations,
- * with {@link CRUDCommandsOrder} defining the relative order
- * of the individual commands in this group.
- * 
- * @author Ruud Senden
- */
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		CRUD     = 300,
-		TRANSFER = 400,
-		SAST     = 500,
-		DAST     = 600,
-		RUN      = 700,
-		SOFTWARE = 800,
-		API      = 900;
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine.Command;
+
+@ReflectiveAccess
+@SubcommandOf(RootSastCommand.class)
+@Command(name = "translate", description = "Translate source code to Fortify intermediate model")
+@Order(SastCommandsOrder.TRANSLATE)
+public class SastTranslateCommand {
 }

@@ -88,8 +88,8 @@ configure(allprojects.findAll {it.name != 'fcli-common'}) {
 dependencies {
 	runtimeOnly project(':fcli-ssc')
 	runtimeOnly project(':fcli-fod')
-	runtimeOnly project(':fcli-sast')
-	runtimeOnly project(':fcli-dast')
+	runtimeOnly project(':fcli-sc-sast')
+	runtimeOnly project(':fcli-sc-dast')
 	runtimeOnly project(':fcli-run')
 
 	// Logging dependencies
@@ -118,4 +118,17 @@ task dist(type: Copy) {
 		include "${rootProject.name}.jar"
 	}
 	into "$buildDir/dist"
+}
+
+
+// SCA Gradle adapter settings
+
+apply plugin: 'java'
+allprojects {
+   tasks.withType(JavaCompile) {
+     task->
+       task.options.compilerArgs << '-parameters'
+       task.options.fork = true
+       task.options.forkOptions.executable = 'javac.exe'
+ }
 }

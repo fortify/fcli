@@ -22,29 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command;
+package com.fortify.cli.sc_dast.command;
 
-import com.fortify.cli.common.picocli.command.crud.CRUDCommandsOrder;
+import com.fortify.cli.sc_dast.rest.unirest.SCDastUnirestRunner;
 
-/**
- * This class defines the order of top-level command groups, with 
- * each group representing either a single top-level command or
- * a group of top-level commands. As an example, {@link #CRUD}
- * is a group of entity-related commands providing CRUD operations,
- * with {@link CRUDCommandsOrder} defining the relative order
- * of the individual commands in this group.
- * 
- * @author Ruud Senden
- */
-public final class RootCommandsOrderByGroup {
-	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		CRUD     = 300,
-		TRANSFER = 400,
-		SAST     = 500,
-		DAST     = 600,
-		RUN      = 700,
-		SOFTWARE = 800,
-		API      = 900;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import jakarta.inject.Inject;
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Option;
+
+@ReflectiveAccess
+public abstract class AbstractSCDastUnirestRunnerCommand implements Runnable {
+	@Getter @Inject private SCDastUnirestRunner unirestRunner;
+	
+	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
+    @Getter private AuthSessionConsumerNameOptions nameOptions;
+	
+	static class AuthSessionConsumerNameOptions {
+		@Option(names = {"--ssc-auth-session"}, required = false, defaultValue = "default")
+		@Getter private String sscAuthSessionName;
+	}
+	
+	public String getSSCAuthSessionName() {
+		return nameOptions==null ? "default" : nameOptions.getSscAuthSessionName();
+	}
+
+	@Override @SneakyThrows
+	public final void run() {
+		// TODO Do we want to do anything with the results, like formatting it based on output options?
+		//      Or do we let the actual implementation handle this?
+		unirestRunner.runWithUnirest(getSSCAuthSessionName(), this::runWithUnirest);
+	}
+	
+	protected abstract Void runWithUnirest(UnirestInstance unirest);
+	
 }
