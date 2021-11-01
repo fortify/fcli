@@ -56,7 +56,11 @@ public class EnabledCommandBeansHelper {
 	}
 
 	public final boolean isNotAlphaOrAllowed(BeanDefinition<?> bd) {
-		return !bd.hasAnnotation(AlphaFeature.class) || alphaFeaturesHelper.isAlphaFeaturesEnabled();	
+		return !bd.hasAnnotation(AlphaFeature.class) || isAlphaFeaturesEnabled();	
+	}
+
+	public final boolean isAlphaFeaturesEnabled() {
+		return alphaFeaturesHelper.isAlphaFeaturesEnabled();
 	}
 	
 	public final boolean isRequiredProductEnabled(BeanDefinition<?> bd) {

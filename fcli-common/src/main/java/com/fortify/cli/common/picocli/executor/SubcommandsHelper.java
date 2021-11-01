@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 
@@ -43,6 +44,7 @@ import picocli.CommandLine.Model.CommandSpec;
 
 public class SubcommandsHelper {
 	private final LinkedHashMap<Class<?>, List<Object>> parentToSubcommandsMap = new LinkedHashMap<>();
+	private final LinkedHashMap<Class<?>, Boolean> hasRunnableSubcommands = new LinkedHashMap<>();
 	private final ApplicationContext applicationContext;
 	private final EnabledCommandBeansHelper enabledCommandBeansHelper;
 	private final MicronautFactorySupplier micronautFactorySupplier;
@@ -64,14 +66,28 @@ public class SubcommandsHelper {
 		List<Object> subcommands = parentToSubcommandsMap.get(command.getClass());
 		if (subcommands != null) {
 			for (Object subcommand : subcommands) {
-				CommandLine subCommandLine = new CommandLine(subcommand, micronautFactorySupplier.getMicronautFactory());
-				try {
-					commandLine.addSubcommand(subCommandLine);
-				} catch ( RuntimeException e ) {
-					throw new RuntimeException("Error while adding command class "+subcommand.getClass().getName(), e);
-				}
-				addSubcommands(subCommandLine, subcommand);
+				addSubcommand(commandLine, subcommand);
 			}
+		}
+	}
+
+	private void addSubcommand(CommandLine commandLine, Object subcommand) {
+		CommandLine subCommandLine = new CommandLine(subcommand, micronautFactorySupplier.getMicronautFactory());
+		boolean isSubCommandEnabled = Boolean.TRUE.equals(hasRunnableSubcommands.get(subcommand.getClass())) || enabledCommandBeansHelper.isAlphaFeaturesEnabled();
+		if ( !isSubCommandEnabled ) {
+			String name = subCommandLine.getCommandSpec().name();
+			String[] aliases = subCommandLine.getCommandSpec().aliases();
+			String reason = "No runnable sub-commands";
+			DisabledCommand disabledCommand = new DisabledCommand(name, aliases, reason);
+			subCommandLine = new CommandLine(disabledCommand.asCommandSpec());
+		}
+		try {
+			commandLine.addSubcommand(subCommandLine);
+		} catch ( RuntimeException e ) {
+			throw new RuntimeException("Error adding command class "+subcommand.getClass().getName(), e);
+		}
+		if ( isSubCommandEnabled ) {
+			addSubcommands(subCommandLine, subcommand);
 		}
 	}
 	
@@ -84,13 +100,26 @@ public class SubcommandsHelper {
 	}
 	
 	private final void addSubcommand(BeanDefinition<?> commandBeanDefinition) {
+		Object command = getCommand(commandBeanDefinition);
 		addMultiValueEntry(
 				parentToSubcommandsMap, 
 				getParentCommandClazz(commandBeanDefinition),
-				getCommandLine(commandBeanDefinition));
+				command);
+		if ( command instanceof Runnable || command instanceof Callable ) {
+			setParentCommandsEnabled(command.getClass());
+		}
+	}
+	
+	private void setParentCommandsEnabled(Class<?> clazz) {
+		hasRunnableSubcommands.put(clazz, true);
+		SubcommandOf subcommandOf = clazz.getAnnotation(SubcommandOf.class);
+		if ( subcommandOf!=null ) {
+			Class<?> parentClazz = subcommandOf.value();
+			setParentCommandsEnabled(parentClazz);
+		}
 	}
 
-	private Object getCommandLine(BeanDefinition<?> commandBeanDefinition) {
+	private Object getCommand(BeanDefinition<?> commandBeanDefinition) {
 		if ( enabledCommandBeansHelper.isEnabled(commandBeanDefinition) ) {
 			return applicationContext.getBean(commandBeanDefinition);
 		} else {
