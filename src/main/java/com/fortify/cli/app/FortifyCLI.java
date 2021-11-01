@@ -30,7 +30,7 @@ import org.apache.commons.logging.impl.SimpleLog;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
-import com.fortify.cli.common.picocli.CommandLineExecutor;
+import com.fortify.cli.common.picocli.executor.CommandLineExecutor;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
 import io.micronaut.context.ApplicationContext;
