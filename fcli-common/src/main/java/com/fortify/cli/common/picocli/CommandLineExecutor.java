@@ -41,7 +41,9 @@ import com.fortify.cli.common.picocli.util.DefaultValueProvider;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -51,6 +53,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
 /**
  * This class is responsible for actually running the (sub-)commands 
@@ -131,7 +134,7 @@ public class CommandLineExecutor {
 		//      that tells the user that the command has been disabled (and for what reason). Requires some more research 
 		//      though on how to properly do this.
 			.filter(this::isEnabled) 
-			.sorted(this::compare)
+			.sorted(this::compareCommands)
 			.forEach(bd ->
 				addMultiValueEntry(
 						parentToSubcommandsMap, 
@@ -167,8 +170,34 @@ public class CommandLineExecutor {
 		return optClazz.get();
 	}
 	
-	private int compare(BeanDefinition<?> bd1, BeanDefinition<?> bd2) {
-		return Integer.compare(OrderUtil.getOrder(bd1.getAnnotationMetadata()), OrderUtil.getOrder(bd2.getAnnotationMetadata()));
+	/**
+	 * Order bean definitions based on annotation metadata, using the following rules:
+	 * <ol>
+	 *  <li>If both beans have the {@link Order} annotation, order them based on {@link Order#value()}</li>
+	 *  <li>If only one of the beans has the {@link Order}, it will come before any bean that doesn't have the {@link Order} annotation</li>
+	 *  <li>If neither bean has the {@link Order}, but both have the {@link Command} annotation, they will be ordered by command name</li>
+	 *  <li>In any other situation, beans will be considered equal</li>
+	 * </ul>
+	 * @param bd1
+	 * @param bd2
+	 * @return
+	 */
+	private int compareCommands(BeanDefinition<?> bd1, BeanDefinition<?> bd2) {
+		AnnotationMetadata bd1am = bd1.getAnnotationMetadata();
+		AnnotationMetadata bd2am = bd2.getAnnotationMetadata();
+		if ( bd1am.hasAnnotation(Order.class) && bd2am.hasAnnotation(Order.class) ) {
+			return Integer.compare(OrderUtil.getOrder(bd1am), OrderUtil.getOrder(bd2am));
+		} else if ( bd1am.hasAnnotation(Order.class) ) {
+			return -1;
+		} else if ( bd2am.hasAnnotation(Order.class) ) {
+			return 1;
+		} else if (bd1am.hasAnnotation(Command.class) && bd2am.hasAnnotation(Command.class) ){
+			String bd1name = bd1am.stringValue(Command.class, "name").orElseThrow();
+			String bd2name = bd2am.stringValue(Command.class, "name").orElseThrow();
+			return bd1name.compareTo(bd2name);
+		} else {
+			return 0;
+		}
 	}
 
 	private static final <K, V> void addMultiValueEntry(LinkedHashMap<K, List<V>> map, K key, V value) {
