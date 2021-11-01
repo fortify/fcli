@@ -24,16 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.executor;
 
-import java.util.List;
-
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.FCLIRootCommand;
 import com.fortify.cli.common.picocli.util.DefaultValueProvider;
 
-import io.micronaut.configuration.picocli.MicronautFactory;
-import io.micronaut.context.ApplicationContext;
 import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import picocli.CommandLine;
@@ -52,49 +47,29 @@ import picocli.CommandLine;
 @Singleton
 public class CommandLineExecutor {
 	private final FCLIRootCommand rootCommand;
-	private final SubcommandsMap subcommandsMap;
-	private final MicronautFactory factory;
+	private final SubcommandsHelper subcommandsHelper;
+	private final MicronautFactorySupplier micronautFactorySupplier;
 	private CommandLine commandLine;
 	@Inject
 	public CommandLineExecutor(
 			FCLIRootCommand rootCommand,  
-			ApplicationContext applicationContext,
-			SubcommandsMap subcommandsMap) {
+			MicronautFactorySupplier micronautFactorySupplier,
+			SubcommandsHelper subcommandsHelper) {
 		this.rootCommand = rootCommand;
-		this.subcommandsMap = subcommandsMap;
-		this.factory = new MicronautFactory(applicationContext);
-	}
-	
-	@PreDestroy
-	public void closeFactory() {
-		this.factory.close();
+		this.subcommandsHelper = subcommandsHelper;
+		this.micronautFactorySupplier = micronautFactorySupplier;
 	}
 	
 	@PostConstruct
 	public void createCommandLine() {
-		this.commandLine = new CommandLine(rootCommand, factory)
+		this.commandLine = new CommandLine(rootCommand, micronautFactorySupplier.getMicronautFactory())
 				.setCaseInsensitiveEnumValuesAllowed(true)
 				.setDefaultValueProvider(new DefaultValueProvider())
 				.setUsageHelpAutoWidth(true); // TODO Add ExceptionHandler?
-		addSubcommands(commandLine, rootCommand);
+		subcommandsHelper.addSubcommands(commandLine);
 	}
 	
 	public final int execute(String[] args) {
 		return commandLine.execute(args);
-	}
-	
-	private final void addSubcommands(CommandLine commandLine, Object command) {
-		List<Object> subcommands = subcommandsMap.get(command.getClass());
-		if (subcommands != null) {
-			for (Object subcommand : subcommands) {
-				CommandLine subCommandLine = new CommandLine(subcommand, factory);
-				try {
-					commandLine.addSubcommand(subCommandLine);
-				} catch ( RuntimeException e ) {
-					throw new RuntimeException("Error while adding command class "+subcommand.getClass().getName(), e);
-				}
-				addSubcommands(subCommandLine, subcommand);
-			}
-		}
 	}
 }

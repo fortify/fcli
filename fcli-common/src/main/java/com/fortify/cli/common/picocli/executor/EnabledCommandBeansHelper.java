@@ -68,4 +68,23 @@ public class EnabledCommandBeansHelper {
 		}
 		return result;
 	}
+	
+	public final ProductOrGroup getRequiredProduct(BeanDefinition<?> bd) {
+		ProductOrGroup result = null;
+		AnnotationValue<RequiresProduct> annotation = bd.getAnnotation(RequiresProduct.class);
+		if ( annotation!=null ) {
+			result = annotation.enumValue(ProductOrGroup.class).get();
+		}
+		return result;
+	}
+
+	public String getDisabledReason(BeanDefinition<?> bd) {
+		if ( !isRequiredProductEnabled(bd) ) {
+			return String.format("Required product '%s' not enabled; please see 'fcli config enabled-products'", getRequiredProduct(bd));
+		} else if ( !isNotAlphaOrAllowed(bd) ) {
+			return "Alpha features not enabled; please see 'fcli config enable-alpha-features'";
+		} else {
+			return null;
+		}
+	}
 }
