@@ -22,7 +22,12 @@ public class SCDastScanSettingsCommands {
     private static final String NAME = "scan-settings";
     private static final String DESC = "DAST scan settings";
 
-    private static final String _getDefaultOutputColumns() { return "id#name#cicdToken#applicationName#applicationVersionName"; }
+    private static final String _getDefaultOutputColumns() {
+        return "id#name#" +
+                "cicdToken:Settings Id#" +
+                "applicationName:Application#" +
+                "applicationVersionName:Version";
+    }
 
 
     @ReflectiveAccess

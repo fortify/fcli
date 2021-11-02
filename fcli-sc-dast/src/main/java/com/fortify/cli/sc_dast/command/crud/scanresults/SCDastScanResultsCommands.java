@@ -23,7 +23,12 @@ public class SCDastScanResultsCommands {
     private static final String NAME = "scan-results";
     private static final String DESC = "DAST scan results";
 
-    private static final String _getDefaultOutputColumns() { return "lowCount#mediumCount#highCount#criticalCount"; }
+    private static final String _getDefaultOutputColumns() {
+        return  "lowCount:Low#" +
+                "mediumCount:Medium#" +
+                "highCount:High#" +
+                "criticalCount:Critical";
+    }
 
     @ReflectiveAccess
     @SubcommandOf(SCDastCrudRootCommands.SCDastGetCommand.class)
