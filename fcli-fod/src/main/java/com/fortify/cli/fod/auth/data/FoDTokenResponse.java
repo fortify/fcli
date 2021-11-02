@@ -26,6 +26,7 @@ package com.fortify.cli.fod.auth.data;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -50,7 +51,7 @@ public final class FoDTokenResponse {
 	public long getExpiresAt() {
 		return expiresAt;
 	}
-	public boolean isExpired() {
+	@JsonIgnore public boolean isExpired() {
 		return new Date().getTime() > expiresAt;
 	}
 }
