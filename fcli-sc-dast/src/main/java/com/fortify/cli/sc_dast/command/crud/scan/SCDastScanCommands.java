@@ -1,11 +1,12 @@
 package com.fortify.cli.sc_dast.command.crud.scan;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 import com.fortify.cli.sc_dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.command.crud.SCDastCrudRootCommands;
+import com.fortify.cli.sc_dast.command.crud.SCDastCrudRootCommands.SCDastGetCommand;
 import com.fortify.cli.sc_dast.command.crud.scan.options.SCDastGetScanListOptions;
 import com.fortify.cli.sc_dast.command.crud.scan.options.SCDastGetScanOptions;
 
@@ -25,7 +26,7 @@ public class SCDastScanCommands {
     @ReflectiveAccess
     @SubcommandOf(SCDastCrudRootCommands.SCDastGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
-    public static final class Get extends AbstractSCDastUnirestRunnerCommand {
+    public static final class Get extends AbstractSCDastUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
 
         @ArgGroup(exclusive = false, heading = "Get a specific scan:%n", order = 1)
         @Getter private SCDastGetScanOptions scanOptions;
@@ -41,14 +42,11 @@ public class SCDastScanCommands {
         protected Void runWithUnirest(UnirestInstance unirest) {
             String urlPath = "/api/v2/scans/scan-summary-list";
             String urlParams = "";
-            String dataNode;
 
             if (scanOptions != null){
                 urlPath = "/api/v2/scans/"+ scanOptions.getScanId() + "/scan-summary";
-                dataNode = "item";
             }
             else {
-                dataNode = "items";
                 if(scanListOptions != null) {
                     if (scanListOptions.getSearchText() != null) {
                         urlParams += String.format("searchText=%s&",scanListOptions.getSearchText());
@@ -71,16 +69,16 @@ public class SCDastScanCommands {
                 }
             }
 
-            JsonNode response = unirest.get(urlPath + "?" + urlParams)
+            outputOptionsHandler.write( unirest.get(urlPath + "?" + urlParams)
                     .accept("application/json")
-                    .header("Content-Type", "application/json")
-                    .asObject(ObjectNode.class)
-                    .getBody()
-                    .get(dataNode);
-
-            outputOptionsHandler.write(response);
+                    .header("Content-Type", "application/json"));
 
             return null;
         }
+        
+        @Override
+		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+			return SCDastGetCommand.defaultOutputConfig(); // TODO .defaultColumns(_getDefaultOutputColumns());
+		}
     }
 }

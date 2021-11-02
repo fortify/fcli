@@ -29,23 +29,26 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fortify.cli.common.output.IOutputWriter;
-import com.fortify.cli.common.output.OutputWriterConfig;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.output.IRecordWriter;
+import com.fortify.cli.common.output.RecordWriterConfig;
 
 import hu.webarticum.treeprinter.ListingTreePrinter;
 import hu.webarticum.treeprinter.SimpleTreeNode;
 
-public class TreeOutputWriter implements IOutputWriter {
-
-	public TreeOutputWriter(OutputWriterConfig config) {
-		// TODO Auto-generated constructor stub
+public class TreeRecordWriter implements IRecordWriter {
+	private final RecordWriterConfig config;
+	
+	public TreeRecordWriter(RecordWriterConfig config) {
+		this.config = config;
 	}
 
 	@Override
-	public void write(JsonNode jsonNode) {
+	public void writeRecord(ObjectNode record) {
         SimpleTreeNode rootNode = new SimpleTreeNode("-+-");
-        treeBuilder(rootNode, jsonNode, null);
-        ListingTreePrinter.createBuilder().ascii().build().print(rootNode);  // print with ascii
+        treeBuilder(rootNode, record, null);
+        ListingTreePrinter.createBuilder().ascii().build().print(rootNode); // TODO print to actual output, but for some reason line below doesn't work
+        //ListingTreePrinter.createBuilder().ascii().build().print(rootNode, config.getPrintWriterSupplier().get());  // print with ascii
         //new ListingTreePrinter().print(rootNode); // print with unicode
 	}
 

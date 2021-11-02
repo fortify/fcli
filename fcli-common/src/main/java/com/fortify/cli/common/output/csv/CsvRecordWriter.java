@@ -22,43 +22,49 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.xml;
+package com.fortify.cli.common.output.csv;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import java.io.PrintWriter;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fortify.cli.common.output.IOutputWriter;
-import com.fortify.cli.common.output.OutputWriterConfig;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.fortify.cli.common.output.IRecordWriter;
+import com.fortify.cli.common.output.RecordWriterConfig;
 
 import lombok.SneakyThrows;
 
-public class XmlOutputWriter implements IOutputWriter {
-	private final boolean pretty = true;
+public class CsvRecordWriter implements IRecordWriter {
+	private final RecordWriterConfig config;
+	private ObjectWriter objectWriter;
 
-	public XmlOutputWriter(OutputWriterConfig config) {
-		// TODO Auto-generated constructor stub
+	public CsvRecordWriter(RecordWriterConfig config) {
+		this.config = config;
 	}
 
 	@Override @SneakyThrows
-	public void write(JsonNode jsonNode) {
-		XmlMapper xmlMapper = new XmlMapper();
-
-        if(! (jsonNode instanceof ObjectNode)){
-            ObjectMapper objectMapper = new ObjectMapper();
-            ObjectNode root = objectMapper.createObjectNode();
-            root.set("item", jsonNode);
-
-            jsonNode = root;
-        }
-
-        if (pretty){
-            xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        }
-        String xmlString = xmlMapper.writeValueAsString(jsonNode).replace("ObjectNode", "content");
-
-        System.out.println(xmlString);
+	public void writeRecord(ObjectNode record) {
+		ObjectWriter objectWriter = getObjectWriter(record);
+		PrintWriter printWriter = config.getPrintWriterSupplier().get();
+		objectWriter.writeValue(printWriter, record);
+	}
+	
+	private ObjectWriter getObjectWriter(ObjectNode record) {
+		if ( objectWriter==null ) {
+			if ( record!=null ) {
+				CsvSchema.Builder schemaBuilder = CsvSchema.builder();
+				record.fieldNames().forEachRemaining(schemaBuilder::addColumn);
+				CsvSchema schema = schemaBuilder.build()
+						.withUseHeader(config.isHeadersEnabled());
+				objectWriter = new CsvMapper()
+						.enable(JsonGenerator.Feature.IGNORE_UNKNOWN)
+						.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+						.writer(schema);
+			}
+		}
+		return objectWriter;
 	}
 
 }

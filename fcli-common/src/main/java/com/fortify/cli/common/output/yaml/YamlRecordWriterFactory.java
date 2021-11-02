@@ -22,10 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output;
+package com.fortify.cli.common.output.yaml;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.IRecordWriter;
+import com.fortify.cli.common.output.IRecordWriterFactory;
+import com.fortify.cli.common.output.RecordWriterConfig;
 
-public interface IOutputWriter {
-	public void write(JsonNode jsonNode);
+public class YamlRecordWriterFactory implements IRecordWriterFactory {
+
+	@Override
+	public IRecordWriter createRecordWriter(RecordWriterConfig config) {
+		return new YamlRecordWriter(config);
+	}
+
 }

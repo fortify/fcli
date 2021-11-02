@@ -24,8 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.crud;
 
+import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.FCLIRootCommand;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -36,4 +38,7 @@ import picocli.CommandLine.Command;
 @Command(name = "get", description = "Get data from various Fortify systems")
 @Order(CRUDCommandsOrder.GET)
 public class RootGetCommand {
+	public static final OutputOptionsWriterConfig defaultOutputConfig() {
+		return new OutputOptionsWriterConfig().defaultFormat(OutputFormat.table); 
+	}
 }

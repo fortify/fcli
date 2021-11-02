@@ -24,16 +24,15 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.command.api;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.api.APICommandOptionsHandler;
 import com.fortify.cli.common.picocli.command.api.RootApiCommand;
-import com.fortify.cli.common.picocli.component.output.IDefaultOutputFormatSupplier;
+import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -45,18 +44,18 @@ import picocli.CommandLine.Mixin;
 @SubcommandOf(RootApiCommand.class)
 @Command(name = ProductIdentifiers.SSC, description = "Invoke SSC REST API")
 @RequiresProduct(ProductOrGroup.SSC)
-public final class SSCApiCommand extends AbstractSSCUnirestRunnerCommand implements IDefaultOutputFormatSupplier {
+public final class SSCApiCommand extends AbstractSSCUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
 	@Mixin private OutputOptionsHandler outputOptionsHandler;
 	@Mixin private APICommandOptionsHandler apiCommand;
 	
 	@Override
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputOptionsHandler.write(apiCommand.prepareRequest(unirest).asObject(ObjectNode.class).getBody());
+		outputOptionsHandler.write(apiCommand.prepareRequest(unirest));
 		return null;
 	}
 	
 	@Override
-	public OutputFormat getDefaultOutputFormat() {
-		return OutputFormat.json;
+	public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+		return RootApiCommand.defaultOutputConfig();
 	}
 }

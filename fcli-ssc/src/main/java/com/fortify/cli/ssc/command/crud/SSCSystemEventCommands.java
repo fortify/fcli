@@ -24,13 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.command.crud;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IDefaultOutputColumnsSupplier;
+import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.crud.SSCCrudRootCommands.SSCGetCommand;
 
@@ -43,18 +42,17 @@ import picocli.CommandLine.Command;
 public class SSCSystemEventCommands {
     private static final String NAME = "system-events";
     private static final String DESC = "system events";
+    
+    private static final String _getDefaultOutputColumns() {
+		return "eventDate#userName#eventType#projectVersionId#entityId";
+	}
 	
     @ReflectiveAccess
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, description = "Get "+DESC+" data from SSC")
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IDefaultOutputColumnsSupplier {
+	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
 		@CommandLine.Mixin private OutputOptionsHandler outputOptionsHandler;
-		
-		@Override
-		public String getDefaultOutputColumns(OutputFormat outputFormat) {
-			return "eventDate#userName#eventType#projectVersionId#entityId";
-		}
 		
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
@@ -62,12 +60,14 @@ public class SSCSystemEventCommands {
 				unirest.get("/api/v1/events?limit=-1")
 					.accept("application/json")
 					.header("Content-Type", "application/json")
-					.asObject(ObjectNode.class)
-					.getBody()
-					.get("data")
 			);
 			
 			return null;
+		}
+		
+		@Override
+		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+			return SSCGetCommand.defaultOutputConfig().defaultColumns(_getDefaultOutputColumns());
 		}
 	}
 }

@@ -24,9 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.component.output;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.OutputFormat;
-
-public interface IOutputPreTransformer {
-	public JsonNode transform(OutputFormat outputFormat, JsonNode data);
+public interface IOutputOptionsWriterConfigSupplier {
+	public OutputOptionsWriterConfig getOutputOptionsWriterConfig();
 }

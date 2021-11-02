@@ -25,70 +25,68 @@
 package com.fortify.cli.common.output.table;
 
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JacksonJsonNodeHelper;
-import com.fortify.cli.common.output.IOutputWriter;
-import com.fortify.cli.common.output.OutputWriterConfig;
+import com.fortify.cli.common.output.IRecordWriter;
+import com.fortify.cli.common.output.RecordWriterConfig;
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
 import com.github.freva.asciitable.HorizontalAlign;
 
 import lombok.SneakyThrows;
 
-public class TableOutputWriter implements IOutputWriter {
-	private final OutputWriterConfig config;
+public class TableRecordWriter implements IRecordWriter {
+	private final RecordWriterConfig config;
+	private String[] columns;
+	private final List<String[]> rows = new ArrayList<>();
 
-	public TableOutputWriter(OutputWriterConfig config) {
+	public TableRecordWriter(RecordWriterConfig config) {
 		this.config = config;
 	}
 
 	@Override @SneakyThrows
-	public void write(JsonNode jsonNode) {
-		ObjectNode firstObjectNode = JacksonJsonNodeHelper.getFirstObjectNode(jsonNode);
-		if ( firstObjectNode!=null ) {
-			String[] columns = getColumns(firstObjectNode);
-			String[][] data = getData(jsonNode, columns);
-			try ( Writer writer = config.getWriterSupplier().get() ) {
-				writer.write(getTable(columns, data));
-			}
+	public void writeRecord(ObjectNode record) {
+		String[] columns = getColumns(record);
+		String[] row = getRow(record, columns);
+		rows.add(row);
+	}
+
+	@Override @SneakyThrows
+	public void finishOutput() {
+		try ( Writer writer = config.getPrintWriterSupplier().get() ) {
+			writer.write(getTable(columns, rows.toArray(new String[rows.size()][])));
 		}
-		
 	}
 
 	private String getTable(String[] columns, String[][] data) {
-		Column[] columnObjects = Stream.of(columns).map(columnName->
-				new Column()
-					.dataAlign(HorizontalAlign.LEFT)
-					.headerAlign(HorizontalAlign.LEFT)
-					.header(config.isHeadersEnabled()?columnName:null))
-					.toArray(Column[]::new);
-		return AsciiTable.getTable(AsciiTable.NO_BORDERS, columnObjects, data); 
+		if ( columns == null ) {
+			return "No data"; // TODO properly handle this
+		} else {
+			Column[] columnObjects = Stream.of(columns).map(columnName->
+					new Column()
+						.dataAlign(HorizontalAlign.LEFT)
+						.headerAlign(HorizontalAlign.LEFT)
+						.header(config.isHeadersEnabled()?columnName:null))
+						.toArray(Column[]::new);
+			return AsciiTable.getTable(AsciiTable.NO_BORDERS, columnObjects, data); 
+		}
 	}
 
 	private String[] getColumns(ObjectNode firstObjectNode) {
-		return asStream(firstObjectNode.fieldNames()).toArray(String[]::new);
+		if ( columns==null ) { 
+			columns = asStream(firstObjectNode.fieldNames()).toArray(String[]::new);
+		}
+		return columns;
 	}
 	
-	private String[][] getData(JsonNode jsonNode, String[] columns) {
-		if ( jsonNode.isObject() ) {
-			return new String[][] { getNodeData(jsonNode, columns) };
-		} else if ( jsonNode.isArray() ) {
-			return asStream(jsonNode.iterator()).map(elt->getNodeData(elt, columns)).toArray(String[][]::new);
-		} else {
-			throw new IllegalArgumentException("Input must either be a ObjectNode or ArrayNode");
-		}
-	}
-	
-	private String[] getNodeData(JsonNode jsonNode, String[] columns) {
-		if ( !jsonNode.isObject() ) {
-			throw new IllegalArgumentException("Input must either be a ObjectNode or ArrayNode");
-		}
-		return Stream.of(columns).map(jsonNode::get).map(JsonNode::asText).toArray(String[]::new);
+	private String[] getRow(ObjectNode record, String[] columns) {
+		return Stream.of(columns).map(record::get).map(JsonNode::asText).toArray(String[]::new);
 	}
 
 	private static final <T> Stream<T> asStream(Iterator<T> sourceIterator) {
