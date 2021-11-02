@@ -5,6 +5,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.json.transform.jsonpath.JsonPathTransformer;
@@ -17,6 +19,7 @@ import io.micronaut.core.util.StringUtils;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
@@ -67,7 +70,7 @@ public class OutputOptionsHandler {
 	}
 	
 	private <T> void write(Function<OutputOptionsWriter, Consumer<T>> consumer, T input) {
-		try ( var writer = getWriter(getOutputOptionsWriterConfig()); ) {
+		try ( var writer = getWriter(getOutputOptionsWriterConfig()) ) {
 			consumer.apply(writer).accept(input);
 		}
 	}
@@ -113,13 +116,18 @@ public class OutputOptionsHandler {
 		public void write(HttpResponse<JsonNode> httpResponse) {
 			write(httpResponse.getBody());
 		}
-		
+
+		@SneakyThrows
 		private void writeRecord(JsonNode jsonNode) {
 			jsonNode = config.applyRecordTransformations(outputFormat, jsonNode); // TODO Before or after other transformations?
 			jsonNode = applyJsonPathTransformation(outputFormat, jsonNode);
 			jsonNode = config.applyFieldsTransformations(outputFormat, options.fields, jsonNode);
 			jsonNode = applyFlattenTransformation(outputFormat, jsonNode);
-			recordWriter.writeRecord((ObjectNode)jsonNode);
+			if(jsonNode.getNodeType() == JsonNodeType.ARRAY) {
+				if(jsonNode.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(jsonNode.get(0).toString()));
+			} else {
+				recordWriter.writeRecord((ObjectNode) jsonNode);
+			}
 		}
 		
 		// TODO Move to OutputOptionsWriterConfig to allow defaults?

@@ -17,7 +17,7 @@ import java.io.File;
  * @author Ruud Senden
  */
 @ReflectiveAccess
-public class SCDastScanOptions {
+public class SCDastScanStartOptions {
 
     @Option(names = {"-settings","--settings-id","--settings-identifier"}, description = "The Settings Identifier to run the scan with.", required = true)
     @Getter private String settingsId;

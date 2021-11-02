@@ -24,7 +24,10 @@ public class SCDastScanResultsCommands {
     private static final String DESC = "DAST scan results";
 
     private static final String _getDefaultOutputColumns() {
-        return "lowCount#mediumCount#highCount#criticalCount";
+        return  "lowCount:Low#" +
+                "mediumCount:Medium#" +
+                "highCount:High#" +
+                "criticalCount:Critical";
     }
 
     @ReflectiveAccess

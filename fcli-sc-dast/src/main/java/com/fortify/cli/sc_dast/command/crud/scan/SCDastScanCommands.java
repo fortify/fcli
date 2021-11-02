@@ -23,6 +23,18 @@ public class SCDastScanCommands {
     static final String NAME = "scan";
     static final String DESC = "DAST scan";
 
+    private static final String _getDefaultOutputColumns() {
+        return "id#" +
+                "name#" +
+                "applicationName:Application#" +
+                "applicationVersionName:Version#" +
+                "scanStatusType:Status#"+
+                "lowCount:Low#" +
+                "mediumCount:Medium#" +
+                "highCount:High#" +
+                "criticalCount:Critical";
+    }
+
     @ReflectiveAccess
     @SubcommandOf(SCDastCrudRootCommands.SCDastGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
@@ -75,10 +87,10 @@ public class SCDastScanCommands {
 
             return null;
         }
-        
+
         @Override
-		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
-			return SCDastGetCommand.defaultOutputConfig(); // TODO .defaultColumns(_getDefaultOutputColumns());
-		}
+        public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+            return SCDastGetCommand.defaultOutputConfig().defaultColumns(_getDefaultOutputColumns());
+        }
     }
 }
