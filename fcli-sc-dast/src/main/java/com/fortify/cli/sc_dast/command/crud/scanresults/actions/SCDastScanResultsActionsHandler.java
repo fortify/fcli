@@ -38,22 +38,7 @@ public class SCDastScanResultsActionsHandler {
 
     @SneakyThrows
     public Void waitCompletion(int scanId, int waitInterval) {
-        List<String> waitingStatus = Arrays.asList("Pending", "Queued", "Running");
-        String scanStatus =  scanStatusActionsHandler.getScanStatus(scanId).get("scanStatusTypeString")
-                .toString()
-                .replace("\"","");
-        int i = 0;
-
-        while (waitingStatus.contains(scanStatus)) {
-            System.out.println(i + ") Scan status: "+scanStatus);
-            TimeUnit.SECONDS.sleep(waitInterval);
-            scanStatus =  scanStatusActionsHandler.getScanStatus(scanId).get("scanStatusTypeString")
-                    .toString()
-                    .replace("\"","");
-            i += 1;
-        }
-
-        System.out.println(i + ") Scan status: "+scanStatus);
+        scanStatusActionsHandler.waitCompletion(scanId, waitInterval);
 
         return null;
     }
