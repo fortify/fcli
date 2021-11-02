@@ -22,6 +22,9 @@ public class SCDastScanSettingsCommands {
     private static final String NAME = "scan-settings";
     private static final String DESC = "DAST scan settings";
 
+    private static final String _getDefaultOutputColumns() { return "id#name#cicdToken#applicationName#applicationVersionName"; }
+
+
     @ReflectiveAccess
     @SubcommandOf(SCDastCrudRootCommands.SCDastGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
@@ -66,11 +69,11 @@ public class SCDastScanSettingsCommands {
 
             return null;
         }
-        
+
         @Override
-		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
-			return SCDastGetCommand.defaultOutputConfig(); // TODO .defaultColumns(_getDefaultOutputColumns());
-		}
+        public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+            return SCDastGetCommand.defaultOutputConfig().defaultColumns(_getDefaultOutputColumns());
+        }
     }
 }
 
