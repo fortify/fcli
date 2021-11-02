@@ -22,24 +22,52 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.yaml;
+package com.fortify.cli.common.output.json;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.fortify.cli.common.output.IOutputWriter;
-import com.fortify.cli.common.output.OutputWriterConfig;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.PrettyPrinter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.output.IRecordWriter;
+import com.fortify.cli.common.output.RecordWriterConfig;
 
 import lombok.SneakyThrows;
 
-public class YamlOutputWriter implements IOutputWriter {
-
-	public YamlOutputWriter(OutputWriterConfig config) {
-		// TODO Auto-generated constructor stub
+public class JsonRecordWriter implements IRecordWriter {
+	private final RecordWriterConfig config;
+	private JsonGenerator generator;
+	
+	public JsonRecordWriter(RecordWriterConfig config) {
+		this.config = config;
+	}
+	
+	@SneakyThrows
+	private JsonGenerator getGenerator() {
+		if ( generator==null ) {
+			PrettyPrinter pp = !config.isPretty() ? null : new DefaultPrettyPrinter(); 
+			this.generator = JsonFactory.builder().
+					build().createGenerator(config.getPrintWriterSupplier().get())
+					.setPrettyPrinter(pp)
+					.setCodec(new ObjectMapper());
+			if ( !config.isSingular() ) {
+				generator.writeStartArray();
+			}
+		}
+		return generator;
 	}
 
 	@Override @SneakyThrows
-	public void write(JsonNode jsonNode) {
-		System.out.print(new YAMLMapper().writeValueAsString(jsonNode));
+	public void writeRecord(ObjectNode record) {
+		getGenerator().writeTree(record);
 	}
 
+	@Override @SneakyThrows
+	public void finishOutput() {
+		if ( !config.isSingular() ) {
+			generator.writeEndArray();
+			generator.close();
+		}
+	}
 }

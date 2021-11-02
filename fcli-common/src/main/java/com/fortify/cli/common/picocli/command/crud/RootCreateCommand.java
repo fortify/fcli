@@ -24,8 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.crud;
 
+import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.FCLIRootCommand;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -36,4 +38,7 @@ import picocli.CommandLine.Command;
 @Command(name = "create", description = "Create entities in various Fortify systems")
 @Order(CRUDCommandsOrder.CREATE)
 public class RootCreateCommand {
+	public static final OutputOptionsWriterConfig defaultOutputConfig() {
+		return new OutputOptionsWriterConfig().defaultFormat(OutputFormat.tree); 
+	}
 }

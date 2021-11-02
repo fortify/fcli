@@ -1,0 +1,130 @@
+/*******************************************************************************
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a 
+ * copy of this software and associated documentation files (the 
+ * "Software"), to deal in the Software without restriction, including without 
+ * limitation the rights to use, copy, modify, merge, publish, distribute, 
+ * sublicense, and/or sell copies of the Software, and to permit persons to 
+ * whom the Software is furnished to do so, subject to the following 
+ * conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included 
+ * in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY 
+ * KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE 
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
+ * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+ * IN THE SOFTWARE.
+ ******************************************************************************/
+package com.fortify.cli.common.picocli.component.output;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.transform.IJsonNodeTransformer;
+import com.fortify.cli.common.json.transform.fields.PredefinedFieldsTransformerFactory;
+import com.fortify.cli.common.json.transform.flatten.FlattenTransformer;
+import com.fortify.cli.common.json.transform.identity.IdentityTransformer;
+import com.fortify.cli.common.output.OutputFormat;
+import com.fortify.cli.common.output.OutputFormat.OutputType;
+
+import io.micronaut.core.util.StringUtils;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+@Accessors(fluent = true)
+public class OutputOptionsWriterConfig {
+	@Getter @Setter private OutputFormat defaultFormat;
+	private final LinkedHashMap<Function<OutputFormat, Boolean>, String> defaultFields = new LinkedHashMap<>();
+	private final LinkedHashMap<Function<OutputFormat, Boolean>, UnaryOperator<JsonNode>> inputTransformers = new LinkedHashMap<>();
+	private final LinkedHashMap<Function<OutputFormat, Boolean>, UnaryOperator<JsonNode>> recordTransformers = new LinkedHashMap<>();
+	
+	public final OutputOptionsWriterConfig inputTransformer(Function<OutputFormat, Boolean> applyIf, UnaryOperator<JsonNode> transformer) {
+		inputTransformers.put(applyIf, transformer);
+		return this;
+	}
+	
+	public final OutputOptionsWriterConfig inputTransformer(UnaryOperator<JsonNode> transformer) {
+		return inputTransformer(fmt->true, transformer);
+	}
+	
+	public final OutputOptionsWriterConfig recordTransformer(Function<OutputFormat, Boolean> applyIf, UnaryOperator<JsonNode> transformer) {
+		recordTransformers.put(applyIf, transformer);
+		return this;
+	}
+	
+	public final OutputOptionsWriterConfig recordTransformer(UnaryOperator<JsonNode> transformer) {
+		return recordTransformer(fmt->true, transformer);
+	}
+	
+	public final OutputOptionsWriterConfig defaultFields(Function<OutputFormat, Boolean> applyIf, String fields) {
+		defaultFields.put(applyIf, fields);
+		return this;
+	}
+	
+	public final OutputOptionsWriterConfig defaultFields(String fields) {
+		defaultFields.put(fmt->true, fields);
+		return this;
+	}
+	
+	public final OutputOptionsWriterConfig defaultColumns(String outputColumns) {
+		return defaultFields(OutputFormat::isColumns, outputColumns);
+	}
+	
+	final JsonNode applyFieldsTransformations(OutputFormat outputFormat, String overrideFieldsString, JsonNode input) {
+		if ( StringUtils.isNotEmpty(overrideFieldsString) ) {
+			return applyDefaultFieldsTransformations(outputFormat, overrideFieldsString, input);
+		} else {
+			return applyDefaultFieldsTransformations(defaultFields, outputFormat, input);
+		}
+	}
+	
+	private final JsonNode applyDefaultFieldsTransformations(OutputFormat outputFormat, String fieldsString, JsonNode input) {
+		LinkedHashMap<Function<OutputFormat, Boolean>, String> fields = new LinkedHashMap<>();
+		fields.put(fmt->true, fieldsString);
+		return applyDefaultFieldsTransformations(fields, outputFormat, input);
+	}
+	
+	private final JsonNode applyDefaultFieldsTransformations(LinkedHashMap<Function<OutputFormat, Boolean>, String> fields, OutputFormat outputFormat, JsonNode input) {
+		return fields.entrySet().stream()
+			.filter(e->e.getKey().apply(outputFormat))
+			.map(Map.Entry::getValue)
+			.map(fieldsString->getFieldsTransformer(outputFormat, fieldsString))
+			.reduce(input, (o, t) -> t.transform(o), (m1, m2) -> m2);
+	}
+
+	private IJsonNodeTransformer getFieldsTransformer(OutputFormat outputFormat, String fieldsString) {
+		if ( StringUtils.isNotEmpty(fieldsString) && !"all".equals(fieldsString) ) {
+			return PredefinedFieldsTransformerFactory.createFromString(outputFormat.getDefaultFieldNameFormatter(), fieldsString);
+		} else if ( outputFormat.getOutputType()==OutputType.TEXT_COLUMNS ) {
+			return new FlattenTransformer(outputFormat.getDefaultFieldNameFormatter(), ".", false);
+		} else {
+			return new IdentityTransformer();
+		}
+	}
+	
+	final JsonNode applyInputTransformations(OutputFormat outputFormat, JsonNode input) {
+		return applyTransformations(inputTransformers, outputFormat, input);
+	}
+	
+	final JsonNode applyRecordTransformations(OutputFormat outputFormat, JsonNode input) {
+		return applyTransformations(recordTransformers, outputFormat, input);
+	}
+	
+	private final JsonNode applyTransformations(LinkedHashMap<Function<OutputFormat, Boolean>, UnaryOperator<JsonNode>> optionalTransformations, OutputFormat outputFormat, JsonNode input) {
+		return optionalTransformations.entrySet().stream()
+				.filter(e->e.getKey().apply(outputFormat))
+				.map(Map.Entry::getValue)
+				.reduce(input, (o, t) -> t.apply(o), (m1, m2) -> m2);
+	}
+}

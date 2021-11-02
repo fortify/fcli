@@ -24,9 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.api;
 
+import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.FCLIRootCommand;
 import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -38,4 +40,7 @@ import picocli.CommandLine.Command;
 @Command(name = "api", description = "Make arbitrary calls to Fortify REST APIs")
 @Order(RootCommandsOrderByGroup.API)
 public class RootApiCommand {
+	public static final OutputOptionsWriterConfig defaultOutputConfig() {
+		return new OutputOptionsWriterConfig().defaultFormat(OutputFormat.json);
+	}
 }

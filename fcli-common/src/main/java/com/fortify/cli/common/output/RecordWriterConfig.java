@@ -22,21 +22,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.json;
+package com.fortify.cli.common.output;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.IOutputWriter;
-import com.fortify.cli.common.output.OutputWriterConfig;
+import java.io.PrintWriter;
+import java.util.function.Supplier;
 
-public class JsonOutputWriter implements IOutputWriter {
+import lombok.Builder;
+import lombok.Data;
 
-	public JsonOutputWriter(OutputWriterConfig config) {
-		// TODO Auto-generated constructor stub
-	}
-
-	@Override
-	public void write(JsonNode jsonNode) {
-		System.out.println(jsonNode.toPrettyString());
-	}
-
+@Data @Builder
+public class RecordWriterConfig {
+	private Supplier<PrintWriter> printWriterSupplier;
+	private boolean singular;                          // Write singular output rather than array/list/...
+	@Builder.Default private boolean pretty = true;    // Pretty-print
+	private boolean headersEnabled;                    // Whether to print headers
 }

@@ -22,17 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output;
+package com.fortify.cli.common.output.table;
 
-import java.io.PrintWriter;
-import java.io.Writer;
-import java.util.function.Supplier;
+import com.fortify.cli.common.output.IRecordWriter;
+import com.fortify.cli.common.output.IRecordWriterFactory;
+import com.fortify.cli.common.output.RecordWriterConfig;
 
-import lombok.Builder;
-import lombok.Data;
+public class TableRecordWriterFactory implements IRecordWriterFactory {
 
-@Data @Builder
-public class OutputWriterConfig {
-	@Builder.Default private Supplier<Writer> writerSupplier = ()->new PrintWriter(System.out);
-	private boolean headersEnabled;
+	@Override
+	public IRecordWriter createRecordWriter(RecordWriterConfig config) {
+		return new TableRecordWriter(config);
+	}
+
 }

@@ -22,17 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.table;
+package com.fortify.cli.common.output.json;
 
-import com.fortify.cli.common.output.IOutputWriter;
-import com.fortify.cli.common.output.IOutputWriterFactory;
-import com.fortify.cli.common.output.OutputWriterConfig;
+import com.fortify.cli.common.output.IRecordWriter;
+import com.fortify.cli.common.output.IRecordWriterFactory;
+import com.fortify.cli.common.output.RecordWriterConfig;
 
-public class TableOutputWriterFactory implements IOutputWriterFactory {
+public class JsonRecordWriterFactory implements IRecordWriterFactory {
 
 	@Override
-	public IOutputWriter createOutputWriter(OutputWriterConfig config) {
-		return new TableOutputWriter(config);
+	public IRecordWriter createRecordWriter(RecordWriterConfig config) {
+		return new JsonRecordWriter(config);
 	}
 
 }

@@ -24,14 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.command.crud;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IDefaultOutputColumnsSupplier;
+import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.command.crud.SSCCrudRootCommands.SSCCreateCommand;
 import com.fortify.cli.ssc.command.crud.SSCCrudRootCommands.SSCDeleteCommand;
@@ -59,29 +57,22 @@ public class SSCApplicationVersionCommands {
 	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = NAME, aliases = {ALIAS},description = "Get "+DESC+" from SSC")
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IDefaultOutputColumnsSupplier {
-
-
+	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
 		@CommandLine.Mixin
 		@Getter private OutputOptionsHandler outputOptionsHandler;
 
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
-			JsonNode response = unirest.get("/api/v1/projectVersions?limit=-1")
+			outputOptionsHandler.write(unirest.get("/api/v1/projectVersions?limit=-1")
 					.accept("application/json")
-					.header("Content-Type", "application/json")
-					.asObject(ObjectNode.class)
-					.getBody()
-					.get("data");
-
-			outputOptionsHandler.write(response);
+					.header("Content-Type", "application/json"));
 
 			return null;
 		}
-
+		
 		@Override
-		public String getDefaultOutputColumns(OutputFormat outputFormat) {
-			return _getDefaultOutputColumns();
+		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+			return SSCGetCommand.defaultOutputConfig().defaultColumns(_getDefaultOutputColumns());
 		}
 	}
 	

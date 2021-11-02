@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,10 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.component.output;
+package com.fortify.cli.common.output.csv;
 
-import com.fortify.cli.common.output.OutputFormat;
+import com.fortify.cli.common.output.IRecordWriter;
+import com.fortify.cli.common.output.IRecordWriterFactory;
+import com.fortify.cli.common.output.RecordWriterConfig;
 
-public interface IDefaultOutputColumnsSupplier {
-	public String getDefaultOutputColumns(OutputFormat outputFormat);
+public class CsvRecordWriterFactory implements IRecordWriterFactory {
+
+	@Override
+	public IRecordWriter createRecordWriter(RecordWriterConfig config) {
+		return new CsvRecordWriter(config);
+	}
+
 }

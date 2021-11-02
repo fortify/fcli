@@ -28,8 +28,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.dast.scan.remote.DastScanRemoteCommand;
+import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 import com.fortify.cli.sc_dast.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.command.crud.SCDastCrudRootCommands.SCDastGetCommand;
 import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanOptions;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -43,7 +46,7 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 @SubcommandOf(DastScanRemoteCommand.class)
 @Command(name = "sc-dast", description = "Start DAST scan on ScanCentral DAST")
-public final class SCDastRemoteScan extends AbstractSCDastUnirestRunnerCommand {
+public final class SCDastRemoteScan extends AbstractSCDastUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
 
     @ArgGroup(exclusive = false, heading = "Scan options:%n", order = 1)
     @Getter
@@ -68,4 +71,9 @@ public final class SCDastRemoteScan extends AbstractSCDastUnirestRunnerCommand {
 
         return null;
     }
+    
+    @Override
+	public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+		return SCDastGetCommand.defaultOutputConfig(); // TODO .defaultColumns(_getDefaultOutputColumns());
+	}
 }
