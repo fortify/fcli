@@ -1,10 +1,12 @@
 package com.fortify.cli.sc_dast.command.crud.scanstatus;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 import com.fortify.cli.sc_dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.command.crud.SCDastCrudRootCommands;
+import com.fortify.cli.sc_dast.command.crud.SCDastCrudRootCommands.SCDastGetCommand;
 import com.fortify.cli.sc_dast.command.crud.scanstatus.actions.SCDastScanStatusActionsHandler;
 import com.fortify.cli.sc_dast.command.crud.scanstatus.options.SCDastGetScanStatusOptions;
 
@@ -23,7 +25,7 @@ public class SCDastScanStatusCommands {
     @ReflectiveAccess
     @SubcommandOf(SCDastCrudRootCommands.SCDastGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
-    public static final class Get extends AbstractSCDastUnirestRunnerCommand {
+    public static final class Get extends AbstractSCDastUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
 
         @ArgGroup(exclusive = false, heading = "Get a specific scan:%n", order = 1)
         @Getter private SCDastGetScanStatusOptions scanStatusOptions;
@@ -34,13 +36,14 @@ public class SCDastScanStatusCommands {
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
             SCDastScanStatusActionsHandler actionsHandler = new SCDastScanStatusActionsHandler(unirest);
-
-            JsonNode response = actionsHandler.getScanStatus(scanStatusOptions.getScanId());
-
-            outputOptionsHandler.write(response);
-
+            outputOptionsHandler.write(actionsHandler.getScanStatus(scanStatusOptions.getScanId()));
             return null;
         }
+        
+        @Override
+		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+			return SCDastGetCommand.defaultOutputConfig(); // TODO .defaultColumns(_getDefaultOutputColumns());
+		}
     }
 }
 

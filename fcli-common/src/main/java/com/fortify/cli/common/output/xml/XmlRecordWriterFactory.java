@@ -22,17 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.tree;
+package com.fortify.cli.common.output.xml;
 
-import com.fortify.cli.common.output.IOutputWriter;
-import com.fortify.cli.common.output.IOutputWriterFactory;
-import com.fortify.cli.common.output.OutputWriterConfig;
+import com.fortify.cli.common.output.IRecordWriter;
+import com.fortify.cli.common.output.IRecordWriterFactory;
+import com.fortify.cli.common.output.RecordWriterConfig;
 
-public class TreeOutputWriterFactory implements IOutputWriterFactory {
+public class XmlRecordWriterFactory implements IRecordWriterFactory {
 
 	@Override
-	public IOutputWriter createOutputWriter(OutputWriterConfig config) {
-		return new TreeOutputWriter(config);
+	public IRecordWriter createRecordWriter(RecordWriterConfig config) {
+		return new XmlRecordWriter(config);
 	}
 
 }

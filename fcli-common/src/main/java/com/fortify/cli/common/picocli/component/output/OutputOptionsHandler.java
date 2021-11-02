@@ -1,16 +1,21 @@
 package com.fortify.cli.common.picocli.component.output;
 
+import java.io.PrintWriter;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.json.transform.fields.PredefinedFieldsTransformerFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.json.transform.jsonpath.JsonPathTransformer;
-import com.fortify.cli.common.output.IOutputWriter;
+import com.fortify.cli.common.output.IRecordWriter;
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.output.OutputFormat.OutputType;
-import com.fortify.cli.common.output.OutputWriterConfig;
+import com.fortify.cli.common.output.RecordWriterConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
+import kong.unirest.HttpRequest;
+import kong.unirest.HttpResponse;
 import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
@@ -38,92 +43,127 @@ public class OutputOptionsHandler {
     
     @CommandLine.Option(names = {"--with-headers"},
             description = "For column-based outputs, whether to output headers",
-            order=3, defaultValue = "false")
+            order=3, defaultValue = "true")
     @Getter
     private boolean withHeaders;
 
 	@CommandLine.Option(names = {"--json-path"}, description = "Transforms output using JSONPath", order = 1)
 	@Getter private String jsonPath;
-
-    public void write(JsonNode response) {
-    	OutputFormat format = getOutputFormat();
-        getOutputWriter(format).write(transform(response, format));
-    }
-    
-    protected OutputFormat getOutputFormat() {
-    	Object mixeeUserObject = mixee.userObject();
-    	OutputFormat result = this.outputFormat;
-    	if ( result == null && mixeeUserObject instanceof IDefaultOutputFormatSupplier ) {
-    		result = ((IDefaultOutputFormatSupplier)mixeeUserObject).getDefaultOutputFormat();
-    	}
-    	if ( result == null ) {
-    		result = OutputFormat.table;
-    	}
-    	return result;
-    }
-
-	private IOutputWriter getOutputWriter(OutputFormat outputFormat) {
-		return outputFormat.getOutputWriterFactory().createOutputWriter(createConfig());
+	
+	public OutputOptionsWriter getWriter(OutputOptionsWriterConfig config) {
+		return new OutputOptionsWriter(config);
+	}
+	
+	public void write(JsonNode jsonNode) {
+		write(writer->writer::write, jsonNode);
 	}
 
-	private OutputWriterConfig createConfig() {
-		return OutputWriterConfig.builder()
-				// TODO .writerSupplier(null)
-				.headersEnabled(isWithHeaders())
-				.build();
+	public void write(HttpRequest<?> httpRequest) {
+		write(writer->writer::write, httpRequest);
 	}
 	
-	protected JsonNode transform(JsonNode data, OutputFormat outputFormat) {
-		data = applyMixeeTransformation(data, outputFormat);
-		data = applyJsonPathTransformation(data, outputFormat);
-		data = applyFieldsTransformation(data, outputFormat);
-		data = applyFlattenTransformation(data, outputFormat);
-		return data;
+	public void write(HttpResponse<JsonNode> httpResponse) {
+		write(writer->writer::write, httpResponse);
 	}
 	
-	protected JsonNode applyMixeeTransformation(JsonNode data, OutputFormat outputFormat) {
-		Object mixeeUserObject = mixee.userObject();
-		if ( mixeeUserObject instanceof IOutputPreTransformer ) {
-			data = ((IOutputPreTransformer)mixeeUserObject).transform(outputFormat, data);
+	private <T> void write(Function<OutputOptionsWriter, Consumer<T>> consumer, T input) {
+		try ( var writer = getWriter(getOutputOptionsWriterConfig()); ) {
+			consumer.apply(writer).accept(input);
 		}
-		return data;
 	}
 	
-	protected JsonNode applyJsonPathTransformation(JsonNode data, OutputFormat outputFormat) {
-		if ( StringUtils.isNotEmpty(jsonPath) ) {
-			data = new JsonPathTransformer(jsonPath).transform(data);
+	private OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+		Object mixeeObject = mixee.userObject();
+		if ( mixeeObject instanceof IOutputOptionsWriterConfigSupplier ) {
+			return ((IOutputOptionsWriterConfigSupplier)mixeeObject).getOutputOptionsWriterConfig();
+		} else {
+			return new OutputOptionsWriterConfig();
 		}
-		return data;
 	}
 	
-	protected JsonNode applyFieldsTransformation(JsonNode data, OutputFormat outputFormat) {
-		String _fields = getFields(outputFormat);
-		if ( StringUtils.isNotEmpty(_fields) && !"all".equals(_fields)) {
-			data = PredefinedFieldsTransformerFactory.createFromString(outputFormat.getFieldNameFormatter(), _fields).transform(data);
-		} else if ( outputFormat.getOutputType()==OutputType.TEXT_COLUMNS ) {
-			data = new FlattenTransformer(outputFormat.getFieldNameFormatter(), ".", false).transform(data);
+	public final class OutputOptionsWriter implements AutoCloseable { // TODO Implement interface, make implementation private
+		private final OutputOptionsHandler options = OutputOptionsHandler.this;
+		private final OutputOptionsWriterConfig config;
+		private final OutputFormat outputFormat;
+		private final IRecordWriter recordWriter;
+		
+		public OutputOptionsWriter(OutputOptionsWriterConfig config) {
+			this.config = config;
+			this.outputFormat = getOutputFormat();
+			this.recordWriter = outputFormat.getRecordWriterFactory().createRecordWriter(createOutputWriterConfig());
 		}
-		return data;
-	}
-	
-	protected JsonNode applyFlattenTransformation(JsonNode data, OutputFormat outputFormat2) {
-		if ( flatten ) {
-			data = new FlattenTransformer(outputFormat.getFieldNameFormatter(), ".", false).transform(data);
-		}
-		return data;
-	}
-
-	private String getFields(OutputFormat outputFormat) {
-		String _fields = fields;
-		if ( StringUtils.isEmpty(_fields) ) {
-			Object mixeeUserObject = mixee.userObject();
-			if ( mixeeUserObject instanceof IDefaultOutputFieldsSupplier ) {
-				_fields = ((IDefaultOutputFieldsSupplier)mixeeUserObject).getDefaultOutputFields(outputFormat);
-			} else if ( outputFormat.getOutputType()==OutputType.TEXT_COLUMNS && mixeeUserObject instanceof IDefaultOutputColumnsSupplier ) {
-				_fields = ((IDefaultOutputColumnsSupplier)mixeeUserObject).getDefaultOutputColumns(outputFormat);
+		
+		public void write(JsonNode jsonNode) {
+			jsonNode = config.applyInputTransformations(outputFormat, jsonNode);
+			if ( jsonNode.isArray() ) {
+				jsonNode.elements().forEachRemaining(this::writeRecord);
+			} else if ( jsonNode.isObject() ) {
+				writeRecord(jsonNode);
+			} else {
+				throw new RuntimeException("Not sure what to do here");
 			}
 		}
-		return _fields;
+		
+		public void write(HttpRequest<?> httpRequest) {
+			httpRequest.asObject(JsonNode.class)
+				.ifSuccess(this::write);
+				//TODO .ifFailure(...);
+		}
+		
+		public void write(HttpResponse<JsonNode> httpResponse) {
+			write(httpResponse.getBody());
+		}
+		
+		private void writeRecord(JsonNode jsonNode) {
+			jsonNode = config.applyRecordTransformations(outputFormat, jsonNode); // TODO Before or after other transformations?
+			jsonNode = applyJsonPathTransformation(outputFormat, jsonNode);
+			jsonNode = config.applyFieldsTransformations(outputFormat, options.fields, jsonNode);
+			jsonNode = applyFlattenTransformation(outputFormat, jsonNode);
+			recordWriter.writeRecord((ObjectNode)jsonNode);
+		}
+		
+		// TODO Move to OutputOptionsWriterConfig to allow defaults?
+		protected JsonNode applyJsonPathTransformation(OutputFormat outputFormat, JsonNode data) {
+			if ( StringUtils.isNotEmpty(options.jsonPath) ) {
+				data = new JsonPathTransformer(options.jsonPath).transform(data);
+			}
+			return data;
+		}
+		
+		// TODO Move to OutputOptionsWriterConfig to allow defaults?
+		protected JsonNode applyFlattenTransformation(OutputFormat outputFormat, JsonNode data) {
+			if ( options.flatten ) {
+				data = new FlattenTransformer(outputFormat.getDefaultFieldNameFormatter(), ".", false).transform(data);
+			}
+			return data;
+		}
+
+		private OutputFormat getOutputFormat() {
+	    	OutputFormat result = options.outputFormat;
+	    	if ( result == null ) {
+	    		result = config.defaultFormat();
+	    	}
+	    	if ( result == null ) {
+	    		result = OutputFormat.table;
+	    	}
+	    	return result;
+	    }
+		
+		private RecordWriterConfig createOutputWriterConfig() {
+			return RecordWriterConfig.builder()
+					.printWriterSupplier(this::getPrintWriter)
+					.headersEnabled(isWithHeaders())
+					.build();
+		}
+		
+		private final PrintWriter getPrintWriter() {
+			return new PrintWriter(System.out);
+		}
+
+		@Override
+		public void close() {
+			recordWriter.finishOutput();
+		}
 	}
 }
 

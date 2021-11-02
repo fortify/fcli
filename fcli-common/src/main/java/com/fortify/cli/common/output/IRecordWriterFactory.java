@@ -24,6 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.output;
 
-public interface IOutputWriterFactory {
-	public IOutputWriter createOutputWriter(OutputWriterConfig config);
+public interface IRecordWriterFactory {
+	public IRecordWriter createRecordWriter(RecordWriterConfig config);
 }

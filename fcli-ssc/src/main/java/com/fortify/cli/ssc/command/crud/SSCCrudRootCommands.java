@@ -32,6 +32,7 @@ import com.fortify.cli.common.picocli.command.crud.RootCreateCommand;
 import com.fortify.cli.common.picocli.command.crud.RootDeleteCommand;
 import com.fortify.cli.common.picocli.command.crud.RootGetCommand;
 import com.fortify.cli.common.picocli.command.crud.RootUpdateCommand;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
@@ -41,23 +42,39 @@ public class SSCCrudRootCommands {
 	@SubcommandOf(RootGetCommand.class)
 	@Command(name = ProductIdentifiers.SSC, description = "Get entity data from SSC")
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static class SSCGetCommand {}
+	public static class SSCGetCommand {
+		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+			return RootGetCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
+		}
+	}
 	
 	@ReflectiveAccess
 	@SubcommandOf(RootCreateCommand.class)
 	@Command(name = ProductIdentifiers.SSC, description = "Create entities in SSC")
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static class SSCCreateCommand {}
+	public static class SSCCreateCommand {
+		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+			return RootCreateCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
+		}
+	}
 	
 	@ReflectiveAccess
 	@SubcommandOf(RootUpdateCommand.class)
 	@Command(name = ProductIdentifiers.SSC, description = "Update entities in SSC")
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static class SSCUpdateCommand {}
+	public static class SSCUpdateCommand {
+		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+			return RootUpdateCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
+		}
+	}
 	
 	@ReflectiveAccess
 	@SubcommandOf(RootDeleteCommand.class)
 	@Command(name = ProductIdentifiers.SSC, description = "Delete entities from SSC")
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static class SSCDeleteCommand {}
+	public static class SSCDeleteCommand {
+		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+			return RootDeleteCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
+		}
+	}
 }

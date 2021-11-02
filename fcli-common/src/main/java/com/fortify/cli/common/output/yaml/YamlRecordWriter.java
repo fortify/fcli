@@ -22,17 +22,47 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.xml;
+package com.fortify.cli.common.output.yaml;
 
-import com.fortify.cli.common.output.IOutputWriter;
-import com.fortify.cli.common.output.IOutputWriterFactory;
-import com.fortify.cli.common.output.OutputWriterConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import com.fortify.cli.common.output.IRecordWriter;
+import com.fortify.cli.common.output.RecordWriterConfig;
 
-public class XmlOutputWriterFactory implements IOutputWriterFactory {
+import lombok.SneakyThrows;
 
-	@Override
-	public IOutputWriter createOutputWriter(OutputWriterConfig config) {
-		return new XmlOutputWriter(config);
+public class YamlRecordWriter implements IRecordWriter {
+	private final RecordWriterConfig config;
+	private YAMLGenerator generator;
+
+	public YamlRecordWriter(RecordWriterConfig config) {
+		this.config = config;
+	}
+	
+	@SneakyThrows
+	private YAMLGenerator getGenerator() {
+		if ( generator==null ) {
+			YAMLFactory factory = new YAMLFactory();
+		    this.generator = (YAMLGenerator)factory.createGenerator(config.getPrintWriterSupplier().get())
+		    		.setCodec(new ObjectMapper());
+		    if ( config.isPretty() ) generator = (YAMLGenerator)generator.useDefaultPrettyPrinter();
+			if ( !config.isSingular() ) {
+				generator.writeStartArray();
+			}
+		}
+		return generator;
 	}
 
+	@Override @SneakyThrows
+	public void writeRecord(ObjectNode record) {
+		getGenerator().writeTree(record);
+	}
+	
+	@Override @SneakyThrows
+	public void finishOutput() {
+		generator.writeEndArray();
+		generator.close();
+	}
 }

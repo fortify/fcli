@@ -1,12 +1,13 @@
 package com.fortify.cli.sc_dast.command.crud.scanresults;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IDefaultOutputColumnsSupplier;
+import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 import com.fortify.cli.sc_dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.command.crud.SCDastCrudRootCommands;
+import com.fortify.cli.sc_dast.command.crud.SCDastCrudRootCommands.SCDastGetCommand;
 import com.fortify.cli.sc_dast.command.crud.scanresults.actions.SCDastScanResultsActionsHandler;
 import com.fortify.cli.sc_dast.command.crud.scanresults.options.SCDastScanResultsOptions;
 
@@ -29,7 +30,7 @@ public class SCDastScanResultsCommands {
     @ReflectiveAccess
     @SubcommandOf(SCDastCrudRootCommands.SCDastGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
-    public static final class Get extends AbstractSCDastUnirestRunnerCommand  implements IDefaultOutputColumnsSupplier {
+    public static final class Get extends AbstractSCDastUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
 
         @ArgGroup(exclusive = false, heading = "Get results from a specific scan:%n", order = 1)
         @Getter private SCDastScanResultsOptions scanResultsOptions;
@@ -53,9 +54,9 @@ public class SCDastScanResultsCommands {
         }
 
         @Override
-        public String getDefaultOutputColumns(OutputFormat outputFormat) {
-            return _getDefaultOutputColumns();
-        }
+		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+			return SCDastGetCommand.defaultOutputConfig().defaultColumns(_getDefaultOutputColumns());
+		}
     }
 }
 

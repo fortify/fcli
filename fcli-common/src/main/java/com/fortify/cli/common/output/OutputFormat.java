@@ -27,32 +27,47 @@ package com.fortify.cli.common.output;
 import java.util.function.Function;
 
 import com.fortify.cli.common.json.transform.PropertyPathFormatter;
-import com.fortify.cli.common.output.csv.CsvOutputWriterFactory;
-import com.fortify.cli.common.output.json.JsonOutputWriterFactory;
-import com.fortify.cli.common.output.table.TableOutputWriterFactory;
-import com.fortify.cli.common.output.tree.TreeOutputWriterFactory;
-import com.fortify.cli.common.output.xml.XmlOutputWriterFactory;
-import com.fortify.cli.common.output.yaml.YamlOutputWriterFactory;
+import com.fortify.cli.common.output.csv.CsvRecordWriterFactory;
+import com.fortify.cli.common.output.json.JsonRecordWriterFactory;
+import com.fortify.cli.common.output.table.TableRecordWriterFactory;
+import com.fortify.cli.common.output.tree.TreeRecordWriterFactory;
+import com.fortify.cli.common.output.xml.XmlRecordWriterFactory;
+import com.fortify.cli.common.output.yaml.YamlRecordWriterFactory;
 
 import lombok.Getter;
 
 public enum OutputFormat {
 	@Getter
-	json (OutputType.TECHNICAL,    new JsonOutputWriterFactory(),  PropertyPathFormatter::camelCase), 
-	yaml (OutputType.TECHNICAL,    new YamlOutputWriterFactory(),  PropertyPathFormatter::snakeCase), 
-	table(OutputType.TEXT_COLUMNS, new TableOutputWriterFactory(), PropertyPathFormatter::humanReadable), 
-	tree (OutputType.TEXT_ROWS,    new TreeOutputWriterFactory(),  PropertyPathFormatter::humanReadable), 
-	xml  (OutputType.TECHNICAL,    new XmlOutputWriterFactory(),   PropertyPathFormatter::camelCase), 
-	csv  (OutputType.TEXT_COLUMNS, new CsvOutputWriterFactory(),   PropertyPathFormatter::humanReadable);
+	json (OutputType.TECHNICAL,    new JsonRecordWriterFactory(),  PropertyPathFormatter::camelCase), 
+	yaml (OutputType.TECHNICAL,    new YamlRecordWriterFactory(),  PropertyPathFormatter::snakeCase), 
+	table(OutputType.TEXT_COLUMNS, new TableRecordWriterFactory(), PropertyPathFormatter::humanReadable), 
+	tree (OutputType.TEXT_ROWS,    new TreeRecordWriterFactory(),  PropertyPathFormatter::humanReadable), 
+	xml  (OutputType.TECHNICAL,    new XmlRecordWriterFactory(),   PropertyPathFormatter::camelCase), 
+	csv  (OutputType.TEXT_COLUMNS, new CsvRecordWriterFactory(),   PropertyPathFormatter::humanReadable);
 	
 	@Getter private final OutputType               outputType; 
-	@Getter private final IOutputWriterFactory     outputWriterFactory;
-	@Getter private final Function<String, String> fieldNameFormatter;
-	OutputFormat(OutputType outputType, IOutputWriterFactory outputWriterFactory, Function<String, String> fieldNameformatter) {
+	@Getter private final IRecordWriterFactory     recordWriterFactory;
+	@Getter private final Function<String, String> defaultFieldNameFormatter;
+	OutputFormat(OutputType outputType, IRecordWriterFactory recordWriterFactory, Function<String, String> defaultFieldNameformatter) {
 		this.outputType = outputType;
-		this.outputWriterFactory = outputWriterFactory;
-		this.fieldNameFormatter = fieldNameformatter;
+		this.recordWriterFactory = recordWriterFactory;
+		this.defaultFieldNameFormatter = defaultFieldNameformatter;
 	}
 	
 	public enum OutputType { TEXT_ROWS, TEXT_COLUMNS, TECHNICAL }
+	
+	public static final boolean isText(OutputFormat outputFormat) {
+		switch (outputFormat.getOutputType()) {
+		case TEXT_COLUMNS:
+		case TEXT_ROWS: return true;
+		default: return false;
+		}
+	}
+	
+	public static final boolean isColumns(OutputFormat outputFormat) {
+		switch (outputFormat.getOutputType()) {
+		case TEXT_COLUMNS: return true;
+		default: return false;
+		}
+	}
 }

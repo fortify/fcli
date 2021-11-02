@@ -22,52 +22,52 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.csv;
+package com.fortify.cli.common.output.xml;
 
-import java.io.Writer;
+import javax.xml.namespace.QName;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.fortify.cli.common.json.JacksonJsonNodeHelper;
-import com.fortify.cli.common.output.IOutputWriter;
-import com.fortify.cli.common.output.OutputWriterConfig;
+import com.fasterxml.jackson.dataformat.xml.XmlFactory;
+import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
+import com.fortify.cli.common.output.IRecordWriter;
+import com.fortify.cli.common.output.RecordWriterConfig;
 
 import lombok.SneakyThrows;
 
-public class CsvOutputWriter implements IOutputWriter {
-	private final OutputWriterConfig config;
-	private ObjectWriter objectWriter;
+public class XmlRecordWriter implements IRecordWriter {
+	private final RecordWriterConfig config;
+	private ToXmlGenerator generator;
 
-	public CsvOutputWriter(OutputWriterConfig config) {
+	public XmlRecordWriter(RecordWriterConfig config) {
 		this.config = config;
 	}
-
-	private ObjectWriter getObjectWriter(JsonNode input) {
-		if ( objectWriter==null ) {
-			ObjectNode firstObjectNode = JacksonJsonNodeHelper.getFirstObjectNode(input);
-			if ( firstObjectNode!=null ) {
-				CsvSchema.Builder schemaBuilder = CsvSchema.builder();
-				firstObjectNode.fieldNames().forEachRemaining(schemaBuilder::addColumn);
-				CsvSchema schema = schemaBuilder.build()
-						.withUseHeader(config.isHeadersEnabled());
-				objectWriter = new CsvMapper()
-						.enable(JsonGenerator.Feature.IGNORE_UNKNOWN)
-						.writer(schema);
+	
+	@SneakyThrows
+	private ToXmlGenerator getGenerator() {
+		if ( generator==null ) {
+			XmlFactory factory = new XmlFactory();
+		    this.generator = (ToXmlGenerator)factory.createGenerator(config.getPrintWriterSupplier().get())
+		    		.setCodec(new ObjectMapper());
+		    if ( config.isPretty() ) generator = (ToXmlGenerator)generator.useDefaultPrettyPrinter();
+			if ( !config.isSingular() ) {
+				generator.setNextName(new QName(null, "items"));
+				generator.writeStartObject();
 			}
 		}
-		return objectWriter;
+		return generator;
 	}
 
 	@Override @SneakyThrows
-	public void write(JsonNode jsonNode) {
-		ObjectWriter objectWriter = getObjectWriter(jsonNode);
-		try ( Writer writer = config.getWriterSupplier().get() ) {
-			objectWriter.writeValue(writer, jsonNode);
-		}
+	public void writeRecord(ObjectNode record) {
+		ToXmlGenerator generator = getGenerator();
+		generator.writeFieldName("item");
+		generator.writeTree(record);
 	}
-
+	
+	@Override @SneakyThrows
+	public void finishOutput() {
+		generator.writeEndObject();
+		generator.close();
+	}
 }

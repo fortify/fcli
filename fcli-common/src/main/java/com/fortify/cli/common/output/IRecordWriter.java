@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,10 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.component.output;
+package com.fortify.cli.common.output;
 
-import com.fortify.cli.common.output.OutputFormat;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public interface IDefaultOutputFormatSupplier {
-	public OutputFormat getDefaultOutputFormat();
+public interface IRecordWriter {
+	public void writeRecord(ObjectNode record);
+	default void finishOutput() {}
 }
