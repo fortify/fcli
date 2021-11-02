@@ -22,28 +22,35 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.command.transfer;
+package com.fortify.cli.fod.auth.data;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.transfer.RootDownloadCommand;
-import com.fortify.cli.common.picocli.command.transfer.RootUploadCommand;
+import java.util.Date;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine.Command;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class FoDTransferRootCommands {
-	@ReflectiveAccess
-	@SubcommandOf(RootUploadCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Upload data FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
-	public static class FoDUploadCommand {}
-	
-	@ReflectiveAccess
-	@SubcommandOf(RootDownloadCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Download data from FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
-	public static class FoDDownloadCommand {}
+import io.micronaut.core.annotation.Introspected;
+import lombok.Data;
+
+@Data @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
+public final class FoDTokenResponse {
+	private String accessToken;
+	private long expiresAt;
+	public String getAccessToken() {
+		return accessToken;
+	}
+	@JsonProperty("access_token")
+	public void setAccessToken(String accessToken) {
+		this.accessToken = accessToken;
+	}
+	@JsonProperty("expires_in")
+	public void setExpiresIn(long expiresIn) {
+		this.expiresAt = new Date().getTime()+((expiresIn-5)*1000);
+	}
+	public long getExpiresAt() {
+		return expiresAt;
+	}
+	public boolean isExpired() {
+		return new Date().getTime() > expiresAt;
+	}
 }

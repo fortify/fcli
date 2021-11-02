@@ -22,28 +22,34 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.command.transfer;
+package com.fortify.cli.fod.command;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.transfer.RootDownloadCommand;
-import com.fortify.cli.common.picocli.command.transfer.RootUploadCommand;
+import com.fortify.cli.common.picocli.command.auth.consumer.AuthSessionConsumerOptionsHandler;
+import com.fortify.cli.fod.rest.unirest.FoDUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine.Command;
+import jakarta.inject.Inject;
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import picocli.CommandLine.Mixin;
 
-public class FoDTransferRootCommands {
-	@ReflectiveAccess
-	@SubcommandOf(RootUploadCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Upload data FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
-	public static class FoDUploadCommand {}
+@ReflectiveAccess
+@RequiresProduct(ProductOrGroup.FOD)
+public abstract class AbstractFoDUnirestRunnerCommand implements Runnable {
+	@Getter @Inject private ObjectMapper objectMapper;
+	@Getter @Inject private FoDUnirestRunner unirestRunner;
+	@Getter @Mixin  private AuthSessionConsumerOptionsHandler authSessionConsumerOptionsHandler;
+
+	@Override @SneakyThrows
+	public final void run() {
+		// TODO Do we want to do anything with the results, like formatting it based on output options?
+		//      Or do we let the actual implementation handle this?
+		unirestRunner.runWithUnirest(authSessionConsumerOptionsHandler.getAuthSessionName(), this::runWithUnirest);
+	}
 	
-	@ReflectiveAccess
-	@SubcommandOf(RootDownloadCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Download data from FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
-	public static class FoDDownloadCommand {}
+	protected abstract Void runWithUnirest(UnirestInstance unirest);
 }

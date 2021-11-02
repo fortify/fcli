@@ -62,7 +62,7 @@ public class LoginConnectionOptions {
 	@Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
 	@Getter private boolean insecureModeEnabled;
 	
-	public final void configure(BasicConnectionConfig config) {
+	public void configure(BasicConnectionConfig config) {
 		config.setUrl(getUrl());
 		config.setProxyHost(getProxyHost());
 		config.setProxyPort(getProxyPort());

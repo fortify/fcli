@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,28 +22,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.command.transfer;
+package com.fortify.cli.fod.rest.data;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.transfer.RootDownloadCommand;
-import com.fortify.cli.common.picocli.command.transfer.RootUploadCommand;
+import com.fortify.cli.common.rest.data.BasicUserCredentialsConfig;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine.Command;
+import io.micronaut.core.annotation.Introspected;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-public class FoDTransferRootCommands {
-	@ReflectiveAccess
-	@SubcommandOf(RootUploadCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Upload data FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
-	public static class FoDUploadCommand {}
-	
-	@ReflectiveAccess
-	@SubcommandOf(RootDownloadCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Download data from FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
-	public static class FoDDownloadCommand {}
+@Data @EqualsAndHashCode(callSuper = true) @Introspected
+public final class FoDUserCredentialsConfig extends BasicUserCredentialsConfig {
+	private String tenant;
+	public void setPersonalAccessToken(char[] pat) {
+		super.setPassword(pat);
+	}
 }

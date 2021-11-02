@@ -38,7 +38,7 @@ public class LoginUserCredentialOptions {
 	@Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
 	@Getter protected char[] password;
 	
-	public final void configure(BasicUserCredentialsConfig config) {
+	public void configure(BasicUserCredentialsConfig config) {
 		config.setUser(getUser());
 		config.setPassword(getPassword());
 	}

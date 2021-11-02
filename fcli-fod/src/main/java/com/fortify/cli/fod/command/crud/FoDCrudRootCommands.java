@@ -32,6 +32,7 @@ import com.fortify.cli.common.picocli.command.crud.RootCreateCommand;
 import com.fortify.cli.common.picocli.command.crud.RootDeleteCommand;
 import com.fortify.cli.common.picocli.command.crud.RootGetCommand;
 import com.fortify.cli.common.picocli.command.crud.RootUpdateCommand;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
@@ -41,23 +42,39 @@ public class FoDCrudRootCommands {
 	@SubcommandOf(RootGetCommand.class)
 	@Command(name = ProductIdentifiers.FOD, description = "Get entity data from FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
-	public static final class FoDGetCommand {}
+	public static class FoDGetCommand {
+		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+			return RootGetCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
+		}
+	}
 	
 	@ReflectiveAccess
 	@SubcommandOf(RootCreateCommand.class)
 	@Command(name = ProductIdentifiers.FOD, description = "Create entities in FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
-	public static final class FoDCreateCommand {}
+	public static class FoDCreateCommand {
+		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+			return RootCreateCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
+		}
+	}
 	
 	@ReflectiveAccess
 	@SubcommandOf(RootUpdateCommand.class)
 	@Command(name = ProductIdentifiers.FOD, description = "Update entities in FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
-	public static final class FoDUpdateCommand {}
+	public static class FoDUpdateCommand {
+		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+			return RootUpdateCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
+		}
+	}
 	
 	@ReflectiveAccess
 	@SubcommandOf(RootDeleteCommand.class)
 	@Command(name = ProductIdentifiers.FOD, description = "Delete entities from FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
-	public static final class FoDDeleteCommand {}
+	public static class FoDDeleteCommand {
+		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+			return RootDeleteCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
+		}
+	}
 }

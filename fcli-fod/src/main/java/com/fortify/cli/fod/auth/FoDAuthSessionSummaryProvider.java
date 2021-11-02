@@ -22,28 +22,25 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.command.transfer;
+package com.fortify.cli.fod.auth;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
+import com.fortify.cli.common.auth.AbstractAuthSessionSummaryProvider;
+import com.fortify.cli.common.auth.AuthSessionSummary;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.transfer.RootDownloadCommand;
-import com.fortify.cli.common.picocli.command.transfer.RootUploadCommand;
+import com.fortify.cli.fod.auth.data.FoDAuthSessionData;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine.Command;
+import jakarta.inject.Singleton;
 
-public class FoDTransferRootCommands {
-	@ReflectiveAccess
-	@SubcommandOf(RootUploadCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Upload data FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
-	public static class FoDUploadCommand {}
+@Singleton
+public class FoDAuthSessionSummaryProvider extends AbstractAuthSessionSummaryProvider {
+	public final String getAuthSessionType() {
+		return ProductIdentifiers.FOD;
+	}
 	
-	@ReflectiveAccess
-	@SubcommandOf(RootDownloadCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Download data from FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
-	public static class FoDDownloadCommand {}
+	@Override
+	protected AuthSessionSummary getAuthSessionSummary(String authSessionName) {
+		return getAuthSessionPersistenceHelper()
+				.getData(getAuthSessionType(), authSessionName, FoDAuthSessionData.class)
+				.getSummary(authSessionName);
+	}
 }

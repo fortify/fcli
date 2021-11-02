@@ -30,8 +30,13 @@ import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.api.APICommandOptionsHandler;
 import com.fortify.cli.common.picocli.command.api.RootApiCommand;
+import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
+import com.fortify.cli.fod.command.AbstractFoDUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -39,15 +44,18 @@ import picocli.CommandLine.Mixin;
 @SubcommandOf(RootApiCommand.class)
 @Command(name = ProductIdentifiers.FOD, description = "Invoke FoD REST API")
 @RequiresProduct(ProductOrGroup.FOD)
-public final class FoDApiCommand /*extends AbstractFoDUnirestRunnerCommand*/ {
+public final class FoDApiCommand extends AbstractFoDUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
+	@Mixin private OutputOptionsHandler outputOptionsHandler;
 	@Mixin private APICommandOptionsHandler apiCommand;
 	
-	/*
 	@Override
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		System.out.println(apiCommand.prepareRequest(unirest).asObject(ObjectNode.class).getBody().toPrettyString());
+		outputOptionsHandler.write(apiCommand.prepareRequest(unirest));
 		return null;
 	}
-	*/
-    
+	
+	@Override
+	public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+		return RootApiCommand.defaultOutputConfig();
+	}
 }
