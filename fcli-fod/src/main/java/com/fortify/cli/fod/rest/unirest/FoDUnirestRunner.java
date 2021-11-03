@@ -57,7 +57,7 @@ public class FoDUnirestRunner extends AbstractAuthSessionUnirestRunner<FoDAuthSe
 		if ( cachedTokenResponse!=null ) {
 			System.out.println("FoD cachedTokenResponse: "+cachedTokenResponse);
 			if ( !cachedTokenResponse.isExpired() ) {
-				token = cachedTokenResponse.getAccessToken();
+				token = cachedTokenResponse.getAccess_token();
 			} else if ( !config.isRenewAllowed() ) {
 				throw new IllegalStateException(String.format("Login session %s for %s has expired, please login again", authSessionName, getAuthSessionType()));
 			}
@@ -78,7 +78,7 @@ public class FoDUnirestRunner extends AbstractAuthSessionUnirestRunner<FoDAuthSe
 					clearClientCredentials(config.getFodClientCredentialsConfig());
 				}
 				getAuthSessionPersistenceHelper().saveData(getAuthSessionType(), authSessionName, authSessionData);
-				token = tokenResponse.getAccessToken();
+				token = tokenResponse.getAccess_token();
 			} else {
 				throw new IllegalStateException("Cannot generate bearer token");
 			}

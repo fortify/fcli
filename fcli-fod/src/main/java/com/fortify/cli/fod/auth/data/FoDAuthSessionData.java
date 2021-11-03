@@ -67,7 +67,7 @@ public class FoDAuthSessionData implements IBasicConnectionConfigProvider {
 	private Date getSessionExpiryDate() {
 		Date sessionExpiryDate = AuthSessionSummary.EXPIRES_UNKNOWN;
 		if ( getCachedTokenResponse()!=null ) {
-			sessionExpiryDate = new Date(getCachedTokenResponse().getExpiresAt());
+			sessionExpiryDate = new Date(getCachedTokenResponse().getExpires_at());
 		}
 		return sessionExpiryDate;
 	}

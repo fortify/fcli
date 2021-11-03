@@ -28,32 +28,20 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 
 @Data @Introspected() @JsonIgnoreProperties(ignoreUnknown = true)
-@ReflectiveAccess // Needed to have Jackson see the JsonProperty annotations
 public final class FoDTokenResponse {
-	private String accessToken;
-	private long expiresAt;
-	public String getAccessToken() {
-		return accessToken;
+	private String access_token;
+	private long expires_at;
+
+	public void setExpires_in(long expiresIn) {
+		this.expires_at = new Date().getTime()+((expiresIn-5)*1000);
 	}
-	@JsonProperty("access_token")
-	public void setAccessToken(String accessToken) {
-		this.accessToken = accessToken;
-	}
-	@JsonProperty("expires_in")
-	public void setExpiresIn(long expiresIn) {
-		this.expiresAt = new Date().getTime()+((expiresIn-5)*1000);
-	}
-	public long getExpiresAt() {
-		return expiresAt;
-	}
+
 	@JsonIgnore public boolean isExpired() {
-		return new Date().getTime() > expiresAt;
+		return new Date().getTime() > expires_at;
 	}
 }
