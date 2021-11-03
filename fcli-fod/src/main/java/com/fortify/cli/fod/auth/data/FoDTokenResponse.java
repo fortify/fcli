@@ -31,9 +31,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 
-@Data @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @Introspected() @JsonIgnoreProperties(ignoreUnknown = true)
+@ReflectiveAccess // Needed to have Jackson see the JsonProperty annotations
 public final class FoDTokenResponse {
 	private String accessToken;
 	private long expiresAt;
