@@ -44,7 +44,6 @@ import kong.unirest.UnirestInstance;
 public class FoDUnirestRunner extends AbstractAuthSessionUnirestRunner<FoDAuthSessionData> {
 	@Override
 	protected void configure(String authSessionName, FoDAuthSessionData authSessionData, UnirestInstance unirestInstance) {
-		unirestInstance.config().followRedirects(true);
 		FoDConnectionConfig config = authSessionData.getConfig();
 		if ( config==null ) {
 			throw new IllegalStateException("FoD connection configuration may not be null");
@@ -56,6 +55,7 @@ public class FoDUnirestRunner extends AbstractAuthSessionUnirestRunner<FoDAuthSe
 		String token = null;
 		FoDTokenResponse cachedTokenResponse = authSessionData.getCachedTokenResponse();
 		if ( cachedTokenResponse!=null ) {
+			System.out.println("FoD cachedTokenResponse: "+cachedTokenResponse);
 			if ( !cachedTokenResponse.isExpired() ) {
 				token = cachedTokenResponse.getAccessToken();
 			} else if ( !config.isRenewAllowed() ) {
@@ -71,6 +71,7 @@ public class FoDUnirestRunner extends AbstractAuthSessionUnirestRunner<FoDAuthSe
 			}
 			if ( tokenRequestData != null ) {
 				FoDTokenResponse tokenResponse = generateToken(unirestInstance, tokenRequestData);
+				System.out.println("FoD tokenResponse: "+tokenResponse);
 				authSessionData.setCachedTokenResponse(tokenResponse);
 				if ( !config.isRenewAllowed() ) {
 					clearUserCredentials(config.getFodUserCredentialsConfig());
