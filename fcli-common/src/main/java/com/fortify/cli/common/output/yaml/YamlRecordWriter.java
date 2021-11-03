@@ -62,7 +62,7 @@ public class YamlRecordWriter implements IRecordWriter {
 	
 	@Override @SneakyThrows
 	public void finishOutput() {
-		generator.writeEndArray();
-		generator.close();
+		getGenerator().writeEndArray();
+		getGenerator().close();
 	}
 }

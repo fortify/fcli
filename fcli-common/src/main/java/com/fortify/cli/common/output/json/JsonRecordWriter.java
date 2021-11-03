@@ -66,8 +66,8 @@ public class JsonRecordWriter implements IRecordWriter {
 	@Override @SneakyThrows
 	public void finishOutput() {
 		if ( !config.isSingular() ) {
-			generator.writeEndArray();
-			generator.close();
+			getGenerator().writeEndArray();
+			getGenerator().close();
 		}
 	}
 }

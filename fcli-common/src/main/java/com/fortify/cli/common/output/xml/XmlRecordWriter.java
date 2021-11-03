@@ -60,14 +60,13 @@ public class XmlRecordWriter implements IRecordWriter {
 
 	@Override @SneakyThrows
 	public void writeRecord(ObjectNode record) {
-		ToXmlGenerator generator = getGenerator();
-		generator.writeFieldName("item");
-		generator.writeTree(record);
+		getGenerator().writeFieldName("item");
+		getGenerator().writeTree(record);
 	}
 	
 	@Override @SneakyThrows
 	public void finishOutput() {
-		generator.writeEndObject();
-		generator.close();
+		getGenerator().writeEndObject();
+		getGenerator().close();
 	}
 }
