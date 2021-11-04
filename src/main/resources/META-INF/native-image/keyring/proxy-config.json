@@ -1,8 +1,7 @@
 [
   ["net.smoofyuniverse.keyring.windows.Advapi32"],
   ["net.smoofyuniverse.keyring.windows.Kernel32"],
-  ["net.smoofyuniverse.keyring.linux.GLib"],
-  ["net.smoofyuniverse.keyring.linux.Libsecret"],
+  
   ["net.smoofyuniverse.keyring.mac.CoreFoundationLib"],
   ["net.smoofyuniverse.keyring.osx.CoreFoundationLib"],
   ["net.smoofyuniverse.keyring.mac.SecurityLib"],
