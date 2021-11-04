@@ -29,6 +29,7 @@ import org.apache.commons.logging.impl.LogFactoryImpl;
 import org.apache.commons.logging.impl.SimpleLog;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
+import org.netbeans.api.keyring.Keyring;
 
 import com.fortify.cli.common.picocli.executor.CommandLineExecutor;
 import com.oracle.svm.core.annotate.AutomaticFeature;
@@ -54,10 +55,17 @@ public class FortifyCLI {
 	 * @param args Command line options passed to Fortify CLI
 	 */
 	public static void main(String[] args) {
+		testKeyring();
 		FortifyCLILogHelper.configureLogging(args);
 		System.exit(execute(args));
 	}
 	
+	private static final void testKeyring() {
+		TestGitHubKeyRing.test();
+		TestNetBeansKeyRing.test();
+		TestSmoothyKeyRing.test();
+	}
+
 	/**
 	 * This method starts the Micronaut {@link ApplicationContext}, then invokes the 
 	 * {@link CommandLineExecutor#execute(String[])} method on the {@link CommandLineExecutor}
