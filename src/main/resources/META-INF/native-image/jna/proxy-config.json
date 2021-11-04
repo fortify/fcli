@@ -1,4 +1,5 @@
 [
   ["com.sun.jna.Library"],
-  ["com.sun.jna.Callback"]
+  ["com.sun.jna.Callback"],
+  ["net.smoofyuniverse.keyring.linux.GLib"]
 ]
