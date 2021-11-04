@@ -77,6 +77,8 @@ jobs:
     needs: build
     runs-on: ubuntu-18.04
     steps:
+      - name: Check-out source code
+        uses: actions/checkout@v2
       - uses: DeLaGuardo/setup-graalvm@3
         with:
           graalvm-version: '21.2.0.java11'
@@ -89,7 +91,7 @@ jobs:
           path: ./
 
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -H:ResourceConfigurationFiles@jar:artifact/fcli.jar!platform/linux-x86-64/resource-config.json -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} -H:ResourceConfigurationFiles=src/main/resources/platform/linux-x86-64/resource-config.json -jar ./artifact/fcli.jar fcli
         
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -111,6 +113,8 @@ jobs:
     needs: build
     runs-on: macos-10.15
     steps:
+      - name: Check-out source code
+        uses: actions/checkout@v2
       - uses: DeLaGuardo/setup-graalvm@3
         with:
           graalvm-version: '21.2.0.java11'
@@ -123,7 +127,7 @@ jobs:
           path: ./
 
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -H:ResourceConfigurationFiles@jar:artifact/fcli.jar!platform/darwin-x86-64/resource-config.json -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} -H:ResourceConfigurationFiles=src/main/resources/platform/darwin-x86-64/resource-config.json -jar ./artifact/fcli.jar fcli
        
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -145,6 +149,8 @@ jobs:
     needs: build
     runs-on: windows-2019
     steps:
+      - name: Check-out source code
+        uses: actions/checkout@v2
       - uses: DeLaGuardo/setup-graalvm@3
         with:
           graalvm-version: '21.2.0.java11'
@@ -158,27 +164,27 @@ jobs:
 
       - name: Create native fcli
         run: >-
-          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-          ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ResourceConfigurationFiles@jar:artifact/fcli.jar!platform/win32-x86-64/resource-config.json -jar .\artifact\fcli.jar fcli
-        shell: cmd
+        "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
+        ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ResourceConfigurationFiles=src/main/resources/platform/win32-x86-64/resource-config.json -jar .\artifact\fcli.jar fcli
+      shell: cmd
 
       
-      - name: Compress native fcli
-        uses: svenstaro/upx-action@v2
-        with:
-          file: fcli.exe
+    - name: Compress native fcli
+      uses: svenstaro/upx-action@v2
+      with:
+        file: fcli.exe
       
-      - name: Basic test of native fcli
-        run: |
-          .\fcli.exe --help 
-          .\fcli.exe get --help
+    - name: Basic test of native fcli
+      run: |
+        .\fcli.exe --help 
+        .\fcli.exe get --help
         
-      - name: Package native fcli
-        run: 7z a fcli-windows.zip fcli.exe
+    - name: Package native fcli
+      run: 7z a fcli-windows.zip fcli.exe
 
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./fcli-windows.zip
+    - uses: actions/upload-artifact@v2
+      with:
+        path: ./fcli-windows.zip
         
   release:
     name: release
