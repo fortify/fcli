@@ -127,7 +127,7 @@ jobs:
           path: ./
 
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -H:ResourceConfigurationFiles=src/main/resources/platform/darwin-x86-64/resource-config.json -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} -H:ResourceConfigurationFiles=src/main/resources/platform/darwin/resource-config.json -jar ./artifact/fcli.jar fcli
        
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
