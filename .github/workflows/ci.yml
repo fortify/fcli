@@ -91,7 +91,7 @@ jobs:
           path: ./
 
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -H:ResourceConfigurationFiles=src/main/resources/platform/linux-x86-64/resource-config.json -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} -H:ResourceConfigurationFiles=src/main/resources/jna/native-image/platform/linux-x86-64/resource-config.json -jar ./artifact/fcli.jar fcli
         
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -127,7 +127,7 @@ jobs:
           path: ./
 
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -H:ResourceConfigurationFiles=src/main/resources/platform/darwin/resource-config.json -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} -H:ResourceConfigurationFiles=src/main/resources/jna/native-image/platform/darwin/resource-config.json -jar ./artifact/fcli.jar fcli
        
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -165,7 +165,7 @@ jobs:
       - name: Create native fcli
         run: >-
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-          ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ResourceConfigurationFiles=src/main/resources/platform/win32-x86-64/resource-config.json -jar .\artifact\fcli.jar fcli
+          ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ResourceConfigurationFiles=src/main/resources/jna/native-image/platform/win32-x86-64/resource-config.json -jar .\artifact\fcli.jar fcli
         shell: cmd
 
       

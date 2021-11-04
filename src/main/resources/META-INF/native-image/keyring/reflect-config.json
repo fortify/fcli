@@ -14,6 +14,20 @@
     "allPublicMethods" : true
   },
   {
+    "name" : "net.smoofyuniverse.keyring.windows.CREDENTIAL",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true
+  },
+  {
+    "name" : "net.smoofyuniverse.keyring.windows.FILETIME",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true
+  },
+  {
     "name" : "net.smoofyuniverse.keyring.linux.GLib",
     "allDeclaredConstructors" : true,
     "allPublicConstructors" : true,
@@ -22,6 +36,27 @@
   },
   {
     "name" : "net.smoofyuniverse.keyring.linux.Libsecret",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true
+  },
+  {
+    "name" : "net.smoofyuniverse.keyring.linux.GError",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true
+  },
+  {
+    "name" : "net.smoofyuniverse.keyring.linux.SecretSchema",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true
+  },
+  {
+    "name" : "net.smoofyuniverse.keyring.linux.SecretSchemaAttribute",
     "allDeclaredConstructors" : true,
     "allPublicConstructors" : true,
     "allDeclaredMethods" : true,
@@ -54,5 +89,7 @@
     "allPublicConstructors" : true,
     "allDeclaredMethods" : true,
     "allPublicMethods" : true
-  }
+  },
+  
+  
 ]
