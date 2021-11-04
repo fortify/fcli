@@ -104,6 +104,78 @@ This does have a couple of consequences:
 * Some code may run fine on a regular JVM, but not in a native image, for example due to one of the following reasons:
     * Classes being serialized or de-serialized unintentionally force reflective access. For example, de-serializing some JSON property that corresponds to a `final` field will work fine on a JVM (despite being defined as `final`, the property can still be set through reflection), but will fail in a native image
     * De-serializing properties for which no setter exists may fail. In particular, if data classes define   getters without corresponding setters (for example to access nested or calculated data), then by default Jackson will serialize the data returned by these methods but will fail to deserialize that data in a native image because no setter exists; see [Jackson deserialization failing](https://github.com/micronaut-projects/micronaut-core/discussions/6393) for an example. The solution is to not serialize the data returned by those methods in the first place by using the `@JsonIgnore` annotation on those getters.
+    
+#### JNA
+
+Some 3<sup>rd</sup>-party libraries may use JNA for interfacing with native libraries. GraalVM doesn't officially support JNA, however it is possible to make this work. General JNA setup is as follows:
+
+* `src/main/resources/META-INF/native-image/jna` contains JNI, proxy and reflection configuration copied from https://github.com/amahfouz1/jna-graalvm/tree/main/src/main/resources/conf
+* `src/main/resources/jna/native-image/plaform/*/resource-config.json` contain platform-specific resource configurations, for example to allow native images to access the native JNA libraries
+     * The appropriate resource configuration must be provided during image generation using `-H:ResourceConfigurationFiles=src/main/resources/jna/native-image/platform/<platform>/resource-config.json` as can be seen in .github/workflows/ci.yml
+     * You'll get an error message showing the exact path of the expected library location at runtime if a required library is missing, so it's easy to create/update the appropriate `resource-config.json` file with the correct path
+     
+In addition, for each library that uses JNA, a separate `src/main/resources/META-INF/native-image/<libraryname>` should be created containing `proxy-config.json` and `reflect-config.json` files with contents as described below.
+
+* For each 3<sup>rd</sup>-party interface that extends `com.sun.jna.Library`:
+    * Add the class name to `proxy-config.json`
+    * Add the class name to `reflect-config.json`, setting the following properties to true: `allDeclaredConstructors`, `allPublicConstructors`, `allDeclaredMethods`, `allPublicMethods`
+* For each 3<sup>rd</sup>-party class that extends `com.sun.jna.Structure`:
+    * Add the class name to `reflect-config.json`, setting the following properties to true: `allDeclaredConstructors`, `allPublicConstructors`, `allDeclaredMethods`, `allPublicMethods`, `allDeclaredfields`, `allPublicFields`
+     
+Failure to do so may result in runtime errors with fairly descriptive error messages. For example:
+* `java.lang.Error: Structure.getFieldOrder() on class ... returns names ([...]) which do not match declared field names ([])`
+    * Identifies that `reflect-config.json` is missing an entry for the class mentioned in the error message, or the `allDeclaredfields` property for that class hasn't been set to `true`
+* `Proxy class defined by interfaces [interface ...] not found. Generating proxy classes at runtime is not supported`
+    * Identifies that `proxy-config.json` is missing an entry for the interface mentioned in the error message
+         
+Following is a partial example of `proxy-config.json` and `reflect-config.json` for https://github.com/Yeregorix/java-keyring:
+
+proxy-config.json:
+
+```json
+[
+  ["net.smoofyuniverse.keyring.windows.Advapi32"],
+  ["net.smoofyuniverse.keyring.windows.Kernel32"],
+  ["net.smoofyuniverse.keyring.linux.GLib"],
+  ["net.smoofyuniverse.keyring.linux.Libsecret"],
+  ["net.smoofyuniverse.keyring.mac.CoreFoundationLib"],
+  ["net.smoofyuniverse.keyring.osx.CoreFoundationLib"],
+  ["net.smoofyuniverse.keyring.mac.SecurityLib"],
+  ["net.smoofyuniverse.keyring.osx.SecurityLib"]
+]
+```
+
+reflect-config.json:
+
+```json
+[
+  {
+    "name" : "net.smoofyuniverse.keyring.windows.Advapi32",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true
+  },
+  {
+    "name" : "net.smoofyuniverse.keyring.windows.Kernel32",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true
+  },
+  {
+    "name" : "net.smoofyuniverse.keyring.windows.CREDENTIAL",
+    "allDeclaredConstructors" : true,
+    "allPublicConstructors" : true,
+    "allDeclaredMethods" : true,
+    "allPublicMethods" : true,
+    "allDeclaredFields" : true,
+    "allPublicFields" : true
+  },
+  ...
+]
+```
+
 
 ### Gradle Wrapper
 
