@@ -34,7 +34,7 @@ public class TestSmoothyKeyRing {
 			keyring.setPassword("com.fortify.cli", "TestSmoothyKeyRing", String.valueOf(pwd));
 			String fromKeyring = keyring.getPassword("com.fortify.cli", "TestSmoothyKeyRing");
 			System.err.println("TestSmoothyKeyRing Secret key: "+fromKeyring);
-		} catch ( Exception e ) {
+		} catch ( Exception | Error e ) {
 			e.printStackTrace();
 		}
 	}

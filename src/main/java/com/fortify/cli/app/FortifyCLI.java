@@ -62,8 +62,8 @@ public class FortifyCLI {
 	
 	private static final void testKeyring() {
 		TestGitHubKeyRing.test();
-		TestNetBeansKeyRing.test();
 		TestSmoothyKeyRing.test();
+		TestNetBeansKeyRing.test();
 	}
 
 	/**

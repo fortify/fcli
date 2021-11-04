@@ -33,7 +33,7 @@ public class TestNetBeansKeyRing {
 			Keyring.save("TestNetBeansKeyRing", pwd, "Test Key");
 			char[] fromKeyring = Keyring.read("TestNetBeansKeyRing");
 			System.err.println("TestNetBeansKeyRing Secret key: "+String.valueOf(fromKeyring));
-		} catch ( Exception e ) {
+		} catch ( Exception | Error e ) {
 			e.printStackTrace();
 		}
 	}

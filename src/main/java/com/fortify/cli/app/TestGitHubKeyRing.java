@@ -34,7 +34,7 @@ public class TestGitHubKeyRing {
 			keyring.setPassword("com.fortify.cli", "TestGitHubKeyRing", String.valueOf(pwd));
 			String fromKeyring = keyring.getPassword("com.fortify.cli", "TestGitHubKeyRing");
 			System.err.println("TestGitHubKeyRing Secret key: "+fromKeyring);
-		} catch ( Exception e ) {
+		} catch ( Exception | Error e ) {
 			e.printStackTrace();
 		}
 	}
