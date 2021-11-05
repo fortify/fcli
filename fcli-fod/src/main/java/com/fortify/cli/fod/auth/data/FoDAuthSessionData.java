@@ -58,6 +58,7 @@ public class FoDAuthSessionData implements IBasicConnectionConfigProvider {
 	public AuthSessionSummary getSummary(String authSessionName) {
 		return AuthSessionSummary.builder()
 				.name(authSessionName)
+				.url(config.getBasicConnectionConfig().getUrl())
 				.created(getCreated())
 				.expires(getSessionExpiryDate())
 				.build();

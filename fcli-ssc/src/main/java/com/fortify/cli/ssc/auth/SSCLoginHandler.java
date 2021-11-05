@@ -24,46 +24,62 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.auth;
 
-import java.util.Date;
-
-import com.fortify.cli.common.auth.AuthSessionPersistenceHelper;
-import com.fortify.cli.common.auth.ILoginHandler;
-import com.fortify.cli.common.auth.LogoutHelper;
+import com.fortify.cli.common.auth.AbstractLoginHandler;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
+import com.fortify.cli.common.rest.data.BasicConnectionConfig;
+import com.fortify.cli.common.rest.data.BasicUserCredentialsConfig;
+import com.fortify.cli.common.rest.unirest.BasicConnectionConfigUnirestRunner;
 import com.fortify.cli.ssc.auth.data.SSCAuthSessionData;
+import com.fortify.cli.ssc.auth.data.SSCTokenRequest;
+import com.fortify.cli.ssc.auth.data.SSCTokenResponse;
 import com.fortify.cli.ssc.rest.data.SSCConnectionConfig;
-import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public class SSCLoginHandler implements ILoginHandler<SSCConnectionConfig> {
-	@Getter @Inject private SSCUnirestRunner unirestRunner;
-	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
-	@Getter @Inject private LogoutHelper logoutHelper;
+public class SSCLoginHandler extends AbstractLoginHandler<SSCConnectionConfig> {
+	@Inject private BasicConnectionConfigUnirestRunner basicUnirestRunner;
 
 	public final String getAuthSessionType() {
 		return ProductIdentifiers.SSC;
 	}
 
 	@Override
-	public void login(String authSessionName, SSCConnectionConfig connectionConfig) {
-		String authSessionType = getAuthSessionType();
-		if ( authSessionPersistenceHelper.exists(authSessionType, authSessionName) ) {
-			// Log out from previous session before creating a new session
-			getLogoutHelper().logoutAndDestroy(authSessionType, authSessionName);
+	public final Object _login(String authSessionName, SSCConnectionConfig sscConnectionConfig) {
+		SSCAuthSessionData authSessionData = null;
+		BasicConnectionConfig basicConnectionConfig = sscConnectionConfig.getBasicConnectionConfig();
+		if ( sscConnectionConfig.getToken()!=null ) {
+			authSessionData = new SSCAuthSessionData(sscConnectionConfig);
+		} else if ( sscConnectionConfig.hasUserCredentialsConfig() ) {
+			authSessionData = basicUnirestRunner.runWithUnirest(basicConnectionConfig, unirest->generateAuthSessionData(unirest, sscConnectionConfig));
+		} else {
+			throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
 		}
-		SSCAuthSessionData authSessionData = new SSCAuthSessionData(connectionConfig, null, new Date());
-		getUnirestRunner().runWithUnirest(authSessionName, authSessionData, this::validateAuthSession);
-		authSessionPersistenceHelper.saveData(authSessionType, authSessionName, authSessionData);
+		return authSessionData;
 	}
 	
-	private final Void validateAuthSession(UnirestInstance unirestInstance) {
-		// TODO Is there any endpoint that can be called with any type of token?
-		return null;
+	private final SSCAuthSessionData generateAuthSessionData(UnirestInstance unirest, SSCConnectionConfig sscConnectionConfig) {
+		SSCTokenResponse sscTokenResponse = generateToken(unirest, sscConnectionConfig);
+		return new SSCAuthSessionData(sscConnectionConfig, sscTokenResponse);
 	}
+	
+	private final SSCTokenResponse generateToken(UnirestInstance unirestInstance, SSCConnectionConfig sscConnectionConfig) {
+		SSCTokenRequest tokenRequest = SSCTokenRequest.builder()
+				.type("UnifiedLoginToken")
+				.terminalDate(sscConnectionConfig.getExpiresAt())
+				.build();
+		BasicUserCredentialsConfig basicUserCredentialsConfig = sscConnectionConfig.getBasicUserCredentialsConfig();
+		return unirestInstance.post("/api/v1/tokens")
+				.accept("application/json")
+				.header("Content-Type", "application/json")
+				.basicAuth(basicUserCredentialsConfig.getUser(), new String(basicUserCredentialsConfig.getPassword()))
+				.body(tokenRequest)
+				.asObject(SSCTokenResponse.class)
+				.ifFailure(resp->{throw new RuntimeException(resp.getStatusText());})
+				.getBody();
+	}
+	
 }

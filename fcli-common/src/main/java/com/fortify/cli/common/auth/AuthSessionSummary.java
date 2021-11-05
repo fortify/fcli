@@ -35,6 +35,7 @@ public class AuthSessionSummary {
 	public static final Date EXPIRES_UNKNOWN = null;
 	public static final Date EXPIRES_NEVER = new Date(Long.MAX_VALUE);
 	private String name;
+	private String url;
 	private Date created;
 	private Date expires;
 }

@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.command.auth;
 
+import java.time.OffsetDateTime;
+
 import com.fortify.cli.common.auth.ILoginHandler;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
@@ -33,6 +35,7 @@ import com.fortify.cli.common.picocli.command.auth.login.AbstractAuthLoginComman
 import com.fortify.cli.common.picocli.command.auth.login.AuthLoginCommand;
 import com.fortify.cli.common.picocli.command.auth.login.LoginConnectionOptions;
 import com.fortify.cli.common.picocli.command.auth.login.LoginUserCredentialOptions;
+import com.fortify.cli.common.time.DateTimeHelper;
 import com.fortify.cli.ssc.auth.SSCLoginHandler;
 import com.fortify.cli.ssc.rest.data.SSCConnectionConfig;
 
@@ -41,6 +44,7 @@ import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
@@ -56,11 +60,12 @@ public class SSCLoginCommand extends AbstractAuthLoginCommand<SSCConnectionConfi
 	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC authentication options:%n", order = 2)
     @Getter private SSCAuthOptions authOptions;
 	
+	@Option(names = {"--expires-in"}, required = false, defaultValue = "30m", showDefaultValue = Visibility.ALWAYS) 
+	@Getter private String expiresIn;
+	
 	static class SSCAuthOptions {
 		@ArgGroup(exclusive = true, multiplicity = "1", order = 3)
 	    @Getter private SSCCredentialOptions credentialOptions;
-		@Option(names = {"--allow-renew", "-r"}, description = "Allow SSC token renewal", order = 4) 
-    	@Getter private boolean renewAllowed;
 	}
 	
     static class SSCCredentialOptions {
@@ -86,8 +91,12 @@ public class SSCLoginCommand extends AbstractAuthLoginCommand<SSCConnectionConfi
 		connectionOptions.configure(config.getNonNullBasicConnectionConfig());
 		authOptions.getCredentialOptions().getUserOptions().configure(config.getNonNullBasicUserCredentialsConfig());
 		config.setToken(authOptions.getCredentialOptions().getTokenOptions().getToken());
-		config.setRenewAllowed(authOptions.isRenewAllowed());
+		config.setExpiresAt(getExpiresAt());
 		return config;
+	}
+
+	private OffsetDateTime getExpiresAt() {
+		return DateTimeHelper.getCurrentOffsetDateTimePlusPeriod(expiresIn);
 	}
 
 	@Override

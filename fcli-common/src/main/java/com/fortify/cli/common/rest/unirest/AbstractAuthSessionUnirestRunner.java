@@ -41,8 +41,8 @@ import lombok.Getter;
 //      which should be OK when running individual commands but less performant when running
 //      multiple commands in a composite command or workflow.
 @ReflectiveAccess
-public abstract class AbstractAuthSessionUnirestRunner<D> {
-	@Getter @Inject private UnirestRunner unirestRunner;
+public abstract class AbstractAuthSessionUnirestRunner<D extends IBasicConnectionConfigProvider> {
+	@Getter @Inject private BasicConnectionConfigUnirestRunner unirestRunner;
 	@Getter @Inject private ObjectMapper objectMapper;
 	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
 	
@@ -60,7 +60,7 @@ public abstract class AbstractAuthSessionUnirestRunner<D> {
 		if ( authSessionData == null ) {
 			throw new IllegalStateException("Login session data may not be null");
 		}
-		return unirestRunner.runWithUnirest(unirest -> {
+		return unirestRunner.runWithUnirest(authSessionData.getBasicConnectionConfig(), unirest -> {
 			_configure(authSessionName, authSessionData, unirest);
 			return runner.apply(unirest);
 		});
@@ -94,7 +94,7 @@ public abstract class AbstractAuthSessionUnirestRunner<D> {
 
 	/**
 	 * Perform basic connection configuration if the given login session data implements
-	 * {@link IBasicConnectionConfigProvider}. Afterwards the {@link #configure(String, Object, UnirestInstance)}
+	 * {@link IBasicConnectionConfigProvider}. Afterwards the {@link #configure(String, IBasicConnectionConfigProvider, UnirestInstance)}
 	 * method is called to allow subclasses to perform any additional configuration, like setting
 	 * authentication headers.
 	 * @param authSessionData used to configure the {@link UnirestInstance}

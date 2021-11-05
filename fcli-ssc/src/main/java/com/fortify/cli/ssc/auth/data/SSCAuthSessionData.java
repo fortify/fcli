@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.auth.data;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -41,20 +43,38 @@ import lombok.NoArgsConstructor;
 
 @Data @Introspected @NoArgsConstructor @AllArgsConstructor @JsonIgnoreProperties(ignoreUnknown = true)
 public class SSCAuthSessionData implements IBasicConnectionConfigProvider {
-	private SSCConnectionConfig config;
+	private BasicConnectionConfig basicConnectionConfig;
+	private char[] predefinedToken;
+	private OffsetDateTime expiresAt;
 	private SSCTokenResponse cachedTokenResponse;
-	private Date created; // When was this session created; note that due to token renewal we cannot use creation data from cache token response
+	private final Date created = new Date(); // When was this session created
 	
-	@Override @JsonIgnore
-	public BasicConnectionConfig getBasicConnectionConfig() {
-		return config.getNonNullBasicConnectionConfig();
+	public SSCAuthSessionData(SSCConnectionConfig config) {
+		this.basicConnectionConfig = config.getBasicConnectionConfig();
+		this.predefinedToken = config.getToken();
+		this.expiresAt = config.getExpiresAt();
+	}
+	
+	public SSCAuthSessionData(SSCConnectionConfig config, SSCTokenResponse cachedTokenResponse) {
+		this(config);
+		this.cachedTokenResponse = cachedTokenResponse;
+	}
+	
+	@JsonIgnore 
+	public final char[] getActiveToken() {
+		if ( !expiresAt.isAfter(OffsetDateTime.now(ZoneOffset.UTC)) ) {
+			return null;
+		} else if ( hasActiveCachedTokenResponse() ) {
+			return getCachedTokenResponseData().getToken();
+		} else {
+			return predefinedToken;
+		}
 	}
 	
 	@JsonIgnore
 	public final boolean hasActiveCachedTokenResponse() {
-		return getCachedTokenResponseData()!=null && cachedTokenResponse.getData().getTerminalDate().after(new Date()); 
+		return getCachedTokenResponseData()!=null && getCachedTokenResponseData().getTerminalDate().after(new Date()); 
 	}
-	
 	
 	@JsonIgnore
 	private SSCTokenData getCachedTokenResponseData() {
@@ -72,6 +92,7 @@ public class SSCAuthSessionData implements IBasicConnectionConfigProvider {
 	public AuthSessionSummary getSummary(String authSessionName) {
 		return AuthSessionSummary.builder()
 				.name(authSessionName)
+				.url(basicConnectionConfig.getUrl())
 				.created(getCreated())
 				.expires(getSessionExpiryDate())
 				.build();

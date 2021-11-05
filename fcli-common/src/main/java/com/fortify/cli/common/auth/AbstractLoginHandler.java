@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,17 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.auth.data;
+package com.fortify.cli.common.auth;
 
-import java.time.OffsetDateTime;
+import jakarta.inject.Inject;
+import lombok.Getter;
 
-import io.micronaut.core.annotation.Introspected;
-import lombok.Builder;
-import lombok.Data;
+public abstract class AbstractLoginHandler<C> implements ILoginHandler<C>, IAuthSessionTypeProvider {
+	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
+	@Inject private LogoutHelper logoutHelper;
+	
+	public final void login(String authSessionName, C connectionConfigData) {
+		logoutIfSessionExists(authSessionName);
+		Object authSessionData = _login(authSessionName, connectionConfigData);
+		authSessionPersistenceHelper.saveData(getAuthSessionType(), authSessionName, authSessionData);
+	}
 
-@Data @Builder @Introspected
-public final class SSCTokenRequest {
-	private String type;
-	private String description;
-	private OffsetDateTime terminalDate;
+	private void logoutIfSessionExists(String authSessionName) {
+		String authSessionType = getAuthSessionType();
+		if ( authSessionPersistenceHelper.exists(authSessionType, authSessionName) ) {
+			// Log out from previous session before creating a new session
+			logoutHelper.logoutAndDestroy(authSessionType, authSessionName);
+		}
+	}
+
+	protected abstract Object _login(String authSessionName, C connectionConfigData);
 }

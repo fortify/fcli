@@ -1,3 +1,7 @@
 micronaut:
   application:
     name: fcli
+    
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false
