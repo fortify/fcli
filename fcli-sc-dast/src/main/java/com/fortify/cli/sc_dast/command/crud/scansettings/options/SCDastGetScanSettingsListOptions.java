@@ -21,16 +21,16 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 public class SCDastGetScanSettingsListOptions {
 
-    @Option(names = {"-st","--search-text"}, description = "The text to filter results by.")
+    @Option(names = {"-t","--text","--search-text"}, description = "The text to filter results by.")
     @Getter private String searchText;
 
-    @Option(names = {"-sd","--start-date"}, description = "The modified start date range.")
+    @Option(names = {"--start","--start-date"}, description = "The modified start date range.")
     @Getter private String startDate;
 
-    @Option(names = {"-ed","--end-date"}, description = "The modified end date range.")
+    @Option(names = {"--end","--end-date"}, description = "The modified end date range.")
     @Getter private String endDate;
 
     private enum ScanTypes {Standard, WorkflowDriven, AMI}
-    @Option(names = {"-t","--scan-type"}, description = "The specific ScanTypes to filter results. [ ${COMPLETION-CANDIDATES} ]")
+    @Option(names = {"--type","--scan-type"}, description = "The specific ScanTypes to filter results. [ ${COMPLETION-CANDIDATES} ]")
     @Getter private ScanTypes scanType;
 }

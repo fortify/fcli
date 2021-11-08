@@ -12,6 +12,6 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 public class SCDastScanDeleteOptions {
 
-    @Option(names = {"-id","--scan-id"}, description = "The scan id.", required = true)
+    @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
     @Getter private int scanId;
 }

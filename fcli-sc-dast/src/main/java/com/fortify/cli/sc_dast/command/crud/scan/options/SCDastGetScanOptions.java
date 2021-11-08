@@ -12,7 +12,7 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 public class SCDastGetScanOptions {
 
-    @Option(names = {"-id", "--scan-id"}, description = "The scan id")
+    @Option(names = {"-i", "--id", "--scan-id"}, description = "The scan id")
     @Getter private String scanId;
 
 

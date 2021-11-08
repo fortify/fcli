@@ -14,24 +14,24 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 public class SCDastGetScanListOptions {
 
-    @Option(names = {"-st","--search-text"}, description = "The text to filter results by")
+    @Option(names = {"-t", "--text", "--search-text"}, description = "The text to filter results by")
     @Getter private String searchText;
 
-    @Option(names = {"-sd","--start-date"}, description = "The started on start date range")
+    @Option(names = { "--start","--start-date"}, description = "The started on start date range")
     @Getter private String startDate;
 
-    @Option(names = {"-ed","--end-date"}, description = "The started on end date range")
+    @Option(names = {"--end","--end-date"}, description = "The started on end date range")
     @Getter private String endDate;
 
-    @Option(names = {"-status", "--scan-status"},
+    @Option(names = {"-s","--status", "--scan-status"},
             description = "The specific ScanStatusTypes to filter results. Possible values: ${COMPLETION-CANDIDATES}.")
     @Getter private ScanStatusTypes scanStatus;
 
-    @Option(names = {"-ob","--order-by"}, description = "The field name to order the results by")
+    @Option(names = {"-o","--order","--order-by"}, description = "The field name to order the results by")
     @Getter private String orderBy;
 
     private enum Directions {ASC, DESC}
-    @Option(names = {"-od","--order-by-direction"}, description = "The direction to order the results by. Possible values: ${COMPLETION-CANDIDATES}.")
+    @Option(names = {"-d","--direction","--order-by-direction"}, description = "The direction to order the results by. Possible values: ${COMPLETION-CANDIDATES}.")
     @Getter private Directions orderByDirection;
 
 

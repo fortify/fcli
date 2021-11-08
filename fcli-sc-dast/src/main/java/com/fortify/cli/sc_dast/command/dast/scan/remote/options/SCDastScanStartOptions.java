@@ -19,13 +19,13 @@ import java.io.File;
 @ReflectiveAccess
 public class SCDastScanStartOptions {
 
-    @Option(names = {"-settings","--settings-id","--settings-identifier"}, description = "The Settings Identifier to run the scan with.", required = true)
+    @Option(names = {"-s", "--settings","--settings-id","--settings-identifier"}, description = "The Settings Identifier to run the scan with.", required = true)
     @Getter private String settingsId;
 
     @Option(names = {"-n","--scan-name"}, description = "The name of the SC DAST scan")
     @Getter private String scanName;
 
-    @Option(names = {"--overrides"}, description = "File containing override valuse for the SC DAST scan")
+    @Option(names = {"-o", "--overrides"}, description = "File containing override valuse for the SC DAST scan")
     @Getter private File overridesFile;
 
     @SneakyThrows

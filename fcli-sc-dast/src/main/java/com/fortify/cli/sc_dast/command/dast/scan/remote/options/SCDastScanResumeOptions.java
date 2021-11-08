@@ -13,14 +13,14 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 public class SCDastScanResumeOptions {
 
-    @Option(names = {"-id","--scan-id"}, description = "The scan id.", required = true)
+    @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
     @Getter private int scanId;
 
     @Option(names = {"-w", "--wait", "--wait-resumed"}, defaultValue = "false",
             description = "Wait until the scan is running")
     @Getter private boolean waitResumed;
 
-    @Option(names = {"-wi", "--wait-interval"}, defaultValue = "30",
+    @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30",
             description = "When waiting for completion, how long between to poll, in seconds", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
     @Getter private int waitInterval;
 }
