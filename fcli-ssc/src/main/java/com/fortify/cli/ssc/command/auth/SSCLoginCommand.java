@@ -97,7 +97,7 @@ public class SSCLoginCommand extends AbstractAuthLoginCommand<SSCLoginConfig> {
 	@Override
 	protected final SSCLoginConfig getLoginConfig() {
 		SSCLoginConfig config = new SSCLoginConfig();
-		config.setBasicConnectionConfig(getConnectionOptions());
+		config.setConnectionConfig(getConnectionOptions());
 		Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getUserOptions).ifPresent(config::setSscUserCredentialsConfig);
 		Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getTokenOptions).map(TokenOptions::getToken).ifPresent(config::setToken);
 		return config;

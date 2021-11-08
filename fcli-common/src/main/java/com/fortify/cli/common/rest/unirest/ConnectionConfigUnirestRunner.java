@@ -27,8 +27,7 @@ package com.fortify.cli.common.rest.unirest;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.rest.data.BasicConnectionConfig;
-import com.fortify.cli.common.rest.data.IBasicConnectionConfig;
+import com.fortify.cli.common.rest.data.IConnectionConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
@@ -41,41 +40,41 @@ import lombok.Getter;
 //      which should be OK when running individual commands but less performant when running
 //      multiple commands in a composite command or workflow.
 @ReflectiveAccess @Singleton
-public class BasicConnectionConfigUnirestRunner {
+public class ConnectionConfigUnirestRunner {
 	@Getter @Inject private UnirestRunner unirestRunner;
 	@Getter @Inject private ObjectMapper objectMapper;
 	
 	/**
 	 * Run the given runner with a {@link UnirestInstance} that has been configured
-	 * based on the given {@link BasicConnectionConfig}.
+	 * based on the given {@link IConnectionConfig}.
 	 * @param <R> Return type
-	 * @param basicConnectionConfig with which to configure the connection
+	 * @param connectionConfig with which to configure the connection
 	 * @param runner to perform the actual work with a configured {@link UnirestInstance}
 	 * @return Return value of runner; note that this return value shouldn't contain any reference to the 
 	 *         {@link UnirestInstance} as that might be closed once this call returns.
 	 */
-	public <R> R runWithUnirest(IBasicConnectionConfig basicConnectionConfig, Function<UnirestInstance, R> runner) {
-		if ( basicConnectionConfig == null ) {
+	public <R> R runWithUnirest(IConnectionConfig connectionConfig, Function<UnirestInstance, R> runner) {
+		if ( connectionConfig == null ) {
 			throw new IllegalStateException("Connection configuration data may not be null");
 		}
 		return unirestRunner.runWithUnirest(unirest -> {
-			_configure(basicConnectionConfig, unirest);
+			_configure(connectionConfig, unirest);
 			return runner.apply(unirest);
 		});
 	}
 
 	/**
 	 * Perform basic connection configuration.
-	 * @param basicConnectionConfig used to configure the {@link UnirestInstance}
+	 * @param connectionConfig used to configure the {@link UnirestInstance}
 	 * @param unirestInstance {@link UnirestInstance} to be configured
 	 */
-	private final void _configure(IBasicConnectionConfig basicConnectionConfig, UnirestInstance unirestInstance) {
+	private final void _configure(IConnectionConfig connectionConfig, UnirestInstance unirestInstance) {
 		unirestInstance.config()
-			.defaultBaseUrl(normalizeUrl(basicConnectionConfig.getUrl()))
-			.verifySsl(basicConnectionConfig.isInsecureModeEnabled());
-		if ( StringUtils.isNotEmpty(basicConnectionConfig.getProxyHost()) ) {
-			unirestInstance.config().proxy(basicConnectionConfig.getProxyHost(), basicConnectionConfig.getProxyPort(), basicConnectionConfig.getProxyUser(), 
-					basicConnectionConfig.getProxyHost()==null ? null : String.valueOf(basicConnectionConfig.getProxyPassword()));
+			.defaultBaseUrl(normalizeUrl(connectionConfig.getUrl()))
+			.verifySsl(connectionConfig.isInsecureModeEnabled());
+		if ( StringUtils.isNotEmpty(connectionConfig.getProxyHost()) ) {
+			unirestInstance.config().proxy(connectionConfig.getProxyHost(), connectionConfig.getProxyPort(), connectionConfig.getProxyUser(), 
+					connectionConfig.getProxyHost()==null ? null : String.valueOf(connectionConfig.getProxyPassword()));
 		}
 	}
 	

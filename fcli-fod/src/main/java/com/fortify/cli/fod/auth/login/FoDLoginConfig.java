@@ -24,15 +24,15 @@
  ******************************************************************************/
 package com.fortify.cli.fod.auth.login;
 
-import com.fortify.cli.common.rest.data.IBasicConnectionConfig;
-import com.fortify.cli.common.rest.data.IBasicConnectionConfigProvider;
+import com.fortify.cli.common.rest.data.IConnectionConfig;
+import com.fortify.cli.common.rest.data.IConnectionConfigProvider;
 
 import io.micronaut.core.util.StringUtils;
 import lombok.Data;
 
 @Data
-public class FoDLoginConfig implements IBasicConnectionConfigProvider {
-	private IBasicConnectionConfig basicConnectionConfig;
+public class FoDLoginConfig implements IConnectionConfigProvider {
+	private IConnectionConfig connectionConfig;
 	private IFoDUserCredentialsConfig fodUserCredentialsConfig;
 	private IFoDClientCredentialsConfig fodClientCredentialsConfig;
 	private String[] scopes = {"api-tenant"};

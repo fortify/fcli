@@ -30,8 +30,8 @@ import java.util.Map;
 import com.fortify.cli.common.auth.login.AbstractLoginHandler;
 import com.fortify.cli.common.auth.session.IAuthSessionData;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.rest.data.IBasicConnectionConfig;
-import com.fortify.cli.common.rest.unirest.BasicConnectionConfigUnirestRunner;
+import com.fortify.cli.common.rest.data.IConnectionConfig;
+import com.fortify.cli.common.rest.unirest.ConnectionConfigUnirestRunner;
 import com.fortify.cli.fod.auth.login.rest.FoDTokenResponse;
 import com.fortify.cli.fod.auth.session.FoDAuthSessionData;
 
@@ -42,7 +42,7 @@ import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
 public class FoDLoginHandler extends AbstractLoginHandler<FoDLoginConfig> {
-	@Inject private BasicConnectionConfigUnirestRunner basicUnirestRunner;
+	@Inject private ConnectionConfigUnirestRunner basicUnirestRunner;
 
 	public final String getAuthSessionType() {
 		return ProductIdentifiers.FOD;
@@ -51,11 +51,11 @@ public class FoDLoginHandler extends AbstractLoginHandler<FoDLoginConfig> {
 	@Override
 	public final IAuthSessionData _login(String authSessionName, FoDLoginConfig fodLoginConfig) {
 		FoDAuthSessionData authSessionData = null;
-		IBasicConnectionConfig basicConnectionConfig = fodLoginConfig.getBasicConnectionConfig();
+		IConnectionConfig connectionConfig = fodLoginConfig.getConnectionConfig();
 		if ( fodLoginConfig.hasClientCredentials() ) {
-			authSessionData = basicUnirestRunner.runWithUnirest(basicConnectionConfig, unirest->generateClientCredentialsAuthSessionData(unirest, fodLoginConfig));
+			authSessionData = basicUnirestRunner.runWithUnirest(connectionConfig, unirest->generateClientCredentialsAuthSessionData(unirest, fodLoginConfig));
 		} else if ( fodLoginConfig.hasUserCredentialsConfig() ) {
-			authSessionData = basicUnirestRunner.runWithUnirest(basicConnectionConfig, unirest->generateUserCredentialsAuthSessionData(unirest, fodLoginConfig));
+			authSessionData = basicUnirestRunner.runWithUnirest(connectionConfig, unirest->generateUserCredentialsAuthSessionData(unirest, fodLoginConfig));
 		} else {
 			throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
 		}

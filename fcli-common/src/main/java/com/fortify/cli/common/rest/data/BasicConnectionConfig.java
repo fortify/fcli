@@ -31,7 +31,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data @Introspected @NoArgsConstructor @AllArgsConstructor @Builder
-public class BasicConnectionConfig implements IBasicConnectionConfig {
+public class BasicConnectionConfig implements IConnectionConfig {
 	private String  url;
 	private String  proxyHost;
 	private Integer proxyPort;
@@ -39,7 +39,7 @@ public class BasicConnectionConfig implements IBasicConnectionConfig {
 	private char[]  proxyPassword;
 	private boolean insecureModeEnabled;
 	
-	public static final BasicConnectionConfig from(IBasicConnectionConfig other) {
+	public static final BasicConnectionConfig from(IConnectionConfig other) {
 		return BasicConnectionConfig.builder()
 			.url(other.getUrl())
 			.proxyHost(other.getProxyHost())

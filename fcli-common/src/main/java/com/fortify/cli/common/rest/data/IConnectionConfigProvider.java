@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -24,11 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.data;
 
-public interface IBasicConnectionConfig {
-	String  getUrl();
-	String  getProxyHost();
-	Integer getProxyPort();
-	String  getProxyUser();
-	char[]  getProxyPassword();
-	boolean isInsecureModeEnabled();
+public interface IConnectionConfigProvider {
+	public IConnectionConfig getConnectionConfig();
 }

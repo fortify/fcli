@@ -27,8 +27,8 @@ package com.fortify.cli.ssc.auth.login;
 import com.fortify.cli.common.auth.login.AbstractLoginHandler;
 import com.fortify.cli.common.auth.session.IAuthSessionData;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.rest.data.IBasicConnectionConfig;
-import com.fortify.cli.common.rest.unirest.BasicConnectionConfigUnirestRunner;
+import com.fortify.cli.common.rest.data.IConnectionConfig;
+import com.fortify.cli.common.rest.unirest.ConnectionConfigUnirestRunner;
 import com.fortify.cli.ssc.auth.login.rest.SSCTokenRequest;
 import com.fortify.cli.ssc.auth.login.rest.SSCTokenResponse;
 import com.fortify.cli.ssc.auth.session.SSCAuthSessionData;
@@ -40,7 +40,7 @@ import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
 public class SSCLoginHandler extends AbstractLoginHandler<SSCLoginConfig> {
-	@Inject private BasicConnectionConfigUnirestRunner basicUnirestRunner;
+	@Inject private ConnectionConfigUnirestRunner basicUnirestRunner;
 
 	public final String getAuthSessionType() {
 		return ProductIdentifiers.SSC;
@@ -49,11 +49,11 @@ public class SSCLoginHandler extends AbstractLoginHandler<SSCLoginConfig> {
 	@Override
 	public final IAuthSessionData _login(String authSessionName, SSCLoginConfig sscLoginConfig) {
 		SSCAuthSessionData authSessionData = null;
-		IBasicConnectionConfig basicConnectionConfig = sscLoginConfig.getBasicConnectionConfig();
+		IConnectionConfig connectionConfig = sscLoginConfig.getConnectionConfig();
 		if ( sscLoginConfig.getToken()!=null ) {
 			authSessionData = new SSCAuthSessionData(sscLoginConfig);
 		} else if ( sscLoginConfig.hasUserCredentialsConfig() ) {
-			authSessionData = basicUnirestRunner.runWithUnirest(basicConnectionConfig, unirest->generateAuthSessionData(unirest, sscLoginConfig));
+			authSessionData = basicUnirestRunner.runWithUnirest(connectionConfig, unirest->generateAuthSessionData(unirest, sscLoginConfig));
 		} else {
 			throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
 		}

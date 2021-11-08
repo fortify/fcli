@@ -24,11 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.common.auth.session;
 
-import com.fortify.cli.common.rest.data.IBasicConnectionConfigProvider;
+import com.fortify.cli.common.rest.data.IConnectionConfigProvider;
 
 /** 
  * Marker interface for auth session data
  * 
  * @author Ruud Senden
  */
-public interface IAuthSessionData extends IBasicConnectionConfigProvider {}
+public interface IAuthSessionData extends IConnectionConfigProvider {}

@@ -30,15 +30,15 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.codec.binary.Base64;
 
-import com.fortify.cli.common.rest.data.IBasicConnectionConfig;
-import com.fortify.cli.common.rest.data.IBasicConnectionConfigProvider;
+import com.fortify.cli.common.rest.data.IConnectionConfig;
+import com.fortify.cli.common.rest.data.IConnectionConfigProvider;
 
 import io.micronaut.core.util.StringUtils;
 import lombok.Data;
 
 @Data
-public class SSCLoginConfig implements IBasicConnectionConfigProvider {
-	private IBasicConnectionConfig basicConnectionConfig;
+public class SSCLoginConfig implements IConnectionConfigProvider {
+	private IConnectionConfig connectionConfig;
 	private ISSCUserCredentialsConfig sscUserCredentialsConfig;
 	private char[] token;
 	

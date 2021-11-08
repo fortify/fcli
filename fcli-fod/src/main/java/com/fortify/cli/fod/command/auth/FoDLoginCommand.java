@@ -92,7 +92,7 @@ public class FoDLoginCommand extends AbstractAuthLoginCommand<FoDLoginConfig> {
 	@Override
 	protected final FoDLoginConfig getLoginConfig() {
 		FoDLoginConfig config = new FoDLoginConfig();
-		config.setBasicConnectionConfig(getConnectionOptions());
+		config.setConnectionConfig(getConnectionOptions());
 		Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getUserCredentialOptions).ifPresent(config::setFodUserCredentialsConfig);
 		Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getClientCredentialOptions).ifPresent(config::setFodClientCredentialsConfig);
 		return config;

@@ -29,8 +29,8 @@ import java.util.function.Function;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
 import com.fortify.cli.common.auth.session.IAuthSessionData;
-import com.fortify.cli.common.rest.data.IBasicConnectionConfig;
-import com.fortify.cli.common.rest.data.IBasicConnectionConfigProvider;
+import com.fortify.cli.common.rest.data.IConnectionConfig;
+import com.fortify.cli.common.rest.data.IConnectionConfigProvider;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
@@ -43,7 +43,7 @@ import lombok.Getter;
 //      multiple commands in a composite command or workflow.
 @ReflectiveAccess
 public abstract class AbstractAuthSessionUnirestRunner<D extends IAuthSessionData> {
-	@Getter @Inject private BasicConnectionConfigUnirestRunner unirestRunner;
+	@Getter @Inject private ConnectionConfigUnirestRunner unirestRunner;
 	@Getter @Inject private ObjectMapper objectMapper;
 	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
 	
@@ -61,7 +61,7 @@ public abstract class AbstractAuthSessionUnirestRunner<D extends IAuthSessionDat
 		if ( authSessionData == null ) {
 			throw new IllegalStateException("Login session data may not be null");
 		}
-		return unirestRunner.runWithUnirest(authSessionData.getBasicConnectionConfig(), unirest -> {
+		return unirestRunner.runWithUnirest(authSessionData.getConnectionConfig(), unirest -> {
 			_configure(authSessionName, authSessionData, unirest);
 			return runner.apply(unirest);
 		});
@@ -95,16 +95,16 @@ public abstract class AbstractAuthSessionUnirestRunner<D extends IAuthSessionDat
 
 	/**
 	 * Perform basic connection configuration if the given login session data implements
-	 * {@link IBasicConnectionConfigProvider}. Afterwards the {@link #configure(String, IAuthSessionData, UnirestInstance)}
+	 * {@link IConnectionConfigProvider}. Afterwards the {@link #configure(String, IAuthSessionData, UnirestInstance)}
 	 * method is called to allow subclasses to perform any additional configuration, like setting
 	 * authentication headers.
 	 * @param authSessionData used to configure the {@link UnirestInstance}
 	 * @param unirestInstance {@link UnirestInstance} to be configured
 	 */
 	private final void _configure(String authSessionName, D authSessionData, UnirestInstance unirestInstance) {
-		if ( authSessionData instanceof IBasicConnectionConfigProvider ) {
-			IBasicConnectionConfigProvider csp = (IBasicConnectionConfigProvider)authSessionData;
-			IBasicConnectionConfig cs = csp.getBasicConnectionConfig();
+		if ( authSessionData instanceof IConnectionConfigProvider ) {
+			IConnectionConfigProvider csp = (IConnectionConfigProvider)authSessionData;
+			IConnectionConfig cs = csp.getConnectionConfig();
 			if ( cs == null ) { throw new IllegalArgumentException("Connection configuration may not be null"); }
 			unirestInstance.config()
 				.defaultBaseUrl(normalizeUrl(cs.getUrl()))

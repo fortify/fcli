@@ -28,25 +28,23 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fortify.cli.common.auth.session.IAuthSessionData;
+import com.fortify.cli.common.auth.session.AbstractAuthSessionData;
 import com.fortify.cli.common.auth.session.summary.AuthSessionSummary;
-import com.fortify.cli.common.rest.data.BasicConnectionConfig;
 import com.fortify.cli.fod.auth.login.FoDLoginConfig;
 import com.fortify.cli.fod.auth.login.rest.FoDTokenResponse;
 
 import io.micronaut.core.annotation.Introspected;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Data @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
-public class FoDAuthSessionData implements IAuthSessionData {
-	private BasicConnectionConfig basicConnectionConfig;
+@Data @EqualsAndHashCode(callSuper = true) @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
+public class FoDAuthSessionData extends AbstractAuthSessionData {
 	private FoDTokenResponse cachedTokenResponse;
-	private Date created; // When was this session created; note that due to token renewal we cannot use creation data from cache token response
 	
 	public FoDAuthSessionData() {}
 	
 	public FoDAuthSessionData(FoDLoginConfig loginConfig, FoDTokenResponse tokenResponse) {
-		this.basicConnectionConfig = BasicConnectionConfig.from(loginConfig.getBasicConnectionConfig());
+		super(loginConfig.getConnectionConfig());
 		this.cachedTokenResponse = tokenResponse;
 	}
 	
@@ -59,19 +57,9 @@ public class FoDAuthSessionData implements IAuthSessionData {
 	public String getActiveBearerToken() {
 		return hasActiveCachedTokenResponse() ? cachedTokenResponse.getAccess_token() : null; 
 	}
-
-	@JsonIgnore
-	public AuthSessionSummary getSummary(String authSessionName) {
-		return AuthSessionSummary.builder()
-				.name(authSessionName)
-				.url(basicConnectionConfig.getUrl())
-				.created(getCreated())
-				.expires(getSessionExpiryDate())
-				.build();
-	}
 	
-	@JsonIgnore
-	private Date getSessionExpiryDate() {
+	@JsonIgnore @Override
+	protected Date getSessionExpiryDate() {
 		Date sessionExpiryDate = AuthSessionSummary.EXPIRES_UNKNOWN;
 		if ( getCachedTokenResponse()!=null ) {
 			sessionExpiryDate = new Date(getCachedTokenResponse().getExpires_at());
