@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.auth.consumer;
 
-import com.fortify.cli.common.auth.IAuthSessionNameProvider;
+import com.fortify.cli.common.auth.session.IAuthSessionNameProvider;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;

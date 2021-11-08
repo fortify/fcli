@@ -22,15 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.auth;
+package com.fortify.cli.ssc.auth.login.rest;
 
-import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
+import java.time.OffsetDateTime;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import lombok.Getter;
+import io.micronaut.core.annotation.Introspected;
+import lombok.Builder;
+import lombok.Data;
 
-@ReflectiveAccess
-public abstract class AbstractCommandWithAuthSessionPersistenceHelper {
-	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
+@Data @Builder @Introspected
+public final class SSCTokenRequest {
+	private String type;
+	private String description;
+	private OffsetDateTime terminalDate;
 }

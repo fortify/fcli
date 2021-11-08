@@ -26,8 +26,8 @@ package com.fortify.cli.common.picocli.command.auth.sessions;
 
 import java.util.Collection;
 
-import com.fortify.cli.common.auth.AuthSessionSummary;
-import com.fortify.cli.common.auth.IAuthSessionSummaryProvider;
+import com.fortify.cli.common.auth.session.summary.AuthSessionSummary;
+import com.fortify.cli.common.auth.session.summary.IAuthSessionSummaryProvider;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.auth.AuthCommandsOrder;
 import com.fortify.cli.common.picocli.command.auth.RootAuthCommand;

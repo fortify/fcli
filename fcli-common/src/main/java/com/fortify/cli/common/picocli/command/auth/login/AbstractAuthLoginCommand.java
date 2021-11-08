@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.auth.login;
 
-import com.fortify.cli.common.auth.ILoginHandler;
+import com.fortify.cli.common.auth.login.ILoginHandler;
 import com.fortify.cli.common.picocli.command.auth.AbstractCommandWithAuthSessionPersistenceHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -46,7 +46,7 @@ public abstract class AbstractAuthLoginCommand<C> extends AbstractCommandWithAut
 	
 	@Override @SneakyThrows
 	public final void run() {
-		getLoginHandler().login(getAuthSessionName(), getConnectionConfig());
+		getLoginHandler().login(getAuthSessionName(), getLoginConfig());
 	}
 	
 	public final String getAuthSessionName() {
@@ -54,6 +54,6 @@ public abstract class AbstractAuthLoginCommand<C> extends AbstractCommandWithAut
 	}
 	
 	protected abstract String getAuthSessionType();
-	protected abstract C getConnectionConfig();
+	protected abstract C getLoginConfig();
 	protected abstract ILoginHandler<C> getLoginHandler();
 }

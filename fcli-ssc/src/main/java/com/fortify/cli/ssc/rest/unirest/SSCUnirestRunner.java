@@ -26,7 +26,7 @@ package com.fortify.cli.ssc.rest.unirest;
 
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.rest.unirest.AbstractAuthSessionUnirestRunner;
-import com.fortify.cli.ssc.auth.data.SSCAuthSessionData;
+import com.fortify.cli.ssc.auth.session.SSCAuthSessionData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;

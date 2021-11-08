@@ -22,15 +22,31 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.auth;
+package com.fortify.cli.fod.auth.login;
 
-import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
+import com.fortify.cli.common.rest.data.IBasicConnectionConfig;
+import com.fortify.cli.common.rest.data.IBasicConnectionConfigProvider;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import lombok.Getter;
+import io.micronaut.core.util.StringUtils;
+import lombok.Data;
 
-@ReflectiveAccess
-public abstract class AbstractCommandWithAuthSessionPersistenceHelper {
-	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
+@Data
+public class FoDLoginConfig implements IBasicConnectionConfigProvider {
+	private IBasicConnectionConfig basicConnectionConfig;
+	private IFoDUserCredentialsConfig fodUserCredentialsConfig;
+	private IFoDClientCredentialsConfig fodClientCredentialsConfig;
+	private String[] scopes = {"api-tenant"};
+	private boolean renewAllowed;
+
+	public final boolean hasUserCredentialsConfig() {
+		return fodUserCredentialsConfig!=null 
+				&& StringUtils.isNotEmpty(fodUserCredentialsConfig.getUser())
+				&& fodUserCredentialsConfig.getPassword()!=null;
+	}
+	
+	public final boolean hasClientCredentials() {
+		return fodClientCredentialsConfig!=null
+				&& StringUtils.isNotEmpty(fodClientCredentialsConfig.getClientId())
+				&& StringUtils.isNotEmpty(fodClientCredentialsConfig.getClientSecret());
+	}
 }

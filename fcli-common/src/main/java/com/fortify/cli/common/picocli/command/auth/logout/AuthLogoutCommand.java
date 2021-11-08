@@ -26,7 +26,7 @@ package com.fortify.cli.common.picocli.command.auth.logout;
 
 import java.util.List;
 
-import com.fortify.cli.common.auth.LogoutHelper;
+import com.fortify.cli.common.auth.logout.LogoutHelper;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.auth.AbstractCommandWithAuthSessionPersistenceHelper;
 import com.fortify.cli.common.picocli.command.auth.AuthCommandsOrder;

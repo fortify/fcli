@@ -22,15 +22,44 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.auth;
+package com.fortify.cli.fod.auth.logout;
 
+import com.fortify.cli.common.auth.logout.ILogoutHandler;
 import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
+import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
+import com.fortify.cli.fod.auth.session.FoDAuthSessionData;
+import com.fortify.cli.fod.rest.unirest.FoDUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
-@ReflectiveAccess
-public abstract class AbstractCommandWithAuthSessionPersistenceHelper {
+@Singleton @ReflectiveAccess
+public class FoDLogoutHandler implements ILogoutHandler {
 	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
+	@Getter @Inject private FoDUnirestRunner unirestRunner;
+
+	@Override
+	public final void logout(String authSessionName) {
+		FoDAuthSessionData data = authSessionPersistenceHelper.getData(getAuthSessionType(), authSessionName, FoDAuthSessionData.class);
+		if ( data.hasActiveCachedTokenResponse() ) {
+			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
+		}
+	}
+	
+	private final Void logout(UnirestInstance unirestInstance, FoDAuthSessionData authSessionData) {
+		try {
+			// TODO Invalidate token if possible in FoD
+		} catch ( RuntimeException e ) {
+			System.out.println("Error deserializing token:" + e.getMessage());
+		}
+		return null;
+	}
+
+	@Override
+	public String getAuthSessionType() {
+		return ProductIdentifiers.FOD;
+	}
 }

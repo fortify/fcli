@@ -22,15 +22,37 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.auth;
+package com.fortify.cli.common.auth.logout;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.Getter;
 
-@ReflectiveAccess
-public abstract class AbstractCommandWithAuthSessionPersistenceHelper {
-	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
+@Singleton
+public final class LogoutHelper {
+	private final AuthSessionPersistenceHelper authSessionPersistenceHelper;
+	@Getter private Map<String, ILogoutHandler> logoutHandlers;
+	
+	@Inject
+	public LogoutHelper(AuthSessionPersistenceHelper authSessionPersistenceHelper) {
+		this.authSessionPersistenceHelper = authSessionPersistenceHelper;
+	}
+	
+	@Inject
+	public void setLogoutManagers(Collection<ILogoutHandler> logoutHandlers) {
+		this.logoutHandlers = logoutHandlers.stream().collect(
+			Collectors.toMap(ILogoutHandler::getAuthSessionType, Function.identity()));
+	}
+	
+	public final void logoutAndDestroy(String authSessionType, String authSessionName) {
+		logoutHandlers.get(authSessionType).logout(authSessionName);
+		authSessionPersistenceHelper.destroy(authSessionType, authSessionName);
+	}
 }

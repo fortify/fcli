@@ -28,6 +28,7 @@ import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.rest.data.BasicConnectionConfig;
+import com.fortify.cli.common.rest.data.IBasicConnectionConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
@@ -53,7 +54,7 @@ public class BasicConnectionConfigUnirestRunner {
 	 * @return Return value of runner; note that this return value shouldn't contain any reference to the 
 	 *         {@link UnirestInstance} as that might be closed once this call returns.
 	 */
-	public <R> R runWithUnirest(BasicConnectionConfig basicConnectionConfig, Function<UnirestInstance, R> runner) {
+	public <R> R runWithUnirest(IBasicConnectionConfig basicConnectionConfig, Function<UnirestInstance, R> runner) {
 		if ( basicConnectionConfig == null ) {
 			throw new IllegalStateException("Connection configuration data may not be null");
 		}
@@ -68,7 +69,7 @@ public class BasicConnectionConfigUnirestRunner {
 	 * @param basicConnectionConfig used to configure the {@link UnirestInstance}
 	 * @param unirestInstance {@link UnirestInstance} to be configured
 	 */
-	private final void _configure(BasicConnectionConfig basicConnectionConfig, UnirestInstance unirestInstance) {
+	private final void _configure(IBasicConnectionConfig basicConnectionConfig, UnirestInstance unirestInstance) {
 		unirestInstance.config()
 			.defaultBaseUrl(normalizeUrl(basicConnectionConfig.getUrl()))
 			.verifySsl(basicConnectionConfig.isInsecureModeEnabled());

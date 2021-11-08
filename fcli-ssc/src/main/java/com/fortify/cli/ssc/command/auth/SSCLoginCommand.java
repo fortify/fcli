@@ -25,8 +25,9 @@
 package com.fortify.cli.ssc.command.auth;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 
-import com.fortify.cli.common.auth.ILoginHandler;
+import com.fortify.cli.common.auth.login.ILoginHandler;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
@@ -36,8 +37,9 @@ import com.fortify.cli.common.picocli.command.auth.login.AuthLoginCommand;
 import com.fortify.cli.common.picocli.command.auth.login.LoginConnectionOptions;
 import com.fortify.cli.common.picocli.command.auth.login.LoginUserCredentialOptions;
 import com.fortify.cli.common.time.DateTimeHelper;
-import com.fortify.cli.ssc.auth.SSCLoginHandler;
-import com.fortify.cli.ssc.rest.data.SSCConnectionConfig;
+import com.fortify.cli.ssc.auth.login.ISSCUserCredentialsConfig;
+import com.fortify.cli.ssc.auth.login.SSCLoginConfig;
+import com.fortify.cli.ssc.auth.login.SSCLoginHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -51,7 +53,7 @@ import picocli.CommandLine.Option;
 @SubcommandOf(AuthLoginCommand.class) 
 @Command(name = ProductIdentifiers.SSC, description = "Login to SSC", sortOptions = false)
 @RequiresProduct(ProductOrGroup.SSC)
-public class SSCLoginCommand extends AbstractAuthLoginCommand<SSCConnectionConfig> {
+public class SSCLoginCommand extends AbstractAuthLoginCommand<SSCLoginConfig> {
 	@Getter @Inject private SSCLoginHandler sscLoginHandler;
 	
 	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC connection options:%n", order = 1)
@@ -60,9 +62,6 @@ public class SSCLoginCommand extends AbstractAuthLoginCommand<SSCConnectionConfi
 	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC authentication options:%n", order = 2)
     @Getter private SSCAuthOptions authOptions;
 	
-	@Option(names = {"--expires-in"}, required = false, defaultValue = "30m", showDefaultValue = Visibility.ALWAYS) 
-	@Getter private String expiresIn;
-	
 	static class SSCAuthOptions {
 		@ArgGroup(exclusive = true, multiplicity = "1", order = 3)
 	    @Getter private SSCCredentialOptions credentialOptions;
@@ -70,9 +69,19 @@ public class SSCLoginCommand extends AbstractAuthLoginCommand<SSCConnectionConfi
 	
     static class SSCCredentialOptions {
     	@ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
-    	@Getter private LoginUserCredentialOptions userOptions = new LoginUserCredentialOptions();
+    	@Getter private SSCUserCredentialOptions userOptions = new SSCUserCredentialOptions();
     	@ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
     	@Getter private TokenOptions tokenOptions = new TokenOptions();
+    }
+    
+    static class SSCUserCredentialOptions extends LoginUserCredentialOptions implements ISSCUserCredentialsConfig {
+    	@Option(names = {"--expire-in"}, required = false, defaultValue = "1d", showDefaultValue = Visibility.ALWAYS) 
+    	@Getter private String expireIn;
+    	
+    	@Override
+    	public OffsetDateTime getExpiresAt() {
+    		return DateTimeHelper.getCurrentOffsetDateTimePlusPeriod(expireIn);
+    	}
     }
     
     static class TokenOptions {
@@ -86,21 +95,16 @@ public class SSCLoginCommand extends AbstractAuthLoginCommand<SSCConnectionConfi
 	}
 	
 	@Override
-	protected final SSCConnectionConfig getConnectionConfig() {
-		SSCConnectionConfig config = new SSCConnectionConfig();
-		connectionOptions.configure(config.getNonNullBasicConnectionConfig());
-		authOptions.getCredentialOptions().getUserOptions().configure(config.getNonNullBasicUserCredentialsConfig());
-		config.setToken(authOptions.getCredentialOptions().getTokenOptions().getToken());
-		config.setExpiresAt(getExpiresAt());
+	protected final SSCLoginConfig getLoginConfig() {
+		SSCLoginConfig config = new SSCLoginConfig();
+		config.setBasicConnectionConfig(getConnectionOptions());
+		Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getUserOptions).ifPresent(config::setSscUserCredentialsConfig);
+		Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getTokenOptions).map(TokenOptions::getToken).ifPresent(config::setToken);
 		return config;
 	}
-
-	private OffsetDateTime getExpiresAt() {
-		return DateTimeHelper.getCurrentOffsetDateTimePlusPeriod(expiresIn);
-	}
-
+	
 	@Override
-	protected ILoginHandler<SSCConnectionConfig> getLoginHandler() {
+	protected ILoginHandler<SSCLoginConfig> getLoginHandler() {
 		return sscLoginHandler;
 	}
 }

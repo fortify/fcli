@@ -2,7 +2,6 @@
 package com.fortify.cli.common.picocli.command.dast.scan.local;
 
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.dast.RootDastCommand;
 import com.fortify.cli.common.picocli.command.dast.scan.DastScanCommand;
 import com.fortify.cli.common.picocli.command.dast.scan.DastScanCommandsOrder;
 

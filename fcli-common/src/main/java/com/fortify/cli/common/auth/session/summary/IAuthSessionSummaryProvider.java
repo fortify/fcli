@@ -22,15 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.auth;
+package com.fortify.cli.common.auth.session.summary;
 
-import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
+import java.util.Collection;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import lombok.Getter;
+import com.fortify.cli.common.auth.session.IAuthSessionTypeProvider;
 
-@ReflectiveAccess
-public abstract class AbstractCommandWithAuthSessionPersistenceHelper {
-	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
+public interface IAuthSessionSummaryProvider extends IAuthSessionTypeProvider {
+	public Collection<AuthSessionSummary> getAuthSessionSummaries();
 }

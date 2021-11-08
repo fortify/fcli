@@ -24,7 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.auth;
 
-import com.fortify.cli.common.auth.ILoginHandler;
+import java.util.Optional;
+
+import com.fortify.cli.common.auth.login.ILoginHandler;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
@@ -33,10 +35,10 @@ import com.fortify.cli.common.picocli.command.auth.login.AbstractAuthLoginComman
 import com.fortify.cli.common.picocli.command.auth.login.AuthLoginCommand;
 import com.fortify.cli.common.picocli.command.auth.login.LoginConnectionOptions;
 import com.fortify.cli.common.picocli.command.auth.login.LoginUserCredentialOptions;
-import com.fortify.cli.fod.auth.FoDLoginHandler;
-import com.fortify.cli.fod.rest.data.FoDClientCredentialsConfig;
-import com.fortify.cli.fod.rest.data.FoDConnectionConfig;
-import com.fortify.cli.fod.rest.data.FoDUserCredentialsConfig;
+import com.fortify.cli.fod.auth.login.FoDLoginConfig;
+import com.fortify.cli.fod.auth.login.FoDLoginHandler;
+import com.fortify.cli.fod.auth.login.IFoDClientCredentialsConfig;
+import com.fortify.cli.fod.auth.login.IFoDUserCredentialsConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -49,7 +51,7 @@ import picocli.CommandLine.Option;
 @SubcommandOf(AuthLoginCommand.class) 
 @Command(name = ProductIdentifiers.FOD, description = "Login to FoD", sortOptions = false)
 @RequiresProduct(ProductOrGroup.FOD)
-public class FoDLoginCommand extends AbstractAuthLoginCommand<FoDConnectionConfig> {
+public class FoDLoginCommand extends AbstractAuthLoginCommand<FoDLoginConfig> {
 	@Getter @Inject private FoDLoginHandler sscLoginHandler;
 	
 	@ArgGroup(exclusive = false, multiplicity = "1", heading = "FoD connection options:%n", order = 1)
@@ -61,37 +63,25 @@ public class FoDLoginCommand extends AbstractAuthLoginCommand<FoDConnectionConfi
 	static class FoDAuthOptions {
 		@ArgGroup(exclusive = true, multiplicity = "1", order = 3)
 	    @Getter private FoDCredentialOptions credentialOptions;
-		@Option(names = {"--allow-renew", "-r"}, description = "Allow FoD token renewal", order = 4) 
-    	@Getter private boolean renewAllowed;
 	}
 	
     static class FoDCredentialOptions {
     	@ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
-    	@Getter private FoDUserCredentialOptions userOptions = new FoDUserCredentialOptions();
+    	@Getter private FoDUserCredentialOptions userCredentialOptions = new FoDUserCredentialOptions();
     	@ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
     	@Getter private FoDClientCredentialOptions clientCredentialOptions = new FoDClientCredentialOptions();
     }
     
-    static class FoDUserCredentialOptions extends LoginUserCredentialOptions {
+    static class FoDUserCredentialOptions extends LoginUserCredentialOptions implements IFoDUserCredentialsConfig {
     	@Option(names = {"--tenant"}, required = true) 
     	@Getter private String tenant;
-    	
-    	public void configure(FoDUserCredentialsConfig config) {
-    		super.configure(config);
-    		config.setTenant(tenant);
-    	}
     }
     
-    static class FoDClientCredentialOptions {
+    static class FoDClientCredentialOptions implements IFoDClientCredentialsConfig {
     	@Option(names = {"--client-id"}, required = true) 
     	@Getter private String clientId;
     	@Option(names = {"--client-secret"}, required = true, interactive = true, arity = "0..1", echo = false) 
     	@Getter private String clientSecret;
-    	
-    	public void configure(FoDClientCredentialsConfig config) {
-    		config.setClientId(clientId);
-    		config.setClientSecret(clientSecret);
-    	}
     }
 	
 	@Override
@@ -100,17 +90,16 @@ public class FoDLoginCommand extends AbstractAuthLoginCommand<FoDConnectionConfi
 	}
 	
 	@Override
-	protected final FoDConnectionConfig getConnectionConfig() {
-		FoDConnectionConfig config = new FoDConnectionConfig();
-		connectionOptions.configure(config.getNonNullBasicConnectionConfig());
-		authOptions.getCredentialOptions().getUserOptions().configure(config.getNonNullUserCredentialsConfig());
-		authOptions.getCredentialOptions().getClientCredentialOptions().configure(config.getNonNullClientCredentialsConfig());
-		config.setRenewAllowed(authOptions.isRenewAllowed());
+	protected final FoDLoginConfig getLoginConfig() {
+		FoDLoginConfig config = new FoDLoginConfig();
+		config.setBasicConnectionConfig(getConnectionOptions());
+		Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getUserCredentialOptions).ifPresent(config::setFodUserCredentialsConfig);
+		Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getClientCredentialOptions).ifPresent(config::setFodClientCredentialsConfig);
 		return config;
 	}
 
 	@Override
-	protected ILoginHandler<FoDConnectionConfig> getLoginHandler() {
+	protected ILoginHandler<FoDLoginConfig> getLoginHandler() {
 		return sscLoginHandler;
 	}
 }

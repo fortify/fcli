@@ -24,22 +24,17 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.auth.login;
 
-import com.fortify.cli.common.rest.data.BasicUserCredentialsConfig;
+import com.fortify.cli.common.auth.login.IBasicUserCredentialsConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-public class LoginUserCredentialOptions {
+public class LoginUserCredentialOptions implements IBasicUserCredentialsConfig {
 	@Option(names = {"--user", "-u"}, required = true)
 	@Getter protected String user;
 	
 	@Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
 	@Getter protected char[] password;
-	
-	public void configure(BasicUserCredentialsConfig config) {
-		config.setUser(getUser());
-		config.setPassword(getPassword());
-	}
 }

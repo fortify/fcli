@@ -25,14 +25,26 @@
 package com.fortify.cli.common.rest.data;
 
 import io.micronaut.core.annotation.Introspected;
+import lombok.Builder;
 import lombok.Data;
 
-@Data @Introspected
-public class BasicConnectionConfig {
+@Data @Introspected @Builder
+public class BasicConnectionConfig implements IBasicConnectionConfig {
 	private String  url;
 	private String  proxyHost;
 	private Integer proxyPort;
 	private String  proxyUser;
 	private char[]  proxyPassword;
 	private boolean insecureModeEnabled;
+	
+	public static final BasicConnectionConfig from(IBasicConnectionConfig other) {
+		return BasicConnectionConfig.builder()
+			.url(other.getUrl())
+			.proxyHost(other.getProxyHost())
+			.proxyPort(other.getProxyPort())
+			.proxyUser(other.getProxyUser())
+			.proxyPassword(other.getProxyPassword())
+			.insecureModeEnabled(other.isInsecureModeEnabled())
+			.build();
+	}
 }

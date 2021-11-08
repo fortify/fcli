@@ -27,8 +27,9 @@ package com.fortify.cli.common.rest.unirest;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.auth.AuthSessionPersistenceHelper;
-import com.fortify.cli.common.rest.data.BasicConnectionConfig;
+import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
+import com.fortify.cli.common.auth.session.IAuthSessionData;
+import com.fortify.cli.common.rest.data.IBasicConnectionConfig;
 import com.fortify.cli.common.rest.data.IBasicConnectionConfigProvider;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -41,7 +42,7 @@ import lombok.Getter;
 //      which should be OK when running individual commands but less performant when running
 //      multiple commands in a composite command or workflow.
 @ReflectiveAccess
-public abstract class AbstractAuthSessionUnirestRunner<D extends IBasicConnectionConfigProvider> {
+public abstract class AbstractAuthSessionUnirestRunner<D extends IAuthSessionData> {
 	@Getter @Inject private BasicConnectionConfigUnirestRunner unirestRunner;
 	@Getter @Inject private ObjectMapper objectMapper;
 	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
@@ -94,7 +95,7 @@ public abstract class AbstractAuthSessionUnirestRunner<D extends IBasicConnectio
 
 	/**
 	 * Perform basic connection configuration if the given login session data implements
-	 * {@link IBasicConnectionConfigProvider}. Afterwards the {@link #configure(String, IBasicConnectionConfigProvider, UnirestInstance)}
+	 * {@link IBasicConnectionConfigProvider}. Afterwards the {@link #configure(String, IAuthSessionData, UnirestInstance)}
 	 * method is called to allow subclasses to perform any additional configuration, like setting
 	 * authentication headers.
 	 * @param authSessionData used to configure the {@link UnirestInstance}
@@ -103,7 +104,7 @@ public abstract class AbstractAuthSessionUnirestRunner<D extends IBasicConnectio
 	private final void _configure(String authSessionName, D authSessionData, UnirestInstance unirestInstance) {
 		if ( authSessionData instanceof IBasicConnectionConfigProvider ) {
 			IBasicConnectionConfigProvider csp = (IBasicConnectionConfigProvider)authSessionData;
-			BasicConnectionConfig cs = csp.getBasicConnectionConfig();
+			IBasicConnectionConfig cs = csp.getBasicConnectionConfig();
 			if ( cs == null ) { throw new IllegalArgumentException("Connection configuration may not be null"); }
 			unirestInstance.config()
 				.defaultBaseUrl(normalizeUrl(cs.getUrl()))

@@ -22,15 +22,26 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.auth;
+package com.fortify.cli.fod.auth.login.rest;
 
-import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
+import java.util.Date;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@ReflectiveAccess
-public abstract class AbstractCommandWithAuthSessionPersistenceHelper {
-	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
+import io.micronaut.core.annotation.Introspected;
+import lombok.Data;
+
+@Data @Introspected() @JsonIgnoreProperties(ignoreUnknown = true)
+public final class FoDTokenResponse {
+	private String access_token;
+	private long expires_at;
+
+	public void setExpires_in(long expiresIn) {
+		this.expires_at = new Date().getTime()+((expiresIn-5)*1000);
+	}
+
+	@JsonIgnore public boolean isExpired() {
+		return new Date().getTime() < expires_at;
+	}
 }

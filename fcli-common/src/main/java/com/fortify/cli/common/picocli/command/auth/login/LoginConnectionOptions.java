@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.auth.login;
 
-import com.fortify.cli.common.rest.data.BasicConnectionConfig;
+import com.fortify.cli.common.rest.data.IBasicConnectionConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -43,7 +43,7 @@ import picocli.CommandLine.Option;
  * @author Ruud Senden
  */
 @ReflectiveAccess
-public class LoginConnectionOptions {
+public class LoginConnectionOptions implements IBasicConnectionConfig {
 	@Option(names = {"--url"}, required = true, order=1)
 	@Getter private String url;
 	
@@ -61,13 +61,4 @@ public class LoginConnectionOptions {
 	
 	@Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
 	@Getter private boolean insecureModeEnabled;
-	
-	public void configure(BasicConnectionConfig config) {
-		config.setUrl(getUrl());
-		config.setProxyHost(getProxyHost());
-		config.setProxyPort(getProxyPort());
-		config.setProxyUser(getProxyUser());
-		config.setProxyPassword(getProxyPassword());
-		config.setInsecureModeEnabled(isInsecureModeEnabled());
-	}
 }

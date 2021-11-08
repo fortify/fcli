@@ -22,15 +22,20 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.auth;
+package com.fortify.cli.common.auth.session.summary;
 
-import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
+import java.util.Date;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import lombok.Getter;
+import io.micronaut.core.annotation.Introspected;
+import lombok.Builder;
+import lombok.Data;
 
-@ReflectiveAccess
-public abstract class AbstractCommandWithAuthSessionPersistenceHelper {
-	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
+@Data @Introspected @Builder
+public class AuthSessionSummary {
+	public static final Date EXPIRES_UNKNOWN = null;
+	public static final Date EXPIRES_NEVER = new Date(Long.MAX_VALUE);
+	private String name;
+	private String url;
+	private Date created;
+	private Date expires;
 }
