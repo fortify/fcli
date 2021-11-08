@@ -28,9 +28,9 @@ import java.time.OffsetDateTime;
 
 import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Value;
 
-@Data @Builder @Introspected
+@Value @Introspected @Builder
 public final class SSCTokenRequest {
 	private String type;
 	private String description;
