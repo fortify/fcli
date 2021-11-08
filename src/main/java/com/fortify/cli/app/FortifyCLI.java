@@ -29,6 +29,7 @@ import org.apache.commons.logging.impl.LogFactoryImpl;
 import org.apache.commons.logging.impl.SimpleLog;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
+import org.jasypt.normalization.Normalizer;
 
 import com.fortify.cli.common.picocli.executor.CommandLineExecutor;
 import com.oracle.svm.core.annotate.AutomaticFeature;
@@ -78,6 +79,9 @@ public class FortifyCLI {
 	@AutomaticFeature
 	public static final class RuntimeReflectionRegistrationFeature implements Feature {
 		public void beforeAnalysis(BeforeAnalysisAccess access) {
+			// This jasypt class uses reflection, so we perform a dummy operation to have GraalVM native image generation detect this
+			Normalizer.normalizeToNfc("dummy");
+			
 			// TODO Review whether these are all necessary
 			RuntimeReflection.register(String.class);
 			RuntimeReflection.register(LogFactoryImpl.class);
