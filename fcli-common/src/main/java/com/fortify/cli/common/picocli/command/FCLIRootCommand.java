@@ -46,16 +46,17 @@ import picocli.CommandLine.ScopeType;
 @ReflectiveAccess
 @Command(name = "fcli", 
 	scope = ScopeType.INHERIT, 
-	mixinStandardHelpOptions = true, 
+	mixinStandardHelpOptions = true,
 	usageHelpAutoWidth = true,
+	sortOptions = false,
 	footer = "%n(c) Copyright 2021 Micro Focus", 
-	showAtFileInUsageHelp = true,
-    optionListHeading = "%nOptions:%n",
+	showAtFileInUsageHelp = false,
+    optionListHeading = "%nGeneric options:%n", // This is supposed to hold only standard help, version, and logging options; command implementations should always use appropriate ArgGroups with headings
 	description = "Command-line interface for working with various Fortify products")
 public class FCLIRootCommand {
 	// Setting up logging is handled in the main class by a separate Picocli instance, to allow
 	// for setting up logging early in the process. In order to have our main command structure
 	// not complain about any logging options, we define them here even though we don't actually
 	// do anything with these options here.
-	@Mixin LogOptionsHandler logOptions; 
+	@Mixin LogOptionsHandler logOptions;
 }

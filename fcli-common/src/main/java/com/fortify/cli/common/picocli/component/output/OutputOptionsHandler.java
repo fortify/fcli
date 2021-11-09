@@ -21,37 +21,43 @@ import kong.unirest.HttpResponse;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
 public class OutputOptionsHandler {
 	@Spec(Spec.Target.MIXEE) CommandSpec mixee;
+	
+	@ArgGroup(heading = "Output options:%n")
+	private OutputOptionsArgGroup outputOptionsArgGroup;
 
-    @CommandLine.Option(names = {"--fmt", "--format"},
-            description = "Output format. Possible values: ${COMPLETION-CANDIDATES}.",
-            order=1)
-    private OutputFormat outputFormat;
-
-    @CommandLine.Option(names = {"--fields"},
-            description = "Define the fields to be included in the output, together with optional header names",
-            order=2)
-    private String fields;
-    
-    @CommandLine.Option(names = {"--flatten"},
-            description = "For non-column-based outputs, whether to flatten the structure",
-            order=3, defaultValue = "false")
-    @Getter
-    private boolean flatten;
-    
-    @CommandLine.Option(names = {"--with-headers"},
-            description = "For column-based outputs, whether to output headers",
-            order=3, defaultValue = "true")
-    @Getter
-    private boolean withHeaders;
-
-	@CommandLine.Option(names = {"--json-path"}, description = "Transforms output using JSONPath", order = 1)
-	@Getter private String jsonPath;
+	private static final class OutputOptionsArgGroup {
+	    @CommandLine.Option(names = {"--fmt", "--format"},
+	            description = "Output format. Possible values: ${COMPLETION-CANDIDATES}.",
+	            order=1)
+	    private OutputFormat outputFormat;
+	
+	    @CommandLine.Option(names = {"--fields"},
+	            description = "Define the fields to be included in the output, together with optional header names",
+	            order=2)
+	    private String fields;
+	    
+	    @CommandLine.Option(names = {"--flatten"},
+	            description = "For non-column-based outputs, whether to flatten the structure",
+	            order=3, defaultValue = "false")
+	    @Getter
+	    private boolean flatten;
+	    
+	    @CommandLine.Option(names = "--no-headers", negatable = true,
+	            description = "For column-based outputs, whether to output headers",
+	            order=3)
+	    @Getter
+	    private boolean withHeaders = true;
+	
+		@CommandLine.Option(names = {"--json-path"}, description = "Transforms output using JSONPath", order = 6)
+		@Getter private String jsonPath;
+	}
 	
 	public OutputOptionsWriter getWriter() {
 		return new OutputOptionsWriter(getOutputOptionsWriterConfig());
@@ -85,7 +91,8 @@ public class OutputOptionsHandler {
 	}
 	
 	public final class OutputOptionsWriter implements AutoCloseable { // TODO Implement interface, make implementation private
-		private final OutputOptionsHandler options = OutputOptionsHandler.this;
+		private final OutputOptionsHandler optionsHandler = OutputOptionsHandler.this;
+		private final OutputOptionsArgGroup optionsArgGroup = optionsHandler.outputOptionsArgGroup!=null ? optionsHandler.outputOptionsArgGroup : new OutputOptionsArgGroup();
 		private final OutputOptionsWriterConfig config;
 		private final OutputFormat outputFormat;
 		private final PrintWriter printWriter;
@@ -123,7 +130,7 @@ public class OutputOptionsHandler {
 		private void writeRecord(JsonNode jsonNode) {
 			jsonNode = config.applyRecordTransformations(outputFormat, jsonNode); // TODO Before or after other transformations?
 			jsonNode = applyJsonPathTransformation(outputFormat, jsonNode);
-			jsonNode = config.applyFieldsTransformations(outputFormat, options.fields, jsonNode);
+			jsonNode = config.applyFieldsTransformations(outputFormat, optionsArgGroup.fields, jsonNode);
 			jsonNode = applyFlattenTransformation(outputFormat, jsonNode);
 			if(jsonNode.getNodeType() == JsonNodeType.ARRAY) {
 				if(jsonNode.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(jsonNode.get(0).toString()));
@@ -134,22 +141,22 @@ public class OutputOptionsHandler {
 		
 		// TODO Move to OutputOptionsWriterConfig to allow defaults?
 		protected JsonNode applyJsonPathTransformation(OutputFormat outputFormat, JsonNode data) {
-			if ( StringUtils.isNotEmpty(options.jsonPath) ) {
-				data = new JsonPathTransformer(options.jsonPath).transform(data);
+			if ( StringUtils.isNotEmpty(optionsArgGroup.jsonPath) ) {
+				data = new JsonPathTransformer(optionsArgGroup.jsonPath).transform(data);
 			}
 			return data;
 		}
 		
 		// TODO Move to OutputOptionsWriterConfig to allow defaults?
 		protected JsonNode applyFlattenTransformation(OutputFormat outputFormat, JsonNode data) {
-			if ( options.flatten ) {
+			if ( optionsArgGroup.flatten ) {
 				data = new FlattenTransformer(outputFormat.getDefaultFieldNameFormatter(), ".", false).transform(data);
 			}
 			return data;
 		}
 
 		private OutputFormat getOutputFormat() {
-	    	OutputFormat result = options.outputFormat;
+	    	OutputFormat result = optionsArgGroup.outputFormat;
 	    	if ( result == null ) {
 	    		result = config.defaultFormat();
 	    	}
@@ -162,7 +169,7 @@ public class OutputOptionsHandler {
 		private RecordWriterConfig createOutputWriterConfig() {
 			return RecordWriterConfig.builder()
 					.printWriter(printWriter)
-					.headersEnabled(isWithHeaders())
+					.headersEnabled(optionsArgGroup.isWithHeaders())
 					.build();
 		}
 		

@@ -33,7 +33,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.FileAppender;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ScopeType;
 
@@ -47,17 +46,11 @@ import picocli.CommandLine.ScopeType;
  */
 @ReflectiveAccess
 public class LogOptionsHandler {
-	@ArgGroup(heading = "Log Options%n", order = 0)
-	private LogOptions logOptions = new LogOptions();
-	
-	@ReflectiveAccess
-	private static class LogOptions { 
-		@Option(names = "--log-level", scope = ScopeType.INHERIT, description = "Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: ${COMPLETION-CANDIDATES}")
-		private LogLevel logLevel;
-	
-		@Option(names = "--log-file", scope = ScopeType.INHERIT, description = "File where logging data will be written. If not specified, no logging data will be witten.")
-		private String logFile;
-	}
+	@Option(names = "--log-level", scope = ScopeType.INHERIT, description = "Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: ${COMPLETION-CANDIDATES}")
+	private LogLevel logLevel;
+
+	@Option(names = "--log-file", scope = ScopeType.INHERIT, description = "File where logging data will be written. If not specified, no logging data will be witten.")
+	private String logFile;
 	
 	private static enum LogLevel {
 	    TRACE(Level.TRACE),
@@ -73,11 +66,11 @@ public class LogOptionsHandler {
 	}
 
 	public void configureLogging() {
-		if ( logOptions.logFile!=null || logOptions.logLevel!=null ) {
+		if ( logFile!=null || logLevel!=null ) {
 			LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
 			Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-			configureLogFile(rootLogger, logOptions.logFile==null ? "fcli.log" : logOptions.logFile);
-			configureLogLevel(rootLogger, logOptions.logLevel==null ? LogLevel.INFO : logOptions.logLevel);
+			configureLogFile(rootLogger, logFile==null ? "fcli.log" : logFile);
+			configureLogLevel(rootLogger, logLevel==null ? LogLevel.INFO : logLevel);
 		}
 	}
 
