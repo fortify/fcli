@@ -29,14 +29,16 @@ import java.time.OffsetDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data @Introspected @Builder @NoArgsConstructor @AllArgsConstructor
+@Data @Introspected @Builder @NoArgsConstructor @AllArgsConstructor @ReflectiveAccess
 public final class SSCTokenRequest {
 	private String type;
 	private String description;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") private OffsetDateTime terminalDate;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") 
+	private OffsetDateTime terminalDate;
 }
