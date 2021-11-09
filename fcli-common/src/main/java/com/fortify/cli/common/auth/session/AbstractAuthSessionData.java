@@ -64,6 +64,7 @@ public abstract class AbstractAuthSessionData implements IAuthSessionData {
 	@JsonIgnore public final AuthSessionSummary getSummary(String authSessionName) {
 		return AuthSessionSummary.builder()
 				.name(authSessionName)
+				.type(getAuthSessionType())
 				.url(getConnectionConfig().getUrl())
 				.created(getCreated())
 				.expires(getSessionExpiryDate())

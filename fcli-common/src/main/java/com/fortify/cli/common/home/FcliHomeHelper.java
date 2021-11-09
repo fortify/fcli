@@ -88,4 +88,9 @@ public class FcliHomeHelper {
 	public static final void deleteFilesInDir(Path relativePath, boolean recursive) throws IOException {
 		listFilesInDir(relativePath, recursive).map(Path::toFile).forEach(File::delete);
 	}
+
+	public static final boolean exists(Path relativePath) {
+		final Path filePath = getFcliHomePath().resolve(relativePath);
+		return Files.exists(filePath);
+	}
 }

@@ -26,36 +26,37 @@ package com.fortify.cli.common.picocli.command.auth.sessions;
 
 import java.util.Collection;
 
-import com.fortify.cli.common.auth.session.summary.AuthSessionSummary;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.auth.session.summary.IAuthSessionSummaryProvider;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.auth.AuthCommandsOrder;
 import com.fortify.cli.common.picocli.command.auth.RootAuthCommand;
+import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @SubcommandOf(RootAuthCommand.class)
 @Command(name = "sessions", description = "Get information related to authentication sessions.")
 @Order(AuthCommandsOrder.LOGIN)
 public class AuthSessionsCommand implements Runnable {
+	@Inject private ObjectMapper objectMapper;
 	@Inject private Collection<IAuthSessionSummaryProvider> authSessionSummaryProviders;
+	@Mixin private OutputOptionsHandler outputOptionsHandler;
 
 	@Override
 	public void run() {
-		authSessionSummaryProviders.forEach(this::printSummary);
+		try ( var writer = outputOptionsHandler.getWriter() ) {
+			authSessionSummaryProviders.stream()
+				.flatMap(p->p.getAuthSessionSummaries().stream())
+				.map(objectMapper::valueToTree)
+				.map(JsonNode.class::cast) // TODO Not sure why this is necessary
+				.forEach(writer::write);
+		}
 	}
-
-	private void printSummary(IAuthSessionSummaryProvider authSessionSummaryProvider) {
-		authSessionSummaryProvider.getAuthSessionSummaries().forEach(this::outputSummary);
-	}
-
-	private void outputSummary(AuthSessionSummary authSessionSummary) {
-		System.out.println(authSessionSummary);
-	}
-	
-	
 }

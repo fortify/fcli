@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fortify.cli.common.auth.session.AbstractAuthSessionData;
 import com.fortify.cli.common.auth.session.summary.AuthSessionSummary;
+import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.ssc.auth.login.SSCLoginConfig;
 import com.fortify.cli.ssc.auth.login.rest.SSCTokenResponse;
 import com.fortify.cli.ssc.auth.login.rest.SSCTokenResponse.SSCTokenData;
@@ -53,6 +54,11 @@ public class SSCAuthSessionData extends AbstractAuthSessionData {
 	public SSCAuthSessionData(SSCLoginConfig config, SSCTokenResponse cachedTokenResponse) {
 		this(config);
 		this.cachedTokenResponse = cachedTokenResponse;
+	}
+	
+	@JsonIgnore @Override
+	public String getAuthSessionType() {
+		return ProductIdentifiers.SSC;
 	}
 	
 	@JsonIgnore 

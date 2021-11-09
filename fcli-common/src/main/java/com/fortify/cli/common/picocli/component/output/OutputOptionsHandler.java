@@ -53,8 +53,8 @@ public class OutputOptionsHandler {
 	@CommandLine.Option(names = {"--json-path"}, description = "Transforms output using JSONPath", order = 1)
 	@Getter private String jsonPath;
 	
-	public OutputOptionsWriter getWriter(OutputOptionsWriterConfig config) {
-		return new OutputOptionsWriter(config);
+	public OutputOptionsWriter getWriter() {
+		return new OutputOptionsWriter(getOutputOptionsWriterConfig());
 	}
 	
 	public void write(JsonNode jsonNode) {
@@ -70,7 +70,7 @@ public class OutputOptionsHandler {
 	}
 	
 	private <T> void write(Function<OutputOptionsWriter, Consumer<T>> consumer, T input) {
-		try ( var writer = getWriter(getOutputOptionsWriterConfig()) ) {
+		try ( var writer = getWriter() ) {
 			consumer.apply(writer).accept(input);
 		}
 	}

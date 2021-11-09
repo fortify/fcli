@@ -37,7 +37,18 @@ public class AuthSessionSummary {
 	public static final Date EXPIRES_UNKNOWN = null;
 	public static final Date EXPIRES_NEVER = new Date(Long.MAX_VALUE);
 	private String name;
+	private String type;
 	private String url;
 	private Date created;
 	private Date expires;
+	
+	public String getExpired() {
+		if ( expires==null ) { 
+			return "Unknown";
+		} else if ( expires.after(new Date()) ) {
+			return "No";
+		} else {
+			return "Yes";
+		}
+	}
 }

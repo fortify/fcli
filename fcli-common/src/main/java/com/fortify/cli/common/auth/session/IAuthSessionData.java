@@ -31,4 +31,4 @@ import com.fortify.cli.common.rest.data.IConnectionConfigProvider;
  * 
  * @author Ruud Senden
  */
-public interface IAuthSessionData extends IConnectionConfigProvider {}
+public interface IAuthSessionData extends IConnectionConfigProvider, IAuthSessionTypeProvider {}
