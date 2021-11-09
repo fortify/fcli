@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.table;
 
-import java.io.Writer;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -59,9 +59,10 @@ public class TableRecordWriter implements IRecordWriter {
 
 	@Override @SneakyThrows
 	public void finishOutput() {
-		try ( Writer writer = config.getPrintWriterSupplier().get() ) {
-			writer.write(getTable(columns, rows.toArray(new String[rows.size()][])));
+		try ( PrintWriter writer = config.getPrintWriterSupplier().get() ) {
+			writer.println(getTable(columns, rows.toArray(new String[rows.size()][])));
 		}
+		
 	}
 
 	private String getTable(String[] columns, String[][] data) {
