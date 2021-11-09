@@ -26,6 +26,7 @@ package com.fortify.cli.common.output.xml;
 
 import javax.xml.namespace.QName;
 
+import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlFactory;
@@ -47,8 +48,9 @@ public class XmlRecordWriter implements IRecordWriter {
 	private ToXmlGenerator getGenerator() {
 		if ( generator==null ) {
 			XmlFactory factory = new XmlFactory();
-		    this.generator = (ToXmlGenerator)factory.createGenerator(config.getPrintWriterSupplier().get())
-		    		.setCodec(new ObjectMapper());
+		    this.generator = (ToXmlGenerator)factory.createGenerator(config.getPrintWriter())
+		    		.setCodec(new ObjectMapper())
+		    		.disable(Feature.AUTO_CLOSE_TARGET);
 		    if ( config.isPretty() ) generator = (ToXmlGenerator)generator.useDefaultPrettyPrinter();
 			if ( !config.isSingular() ) {
 				generator.setNextName(new QName(null, "items"));

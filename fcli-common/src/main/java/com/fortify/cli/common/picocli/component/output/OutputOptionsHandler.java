@@ -88,11 +88,13 @@ public class OutputOptionsHandler {
 		private final OutputOptionsHandler options = OutputOptionsHandler.this;
 		private final OutputOptionsWriterConfig config;
 		private final OutputFormat outputFormat;
+		private final PrintWriter printWriter;
 		private final IRecordWriter recordWriter;
 		
 		public OutputOptionsWriter(OutputOptionsWriterConfig config) {
 			this.config = config;
 			this.outputFormat = getOutputFormat();
+			this.printWriter = createPrintWriter(config);
 			this.recordWriter = outputFormat.getRecordWriterFactory().createRecordWriter(createOutputWriterConfig());
 		}
 		
@@ -159,18 +161,21 @@ public class OutputOptionsHandler {
 		
 		private RecordWriterConfig createOutputWriterConfig() {
 			return RecordWriterConfig.builder()
-					.printWriterSupplier(this::getPrintWriter)
+					.printWriter(printWriter)
 					.headersEnabled(isWithHeaders())
 					.build();
 		}
 		
-		private final PrintWriter getPrintWriter() {
+		private final PrintWriter createPrintWriter(OutputOptionsWriterConfig config) {
 			return new PrintWriter(System.out);
 		}
 
 		@Override
 		public void close() {
 			recordWriter.finishOutput();
+			printWriter.flush();
+			// TODO Close printwriter and/or underlying streams except for System.out
+			//      once we have implemented output to file.
 		}
 	}
 }

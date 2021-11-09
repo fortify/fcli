@@ -25,14 +25,13 @@
 package com.fortify.cli.common.output;
 
 import java.io.PrintWriter;
-import java.util.function.Supplier;
 
 import lombok.Builder;
 import lombok.Data;
 
 @Data @Builder
 public class RecordWriterConfig {
-	private Supplier<PrintWriter> printWriterSupplier;
+	private PrintWriter printWriter;
 	private boolean singular;                          // Write singular output rather than array/list/...
 	@Builder.Default private boolean pretty = true;    // Pretty-print
 	private boolean headersEnabled;                    // Whether to print headers

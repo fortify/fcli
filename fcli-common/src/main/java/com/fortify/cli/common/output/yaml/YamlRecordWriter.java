@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.yaml;
 
+import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -45,8 +46,9 @@ public class YamlRecordWriter implements IRecordWriter {
 	private YAMLGenerator getGenerator() {
 		if ( generator==null ) {
 			YAMLFactory factory = new YAMLFactory();
-		    this.generator = (YAMLGenerator)factory.createGenerator(config.getPrintWriterSupplier().get())
-		    		.setCodec(new ObjectMapper());
+		    this.generator = (YAMLGenerator)factory.createGenerator(config.getPrintWriter())
+		    		.setCodec(new ObjectMapper())
+		    		.disable(Feature.AUTO_CLOSE_TARGET);
 		    if ( config.isPretty() ) generator = (YAMLGenerator)generator.useDefaultPrettyPrinter();
 			if ( !config.isSingular() ) {
 				generator.writeStartArray();

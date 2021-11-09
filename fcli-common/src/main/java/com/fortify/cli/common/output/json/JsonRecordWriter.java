@@ -24,8 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.json;
 
+import java.io.PrintWriter;
+
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,14 +46,19 @@ public class JsonRecordWriter implements IRecordWriter {
 		this.config = config;
 	}
 	
+	private PrintWriter getPrintWriter() {
+		return config.getPrintWriter();
+	}
+	
 	@SneakyThrows
 	private JsonGenerator getGenerator() {
 		if ( generator==null ) {
 			PrettyPrinter pp = !config.isPretty() ? null : new DefaultPrettyPrinter(); 
 			this.generator = JsonFactory.builder().
-					build().createGenerator(config.getPrintWriterSupplier().get())
+					build().createGenerator(getPrintWriter())
 					.setPrettyPrinter(pp)
-					.setCodec(new ObjectMapper());
+					.setCodec(new ObjectMapper())
+					.disable(Feature.AUTO_CLOSE_TARGET);
 			if ( !config.isSingular() ) {
 				generator.writeStartArray();
 			}
@@ -69,5 +77,6 @@ public class JsonRecordWriter implements IRecordWriter {
 			getGenerator().writeEndArray();
 			getGenerator().close();
 		}
+		getPrintWriter().println(); // End with a newline
 	}
 }

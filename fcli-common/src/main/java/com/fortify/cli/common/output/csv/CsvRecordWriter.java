@@ -26,10 +26,11 @@ package com.fortify.cli.common.output.csv;
 
 import java.io.PrintWriter;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.core.JsonGenerator.Feature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvFactory;
+import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fortify.cli.common.output.IRecordWriter;
 import com.fortify.cli.common.output.RecordWriterConfig;
@@ -38,33 +39,49 @@ import lombok.SneakyThrows;
 
 public class CsvRecordWriter implements IRecordWriter {
 	private final RecordWriterConfig config;
-	private ObjectWriter objectWriter;
+	private CsvGenerator generator;
 
 	public CsvRecordWriter(RecordWriterConfig config) {
 		this.config = config;
 	}
-
-	@Override @SneakyThrows
-	public void writeRecord(ObjectNode record) {
-		ObjectWriter objectWriter = getObjectWriter(record);
-		PrintWriter printWriter = config.getPrintWriterSupplier().get();
-		objectWriter.writeValue(printWriter, record);
+	
+	private PrintWriter getPrintWriter() {
+		return config.getPrintWriter();
 	}
 	
-	private ObjectWriter getObjectWriter(ObjectNode record) {
-		if ( objectWriter==null ) {
+	@SneakyThrows
+	private CsvGenerator getGenerator(ObjectNode record) {
+		if ( generator==null ) {
 			if ( record!=null ) {
 				CsvSchema.Builder schemaBuilder = CsvSchema.builder();
 				record.fieldNames().forEachRemaining(schemaBuilder::addColumn);
 				CsvSchema schema = schemaBuilder.build()
 						.withUseHeader(config.isHeadersEnabled());
-				objectWriter = new CsvMapper()
-						.enable(JsonGenerator.Feature.IGNORE_UNKNOWN)
-						.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
-						.writer(schema);
+				this.generator = (CsvGenerator)CsvFactory.builder().
+						build().createGenerator(getPrintWriter())
+						.setCodec(new ObjectMapper())
+						.enable(Feature.IGNORE_UNKNOWN)
+						.disable(Feature.AUTO_CLOSE_TARGET);
+				this.generator.setSchema(schema);
+				if ( !config.isSingular() ) {
+					generator.writeStartArray();
+				}
 			}
 		}
-		return objectWriter;
+		return generator;
+	}
+
+	@Override @SneakyThrows
+	public void writeRecord(ObjectNode record) {
+		getGenerator(record).writeTree(record);
+	}
+	
+	@Override @SneakyThrows
+	public void finishOutput() {
+		if ( !config.isSingular() && generator!=null ) {
+			generator.writeEndArray();
+			generator.close();
+		}
 	}
 
 }
