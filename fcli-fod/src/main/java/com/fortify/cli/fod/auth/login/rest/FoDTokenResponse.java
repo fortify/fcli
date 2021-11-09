@@ -41,7 +41,7 @@ public final class FoDTokenResponse {
 		this.expires_at = new Date().getTime()+((expiresIn-5)*1000);
 	}
 
-	@JsonIgnore public boolean isExpired() {
+	@JsonIgnore public boolean isActive() {
 		return new Date().getTime() < expires_at;
 	}
 }

@@ -50,7 +50,7 @@ public class FoDAuthSessionData extends AbstractAuthSessionData {
 	
 	@JsonIgnore
 	public final boolean hasActiveCachedTokenResponse() {
-		return getCachedTokenResponse()!=null && cachedTokenResponse.isExpired(); 
+		return getCachedTokenResponse()!=null && cachedTokenResponse.isActive(); 
 	}
 	
 	@JsonIgnore 
