@@ -26,6 +26,8 @@ package com.fortify.cli.common.auth.session.summary;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,7 +41,9 @@ public class AuthSessionSummary {
 	private String name;
 	private String type;
 	private String url;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss z") 
 	private Date created;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss z") 
 	private Date expires;
 	
 	public String getExpired() {
