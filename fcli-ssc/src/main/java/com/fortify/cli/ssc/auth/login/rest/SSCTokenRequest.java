@@ -26,6 +26,8 @@ package com.fortify.cli.ssc.auth.login.rest;
 
 import java.time.OffsetDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.micronaut.core.annotation.Introspected;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,4 +39,9 @@ public final class SSCTokenRequest {
 	private String type;
 	private String description;
 	private OffsetDateTime terminalDate;
+	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
+	public OffsetDateTime getTerminalDate() {
+		return terminalDate;
+	}
 }
