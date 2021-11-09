@@ -38,10 +38,5 @@ import lombok.NoArgsConstructor;
 public final class SSCTokenRequest {
 	private String type;
 	private String description;
-	private OffsetDateTime terminalDate;
-	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
-	public OffsetDateTime getTerminalDate() {
-		return terminalDate;
-	}
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") private OffsetDateTime terminalDate;
 }
