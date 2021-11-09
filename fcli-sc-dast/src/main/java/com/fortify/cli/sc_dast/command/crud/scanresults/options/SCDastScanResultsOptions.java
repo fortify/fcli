@@ -24,7 +24,7 @@ public class SCDastScanResultsOptions {
             description = "When waiting for completion, how long between to poll, in seconds", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
     @Getter private int waitInterval;
 
-    @Option(names = {"--detailed"}, defaultValue = "false"
+    @Option(names = {"--detailed"}, defaultValue = "false",
             description = "Displays issues count while polling scans status", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
     @Getter private boolean detailed;
 }
