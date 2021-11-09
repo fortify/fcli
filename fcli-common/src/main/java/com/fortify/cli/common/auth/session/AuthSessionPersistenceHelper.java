@@ -24,8 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.common.auth.session;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -61,7 +63,11 @@ public final class AuthSessionPersistenceHelper {
 	
 	@SneakyThrows // TODO Do we want to use SneakyThrows?
 	public final List<String> list(String authSessionType) {
-		return FcliHomeHelper.listFilesInDir(Paths.get("authSessions", authSessionType), false)
+		Path path = Paths.get("authSessions", authSessionType);
+		if ( !Files.exists(path) ) {
+			return Collections.emptyList();
+		}
+		return FcliHomeHelper.listFilesInDir(path, false)
 				.map(Path::getFileName)
 				.map(Path::toString)
 				.collect(Collectors.toList());
