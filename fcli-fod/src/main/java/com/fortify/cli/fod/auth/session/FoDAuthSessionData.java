@@ -55,14 +55,14 @@ public class FoDAuthSessionData extends AbstractAuthSessionData {
 	
 	@JsonIgnore 
 	public String getActiveBearerToken() {
-		return hasActiveCachedTokenResponse() ? cachedTokenResponse.getAccess_token() : null; 
+		return hasActiveCachedTokenResponse() ? cachedTokenResponse.getAccessToken() : null; 
 	}
 	
 	@JsonIgnore @Override
 	protected Date getSessionExpiryDate() {
 		Date sessionExpiryDate = AuthSessionSummary.EXPIRES_UNKNOWN;
 		if ( getCachedTokenResponse()!=null ) {
-			sessionExpiryDate = new Date(getCachedTokenResponse().getExpires_at());
+			sessionExpiryDate = new Date(getCachedTokenResponse().getExpiresAt());
 		}
 		return sessionExpiryDate;
 	}

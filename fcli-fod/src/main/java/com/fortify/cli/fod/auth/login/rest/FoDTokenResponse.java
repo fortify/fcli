@@ -28,23 +28,22 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 
 @Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public final class FoDTokenResponse {
-	private String access_token;
-	private long expires_at;
+	@JsonProperty("access_token") private String accessToken;
+	@JsonProperty("expires_at") private long expiresAt;
 
-	public void setExpires_in(long expiresIn) {
-		this.expires_at = new Date().getTime()+((expiresIn-5)*1000);
+	@JsonProperty("expires_in")
+	public void setExpiresIn(long expiresIn) {
+		this.expiresAt = new Date().getTime()+((expiresIn-5)*1000);
 	}
-	
-	// Dummy method to have Micronaut generate correct bean introspection data 
-	@JsonIgnore public long getExpires_in() { return 0; }
 
 	@JsonIgnore public boolean isActive() {
-		return new Date().getTime() < expires_at;
+		return new Date().getTime() < expiresAt;
 	}
 }
