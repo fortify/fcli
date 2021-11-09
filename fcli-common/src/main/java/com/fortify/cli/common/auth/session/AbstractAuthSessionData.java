@@ -33,10 +33,10 @@ import com.fortify.cli.common.rest.data.BasicConnectionConfig;
 import com.fortify.cli.common.rest.data.IConnectionConfig;
 import com.fortify.cli.common.rest.data.IConnectionConfigProvider;
 
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 
-@Data @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractAuthSessionData implements IAuthSessionData {
 	private BasicConnectionConfig basicConnectionConfig;
 	private Date created = new Date();

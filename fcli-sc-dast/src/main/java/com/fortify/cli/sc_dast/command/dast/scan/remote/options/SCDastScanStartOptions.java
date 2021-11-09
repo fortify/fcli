@@ -1,15 +1,16 @@
 package com.fortify.cli.sc_dast.command.dast.scan.remote.options;
 
+import java.io.File;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Option;
-
-import java.io.File;
 
 /**
  * Configure options for running SC DAST Scan

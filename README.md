@@ -94,16 +94,11 @@ The following native image runtime behavior may indicate a missing `@ReflectiveA
 
 #### Jackson
 
-Jackson is usually heavily based on reflection to perform object serialization and deserialization. As described above, support for reflection is severely limited in native images, but Micronaut offers a solution for this. Micronaut offers the `@Introspected` class-level annotation, which at compilation time will result in `BeanIntrospection` classes to be generated; these classes allow for performing reflection-like functionality but without actually doing any reflection. To complement this, Micronaut also provides a Jackson `ObjectMapper` bean that has been configured to use these generated classes rather than reflection.
+Jackson is heavily based on reflection to perform object serialization and deserialization. All classes that need to be (de-)serialized with Jackson therefore need to be annotated with `@ReflectiveAccess` to allow reflection-based (de-)serialization.
 
-This does have a couple of consequences:
-* All classes to be serialized or de-serialized with Jackson will need to have `BeanIntrospection` classes to be generated
-    * For classes under our control we can simply add the `@Introspected` annotation
-    * For classes not under our control we can use the `@Introspected(<3rd-party class>)` annotation on some configuration class
-    * See Micronaut [documentation](https://docs.micronaut.io/latest/guide/#introspection) and [JavaDoc](https://docs.micronaut.io/3.0.1/api/io/micronaut/core/annotation/Introspected.html) for more details
-* Some code may run fine on a regular JVM, but not in a native image, for example due to one of the following reasons:
-    * Classes being serialized or de-serialized unintentionally force reflective access. For example, de-serializing some JSON property that corresponds to a `final` field will work fine on a JVM (despite being defined as `final`, the property can still be set through reflection), but will fail in a native image
-    * De-serializing properties for which no setter exists may fail. In particular, if data classes define   getters without corresponding setters (for example to access nested or calculated data), then by default Jackson will serialize the data returned by these methods but will fail to deserialize that data in a native image because no setter exists; see [Jackson deserialization failing](https://github.com/micronaut-projects/micronaut-core/discussions/6393) for an example. The solution is to not serialize the data returned by those methods in the first place by using the `@JsonIgnore` annotation on those getters.
+Note that Micronaut provides the `@Introspected` annotation that should allow for reflection-free (de-)serialization. However experience learns that there are just too many differences between reflection-based and introspection-based (de-)serialization. When running in a normal JVM these differences are often not visible as Jackson can easily fall back to reflection-based (de-)serialization. In native images, Jackson cannot fall back to reflection-based (de-)serialization unless properly configured, and even when properly configured there are still some differences in behavior. 
+
+As such, it has been decided to disable Jackson introspection-based (de-)serialization using the `jackson.bean-introspection-module` configuration property in `application.yml`. This also means that we will not be using the `@Introspected` annotation on classes that need to be (de-)serialized with Jackson (unless of course introspection-based access is used for non Jackson-related purposes).
 
 ### Gradle Wrapper
 

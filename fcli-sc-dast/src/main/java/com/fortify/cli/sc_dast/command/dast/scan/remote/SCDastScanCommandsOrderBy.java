@@ -24,8 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.command.dast.scan.remote;
 
-import com.fortify.cli.common.picocli.command.crud.CRUDCommandsOrder;
-
 /**
  * @author Ruud Senden
  */

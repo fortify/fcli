@@ -29,10 +29,10 @@ import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 
-@Data @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public final class FoDTokenResponse {
 	private String access_token;
 	private long expires_at;

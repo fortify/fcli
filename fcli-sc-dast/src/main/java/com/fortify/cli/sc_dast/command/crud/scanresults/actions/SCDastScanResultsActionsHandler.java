@@ -11,10 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 @ReflectiveAccess
 @AllArgsConstructor
 public class SCDastScanResultsActionsHandler {

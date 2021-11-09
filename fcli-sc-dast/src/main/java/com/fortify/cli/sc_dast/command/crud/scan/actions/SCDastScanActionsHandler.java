@@ -1,18 +1,19 @@
 package com.fortify.cli.sc_dast.command.crud.scan.actions;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JacksonJsonNodeHelper;
 import com.fortify.cli.sc_dast.command.crud.scanstatus.actions.SCDastScanStatusActionsHandler;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.NonNull;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 @ReflectiveAccess
 public class SCDastScanActionsHandler {

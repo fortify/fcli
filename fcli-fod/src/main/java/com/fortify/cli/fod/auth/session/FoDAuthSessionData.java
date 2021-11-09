@@ -33,11 +33,11 @@ import com.fortify.cli.common.auth.session.summary.AuthSessionSummary;
 import com.fortify.cli.fod.auth.login.FoDLoginConfig;
 import com.fortify.cli.fod.auth.login.rest.FoDTokenResponse;
 
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-@Data @EqualsAndHashCode(callSuper = true) @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @EqualsAndHashCode(callSuper = true) @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public class FoDAuthSessionData extends AbstractAuthSessionData {
 	private FoDTokenResponse cachedTokenResponse;
 	

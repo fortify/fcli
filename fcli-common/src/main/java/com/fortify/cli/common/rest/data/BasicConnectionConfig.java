@@ -24,13 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.data;
 
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data @Introspected @NoArgsConstructor @AllArgsConstructor @Builder
+@Data @ReflectiveAccess @NoArgsConstructor @AllArgsConstructor @Builder
 public class BasicConnectionConfig implements IConnectionConfig {
 	private String  url;
 	private String  proxyHost;

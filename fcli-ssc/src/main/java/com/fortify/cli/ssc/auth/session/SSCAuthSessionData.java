@@ -34,11 +34,11 @@ import com.fortify.cli.ssc.auth.login.SSCLoginConfig;
 import com.fortify.cli.ssc.auth.login.rest.SSCTokenResponse;
 import com.fortify.cli.ssc.auth.login.rest.SSCTokenResponse.SSCTokenData;
 
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-@Data @EqualsAndHashCode(callSuper = true)  @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @EqualsAndHashCode(callSuper = true)  @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public class SSCAuthSessionData extends AbstractAuthSessionData {
 	private char[] predefinedToken;
 	private SSCTokenResponse cachedTokenResponse;

@@ -26,13 +26,13 @@ package com.fortify.cli.common.auth.session.summary;
 
 import java.util.Date;
 
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data @Introspected @Builder @NoArgsConstructor @AllArgsConstructor
+@Data @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
 public class AuthSessionSummary {
 	public static final Date EXPIRES_UNKNOWN = null;
 	public static final Date EXPIRES_NEVER = new Date(Long.MAX_VALUE);

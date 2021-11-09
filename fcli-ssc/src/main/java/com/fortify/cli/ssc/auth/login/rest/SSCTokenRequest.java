@@ -28,14 +28,13 @@ import java.time.OffsetDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data @Introspected @Builder @NoArgsConstructor @AllArgsConstructor @ReflectiveAccess
+@Data @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
 public final class SSCTokenRequest {
 	private String type;
 	private String description;

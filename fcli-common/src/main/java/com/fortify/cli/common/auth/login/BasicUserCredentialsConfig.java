@@ -26,10 +26,10 @@ package com.fortify.cli.common.auth.login;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 
-@Data @Introspected
+@Data @ReflectiveAccess
 public class BasicUserCredentialsConfig implements IBasicUserCredentialsConfig {
 	private String user;
 	private char[] password;

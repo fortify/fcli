@@ -2,18 +2,23 @@ package com.fortify.cli.sc_dast.command.dast.scan.remote;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.dast.scan.DastScanCommandsOrder;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.sc_dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.command.crud.scan.actions.SCDastScanActionsHandler;
-import com.fortify.cli.sc_dast.command.dast.scan.remote.options.*;
+import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanCompleteOptions;
+import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanDeleteOptions;
+import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanPauseOptions;
+import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanPublishOptions;
+import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanResumeOptions;
+import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanStartOptions;
+
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine.Command;
 import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 public class SCDastRemoteScanCommands {

@@ -1,5 +1,9 @@
 package com.fortify.cli.sc_dast.command.crud.scanstatus.actions;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.sc_dast.command.crud.scan.actions.SCDastScanActionsHandler;
@@ -10,10 +14,6 @@ import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @ReflectiveAccess
 public class SCDastScanStatusActionsHandler {
