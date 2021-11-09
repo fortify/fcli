@@ -40,6 +40,9 @@ public final class FoDTokenResponse {
 	public void setExpires_in(long expiresIn) {
 		this.expires_at = new Date().getTime()+((expiresIn-5)*1000);
 	}
+	
+	// Dummy method to have Micronaut generate correct bean introspection data 
+	@JsonIgnore public long getExpires_in() { return 0; }
 
 	@JsonIgnore public boolean isActive() {
 		return new Date().getTime() < expires_at;
