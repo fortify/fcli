@@ -88,6 +88,13 @@ public class SCDastScanStatusActionsHandler {
         waitWhileScanStatus(scanId, waitingStatus, waitInterval);
     }
 
+    public void waitCompletionWithDetails(int scanId, int waitInterval)
+    {
+        List<String> waitingStatus = Arrays.asList("Pending", "Queued", "Running");
+
+        waitWhileScanStatus(scanId, waitingStatus, waitInterval);
+    }
+
     public void waitPaused(int scanId, int waitInterval)
     {
         List<String> waitingStatus = Arrays.asList("Paused","Unknown");
