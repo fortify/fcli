@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Data;
 
-@Data @Introspected() @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @Introspected @JsonIgnoreProperties(ignoreUnknown = true)
 public final class FoDTokenResponse {
 	private String access_token;
 	private long expires_at;

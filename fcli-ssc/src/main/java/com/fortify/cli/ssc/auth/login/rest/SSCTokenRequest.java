@@ -27,10 +27,12 @@ package com.fortify.cli.ssc.auth.login.rest;
 import java.time.OffsetDateTime;
 
 import io.micronaut.core.annotation.Introspected;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Value @Introspected @Builder
+@Data @Introspected @Builder @NoArgsConstructor @AllArgsConstructor
 public final class SSCTokenRequest {
 	private String type;
 	private String description;
