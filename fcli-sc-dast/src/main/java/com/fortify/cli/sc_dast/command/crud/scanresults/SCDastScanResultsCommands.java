@@ -46,7 +46,11 @@ public class SCDastScanResultsCommands {
             SCDastScanResultsActionsHandler actionsHandler = new SCDastScanResultsActionsHandler(unirest);
 
             if(scanResultsOptions.isWaitCompletion()) {
-                actionsHandler.waitCompletion(scanResultsOptions.getScanId(), scanResultsOptions.getWaitInterval());
+                if (scanResultsOptions.isDetailed()){
+                    actionsHandler.waitCompletionWithDetails(scanResultsOptions.getScanId(), scanResultsOptions.getWaitInterval());
+                } else {
+                    actionsHandler.waitCompletion(scanResultsOptions.getScanId(), scanResultsOptions.getWaitInterval());
+                }
             }
 
             JsonNode response = actionsHandler.getScanResults(scanResultsOptions.getScanId());

@@ -38,4 +38,11 @@ public class SCDastScanResultsActionsHandler {
 
         return null;
     }
+
+    @SneakyThrows
+    public Void waitCompletionWithDetails(int scanId, int waitInterval) {
+        scanStatusActionsHandler.waitCompletionWithDetails(scanId, waitInterval);
+
+        return null;
+    }
 }
