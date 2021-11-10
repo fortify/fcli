@@ -52,8 +52,14 @@ public final class AuthSessionPersistenceHelper {
 	
 	@SneakyThrows // TODO Do we want to use SneakyThrows?
 	public final <T extends IAuthSessionData> T getData(String authSessionType, String authSessionName, Class<T> returnType) {
-		String authSessionDataJson = FcliHomeHelper.readSecuredFile(Paths.get("authSessions", authSessionType, authSessionName), false);
-		return authSessionDataJson==null ? null : objectMapper.readValue(authSessionDataJson, returnType);
+		Path authSessionDataPath = Paths.get("authSessions", authSessionType, authSessionName);
+		try {
+			String authSessionDataJson = FcliHomeHelper.readSecuredFile(authSessionDataPath, false);
+			return authSessionDataJson==null ? null : objectMapper.readValue(authSessionDataJson, returnType);
+		} catch ( Exception e ) {
+			FcliHomeHelper.deleteFile(authSessionDataPath);
+			throw new IllegalStateException("Error reading auth session data, please try logging in again", e);
+		}
 	}
 	
 	public final boolean exists(String authSessionType, String authSessionName) {
