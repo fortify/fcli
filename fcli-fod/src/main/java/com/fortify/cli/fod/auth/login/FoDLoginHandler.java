@@ -32,6 +32,7 @@ import com.fortify.cli.common.auth.session.IAuthSessionData;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.rest.data.IConnectionConfig;
 import com.fortify.cli.common.rest.unirest.ConnectionConfigUnirestRunner;
+import com.fortify.cli.common.rest.unirest.IfFailure;
 import com.fortify.cli.fod.auth.login.rest.FoDTokenResponse;
 import com.fortify.cli.fod.auth.session.FoDAuthSessionData;
 
@@ -95,7 +96,9 @@ public class FoDLoginHandler extends AbstractLoginHandler<FoDLoginConfig> {
 				.accept("application/json")
 				.header("Content-Type", "application/x-www-form-urlencoded")
 				.fields(tokenRequestData)
-				.asObject(FoDTokenResponse.class).getBody();
+				.asObject(FoDTokenResponse.class)
+				.ifFailure(IfFailure::handle)
+				.getBody();
 	}
 
 }

@@ -29,6 +29,7 @@ import java.util.function.Function;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JacksonJsonNodeHelper;
+import com.fortify.cli.common.rest.unirest.IfFailure;
 import com.fortify.cli.common.rest.unirest.UnirestRunner;
 import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
 
@@ -65,8 +66,10 @@ public class SCDastUnirestRunner {
 	}
 
 	private final ArrayNode getSCDastConfigurationProperties(UnirestInstance sscUnirest) {
-		// TODO Check response code
-		ObjectNode configData = sscUnirest.get("/api/v1/configuration?group=edast").asObject(ObjectNode.class).getBody(); 
+		ObjectNode configData = sscUnirest.get("/api/v1/configuration?group=edast")
+				.asObject(ObjectNode.class)
+				.ifFailure(IfFailure::handle)
+				.getBody(); 
 		
 		return JacksonJsonNodeHelper.evaluateJsonPath(configData, "$.data.properties", ArrayNode.class);
 	}

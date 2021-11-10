@@ -29,6 +29,7 @@ import com.fortify.cli.common.auth.session.IAuthSessionData;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.rest.data.IConnectionConfig;
 import com.fortify.cli.common.rest.unirest.ConnectionConfigUnirestRunner;
+import com.fortify.cli.common.rest.unirest.IfFailure;
 import com.fortify.cli.ssc.auth.login.rest.SSCTokenRequest;
 import com.fortify.cli.ssc.auth.login.rest.SSCTokenResponse;
 import com.fortify.cli.ssc.auth.session.SSCAuthSessionData;
@@ -76,7 +77,7 @@ public class SSCLoginHandler extends AbstractLoginHandler<SSCLoginConfig> {
 				.basicAuth(sscUserCredentialsConfig.getUser(), new String(sscUserCredentialsConfig.getPassword()))
 				.body(tokenRequest)
 				.asObject(SSCTokenResponse.class)
-				.ifFailure(resp->{throw new RuntimeException(resp.getStatusText());})
+				.ifFailure(IfFailure::handle)
 				.getBody();
 	}
 	

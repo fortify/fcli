@@ -7,6 +7,7 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JacksonJsonNodeHelper;
+import com.fortify.cli.common.rest.unirest.IfFailure;
 import com.fortify.cli.sc_dast.command.crud.scanstatus.actions.SCDastScanStatusActionsHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -33,6 +34,7 @@ public class SCDastScanActionsHandler {
                 .accept("application/json")
                 .header("Content-Type", "application/json")
                 .asObject(ObjectNode.class)
+				.ifFailure(IfFailure::handle)
                 .getBody()
                 .get("item");
     }
@@ -54,6 +56,7 @@ public class SCDastScanActionsHandler {
                 .header("Content-Type", "application/json")
                 .body(body)
                 .asObject(ObjectNode.class)
+				.ifFailure(IfFailure::handle)
                 .getBody();
     }
 
@@ -64,6 +67,7 @@ public class SCDastScanActionsHandler {
                 .header("Content-Type", "application/json")
                 .body("{\"scanActionType\": \"" + action + "\"}")
                 .asObject(ObjectNode.class)
+				.ifFailure(IfFailure::handle)
                 .getBody();
     }
 
