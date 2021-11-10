@@ -1,10 +1,12 @@
 package com.fortify.cli.sc_dast.command.dast.scan.remote.options;
 
 import java.io.File;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -29,6 +31,19 @@ public class SCDastScanStartOptions {
     @Option(names = {"-o", "--overrides"}, description = "File containing override valuse for the SC DAST scan")
     @Getter private File overridesFile;
 
+    private enum ScanModes {CrawlOnly, CrawlAndAudit, AuditOnly}
+    @Option(names= {"-M", "--mode", "--scan-mode"}, description = "Overrides the scan mode.")
+    @Getter private ScanModes scanMode;
+
+    @Option(names = {"-U", "--url","--start-url"}, description = "Overrides the scan start URL")
+    @Getter private List<String> startUrls;
+
+    @Option(names = {"-P", "--policy","--policy-id"}, description = "Overrides the scan policy id")
+    @Getter private String policyId;
+
+    @Option(names = {"-L","--login-macro"}, description = "Overrides the scan login macro binary file id")
+    @Getter private Integer loginMacroBinaryFileId;
+
     @SneakyThrows
     public String getJsonBody() {
         JsonMapper jsonMapper = new JsonMapper();
@@ -37,13 +52,21 @@ public class SCDastScanStartOptions {
         ObjectNode body = objectMapper.createObjectNode();
         body.set("cicdToken", objectMapper.convertValue(getSettingsId(), JsonNode.class));
 
+        ObjectNode overridesJson = objectMapper.createObjectNode();
+
         if (getScanName() != null) {
             body.set("name", objectMapper.convertValue(getScanName(), JsonNode.class));
         }
         if (getOverridesFile() != null) {
-            JsonNode overridesJson = jsonMapper.readValue(getOverridesFile(), JsonNode.class);
-            body.set("overrides", overridesJson);
+            overridesJson = jsonMapper.readValue(getOverridesFile(), ObjectNode.class);
+        } else {
+            if (getScanMode() != null) overridesJson.put("scanMode", getScanMode().toString());
+            if (getStartUrls() != null) overridesJson.putArray("startUrls").addAll((ArrayNode) jsonMapper.valueToTree(getStartUrls()));
+            if (getPolicyId() != null) overridesJson.put("policyId", getPolicyId());
+            if (getLoginMacroBinaryFileId() != null) overridesJson.put("loginMacroBinaryFileId", getLoginMacroBinaryFileId());
         }
+
+        body.set("overrides", overridesJson);
 
         return  jsonMapper.writeValueAsString(body);
     }
