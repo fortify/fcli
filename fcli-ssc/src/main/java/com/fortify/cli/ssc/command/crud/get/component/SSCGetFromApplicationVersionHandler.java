@@ -24,9 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.command.crud.get.component;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Option;
 
+@ReflectiveAccess
 public class SSCGetFromApplicationVersionHandler {
 	@Option(names = {"--from"}, required = true, description = "Get data from the given application version id or <application>/<version> name")
 	private String fromApplicationVersion;
