@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.command;
 
-import com.fortify.cli.sc_dast.rest.unirest.SCDastUnirestRunner;
+import com.fortify.cli.sc_dast.rest.unirest.runner.SCDastUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;

@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.command.auth.consumer.AuthSessionConsumerOptionsHandler;
-import com.fortify.cli.fod.rest.unirest.FoDUnirestRunner;
+import com.fortify.cli.fod.rest.unirest.runner.FoDAuthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -41,7 +41,7 @@ import picocli.CommandLine.Mixin;
 @RequiresProduct(ProductOrGroup.FOD)
 public abstract class AbstractFoDUnirestRunnerCommand implements Runnable {
 	@Getter @Inject private ObjectMapper objectMapper;
-	@Getter @Inject private FoDUnirestRunner unirestRunner;
+	@Getter @Inject private FoDAuthenticatedUnirestRunner unirestRunner;
 	@Getter @Mixin  private AuthSessionConsumerOptionsHandler authSessionConsumerOptionsHandler;
 
 	@Override @SneakyThrows

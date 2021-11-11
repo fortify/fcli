@@ -22,34 +22,34 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.command;
+package com.fortify.cli.common.rest.unirest.runner;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.command.auth.consumer.AuthSessionConsumerOptionsHandler;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
+import java.util.function.Function;
+
+import com.fortify.cli.common.rest.data.IConnectionConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.Mixin;
 
+// TODO For now this class instantiates a new UnirestInstance on every call to runWithUnirest,
+//      which should be OK when running individual commands but less performant when running
+//      multiple commands in a composite command or workflow.
 @ReflectiveAccess
-@RequiresProduct(ProductOrGroup.SSC)
-public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private ObjectMapper objectMapper;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-	@Getter @Mixin  private AuthSessionConsumerOptionsHandler authSessionConsumerOptionsHandler;
-
-	@Override @SneakyThrows
-	public final void run() {
-		// TODO Do we want to do anything with the results, like formatting it based on output options?
-		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(authSessionConsumerOptionsHandler.getAuthSessionName(), this::runWithUnirest);
-	}
+public abstract class AbstractConfigurableUnirestRunner {
+	@Getter @Inject private ConnectionConfigUnirestRunner unirestRunner;
 	
-	protected abstract Void runWithUnirest(UnirestInstance unirest);
+	public <R> R runWithUnirest(IConnectionConfig connectionConfig, Function<UnirestInstance, R> runner) {
+		return unirestRunner.runWithUnirest(connectionConfig, unirest -> {
+			configure(unirest);
+			return runner.apply(unirest);
+		});
+	}
+
+	/**
+	 * Subclasses must implement this method to perform any additional configuration of the given
+	 * {@link UnirestInstance}.
+	 */
+	protected abstract void configure(UnirestInstance unirestInstance);
 }

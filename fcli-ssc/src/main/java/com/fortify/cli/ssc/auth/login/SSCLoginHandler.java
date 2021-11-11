@@ -28,11 +28,10 @@ import com.fortify.cli.common.auth.login.AbstractLoginHandler;
 import com.fortify.cli.common.auth.session.IAuthSessionData;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.rest.data.IConnectionConfig;
-import com.fortify.cli.common.rest.unirest.ConnectionConfigUnirestRunner;
-import com.fortify.cli.common.rest.unirest.IfFailure;
 import com.fortify.cli.ssc.auth.login.rest.SSCTokenRequest;
 import com.fortify.cli.ssc.auth.login.rest.SSCTokenResponse;
 import com.fortify.cli.ssc.auth.session.SSCAuthSessionData;
+import com.fortify.cli.ssc.rest.unirest.runner.SSCUnauthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -41,7 +40,7 @@ import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
 public class SSCLoginHandler extends AbstractLoginHandler<SSCLoginConfig> {
-	@Inject private ConnectionConfigUnirestRunner basicUnirestRunner;
+	@Inject private SSCUnauthenticatedUnirestRunner unauthenticatedUnirestRunner;
 
 	public final String getAuthSessionType() {
 		return ProductIdentifiers.SSC;
@@ -54,7 +53,7 @@ public class SSCLoginHandler extends AbstractLoginHandler<SSCLoginConfig> {
 		if ( sscLoginConfig.getToken()!=null ) {
 			authSessionData = new SSCAuthSessionData(sscLoginConfig);
 		} else if ( sscLoginConfig.hasUserCredentialsConfig() ) {
-			authSessionData = basicUnirestRunner.runWithUnirest(connectionConfig, unirest->generateAuthSessionData(unirest, sscLoginConfig));
+			authSessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateAuthSessionData(unirest, sscLoginConfig));
 		} else {
 			throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
 		}
@@ -77,7 +76,6 @@ public class SSCLoginHandler extends AbstractLoginHandler<SSCLoginConfig> {
 				.basicAuth(sscUserCredentialsConfig.getUser(), new String(sscUserCredentialsConfig.getPassword()))
 				.body(tokenRequest)
 				.asObject(SSCTokenResponse.class)
-				.ifFailure(IfFailure::handle)
 				.getBody();
 	}
 	

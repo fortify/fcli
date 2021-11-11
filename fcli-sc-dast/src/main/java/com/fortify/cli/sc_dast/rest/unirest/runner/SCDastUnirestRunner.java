@@ -22,16 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.rest.unirest;
+package com.fortify.cli.sc_dast.rest.unirest.runner;
 
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JacksonJsonNodeHelper;
-import com.fortify.cli.common.rest.unirest.IfFailure;
-import com.fortify.cli.common.rest.unirest.UnirestRunner;
-import com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner;
+import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
+import com.fortify.cli.common.rest.unirest.runner.UnirestRunner;
+import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -42,7 +42,7 @@ import lombok.Getter;
 @Singleton @ReflectiveAccess
 public class SCDastUnirestRunner {
 	@Getter @Inject private UnirestRunner unirestRunner;
-	@Getter @Inject private SSCUnirestRunner sscUnirestRunner;
+	@Getter @Inject private SSCAuthenticatedUnirestRunner sscUnirestRunner;
 	
 	public <R> R runWithUnirest(String sscAuthSessionName, Function<UnirestInstance, R> runner) {
 		return sscUnirestRunner.runWithUnirest(sscAuthSessionName, sscUnirest -> {
@@ -52,7 +52,8 @@ public class SCDastUnirestRunner {
 				scDastUnirest.config()
 						.defaultBaseUrl(scDastApiUrl)
 						.setDefaultHeader("Authorization", authHeader)
-						.verifySsl(false); //TODO: Variabilize
+						.verifySsl(sscUnirest.config().isVerifySsl());
+				ThrowUnexpectedHttpResponseExceptionInterceptor.configure(scDastUnirest);
 				return runner.apply(scDastUnirest);
 			});
 		});
@@ -68,7 +69,6 @@ public class SCDastUnirestRunner {
 	private final ArrayNode getSCDastConfigurationProperties(UnirestInstance sscUnirest) {
 		ObjectNode configData = sscUnirest.get("/api/v1/configuration?group=edast")
 				.asObject(ObjectNode.class)
-				.ifFailure(IfFailure::handle)
 				.getBody(); 
 		
 		return JacksonJsonNodeHelper.evaluateJsonPath(configData, "$.data.properties", ArrayNode.class);

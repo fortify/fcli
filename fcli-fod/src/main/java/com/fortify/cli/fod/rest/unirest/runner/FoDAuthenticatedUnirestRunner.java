@@ -22,45 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.auth.logout;
+package com.fortify.cli.fod.rest.unirest.runner;
 
-import com.fortify.cli.common.auth.logout.ILogoutHandler;
-import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.ssc.auth.session.SSCAuthSessionData;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
+import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
+import com.fortify.cli.common.rest.unirest.runner.AbstractAuthSessionUnirestRunner;
+import com.fortify.cli.fod.auth.session.FoDAuthSessionData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public class SSCLogoutHandler implements ILogoutHandler {
-	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-
+public class FoDAuthenticatedUnirestRunner extends AbstractAuthSessionUnirestRunner<FoDAuthSessionData> {
 	@Override
-	public final void logout(String authSessionName) {
-		SSCAuthSessionData data = authSessionPersistenceHelper.getData(getAuthSessionType(), authSessionName, SSCAuthSessionData.class);
-		if ( data.hasActiveCachedTokenResponse() ) {
-			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
+	protected void configure(String authSessionName, FoDAuthSessionData authSessionData, UnirestInstance unirestInstance) {
+		String token = authSessionData.getActiveBearerToken();
+		if ( token==null ) {
+			throw new IllegalStateException("FoD token not available or has expired, please login again");
 		}
+		setBearerHeader(unirestInstance, token);
+		ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
 	}
 	
-	private final Void logout(UnirestInstance unirestInstance, SSCAuthSessionData authSessionData) {
-		try {
-			// TODO Current SSC versions don't allow current token to be invalidated
-			// TODO Invalidate token if username/password are available in login  session data 
-		} catch ( RuntimeException e ) {
-			System.out.println("Error deserializing token:" + e.getMessage());
-		}
-		return null;
+	private final void setBearerHeader(UnirestInstance unirestInstance, String token) {
+		final String authHeader = String.format("Bearer %s", token);
+		unirestInstance.config().setDefaultHeader("Authorization", authHeader);
 	}
 
 	@Override
-	public String getAuthSessionType() {
-		return ProductIdentifiers.SSC;
+	public final String getAuthSessionType() {
+		return ProductIdentifiers.FOD;
+	}
+
+	@Override
+	protected Class<FoDAuthSessionData> getAuthSessionDataClass() {
+		return FoDAuthSessionData.class;
 	}
 }

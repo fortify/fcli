@@ -22,17 +22,29 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.rest.unirest;
+package com.fortify.cli.common.rest.unirest.exception;
 
+import kong.unirest.HttpRequestSummary;
 import kong.unirest.HttpResponse;
+import kong.unirest.UnirestException;
 
-public final class UnexpectedHttpResponseException extends RuntimeException {
+public final class UnexpectedHttpResponseException extends UnirestException {
 	private static final long serialVersionUID = 1L;
 
 	public UnexpectedHttpResponseException(HttpResponse<?> failureResponse) {
 		super(getMessage(failureResponse), getCause(failureResponse));
 	}
 	
+	public UnexpectedHttpResponseException(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
+		super(getMessage(failureResponse, requestSummary), getCause(failureResponse));
+	}
+
+	private static final String getMessage(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
+		var httpMethod = requestSummary.getHttpMethod().name();
+		var url = requestSummary.getUrl();
+		return String.format("%s %s: %s", httpMethod, url, getMessage(failureResponse));
+	}
+
 	private static final String getMessage(HttpResponse<?> failureResponse) {
 		if ( isHttpFailure(failureResponse) ) {
 			// TODO Any way we can include the original request URL in the message?

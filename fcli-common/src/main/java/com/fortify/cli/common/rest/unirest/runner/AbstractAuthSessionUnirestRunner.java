@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.rest.unirest;
+package com.fortify.cli.common.rest.unirest.runner;
 
 import java.util.function.Function;
 

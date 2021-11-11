@@ -22,45 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.auth.logout;
+package com.fortify.cli.ssc.rest.unirest.runner;
 
-import com.fortify.cli.common.auth.logout.ILogoutHandler;
-import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
+import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
+import com.fortify.cli.common.rest.unirest.runner.AbstractAuthSessionUnirestRunner;
 import com.fortify.cli.ssc.auth.session.SSCAuthSessionData;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public class SSCLogoutHandler implements ILogoutHandler {
-	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-
+public class SSCAuthenticatedUnirestRunner extends AbstractAuthSessionUnirestRunner<SSCAuthSessionData> {
 	@Override
-	public final void logout(String authSessionName) {
-		SSCAuthSessionData data = authSessionPersistenceHelper.getData(getAuthSessionType(), authSessionName, SSCAuthSessionData.class);
-		if ( data.hasActiveCachedTokenResponse() ) {
-			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
+	protected void configure(String authSessionName, SSCAuthSessionData authSessionData, UnirestInstance unirestInstance) {
+		char[] token = authSessionData.getActiveToken();
+		if ( token==null ) {
+			throw new IllegalStateException("SSC token not available or has expired, please login again");
 		}
+		setTokenHeader(unirestInstance, token);
+		ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
 	}
 	
-	private final Void logout(UnirestInstance unirestInstance, SSCAuthSessionData authSessionData) {
-		try {
-			// TODO Current SSC versions don't allow current token to be invalidated
-			// TODO Invalidate token if username/password are available in login  session data 
-		} catch ( RuntimeException e ) {
-			System.out.println("Error deserializing token:" + e.getMessage());
-		}
-		return null;
+	private final void setTokenHeader(UnirestInstance unirestInstance, char[] token) {
+		final String authHeader = String.format("FortifyToken %s", String.valueOf(token));
+		unirestInstance.config().setDefaultHeader("Authorization", authHeader);
 	}
 
 	@Override
-	public String getAuthSessionType() {
+	public final String getAuthSessionType() {
 		return ProductIdentifiers.SSC;
+	}
+
+	@Override
+	protected Class<SSCAuthSessionData> getAuthSessionDataClass() {
+		return SSCAuthSessionData.class;
 	}
 }

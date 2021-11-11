@@ -31,10 +31,9 @@ import com.fortify.cli.common.auth.login.AbstractLoginHandler;
 import com.fortify.cli.common.auth.session.IAuthSessionData;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.rest.data.IConnectionConfig;
-import com.fortify.cli.common.rest.unirest.ConnectionConfigUnirestRunner;
-import com.fortify.cli.common.rest.unirest.IfFailure;
 import com.fortify.cli.fod.auth.login.rest.FoDTokenResponse;
 import com.fortify.cli.fod.auth.session.FoDAuthSessionData;
+import com.fortify.cli.fod.rest.unirest.runner.FoDUnauthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -43,7 +42,7 @@ import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
 public class FoDLoginHandler extends AbstractLoginHandler<FoDLoginConfig> {
-	@Inject private ConnectionConfigUnirestRunner basicUnirestRunner;
+	@Inject private FoDUnauthenticatedUnirestRunner unauthenticatedUnirestRunner;
 
 	public final String getAuthSessionType() {
 		return ProductIdentifiers.FOD;
@@ -54,9 +53,9 @@ public class FoDLoginHandler extends AbstractLoginHandler<FoDLoginConfig> {
 		FoDAuthSessionData authSessionData = null;
 		IConnectionConfig connectionConfig = fodLoginConfig.getConnectionConfig();
 		if ( fodLoginConfig.hasClientCredentials() ) {
-			authSessionData = basicUnirestRunner.runWithUnirest(connectionConfig, unirest->generateClientCredentialsAuthSessionData(unirest, fodLoginConfig));
+			authSessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateClientCredentialsAuthSessionData(unirest, fodLoginConfig));
 		} else if ( fodLoginConfig.hasUserCredentialsConfig() ) {
-			authSessionData = basicUnirestRunner.runWithUnirest(connectionConfig, unirest->generateUserCredentialsAuthSessionData(unirest, fodLoginConfig));
+			authSessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateUserCredentialsAuthSessionData(unirest, fodLoginConfig));
 		} else {
 			throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
 		}
@@ -97,7 +96,6 @@ public class FoDLoginHandler extends AbstractLoginHandler<FoDLoginConfig> {
 				.header("Content-Type", "application/x-www-form-urlencoded")
 				.fields(tokenRequestData)
 				.asObject(FoDTokenResponse.class)
-				.ifFailure(IfFailure::handle)
 				.getBody();
 	}
 

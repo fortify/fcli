@@ -22,38 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.rest.unirest;
+package com.fortify.cli.ssc.rest.unirest.runner;
 
-import java.util.function.Function;
+import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
+import com.fortify.cli.common.rest.unirest.runner.AbstractConfigurableUnirestRunner;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import kong.unirest.Unirest;
+import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
-import kong.unirest.jackson.JacksonObjectMapper;
-import lombok.Getter;
 
-//TODO For now this class instantiates a new UnirestInstance on every call to runWithUnirest,
-//which should be OK when running individual commands but less performant when running
-//multiple commands in a composite command or workflow.
-@ReflectiveAccess
-public class UnirestRunner {
-	@Getter @Inject private ObjectMapper objectMapper;
-	
-	private final UnirestInstance createUnirestInstance() {
-		UnirestInstance instance = Unirest.spawnInstance();
-		instance.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
-		return instance;
-	}
-	
-	public <R> R runWithUnirest(Function<UnirestInstance, R> runner) {
-		if ( runner == null ) {
-			throw new IllegalStateException("Unirest runner may not be null");
-		}
-		try ( var unirestInstance = createUnirestInstance() ) {
-			return runner.apply(unirestInstance);
-		}
+@Singleton
+public final class SSCUnauthenticatedUnirestRunner extends AbstractConfigurableUnirestRunner {
+	protected void configure(UnirestInstance unirestInstance) {
+		ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
 	}
 }

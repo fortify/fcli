@@ -22,11 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.rest.unirest;
+package com.fortify.cli.common.rest.unirest.exception;
 
 import kong.unirest.HttpResponse;
 
-public class IfFailure {
+public class IfFailureHandler {
 	public static final void handle(HttpResponse<?> failureResponse) {
 		throw new UnexpectedHttpResponseException(failureResponse);
 	}

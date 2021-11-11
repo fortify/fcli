@@ -13,7 +13,7 @@ import com.fortify.cli.common.json.transform.jsonpath.JsonPathTransformer;
 import com.fortify.cli.common.output.IRecordWriter;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.RecordWriterConfig;
-import com.fortify.cli.common.rest.unirest.IfFailure;
+import com.fortify.cli.common.rest.unirest.exception.IfFailureHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
@@ -120,7 +120,7 @@ public class OutputOptionsHandler {
 		public void write(HttpRequest<?> httpRequest) {
 			httpRequest.asObject(JsonNode.class)
 				.ifSuccess(this::write)
-				.ifFailure(IfFailure::handle);
+				.ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
 		}
 
 		public void write(HttpResponse<JsonNode> httpResponse) {

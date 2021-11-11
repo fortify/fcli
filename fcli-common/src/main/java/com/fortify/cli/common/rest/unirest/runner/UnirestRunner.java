@@ -22,39 +22,38 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.rest.unirest;
+package com.fortify.cli.common.rest.unirest.runner;
 
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.rest.unirest.AbstractAuthSessionUnirestRunner;
-import com.fortify.cli.fod.auth.session.FoDAuthSessionData;
+import java.util.function.Function;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Singleton;
+import jakarta.inject.Inject;
+import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
+import kong.unirest.jackson.JacksonObjectMapper;
+import lombok.Getter;
 
-@Singleton @ReflectiveAccess
-public class FoDUnirestRunner extends AbstractAuthSessionUnirestRunner<FoDAuthSessionData> {
-	@Override
-	protected void configure(String authSessionName, FoDAuthSessionData authSessionData, UnirestInstance unirestInstance) {
-		String token = authSessionData.getActiveBearerToken();
-		if ( token==null ) {
-			throw new IllegalStateException("FoD token not available or has expired, please login again");
-		}
-		setBearerHeader(unirestInstance, token);
+//TODO For now this class instantiates a new UnirestInstance on every call to runWithUnirest,
+//which should be OK when running individual commands but less performant when running
+//multiple commands in a composite command or workflow.
+@ReflectiveAccess
+public class UnirestRunner {
+	@Getter @Inject private ObjectMapper objectMapper;
+	
+	private final UnirestInstance createUnirestInstance() {
+		UnirestInstance instance = Unirest.spawnInstance();
+		instance.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
+		return instance;
 	}
 	
-	private final void setBearerHeader(UnirestInstance unirestInstance, String token) {
-		final String authHeader = String.format("Bearer %s", token);
-		unirestInstance.config().setDefaultHeader("Authorization", authHeader);
-	}
-
-	@Override
-	public final String getAuthSessionType() {
-		return ProductIdentifiers.FOD;
-	}
-
-	@Override
-	protected Class<FoDAuthSessionData> getAuthSessionDataClass() {
-		return FoDAuthSessionData.class;
+	public <R> R runWithUnirest(Function<UnirestInstance, R> runner) {
+		if ( runner == null ) {
+			throw new IllegalStateException("Unirest runner may not be null");
+		}
+		try ( var unirestInstance = createUnirestInstance() ) {
+			return runner.apply(unirestInstance);
+		}
 	}
 }

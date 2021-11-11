@@ -28,7 +28,7 @@ import com.fortify.cli.common.auth.logout.ILogoutHandler;
 import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.fod.auth.session.FoDAuthSessionData;
-import com.fortify.cli.fod.rest.unirest.FoDUnirestRunner;
+import com.fortify.cli.fod.rest.unirest.runner.FoDAuthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -39,7 +39,7 @@ import lombok.Getter;
 @Singleton @ReflectiveAccess
 public class FoDLogoutHandler implements ILogoutHandler {
 	@Getter @Inject private AuthSessionPersistenceHelper authSessionPersistenceHelper;
-	@Getter @Inject private FoDUnirestRunner unirestRunner;
+	@Getter @Inject private FoDAuthenticatedUnirestRunner unirestRunner;
 
 	@Override
 	public final void logout(String authSessionName) {
