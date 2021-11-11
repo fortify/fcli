@@ -38,7 +38,7 @@ import picocli.CommandLine.Command;
 @SubcommandOf(RootGetCommand.class)
 @Command(name = ProductIdentifiers.SSC, description = "Get entity data from SSC")
 @RequiresProduct(ProductOrGroup.SSC)
-class _SSCGetCommand {
+public class _SSCGetCommand {
 	public static final OutputOptionsWriterConfig defaultOutputConfig() {
 		return RootGetCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
 	}

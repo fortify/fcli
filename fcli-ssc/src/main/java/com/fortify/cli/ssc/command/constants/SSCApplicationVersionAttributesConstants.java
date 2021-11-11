@@ -25,20 +25,21 @@
 package com.fortify.cli.ssc.command.constants;
 
 public class SSCApplicationVersionAttributesConstants extends _SSCConstants {
-	public static final String CMD_SINGULAR    = "av-attribute";
-	public static final String ALIAS_SINGULAR  = null;
-	public static final String NAME_SINGULAR   = "application version attribute";
-	public static final String CMD_PLURAL      = "av-attributes";
-	public static final String ALIAS_PLURAL    = null;
-	public static final String NAME_PLURAL     = "application version attributes";
-	public static final String _OUTPUT_COLUMNS = "id#name"; //TODO
+	public static class Constants {
+		public static final String CMD_SINGULAR    = "av-attribute";
+		public static final String ALIAS_SINGULAR  = null;
+		public static final String NAME_SINGULAR   = "application version attribute";
+		public static final String CMD_PLURAL      = "av-attributes";
+		public static final String ALIAS_PLURAL    = null;
+		public static final String NAME_PLURAL     = "application version attributes";
+		public static final String OUTPUT_COLUMNS  = "id#name"; //TODO
+	}
 
 	// Boilerplate code
-	public static class Singular {
+	public static class Singular extends Constants {
 		public static final String CMD   = CMD_SINGULAR;
 		public static final String ALIAS = ALIAS_SINGULAR;
 		public static final String NAME  = NAME_SINGULAR;
-		public static final String OUTPUT_COLUMNS = _OUTPUT_COLUMNS;
 		
 		public static final String DESC_CREATE   = PFX_CREATE+NAME+SFX_CREATE;
 		public static final String DESC_DELETE   = PFX_DELETE+NAME+SFX_DELETE;
@@ -49,11 +50,10 @@ public class SSCApplicationVersionAttributesConstants extends _SSCConstants {
 	}
 	
 	// Boilerplate code
-	public static class Plural {
+	public static class Plural extends Constants {
 		public static final String CMD            = CMD_PLURAL;
 		public static final String ALIAS          = ALIAS_PLURAL;
 		public static final String NAME           = NAME_PLURAL;
-		public static final String OUTPUT_COLUMNS = _OUTPUT_COLUMNS;
 		
 		public static final String DESC_CREATE   = PFX_CREATE+NAME+SFX_CREATE;
 		public static final String DESC_DELETE   = PFX_DELETE+NAME+SFX_DELETE;

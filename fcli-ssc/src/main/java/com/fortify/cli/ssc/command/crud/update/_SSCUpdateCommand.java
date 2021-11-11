@@ -38,7 +38,7 @@ import picocli.CommandLine.Command;
 @SubcommandOf(RootUpdateCommand.class)
 @Command(name = ProductIdentifiers.SSC, description = "Update entities in SSC")
 @RequiresProduct(ProductOrGroup.SSC)
-class _SSCUpdateCommand {
+public class _SSCUpdateCommand {
 	public static final OutputOptionsWriterConfig defaultOutputConfig() {
 		return RootUpdateCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
 	}

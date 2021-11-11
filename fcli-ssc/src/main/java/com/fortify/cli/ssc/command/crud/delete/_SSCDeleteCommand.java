@@ -38,7 +38,7 @@ import picocli.CommandLine.Command;
 @SubcommandOf(RootDeleteCommand.class)
 @Command(name = ProductIdentifiers.SSC, description = "Delete entities from SSC")
 @RequiresProduct(ProductOrGroup.SSC)
-class _SSCDeleteCommand {
+public class _SSCDeleteCommand {
 	public static final OutputOptionsWriterConfig defaultOutputConfig() {
 		return RootDeleteCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
 	}

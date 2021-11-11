@@ -38,7 +38,7 @@ import picocli.CommandLine.Command;
 @SubcommandOf(RootCreateCommand.class)
 @Command(name = ProductIdentifiers.SSC, description = "Create entities in SSC")
 @RequiresProduct(ProductOrGroup.SSC)
-class _SSCCreateCommand {
+public class _SSCCreateCommand {
 	public static final OutputOptionsWriterConfig defaultOutputConfig() {
 		return RootCreateCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
 	}
