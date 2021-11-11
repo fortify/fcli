@@ -29,11 +29,8 @@ import java.util.function.Function;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.auth.session.AuthSessionPersistenceHelper;
 import com.fortify.cli.common.auth.session.IAuthSessionData;
-import com.fortify.cli.common.rest.data.IConnectionConfig;
-import com.fortify.cli.common.rest.data.IConnectionConfigProvider;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import io.micronaut.core.util.StringUtils;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -62,7 +59,7 @@ public abstract class AbstractAuthSessionUnirestRunner<D extends IAuthSessionDat
 			throw new IllegalStateException("Login session data may not be null");
 		}
 		return unirestRunner.runWithUnirest(authSessionData.getConnectionConfig(), unirest -> {
-			_configure(authSessionName, authSessionData, unirest);
+			configure(authSessionName, authSessionData, unirest);
 			return runner.apply(unirest);
 		});
 	}
@@ -91,35 +88,6 @@ public abstract class AbstractAuthSessionUnirestRunner<D extends IAuthSessionDat
 	 */
 	protected D getAuthSessionData(String authSessionName) {
 		return authSessionPersistenceHelper.getData(getAuthSessionType(), authSessionName, getAuthSessionDataClass());
-	}
-
-	/**
-	 * Perform basic connection configuration if the given login session data implements
-	 * {@link IConnectionConfigProvider}. Afterwards the {@link #configure(String, IAuthSessionData, UnirestInstance)}
-	 * method is called to allow subclasses to perform any additional configuration, like setting
-	 * authentication headers.
-	 * @param authSessionData used to configure the {@link UnirestInstance}
-	 * @param unirestInstance {@link UnirestInstance} to be configured
-	 */
-	private final void _configure(String authSessionName, D authSessionData, UnirestInstance unirestInstance) {
-		if ( authSessionData instanceof IConnectionConfigProvider ) {
-			IConnectionConfigProvider csp = (IConnectionConfigProvider)authSessionData;
-			IConnectionConfig cs = csp.getConnectionConfig();
-			if ( cs == null ) { throw new IllegalArgumentException("Connection configuration may not be null"); }
-			unirestInstance.config()
-				.defaultBaseUrl(normalizeUrl(cs.getUrl()))
-				.verifySsl(cs.isInsecureModeEnabled());
-			if ( StringUtils.isNotEmpty(cs.getProxyHost()) ) {
-				unirestInstance.config().proxy(cs.getProxyHost(), cs.getProxyPort(), cs.getProxyUser(), 
-						cs.getProxyHost()==null ? null : String.valueOf(cs.getProxyPassword()));
-			}
-		}
-		configure(authSessionName, authSessionData, unirestInstance);
-	}
-	
-	protected String normalizeUrl(String url) {
-		// We remove any trailing slashes, assuming that most users will specify relative URL's starting with /
-		return url.replaceAll("/+$", "");
 	}
 
 	/**
