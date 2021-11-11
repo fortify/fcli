@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.command.crud;
+package com.fortify.cli.ssc.command.crud.get;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
@@ -31,83 +31,37 @@ import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfi
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 import com.fortify.cli.ssc.command.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.command.crud.SSCCrudRootCommands.SSCCreateCommand;
-import com.fortify.cli.ssc.command.crud.SSCCrudRootCommands.SSCDeleteCommand;
-import com.fortify.cli.ssc.command.crud.SSCCrudRootCommands.SSCGetCommand;
-import com.fortify.cli.ssc.command.crud.SSCCrudRootCommands.SSCUpdateCommand;
+import com.fortify.cli.ssc.command.constants.SSCApplicationVersionAttributesConstants;
+import com.fortify.cli.ssc.command.crud.get.component.SSCGetFromApplicationVersionHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-public class SSCApplicationCommands {
-	private static final String NAME = "applications";
-	private static final String DESC = "applications";
-	private static final String ALIAS = "apps";
-	
-	private static final String _getDefaultOutputColumns() {
-		return "id#name";
-	}
-	
+public class SSCGetApplicationVersionAttributesCommand extends SSCApplicationVersionAttributesConstants.Plural {
 	@ReflectiveAccess
-	@SubcommandOf(SSCGetCommand.class)
-	@Command(name = NAME, description = "Get "+DESC+" from SSC", aliases = {ALIAS})
+	@SubcommandOf(_SSCGetCommand.class)
+	@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static final class Get extends AbstractSSCUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
+	public static final class Impl extends AbstractSSCUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
+		@CommandLine.Mixin private SSCGetFromApplicationVersionHandler fromApplicationVersionHandler;
 		@CommandLine.Mixin private OutputOptionsHandler outputOptionsHandler;
-
+		
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
-			outputOptionsHandler.write(
-					unirest.get("/api/v1/projects?limit=-1")
-						.accept("application/json")
-						.header("Content-Type", "application/json"));
-
+			outputOptionsHandler.write(unirest.get("/api/v1/projectVersions/{id}/attributes")
+					.routeParam("id", fromApplicationVersionHandler.getApplicationVersionId(unirest))
+					.accept("application/json")
+					.header("Content-Type", "application/json"));
+	
 			return null;
 		}
 		
 		@Override
 		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
-			return SSCGetCommand.defaultOutputConfig().defaultColumns(_getDefaultOutputColumns());
-		}
-	}
-	
-	@ReflectiveAccess
-	@SubcommandOf(SSCCreateCommand.class)
-	@Command(name = NAME, description = "Create "+DESC+" in SSC")
-	@RequiresProduct(ProductOrGroup.SSC)
-	public static final class Create extends AbstractSSCUnirestRunnerCommand {
-		@SneakyThrows
-		protected Void runWithUnirest(UnirestInstance unirest) {
-			System.err.println("ERROR: Not yet implemented");
-			return null;
-		}
-	}
-	
-	@Singleton
-	@SubcommandOf(SSCUpdateCommand.class)
-	@Command(name = NAME, description = "Update "+DESC+" in SSC")
-	@RequiresProduct(ProductOrGroup.SSC)
-	public static final class Update extends AbstractSSCUnirestRunnerCommand {
-		@SneakyThrows
-		protected Void runWithUnirest(UnirestInstance unirest) {
-			System.err.println("ERROR: Not yet implemented");
-			return null;
-		}
-	}
-	
-	@ReflectiveAccess
-	@SubcommandOf(SSCDeleteCommand.class)
-	@Command(name = NAME, description = "Delete "+DESC+" from SSC")
-	@RequiresProduct(ProductOrGroup.SSC)
-	public static final class Delete extends AbstractSSCUnirestRunnerCommand {
-		@SneakyThrows
-		protected Void runWithUnirest(UnirestInstance unirest) {
-			System.err.println("ERROR: Not yet implemented");
-			return null;
+			return _SSCGetCommand.defaultOutputConfig().defaultColumns(OUTPUT_COLUMNS);
 		}
 	}
 }
