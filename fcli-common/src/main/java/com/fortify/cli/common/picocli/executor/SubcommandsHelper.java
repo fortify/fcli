@@ -158,12 +158,20 @@ public class SubcommandsHelper {
 		}
 	}
 	
-	private static final Class<?> getParentCommandClazz(BeanDefinition<?> bd) {
+	private final Class<?> getParentCommandClazz(BeanDefinition<?> bd) {
 		Optional<Class<?>> optClazz = bd.getAnnotation(SubcommandOf.class).classValue();
 		if ( !optClazz.isPresent() ) {
 			throw new IllegalStateException("No parent command found for class "+bd.getBeanType().getName());
+		} else {
+			Class<?> clazz = optClazz.get();
+			if ( !applicationContext.containsBean(clazz) ) {
+				throw new IllegalStateException("Parent command class "+clazz.getName()+" for "+bd.getBeanType().getName()+" not available in application context");
+			} else if ( !applicationContext.getBeanDefinition(clazz).hasAnnotation(Command.class) ) {
+				throw new IllegalStateException("Parent command class "+clazz.getName()+" for "+bd.getBeanType().getName()+" is not annotated with @Command");
+			} else {
+				return clazz;
+			}
 		}
-		return optClazz.get();
 	}
 
 	private static final <K, V> void addMultiValueEntry(LinkedHashMap<K, List<V>> map, K key, V value) {
