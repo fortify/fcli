@@ -26,6 +26,8 @@ package com.fortify.cli.common.json.transform.fields;
 
 import java.util.LinkedHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -67,11 +69,19 @@ public class PredefinedFieldsTransformer extends AbstractJsonNodeTransformer imp
 	}
 	
 	private void addConvertedValue(ObjectNode output, String outputFieldName, ObjectNode input, String inputFieldPath) {
-		output.set(outputFieldName, getValue(input, inputFieldPath));
+		JsonNode value = getValue(input, inputFieldPath);
+		if ( value.isArray() ) {
+			output.put(outputFieldName,
+					StreamSupport.stream(value.spliterator(), false)
+						.map(JsonNode::asText)
+						.collect(Collectors.joining(", ")) );
+		} else {
+			output.set(outputFieldName, value);
+		}
 	}
 
 	private JsonNode getValue(ObjectNode input, String propertyPath) {
-		if ( !propertyPath.startsWith("$.") ) { propertyPath = "$."+propertyPath; }
+		if ( !propertyPath.startsWith("$") ) { propertyPath = "$."+propertyPath; }
 		return JacksonJsonNodeHelper.evaluateJsonPath(input, propertyPath, JsonNode.class);
 	}
 }
