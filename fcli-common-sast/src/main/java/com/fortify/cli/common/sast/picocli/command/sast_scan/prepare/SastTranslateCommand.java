@@ -22,10 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sast.command.scan.remote;
+package com.fortify.cli.common.sast.picocli.command.sast_scan.prepare;
 
-public final class SastScanRemoteCommandsOrder {
-	public static final int 
-		FOD         = 100,
-		SCANCENTRAL = 200;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine.Command;
+
+@ReflectiveAccess
+@Command(name = "translate", description = "Translate source code to Fortify intermediate model")
+public class SastTranslateCommand implements Runnable {
+	@Override
+	public void run() {
+		throw new RuntimeException("Not yet implemented");
+	}
 }

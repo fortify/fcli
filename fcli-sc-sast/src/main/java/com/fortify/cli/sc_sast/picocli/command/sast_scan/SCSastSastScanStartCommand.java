@@ -22,18 +22,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sast.command;
+package com.fortify.cli.sc_sast.picocli.command.sast_scan;
 
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.sast_scan.RootSastScanCommand;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootSastScanCommand.class)
-@Command(name = "package", description = "Package source code to be scanned")
-@Order(SastCommandsOrder.PACKAGE)
-public class SastPackageCommand {
+@SubcommandOf(SCSastSastScanCommand.class)
+@Command(name = "start", description = "Start a ScanCentral SAST scan")
+@Order(SCSastSastScanCommandsOrder.START)
+public class SCSastSastScanStartCommand implements Runnable {
+	public void run() {};
 }

@@ -22,28 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sast.command.scan.remote;
+package com.fortify.cli.fod.command.sast_scan;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.sast.command.scan.SastScanRemoteCommand;
-
-import io.micronaut.core.annotation.Order;
-import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-
-@ReflectiveAccess
-@SubcommandOf(SastScanRemoteCommand.class)
-@Command(name = ProductIdentifiers.FOD, description = "Submit scan to FoD")
-@RequiresProduct(ProductOrGroup.FOD)
-@Order(SastScanRemoteCommandsOrder.FOD)
-public class SastScanRemoteFoDCommand {
-	@Option(names = {"--build-id", "-b"})
-	private String[] buildIds;
-	
-	@Option(names = {"--package", "--pkg"})
-	private String pkg;
+public final class FoDSastScanCommandsOrder {
+	public static final int 
+		PREPARE   = 100,
+		START     = 200,
+		CANCEL    = 300;
 }

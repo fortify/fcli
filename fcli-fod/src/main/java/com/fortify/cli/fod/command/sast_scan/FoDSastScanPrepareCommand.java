@@ -22,10 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sast.command.scan;
+package com.fortify.cli.fod.command.sast_scan;
 
-public final class SastScanCommandsOrder {
-	public static final int 
-		LOCAL  = 100,
-		REMOTE = 200;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.sast.picocli.command.sast_scan.prepare.SastCleanCommand;
+import com.fortify.cli.common.sast.picocli.command.sast_scan.prepare.SastPackageCommand;
+import com.fortify.cli.common.sast.picocli.command.sast_scan.prepare.SastTranslateCommand;
+
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine.Command;
+
+@ReflectiveAccess
+@SubcommandOf(FoDSastScanCommand.class)
+@Command(name = "prepare", description = "Prepare for an FoD SAST scan")
+@Order(FoDSastScanCommandsOrder.PREPARE)
+public class FoDSastScanPrepareCommand {
+	@SubcommandOf(FoDSastScanPrepareCommand.class) @Order(10)
+	public static final class Clean extends SastCleanCommand {}
+	
+	@SubcommandOf(FoDSastScanPrepareCommand.class) @Order(20)
+	public static final class Translate extends SastTranslateCommand {}
+	
+	@SubcommandOf(FoDSastScanPrepareCommand.class) @Order(30)
+	public static final class Package extends SastPackageCommand {}
 }

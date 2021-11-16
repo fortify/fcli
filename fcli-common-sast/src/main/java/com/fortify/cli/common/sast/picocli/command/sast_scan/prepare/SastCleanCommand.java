@@ -22,18 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sast.command;
+package com.fortify.cli.common.sast.picocli.command.sast_scan.prepare;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.sast_scan.RootSastScanCommand;
-
-import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootSastScanCommand.class)
-@Command(name = "scan", description = "Scan build session or package locally, using ScanCentral SAST, or on FoD")
-@Order(SastCommandsOrder.SCAN)
-public class SastScanCommand {
+@Command(name = "clean", description = "Clean Fortify intermediate model")
+public class SastCleanCommand implements Runnable {
+	@Override
+	public void run() {
+		throw new RuntimeException("Not yet implemented");
+	}
 }

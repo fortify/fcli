@@ -22,18 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sast.command;
+package com.fortify.cli.fod.command.sast_scan;
 
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.sast_scan.RootSastScanCommand;
 
-import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @SubcommandOf(RootSastScanCommand.class)
-@Command(name = "clean", description = "Clean Fortify intermediate model")
-@Order(SastCommandsOrder.CLEAN)
-public class SastCleanCommand {
+@Command(name = "fod", description = "Prepare, run and manage FoD SAST scans")
+public class FoDSastScanCommand {
 }
