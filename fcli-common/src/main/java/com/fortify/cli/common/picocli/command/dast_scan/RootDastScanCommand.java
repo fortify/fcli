@@ -22,9 +22,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.dast;
+package com.fortify.cli.common.picocli.command.dast_scan;
 
-public class DastCommandsOrder {
-	public static final int 
-		SCAN     = 100;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.command.FCLIRootCommand;
+import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
+
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine.Command;
+
+@ReflectiveAccess
+@SubcommandOf(FCLIRootCommand.class)
+@Command(name = "dast-scan", description = "Prepare, run and manage DAST scans")
+@Order(RootCommandsOrderByGroup.DAST_SCAN)
+public class RootDastScanCommand {
 }

@@ -25,14 +25,14 @@
 package com.fortify.cli.sast.command;
 
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.sast.RootSastCommand;
+import com.fortify.cli.common.picocli.command.sast_scan.RootSastScanCommand;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootSastCommand.class)
+@SubcommandOf(RootSastScanCommand.class)
 @Command(name = "translate", description = "Translate source code to Fortify intermediate model")
 @Order(SastCommandsOrder.TRANSLATE)
 public class SastTranslateCommand {

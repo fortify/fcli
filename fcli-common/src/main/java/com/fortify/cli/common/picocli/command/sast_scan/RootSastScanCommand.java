@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.sast;
+package com.fortify.cli.common.picocli.command.sast_scan;
 
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.FCLIRootCommand;
@@ -34,7 +34,7 @@ import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @SubcommandOf(FCLIRootCommand.class)
-@Command(name = "sast", description = "Prepare and run SAST scans")
-@Order(RootCommandsOrderByGroup.SAST)
-public class RootSastCommand {
+@Command(name = "sast-scan", description = "Prepare, run and manage SAST scans")
+@Order(RootCommandsOrderByGroup.SAST_SCAN)
+public class RootSastScanCommand {
 }

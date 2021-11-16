@@ -25,14 +25,14 @@
 package com.fortify.cli.sast.command;
 
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.sast.RootSastCommand;
+import com.fortify.cli.common.picocli.command.sast_scan.RootSastScanCommand;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootSastCommand.class)
+@SubcommandOf(RootSastScanCommand.class)
 @Command(name = "package", description = "Package source code to be scanned")
 @Order(SastCommandsOrder.PACKAGE)
 public class SastPackageCommand {

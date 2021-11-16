@@ -22,16 +22,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.dast.scan;
+package com.fortify.cli.common.picocli.command.dast_scan;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.dast.RootDastCommand;
-
-import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine.Command;
-
-@ReflectiveAccess
-@SubcommandOf(RootDastCommand.class)
-@Command(name = "scan", description = "Run DAST scans")
-public class DastScanCommand {
+public class RootDastScanCommandsOrder {
+	public static final int 
+		LOCAL     = 100,
+		REMOTE    = 200;
 }

@@ -38,13 +38,13 @@ import com.fortify.cli.common.picocli.command.crud.CRUDCommandsOrder;
  */
 public final class RootCommandsOrderByGroup {
 	public static final int 
-		CONFIG   = 100,
-		AUTH     = 200,
-		CRUD     = 300,
-		TRANSFER = 400,
-		SAST     = 500,
-		DAST     = 600,
-		RUN      = 700,
-		SOFTWARE = 800,
-		API      = 900;
+		CONFIG    = 100,
+		AUTH      = 200,
+		CRUD      = 300,
+		TRANSFER  = 400,
+		SAST_SCAN = 500,
+		DAST_SCAN = 600,
+		RUN       = 700,
+		SOFTWARE  = 800,
+		API       = 900;
 }
