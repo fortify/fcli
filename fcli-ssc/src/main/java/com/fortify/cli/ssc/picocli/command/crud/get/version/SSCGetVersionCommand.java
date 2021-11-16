@@ -22,21 +22,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.transfer.download.repo;
+package com.fortify.cli.ssc.picocli.command.crud.get.version;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.ssc.picocli.command.transfer.download.SSCDownloadCommand;
-import com.fortify.cli.ssc.picocli.constants.repo.SSCScanRepoConstants;
+import com.fortify.cli.ssc.picocli.command.crud.get.SSCGetCommand;
+import com.fortify.cli.ssc.picocli.constants.version.SSCVersionConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
-public class SSCDownloadScanRepoCommand extends SSCScanRepoConstants.Singular {
+public class SSCGetVersionCommand extends SSCVersionConstants.Singular {
 	@ReflectiveAccess
-	@SubcommandOf(SSCDownloadCommand.class)
-	@Command(name = CMD, description = DESC_DOWNLOAD, aliases = {ALIAS})
+	@SubcommandOf(SSCGetCommand.class)
+	@Command(name = CMD, description = DESC_GET, aliases = {ALIAS})
 	@RequiresProduct(ProductOrGroup.SSC)
 	public static final class Impl {}
 }

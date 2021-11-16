@@ -27,41 +27,16 @@ package com.fortify.cli.ssc.picocli.command.crud.get.system;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
-import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.command.crud.get.SSCGetCommand;
-import com.fortify.cli.ssc.picocli.constants.system.SSCSystemEventConstants;
+import com.fortify.cli.ssc.picocli.constants.system.SSCSystemConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-public class SSCGetSystemEventsCommand extends SSCSystemEventConstants.Plural {
+public class SSCGetSystemCommand extends SSCSystemConstants.Singular {
 	@ReflectiveAccess
-	@SubcommandOf(SSCGetSystemCommand.Impl.class)
+	@SubcommandOf(SSCGetCommand.class)
 	@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static final class Impl extends AbstractSSCUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
-		@CommandLine.Mixin private OutputOptionsHandler outputOptionsHandler;
-		
-		@SneakyThrows
-		protected Void runWithUnirest(UnirestInstance unirest) {
-			outputOptionsHandler.write(
-				unirest.get("/api/v1/events?limit=-1")
-					.accept("application/json")
-					.header("Content-Type", "application/json")
-			);
-			
-			return null;
-		}
-		
-		@Override
-		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
-			return SSCGetCommand.defaultOutputConfig().defaultColumns(OUTPUT_COLUMNS);
-		}
-	}
+	public static final class Impl {}
 }

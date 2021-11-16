@@ -22,40 +22,22 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.constants.repo;
+package com.fortify.cli.ssc.picocli.constants.system;
 
 import com.fortify.cli.ssc.picocli.constants._SSCConstants;
 
-public class SSCScanRepoAttributeConstants extends _SSCConstants {
+public class SSCSystemConstants extends _SSCConstants {
 	public static class Constants {
-		public static final String CMD_SINGULAR    = "attribute";
+		public static final String CMD_SINGULAR    = "system";
 		public static final String ALIAS_SINGULAR  = null;
-		public static final String NAME_SINGULAR   = "application version attribute";
-		public static final String CMD_PLURAL      = "attributes";
-		public static final String ALIAS_PLURAL    = null;
-		public static final String NAME_PLURAL     = "application version attributes";
-		public static final String OUTPUT_COLUMNS  = "id#guid#value#values[*].name:Value"; //TODO
+		public static final String NAME_SINGULAR   = "system data";
 	}
-
+	
 	// Boilerplate code
 	public static class Singular extends Constants {
 		public static final String CMD   = CMD_SINGULAR;
 		public static final String ALIAS = ALIAS_SINGULAR;
 		public static final String NAME  = NAME_SINGULAR;
-		
-		public static final String DESC_CREATE   = PFX_CREATE+NAME+SFX_CREATE;
-		public static final String DESC_DELETE   = PFX_DELETE+NAME+SFX_DELETE;
-		public static final String DESC_GET      = PFX_GET+NAME+SFX_GET;
-		public static final String DESC_UPDATE   = PFX_UPDATE+NAME+SFX_UPDATE;
-		public static final String DESC_DOWNLOAD = PFX_DOWNLOAD+NAME+SFX_DOWNLOAD;
-		public static final String DESC_UPLOAD   = PFX_UPLOAD+NAME+SFX_UPLOAD;
-	}
-	
-	// Boilerplate code
-	public static class Plural extends Constants {
-		public static final String CMD            = CMD_PLURAL;
-		public static final String ALIAS          = ALIAS_PLURAL;
-		public static final String NAME           = NAME_PLURAL;
 		
 		public static final String DESC_CREATE   = PFX_CREATE+NAME+SFX_CREATE;
 		public static final String DESC_DELETE   = PFX_DELETE+NAME+SFX_DELETE;

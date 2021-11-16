@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.crud.delete.repo;
+package com.fortify.cli.ssc.picocli.command.crud.get.version;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
@@ -31,8 +31,9 @@ import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfi
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.picocli.command.crud.delete.SSCDeleteCommand;
-import com.fortify.cli.ssc.picocli.constants.repo.SSCScanRepoConstants;
+import com.fortify.cli.ssc.picocli.command.crud.get.SSCGetCommand;
+import com.fortify.cli.ssc.picocli.component.repo.SSCScanRepoHandler;
+import com.fortify.cli.ssc.picocli.constants.version.SSCVersionAttributeConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -40,29 +41,28 @@ import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-public class SSCDeleteScanRepoCommand extends SSCScanRepoConstants.Singular {
+public class SSCGetVersionAttributesCommand extends SSCVersionAttributeConstants.Plural {
 	@ReflectiveAccess
-	@SubcommandOf(SSCDeleteCommand.class)
-	@Command(name = CMD, description = DESC_DELETE, aliases = {ALIAS})
+	@SubcommandOf(SSCGetVersionCommand.Impl.class)
+	@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SSC)
 	public static final class Impl extends AbstractSSCUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
+		@CommandLine.Mixin private SSCScanRepoHandler fromApplicationVersionHandler;
 		@CommandLine.Mixin private OutputOptionsHandler outputOptionsHandler;
-	
+		
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
-			throw new RuntimeException("Not yet implemented");
-			/*
-			outputOptionsHandler.write(unirest.delete("/api/v1/projectVersions?limit=-1")
+			outputOptionsHandler.write(unirest.get("/api/v1/projectVersions/{id}/attributes")
+					.routeParam("id", fromApplicationVersionHandler.getApplicationVersionId(unirest))
 					.accept("application/json")
 					.header("Content-Type", "application/json"));
 	
 			return null;
-			*/
 		}
 		
 		@Override
 		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
-			return SSCDeleteCommand.defaultOutputConfig().defaultColumns(OUTPUT_COLUMNS);
+			return SSCGetCommand.defaultOutputConfig().defaultColumns(OUTPUT_COLUMNS);
 		}
 	}
 }

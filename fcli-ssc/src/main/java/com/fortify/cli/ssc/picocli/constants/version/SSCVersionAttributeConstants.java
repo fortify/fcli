@@ -22,20 +22,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.constants.repo;
+package com.fortify.cli.ssc.picocli.constants.version;
 
 import com.fortify.cli.ssc.picocli.constants._SSCConstants;
 
-public class SSCScanRepoArtifactConstants extends _SSCConstants {
+public class SSCVersionAttributeConstants extends _SSCConstants {
 	public static class Constants {
-		public static final String CMD_SINGULAR    = "artifact";
+		public static final String CMD_SINGULAR    = "attribute";
 		public static final String ALIAS_SINGULAR  = null;
-		public static final String NAME_SINGULAR   = "application version artifact";
-		public static final String CMD_PLURAL      = "artifacts";
+		public static final String NAME_SINGULAR   = "application version attribute";
+		public static final String CMD_PLURAL      = "attributes";
 		public static final String ALIAS_PLURAL    = null;
-		public static final String NAME_PLURAL     = "application version artifacts";
-		//TODO Will the _embed.scans[0] JSONPath cause exceptions if there are no scans? (for example for 3rd-party artifacts)
-		public static final String OUTPUT_COLUMNS  = "id#$[*].scans[*].type:type#lastScanDate#uploadDate#status"; 
+		public static final String NAME_PLURAL     = "application version attributes";
+		public static final String OUTPUT_COLUMNS  = "id#guid#value#values[*].name:Value"; //TODO
 	}
 
 	// Boilerplate code

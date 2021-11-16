@@ -33,7 +33,7 @@ import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.command.crud.update.SSCUpdateCommand;
 import com.fortify.cli.ssc.picocli.component.repo.SSCScanRepoHandler;
-import com.fortify.cli.ssc.picocli.constants.repo.SSCScanRepoAttributeConstants;
+import com.fortify.cli.ssc.picocli.constants.version.SSCVersionAttributeConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -41,7 +41,7 @@ import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-public class SSCUpdateScanRepoAttributesCommand extends SSCScanRepoAttributeConstants.Plural {
+public class SSCUpdateScanRepoAttributesCommand extends SSCVersionAttributeConstants.Plural {
 	@ReflectiveAccess
 	@SubcommandOf(SSCUpdateScanRepoCommand.Impl.class)
 	@Command(name = CMD, description = DESC_UPDATE /*, aliases = {ALIAS}*/)

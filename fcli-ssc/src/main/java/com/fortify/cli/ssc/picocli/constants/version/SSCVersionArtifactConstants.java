@@ -22,21 +22,22 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.constants.repo;
+package com.fortify.cli.ssc.picocli.constants.version;
 
 import com.fortify.cli.ssc.picocli.constants._SSCConstants;
 
-public class SSCScanRepoConstants extends _SSCConstants {
+public class SSCVersionArtifactConstants extends _SSCConstants {
 	public static class Constants {
-		public static final String CMD_SINGULAR    = "scan-repo";
-		public static final String ALIAS_SINGULAR  = "application-version";
-		public static final String NAME_SINGULAR   = "application version and related entities";
-		public static final String CMD_PLURAL      = "scan-repositories";
-		public static final String ALIAS_PLURAL    = "application-versions";
-		public static final String NAME_PLURAL     = "application versions and related entities";
-		public static final String OUTPUT_COLUMNS  = "id#project.name#name";
+		public static final String CMD_SINGULAR    = "artifact";
+		public static final String ALIAS_SINGULAR  = null;
+		public static final String NAME_SINGULAR   = "application version artifact";
+		public static final String CMD_PLURAL      = "artifacts";
+		public static final String ALIAS_PLURAL    = null;
+		public static final String NAME_PLURAL     = "application version artifacts";
+		//TODO Will the _embed.scans[0] JSONPath cause exceptions if there are no scans? (for example for 3rd-party artifacts)
+		public static final String OUTPUT_COLUMNS  = "id#$[*].scans[*].type:type#lastScanDate#uploadDate#status"; 
 	}
-	
+
 	// Boilerplate code
 	public static class Singular extends Constants {
 		public static final String CMD   = CMD_SINGULAR;

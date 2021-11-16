@@ -22,17 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.crud.create.repo;
+package com.fortify.cli.ssc.picocli.command.transfer.upload.version;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.picocli.command.crud.create.SSCCreateCommand;
-import com.fortify.cli.ssc.picocli.constants.repo.SSCScanRepoConstants;
+import com.fortify.cli.ssc.picocli.component.repo.SSCScanRepoHandler;
+import com.fortify.cli.ssc.picocli.constants.version.SSCVersionArtifactConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -40,29 +37,17 @@ import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-public class SSCCreateScanRepoCommand extends SSCScanRepoConstants.Singular {
+public class SSCUploadVersionArtifactCommand extends SSCVersionArtifactConstants.Singular {
 	@ReflectiveAccess
-	@SubcommandOf(SSCCreateCommand.class)
-	@Command(name = CMD, description = DESC_CREATE, aliases = {ALIAS})
+	@SubcommandOf(SSCUploadVersionCommand.Impl.class)
+	@Command(name = CMD, description = DESC_UPLOAD /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static final class Impl extends AbstractSSCUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
-		@CommandLine.Mixin private OutputOptionsHandler outputOptionsHandler;
-	
+	public static final class Impl extends AbstractSSCUnirestRunnerCommand {
+		@CommandLine.Mixin private SSCScanRepoHandler fromApplicationVersionHandler;
+		
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
 			throw new RuntimeException("Not yet implemented");
-			/*
-			outputOptionsHandler.write(unirest.delete("/api/v1/projectVersions?limit=-1")
-					.accept("application/json")
-					.header("Content-Type", "application/json"));
-	
-			return null;
-			*/
-		}
-		
-		@Override
-		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
-			return SSCCreateCommand.defaultOutputConfig().defaultColumns(OUTPUT_COLUMNS);
 		}
 	}
 }

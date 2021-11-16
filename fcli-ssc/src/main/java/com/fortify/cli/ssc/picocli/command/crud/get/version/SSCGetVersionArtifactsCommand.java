@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.crud.get.repo;
+package com.fortify.cli.ssc.picocli.command.crud.get.version;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
@@ -33,7 +33,7 @@ import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.command.crud.get.SSCGetCommand;
 import com.fortify.cli.ssc.picocli.component.repo.SSCScanRepoHandler;
-import com.fortify.cli.ssc.picocli.constants.repo.SSCScanRepoArtifactConstants;
+import com.fortify.cli.ssc.picocli.constants.version.SSCVersionArtifactConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -41,9 +41,9 @@ import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-public class SSCGetScanRepoArtifactsCommand extends SSCScanRepoArtifactConstants.Plural {
+public class SSCGetVersionArtifactsCommand extends SSCVersionArtifactConstants.Plural {
 	@ReflectiveAccess
-	@SubcommandOf(SSCGetScanRepoCommand.Impl.class)
+	@SubcommandOf(SSCGetVersionCommand.Impl.class)
 	@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SSC)
 	public static final class Impl extends AbstractSSCUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
