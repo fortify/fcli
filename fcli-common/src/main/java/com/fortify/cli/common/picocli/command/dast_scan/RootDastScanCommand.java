@@ -34,7 +34,7 @@ import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @SubcommandOf(FCLIRootCommand.class)
-@Command(name = "dast-scan", description = "Prepare, run and manage DAST scans")
+@Command(name = "dast-scan", aliases = {"dast"}, description = "Prepare, run and manage DAST scans")
 @Order(RootCommandsOrderByGroup.DAST_SCAN)
 public class RootDastScanCommand {
 }

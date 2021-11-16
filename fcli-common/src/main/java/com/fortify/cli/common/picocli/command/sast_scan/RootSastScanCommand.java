@@ -34,7 +34,7 @@ import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @SubcommandOf(FCLIRootCommand.class)
-@Command(name = "sast-scan", description = "Prepare, run and manage SAST scans")
+@Command(name = "sast-scan", aliases = {"sast"}, description = "Prepare, run and manage SAST scans")
 @Order(RootCommandsOrderByGroup.SAST_SCAN)
 public class RootSastScanCommand {
 }
