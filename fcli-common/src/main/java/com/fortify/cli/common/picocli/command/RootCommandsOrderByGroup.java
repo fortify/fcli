@@ -40,10 +40,10 @@ public final class RootCommandsOrderByGroup {
 	public static final int 
 		CONFIG    = 100,
 		AUTH      = 200,
-		CRUD      = 300,
-		TRANSFER  = 400,
-		SAST_SCAN = 500,
-		DAST_SCAN = 600,
+		SAST_SCAN = 300,
+		DAST_SCAN = 400,
+		CRUD      = 500,
+		TRANSFER  = 600,
 		RUN       = 700,
 		SOFTWARE  = 800,
 		API       = 900;

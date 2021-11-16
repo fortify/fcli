@@ -28,8 +28,8 @@ import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
 
 public class CRUDCommandsOrder {
 	public static final int 
-		GET      = RootCommandsOrderByGroup.CRUD,
-		CREATE   = RootCommandsOrderByGroup.CRUD + 10,
+		CREATE   = RootCommandsOrderByGroup.CRUD,
+		GET      = RootCommandsOrderByGroup.CRUD + 10,
 		UPDATE   = RootCommandsOrderByGroup.CRUD + 20,
 		DELETE   = RootCommandsOrderByGroup.CRUD + 30;
 }
