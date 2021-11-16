@@ -1,16 +1,16 @@
-package com.fortify.cli.sc_dast.command.dast.scan.remote;
+package com.fortify.cli.sc_dast.command.dast_scan;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.sc_dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.command.crud.scan.actions.SCDastScanActionsHandler;
-import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanCompleteOptions;
-import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanDeleteOptions;
-import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanPauseOptions;
-import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanPublishOptions;
-import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanResumeOptions;
-import com.fortify.cli.sc_dast.command.dast.scan.remote.options.SCDastScanStartOptions;
+import com.fortify.cli.sc_dast.command.dast_scan.options.SCDastScanCompleteOptions;
+import com.fortify.cli.sc_dast.command.dast_scan.options.SCDastScanDeleteOptions;
+import com.fortify.cli.sc_dast.command.dast_scan.options.SCDastScanPauseOptions;
+import com.fortify.cli.sc_dast.command.dast_scan.options.SCDastScanPublishOptions;
+import com.fortify.cli.sc_dast.command.dast_scan.options.SCDastScanResumeOptions;
+import com.fortify.cli.sc_dast.command.dast_scan.options.SCDastScanStartOptions;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -21,10 +21,10 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-public class SCDastRemoteScanCommands {
+public class SCDastScanCommands {
 
     @ReflectiveAccess
-    @SubcommandOf(SCDastRemoteRootCommands.SCDastRemoteCommand.class)
+    @SubcommandOf(SCDastScanRootCommands.SCDastCommand.class)
     @Command(name = "start", description = "Starts DAST scan on ScanCentral DAST")
     @Order(SCDastScanCommandsOrderBy.START)
     public static final class Start extends AbstractSCDastUnirestRunnerCommand {
@@ -44,7 +44,7 @@ public class SCDastRemoteScanCommands {
     }
 
     @ReflectiveAccess
-    @SubcommandOf(SCDastRemoteRootCommands.SCDastRemoteCommand.class)
+    @SubcommandOf(SCDastScanRootCommands.SCDastCommand.class)
     @Command(name = "pause", description = "Pauses a DAST scan on ScanCentral DAST")
     @Order(SCDastScanCommandsOrderBy.PAUSE)
     public static final class Pause extends AbstractSCDastUnirestRunnerCommand {
@@ -67,7 +67,7 @@ public class SCDastRemoteScanCommands {
     }
 
     @ReflectiveAccess
-    @SubcommandOf(SCDastRemoteRootCommands.SCDastRemoteCommand.class)
+    @SubcommandOf(SCDastScanRootCommands.SCDastCommand.class)
     @Command(name = "resume", description = "Resumes a DAST scan on ScanCentral DAST")
     @Order(SCDastScanCommandsOrderBy.RESUME)
     public static final class Resume extends AbstractSCDastUnirestRunnerCommand {
@@ -90,7 +90,7 @@ public class SCDastRemoteScanCommands {
     }
 
     @ReflectiveAccess
-    @SubcommandOf(SCDastRemoteRootCommands.SCDastRemoteCommand.class)
+    @SubcommandOf(SCDastScanRootCommands.SCDastCommand.class)
     @Command(name = "complete", description = "Completes a DAST scan on ScanCentral DAST")
     @Order(SCDastScanCommandsOrderBy.COMPLETE)
     public static final class Complete extends AbstractSCDastUnirestRunnerCommand {
@@ -113,7 +113,7 @@ public class SCDastRemoteScanCommands {
     }
 
     @ReflectiveAccess
-    @SubcommandOf(SCDastRemoteRootCommands.SCDastRemoteCommand.class)
+    @SubcommandOf(SCDastScanRootCommands.SCDastCommand.class)
     @Command(name = "delete", description = "Deletes a DAST scan on ScanCentral DAST")
     @Order(SCDastScanCommandsOrderBy.DELETE)
     public static final class Delete extends AbstractSCDastUnirestRunnerCommand {
@@ -134,7 +134,7 @@ public class SCDastRemoteScanCommands {
     }
 
     @ReflectiveAccess
-    @SubcommandOf(SCDastRemoteRootCommands.SCDastRemoteCommand.class)
+    @SubcommandOf(SCDastScanRootCommands.SCDastCommand.class)
     @Command(name = "publish", description = "Publishes a DAST scan on ScanCentral DAST to SSC")
     @Order(SCDastScanCommandsOrderBy.PUBLISH)
     public static final class Publish extends AbstractSCDastUnirestRunnerCommand {

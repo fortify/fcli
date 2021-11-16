@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_dast.command.dast.scan.remote.options;
+package com.fortify.cli.sc_dast.command.dast_scan.options;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;

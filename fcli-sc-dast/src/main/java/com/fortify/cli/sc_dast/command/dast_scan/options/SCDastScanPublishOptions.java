@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_dast.command.dast.scan.remote.options;
+package com.fortify.cli.sc_dast.command.dast_scan.options;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -10,7 +10,7 @@ import picocli.CommandLine.Option;
  * @author Ruud Senden
  */
 @ReflectiveAccess
-public class SCDastScanDeleteOptions {
+public class SCDastScanPublishOptions {
 
     @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
     @Getter private int scanId;

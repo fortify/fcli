@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.command.dast.scan.remote;
+package com.fortify.cli.sc_dast.command.dast_scan;
 
 /**
  * @author Ruud Senden
