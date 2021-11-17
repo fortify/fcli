@@ -35,7 +35,7 @@ import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @SubcommandOf(FCLIRootCommand.class)
-@Command(name = "get", description = "Get data from various Fortify systems")
+@Command(name = "retrieve", aliases = {"get"}, description = "Get data from various Fortify systems")
 @Order(CRUDCommandsOrder.GET)
 public class RootGetCommand {
 	public static final OutputOptionsWriterConfig defaultOutputConfig() {

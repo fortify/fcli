@@ -22,14 +22,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.crud;
+package com.fortify.cli.common.picocli.command.dast_scan;
 
-import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
-
-public class CRUDCommandsOrder {
+public class RootDastScanCommandsOrder {
 	public static final int 
-		CREATE   = RootCommandsOrderByGroup.CRUD,
-		GET      = RootCommandsOrderByGroup.CRUD + 10,
-		UPDATE   = RootCommandsOrderByGroup.CRUD + 20,
-		DELETE   = RootCommandsOrderByGroup.CRUD + 30;
+		LOCAL     = 100,
+		REMOTE    = 200;
 }

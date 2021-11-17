@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,14 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.crud;
+package com.fortify.cli.ssc.picocli.constants.system;
 
-import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
+import com.fortify.cli.ssc.picocli.constants._SSCConstants;
 
-public class CRUDCommandsOrder {
-	public static final int 
-		CREATE   = RootCommandsOrderByGroup.CRUD,
-		GET      = RootCommandsOrderByGroup.CRUD + 10,
-		UPDATE   = RootCommandsOrderByGroup.CRUD + 20,
-		DELETE   = RootCommandsOrderByGroup.CRUD + 30;
+public class SSCSystemConstants extends _SSCConstants {
+	public static class Constants {
+		public static final String CMD_SINGULAR    = "system";
+		public static final String ALIAS_SINGULAR  = null;
+		public static final String NAME_SINGULAR   = "system data";
+	}
+	
+	// Boilerplate code
+	public static class Singular extends Constants {
+		public static final String CMD   = CMD_SINGULAR;
+		public static final String ALIAS = ALIAS_SINGULAR;
+		public static final String NAME  = NAME_SINGULAR;
+		
+		public static final String DESC_CREATE   = PFX_CREATE+NAME+SFX_CREATE;
+		public static final String DESC_DELETE   = PFX_DELETE+NAME+SFX_DELETE;
+		public static final String DESC_GET      = PFX_GET+NAME+SFX_GET;
+		public static final String DESC_UPDATE   = PFX_UPDATE+NAME+SFX_UPDATE;
+		public static final String DESC_DOWNLOAD = PFX_DOWNLOAD+NAME+SFX_DOWNLOAD;
+		public static final String DESC_UPLOAD   = PFX_UPLOAD+NAME+SFX_UPLOAD;
+	}
 }

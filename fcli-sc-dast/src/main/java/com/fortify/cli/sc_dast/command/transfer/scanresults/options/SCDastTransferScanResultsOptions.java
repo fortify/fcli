@@ -1,11 +1,10 @@
 package com.fortify.cli.sc_dast.command.transfer.scanresults.options;
 
+import java.io.File;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
-import picocli.CommandLine;
 import picocli.CommandLine.Option;
-
-import java.io.File;
 
 /**
  * Configure options for retrieving SC DAST Scan results

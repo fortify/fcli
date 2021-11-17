@@ -22,14 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.crud;
+package com.fortify.cli.common.sast.picocli.command.sast_scan.prepare;
 
-import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine.Command;
 
-public class CRUDCommandsOrder {
-	public static final int 
-		CREATE   = RootCommandsOrderByGroup.CRUD,
-		GET      = RootCommandsOrderByGroup.CRUD + 10,
-		UPDATE   = RootCommandsOrderByGroup.CRUD + 20,
-		DELETE   = RootCommandsOrderByGroup.CRUD + 30;
+@ReflectiveAccess
+@Command(name = "package", description = "Package source code to be scanned")
+public class SastPackageCommand implements Runnable {
+	@Override
+	public void run() {
+		throw new RuntimeException("Not yet implemented");
+	}
 }

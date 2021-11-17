@@ -22,14 +22,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.crud;
+package com.fortify.cli.sc_sast.picocli.command.sast_scan;
 
-import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 
-public class CRUDCommandsOrder {
-	public static final int 
-		CREATE   = RootCommandsOrderByGroup.CRUD,
-		GET      = RootCommandsOrderByGroup.CRUD + 10,
-		UPDATE   = RootCommandsOrderByGroup.CRUD + 20,
-		DELETE   = RootCommandsOrderByGroup.CRUD + 30;
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine.Command;
+
+@ReflectiveAccess
+@SubcommandOf(SCSastSastScanCommand.class)
+@Command(name = "cancel", description = "Cancel a ScanCentral SAST scan")
+@Order(SCSastSastScanCommandsOrder.CANCEL)
+public class SCSastSastScanCancelCommand implements Runnable {
+	public void run() {};
 }

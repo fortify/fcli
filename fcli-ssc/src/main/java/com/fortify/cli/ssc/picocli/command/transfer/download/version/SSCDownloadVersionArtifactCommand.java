@@ -22,14 +22,32 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.crud;
+package com.fortify.cli.ssc.picocli.command.transfer.download.version;
 
-import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
+import com.fortify.cli.common.config.product.ProductOrGroup;
+import com.fortify.cli.common.picocli.annotation.RequiresProduct;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.picocli.component.repo.SSCScanRepoHandler;
+import com.fortify.cli.ssc.picocli.constants.version.SSCVersionArtifactConstants;
 
-public class CRUDCommandsOrder {
-	public static final int 
-		CREATE   = RootCommandsOrderByGroup.CRUD,
-		GET      = RootCommandsOrderByGroup.CRUD + 10,
-		UPDATE   = RootCommandsOrderByGroup.CRUD + 20,
-		DELETE   = RootCommandsOrderByGroup.CRUD + 30;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.UnirestInstance;
+import lombok.SneakyThrows;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+
+public class SSCDownloadVersionArtifactCommand extends SSCVersionArtifactConstants.Singular {
+	@ReflectiveAccess
+	@SubcommandOf(SSCDownloadVersionCommand.Impl.class)
+	@Command(name = CMD, description = DESC_DOWNLOAD /*, aliases = {ALIAS}*/)
+	@RequiresProduct(ProductOrGroup.SSC)
+	public static final class Impl extends AbstractSSCUnirestRunnerCommand {
+		@CommandLine.Mixin private SSCScanRepoHandler fromApplicationVersionHandler;
+		
+		@SneakyThrows
+		protected Void runWithUnirest(UnirestInstance unirest) {
+			throw new RuntimeException("Not yet implemented");
+		}
+	}
 }

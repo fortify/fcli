@@ -22,14 +22,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.crud;
+package com.fortify.cli.ssc.picocli.command.transfer.upload.version;
 
-import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
+import com.fortify.cli.common.config.product.ProductOrGroup;
+import com.fortify.cli.common.picocli.annotation.RequiresProduct;
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.ssc.picocli.command.transfer.upload.SSCUploadCommand;
+import com.fortify.cli.ssc.picocli.constants.version.SSCVersionConstants;
 
-public class CRUDCommandsOrder {
-	public static final int 
-		CREATE   = RootCommandsOrderByGroup.CRUD,
-		GET      = RootCommandsOrderByGroup.CRUD + 10,
-		UPDATE   = RootCommandsOrderByGroup.CRUD + 20,
-		DELETE   = RootCommandsOrderByGroup.CRUD + 30;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine.Command;
+
+public class SSCUploadVersionCommand extends SSCVersionConstants.Singular {
+	@ReflectiveAccess
+	@SubcommandOf(SSCUploadCommand.class)
+	@Command(name = CMD, description = DESC_UPLOAD, aliases = {ALIAS})
+	@RequiresProduct(ProductOrGroup.SSC)
+	public static final class Impl {}
 }

@@ -22,14 +22,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.crud;
+package com.fortify.cli.common.picocli.command.dast_scan;
 
+import com.fortify.cli.common.picocli.annotation.SubcommandOf;
+import com.fortify.cli.common.picocli.command.FCLIRootCommand;
 import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
 
-public class CRUDCommandsOrder {
-	public static final int 
-		CREATE   = RootCommandsOrderByGroup.CRUD,
-		GET      = RootCommandsOrderByGroup.CRUD + 10,
-		UPDATE   = RootCommandsOrderByGroup.CRUD + 20,
-		DELETE   = RootCommandsOrderByGroup.CRUD + 30;
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine.Command;
+
+@ReflectiveAccess
+@SubcommandOf(FCLIRootCommand.class)
+@Command(name = "dast-scan", aliases = {"dast"}, description = "Prepare, run and manage DAST scans")
+@Order(RootCommandsOrderByGroup.DAST_SCAN)
+public class RootDastScanCommand {
 }
