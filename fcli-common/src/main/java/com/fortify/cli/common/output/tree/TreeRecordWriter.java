@@ -37,10 +37,10 @@ import hu.webarticum.treeprinter.ListingTreePrinter;
 import hu.webarticum.treeprinter.SimpleTreeNode;
 
 public class TreeRecordWriter implements IRecordWriter {
-	private final RecordWriterConfig config;
+	//private final RecordWriterConfig config;
 	
 	public TreeRecordWriter(RecordWriterConfig config) {
-		this.config = config;
+		//this.config = config;
 	}
 
 	@Override

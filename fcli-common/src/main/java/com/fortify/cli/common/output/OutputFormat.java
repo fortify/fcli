@@ -37,7 +37,6 @@ import com.fortify.cli.common.output.yaml.YamlRecordWriterFactory;
 import lombok.Getter;
 
 public enum OutputFormat {
-	@Getter
 	json (OutputType.TECHNICAL,    new JsonRecordWriterFactory(),  PropertyPathFormatter::camelCase), 
 	yaml (OutputType.TECHNICAL,    new YamlRecordWriterFactory(),  PropertyPathFormatter::snakeCase), 
 	table(OutputType.TEXT_COLUMNS, new TableRecordWriterFactory(), PropertyPathFormatter::humanReadable), 
