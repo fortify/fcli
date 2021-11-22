@@ -22,15 +22,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.constants.scan;
+package com.fortify.cli.sc_dast.picocli.constants.scan;
 
-import com.fortify.cli.sc_dast.picocli.command.constants._SCDastConstants;
+import com.fortify.cli.sc_dast.picocli.constants._SCDastConstants;
 
-public class SCDastScanLogsConstants extends _SCDastConstants {
+public class SCDastScanSettingsConstants extends _SCDastConstants {
 	public static class Constants {
-		public static final String CMD_PLURAL      = "logs";
+		public static final String CMD_PLURAL      = "settings";
 		public static final String ALIAS_PLURAL    = null;
-		public static final String NAME_PLURAL     = "scan logs";
+		public static final String NAME_PLURAL     = "scan settings";
+		public static final String OUTPUT_COLUMNS  =  "id#name#" +
+                "cicdToken:Settings Id#" +
+                "applicationName:Application#" +
+                "applicationVersionName:Version";
 	}
 	
 	// Boilerplate code

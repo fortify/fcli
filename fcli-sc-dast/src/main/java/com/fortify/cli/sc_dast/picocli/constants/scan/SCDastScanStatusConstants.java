@@ -22,26 +22,23 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.constants.scan;
+package com.fortify.cli.sc_dast.picocli.constants.scan;
 
-import com.fortify.cli.sc_dast.picocli.command.constants._SCDastConstants;
+import com.fortify.cli.sc_dast.picocli.constants._SCDastConstants;
 
-public class SCDastScanResultsConstants extends _SCDastConstants {
+public class SCDastScanStatusConstants extends _SCDastConstants {
 	public static class Constants {
-		public static final String CMD_PLURAL      = "results";
-		public static final String ALIAS_PLURAL    = null;
-		public static final String NAME_PLURAL     = "scan results";
-		public static final String OUTPUT_COLUMNS  =  "lowCount:Low#" +
-                "mediumCount:Medium#" +
-                "highCount:High#" +
-                "criticalCount:Critical";;
+		public static final String CMD_SINGULAR    = "status";
+		public static final String ALIAS_SINGULAR  = null;
+		public static final String NAME_SINGULAR   = "scan status";
+		public static final String OUTPUT_COLUMNS  = null;
 	}
 	
 	// Boilerplate code
-	public static class Plural extends Constants {
-		public static final String CMD            = CMD_PLURAL;
-		public static final String ALIAS          = ALIAS_PLURAL;
-		public static final String NAME           = NAME_PLURAL;
+	public static class Singular extends Constants {
+		public static final String CMD   = CMD_SINGULAR;
+		public static final String ALIAS = ALIAS_SINGULAR;
+		public static final String NAME  = NAME_SINGULAR;
 		
 		public static final String DESC_CREATE   = PFX_CREATE+NAME+SFX_CREATE;
 		public static final String DESC_DELETE   = PFX_DELETE+NAME+SFX_DELETE;

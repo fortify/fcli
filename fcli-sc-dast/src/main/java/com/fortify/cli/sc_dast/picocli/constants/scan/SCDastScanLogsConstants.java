@@ -22,19 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.constants;
+package com.fortify.cli.sc_dast.picocli.constants.scan;
 
-public class _SCDastConstants {
-	public static final String PFX_CREATE   = "Create ";
-	public static final String SFX_CREATE   = " in ScanCentral DAST";
-	public static final String PFX_DELETE   = "Delete ";
-	public static final String SFX_DELETE   = " from ScanCentral DAST";
-	public static final String PFX_GET      = "Get ";
-	public static final String SFX_GET      = " from ScanCentral DAST";
-	public static final String PFX_UPDATE   = "Update ";
-	public static final String SFX_UPDATE   = " in ScanCentral DAST";
-	public static final String PFX_DOWNLOAD = "Download ";
-	public static final String SFX_DOWNLOAD = " from ScanCentral DAST";
-	public static final String PFX_UPLOAD   = "Upload ";
-	public static final String SFX_UPLOAD   = " to ScanCentral DAST";
+import com.fortify.cli.sc_dast.picocli.constants._SCDastConstants;
+
+public class SCDastScanLogsConstants extends _SCDastConstants {
+	public static class Constants {
+		public static final String CMD_PLURAL      = "logs";
+		public static final String ALIAS_PLURAL    = null;
+		public static final String NAME_PLURAL     = "scan logs";
+	}
+	
+	// Boilerplate code
+	public static class Plural extends Constants {
+		public static final String CMD            = CMD_PLURAL;
+		public static final String ALIAS          = ALIAS_PLURAL;
+		public static final String NAME           = NAME_PLURAL;
+		
+		public static final String DESC_CREATE   = PFX_CREATE+NAME+SFX_CREATE;
+		public static final String DESC_DELETE   = PFX_DELETE+NAME+SFX_DELETE;
+		public static final String DESC_GET      = PFX_GET+NAME+SFX_GET;
+		public static final String DESC_UPDATE   = PFX_UPDATE+NAME+SFX_UPDATE;
+		public static final String DESC_DOWNLOAD = PFX_DOWNLOAD+NAME+SFX_DOWNLOAD;
+		public static final String DESC_UPLOAD   = PFX_UPLOAD+NAME+SFX_UPLOAD;
+	}
 }

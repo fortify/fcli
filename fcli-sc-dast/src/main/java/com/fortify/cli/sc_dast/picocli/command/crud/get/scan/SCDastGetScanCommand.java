@@ -27,8 +27,8 @@ package com.fortify.cli.sc_dast.picocli.command.crud.get.scan;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.sc_dast.picocli.command.constants.scan.SCDastScanConstants;
 import com.fortify.cli.sc_dast.picocli.command.crud.get.SCDastGetCommand;
+import com.fortify.cli.sc_dast.picocli.constants.scan.SCDastScanConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;

@@ -31,9 +31,9 @@ import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
-import com.fortify.cli.sc_dast.picocli.command.constants.scan.SCDastScanStatusConstants;
 import com.fortify.cli.sc_dast.picocli.command.crud.get.SCDastGetCommand;
 import com.fortify.cli.sc_dast.picocli.command.util.SCDastScanStatusActionsHandler;
+import com.fortify.cli.sc_dast.picocli.constants.scan.SCDastScanStatusConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
