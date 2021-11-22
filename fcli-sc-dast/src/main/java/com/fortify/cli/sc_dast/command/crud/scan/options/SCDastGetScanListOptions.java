@@ -27,7 +27,7 @@ public class SCDastGetScanListOptions {
             description = "The specific ScanStatusTypes to filter results. Possible values: ${COMPLETION-CANDIDATES}.")
     @Getter private ScanStatusTypes scanStatus;
 
-    @Option(names = {"-o","--order","--order-by"}, description = "The field name to order the results by")
+    @Option(names = {"--order","--order-by"}, description = "The field name to order the results by")
     @Getter private String orderBy;
 
     private enum Directions {ASC, DESC}

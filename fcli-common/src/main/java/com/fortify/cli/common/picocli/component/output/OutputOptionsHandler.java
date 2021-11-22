@@ -1,5 +1,6 @@
 package com.fortify.cli.common.picocli.component.output;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -58,6 +59,11 @@ public class OutputOptionsHandler {
 	
 		@CommandLine.Option(names = {"--json-path"}, description = "Transforms output using JSONPath", order = 6)
 		@Getter private String jsonPath;
+		
+		@CommandLine.Option(names = {"-o", "--output"},
+	            description = "Output file", 
+	            order=7)
+	    private File outputFile; // TODO Add actual implementation to write to file
 	}
 	
 	public OutputOptionsWriter getWriter() {

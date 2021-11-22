@@ -28,7 +28,7 @@ public class SCDastScanStartOptions {
     @Option(names = {"-n","--scan-name"}, description = "The name of the SC DAST scan")
     @Getter private String scanName;
 
-    @Option(names = {"-o", "--overrides"}, description = "File containing override valuse for the SC DAST scan")
+    @Option(names = {"--overrides"}, description = "File containing override valuse for the SC DAST scan")
     @Getter private File overridesFile;
 
     private enum ScanModes {CrawlOnly, CrawlAndAudit, AuditOnly}
