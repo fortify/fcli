@@ -1,6 +1,6 @@
 package com.fortify.cli.common.picocli.component.output;
 
-import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -31,7 +31,7 @@ import picocli.CommandLine.Spec;
 public class OutputOptionsHandler {
 	@Spec(Spec.Target.MIXEE) CommandSpec mixee;
 	
-	@ArgGroup(heading = "Output options:%n")
+	@ArgGroup(heading = "Output options:%n", exclusive = false)
 	private OutputOptionsArgGroup outputOptionsArgGroup;
 
 	private static final class OutputOptionsArgGroup {
@@ -63,7 +63,7 @@ public class OutputOptionsHandler {
 		@CommandLine.Option(names = {"-o", "--output"},
 	            description = "Output file", 
 	            order=7)
-	    private File outputFile; // TODO Add actual implementation to write to file
+	    private String outputFile; 
 	}
 	
 	public OutputOptionsWriter getWriter() {
@@ -181,7 +181,13 @@ public class OutputOptionsHandler {
 		}
 		
 		private final PrintWriter createPrintWriter(OutputOptionsWriterConfig config) {
-			return new PrintWriter(System.out);
+			try {
+				return optionsArgGroup.outputFile == null || "-".equals(optionsArgGroup.outputFile)
+						? new PrintWriter(System.out)
+						: new PrintWriter(optionsArgGroup.outputFile);
+			} catch ( FileNotFoundException e) {
+				throw new IllegalArgumentException("Output file "+optionsArgGroup.outputFile.toString()+" cannot be accessed");
+			}
 		}
 
 		@Override
