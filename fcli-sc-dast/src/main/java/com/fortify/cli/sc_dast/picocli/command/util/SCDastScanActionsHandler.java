@@ -2,7 +2,9 @@ package com.fortify.cli.sc_dast.picocli.command.util;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -10,22 +12,21 @@ import com.fortify.cli.common.json.JacksonJsonNodeHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 
+// TODO Review this class, refactor as needed, move to appropriate package, ...
 @ReflectiveAccess
 public class SCDastScanActionsHandler {
-    @Getter @NonNull private final UnirestInstance unirest;
-    @Getter private final SCDastScanStatusActionsHandler scanStatusActionsHandler;
+    @NonNull private final UnirestInstance unirest;
 
     public SCDastScanActionsHandler(UnirestInstance unirest) {
         this.unirest = unirest;
-        this.scanStatusActionsHandler = new SCDastScanStatusActionsHandler(unirest, this);
     }
 
     public JsonNode getScanSummary(int scanId) {
         String urlPath = "/api/v2/scans/"+ scanId + "/scan-summary";
-        return getUnirest().get(urlPath)
+        return unirest.get(urlPath)
                 .accept("application/json")
                 .header("Content-Type", "application/json")
                 .asObject(ObjectNode.class)
@@ -42,21 +43,10 @@ public class SCDastScanActionsHandler {
         return response;
     }
 
-    public JsonNode startScan(String body){
-        String urlPath = "/api/v2/scans/start-scan-cicd";
-
-        return getUnirest().post(urlPath)
-                .accept("application/json")
-                .header("Content-Type", "application/json")
-                .body(body)
-                .asObject(ObjectNode.class)
-                .getBody();
-    }
-
     private JsonNode runScanAction(int scanId, String action){
         String urlPath = "/api/v2/scans/"+ scanId + "/scan-action";
 
-        return getUnirest().post(urlPath)
+        return unirest.post(urlPath)
                 .header("Content-Type", "application/json")
                 .body("{\"scanActionType\": \"" + action + "\"}")
                 .asObject(ObjectNode.class)
@@ -83,11 +73,93 @@ public class SCDastScanActionsHandler {
         return runScanAction(scanId, "RetryImportScanResults ");
     }
 
-    public void waitPaused(int scanId, int waitInterval) { scanStatusActionsHandler.waitPaused(scanId, waitInterval); }
+    public JsonNode getScanResults(int scanId) {
+        String[] fields = new String[]{"lowCount", "mediumCount", "highCount", "criticalCount"};
+        return getFilteredScanSummary(scanId, fields);
+    }
+    
+    public JsonNode getScanStatus(int scanId) {
+        JsonNode response = getFilteredScanSummary(scanId, new String[]{"scanStatusType"});
 
-    public void waitResumed(int scanId, int waitInterval) { scanStatusActionsHandler.waitResumed(scanId, waitInterval); }
+        int scanStatusInt = Integer.parseInt(response.get("scanStatusType").toString());
+        ((ObjectNode) response).put(
+                "scanStatusTypeString",
+                ScanStatusTypes.getStatusString(scanStatusInt).replace("\"",""));
 
-    public void waitCompleted(int scanId, int waitInterval) { scanStatusActionsHandler.waitCompleted(scanId, waitInterval); }
+        return response;
+    }
 
+    @SneakyThrows
+    private void waitWhileScanStatus(int scanId, List<String> waitingStatus, int waitInterval) {
+        String scanStatus =  getScanStatus(scanId).get("scanStatusTypeString")
+                .toString()
+                .replace("\"","");
+        int i = 0;
+
+        while (waitingStatus.contains(scanStatus)) {
+            System.out.println(i + ") Scan status: "+scanStatus);
+            TimeUnit.SECONDS.sleep(waitInterval);
+            scanStatus =  getScanStatus(scanId).get("scanStatusTypeString")
+                    .toString()
+                    .replace("\"","");
+            i += 1;
+        }
+
+        System.out.println(i + ") Scan status: "+scanStatus);
+    }
+
+    @SneakyThrows
+    private void waitUntilScanStatus(int scanId, List<String> waitingStatus, int waitInterval) {
+        String scanStatus =  getScanStatus(scanId).get("scanStatusTypeString")
+                .toString()
+                .replace("\"","");
+        int i = 0;
+
+        while (! waitingStatus.contains(scanStatus)) {
+            System.out.println(i + ") Scan status: "+scanStatus);
+            TimeUnit.SECONDS.sleep(waitInterval);
+            scanStatus =  getScanStatus(scanId).get("scanStatusTypeString")
+                    .toString()
+                    .replace("\"","");
+            i += 1;
+        }
+
+        System.out.println(i + ") Scan status: "+scanStatus);
+    }
+
+    public void waitCompletion(int scanId, int waitInterval)
+    {
+        List<String> waitingStatus = Arrays.asList("Pending", "Queued", "Running");
+
+        waitWhileScanStatus(scanId, waitingStatus, waitInterval);
+    }
+
+    public void waitCompletionWithDetails(int scanId, int waitInterval)
+    {
+        List<String> waitingStatus = Arrays.asList("Pending", "Queued", "Running");
+
+        waitWhileScanStatus(scanId, waitingStatus, waitInterval);
+    }
+
+    public void waitPaused(int scanId, int waitInterval)
+    {
+        List<String> waitingStatus = Arrays.asList("Paused","Unknown");
+
+        waitUntilScanStatus(scanId, waitingStatus, waitInterval);
+    }
+
+    public void waitResumed(int scanId, int waitInterval)
+    {
+        List<String> waitingStatus = Arrays.asList("Running","FailedToResume","FailedToStart","LicenseUnavailable","Unknown");
+
+        waitUntilScanStatus(scanId, waitingStatus, waitInterval);
+    }
+
+    public void waitCompleted(int scanId, int waitInterval)
+    {
+        List<String> waitingStatus = Arrays.asList("Complete","ForcedComplete","LicenseUnavailable","Unknown");
+
+        waitUntilScanStatus(scanId, waitingStatus, waitInterval);
+    }
 
 }

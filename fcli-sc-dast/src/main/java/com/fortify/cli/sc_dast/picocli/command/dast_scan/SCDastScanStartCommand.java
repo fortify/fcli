@@ -35,7 +35,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
-import com.fortify.cli.sc_dast.picocli.command.util.SCDastScanActionsHandler;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -112,10 +111,11 @@ public final class SCDastScanStartCommand extends AbstractSCDastUnirestRunnerCom
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-        SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-        JsonNode response = actionsHandler.startScan(scanOptions.getJsonBody());
-        outputMixin.write(response);
-
+    	outputMixin.write(unirest.post("/api/v2/scans/start-scan-cicd")
+                .accept("application/json")
+                .header("Content-Type", "application/json")
+                .body(scanOptions.getJsonBody())
+                .asObject(ObjectNode.class));
         return null;
     }
     

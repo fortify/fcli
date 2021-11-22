@@ -26,6 +26,7 @@ package com.fortify.cli.sc_dast.picocli.command.transfer.download.scan;
 
 import java.io.File;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
@@ -35,7 +36,6 @@ import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.picocli.command.crud.get.SCDastGetCommand;
-import com.fortify.cli.sc_dast.picocli.command.util.SCDastTransferScanResultsActionsHandler;
 import com.fortify.cli.sc_dast.picocli.constants.scan.SCDastScanResultsConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -66,15 +66,23 @@ public class SCDastDownloadScanResultsCommand extends SCDastScanResultsConstants
 		    @Getter private int scanId;
 
 		    @Option(names = {"-f", "--file", "--output-file"}, description = "The output file to save the scan results in.", required = true)
-		    @Getter private File file;
+		    @Getter private String file;
 		}
 		
 		@SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest){
-            SCDastTransferScanResultsActionsHandler actionsHandler = new SCDastTransferScanResultsActionsHandler(unirest);
-            ObjectNode result = actionsHandler.downloadScanResults(scanResultsOptions.getScanId(), scanResultsOptions.getFile());
-            OutputMixin.write(result);
-            return null;
+			File outputFile = unirest.get("/api/v2/scans/{scanId}/download-results")
+		    		.routeParam("scanId", String.valueOf(scanResultsOptions.getScanId()))
+		            .accept("application/json")
+		            .header("Content-Type", "application/json")
+		            .asFile(scanResultsOptions.getFile())
+		            .getBody(); // TODO Do we need to call getBody()? Do we need to do anything with the return value? 
+
+			    ObjectNode output = new ObjectMapper().createObjectNode();
+			    output.put("path", outputFile.getPath());
+
+	            OutputMixin.write(output);
+	            return null;
         }
 
 		@Override

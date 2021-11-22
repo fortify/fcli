@@ -32,7 +32,7 @@ import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.picocli.command.crud.get.SCDastGetCommand;
-import com.fortify.cli.sc_dast.picocli.command.util.SCDastScanStatusActionsHandler;
+import com.fortify.cli.sc_dast.picocli.command.util.SCDastScanActionsHandler;
 import com.fortify.cli.sc_dast.picocli.constants.scan.SCDastScanStatusConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -64,7 +64,7 @@ public class SCDastGetScanStatusCommand extends SCDastScanStatusConstants.Singul
 		
 		@SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
-            SCDastScanStatusActionsHandler actionsHandler = new SCDastScanStatusActionsHandler(unirest);
+            SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
             outputMixin.write(actionsHandler.getScanStatus(scanStatusOptions.getScanId()));
             return null;
         }

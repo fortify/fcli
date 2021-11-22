@@ -26,6 +26,7 @@ package com.fortify.cli.sc_dast.picocli.command.transfer.download.scan;
 
 import java.io.File;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
@@ -35,7 +36,6 @@ import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.picocli.command.crud.get.SCDastGetCommand;
-import com.fortify.cli.sc_dast.picocli.command.util.SCDastTransferScanLogsActionsHandler;
 import com.fortify.cli.sc_dast.picocli.constants.scan.SCDastScanLogsConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -65,14 +65,22 @@ public class SCDastDownloadScanLogsCommand extends SCDastScanLogsConstants.Plura
 		    @Getter private int scanId;
 
 		    @Option(names = {"-f", "--file", "--output-file"}, description = "The output file to save the scan logs in.", required = true)
-		    @Getter private File file;
+		    @Getter private String file;
 		}
 		
 		@SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest){
-            SCDastTransferScanLogsActionsHandler actionsHandler = new SCDastTransferScanLogsActionsHandler(unirest);
-            ObjectNode result = actionsHandler.downloadScanLogs(scanLogsOptions.getScanId(), scanLogsOptions.getFile());
-            OutputMixin.write(result);
+            File outputFile = unirest.get("/api/v2/scans/{scanId}/download-logs")
+	    		.routeParam("scanId", String.valueOf(scanLogsOptions.getScanId()))
+	            .accept("application/json")
+	            .header("Content-Type", "application/json")
+	            .asFile(scanLogsOptions.getFile())
+	            .getBody(); // TODO Do we need to call getBody()? Do we need to do anything with the return value? 
+
+		    ObjectNode output = new ObjectMapper().createObjectNode();
+		    output.put("path", outputFile.getPath());
+
+            OutputMixin.write(output);
             return null;
         }
 
