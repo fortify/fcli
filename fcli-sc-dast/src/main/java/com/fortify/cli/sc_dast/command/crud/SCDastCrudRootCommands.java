@@ -9,7 +9,7 @@ import com.fortify.cli.common.picocli.command.crud.RootCreateCommand;
 import com.fortify.cli.common.picocli.command.crud.RootDeleteCommand;
 import com.fortify.cli.common.picocli.command.crud.RootGetCommand;
 import com.fortify.cli.common.picocli.command.crud.RootUpdateCommand;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
+import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
@@ -20,7 +20,7 @@ public class SCDastCrudRootCommands {
 	@Command(name = ProductIdentifiers.SC_DAST, description = "Get entity data from ScanCentral DAST")
 	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static class SCDastGetCommand {
-		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+		public static final OutputConfig defaultOutputConfig() {
 			return RootGetCommand.defaultOutputConfig().inputTransformer(SCDastCrudRootCommands::getItems);
 		}
 	}
@@ -30,7 +30,7 @@ public class SCDastCrudRootCommands {
 	@Command(name = ProductIdentifiers.SC_DAST, description = "Create entities in ScanCentral DAST")
 	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static class SCDastCreateCommand {
-		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+		public static final OutputConfig defaultOutputConfig() {
 			return RootCreateCommand.defaultOutputConfig().inputTransformer(SCDastCrudRootCommands::getItems);
 		}
 	}
@@ -40,7 +40,7 @@ public class SCDastCrudRootCommands {
 	@Command(name = ProductIdentifiers.SC_DAST, description = "Update entities in ScanCentral DAST")
 	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static class SCDastUpdateCommand {
-		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+		public static final OutputConfig defaultOutputConfig() {
 			return RootUpdateCommand.defaultOutputConfig().inputTransformer(SCDastCrudRootCommands::getItems);
 		}
 	}
@@ -50,7 +50,7 @@ public class SCDastCrudRootCommands {
 	@Command(name = ProductIdentifiers.SC_DAST, description = "Delete entities from ScanCentral DAST")
 	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static class SCDastDeleteCommand {
-		public static final OutputOptionsWriterConfig defaultOutputConfig() {
+		public static final OutputConfig defaultOutputConfig() {
 			return RootDeleteCommand.defaultOutputConfig().inputTransformer(SCDastCrudRootCommands::getItems);
 		}
 	}

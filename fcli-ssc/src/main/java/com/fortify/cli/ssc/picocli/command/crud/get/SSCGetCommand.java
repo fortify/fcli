@@ -29,7 +29,7 @@ import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.crud.RootGetCommand;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
+import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
@@ -39,7 +39,7 @@ import picocli.CommandLine.Command;
 @Command(name = ProductIdentifiers.SSC, description = "Get entity data from SSC")
 @RequiresProduct(ProductOrGroup.SSC)
 public class SSCGetCommand {
-	public static final OutputOptionsWriterConfig defaultOutputConfig() {
+	public static final OutputConfig defaultOutputConfig() {
 		return RootGetCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
 	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,35 +22,42 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.api;
+package com.fortify.cli.ssc.picocli.mixin.version;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import io.micronaut.core.util.StringUtils;
-import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-public class APICommandOptionsHandler {
-	@Parameters(index = "0", arity = "1..1") String uri;
+public class SSCParentVersionMixins {
 	
-	@Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
-	@Getter private String httpMethod;
-	
-	@Option(names = {"--data", "-d"}, required = false)
-	@Getter private String data; // TODO Add ability to read data from file
-	
-	// TODO Add options for content-type, arbitrary headers, ...?
-	
-	public final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
-		if ( StringUtils.isEmpty(uri) ) {
-			throw new IllegalArgumentException("Uri must be specified");
+	// get/retrieve/delete/download version <entity> --from
+	public static class From {
+		@Option(names = {"--from"}, required = true, description = "Application version id or <application>/<version> name")
+		private String versionNameOrId;
+		
+		public String getApplicationVersionId(UnirestInstance unirestInstance) {
+			return versionNameOrId; // TODO Find by name if not numeric
 		}
-		var request = unirest.request(httpMethod, uri);
-		// TODO Add Content-Type & accept headers
-		return data==null ? request : request.body(data);
 	}
 	
+	// create/update version <entity> --for <version>
+	public static class For {
+		@Option(names = {"--for"}, required = true, description = "Application version id or <application>/<version> name")
+		private String versionNameOrId;
+			
+		public String getApplicationVersionId(UnirestInstance unirestInstance) {
+			return versionNameOrId; // TODO Find by name if not numeric
+		}
+	}
+	
+	// upload version <entity> --to <version>
+	public static class To {
+		@Option(names = {"--to"}, required = true, description = "Application version id or <application>/<version> name")
+		private String versionNameOrId;
+			
+		public String getApplicationVersionId(UnirestInstance unirestInstance) {
+			return versionNameOrId; // TODO Find by name if not numeric
+		}
+	}
 }

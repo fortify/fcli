@@ -22,8 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.component.output;
+package com.fortify.cli.common.picocli.mixin.output;
 
-public interface IOutputOptionsWriterConfigSupplier {
-	public OutputOptionsWriterConfig getOutputOptionsWriterConfig();
+public interface IOutputConfigSupplier {
+	public OutputConfig getOutputOptionsWriterConfig();
 }

@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.component.output;
+package com.fortify.cli.common.picocli.mixin.output;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -43,41 +43,41 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 @Accessors(fluent = true)
-public class OutputOptionsWriterConfig {
+public class OutputConfig {
 	@Getter @Setter private OutputFormat defaultFormat;
 	private final LinkedHashMap<Function<OutputFormat, Boolean>, String> defaultFields = new LinkedHashMap<>();
 	private final LinkedHashMap<Function<OutputFormat, Boolean>, UnaryOperator<JsonNode>> inputTransformers = new LinkedHashMap<>();
 	private final LinkedHashMap<Function<OutputFormat, Boolean>, UnaryOperator<JsonNode>> recordTransformers = new LinkedHashMap<>();
 	
-	public final OutputOptionsWriterConfig inputTransformer(Function<OutputFormat, Boolean> applyIf, UnaryOperator<JsonNode> transformer) {
+	public final OutputConfig inputTransformer(Function<OutputFormat, Boolean> applyIf, UnaryOperator<JsonNode> transformer) {
 		inputTransformers.put(applyIf, transformer);
 		return this;
 	}
 	
-	public final OutputOptionsWriterConfig inputTransformer(UnaryOperator<JsonNode> transformer) {
+	public final OutputConfig inputTransformer(UnaryOperator<JsonNode> transformer) {
 		return inputTransformer(fmt->true, transformer);
 	}
 	
-	public final OutputOptionsWriterConfig recordTransformer(Function<OutputFormat, Boolean> applyIf, UnaryOperator<JsonNode> transformer) {
+	public final OutputConfig recordTransformer(Function<OutputFormat, Boolean> applyIf, UnaryOperator<JsonNode> transformer) {
 		recordTransformers.put(applyIf, transformer);
 		return this;
 	}
 	
-	public final OutputOptionsWriterConfig recordTransformer(UnaryOperator<JsonNode> transformer) {
+	public final OutputConfig recordTransformer(UnaryOperator<JsonNode> transformer) {
 		return recordTransformer(fmt->true, transformer);
 	}
 	
-	public final OutputOptionsWriterConfig defaultFields(Function<OutputFormat, Boolean> applyIf, String fields) {
+	public final OutputConfig defaultFields(Function<OutputFormat, Boolean> applyIf, String fields) {
 		defaultFields.put(applyIf, fields);
 		return this;
 	}
 	
-	public final OutputOptionsWriterConfig defaultFields(String fields) {
+	public final OutputConfig defaultFields(String fields) {
 		defaultFields.put(fmt->true, fields);
 		return this;
 	}
 	
-	public final OutputOptionsWriterConfig defaultColumns(String outputColumns) {
+	public final OutputConfig defaultColumns(String outputColumns) {
 		return defaultFields(OutputFormat::isColumns, outputColumns);
 	}
 	

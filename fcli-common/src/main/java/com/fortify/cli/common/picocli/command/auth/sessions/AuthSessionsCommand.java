@@ -32,7 +32,7 @@ import com.fortify.cli.common.auth.session.summary.IAuthSessionSummaryProvider;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.auth.AuthCommandsOrder;
 import com.fortify.cli.common.picocli.command.auth.RootAuthCommand;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -47,11 +47,11 @@ import picocli.CommandLine.Mixin;
 public class AuthSessionsCommand implements Runnable {
 	@Inject private ObjectMapper objectMapper;
 	@Inject private Collection<IAuthSessionSummaryProvider> authSessionSummaryProviders;
-	@Mixin private OutputOptionsHandler outputOptionsHandler;
+	@Mixin private OutputMixin outputMixin;
 
 	@Override
 	public void run() {
-		try ( var writer = outputOptionsHandler.getWriter() ) {
+		try ( var writer = outputMixin.getWriter() ) {
 			authSessionSummaryProviders.stream()
 				.flatMap(p->p.getAuthSessionSummaries().stream())
 				.map(objectMapper::valueToTree)

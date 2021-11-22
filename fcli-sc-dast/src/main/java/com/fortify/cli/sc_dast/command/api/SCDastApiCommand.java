@@ -28,11 +28,11 @@ import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.api.APICommandOptionsHandler;
+import com.fortify.cli.common.picocli.command.api.APICommandMixin;
 import com.fortify.cli.common.picocli.command.api.RootApiCommand;
-import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
+import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.sc_dast.command.AbstractSCDastUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -44,18 +44,18 @@ import picocli.CommandLine.Mixin;
 @SubcommandOf(RootApiCommand.class)
 @Command(name = ProductIdentifiers.SC_DAST, description = "Invoke ScanCentral DAST REST API")
 @RequiresProduct(ProductOrGroup.SC_DAST)
-public final class SCDastApiCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
-	@Mixin private OutputOptionsHandler outputOptionsHandler;
-	@Mixin private APICommandOptionsHandler apiCommand;
+public final class SCDastApiCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
+	@Mixin private OutputMixin outputMixin;
+	@Mixin private APICommandMixin apiCommandMixin;
 	
 	@Override
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputOptionsHandler.write(apiCommand.prepareRequest(unirest));
+		outputMixin.write(apiCommandMixin.prepareRequest(unirest));
 		return null;
 	}
 	
 	@Override
-	public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+	public OutputConfig getOutputOptionsWriterConfig() {
 		return RootApiCommand.defaultOutputConfig();
 	}
 }

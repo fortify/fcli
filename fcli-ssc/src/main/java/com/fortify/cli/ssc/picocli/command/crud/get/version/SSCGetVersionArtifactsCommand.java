@@ -27,13 +27,13 @@ package com.fortify.cli.ssc.picocli.command.crud.get.version;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
+import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.command.crud.get.SSCGetCommand;
-import com.fortify.cli.ssc.picocli.component.version.SSCParentVersionHandler;
 import com.fortify.cli.ssc.picocli.constants.version.SSCVersionArtifactConstants;
+import com.fortify.cli.ssc.picocli.mixin.version.SSCParentVersionMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -46,13 +46,13 @@ public class SSCGetVersionArtifactsCommand extends SSCVersionArtifactConstants.P
 	@SubcommandOf(SSCGetVersionCommand.Impl.class)
 	@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SSC)
-	public static final class Impl extends AbstractSSCUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
-		@CommandLine.Mixin private SSCParentVersionHandler.From parentVersionHandler;
-		@CommandLine.Mixin private OutputOptionsHandler outputOptionsHandler;
+	public static final class Impl extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+		@CommandLine.Mixin private SSCParentVersionMixins.From parentVersionHandler;
+		@CommandLine.Mixin private OutputMixin outputMixin;
 		
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
-			outputOptionsHandler.write(unirest.get("/api/v1/projectVersions/{id}/artifacts?embed=scans")
+			outputMixin.write(unirest.get("/api/v1/projectVersions/{id}/artifacts?embed=scans")
 					.routeParam("id", parentVersionHandler.getApplicationVersionId(unirest))
 					.accept("application/json")
 					.header("Content-Type", "application/json"));
@@ -61,7 +61,7 @@ public class SSCGetVersionArtifactsCommand extends SSCVersionArtifactConstants.P
 		}
 		
 		@Override
-		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+		public OutputConfig getOutputOptionsWriterConfig() {
 			return SSCGetCommand.defaultOutputConfig().defaultColumns(OUTPUT_COLUMNS);
 		}
 	}

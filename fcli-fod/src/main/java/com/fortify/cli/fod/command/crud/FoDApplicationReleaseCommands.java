@@ -27,9 +27,9 @@ package com.fortify.cli.fod.command.crud;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
+import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.fod.command.AbstractFoDUnirestRunnerCommand;
 import com.fortify.cli.fod.command.crud.FoDCrudRootCommands.FoDCreateCommand;
 import com.fortify.cli.fod.command.crud.FoDCrudRootCommands.FoDDeleteCommand;
@@ -57,13 +57,13 @@ public class FoDApplicationReleaseCommands {
 	@SubcommandOf(FoDGetCommand.class)
 	@Command(name = NAME, aliases = {ALIAS},description = "Get "+DESC+" from FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
-	public static final class Get extends AbstractFoDUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
+	public static final class Get extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
 		@CommandLine.Mixin
-		@Getter private OutputOptionsHandler outputOptionsHandler;
+		@Getter private OutputMixin outputMixin;
 
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
-			outputOptionsHandler.write(unirest.get("/api/v1/projectVersions?limit=-1")
+			outputMixin.write(unirest.get("/api/v1/projectVersions?limit=-1")
 					.accept("application/json")
 					.header("Content-Type", "application/json"));
 
@@ -71,7 +71,7 @@ public class FoDApplicationReleaseCommands {
 		}
 		
 		@Override
-		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+		public OutputConfig getOutputOptionsWriterConfig() {
 			return FoDGetCommand.defaultOutputConfig().defaultColumns(_getDefaultOutputColumns());
 		}
 	}

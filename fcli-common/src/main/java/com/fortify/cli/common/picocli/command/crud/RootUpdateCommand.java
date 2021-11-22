@@ -27,7 +27,7 @@ package com.fortify.cli.common.picocli.command.crud;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.FCLIRootCommand;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
+import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -38,7 +38,7 @@ import picocli.CommandLine.Command;
 @Command(name = "update", description = "Update data in various Fortify systems")
 @Order(CRUDCommandsOrder.UPDATE)
 public class RootUpdateCommand {
-	public static final OutputOptionsWriterConfig defaultOutputConfig() {
-		return new OutputOptionsWriterConfig().defaultFormat(OutputFormat.tree); 
+	public static final OutputConfig defaultOutputConfig() {
+		return new OutputConfig().defaultFormat(OutputFormat.tree); 
 	}
 }

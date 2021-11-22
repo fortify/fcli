@@ -27,9 +27,9 @@ package com.fortify.cli.fod.command.crud;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
+import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.fod.command.AbstractFoDUnirestRunnerCommand;
 import com.fortify.cli.fod.command.crud.FoDCrudRootCommands.FoDCreateCommand;
 import com.fortify.cli.fod.command.crud.FoDCrudRootCommands.FoDDeleteCommand;
@@ -56,12 +56,12 @@ public class FoDApplicationCommands {
 	@SubcommandOf(FoDGetCommand.class)
 	@Command(name = NAME, description = "Get "+DESC+" from FoD", aliases = {ALIAS})
 	@RequiresProduct(ProductOrGroup.FOD)
-	public static final class Get extends AbstractFoDUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
-		@CommandLine.Mixin private OutputOptionsHandler outputOptionsHandler;
+	public static final class Get extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
+		@CommandLine.Mixin private OutputMixin outputMixin;
 
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
-			outputOptionsHandler.write(
+			outputMixin.write(
 					unirest.get("/api/v1/projects?limit=-1")
 						.accept("application/json")
 						.header("Content-Type", "application/json"));
@@ -70,7 +70,7 @@ public class FoDApplicationCommands {
 		}
 		
 		@Override
-		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+		public OutputConfig getOutputOptionsWriterConfig() {
 			return FoDGetCommand.defaultOutputConfig().defaultColumns(_getDefaultOutputColumns());
 		}
 	}

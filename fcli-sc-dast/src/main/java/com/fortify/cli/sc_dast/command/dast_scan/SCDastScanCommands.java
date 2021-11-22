@@ -2,7 +2,7 @@ package com.fortify.cli.sc_dast.command.dast_scan;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.sc_dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.command.crud.scan.actions.SCDastScanActionsHandler;
 import com.fortify.cli.sc_dast.command.dast_scan.options.SCDastScanCompleteOptions;
@@ -31,13 +31,13 @@ public class SCDastScanCommands {
         @ArgGroup(exclusive = false, heading = "Scan options:%n", order = 1)
         @Getter private SCDastScanStartOptions scanOptions;
 
-        @Mixin private OutputOptionsHandler outputOptionsHandler;
+        @Mixin private OutputMixin outputMixin;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
             SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
             JsonNode response = actionsHandler.startScan(scanOptions.getJsonBody());
-            outputOptionsHandler.write(response);
+            outputMixin.write(response);
 
             return null;
         }
@@ -51,14 +51,14 @@ public class SCDastScanCommands {
         @ArgGroup(exclusive = false, heading = "Pause scan options:%n", order = 1)
         @Getter private SCDastScanPauseOptions pauseScanOptions;
 
-        @Mixin private OutputOptionsHandler outputOptionsHandler;
+        @Mixin private OutputMixin outputMixin;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
             SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
             JsonNode response = actionsHandler.pauseScan(pauseScanOptions.getScanId());
 
-            if(response != null) outputOptionsHandler.write(response);
+            if(response != null) outputMixin.write(response);
 
             if(pauseScanOptions.isWaitPaused()){ actionsHandler.waitPaused(pauseScanOptions.getScanId(), pauseScanOptions.getWaitInterval()); }
 
@@ -74,14 +74,14 @@ public class SCDastScanCommands {
         @ArgGroup(exclusive = false, heading = "Resume scan options:%n", order = 1)
         @Getter private SCDastScanResumeOptions resumeScanOptions;
 
-        @Mixin private OutputOptionsHandler outputOptionsHandler;
+        @Mixin private OutputMixin outputMixin;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
             SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
             JsonNode response = actionsHandler.resumeScan(resumeScanOptions.getScanId());
 
-            if(response != null) outputOptionsHandler.write(response);
+            if(response != null) outputMixin.write(response);
 
             if(resumeScanOptions.isWaitResumed()){ actionsHandler.waitResumed(resumeScanOptions.getScanId(), resumeScanOptions.getWaitInterval()); }
 
@@ -97,14 +97,14 @@ public class SCDastScanCommands {
         @ArgGroup(exclusive = false, heading = "Complete scan options:%n", order = 1)
         @Getter private SCDastScanCompleteOptions completeScanOptions;
 
-        @Mixin private OutputOptionsHandler outputOptionsHandler;
+        @Mixin private OutputMixin outputMixin;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
             SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
             JsonNode response = actionsHandler.completeScan(completeScanOptions.getScanId());
 
-            if(response != null) outputOptionsHandler.write(response);
+            if(response != null) outputMixin.write(response);
 
             if(completeScanOptions.isWaitCompleted()){ actionsHandler.waitCompleted(completeScanOptions.getScanId(), completeScanOptions.getWaitInterval()); }
 
@@ -120,14 +120,14 @@ public class SCDastScanCommands {
         @ArgGroup(exclusive = false, heading = "Delete scan options:%n", order = 1)
         @Getter private SCDastScanDeleteOptions deleteScanOptions;
 
-        @Mixin private OutputOptionsHandler outputOptionsHandler;
+        @Mixin private OutputMixin outputMixin;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
             SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
             JsonNode response = actionsHandler.deleteScan(deleteScanOptions.getScanId());
 
-            if(response != null) outputOptionsHandler.write(response);
+            if(response != null) outputMixin.write(response);
 
             return null;
         }
@@ -141,14 +141,14 @@ public class SCDastScanCommands {
         @ArgGroup(exclusive = false, heading = "Publish scan options:%n", order = 1)
         @Getter private SCDastScanPublishOptions publishScanOptions;
 
-        @Mixin private OutputOptionsHandler outputOptionsHandler;
+        @Mixin private OutputMixin outputMixin;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
             SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
             JsonNode response = actionsHandler.publishScan(publishScanOptions.getScanId());
 
-            if(response != null) outputOptionsHandler.write(response);
+            if(response != null) outputMixin.write(response);
 
             return null;
         }

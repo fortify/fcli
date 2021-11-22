@@ -1,4 +1,4 @@
-package com.fortify.cli.common.picocli.component.output;
+package com.fortify.cli.common.picocli.mixin.output;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -28,7 +28,7 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-public class OutputOptionsHandler {
+public class OutputMixin {
 	@Spec(Spec.Target.MIXEE) CommandSpec mixee;
 	
 	@ArgGroup(heading = "Output options:%n", exclusive = false)
@@ -88,24 +88,24 @@ public class OutputOptionsHandler {
 		}
 	}
 	
-	private OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+	private OutputConfig getOutputOptionsWriterConfig() {
 		Object mixeeObject = mixee.userObject();
-		if ( mixeeObject instanceof IOutputOptionsWriterConfigSupplier ) {
-			return ((IOutputOptionsWriterConfigSupplier)mixeeObject).getOutputOptionsWriterConfig();
+		if ( mixeeObject instanceof IOutputConfigSupplier ) {
+			return ((IOutputConfigSupplier)mixeeObject).getOutputOptionsWriterConfig();
 		} else {
-			return new OutputOptionsWriterConfig();
+			return new OutputConfig();
 		}
 	}
 	
 	public final class OutputOptionsWriter implements AutoCloseable { // TODO Implement interface, make implementation private
-		private final OutputOptionsHandler optionsHandler = OutputOptionsHandler.this;
+		private final OutputMixin optionsHandler = OutputMixin.this;
 		private final OutputOptionsArgGroup optionsArgGroup = optionsHandler.outputOptionsArgGroup!=null ? optionsHandler.outputOptionsArgGroup : new OutputOptionsArgGroup();
-		private final OutputOptionsWriterConfig config;
+		private final OutputConfig config;
 		private final OutputFormat outputFormat;
 		private final PrintWriter printWriter;
 		private final IRecordWriter recordWriter;
 		
-		public OutputOptionsWriter(OutputOptionsWriterConfig config) {
+		public OutputOptionsWriter(OutputConfig config) {
 			this.config = config;
 			this.outputFormat = getOutputFormat();
 			this.printWriter = createPrintWriter(config);
@@ -180,7 +180,7 @@ public class OutputOptionsHandler {
 					.build();
 		}
 		
-		private final PrintWriter createPrintWriter(OutputOptionsWriterConfig config) {
+		private final PrintWriter createPrintWriter(OutputConfig config) {
 			try {
 				return optionsArgGroup.outputFile == null || "-".equals(optionsArgGroup.outputFile)
 						? new PrintWriter(System.out)

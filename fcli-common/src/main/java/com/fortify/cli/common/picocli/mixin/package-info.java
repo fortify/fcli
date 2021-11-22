@@ -5,5 +5,5 @@
  * particular sub-command or sub-command tree should go into the appropriate 
  * com.fortify.cli.common.picocli.command sub-package.
  */
-package com.fortify.cli.common.picocli.component;
+package com.fortify.cli.common.picocli.mixin;
 

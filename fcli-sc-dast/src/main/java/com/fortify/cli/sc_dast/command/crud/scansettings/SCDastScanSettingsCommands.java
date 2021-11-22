@@ -1,9 +1,9 @@
 package com.fortify.cli.sc_dast.command.crud.scansettings;
 
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
+import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.sc_dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.command.crud.SCDastCrudRootCommands;
 import com.fortify.cli.sc_dast.command.crud.SCDastCrudRootCommands.SCDastGetCommand;
@@ -33,7 +33,7 @@ public class SCDastScanSettingsCommands {
     @ReflectiveAccess
     @SubcommandOf(SCDastCrudRootCommands.SCDastGetCommand.class)
     @Command(name = NAME, description = "Get " + DESC + " from SC DAST")
-    public static final class Get extends AbstractSCDastUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
+    public static final class Get extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
         @ArgGroup(exclusive = false, heading = "Get a specific scan settings:%n", order = 1)
         @Getter private SCDastGetScanSettingsOptions scanSettingsOptions;
 
@@ -42,7 +42,7 @@ public class SCDastScanSettingsCommands {
 
 
         @Mixin
-        @Getter private OutputOptionsHandler outputOptionsHandler;
+        @Getter private OutputMixin outputMixin;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
@@ -68,7 +68,7 @@ public class SCDastScanSettingsCommands {
                 }
             }
 
-            outputOptionsHandler.write(unirest.get(urlPath + "?" + urlParams)
+            outputMixin.write(unirest.get(urlPath + "?" + urlParams)
                     .accept("application/json")
                     .header("Content-Type", "application/json"));
 
@@ -76,7 +76,7 @@ public class SCDastScanSettingsCommands {
         }
 
         @Override
-        public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+        public OutputConfig getOutputOptionsWriterConfig() {
             return SCDastGetCommand.defaultOutputConfig().defaultColumns(_getDefaultOutputColumns());
         }
     }

@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command;
 
-import com.fortify.cli.common.picocli.component.log.LogOptionsHandler;
+import com.fortify.cli.common.picocli.mixin.log.LoggingMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
@@ -35,7 +35,7 @@ import picocli.CommandLine.ScopeType;
 /**
  * This is the root command for the fcli application, defining common properties
  * like help options mixin and help footer that will be inherited by all
- * sub-commands. Other than that, it also includes the {@link LogOptionsHandler}
+ * sub-commands. Other than that, it also includes the {@link LoggingMixin}
  * to avoid picocli from complaining about not recognizing those options.
  * Actual logging setup will already have been completed before this command
  * is even loaded, so the logging options themselves are not being processed here. 
@@ -58,5 +58,5 @@ public class FCLIRootCommand {
 	// for setting up logging early in the process. In order to have our main command structure
 	// not complain about any logging options, we define them here even though we don't actually
 	// do anything with these options here.
-	@Mixin LogOptionsHandler logOptions;
+	@Mixin LoggingMixin loggingMixin;
 }

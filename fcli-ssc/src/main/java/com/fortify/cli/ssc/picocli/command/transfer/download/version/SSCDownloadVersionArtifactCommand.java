@@ -28,8 +28,8 @@ import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.picocli.component.version.SSCParentVersionHandler;
 import com.fortify.cli.ssc.picocli.constants.version.SSCVersionArtifactConstants;
+import com.fortify.cli.ssc.picocli.mixin.version.SSCParentVersionMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -43,7 +43,7 @@ public class SSCDownloadVersionArtifactCommand extends SSCVersionArtifactConstan
 	@Command(name = CMD, description = DESC_DOWNLOAD /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SSC)
 	public static final class Impl extends AbstractSSCUnirestRunnerCommand {
-		@CommandLine.Mixin private SSCParentVersionHandler.From parentVersionHandler;
+		@CommandLine.Mixin private SSCParentVersionMixins.From parentVersionHandler;
 		
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {

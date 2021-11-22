@@ -2,14 +2,15 @@ package com.fortify.cli.sc_dast.command.transfer.scanlogs;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.component.output.IOutputOptionsWriterConfigSupplier;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
-import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
+import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.sc_dast.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.command.crud.SCDastCrudRootCommands.SCDastGetCommand;
 import com.fortify.cli.sc_dast.command.transfer.SCDastTransferRootCommands;
 import com.fortify.cli.sc_dast.command.transfer.scanlogs.actions.SCDastTransferScanLogsActionsHandler;
 import com.fortify.cli.sc_dast.command.transfer.scanlogs.options.SCDastTransferScanLogsOptions;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -29,13 +30,13 @@ public class SCDastTransferScanLogsCommands {
     @ReflectiveAccess
     @SubcommandOf(SCDastTransferRootCommands.SCDastDownloadCommand.class)
     @Command(name = NAME, description = "Download " + DESC + " from SC DAST")
-    public static final class Download extends AbstractSCDastUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
+    public static final class Download extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
 
         @ArgGroup(exclusive = false, heading = "Download logs from a specific scan:%n", order = 1)
         @Getter private SCDastTransferScanLogsOptions scanLogsOptions;
 
         @Mixin
-        @Getter private OutputOptionsHandler outputOptionsHandler;
+        @Getter private OutputMixin OutputMixin;
 
         @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest){
@@ -43,13 +44,13 @@ public class SCDastTransferScanLogsCommands {
 
             ObjectNode result = actionsHandler.downloadScanLogs(scanLogsOptions.getScanId(), scanLogsOptions.getFile());
 
-            outputOptionsHandler.write(result);
+            OutputMixin.write(result);
 
             return null;
         }
 
         @Override
-		public OutputOptionsWriterConfig getOutputOptionsWriterConfig() {
+		public OutputConfig getOutputOptionsWriterConfig() {
 			return SCDastGetCommand.defaultOutputConfig().defaultColumns(_getDefaultOutputColumns());
 		}
     }

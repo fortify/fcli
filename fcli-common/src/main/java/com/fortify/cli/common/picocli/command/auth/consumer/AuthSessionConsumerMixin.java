@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,42 +22,27 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.component.version;
+package com.fortify.cli.common.picocli.command.auth.consumer;
+
+import com.fortify.cli.common.auth.session.IAuthSessionNameProvider;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-public class SSCParentVersionHandler {
+public class AuthSessionConsumerMixin implements IAuthSessionNameProvider {
+	@ArgGroup(heading = "Optional authentication session name:%n", order = 1000)
+    @Getter private AuthSessionConsumerNameOptions nameOptions;
 	
-	// get/retrieve/delete/download version <entity> --from
-	public static class From {
-		@Option(names = {"--from"}, required = true, description = "Application version id or <application>/<version> name")
-		private String versionNameOrId;
-		
-		public String getApplicationVersionId(UnirestInstance unirestInstance) {
-			return versionNameOrId; // TODO Find by name if not numeric
-		}
+	static class AuthSessionConsumerNameOptions {
+		@Option(names = {"--auth-session"}, required = false, defaultValue = "default")
+		@Getter private String sessionName;
 	}
 	
-	// create/update version <entity> --for <version>
-	public static class For {
-		@Option(names = {"--for"}, required = true, description = "Application version id or <application>/<version> name")
-		private String versionNameOrId;
-			
-		public String getApplicationVersionId(UnirestInstance unirestInstance) {
-			return versionNameOrId; // TODO Find by name if not numeric
-		}
-	}
-	
-	// upload version <entity> --to <version>
-	public static class To {
-		@Option(names = {"--to"}, required = true, description = "Application version id or <application>/<version> name")
-		private String versionNameOrId;
-			
-		public String getApplicationVersionId(UnirestInstance unirestInstance) {
-			return versionNameOrId; // TODO Find by name if not numeric
-		}
+	@Override
+	public String getAuthSessionName() {
+		return nameOptions==null ? "default" : nameOptions.getSessionName();
 	}
 }

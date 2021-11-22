@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.component.log;
+package com.fortify.cli.common.picocli.mixin.log;
 
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ import picocli.CommandLine.ScopeType;
  * @author Ruud Senden
  */
 @ReflectiveAccess
-public class LogOptionsHandler {
+public class LoggingMixin {
 	@Option(names = "--log-level", scope = ScopeType.INHERIT, description = "Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: ${COMPLETION-CANDIDATES}")
 	private LogLevel logLevel;
 

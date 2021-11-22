@@ -27,7 +27,7 @@ package com.fortify.cli.app;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import com.fortify.cli.common.picocli.component.log.LogOptionsHandler;
+import com.fortify.cli.common.picocli.mixin.log.LoggingMixin;
 import com.fortify.cli.common.picocli.util.DefaultValueProvider;
 
 import picocli.CommandLine;
@@ -37,10 +37,10 @@ import picocli.CommandLine.Mixin;
 /**
  * This class is responsible for setting up logging. It simply sets up a
  * small {@link CommandLine} instance with a single {@link SetupLoggingCommand}
- * that looks for logging parameters as defined in {@link LogOptionsHandler}
+ * that looks for logging parameters as defined in {@link LoggingMixin}
  * while ignoring everything else (including any sub-commands) on the command 
  * line; this essentially means that this command will always run. Upon execution,
- * the {@link SetupLoggingCommand} will simply invoke {@link LogOptionsHandler#configureLogging()}
+ * the {@link SetupLoggingCommand} will simply invoke {@link LoggingMixin#configureLogging()}
  * to actually configure the logging. All output from this small {@link CommandLine}
  * implementation will be suppressed by sending the output to a dummy {@link PrintWriter}. 
  * 
@@ -66,21 +66,21 @@ public class FortifyCLILogHelper {
 	
 	/**
 	 * {@link Command} implementation for setting up logging, based on the
-	 * options and functionality provided by {@link LogOptionsHandler}.
+	 * options and functionality provided by {@link LoggingMixin}.
 	 * 
 	 * @author Ruud Senden
 	 */
 	@Command()
 	public static final class SetupLoggingCommand implements Runnable {
-		@Mixin LogOptionsHandler logOptionsHandler;
+		@Mixin LoggingMixin loggingMixin;
 		
 		/**
-		 * Configure logging by calling the {@link LogOptionsHandler#configureLogging()}
+		 * Configure logging by calling the {@link LoggingMixin#configureLogging()}
 		 * method.
 		 */
 		@Override
 		public void run() {
-			logOptionsHandler.configureLogging();
+			loggingMixin.configureLogging();
 		}
 	}
 }
