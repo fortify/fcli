@@ -22,19 +22,42 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.component.repo;
+package com.fortify.cli.ssc.picocli.component.version;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-public class SSCScanRepoHandler {
-	// TODO Add inner classes for --from, --to, --for, ...
-	@Option(names = {"--from"}, required = true, description = "Get data from the given application version id or <application>/<version> name")
-	private String fromApplicationVersion;
+public class SSCParentVersionHandler {
 	
-	public String getApplicationVersionId(UnirestInstance unirestInstance) {
-		return fromApplicationVersion; // TODO Find by name if not numeric
+	// get/retrieve/delete/download version <entity> --from
+	public static class From {
+		@Option(names = {"--from"}, required = true, description = "Application version id or <application>/<version> name")
+		private String versionNameOrId;
+		
+		public String getApplicationVersionId(UnirestInstance unirestInstance) {
+			return versionNameOrId; // TODO Find by name if not numeric
+		}
+	}
+	
+	// create/update version <entity> --for <version>
+	public static class For {
+		@Option(names = {"--for"}, required = true, description = "Application version id or <application>/<version> name")
+		private String versionNameOrId;
+			
+		public String getApplicationVersionId(UnirestInstance unirestInstance) {
+			return versionNameOrId; // TODO Find by name if not numeric
+		}
+	}
+	
+	// upload version <entity> --to <version>
+	public static class To {
+		@Option(names = {"--to"}, required = true, description = "Application version id or <application>/<version> name")
+		private String versionNameOrId;
+			
+		public String getApplicationVersionId(UnirestInstance unirestInstance) {
+			return versionNameOrId; // TODO Find by name if not numeric
+		}
 	}
 }

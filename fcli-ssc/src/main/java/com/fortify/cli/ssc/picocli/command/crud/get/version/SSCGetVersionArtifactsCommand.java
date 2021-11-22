@@ -32,7 +32,7 @@ import com.fortify.cli.common.picocli.component.output.OutputOptionsHandler;
 import com.fortify.cli.common.picocli.component.output.OutputOptionsWriterConfig;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.command.crud.get.SSCGetCommand;
-import com.fortify.cli.ssc.picocli.component.repo.SSCScanRepoHandler;
+import com.fortify.cli.ssc.picocli.component.version.SSCParentVersionHandler;
 import com.fortify.cli.ssc.picocli.constants.version.SSCVersionArtifactConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -47,13 +47,13 @@ public class SSCGetVersionArtifactsCommand extends SSCVersionArtifactConstants.P
 	@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SSC)
 	public static final class Impl extends AbstractSSCUnirestRunnerCommand implements IOutputOptionsWriterConfigSupplier {
-		@CommandLine.Mixin private SSCScanRepoHandler fromApplicationVersionHandler;
+		@CommandLine.Mixin private SSCParentVersionHandler.From parentVersionHandler;
 		@CommandLine.Mixin private OutputOptionsHandler outputOptionsHandler;
 		
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
 			outputOptionsHandler.write(unirest.get("/api/v1/projectVersions/{id}/artifacts?embed=scans")
-					.routeParam("id", fromApplicationVersionHandler.getApplicationVersionId(unirest))
+					.routeParam("id", parentVersionHandler.getApplicationVersionId(unirest))
 					.accept("application/json")
 					.header("Content-Type", "application/json"));
 	
