@@ -60,7 +60,7 @@ public class SCDastGetScanSettingsCommand extends SCDastScanSettingsConstants.Pl
         @Mixin private OutputMixin outputMixin;
 
 		@ReflectiveAccess
-		public class SCDastGetScanSettingsOptions {
+		public static class SCDastGetScanSettingsOptions {
 		    @Option(names = {"-i", "--id", "--scan-settings-id"}, description = "The scan settings id")
 		    @Getter private String scanSettingsId;
 		}

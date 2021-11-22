@@ -52,7 +52,7 @@ public final class SCDastScanResumeCommand extends AbstractSCDastUnirestRunnerCo
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public class SCDastScanResumeOptions {
+    public static class SCDastScanResumeOptions {
         @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
         @Getter private int scanId;
 

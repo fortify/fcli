@@ -51,7 +51,7 @@ public final class SCDastScanPublishCommand extends AbstractSCDastUnirestRunnerC
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public class SCDastScanPublishOptions {
+    public static class SCDastScanPublishOptions {
         @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
         @Getter private int scanId;
     }

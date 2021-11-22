@@ -60,7 +60,7 @@ public class SCDastDownloadScanResultsCommand extends SCDastScanResultsConstants
         private OutputMixin OutputMixin;
         
 		@ReflectiveAccess
-		public class SCDastTransferScanResultsOptions {
+		public static class SCDastTransferScanResultsOptions {
 
 		    @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id", required = true)
 		    @Getter private int scanId;

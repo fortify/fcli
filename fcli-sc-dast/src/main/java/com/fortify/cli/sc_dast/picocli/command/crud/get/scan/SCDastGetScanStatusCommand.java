@@ -57,7 +57,7 @@ public class SCDastGetScanStatusCommand extends SCDastScanStatusConstants.Singul
         @Getter private OutputMixin outputMixin;
 		
 		@ReflectiveAccess
-		public class SCDastGetScanStatusOptions {
+		public static class SCDastGetScanStatusOptions {
 		    @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id")
 		    @Getter private int scanId;
 		}

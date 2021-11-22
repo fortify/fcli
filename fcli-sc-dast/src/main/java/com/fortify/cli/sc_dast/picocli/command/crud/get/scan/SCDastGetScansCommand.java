@@ -80,7 +80,7 @@ public class SCDastGetScansCommand extends SCDastScanConstants.Plural {
         }
         
         @ReflectiveAccess
-        public class SCDastGetScanOptions {
+        public static class SCDastGetScanOptions {
             @Option(names = {"-i", "--id", "--scan-id"}, description = "The scan id")
             @Getter private String scanId;
         }

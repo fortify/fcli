@@ -52,7 +52,7 @@ public final class SCDastScanPauseCommand extends AbstractSCDastUnirestRunnerCom
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public class SCDastScanPauseOptions {
+    public static class SCDastScanPauseOptions {
         @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
         @Getter private int scanId;
 
