@@ -39,6 +39,9 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -50,6 +53,8 @@ public class SCDastGetScanStatusCommand extends SCDastScanStatusConstants.Singul
 	@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static final class Impl extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
+		@Spec CommandSpec spec;
+
 		@ArgGroup(exclusive = false, heading = "Get a specific scan:%n", order = 1)
         @Getter private SCDastGetScanStatusOptions scanStatusOptions;
 
@@ -58,12 +63,16 @@ public class SCDastGetScanStatusCommand extends SCDastScanStatusConstants.Singul
 		
 		@ReflectiveAccess
 		public static class SCDastGetScanStatusOptions {
-		    @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id")
+		    @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id", required = true)
 		    @Getter private int scanId;
 		}
 		
 		@SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
+			if(scanStatusOptions == null){
+				throw new CommandLine.ParameterException(spec.commandLine(),
+						"Error: No parameter found. Provide the required scan id.");
+			}
             SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
             outputMixin.write(actionsHandler.getScanStatus(scanStatusOptions.getScanId()));
             return null;

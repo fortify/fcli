@@ -36,6 +36,8 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -46,6 +48,8 @@ import picocli.CommandLine.Option;
 @Command(name = "pause", description = "Pauses a DAST scan on ScanCentral DAST")
 @Order(SCDastScanCommandsOrder.PAUSE)
 public final class SCDastScanPauseCommand extends AbstractSCDastUnirestRunnerCommand {
+    @Spec CommandSpec spec;
+
     @ArgGroup(exclusive = false, heading = "Pause scan options:%n", order = 1)
     @Getter private SCDastScanPauseOptions pauseScanOptions;
 
@@ -67,6 +71,10 @@ public final class SCDastScanPauseCommand extends AbstractSCDastUnirestRunnerCom
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
+        if(pauseScanOptions == null){
+            throw new CommandLine.ParameterException(spec.commandLine(),
+                    "Error: No parameter found. Provide the required scan id.");
+        }
         SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
         JsonNode response = actionsHandler.pauseScan(pauseScanOptions.getScanId());
 

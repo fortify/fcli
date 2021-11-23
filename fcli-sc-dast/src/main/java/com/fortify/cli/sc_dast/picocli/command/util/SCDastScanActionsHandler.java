@@ -5,13 +5,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JacksonJsonNodeHelper;
 
+import com.fortify.cli.common.rest.unirest.exception.UnexpectedHttpResponseException;
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.HttpResponse;
+import kong.unirest.RequestBodyEntity;
 import kong.unirest.UnirestInstance;
+import kong.unirest.UnirestParsingException;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
@@ -43,14 +50,32 @@ public class SCDastScanActionsHandler {
         return response;
     }
 
-    private JsonNode runScanAction(int scanId, String action){
+    private ObjectNode runScanAction(int scanId, String action){
         String urlPath = "/api/v2/scans/"+ scanId + "/scan-action";
 
-        return unirest.post(urlPath)
-                .header("Content-Type", "application/json")
-                .body("{\"scanActionType\": \"" + action + "\"}")
-                .asObject(ObjectNode.class)
-                .getBody();
+        ObjectNode output = new ObjectMapper().createObjectNode();
+        HttpResponse<String> response;
+        try {
+            response = unirest.post(urlPath)
+                    .header("Content-Type", "application/json")
+                    .body("{\"scanActionType\": \"" + action + "\"}")
+                    .asString();
+            output.put("statusCode", response.getStatus());
+            output.put("statusText", response.getStatusText());
+            output.put("message", response.getBody());
+        } catch (UnexpectedHttpResponseException e) {
+            Pattern pattern = Pattern.compile("(?<=scan-action: )(?<code>\\d{3})\\W(?<text>.*)");
+            Matcher matcher = pattern.matcher(e.getMessage());
+            if(matcher.find()){
+                output.put("statusCode", matcher.group("code"));
+                output.put("statusText", matcher.group("text"));
+            } else {
+                output.put("statusText", "Error");
+            }
+            output.put("message",e.getLocalizedMessage());
+        }
+
+        return output;
     }
 
     public JsonNode pauseScan(int scanId) {
