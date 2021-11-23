@@ -41,6 +41,9 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -51,6 +54,8 @@ import picocli.CommandLine.Option;
 @Command(name = "start", description = "Starts DAST scan on ScanCentral DAST")
 @Order(SCDastScanCommandsOrder.START)
 public final class SCDastScanStartCommand extends AbstractSCDastUnirestRunnerCommand {
+    @Spec CommandSpec spec;
+
     @ArgGroup(exclusive = false, heading = "Scan options:%n", order = 1)
     @Getter private SCDastScanStartOptions scanOptions;
 
@@ -111,7 +116,11 @@ public final class SCDastScanStartCommand extends AbstractSCDastUnirestRunnerCom
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-    	outputMixin.write(unirest.post("/api/v2/scans/start-scan-cicd")
+    	if(scanOptions == null){
+            throw new CommandLine.ParameterException(spec.commandLine(),
+                    "Error: No parameter found. Provide the required scan-settings identifier.");
+        }
+        outputMixin.write(unirest.post("/api/v2/scans/start-scan-cicd")
                 .accept("application/json")
                 .header("Content-Type", "application/json")
                 .body(scanOptions.getJsonBody())
