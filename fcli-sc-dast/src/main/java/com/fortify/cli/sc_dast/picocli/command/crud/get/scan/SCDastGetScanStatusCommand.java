@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.picocli.command.crud.get.scan;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
@@ -74,7 +75,14 @@ public class SCDastGetScanStatusCommand extends SCDastScanStatusConstants.Singul
 						"Error: No parameter found. Provide the required scan id.");
 			}
             SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-            outputMixin.write(actionsHandler.getScanStatus(scanStatusOptions.getScanId()));
+
+			JsonNode response = actionsHandler.getScanStatus(scanStatusOptions.getScanId());
+
+			if( response.has("statusCode") ) {
+				outputMixin.overrideOutputFields("statusCode#statusText#message");
+			}
+
+            outputMixin.write(response);
             return null;
         }
 		
