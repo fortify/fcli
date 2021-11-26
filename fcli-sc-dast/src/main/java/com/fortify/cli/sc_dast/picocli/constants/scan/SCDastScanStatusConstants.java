@@ -31,7 +31,8 @@ public class SCDastScanStatusConstants extends _SCDastConstants {
 		public static final String CMD_SINGULAR    = "status";
 		public static final String ALIAS_SINGULAR  = null;
 		public static final String NAME_SINGULAR   = "scan status";
-		public static final String OUTPUT_COLUMNS  = null;
+		public static final String OUTPUT_COLUMNS  = "scanStatusType:Scan status type" +
+				"#scanStatusTypeString:Scan status";
 	}
 	
 	// Boilerplate code

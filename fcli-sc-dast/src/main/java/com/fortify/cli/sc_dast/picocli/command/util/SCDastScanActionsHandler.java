@@ -33,18 +33,42 @@ public class SCDastScanActionsHandler {
 
     public JsonNode getScanSummary(int scanId) {
         String urlPath = "/api/v2/scans/"+ scanId + "/scan-summary";
-        return unirest.get(urlPath)
-                .accept("application/json")
-                .header("Content-Type", "application/json")
-                .asObject(ObjectNode.class)
-                .getBody()
-                .get("item");
+
+        JsonNode response;
+        try {
+            response = unirest.get(urlPath)
+                    .accept("application/json")
+                    .header("Content-Type", "application/json")
+                    .asObject(ObjectNode.class)
+                    .getBody()
+                    .get("item");
+        } catch (UnexpectedHttpResponseException e) {
+            ObjectNode output = new ObjectMapper().createObjectNode();
+
+            Pattern pattern = Pattern.compile("(?<=scan-summary: )(?<code>\\d{3})\\W(?<text>.*)");
+            Matcher matcher = pattern.matcher(e.getMessage());
+            if(matcher.find()){
+                output.put("statusCode", matcher.group("code"));
+                output.put("statusText", matcher.group("text"));
+            } else {
+                output.put("statusText", "Error");
+            }
+            output.put("message",e.getLocalizedMessage());
+
+            response = output;
+        }
+
+        return response;
+
     }
 
     public JsonNode getFilteredScanSummary(int scanId, String[] fields) {
         JsonNode response = getScanSummary(scanId);
 
         Set<String> outputFields = new HashSet<>(Arrays.asList(fields));
+        outputFields.add("statusCode");
+        outputFields.add("statusText");
+        outputFields.add("message");
         JacksonJsonNodeHelper.filterJsonNode(response, outputFields);
 
         return response;
@@ -106,10 +130,12 @@ public class SCDastScanActionsHandler {
     public JsonNode getScanStatus(int scanId) {
         JsonNode response = getFilteredScanSummary(scanId, new String[]{"scanStatusType"});
 
-        int scanStatusInt = Integer.parseInt(response.get("scanStatusType").toString());
-        ((ObjectNode) response).put(
-                "scanStatusTypeString",
-                ScanStatusTypes.getStatusString(scanStatusInt).replace("\"",""));
+        if (response.get("scanStatusType") != null) {
+            int scanStatusInt = Integer.parseInt(response.get("scanStatusType").toString());
+            ((ObjectNode) response).put(
+                    "scanStatusTypeString",
+                    ScanStatusTypes.getStatusString(scanStatusInt).replace("\"",""));
+        }
 
         return response;
     }

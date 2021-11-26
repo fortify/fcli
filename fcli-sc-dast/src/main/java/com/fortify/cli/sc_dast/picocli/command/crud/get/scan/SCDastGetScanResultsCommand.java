@@ -41,6 +41,8 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -52,6 +54,7 @@ public class SCDastGetScanResultsCommand extends SCDastScanResultsConstants.Plur
 	@Command(name = CMD, description = DESC_GET /* , aliases = {ALIAS} */)
 	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static final class Impl extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
+		@Spec CommandSpec spec;
 		@ArgGroup(exclusive = false, heading = "Get results from a specific scan:%n", order = 1)
 		private SCDastScanResultsOptions scanResultsOptions;
 
@@ -75,8 +78,11 @@ public class SCDastGetScanResultsCommand extends SCDastScanResultsConstants.Plur
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
 			SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-
-			if (scanResultsOptions.isWaitCompletion()) {
+			if (scanResultsOptions == null) {
+				throw new CommandLine.ParameterException(spec.commandLine(),
+						"Error: No parameter found. Provide the required scan id.");
+			}
+			if ( scanResultsOptions.isWaitCompletion()) {
 				if (scanResultsOptions.isDetailed()) {
 					actionsHandler.waitCompletionWithDetails(scanResultsOptions.getScanId(),
 							scanResultsOptions.getWaitInterval());
@@ -86,6 +92,10 @@ public class SCDastGetScanResultsCommand extends SCDastScanResultsConstants.Plur
 			}
 
 			JsonNode response = actionsHandler.getScanResults(scanResultsOptions.getScanId());
+
+			if( response.has("statusCode") ) {
+				outputMixin.overrideOutputFields("statusCode#statusText#message");
+			}
 
 			outputMixin.write(response);
 

@@ -32,9 +32,7 @@ public class SCDastScanSettingsConstants extends _SCDastConstants {
 		public static final String ALIAS_PLURAL    = null;
 		public static final String NAME_PLURAL     = "scan settings";
 		public static final String OUTPUT_COLUMNS  =  "id#name#" +
-                "cicdToken:Settings Id#" +
-                "applicationName:Application#" +
-                "applicationVersionName:Version";
+                "cicdToken:Settings Id#" ;
 	}
 	
 	// Boilerplate code

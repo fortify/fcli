@@ -21,6 +21,7 @@ import io.micronaut.core.util.StringUtils;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
@@ -43,6 +44,7 @@ public class OutputMixin {
 	    @CommandLine.Option(names = {"--fields"},
 	            description = "Define the fields to be included in the output, together with optional header names",
 	            order=2)
+		@Setter
 	    private String fields;
 	    
 	    @CommandLine.Option(names = {"--flatten"},
@@ -80,6 +82,13 @@ public class OutputMixin {
 	
 	public void write(HttpResponse<JsonNode> httpResponse) {
 		write(writer->writer::write, httpResponse);
+	}
+
+	public void overrideOutputFields(String fields) {
+		if ( outputOptionsArgGroup == null){
+			outputOptionsArgGroup = new OutputOptionsArgGroup();
+		}
+		outputOptionsArgGroup.setFields(fields);
 	}
 	
 	private <T> void write(Function<OutputOptionsWriter, Consumer<T>> consumer, T input) {

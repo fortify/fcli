@@ -24,17 +24,21 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.picocli.command.crud.get.scan;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.rest.unirest.exception.UnexpectedHttpResponseException;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.picocli.command.crud.get.SCDastGetCommand;
 import com.fortify.cli.sc_dast.picocli.constants.scan.SCDastScanSettingsConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.JsonNode;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -42,6 +46,9 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SCDastGetScanSettingsCommand extends SCDastScanSettingsConstants.Plural {
 	@ReflectiveAccess
@@ -83,32 +90,53 @@ public class SCDastGetScanSettingsCommand extends SCDastScanSettingsConstants.Pl
 		
 		@SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
-            String urlPath = "/api/v2/application-version-scan-settings/scan-settings-summary-list";
+            String urlPath = "/api/v2/application-version-scan-settings/scan-settings-summary-list?" ;
             String urlParams = "";
 
             if (scanSettingsOptions != null){
-                urlPath = "/api/v2/application-version-scan-settings/" + scanSettingsOptions.getScanSettingsId();
+                urlPath = "/api/v2/application-version-scan-settings/" + scanSettingsOptions.getScanSettingsId() + "?";
             } else {
                 if(scanSettingsListOptions != null){
                     if (scanSettingsListOptions.getSearchText() != null){
-                        urlParams += String.format("searchText=%s&",scanSettingsListOptions.getSearchText());
+						urlPath += String.format("searchText=%s&",scanSettingsListOptions.getSearchText());
                     }
                     if(scanSettingsListOptions.getStartDate() != null){
-                        urlParams += String.format("modifiedStartDate=%s&",scanSettingsListOptions.getStartDate());
+						urlPath += String.format("modifiedStartDate=%s&",scanSettingsListOptions.getStartDate());
                     }
                     if(scanSettingsListOptions.getEndDate() != null){
-                        urlParams += String.format("modifiedEndDate=%s&",scanSettingsListOptions.getEndDate());
+						urlPath += String.format("modifiedEndDate=%s&",scanSettingsListOptions.getEndDate());
                     }
                     if(scanSettingsListOptions.getScanType() != null){
-                        urlParams += String.format("scanType=%s&",scanSettingsListOptions.getScanType());
+						urlPath += String.format("scanType=%s&",scanSettingsListOptions.getScanType());
                     }
                 }
             }
 
-            outputMixin.write(unirest.get(urlPath + "?" + urlParams)
-                    .accept("application/json")
-                    .header("Content-Type", "application/json"));
+			try {
+				outputMixin.write(unirest.get(urlPath)
+						.accept("application/json")
+						.header("Content-Type", "application/json"));
+			} catch (UnexpectedHttpResponseException e) {
+				ObjectNode output = new ObjectMapper().createObjectNode();
+				String escapedPath = urlPath
+						.replace("/","\\/")
+						.replace("?","\\?");
+				Pattern pattern = Pattern.compile("(?<="+escapedPath+": )(?<code>\\d{3})\\W(?<text>.*)");
+				Matcher matcher = pattern.matcher(e.getMessage());
+				String fields;
+				if(matcher.find()){
+					output.put("statusCode", matcher.group("code"));
+					output.put("statusText", matcher.group("text"));
+					fields = "statusCode#statusText#message";
+				} else {
+					output.put("statusText", "Error");
+					fields = "statusText#message";
+				}
+				output.put("message",e.getLocalizedMessage());
+				outputMixin.overrideOutputFields(fields);
 
+				outputMixin.write(output);
+			}
             return null;
         }
 		
