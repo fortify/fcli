@@ -31,10 +31,10 @@ public class SCDastScanResultsConstants extends _SCDastConstants {
 		public static final String CMD_PLURAL      = "results";
 		public static final String ALIAS_PLURAL    = null;
 		public static final String NAME_PLURAL     = "scan results";
-		public static final String OUTPUT_COLUMNS  =  "lowCount:Low#" +
-                "mediumCount:Medium#" +
+		public static final String OUTPUT_COLUMNS  =  "criticalCount:Critical#" +
                 "highCount:High#" +
-                "criticalCount:Critical";;
+                "mediumCount:Medium#" +
+                "lowCount:Low";;
 	}
 	
 	// Boilerplate code
