@@ -49,19 +49,15 @@ allprojects {
 		annotationProcessor "org.projectlombok:lombok:1.16.20"
 
 		// Picocli dependency and annotation processor
-		annotationProcessor("info.picocli:picocli-codegen:4.6.2")
-		//implementation("info.picocli:picocli:4.6.2") // TODO Re-enable once picocli 4.6.3 with PR 1467 is released
+		annotationProcessor("info.picocli:picocli-codegen:4.6.3")
+		implementation("info.picocli:picocli:4.6.3")
 
 		annotationProcessor("io.micronaut:micronaut-inject-java")
 		annotationProcessor("io.micronaut:micronaut-graal")
 
 		// Micronaut dependencies
 		implementation("io.micronaut:micronaut-runtime")
-		implementation("io.micronaut.picocli:micronaut-picocli") {
-			// TODO For now we have our own copy of picocli in fcli-common to fix autocomplete issues;
-			//      our own copy should be removed once picocli 4.6.3 with PR 1467 is released 
-			exclude group: 'info.picocli', module: 'picocli'
-		}
+		implementation("io.micronaut.picocli:micronaut-picocli")
 		implementation("javax.annotation:javax.annotation-api")
 
 		// Logback dependency to allow us to configure logging programmatically
