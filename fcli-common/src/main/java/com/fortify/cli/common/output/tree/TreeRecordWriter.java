@@ -25,6 +25,7 @@
 package com.fortify.cli.common.output.tree;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,7 +34,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.IRecordWriter;
 import com.fortify.cli.common.output.RecordWriterConfig;
 
-import hu.webarticum.treeprinter.ListingTreePrinter;
+//import hu.webarticum.treeprinter.ListingTreePrinter;
+import hu.webarticum.treeprinter.printer.listing.ListingTreePrinter;
 import hu.webarticum.treeprinter.SimpleTreeNode;
 
 public class TreeRecordWriter implements IRecordWriter {
@@ -47,7 +49,7 @@ public class TreeRecordWriter implements IRecordWriter {
 	public void writeRecord(ObjectNode record) {
         SimpleTreeNode rootNode = new SimpleTreeNode("-+-");
         treeBuilder(rootNode, record, null);
-        ListingTreePrinter.createBuilder().ascii().build().print(rootNode); // TODO print to actual output, but for some reason line below doesn't work
+        ListingTreePrinter.builder().ascii().build().print(rootNode); // TODO print to actual output, but for some reason line below doesn't work
         //ListingTreePrinter.createBuilder().ascii().build().print(rootNode, config.getPrintWriterSupplier().get());  // print with ascii
         //new ListingTreePrinter().print(rootNode); // print with unicode
 	}
