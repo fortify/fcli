@@ -91,11 +91,11 @@ configure(allprojects.findAll {it.name != 'fcli-common'}) {
 }
 
 dependencies {
-	runtimeOnly project(':fcli-ssc')
-	runtimeOnly project(':fcli-fod')
-	runtimeOnly project(':fcli-sc-sast')
-	runtimeOnly project(':fcli-sc-dast')
-	runtimeOnly project(':fcli-run')
+	implementation project(':fcli-ssc')
+	implementation project(':fcli-fod')
+	implementation project(':fcli-sc-sast')
+	implementation project(':fcli-sc-dast')
+	implementation project(':fcli-run')
 
 	// Logging dependencies
 	runtimeOnly('ch.qos.logback:logback-classic:1.2.11')
