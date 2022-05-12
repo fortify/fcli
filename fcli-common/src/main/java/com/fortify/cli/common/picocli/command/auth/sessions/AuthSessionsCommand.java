@@ -29,9 +29,7 @@ import java.util.Collection;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.auth.session.summary.IAuthSessionSummaryProvider;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.auth.AuthCommandsOrder;
-import com.fortify.cli.common.picocli.command.auth.RootAuthCommand;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 
 import io.micronaut.core.annotation.Order;
@@ -41,7 +39,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@SubcommandOf(RootAuthCommand.class)
 @Command(name = "sessions", description = "Get information related to authentication sessions.")
 @Order(AuthCommandsOrder.LOGIN)
 public class AuthSessionsCommand implements Runnable {

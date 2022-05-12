@@ -27,14 +27,11 @@ package com.fortify.cli.ssc.picocli.command.transfer.upload;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.transfer.RootUploadCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootUploadCommand.class)
 @Command(name = ProductIdentifiers.SSC, description = "Upload data SSC")
 @RequiresProduct(ProductOrGroup.SSC)
 public class SSCUploadCommand {}

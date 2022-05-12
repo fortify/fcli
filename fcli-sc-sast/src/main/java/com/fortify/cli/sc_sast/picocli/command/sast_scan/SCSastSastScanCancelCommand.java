@@ -24,14 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.picocli.command.sast_scan;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(SCSastSastScanCommand.class)
 @Command(name = "cancel", description = "Cancel a ScanCentral SAST scan")
 @Order(SCSastSastScanCommandsOrder.CANCEL)
 public class SCSastSastScanCancelCommand implements Runnable {

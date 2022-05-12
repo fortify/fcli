@@ -26,8 +26,6 @@ package com.fortify.cli.ssc.picocli.command.transfer.upload.version;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.ssc.picocli.command.transfer.upload.SSCUploadCommand;
 import com.fortify.cli.ssc.picocli.constants.version.SSCVersionConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -35,8 +33,7 @@ import picocli.CommandLine.Command;
 
 public class SSCUploadVersionCommand extends SSCVersionConstants.Singular {
 	@ReflectiveAccess
-	@SubcommandOf(SSCUploadCommand.class)
-	@Command(name = CMD, description = DESC_UPLOAD, aliases = {ALIAS})
+		@Command(name = CMD, description = DESC_UPLOAD, aliases = {ALIAS})
 	@RequiresProduct(ProductOrGroup.SSC)
 	public static final class Impl {}
 }

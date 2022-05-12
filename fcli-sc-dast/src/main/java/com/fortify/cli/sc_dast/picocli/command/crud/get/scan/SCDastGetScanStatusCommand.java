@@ -27,7 +27,6 @@ package com.fortify.cli.sc_dast.picocli.command.crud.get.scan;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
@@ -50,7 +49,6 @@ import picocli.CommandLine.Option;
 
 public class SCDastGetScanStatusCommand extends SCDastScanStatusConstants.Singular {
 	@ReflectiveAccess
-	@SubcommandOf(SCDastGetScanCommand.Impl.class)
 	@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static final class Impl extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {

@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.run;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.FCLIRootCommand;
 import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
 
@@ -33,7 +32,6 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(FCLIRootCommand.class)
 @Command(name = "run", description = "Run workflows and commands")
 @Order(RootCommandsOrderByGroup.RUN)
 public class RootRunCommand {

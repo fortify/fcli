@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
@@ -49,7 +48,6 @@ import picocli.CommandLine.Option;
 
 public class SCDastDownloadScanLogsCommand extends SCDastScanLogsConstants.Plural {
 	@ReflectiveAccess
-	@SubcommandOf(SCDastDownloadScanCommand.Impl.class)
 	@Command(name = CMD, description = DESC_DOWNLOAD /* , aliases = {ALIAS} */)
 	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static final class Impl extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {

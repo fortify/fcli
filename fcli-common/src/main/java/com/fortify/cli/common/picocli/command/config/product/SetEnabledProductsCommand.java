@@ -29,8 +29,6 @@ import java.util.Iterator;
 
 import com.fortify.cli.common.config.product.EnabledProductsHelper;
 import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.config.RootConfigCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -39,7 +37,6 @@ import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@SubcommandOf(RootConfigCommand.class)
 @Command(name = "enabled-products", description = {
 		"Configure the products for which commands should be enabled in fcli.",
 		"By default, fcli will display all commands and options; configuring",

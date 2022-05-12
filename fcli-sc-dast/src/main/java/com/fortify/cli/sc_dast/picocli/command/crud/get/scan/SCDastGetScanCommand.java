@@ -26,8 +26,6 @@ package com.fortify.cli.sc_dast.picocli.command.crud.get.scan;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.sc_dast.picocli.command.crud.get.SCDastGetCommand;
 import com.fortify.cli.sc_dast.picocli.constants.scan.SCDastScanConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -35,8 +33,7 @@ import picocli.CommandLine.Command;
 
 public class SCDastGetScanCommand extends SCDastScanConstants.Singular {
 	@ReflectiveAccess
-	@SubcommandOf(SCDastGetCommand.class)
-	@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
+		@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static final class Impl {}
 }

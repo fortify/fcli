@@ -24,14 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.sast_scan;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.sast_scan.RootSastScanCommand;
-
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootSastScanCommand.class)
 @Command(name = "fod", description = "Prepare, run and manage FoD SAST scans")
 public class FoDSastScanCommand {
 }

@@ -26,7 +26,6 @@ package com.fortify.cli.ssc.picocli.command.crud.delete.version;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
@@ -42,8 +41,7 @@ import picocli.CommandLine.Command;
 
 public class SSCDeleteVersionCommand extends SSCVersionConstants.Singular {
 	@ReflectiveAccess
-	@SubcommandOf(SSCDeleteCommand.class)
-	@Command(name = CMD, description = DESC_DELETE, aliases = {ALIAS})
+		@Command(name = CMD, description = DESC_DELETE, aliases = {ALIAS})
 	@RequiresProduct(ProductOrGroup.SSC)
 	public static final class Impl extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 		@CommandLine.Mixin private OutputMixin outputMixin;

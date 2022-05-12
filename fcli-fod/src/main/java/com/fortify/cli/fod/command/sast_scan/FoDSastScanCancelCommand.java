@@ -24,14 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.sast_scan;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(FoDSastScanCommand.class)
 @Command(name = "cancel", description = "Cancel an FoD SAST scan")
 @Order(FoDSastScanCommandsOrder.CANCEL)
 public class FoDSastScanCancelCommand implements Runnable {

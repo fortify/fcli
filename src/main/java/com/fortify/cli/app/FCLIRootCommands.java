@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command;
+package com.fortify.cli.app;
 
 import com.fortify.cli.common.picocli.mixin.log.LoggingMixin;
 
@@ -53,7 +53,7 @@ import picocli.CommandLine.ScopeType;
 	showAtFileInUsageHelp = false,
     optionListHeading = "%nGeneric options:%n", // This is supposed to hold only standard help, version, and logging options; command implementations should always use appropriate ArgGroups with headings
 	description = "Command-line interface for working with various Fortify products")
-public class FCLIRootCommand {
+public class FCLIRootCommands {
 	// Setting up logging is handled in the main class by a separate Picocli instance, to allow
 	// for setting up logging early in the process. In order to have our main command structure
 	// not complain about any logging options, we define them here even though we don't actually

@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
+import io.micronaut.configuration.picocli.PicocliRunner;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 import org.apache.commons.logging.impl.SimpleLog;
@@ -31,15 +32,13 @@ import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 import org.jasypt.normalization.Normalizer;
 
-import com.fortify.cli.common.picocli.executor.CommandLineExecutor;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
 
 /**
  * <p>This class provides the {@link #main(String[])} entrypoint into the application. 
- * It first configures logging and then loads the {@link CommandLineExecutor} class to
+ * It first configures logging and then loads the {@link PicocliRunner} class to
  * actually execute commands based on provided command line arguments.</p>
  * 
  * <p>This class is also responsible for registering some GraalVM features, allowing
@@ -50,8 +49,8 @@ import io.micronaut.context.env.Environment;
 public class FortifyCLI {
 	/**
 	 * This is the main entry point for executing the Fortify CLI. It will configure logging and
-	 * then get a {@link CommandLineExecutor} instance from Micronaut, which will perform the
-	 * actual work in its {@link CommandLineExecutor#execute(String[])} method.
+	 * then get a {@link PicocliRunner} instance from Micronaut, which will perform the
+	 * actual work in its {@link PicocliRunner#execute(Class, String...)} method.
 	 * @param args Command line options passed to Fortify CLI
 	 */
 	public static void main(String[] args) {
@@ -61,16 +60,13 @@ public class FortifyCLI {
 	
 	/**
 	 * This method starts the Micronaut {@link ApplicationContext}, then invokes the 
-	 * {@link CommandLineExecutor#execute(String[])} method on the {@link CommandLineExecutor}
+	 * {@link PicocliRunner#execute(Class, String...)} method on the {@link PicocliRunner}
 	 * singleton retrieved from the Micronaut {@link ApplicationContext}
 	 * @param args Command line options passed to Fortify CLI
 	 * @return exit code
 	 */
 	private static int execute(String[] args) {
-		try (ApplicationContext context = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
-			CommandLineExecutor runner = context.getBean(CommandLineExecutor.class);
-			return runner.execute(args);
-		}
+		return PicocliRunner.execute(FCLIRootCommands.class, args);
 	}
 	
 	/**

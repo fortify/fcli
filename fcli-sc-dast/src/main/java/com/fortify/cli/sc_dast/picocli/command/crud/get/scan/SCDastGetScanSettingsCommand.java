@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
@@ -38,7 +37,6 @@ import com.fortify.cli.sc_dast.picocli.command.crud.get.SCDastGetCommand;
 import com.fortify.cli.sc_dast.picocli.constants.scan.SCDastScanSettingsConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.JsonNode;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -52,7 +50,6 @@ import java.util.regex.Pattern;
 
 public class SCDastGetScanSettingsCommand extends SCDastScanSettingsConstants.Plural {
 	@ReflectiveAccess
-	@SubcommandOf(SCDastGetScanCommand.Impl.class)
 	@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static final class Impl extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {

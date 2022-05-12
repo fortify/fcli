@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
 
@@ -50,7 +49,6 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@SubcommandOf(SCDastScanCommand.class)
 @Command(name = "start", description = "Starts DAST scan on ScanCentral DAST")
 @Order(SCDastScanCommandsOrder.START)
 public final class SCDastScanStartCommand extends AbstractSCDastUnirestRunnerCommand {

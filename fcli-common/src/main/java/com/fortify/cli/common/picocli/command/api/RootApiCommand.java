@@ -25,7 +25,6 @@
 package com.fortify.cli.common.picocli.command.api;
 
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.FCLIRootCommand;
 import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
@@ -36,7 +35,6 @@ import picocli.CommandLine.Command;
 
 
 @ReflectiveAccess
-@SubcommandOf(FCLIRootCommand.class)
 @Command(name = "api", description = "Make arbitrary calls to Fortify REST APIs")
 @Order(RootCommandsOrderByGroup.API)
 public class RootApiCommand {

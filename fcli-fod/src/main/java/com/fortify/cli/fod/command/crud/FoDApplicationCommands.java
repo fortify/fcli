@@ -26,15 +26,11 @@ package com.fortify.cli.fod.command.crud;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.fod.command.AbstractFoDUnirestRunnerCommand;
-import com.fortify.cli.fod.command.crud.FoDCrudRootCommands.FoDCreateCommand;
-import com.fortify.cli.fod.command.crud.FoDCrudRootCommands.FoDDeleteCommand;
 import com.fortify.cli.fod.command.crud.FoDCrudRootCommands.FoDGetCommand;
-import com.fortify.cli.fod.command.crud.FoDCrudRootCommands.FoDUpdateCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
@@ -53,8 +49,7 @@ public class FoDApplicationCommands {
 	}
 	
 	@ReflectiveAccess
-	@SubcommandOf(FoDGetCommand.class)
-	@Command(name = NAME, description = "Get "+DESC+" from FoD", aliases = {ALIAS})
+		@Command(name = NAME, description = "Get "+DESC+" from FoD", aliases = {ALIAS})
 	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Get extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
 		@CommandLine.Mixin private OutputMixin outputMixin;
@@ -76,8 +71,7 @@ public class FoDApplicationCommands {
 	}
 	
 	@ReflectiveAccess
-	@SubcommandOf(FoDCreateCommand.class)
-	@Command(name = NAME, description = "Create "+DESC+" in FoD")
+		@Command(name = NAME, description = "Create "+DESC+" in FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Create extends AbstractFoDUnirestRunnerCommand {
 		@SneakyThrows
@@ -88,8 +82,7 @@ public class FoDApplicationCommands {
 	}
 	
 	@Singleton
-	@SubcommandOf(FoDUpdateCommand.class)
-	@Command(name = NAME, description = "Update "+DESC+" in FoD")
+		@Command(name = NAME, description = "Update "+DESC+" in FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Update extends AbstractFoDUnirestRunnerCommand {
 		@SneakyThrows
@@ -100,8 +93,7 @@ public class FoDApplicationCommands {
 	}
 	
 	@ReflectiveAccess
-	@SubcommandOf(FoDDeleteCommand.class)
-	@Command(name = NAME, description = "Delete "+DESC+" from FoD")
+		@Command(name = NAME, description = "Delete "+DESC+" from FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Delete extends AbstractFoDUnirestRunnerCommand {
 		@SneakyThrows

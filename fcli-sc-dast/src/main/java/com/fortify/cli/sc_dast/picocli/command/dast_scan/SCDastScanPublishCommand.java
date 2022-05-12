@@ -25,7 +25,6 @@
 package com.fortify.cli.sc_dast.picocli.command.dast_scan;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.picocli.command.util.SCDastScanActionsHandler;
@@ -44,7 +43,6 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@SubcommandOf(SCDastScanCommand.class)
 @Command(name = "publish", description = "Publishes a DAST scan on ScanCentral DAST to SSC")
 @Order(SCDastScanCommandsOrder.PUBLISH)
 public final class SCDastScanPublishCommand extends AbstractSCDastUnirestRunnerCommand {

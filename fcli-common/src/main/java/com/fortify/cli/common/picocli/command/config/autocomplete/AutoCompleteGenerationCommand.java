@@ -24,9 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.config.autocomplete;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.config.RootConfigCommand;
-
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.AutoComplete;
 import picocli.CommandLine;
@@ -40,7 +37,6 @@ import picocli.CommandLine.Spec;
  * @author Ruud Senden
  */
 @ReflectiveAccess
-@SubcommandOf(RootConfigCommand.class)
 @Command(name = "generate-completion", description = {
 		"Generate bash/zsh completion script for ${ROOT-COMMAND-NAME:-the root command of this command}.",
 		"Run the following command to give `${ROOT-COMMAND-NAME:-$PARENTCOMMAND}` TAB completion in the current shell:",

@@ -24,15 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.workflow.command;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.run.RootRunCommand;
-
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootRunCommand.class)
 @Command(name = "workflow", description = "Run fcli workflow defined in YAML file")
 @Order(RunCommandsOrder.WORKFLOW)
 public class RunWorkflowCommand {

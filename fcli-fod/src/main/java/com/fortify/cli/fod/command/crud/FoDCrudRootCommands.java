@@ -27,7 +27,6 @@ package com.fortify.cli.fod.command.crud;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.crud.RootCreateCommand;
 import com.fortify.cli.common.picocli.command.crud.RootDeleteCommand;
 import com.fortify.cli.common.picocli.command.crud.RootGetCommand;
@@ -39,8 +38,7 @@ import picocli.CommandLine.Command;
 
 public class FoDCrudRootCommands {
 	@ReflectiveAccess
-	@SubcommandOf(RootGetCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Get entity data from FoD")
+		@Command(name = ProductIdentifiers.FOD, description = "Get entity data from FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
 	public static class FoDGetCommand {
 		public static final OutputConfig defaultOutputConfig() {
@@ -49,8 +47,7 @@ public class FoDCrudRootCommands {
 	}
 	
 	@ReflectiveAccess
-	@SubcommandOf(RootCreateCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Create entities in FoD")
+		@Command(name = ProductIdentifiers.FOD, description = "Create entities in FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
 	public static class FoDCreateCommand {
 		public static final OutputConfig defaultOutputConfig() {
@@ -59,8 +56,7 @@ public class FoDCrudRootCommands {
 	}
 	
 	@ReflectiveAccess
-	@SubcommandOf(RootUpdateCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Update entities in FoD")
+		@Command(name = ProductIdentifiers.FOD, description = "Update entities in FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
 	public static class FoDUpdateCommand {
 		public static final OutputConfig defaultOutputConfig() {
@@ -69,8 +65,7 @@ public class FoDCrudRootCommands {
 	}
 	
 	@ReflectiveAccess
-	@SubcommandOf(RootDeleteCommand.class)
-	@Command(name = ProductIdentifiers.FOD, description = "Delete entities from FoD")
+		@Command(name = ProductIdentifiers.FOD, description = "Delete entities from FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
 	public static class FoDDeleteCommand {
 		public static final OutputConfig defaultOutputConfig() {

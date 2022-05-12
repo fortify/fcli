@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.auth;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.FCLIRootCommand;
 
 import io.micronaut.core.annotation.Order;
@@ -32,7 +31,6 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(FCLIRootCommand.class)
 @Command(name = "auth", description = "Manage authentication sessions")
 @Order(AuthCommandsOrder.LOGIN)
 public class RootAuthCommand {

@@ -27,10 +27,8 @@ package com.fortify.cli.common.picocli.command.auth.logout;
 import java.util.List;
 
 import com.fortify.cli.common.auth.logout.LogoutHelper;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.auth.AbstractCommandWithAuthSessionPersistenceHelper;
 import com.fortify.cli.common.picocli.command.auth.AuthCommandsOrder;
-import com.fortify.cli.common.picocli.command.auth.RootAuthCommand;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -44,7 +42,6 @@ import picocli.CommandLine.ScopeType;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@SubcommandOf(RootAuthCommand.class)
 @Command(name = "logout", description = "Logout from Fortify systems")
 @Order(AuthCommandsOrder.LOGOUT)
 public class AuthLogoutCommand extends AbstractCommandWithAuthSessionPersistenceHelper implements Runnable {

@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.dast_scan;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.FCLIRootCommand;
 import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
 
@@ -33,7 +32,6 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(FCLIRootCommand.class)
 @Command(name = "dast-scan", aliases = {"dast"}, description = "Prepare, run and manage DAST scans")
 @Order(RootCommandsOrderByGroup.DAST_SCAN)
 public class RootDastScanCommand {

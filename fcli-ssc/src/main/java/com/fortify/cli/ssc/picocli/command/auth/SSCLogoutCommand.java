@@ -27,15 +27,12 @@ package com.fortify.cli.ssc.picocli.command.auth;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.auth.logout.AbstractAuthLogoutCommand;
-import com.fortify.cli.common.picocli.command.auth.logout.AuthLogoutCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(AuthLogoutCommand.class)
 @Command(name = ProductIdentifiers.SSC, description = "Logout from SSC", sortOptions = false)
 @RequiresProduct(ProductOrGroup.SSC)
 public class SSCLogoutCommand extends AbstractAuthLogoutCommand {

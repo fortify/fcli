@@ -26,7 +26,6 @@ package com.fortify.cli.ssc.picocli.command.crud.update.version;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
@@ -43,7 +42,6 @@ import picocli.CommandLine.Command;
 
 public class SSCUpdateVersionAttributesCommand extends SSCVersionAttributeConstants.Plural {
 	@ReflectiveAccess
-	@SubcommandOf(SSCUpdateVersionCommand.Impl.class)
 	@Command(name = CMD, description = DESC_UPDATE /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SSC)
 	public static final class Impl extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {

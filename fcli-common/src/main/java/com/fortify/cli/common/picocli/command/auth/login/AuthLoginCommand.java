@@ -24,16 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.auth.login;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.auth.AuthCommandsOrder;
-import com.fortify.cli.common.picocli.command.auth.RootAuthCommand;
 
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootAuthCommand.class)
 @Command(name = "login", description = "Login to Fortify systems")
 @Order(AuthCommandsOrder.LOGIN)
 public class AuthLoginCommand {

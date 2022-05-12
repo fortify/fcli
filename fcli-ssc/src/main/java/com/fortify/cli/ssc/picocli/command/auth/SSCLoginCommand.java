@@ -31,9 +31,7 @@ import com.fortify.cli.common.auth.login.ILoginHandler;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.auth.login.AbstractAuthLoginCommand;
-import com.fortify.cli.common.picocli.command.auth.login.AuthLoginCommand;
 import com.fortify.cli.common.picocli.command.auth.login.LoginConnectionOptions;
 import com.fortify.cli.common.picocli.command.auth.login.LoginUserCredentialOptions;
 import com.fortify.cli.common.time.DateTimeHelper;
@@ -50,7 +48,6 @@ import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@SubcommandOf(AuthLoginCommand.class) 
 @Command(name = ProductIdentifiers.SSC, description = "Login to SSC", sortOptions = false)
 @RequiresProduct(ProductOrGroup.SSC)
 public class SSCLoginCommand extends AbstractAuthLoginCommand<SSCLoginConfig> {

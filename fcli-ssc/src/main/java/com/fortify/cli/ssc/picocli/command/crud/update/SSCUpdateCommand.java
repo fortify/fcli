@@ -27,7 +27,6 @@ package com.fortify.cli.ssc.picocli.command.crud.update;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.crud.RootUpdateCommand;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 
@@ -35,7 +34,6 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootUpdateCommand.class)
 @Command(name = ProductIdentifiers.SSC, description = "Update entities in SSC")
 @RequiresProduct(ProductOrGroup.SSC)
 public class SSCUpdateCommand {

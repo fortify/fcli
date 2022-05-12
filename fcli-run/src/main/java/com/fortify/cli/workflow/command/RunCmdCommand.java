@@ -24,15 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.workflow.command;
 
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.run.RootRunCommand;
-
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootRunCommand.class)
 @Command(name = "cmd", description = "Run arbitrary commands from the local system (useful for workflows)")
 @Order(RunCommandsOrder.CMD)
 public class RunCmdCommand {

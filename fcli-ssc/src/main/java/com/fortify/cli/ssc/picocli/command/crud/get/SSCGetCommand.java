@@ -27,7 +27,6 @@ package com.fortify.cli.ssc.picocli.command.crud.get;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.crud.RootGetCommand;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 
@@ -35,7 +34,6 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootGetCommand.class)
 @Command(name = ProductIdentifiers.SSC, description = "Get entity data from SSC")
 @RequiresProduct(ProductOrGroup.SSC)
 public class SSCGetCommand {

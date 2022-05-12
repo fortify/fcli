@@ -26,7 +26,6 @@ package com.fortify.cli.ssc.picocli.command.transfer.download.version;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.constants.version.SSCVersionArtifactConstants;
 import com.fortify.cli.ssc.picocli.mixin.version.SSCParentVersionMixins;
@@ -39,7 +38,6 @@ import picocli.CommandLine.Command;
 
 public class SSCDownloadVersionArtifactCommand extends SSCVersionArtifactConstants.Singular {
 	@ReflectiveAccess
-	@SubcommandOf(SSCDownloadVersionCommand.Impl.class)
 	@Command(name = CMD, description = DESC_DOWNLOAD /*, aliases = {ALIAS}*/)
 	@RequiresProduct(ProductOrGroup.SSC)
 	public static final class Impl extends AbstractSSCUnirestRunnerCommand {

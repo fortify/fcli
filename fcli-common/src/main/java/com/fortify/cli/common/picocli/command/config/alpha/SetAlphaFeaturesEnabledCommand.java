@@ -25,8 +25,6 @@
 package com.fortify.cli.common.picocli.command.config.alpha;
 
 import com.fortify.cli.common.config.alpha.AlphaFeaturesHelper;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
-import com.fortify.cli.common.picocli.command.config.RootConfigCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -34,7 +32,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@SubcommandOf(RootConfigCommand.class)
 @Command(name = "enable-alpha-features", description = {
 		"Configure whether alpha features of fcli are enabled or not.",
 		"Please be aware that alpha features may be highly unstable",

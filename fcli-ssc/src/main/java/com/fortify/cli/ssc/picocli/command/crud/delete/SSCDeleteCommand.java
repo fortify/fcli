@@ -27,7 +27,6 @@ package com.fortify.cli.ssc.picocli.command.crud.delete;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.crud.RootDeleteCommand;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 
@@ -35,7 +34,6 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@SubcommandOf(RootDeleteCommand.class)
 @Command(name = ProductIdentifiers.SSC, description = "Delete entities from SSC")
 @RequiresProduct(ProductOrGroup.SSC)
 public class SSCDeleteCommand {

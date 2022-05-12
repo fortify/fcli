@@ -27,7 +27,6 @@ package com.fortify.cli.sc_dast.picocli.command.api;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.api.APICommandMixin;
 import com.fortify.cli.common.picocli.command.api.RootApiCommand;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
@@ -41,7 +40,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@SubcommandOf(RootApiCommand.class)
 @Command(name = ProductIdentifiers.SC_DAST, description = "Invoke ScanCentral DAST REST API")
 @RequiresProduct(ProductOrGroup.SC_DAST)
 public final class SCDastApiCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {

@@ -27,7 +27,6 @@ package com.fortify.cli.fod.command.api;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.annotation.SubcommandOf;
 import com.fortify.cli.common.picocli.command.api.APICommandMixin;
 import com.fortify.cli.common.picocli.command.api.RootApiCommand;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
@@ -41,7 +40,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@SubcommandOf(RootApiCommand.class)
 @Command(name = ProductIdentifiers.FOD, description = "Invoke FoD REST API")
 @RequiresProduct(ProductOrGroup.FOD)
 public final class FoDApiCommand extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
