@@ -25,7 +25,7 @@
 package com.fortify.cli.common.picocli.command.crud;
 
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.picocli.command.FCLIRootCommand;
+
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 
 import io.micronaut.core.annotation.Order;

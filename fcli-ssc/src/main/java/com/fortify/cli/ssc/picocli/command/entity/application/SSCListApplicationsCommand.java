@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.crud.get.app;
+package com.fortify.cli.ssc.picocli.command.entity.application;
 
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
@@ -39,9 +39,9 @@ import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-public class SSCGetApplicationsCommand extends SSCApplicationConstants.Plural {
+public class SSCListApplicationsCommand extends SSCApplicationConstants.Plural {
 	@ReflectiveAccess
-		@Command(name = CMD, description = DESC_GET, aliases = {ALIAS})
+	@Command(name = "list", description = "List applications on SSC.")
 	@RequiresProduct(ProductOrGroup.SSC)
 	public static final class Impl extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 		@CommandLine.Mixin private OutputMixin outputMixin;

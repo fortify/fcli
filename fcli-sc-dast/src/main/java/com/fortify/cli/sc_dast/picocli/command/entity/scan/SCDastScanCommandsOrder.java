@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.dast_scan;
+package com.fortify.cli.sc_dast.picocli.command.entity.scan;
 
 /**
  * @author Ruud Senden

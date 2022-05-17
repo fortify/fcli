@@ -24,8 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.auth;
 
-import com.fortify.cli.common.picocli.command.FCLIRootCommand;
-
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;

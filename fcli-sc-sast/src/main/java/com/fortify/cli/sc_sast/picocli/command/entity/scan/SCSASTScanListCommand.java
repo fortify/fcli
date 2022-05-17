@@ -22,15 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.picocli.command.sast_scan;
+package com.fortify.cli.sc_sast.picocli.command.entity.scan;
 
+import com.fortify.cli.sc_sast.picocli.command.SCSastSastScanCommandsOrder;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "cancel", description = "Cancel a ScanCentral SAST scan")
-@Order(SCSastSastScanCommandsOrder.CANCEL)
-public class SCSastSastScanCancelCommand implements Runnable {
+@Command(name = "list", description = "Get list of all scans on ScanCentral SAST.")
+@Order(SCSastSastScanCommandsOrder.START)
+public class SCSASTScanListCommand implements Runnable {
 	public void run() {};
 }

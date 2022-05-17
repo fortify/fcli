@@ -22,23 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.picocli.command.sast_scan;
+package com.fortify.cli.sc_sast.picocli.command.entity.scan;
 
-import com.fortify.cli.common.sast.picocli.command.sast_scan.prepare.SastCleanCommand;
-import com.fortify.cli.common.sast.picocli.command.sast_scan.prepare.SastPackageCommand;
-import com.fortify.cli.common.sast.picocli.command.sast_scan.prepare.SastTranslateCommand;
-
+import com.fortify.cli.sc_sast.picocli.command.SCSastSastScanCommandsOrder;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "prepare", description = "Prepare for a ScanCentral SAST scan")
-@Order(SCSastSastScanCommandsOrder.PREPARE)
-public class SCSastSastScanPrepareCommand {
-		public static final class Clean extends SastCleanCommand {}
-	
-		public static final class Translate extends SastTranslateCommand {}
-	
-		public static final class Package extends SastPackageCommand {}
+@Command(name = "status", description = "Get the status of a ScanCentral SAST scan.")
+@Order(SCSastSastScanCommandsOrder.START)
+public class SCSASTScanStatusCommand implements Runnable {
+	public void run() {}
 }

@@ -49,7 +49,7 @@ public class FoDApplicationCommands {
 	}
 	
 	@ReflectiveAccess
-		@Command(name = NAME, description = "Get "+DESC+" from FoD", aliases = {ALIAS})
+	@Command(name = NAME, description = "Get "+DESC+" from FoD", aliases = {ALIAS})
 	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Get extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
 		@CommandLine.Mixin private OutputMixin outputMixin;
@@ -71,7 +71,7 @@ public class FoDApplicationCommands {
 	}
 	
 	@ReflectiveAccess
-		@Command(name = NAME, description = "Create "+DESC+" in FoD")
+	@Command(name = NAME, description = "Create "+DESC+" in FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Create extends AbstractFoDUnirestRunnerCommand {
 		@SneakyThrows
@@ -82,7 +82,7 @@ public class FoDApplicationCommands {
 	}
 	
 	@Singleton
-		@Command(name = NAME, description = "Update "+DESC+" in FoD")
+	@Command(name = NAME, description = "Update "+DESC+" in FoD")
 	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Update extends AbstractFoDUnirestRunnerCommand {
 		@SneakyThrows
@@ -92,14 +92,5 @@ public class FoDApplicationCommands {
 		}
 	}
 	
-	@ReflectiveAccess
-		@Command(name = NAME, description = "Delete "+DESC+" from FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
-	public static final class Delete extends AbstractFoDUnirestRunnerCommand {
-		@SneakyThrows
-		protected Void runWithUnirest(UnirestInstance unirest) {
-			System.err.println("ERROR: Not yet implemented");
-			return null;
-		}
-	}
+
 }

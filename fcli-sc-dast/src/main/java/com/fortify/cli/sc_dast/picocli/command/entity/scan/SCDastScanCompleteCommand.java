@@ -22,11 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.dast_scan;
+package com.fortify.cli.sc_dast.picocli.command.entity.scan;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.picocli.command.entity.scan.SCDastScanCommandsOrder;
 import com.fortify.cli.sc_dast.picocli.command.util.SCDastScanActionsHandler;
 
 import io.micronaut.core.annotation.Order;
@@ -43,32 +44,42 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "delete", description = "Deletes a DAST scan on ScanCentral DAST")
-@Order(SCDastScanCommandsOrder.DELETE)
-public final class SCDastScanDeleteCommand extends AbstractSCDastUnirestRunnerCommand {
+@Command(name = "complete", description = "Completes a DAST scan on ScanCentral DAST")
+@Order(SCDastScanCommandsOrder.COMPLETE)
+public final class SCDastScanCompleteCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
-    @ArgGroup(exclusive = false, heading = "Delete scan options:%n", order = 1)
-    @Getter private SCDastScanDeleteOptions deleteScanOptions;
+    @ArgGroup(exclusive = false, heading = "Complete scan options:%n", order = 1)
+    @Getter private SCDastScanCompleteOptions completeScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public static class SCDastScanDeleteOptions {
+    public static class SCDastScanCompleteOptions {
         @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
         @Getter private int scanId;
+
+        @Option(names = {"-w", "--wait", "--wait-completed"}, defaultValue = "false",
+                description = "Wait until the scan is complete")
+        @Getter private boolean waitCompleted;
+
+        @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30",
+                description = "When waiting for completion, how long between to poll, in seconds", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+        @Getter private int waitInterval;
     }
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-        if(deleteScanOptions == null){
+        if(completeScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
-                    "Error: No parameter found. Provide the required scan-settings identifier.");
+                    "Error: No parameter found. Provide the required scan id.");
         }
         SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-        JsonNode response = actionsHandler.deleteScan(deleteScanOptions.getScanId());
+        JsonNode response = actionsHandler.completeScan(completeScanOptions.getScanId());
 
         if(response != null) outputMixin.write(response);
+
+        if(completeScanOptions.isWaitCompleted()){ actionsHandler.waitCompleted(completeScanOptions.getScanId(), completeScanOptions.getWaitInterval()); }
 
         return null;
     }

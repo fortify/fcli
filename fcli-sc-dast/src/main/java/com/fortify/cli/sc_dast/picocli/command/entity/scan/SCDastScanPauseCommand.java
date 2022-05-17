@@ -22,11 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.dast_scan;
+package com.fortify.cli.sc_dast.picocli.command.entity.scan;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.picocli.command.entity.scan.SCDastScanCommandsOrder;
 import com.fortify.cli.sc_dast.picocli.command.util.SCDastScanActionsHandler;
 
 import io.micronaut.core.annotation.Order;
@@ -43,32 +44,42 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "publish", description = "Publishes a DAST scan on ScanCentral DAST to SSC")
-@Order(SCDastScanCommandsOrder.PUBLISH)
-public final class SCDastScanPublishCommand extends AbstractSCDastUnirestRunnerCommand {
+@Command(name = "pause", description = "Pauses a DAST scan on ScanCentral DAST")
+@Order(SCDastScanCommandsOrder.PAUSE)
+public final class SCDastScanPauseCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
-    @ArgGroup(exclusive = false, heading = "Publish scan options:%n", order = 1)
-    @Getter private SCDastScanPublishOptions publishScanOptions;
+    @ArgGroup(exclusive = false, heading = "Pause scan options:%n", order = 1)
+    @Getter private SCDastScanPauseOptions pauseScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public static class SCDastScanPublishOptions {
+    public static class SCDastScanPauseOptions {
         @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
         @Getter private int scanId;
+
+        @Option(names = {"-w", "--wait", "--wait-paused"}, defaultValue = "false",
+                description = "Wait until the scan is paused")
+        @Getter private boolean waitPaused;
+
+        @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30",
+                description = "When waiting for completion, how long between to poll, in seconds", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+        @Getter private int waitInterval;
     }
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-        if(publishScanOptions == null){
+        if(pauseScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
-                    "Error: No parameter found. Provide the required scan-settings identifier.");
+                    "Error: No parameter found. Provide the required scan id.");
         }
         SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-        JsonNode response = actionsHandler.publishScan(publishScanOptions.getScanId());
+        JsonNode response = actionsHandler.pauseScan(pauseScanOptions.getScanId());
 
         if(response != null) outputMixin.write(response);
+
+        if(pauseScanOptions.isWaitPaused()){ actionsHandler.waitPaused(pauseScanOptions.getScanId(), pauseScanOptions.getWaitInterval()); }
 
         return null;
     }

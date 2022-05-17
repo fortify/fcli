@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.dast_scan;
 
-import com.fortify.cli.common.picocli.command.FCLIRootCommand;
+
 import com.fortify.cli.common.picocli.command.RootCommandsOrderByGroup;
 
 import io.micronaut.core.annotation.Order;
