@@ -1,7 +1,9 @@
 package com.fortify.cli.tools.picocli.command.mixin;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine;
 
+@ReflectiveAccess
 public class DownloadPathMixin {
     @CommandLine.Mixin public DownloadUrlMixin DownloadUrlOpt;
 
