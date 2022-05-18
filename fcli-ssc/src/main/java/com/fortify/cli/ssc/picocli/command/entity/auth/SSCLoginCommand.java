@@ -22,15 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.auth;
+package com.fortify.cli.ssc.picocli.command.entity.auth;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import com.fortify.cli.common.auth.login.ILoginHandler;
-import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.command.auth.login.AbstractAuthLoginCommand;
 import com.fortify.cli.common.picocli.command.auth.login.LoginConnectionOptions;
 import com.fortify.cli.common.picocli.command.auth.login.LoginUserCredentialOptions;
@@ -38,8 +36,6 @@ import com.fortify.cli.common.time.DateTimeHelper;
 import com.fortify.cli.ssc.auth.login.ISSCUserCredentialsConfig;
 import com.fortify.cli.ssc.auth.login.SSCLoginConfig;
 import com.fortify.cli.ssc.auth.login.SSCLoginHandler;
-
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
@@ -47,9 +43,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
-@Command(name = ProductIdentifiers.SSC, description = "Login to SSC", sortOptions = false)
-@RequiresProduct(ProductOrGroup.SSC)
+@Command(name = "login", description = "Login to SSC", sortOptions = false)
 public class SSCLoginCommand extends AbstractAuthLoginCommand<SSCLoginConfig> {
 	@Getter @Inject private SSCLoginHandler sscLoginHandler;
 	

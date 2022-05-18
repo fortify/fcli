@@ -22,23 +22,30 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.auth;
+package com.fortify.cli.ssc.picocli.command.entity.auth;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
+import com.fortify.cli.common.auth.logout.LogoutHelper;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.command.auth.logout.AbstractAuthLogoutCommand;
-
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.fortify.cli.common.picocli.command.auth.AbstractCommandWithAuthSessionPersistenceHelper;
+import com.fortify.cli.common.picocli.command.auth.consumer.AuthSessionConsumerMixin;
+import jakarta.inject.Inject;
+import lombok.Getter;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Command;
 
-@ReflectiveAccess
-@Command(name = ProductIdentifiers.SSC, description = "Logout from SSC", sortOptions = false)
-@RequiresProduct(ProductOrGroup.SSC)
-public class SSCLogoutCommand extends AbstractAuthLogoutCommand {
+@Command(name = "logout", description = "Logout from SSC", sortOptions = false)
+public class SSCLogoutCommand extends AbstractCommandWithAuthSessionPersistenceHelper implements Runnable {
+
+	@Getter	@Inject
+	private LogoutHelper logoutHelper;
+
+	@Getter @Mixin
+	private AuthSessionConsumerMixin authSessionConsumerMixin;
 
 	@Override
-	public String getAuthSessionType() {
-		return ProductIdentifiers.SSC;
+	public final void run() {
+		logoutHelper.logoutAndDestroy(ProductIdentifiers.SSC, authSessionConsumerMixin.getAuthSessionName());
 	}
+
+
 }
