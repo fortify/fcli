@@ -1,12 +1,12 @@
 package com.fortify.cli.tools.picocli.command.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 public class DownloadUrlMixin {
 
-    @CommandLine.Option(
+    @Option(
             names = {"-u","--downloadUrl"},
             description = "Override the default URL that FCLI will download from."
     )
