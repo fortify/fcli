@@ -7,6 +7,7 @@ import com.fortify.cli.tools.model.ToolPackageVersion;
 import com.fortify.cli.tools.picocli.command.mixin.DownloadPathMixin;
 import com.fortify.cli.tools.picocli.command.mixin.InstallPathMixin;
 import com.fortify.cli.tools.picocli.command.mixin.PackageVersionMixin;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -25,6 +26,7 @@ import java.net.URL;
  *   - For "ToolPackages.yaml" entries: <ToolOrPackageName>
  *   - For #ToolPackageBase subclasses: <ToolOrPackageName>+"Commands"
  */
+@ReflectiveAccess
 public abstract class ToolPackageBase {
 
     @Getter private final String UnderConstructionMsg = "Work in progress. Come back later.";

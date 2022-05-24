@@ -1,12 +1,13 @@
 package com.fortify.cli.tools.picocli.command.entity.SampleEightball;
 
-import com.fortify.cli.tools.picocli.command.mixin.DownloadPathMixin;
 import com.fortify.cli.tools.picocli.command.mixin.InstallPathMixin;
 import com.fortify.cli.tools.picocli.command.mixin.PackageVersionMixin;
 import com.fortify.cli.tools.toolPackage.ToolPackageBase;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Command;
 
+@ReflectiveAccess
 @Command(
         name = "eightball",
         aliases = {"eb"},
