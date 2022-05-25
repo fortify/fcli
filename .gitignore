@@ -8,6 +8,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**
 !**/src/test/**
+!**/resource-config.json
 
 ### STS ###
 .apt_generated
