@@ -5,7 +5,7 @@ on:
       - '**'
        
 env:
-  native_image_opts: --verbose --enable-http --enable-https --initialize-at-build-time=org.codehaus.stax2.typed.Base64Variants -H:+IncludeAllLocales
+  native_image_opts: --verbose --enable-http --enable-https --initialize-at-build-time=org.codehaus.stax2.typed.Base64Variants -H:Log=registerResource -H:ResourceConfigurationFiles=resource-config.json -H:+IncludeAllLocales
 #  native_image_opts: --verbose --enable-http --enable-https --initialize-at-build-time=org.codehaus.stax2.typed.Base64Variants
 #  native_image_opts: --verbose --initialize-at-build-time=org.apache.logging.slf4j.Log4jLogger,org.apache.logging.log4j.spi.AbstractLogger,org.apache.logging.log4j.core.Logger,org.apache.logging.log4j.Level,org.apache.logging.slf4j.Log4jLoggerFactory
           
@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Check-out source code
         uses: actions/checkout@v2
-        
+
       - name: PROD - Prepare GitHub release
         id: create_prod_release
         uses: GoogleCloudPlatform/release-please-action@v2
@@ -73,82 +73,101 @@ jobs:
       do_dev_release: ${{ env.DO_RELEASE }}
       release_tag: ${{ env.RELEASE_TAG }}
 
-  native_linux:
-    name: native-image-linux
-    needs: build
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: DeLaGuardo/setup-graalvm@3
-        with:
-          graalvm-version: '21.2.0.java11'
-
-      - name: Install GraalVM's native-image extension
-        run: gu install native-image
-
-      - uses: actions/download-artifact@v2
-        with:
-          path: ./
-
-      - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
-        
-      - name: Compress native fcli
-        uses: svenstaro/upx-action@v2
-        with:
-          file: fcli
-        
-      - name: Basic test of native fcli
-        run: ./fcli --help && ./fcli get --help
-        
-      - name: Package native fcli
-        run: tar -zcvf fcli-linux.tgz ./fcli
-
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./fcli-linux.tgz
-          
-  native_mac:
-    name: native-image-mac
-    needs: build
-    runs-on: macos-10.15
-    steps:
-      - uses: DeLaGuardo/setup-graalvm@3
-        with:
-          graalvm-version: '21.2.0.java11'
-
-      - name: Install GraalVM's native-image extension
-        run: gu install native-image
-
-      - uses: actions/download-artifact@v2
-        with:
-          path: ./
-
-      - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
-       
-      - name: Compress native fcli
-        uses: svenstaro/upx-action@v2
-        with:
-          file: fcli
-        
-      - name: Basic test of native fcli
-        run: ./fcli --help && ./fcli get --help
-        
-      - name: Package native fcli
-        run: tar -zcvf fcli-mac.tgz ./fcli
-
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./fcli-mac.tgz
+#  native_linux:
+#    name: native-image-linux
+#    needs: build
+#    runs-on: ubuntu-18.04
+#    steps:
+#      - name: Check-out source code
+#        uses: actions/checkout@v2
+#
+#      - uses: DeLaGuardo/setup-graalvm@3
+#        with:
+#          graalvm-version: '21.2.0.java11'
+#
+#      - name: Print Dir Information
+#        run: |
+#          echo "/home/runner/work/fcli CONTENTS: "
+#          cd /home/runner/work/fcli
+#          ls -lah
+#          echo "/home/runner/work/fcli/fcli CONTENTS: "
+#          cd /home/runner/work/fcli/fcli
+#          ls -lah
+#
+#      - name: Install GraalVM's native-image extension
+#        run: gu install native-image
+#
+#      - uses: actions/download-artifact@v2
+#        with:
+#          path: ./
+#
+#      - name: Create native fcli
+#        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
+#
+#      - name: Compress native fcli
+#        uses: svenstaro/upx-action@v2
+#        with:
+#          file: fcli
+#
+#      - name: Basic test of native fcli
+#        run: ./fcli --help && ./fcli get --help
+#
+#      - name: Package native fcli
+#        run: tar -zcvf fcli-linux.tgz ./fcli
+#
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          path: ./fcli-linux.tgz
+#
+#  native_mac:
+#    name: native-image-mac
+#    needs: build
+#    runs-on: macos-10.15
+#    steps:
+#      - name: Check-out source code
+#        uses: actions/checkout@v2
+#
+#      - uses: DeLaGuardo/setup-graalvm@3
+#        with:
+#          graalvm-version: '21.2.0.java11'
+#
+#      - name: Install GraalVM's native-image extension
+#        run: gu install native-image
+#
+#      - uses: actions/download-artifact@v2
+#        with:
+#          path: ./
+#
+#      - name: Create native fcli
+#        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
+#
+#      - name: Compress native fcli
+#        uses: svenstaro/upx-action@v2
+#        with:
+#          file: fcli
+#
+#      - name: Basic test of native fcli
+#        run: ./fcli --help && ./fcli get --help
+#
+#      - name: Package native fcli
+#        run: tar -zcvf fcli-mac.tgz ./fcli
+#
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          path: ./fcli-mac.tgz
 
   native_win:
     name: native-image-win
     needs: build
     runs-on: windows-2019
     steps:
+    - name: Check-out source code
+      uses: actions/checkout@v2
+
     - uses: DeLaGuardo/setup-graalvm@3
       with:
         graalvm-version: '21.2.0.java11'
+
 
     - name: Install GraalVM's native-image extension
       run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
@@ -163,6 +182,9 @@ jobs:
         ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar fcli
       shell: cmd
 
+    - name: Make copy of uncompressed fcli.exe
+      run: |
+        copy fcli.exe fcli-uncompressed.exe
       
     - name: Compress native fcli
       uses: svenstaro/upx-action@v2
@@ -175,7 +197,7 @@ jobs:
         .\fcli.exe get --help
         
     - name: Package native fcli
-      run: 7z a fcli-windows.zip fcli.exe
+      run: 7z a fcli-windows.zip fcli*.exe
 
     - uses: actions/upload-artifact@v2
       with:
@@ -184,7 +206,8 @@ jobs:
   release:
     name: release
     if: needs.build.outputs.do_release
-    needs: [build, native_linux, native_mac, native_win]
+#    needs: [build, native_linux, native_mac, native_win]
+    needs: [build, native_win]
     runs-on: ubuntu-latest
     steps:
       - name: Check-out source code

@@ -1,10 +1,12 @@
 package com.fortify.cli.tools.model;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
 
+@ReflectiveAccess
 public class ToolPackage{
     @Getter @Setter private String Name;
     @Getter @Setter private String DefaultVersion;

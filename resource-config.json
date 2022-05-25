@@ -1,0 +1,10 @@
+{
+  "resources": {
+    "includes": [
+      {"pattern": ".*/ToolPackages.yaml$"},
+      {"pattern": ".*ToolPackages.yaml$"}
+    ],
+    "excludes": [
+     ]
+  }
+}

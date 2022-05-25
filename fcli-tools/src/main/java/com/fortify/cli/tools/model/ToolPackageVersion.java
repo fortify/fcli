@@ -1,8 +1,10 @@
 package com.fortify.cli.tools.model;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.Setter;
 
+@ReflectiveAccess
 public class ToolPackageVersion{
     @Getter @Setter private String Version;
     @Getter @Setter private String Url;
