@@ -159,13 +159,9 @@ jobs:
     needs: build
     runs-on: windows-2019
     steps:
-#    - name: Check-out source code
-#      uses: actions/checkout@v2
-
     - uses: DeLaGuardo/setup-graalvm@3
       with:
         graalvm-version: '21.2.0.java11'
-
 
     - name: Install GraalVM's native-image extension
       run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
@@ -180,10 +176,6 @@ jobs:
         ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar fcli
       shell: cmd
 
-    - name: Make copy of uncompressed fcli.exe
-      run: |
-        copy fcli.exe fcli-uncompressed.exe
-      
     - name: Compress native fcli
       uses: svenstaro/upx-action@v2
       with:

@@ -16,7 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
- * #ToolPackageBase serves as a base class for "tool-packages" command class which is a class that's responsible for
+ * #ToolPackageBase serves as a base class for "tool-package" command classes, which are classes responsible for
  * downloading and/or installing (in addition to other functions) tools or packages that an end-user may find useful.
  * "tools and packages" can be things like sample source code, plugins, and even CLI tools.
  *
@@ -45,17 +45,20 @@ public abstract class ToolPackageBase {
     /**
      * When subclassed, custom logic for how to install the tool-package will be implemented here.
      * @param installPath       The directory where the tool should be installed.
-     * @param packageVersion    The version of the tool or package to be retrieved.
+     * @param packageVersion    The version of the tool or package to be retrieved and installed.
      */
     public abstract void Install(InstallPathMixin installPath,  PackageVersionMixin packageVersion);
 
     /**
      * When subclassed, custom logic for how to uninstall the tool-package will be implemented here.
+     * @param pv The version of the package you wish to uninstall.
      */
     public abstract void Uninstall(PackageVersionMixin pv);
 
-
-
+    /**
+     * Lists all versions available for download
+     * @param printPackageVersionUrls For all versions listed, the associated download URL will be printed. By default, these URLs are not printed.
+     */
     @Command(
             name = "list",
             description = "List which versions can be downloaded and/or installed."
