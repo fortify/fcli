@@ -26,17 +26,17 @@ package com.fortify.cli.fod.command.auth;
 
 import java.util.Optional;
 
-import com.fortify.cli.common.auth.login.ILoginHandler;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.command.auth.login.AbstractAuthLoginCommand;
-import com.fortify.cli.common.picocli.command.auth.login.LoginConnectionOptions;
-import com.fortify.cli.common.picocli.command.auth.login.LoginUserCredentialOptions;
-import com.fortify.cli.fod.auth.login.FoDLoginConfig;
-import com.fortify.cli.fod.auth.login.FoDLoginHandler;
-import com.fortify.cli.fod.auth.login.IFoDClientCredentialsConfig;
-import com.fortify.cli.fod.auth.login.IFoDUserCredentialsConfig;
+import com.fortify.cli.common.picocli.command.session.login.AbstractSessionLoginCommand;
+import com.fortify.cli.common.picocli.command.session.login.LoginConnectionOptions;
+import com.fortify.cli.common.picocli.command.session.login.LoginUserCredentialOptions;
+import com.fortify.cli.common.session.login.ISessionLoginHandler;
+import com.fortify.cli.fod.session.login.FoDSessionLoginConfig;
+import com.fortify.cli.fod.session.login.FoDSessionLoginHandler;
+import com.fortify.cli.fod.session.login.IFoDClientCredentialsConfig;
+import com.fortify.cli.fod.session.login.IFoDUserCredentialsConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -48,8 +48,8 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = ProductIdentifiers.FOD, description = "Login to FoD", sortOptions = false)
 @RequiresProduct(ProductOrGroup.FOD)
-public class FoDLoginCommand extends AbstractAuthLoginCommand<FoDLoginConfig> {
-	@Getter @Inject private FoDLoginHandler sscLoginHandler;
+public class FoDLoginCommand extends AbstractSessionLoginCommand<FoDSessionLoginConfig> {
+	@Getter @Inject private FoDSessionLoginHandler sscLoginHandler;
 	
 	@ArgGroup(exclusive = false, multiplicity = "1", heading = "FoD connection options:%n", order = 1)
 	@Getter private LoginConnectionOptions connectionOptions;
@@ -82,13 +82,13 @@ public class FoDLoginCommand extends AbstractAuthLoginCommand<FoDLoginConfig> {
     }
 	
 	@Override
-	protected String getAuthSessionType() {
+	protected String getSessionType() {
 		return ProductIdentifiers.FOD;
 	}
 	
 	@Override
-	protected final FoDLoginConfig getLoginConfig() {
-		FoDLoginConfig config = new FoDLoginConfig();
+	protected final FoDSessionLoginConfig getLoginConfig() {
+		FoDSessionLoginConfig config = new FoDSessionLoginConfig();
 		config.setConnectionConfig(getConnectionOptions());
 		Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getUserCredentialOptions).ifPresent(config::setFodUserCredentialsConfig);
 		Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getClientCredentialOptions).ifPresent(config::setFodClientCredentialsConfig);
@@ -96,7 +96,7 @@ public class FoDLoginCommand extends AbstractAuthLoginCommand<FoDLoginConfig> {
 	}
 
 	@Override
-	protected ILoginHandler<FoDLoginConfig> getLoginHandler() {
+	protected ISessionLoginHandler<FoDSessionLoginConfig> getLoginHandler() {
 		return sscLoginHandler;
 	}
 }

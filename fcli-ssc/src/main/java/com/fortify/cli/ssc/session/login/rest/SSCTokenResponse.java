@@ -22,34 +22,25 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command;
+package com.fortify.cli.ssc.session.login.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.Mixin;
+import lombok.Data;
 
-@ReflectiveAccess
-@RequiresProduct(ProductOrGroup.SSC)
-public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private ObjectMapper objectMapper;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-	@Getter @Mixin  private SessionConsumerMixin sessionConsumerMixin;
-
-	@Override @SneakyThrows
-	public final void run() {
-		// TODO Do we want to do anything with the results, like formatting it based on output options?
-		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(sessionConsumerMixin.getSessionName(), this::runWithUnirest);
+@Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+public final class SSCTokenResponse {
+	private SSCTokenResponse.SSCTokenData data;
+	@Data @ReflectiveAccess
+	public static final class SSCTokenData {
+		private int id;
+		private Date terminalDate;
+		private Date creationDate;
+		private String type;
+		private char[] token;
+		private String _href;
 	}
-	
-	protected abstract Void runWithUnirest(UnirestInstance unirest);
 }

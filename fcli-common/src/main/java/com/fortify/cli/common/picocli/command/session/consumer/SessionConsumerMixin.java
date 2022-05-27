@@ -22,34 +22,27 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command;
+package com.fortify.cli.common.picocli.command.session.consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
+import com.fortify.cli.common.session.ISessionNameProvider;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@RequiresProduct(ProductOrGroup.SSC)
-public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private ObjectMapper objectMapper;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-	@Getter @Mixin  private SessionConsumerMixin sessionConsumerMixin;
-
-	@Override @SneakyThrows
-	public final void run() {
-		// TODO Do we want to do anything with the results, like formatting it based on output options?
-		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(sessionConsumerMixin.getSessionName(), this::runWithUnirest);
+public class SessionConsumerMixin implements ISessionNameProvider {
+	@ArgGroup(heading = "Optional session name:%n", order = 1000)
+    @Getter private SessionConsumerNameOptions nameOptions;
+	
+	static class SessionConsumerNameOptions {
+		@Option(names = {"--session"}, required = false, defaultValue = "default")
+		@Getter private String sessionName;
 	}
 	
-	protected abstract Void runWithUnirest(UnirestInstance unirest);
+	@Override
+	public String getSessionName() {
+		return nameOptions==null ? "default" : nameOptions.getSessionName();
+	}
 }

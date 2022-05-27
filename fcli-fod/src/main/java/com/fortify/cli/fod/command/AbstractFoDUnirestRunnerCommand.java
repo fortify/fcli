@@ -27,7 +27,7 @@ package com.fortify.cli.fod.command;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.config.product.ProductOrGroup;
 import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.command.auth.consumer.AuthSessionConsumerMixin;
+import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
 import com.fortify.cli.fod.rest.unirest.runner.FoDAuthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -42,13 +42,13 @@ import picocli.CommandLine.Mixin;
 public abstract class AbstractFoDUnirestRunnerCommand implements Runnable {
 	@Getter @Inject private ObjectMapper objectMapper;
 	@Getter @Inject private FoDAuthenticatedUnirestRunner unirestRunner;
-	@Getter @Mixin  private AuthSessionConsumerMixin authSessionConsumerMixin;
+	@Getter @Mixin  private SessionConsumerMixin sessionConsumerMixin;
 
 	@Override @SneakyThrows
 	public final void run() {
 		// TODO Do we want to do anything with the results, like formatting it based on output options?
 		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(authSessionConsumerMixin.getAuthSessionName(), this::runWithUnirest);
+		unirestRunner.runWithUnirest(sessionConsumerMixin.getSessionName(), this::runWithUnirest);
 	}
 	
 	protected abstract Void runWithUnirest(UnirestInstance unirest);

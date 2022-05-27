@@ -22,34 +22,44 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command;
+package com.fortify.cli.fod.session.logout;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
+import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
+import com.fortify.cli.common.session.SessionPersistenceHelper;
+import com.fortify.cli.common.session.logout.ISessionLogoutHandler;
+import com.fortify.cli.fod.rest.unirest.runner.FoDAuthenticatedUnirestRunner;
+import com.fortify.cli.fod.session.FoDSessionData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
-@RequiresProduct(ProductOrGroup.SSC)
-public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private ObjectMapper objectMapper;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-	@Getter @Mixin  private SessionConsumerMixin sessionConsumerMixin;
+@Singleton @ReflectiveAccess
+public class FoDSessionLogoutHandler implements ISessionLogoutHandler {
+	@Getter @Inject private SessionPersistenceHelper sessionPersistenceHelper;
+	@Getter @Inject private FoDAuthenticatedUnirestRunner unirestRunner;
 
-	@Override @SneakyThrows
-	public final void run() {
-		// TODO Do we want to do anything with the results, like formatting it based on output options?
-		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(sessionConsumerMixin.getSessionName(), this::runWithUnirest);
+	@Override
+	public final void logout(String authSessionName) {
+		FoDSessionData data = sessionPersistenceHelper.getData(getSessionType(), authSessionName, FoDSessionData.class);
+		if ( data.hasActiveCachedTokenResponse() ) {
+			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
+		}
 	}
 	
-	protected abstract Void runWithUnirest(UnirestInstance unirest);
+	private final Void logout(UnirestInstance unirestInstance, FoDSessionData authSessionData) {
+		try {
+			// TODO Invalidate token if possible in FoD
+		} catch ( RuntimeException e ) {
+			System.out.println("Error deserializing token:" + e.getMessage());
+		}
+		return null;
+	}
+
+	@Override
+	public String getSessionType() {
+		return ProductIdentifiers.FOD;
+	}
 }

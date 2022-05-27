@@ -26,17 +26,17 @@ package com.fortify.cli.ssc.rest.unirest.runner;
 
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
-import com.fortify.cli.common.rest.unirest.runner.AbstractAuthSessionUnirestRunner;
-import com.fortify.cli.ssc.auth.session.SSCAuthSessionData;
+import com.fortify.cli.common.rest.unirest.runner.AbstractSessionUnirestRunner;
+import com.fortify.cli.ssc.session.SSCSessionData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
-public class SSCAuthenticatedUnirestRunner extends AbstractAuthSessionUnirestRunner<SSCAuthSessionData> {
+public class SSCAuthenticatedUnirestRunner extends AbstractSessionUnirestRunner<SSCSessionData> {
 	@Override
-	protected void configure(String authSessionName, SSCAuthSessionData authSessionData, UnirestInstance unirestInstance) {
+	protected void configure(String authSessionName, SSCSessionData authSessionData, UnirestInstance unirestInstance) {
 		char[] token = authSessionData.getActiveToken();
 		if ( token==null ) {
 			throw new IllegalStateException("SSC token not available or has expired, please login again");
@@ -51,12 +51,12 @@ public class SSCAuthenticatedUnirestRunner extends AbstractAuthSessionUnirestRun
 	}
 
 	@Override
-	public final String getAuthSessionType() {
+	public final String getSessionType() {
 		return ProductIdentifiers.SSC;
 	}
 
 	@Override
-	protected Class<SSCAuthSessionData> getAuthSessionDataClass() {
-		return SSCAuthSessionData.class;
+	protected Class<SSCSessionData> getSessionDataClass() {
+		return SSCSessionData.class;
 	}
 }

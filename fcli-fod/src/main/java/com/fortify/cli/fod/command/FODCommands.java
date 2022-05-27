@@ -1,10 +1,9 @@
 package com.fortify.cli.fod.command;
 
-
-import com.fortify.cli.fod.command.crud.FoDApplicationCommands;
 import com.fortify.cli.fod.command.entity.application.FODApplicationCommands;
 import com.fortify.cli.fod.command.entity.dast_scan.FODDASTScanCommands;
 import com.fortify.cli.fod.command.entity.sast_scan.FODSASTScanCommands;
+
 import picocli.CommandLine.Command;
 
 @Command(

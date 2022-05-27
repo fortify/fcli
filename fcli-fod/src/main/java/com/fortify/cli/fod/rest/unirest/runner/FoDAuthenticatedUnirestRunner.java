@@ -26,17 +26,17 @@ package com.fortify.cli.fod.rest.unirest.runner;
 
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
-import com.fortify.cli.common.rest.unirest.runner.AbstractAuthSessionUnirestRunner;
-import com.fortify.cli.fod.auth.session.FoDAuthSessionData;
+import com.fortify.cli.common.rest.unirest.runner.AbstractSessionUnirestRunner;
+import com.fortify.cli.fod.session.FoDSessionData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
-public class FoDAuthenticatedUnirestRunner extends AbstractAuthSessionUnirestRunner<FoDAuthSessionData> {
+public class FoDAuthenticatedUnirestRunner extends AbstractSessionUnirestRunner<FoDSessionData> {
 	@Override
-	protected void configure(String authSessionName, FoDAuthSessionData authSessionData, UnirestInstance unirestInstance) {
+	protected void configure(String authSessionName, FoDSessionData authSessionData, UnirestInstance unirestInstance) {
 		String token = authSessionData.getActiveBearerToken();
 		if ( token==null ) {
 			throw new IllegalStateException("FoD token not available or has expired, please login again");
@@ -51,12 +51,12 @@ public class FoDAuthenticatedUnirestRunner extends AbstractAuthSessionUnirestRun
 	}
 
 	@Override
-	public final String getAuthSessionType() {
+	public final String getSessionType() {
 		return ProductIdentifiers.FOD;
 	}
 
 	@Override
-	protected Class<FoDAuthSessionData> getAuthSessionDataClass() {
-		return FoDAuthSessionData.class;
+	protected Class<FoDSessionData> getSessionDataClass() {
+		return FoDSessionData.class;
 	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,34 +22,33 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command;
+package com.fortify.cli.common.session.login;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
+import com.fortify.cli.common.session.ISessionData;
+import com.fortify.cli.common.session.ISessionTypeProvider;
+import com.fortify.cli.common.session.SessionPersistenceHelper;
+import com.fortify.cli.common.session.logout.SessionLogoutHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
-@RequiresProduct(ProductOrGroup.SSC)
-public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private ObjectMapper objectMapper;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-	@Getter @Mixin  private SessionConsumerMixin sessionConsumerMixin;
-
-	@Override @SneakyThrows
-	public final void run() {
-		// TODO Do we want to do anything with the results, like formatting it based on output options?
-		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(sessionConsumerMixin.getSessionName(), this::runWithUnirest);
-	}
+public abstract class AbstractSessionLoginHandler<C> implements ISessionLoginHandler<C>, ISessionTypeProvider {
+	@Getter @Inject private SessionPersistenceHelper sessionPersistenceHelper;
+	@Inject private SessionLogoutHelper sessionLogoutHelper;
 	
-	protected abstract Void runWithUnirest(UnirestInstance unirest);
+	public final void login(String authSessionName, C loginConfig) {
+		logoutIfSessionExists(authSessionName);
+		ISessionData authSessionData = _login(authSessionName, loginConfig);
+		sessionPersistenceHelper.saveData(getSessionType(), authSessionName, authSessionData);
+	}
+
+	private void logoutIfSessionExists(String authSessionName) {
+		String sessionType = getSessionType();
+		if ( sessionPersistenceHelper.exists(sessionType, authSessionName) ) {
+			// Log out from previous session before creating a new session
+			sessionLogoutHelper.logoutAndDestroy(sessionType, authSessionName);
+		}
+	}
+
+	protected abstract ISessionData _login(String authSessionName, C loginConfig);
 }

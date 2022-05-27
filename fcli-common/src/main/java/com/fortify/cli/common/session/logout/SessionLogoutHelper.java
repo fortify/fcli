@@ -22,34 +22,37 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command;
+package com.fortify.cli.common.session.logout;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
+import java.util.Collection;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.fortify.cli.common.session.SessionPersistenceHelper;
+
 import jakarta.inject.Inject;
-import kong.unirest.UnirestInstance;
+import jakarta.inject.Singleton;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
-@RequiresProduct(ProductOrGroup.SSC)
-public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private ObjectMapper objectMapper;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-	@Getter @Mixin  private SessionConsumerMixin sessionConsumerMixin;
-
-	@Override @SneakyThrows
-	public final void run() {
-		// TODO Do we want to do anything with the results, like formatting it based on output options?
-		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(sessionConsumerMixin.getSessionName(), this::runWithUnirest);
+@Singleton
+public final class SessionLogoutHelper {
+	private final SessionPersistenceHelper sessionPersistenceHelper;
+	@Getter private Map<String, ISessionLogoutHandler> sessionLogoutHandlers;
+	
+	@Inject
+	public SessionLogoutHelper(SessionPersistenceHelper sessionPersistenceHelper) {
+		this.sessionPersistenceHelper = sessionPersistenceHelper;
 	}
 	
-	protected abstract Void runWithUnirest(UnirestInstance unirest);
+	@Inject
+	public void setLogoutManagers(Collection<ISessionLogoutHandler> sessionLogoutHandlers) {
+		this.sessionLogoutHandlers = sessionLogoutHandlers.stream().collect(
+			Collectors.toMap(ISessionLogoutHandler::getSessionType, Function.identity()));
+	}
+	
+	public final void logoutAndDestroy(String authSessionType, String authSessionName) {
+		sessionLogoutHandlers.get(authSessionType).logout(authSessionName);
+		sessionPersistenceHelper.destroy(authSessionType, authSessionName);
+	}
 }

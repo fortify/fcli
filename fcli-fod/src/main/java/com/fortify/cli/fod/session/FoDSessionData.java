@@ -22,23 +22,54 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.command.auth;
+package com.fortify.cli.fod.session;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.command.session.logout.AbstractSessionLogoutCommand;
+import com.fortify.cli.common.session.AbstractSessionData;
+import com.fortify.cli.common.session.summary.SessionSummary;
+import com.fortify.cli.fod.session.login.FoDSessionLoginConfig;
+import com.fortify.cli.fod.session.login.rest.FoDTokenResponse;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine.Command;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@ReflectiveAccess
-@Command(name = ProductIdentifiers.FOD, description = "Logout from FoD", sortOptions = false)
-@RequiresProduct(ProductOrGroup.FOD)
-public class FoDLogoutCommand extends AbstractSessionLogoutCommand {
-
-	@Override
+@Data @EqualsAndHashCode(callSuper = true) @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+public class FoDSessionData extends AbstractSessionData {
+	private FoDTokenResponse cachedTokenResponse;
+	
+	public FoDSessionData() {}
+	
+	public FoDSessionData(FoDSessionLoginConfig loginConfig, FoDTokenResponse tokenResponse) {
+		super(loginConfig.getConnectionConfig());
+		this.cachedTokenResponse = tokenResponse;
+	}
+	
+	@JsonIgnore @Override
 	public String getSessionType() {
 		return ProductIdentifiers.FOD;
+	}
+	
+	@JsonIgnore
+	public final boolean hasActiveCachedTokenResponse() {
+		return getCachedTokenResponse()!=null && cachedTokenResponse.isActive(); 
+	}
+	
+	@JsonIgnore 
+	public String getActiveBearerToken() {
+		return hasActiveCachedTokenResponse() ? cachedTokenResponse.getAccessToken() : null; 
+	}
+	
+	@JsonIgnore @Override
+	protected Date getSessionExpiryDate() {
+		Date sessionExpiryDate = SessionSummary.EXPIRES_UNKNOWN;
+		if ( getCachedTokenResponse()!=null ) {
+			sessionExpiryDate = new Date(getCachedTokenResponse().getExpiresAt());
+		}
+		return sessionExpiryDate;
 	}
 }

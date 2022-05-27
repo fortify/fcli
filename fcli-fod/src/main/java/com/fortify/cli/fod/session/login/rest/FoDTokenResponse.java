@@ -22,34 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command;
+package com.fortify.cli.fod.session.login.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
-import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.Mixin;
+import lombok.Data;
 
-@ReflectiveAccess
-@RequiresProduct(ProductOrGroup.SSC)
-public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private ObjectMapper objectMapper;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-	@Getter @Mixin  private SessionConsumerMixin sessionConsumerMixin;
+@Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+public final class FoDTokenResponse {
+	@JsonProperty("access_token") private String accessToken;
+	@JsonProperty("expires_at") private long expiresAt;
 
-	@Override @SneakyThrows
-	public final void run() {
-		// TODO Do we want to do anything with the results, like formatting it based on output options?
-		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(sessionConsumerMixin.getSessionName(), this::runWithUnirest);
+	@JsonProperty("expires_in")
+	public void setExpiresIn(long expiresIn) {
+		this.expiresAt = new Date().getTime()+((expiresIn-5)*1000);
 	}
-	
-	protected abstract Void runWithUnirest(UnirestInstance unirest);
+
+	@JsonIgnore public boolean isActive() {
+		return new Date().getTime() < expiresAt;
+	}
 }

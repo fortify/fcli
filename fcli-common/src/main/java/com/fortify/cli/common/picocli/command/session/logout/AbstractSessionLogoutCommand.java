@@ -22,34 +22,39 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command;
+package com.fortify.cli.common.picocli.command.session.logout;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
+import com.fortify.cli.common.picocli.command.session.AbstractCommandWithSessionPersistenceHelper;
 import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
+import com.fortify.cli.common.session.logout.SessionLogoutHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.ParentCommand;
 
 @ReflectiveAccess
-@RequiresProduct(ProductOrGroup.SSC)
-public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private ObjectMapper objectMapper;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-	@Getter @Mixin  private SessionConsumerMixin sessionConsumerMixin;
-
-	@Override @SneakyThrows
+public abstract class AbstractSessionLogoutCommand extends AbstractCommandWithSessionPersistenceHelper implements Runnable {
+	@Getter @Inject private SessionLogoutHelper sessionLogoutHelper;
+	@Getter @Mixin private SessionConsumerMixin sessionConsumerMixin;
+	@ParentCommand private SessionLogoutCommand parent;
+	
+	@Override
 	public final void run() {
-		// TODO Do we want to do anything with the results, like formatting it based on output options?
-		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(sessionConsumerMixin.getSessionName(), this::runWithUnirest);
+		if ( parent.isLogoutAll() ) {
+			System.out.println(String.format("Logging out all %s sessions", getSessionType()));
+			getSessionPersistenceHelper().list(getSessionType()).forEach(this::logoutAndDestroy);
+		} else {
+			String authSessionName = sessionConsumerMixin.getSessionName();
+			logoutAndDestroy(authSessionName);
+		}
 	}
 	
-	protected abstract Void runWithUnirest(UnirestInstance unirest);
+	private final void logoutAndDestroy(String authSessionName) {
+		String authSessionType = getSessionType();
+		sessionLogoutHelper.logoutAndDestroy(authSessionType, authSessionName);
+	}
+	
+	protected abstract String getSessionType();
 }
