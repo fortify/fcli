@@ -5,6 +5,7 @@ import com.fortify.cli.ssc.picocli.command.application.SSCApplicationCommands;
 import com.fortify.cli.ssc.picocli.command.application.version.SSCApplicationVersionCommands;
 import com.fortify.cli.ssc.picocli.command.application.version.artifact.SSCApplicationVersionArtifactCommands;
 import com.fortify.cli.ssc.picocli.command.application.version.attribute.SSCApplicationVersionAttributeCommands;
+import com.fortify.cli.ssc.picocli.command.event.SSCSystemEventCommands;
 import com.fortify.cli.ssc.picocli.command.session.SSCSessionCommands;
 
 import picocli.CommandLine.Command;
@@ -18,7 +19,8 @@ import picocli.CommandLine.Command;
                 SSCApplicationCommands.class,
                 SSCApplicationVersionCommands.class,
                 SSCApplicationVersionArtifactCommands.class,
-                SSCApplicationVersionAttributeCommands.class
+                SSCApplicationVersionAttributeCommands.class,
+                SSCSystemEventCommands.class
         }
 )
 public class SSCCommands {
