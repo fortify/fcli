@@ -24,22 +24,19 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.crud;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.command.crud.RootCreateCommand;
 import com.fortify.cli.common.picocli.command.crud.RootDeleteCommand;
 import com.fortify.cli.common.picocli.command.crud.RootGetCommand;
 import com.fortify.cli.common.picocli.command.crud.RootUpdateCommand;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
+import com.fortify.cli.fod.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 public class FoDCrudRootCommands {
 	@ReflectiveAccess
-		@Command(name = ProductIdentifiers.FOD, description = "Get entity data from FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
+		@Command(name = FoDConstants.PRODUCT_ID, description = "Get entity data from FoD")
 	public static class FoDGetCommand {
 		public static final OutputConfig defaultOutputConfig() {
 			return RootGetCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
@@ -47,8 +44,7 @@ public class FoDCrudRootCommands {
 	}
 	
 	@ReflectiveAccess
-		@Command(name = ProductIdentifiers.FOD, description = "Create entities in FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
+		@Command(name = FoDConstants.PRODUCT_ID, description = "Create entities in FoD")
 	public static class FoDCreateCommand {
 		public static final OutputConfig defaultOutputConfig() {
 			return RootCreateCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
@@ -56,8 +52,7 @@ public class FoDCrudRootCommands {
 	}
 	
 	@ReflectiveAccess
-		@Command(name = ProductIdentifiers.FOD, description = "Update entities in FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
+		@Command(name = FoDConstants.PRODUCT_ID, description = "Update entities in FoD")
 	public static class FoDUpdateCommand {
 		public static final OutputConfig defaultOutputConfig() {
 			return RootUpdateCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));
@@ -65,8 +60,7 @@ public class FoDCrudRootCommands {
 	}
 	
 	@ReflectiveAccess
-		@Command(name = ProductIdentifiers.FOD, description = "Delete entities from FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
+		@Command(name = FoDConstants.PRODUCT_ID, description = "Delete entities from FoD")
 	public static class FoDDeleteCommand {
 		public static final OutputConfig defaultOutputConfig() {
 			return RootDeleteCommand.defaultOutputConfig().inputTransformer(json->json.get("data"));

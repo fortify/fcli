@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,34 +22,42 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.api;
-
-import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.picocli.command.api.APICommandMixin;
-import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
-import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
-import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+package com.fortify.cli.ssc.picocli.mixin.application.version;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "api", description = "Invoke ScanCentral DAST REST API")
-public final class SCDastApiCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-	@Mixin private OutputMixin outputMixin;
-	@Mixin private APICommandMixin apiCommandMixin;
+public class SSCParentApplicationVersionMixin {
 	
-	@Override
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(apiCommandMixin.prepareRequest(unirest));
-		return null;
+	// get/retrieve/delete/download version <entity> --from
+	public static class From {
+		@Option(names = {"--from"}, required = true, description = "Application version id or <application>/<version> name")
+		private String versionNameOrId;
+		
+		public String getApplicationVersionId(UnirestInstance unirestInstance) {
+			return versionNameOrId; // TODO Find by name if not numeric
+		}
 	}
 	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return new OutputConfig().defaultFormat(OutputFormat.json);
+	// create/update version <entity> --for <version>
+	public static class For {
+		@Option(names = {"--for"}, required = true, description = "Application version id or <application>/<version> name")
+		private String versionNameOrId;
+			
+		public String getApplicationVersionId(UnirestInstance unirestInstance) {
+			return versionNameOrId; // TODO Find by name if not numeric
+		}
+	}
+	
+	// upload version <entity> --to <version>
+	public static class To {
+		@Option(names = {"--to"}, required = true, description = "Application version id or <application>/<version> name")
+		private String versionNameOrId;
+			
+		public String getApplicationVersionId(UnirestInstance unirestInstance) {
+			return versionNameOrId; // TODO Find by name if not numeric
+		}
 	}
 }

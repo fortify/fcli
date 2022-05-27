@@ -24,9 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.summary;
 
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.session.summary.AbstractSessionSummaryProvider;
 import com.fortify.cli.common.session.summary.SessionSummary;
+import com.fortify.cli.fod.FoDConstants;
 import com.fortify.cli.fod.session.FoDSessionData;
 
 import jakarta.inject.Singleton;
@@ -34,7 +34,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class FoDSessionSummaryProvider extends AbstractSessionSummaryProvider {
 	public final String getSessionType() {
-		return ProductIdentifiers.FOD;
+		return FoDConstants.SESSION_TYPE;
 	}
 	
 	@Override

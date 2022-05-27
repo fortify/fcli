@@ -24,10 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.session.login;
 
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.rest.data.IConnectionConfig;
 import com.fortify.cli.common.session.ISessionData;
 import com.fortify.cli.common.session.login.AbstractSessionLoginHandler;
+import com.fortify.cli.ssc.SSCConstants;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCUnauthenticatedUnirestRunner;
 import com.fortify.cli.ssc.session.SSCSessionData;
 import com.fortify.cli.ssc.session.login.rest.SSCTokenRequest;
@@ -43,7 +43,7 @@ public class SSCSessionLoginHandler extends AbstractSessionLoginHandler<SSCSessi
 	@Inject private SSCUnauthenticatedUnirestRunner unauthenticatedUnirestRunner;
 
 	public final String getSessionType() {
-		return ProductIdentifiers.SSC;
+		return SSCConstants.SESSION_TYPE;
 	}
 
 	@Override

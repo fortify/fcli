@@ -25,9 +25,6 @@
 package com.fortify.cli.sc_dast.picocli.command.crud.get;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.command.crud.RootGetCommand;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 
@@ -35,8 +32,7 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = ProductIdentifiers.SC_DAST, description = "Get entity data from ScanCentral DAST")
-@RequiresProduct(ProductOrGroup.SC_DAST)
+@Command(name = "get", description = "Get entity data from ScanCentral DAST")
 public class SCDastGetCommand {
 	public static final OutputConfig defaultOutputConfig() {
 		return RootGetCommand.defaultOutputConfig().inputTransformer(SCDastGetCommand::getItems);

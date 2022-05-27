@@ -26,13 +26,11 @@ package com.fortify.cli.fod.command.auth;
 
 import java.util.Optional;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.command.session.login.AbstractSessionLoginCommand;
 import com.fortify.cli.common.picocli.command.session.login.LoginConnectionOptions;
 import com.fortify.cli.common.picocli.command.session.login.LoginUserCredentialOptions;
 import com.fortify.cli.common.session.login.ISessionLoginHandler;
+import com.fortify.cli.fod.FoDConstants;
 import com.fortify.cli.fod.session.login.FoDSessionLoginConfig;
 import com.fortify.cli.fod.session.login.FoDSessionLoginHandler;
 import com.fortify.cli.fod.session.login.IFoDClientCredentialsConfig;
@@ -46,8 +44,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = ProductIdentifiers.FOD, description = "Login to FoD", sortOptions = false)
-@RequiresProduct(ProductOrGroup.FOD)
+@Command(name = "login", description = "Login to FoD", sortOptions = false)
 public class FoDLoginCommand extends AbstractSessionLoginCommand<FoDSessionLoginConfig> {
 	@Getter @Inject private FoDSessionLoginHandler sscLoginHandler;
 	
@@ -83,7 +80,7 @@ public class FoDLoginCommand extends AbstractSessionLoginCommand<FoDSessionLogin
 	
 	@Override
 	protected String getSessionType() {
-		return ProductIdentifiers.FOD;
+		return FoDConstants.SESSION_TYPE;
 	}
 	
 	@Override

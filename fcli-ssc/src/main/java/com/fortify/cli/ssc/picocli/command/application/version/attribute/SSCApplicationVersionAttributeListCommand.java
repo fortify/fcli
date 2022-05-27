@@ -22,34 +22,44 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.api;
+package com.fortify.cli.ssc.picocli.command.application.version.attribute;
 
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.picocli.command.api.APICommandMixin;
+import com.fortify.cli.common.picocli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
-import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.picocli.mixin.application.version.SSCParentApplicationVersionMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.SneakyThrows;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "api", description = "Invoke ScanCentral DAST REST API")
-public final class SCDastApiCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-	@Mixin private OutputMixin outputMixin;
-	@Mixin private APICommandMixin apiCommandMixin;
+@Command(name = "list", description = "List application version attributes on SSC.")
+@FixSuperclassInjection
+public class SSCApplicationVersionAttributeListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+	@CommandLine.Mixin private SSCParentApplicationVersionMixin.From parentVersionHandler;
+	@CommandLine.Mixin private OutputMixin outputMixin;
 	
-	@Override
+	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(apiCommandMixin.prepareRequest(unirest));
+		outputMixin.write(unirest.get("/api/v1/projectVersions/{id}/attributes")
+				.routeParam("id", parentVersionHandler.getApplicationVersionId(unirest))
+				.accept("application/json")
+				.header("Content-Type", "application/json"));
+
 		return null;
 	}
 	
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
-		return new OutputConfig().defaultFormat(OutputFormat.json);
+		return new OutputConfig()
+				.defaultFormat(OutputFormat.table)
+				.inputTransformer(json->json.get("data"))
+				.defaultColumns("id#guid#value#values[*].name:Value");
 	}
 }

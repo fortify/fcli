@@ -24,9 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.command;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
 
@@ -38,9 +35,7 @@ import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@RequiresProduct(ProductOrGroup.SSC)
 public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private ObjectMapper objectMapper;
 	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
 	@Getter @Mixin  private SessionConsumerMixin sessionConsumerMixin;
 

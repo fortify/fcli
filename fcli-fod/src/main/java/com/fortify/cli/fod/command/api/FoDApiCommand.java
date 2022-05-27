@@ -24,14 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.api;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
+import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.command.api.APICommandMixin;
-import com.fortify.cli.common.picocli.command.api.RootApiCommand;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.fod.command.AbstractFoDUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -40,8 +37,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = ProductIdentifiers.FOD, description = "Invoke FoD REST API")
-@RequiresProduct(ProductOrGroup.FOD)
+@Command(name = "api", description = "Invoke FoD REST API")
 public final class FoDApiCommand extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
 	@Mixin private OutputMixin outputMixin;
 	@Mixin private APICommandMixin apiCommand;
@@ -54,6 +50,6 @@ public final class FoDApiCommand extends AbstractFoDUnirestRunnerCommand impleme
 	
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
-		return RootApiCommand.defaultOutputConfig();
+		return new OutputConfig().defaultFormat(OutputFormat.json);
 	}
 }

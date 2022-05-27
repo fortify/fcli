@@ -24,21 +24,18 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.auth;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.command.session.logout.AbstractSessionLogoutCommand;
+import com.fortify.cli.fod.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = ProductIdentifiers.FOD, description = "Logout from FoD", sortOptions = false)
-@RequiresProduct(ProductOrGroup.FOD)
+@Command(name = "logout", description = "Logout from FoD", sortOptions = false)
 public class FoDLogoutCommand extends AbstractSessionLogoutCommand {
 
 	@Override
 	public String getSessionType() {
-		return ProductIdentifiers.FOD;
+		return FoDConstants.SESSION_TYPE;
 	}
 }

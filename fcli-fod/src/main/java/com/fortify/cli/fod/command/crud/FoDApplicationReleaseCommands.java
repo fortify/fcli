@@ -24,11 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.crud;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.fod.command.AbstractFoDUnirestRunnerCommand;
 import com.fortify.cli.fod.command.crud.FoDCrudRootCommands.FoDGetCommand;
 
@@ -51,7 +49,6 @@ public class FoDApplicationReleaseCommands {
 
 	@ReflectiveAccess
 		@Command(name = NAME, aliases = {ALIAS},description = "Get "+DESC+" from FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Get extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
 		@CommandLine.Mixin
 		@Getter private OutputMixin outputMixin;
@@ -73,7 +70,6 @@ public class FoDApplicationReleaseCommands {
 	
 	@Singleton
 		@Command(name = NAME, aliases = {ALIAS}, description = "Create "+DESC+" in FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Create extends AbstractFoDUnirestRunnerCommand {
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
@@ -84,7 +80,6 @@ public class FoDApplicationReleaseCommands {
 	
 	@Singleton
 		@Command(name = NAME, aliases = {ALIAS}, description = "Update "+DESC+" in FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Update extends AbstractFoDUnirestRunnerCommand {
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
@@ -95,7 +90,6 @@ public class FoDApplicationReleaseCommands {
 	
 	@Singleton
 		@Command(name = NAME, aliases = {ALIAS}, description = "Delete "+DESC+" from FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Delete extends AbstractFoDUnirestRunnerCommand {
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {

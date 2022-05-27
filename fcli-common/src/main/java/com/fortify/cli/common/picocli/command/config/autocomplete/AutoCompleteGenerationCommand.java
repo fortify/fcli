@@ -35,6 +35,8 @@ import picocli.CommandLine.Spec;
  * TAB key to see and auto-complete options and sub-commands.
  * 
  * @author Ruud Senden
+ * 
+ * TODO: Add this to some proper place in the command structure
  */
 @ReflectiveAccess
 @Command(name = "generate-completion", description = {

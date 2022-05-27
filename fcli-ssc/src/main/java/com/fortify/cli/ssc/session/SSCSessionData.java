@@ -28,9 +28,9 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.session.AbstractSessionData;
 import com.fortify.cli.common.session.summary.SessionSummary;
+import com.fortify.cli.ssc.SSCConstants;
 import com.fortify.cli.ssc.session.login.SSCSessionLoginConfig;
 import com.fortify.cli.ssc.session.login.rest.SSCTokenResponse;
 import com.fortify.cli.ssc.session.login.rest.SSCTokenResponse.SSCTokenData;
@@ -58,7 +58,7 @@ public class SSCSessionData extends AbstractSessionData {
 	
 	@JsonIgnore @Override
 	public String getSessionType() {
-		return ProductIdentifiers.SSC;
+		return SSCConstants.SESSION_TYPE;
 	}
 	
 	@JsonIgnore 

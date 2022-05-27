@@ -22,34 +22,31 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.api;
+package com.fortify.cli.common.picocli.annotation;
 
-import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.picocli.command.api.APICommandMixin;
-import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
-import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
-import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+import static java.lang.annotation.ElementType.TYPE;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@ReflectiveAccess
-@Command(name = "api", description = "Invoke ScanCentral DAST REST API")
-public final class SCDastApiCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-	@Mixin private OutputMixin outputMixin;
-	@Mixin private APICommandMixin apiCommandMixin;
-	
-	@Override
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(apiCommandMixin.prepareRequest(unirest));
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return new OutputConfig().defaultFormat(OutputFormat.json);
-	}
-}
+import jakarta.inject.Inject;
+import jakarta.inject.Qualifier;
+
+/**
+ * No idea why this is needed, but without a (dummy) annotation like
+ * this, Picocli/Micronaut fails to inject fields annotated with {@link Inject}
+ * in superclasses of command classes.
+ * 
+ * TODO Any better ways to resolve this? Is this a Picocli/Micronaut bug?
+ * TODO Create simple test case and file a bug if necessary
+ *  
+ * @author rsenden
+ *
+ */
+@Qualifier
+@Retention(RetentionPolicy.RUNTIME)
+@Target(TYPE)
+@Inherited
+public @interface FixSuperclassInjection {}

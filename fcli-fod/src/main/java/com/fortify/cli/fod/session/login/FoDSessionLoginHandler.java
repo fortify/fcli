@@ -27,10 +27,10 @@ package com.fortify.cli.fod.session.login;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.rest.data.IConnectionConfig;
 import com.fortify.cli.common.session.ISessionData;
 import com.fortify.cli.common.session.login.AbstractSessionLoginHandler;
+import com.fortify.cli.fod.FoDConstants;
 import com.fortify.cli.fod.rest.unirest.runner.FoDUnauthenticatedUnirestRunner;
 import com.fortify.cli.fod.session.FoDSessionData;
 import com.fortify.cli.fod.session.login.rest.FoDTokenResponse;
@@ -45,7 +45,7 @@ public class FoDSessionLoginHandler extends AbstractSessionLoginHandler<FoDSessi
 	@Inject private FoDUnauthenticatedUnirestRunner unauthenticatedUnirestRunner;
 
 	public final String getSessionType() {
-		return ProductIdentifiers.FOD;
+		return FoDConstants.SESSION_TYPE;
 	}
 
 	@Override

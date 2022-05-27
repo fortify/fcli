@@ -24,9 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.logout;
 
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
 import com.fortify.cli.common.session.SessionPersistenceHelper;
 import com.fortify.cli.common.session.logout.ISessionLogoutHandler;
+import com.fortify.cli.fod.FoDConstants;
 import com.fortify.cli.fod.rest.unirest.runner.FoDAuthenticatedUnirestRunner;
 import com.fortify.cli.fod.session.FoDSessionData;
 
@@ -60,6 +60,6 @@ public class FoDSessionLogoutHandler implements ISessionLogoutHandler {
 
 	@Override
 	public String getSessionType() {
-		return ProductIdentifiers.FOD;
+		return FoDConstants.SESSION_TYPE;
 	}
 }

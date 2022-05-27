@@ -22,41 +22,42 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.rest.unirest.runner;
+package com.fortify.cli.ssc.picocli.command.application.version;
 
-import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
-import com.fortify.cli.common.rest.unirest.runner.AbstractSessionUnirestRunner;
-import com.fortify.cli.fod.FoDConstants;
-import com.fortify.cli.fod.session.FoDSessionData;
+import com.fortify.cli.common.output.OutputFormat;
+import com.fortify.cli.common.picocli.annotation.FixSuperclassInjection;
+import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
+import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
+import lombok.SneakyThrows;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
-@Singleton @ReflectiveAccess
-public class FoDAuthenticatedUnirestRunner extends AbstractSessionUnirestRunner<FoDSessionData> {
-	@Override
-	protected void configure(String authSessionName, FoDSessionData authSessionData, UnirestInstance unirestInstance) {
-		String token = authSessionData.getActiveBearerToken();
-		if ( token==null ) {
-			throw new IllegalStateException("FoD token not available or has expired, please login again");
-		}
-		setBearerHeader(unirestInstance, token);
-		ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
+@ReflectiveAccess
+@Command(name = "list", description = "List application versions on SSC.")
+@FixSuperclassInjection
+public class SSCApplicationVersionListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+	@CommandLine.Mixin private OutputMixin outputMixin;
+
+	@SneakyThrows
+	protected Void runWithUnirest(UnirestInstance unirest) {
+		outputMixin.write(
+				unirest.get("/api/v1/projectVersions?limit=-1")
+					.accept("application/json")
+					.header("Content-Type", "application/json"));
+
+		return null;
 	}
 	
-	private final void setBearerHeader(UnirestInstance unirestInstance, String token) {
-		final String authHeader = String.format("Bearer %s", token);
-		unirestInstance.config().setDefaultHeader("Authorization", authHeader);
-	}
-
 	@Override
-	public final String getSessionType() {
-		return FoDConstants.SESSION_TYPE;
-	}
-
-	@Override
-	protected Class<FoDSessionData> getSessionDataClass() {
-		return FoDSessionData.class;
+	public OutputConfig getOutputOptionsWriterConfig() {
+		return new OutputConfig()
+				.defaultFormat(OutputFormat.table)
+				.inputTransformer(json->json.get("data"))
+				.defaultColumns("id#project.name:Application#name");
 	}
 }

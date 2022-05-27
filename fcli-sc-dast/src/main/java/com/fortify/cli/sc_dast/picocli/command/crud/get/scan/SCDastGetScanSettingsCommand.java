@@ -24,10 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.picocli.command.crud.get.scan;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
@@ -45,13 +46,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class SCDastGetScanSettingsCommand extends SCDastScanSettingsConstants.Plural {
 	@ReflectiveAccess
 	@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
-	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static final class Impl extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
 		
 		@ArgGroup(exclusive = false, heading = "Get a specific scan settings:%n", order = 1)

@@ -24,8 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.picocli.command.crud.get.scan;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
@@ -46,7 +44,6 @@ import picocli.CommandLine.Option;
 public class SCDastGetScansCommand extends SCDastScanConstants.Plural {
 	@ReflectiveAccess
 		@Command(name = CMD, description = DESC_GET /*, aliases = {ALIAS}*/)
-	@RequiresProduct(ProductOrGroup.SC_DAST)
 	public static final class Impl extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
         @ArgGroup(exclusive = false, heading = "Get a specific scan:%n", order = 1)
         private SCDastGetScanOptions scanOptions;

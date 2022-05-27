@@ -24,21 +24,17 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.transfer;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
+import com.fortify.cli.fod.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 public class FoDTransferRootCommands {
 	@ReflectiveAccess
-		@Command(name = ProductIdentifiers.FOD, description = "Upload data FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
+		@Command(name = FoDConstants.PRODUCT_ID, description = "Upload data FoD")
 	public static class FoDUploadCommand {}
 	
 	@ReflectiveAccess
-		@Command(name = ProductIdentifiers.FOD, description = "Download data from FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
+		@Command(name = FoDConstants.PRODUCT_ID, description = "Download data from FoD")
 	public static class FoDDownloadCommand {}
 }

@@ -25,8 +25,6 @@
 package com.fortify.cli.fod.command;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
 import com.fortify.cli.fod.rest.unirest.runner.FoDAuthenticatedUnirestRunner;
 
@@ -38,7 +36,6 @@ import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@RequiresProduct(ProductOrGroup.FOD)
 public abstract class AbstractFoDUnirestRunnerCommand implements Runnable {
 	@Getter @Inject private ObjectMapper objectMapper;
 	@Getter @Inject private FoDAuthenticatedUnirestRunner unirestRunner;

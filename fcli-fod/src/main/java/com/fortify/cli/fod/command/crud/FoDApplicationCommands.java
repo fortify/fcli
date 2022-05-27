@@ -24,11 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.fod.command.crud;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.fod.command.AbstractFoDUnirestRunnerCommand;
 import com.fortify.cli.fod.command.crud.FoDCrudRootCommands.FoDGetCommand;
 
@@ -50,7 +48,6 @@ public class FoDApplicationCommands {
 	
 	@ReflectiveAccess
 	@Command(name = NAME, description = "Get "+DESC+" from FoD", aliases = {ALIAS})
-	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Get extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
 		@CommandLine.Mixin private OutputMixin outputMixin;
 
@@ -72,7 +69,6 @@ public class FoDApplicationCommands {
 	
 	@ReflectiveAccess
 	@Command(name = NAME, description = "Create "+DESC+" in FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Create extends AbstractFoDUnirestRunnerCommand {
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {
@@ -83,7 +79,6 @@ public class FoDApplicationCommands {
 	
 	@Singleton
 	@Command(name = NAME, description = "Update "+DESC+" in FoD")
-	@RequiresProduct(ProductOrGroup.FOD)
 	public static final class Update extends AbstractFoDUnirestRunnerCommand {
 		@SneakyThrows
 		protected Void runWithUnirest(UnirestInstance unirest) {

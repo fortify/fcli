@@ -22,34 +22,31 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.api;
+package com.fortify.cli.ssc.picocli.command.session;
 
-import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.picocli.command.api.APICommandMixin;
-import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
-import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
-import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.common.picocli.command.session.AbstractCommandWithSessionPersistenceHelper;
+import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
+import com.fortify.cli.common.session.logout.SessionLogoutHelper;
+import com.fortify.cli.ssc.SSCConstants;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
+import jakarta.inject.Inject;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
-@Command(name = "api", description = "Invoke ScanCentral DAST REST API")
-public final class SCDastApiCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-	@Mixin private OutputMixin outputMixin;
-	@Mixin private APICommandMixin apiCommandMixin;
-	
+@Command(name = "logout", description = "Logout from SSC", sortOptions = false)
+public class SSCSessionLogoutCommand extends AbstractCommandWithSessionPersistenceHelper implements Runnable {
+
+	@Getter	@Inject
+	private SessionLogoutHelper sessionLogoutHelper;
+
+	@Getter @Mixin
+	private SessionConsumerMixin sessionConsumerMixin;
+
 	@Override
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(apiCommandMixin.prepareRequest(unirest));
-		return null;
+	public final void run() {
+		sessionLogoutHelper.logoutAndDestroy(SSCConstants.SESSION_TYPE, sessionConsumerMixin.getSessionName());
 	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return new OutputConfig().defaultFormat(OutputFormat.json);
-	}
+
+
 }

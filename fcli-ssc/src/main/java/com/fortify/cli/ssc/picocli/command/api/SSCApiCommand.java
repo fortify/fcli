@@ -24,11 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.command.api;
 
-import com.fortify.cli.common.config.product.ProductOrGroup;
-import com.fortify.cli.common.config.product.ProductOrGroup.ProductIdentifiers;
-import com.fortify.cli.common.picocli.annotation.RequiresProduct;
+import com.fortify.cli.common.output.OutputFormat;
+import com.fortify.cli.common.picocli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.picocli.command.api.APICommandMixin;
-import com.fortify.cli.common.picocli.command.api.RootApiCommand;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
@@ -40,8 +38,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = ProductIdentifiers.SSC, description = "Invoke SSC REST API")
-@RequiresProduct(ProductOrGroup.SSC)
+@Command(name = "api", description = "Invoke SSC REST API")
+@FixSuperclassInjection
 public final class SSCApiCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@Mixin private OutputMixin outputMixin;
 	@Mixin private APICommandMixin apiCommandMixin;
@@ -54,6 +52,6 @@ public final class SSCApiCommand extends AbstractSSCUnirestRunnerCommand impleme
 	
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
-		return RootApiCommand.defaultOutputConfig();
+		return new OutputConfig().defaultFormat(OutputFormat.json);
 	}
 }
