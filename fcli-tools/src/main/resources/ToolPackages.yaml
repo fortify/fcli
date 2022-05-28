@@ -64,6 +64,7 @@ Packages:
         url: "https://tools.fortify.com/scancentral/Fortify_ScanCentral_Client_Latest_x64.zip"
       - version: "21.2.3"
         url: "https://tools.fortify.com/scancentral/Fortify_ScanCentral_Client_21.2.3_x64.zip"
+        checksum: "96B6678E0A133F2589AC1DF7B7FF34141630C2C697EA17BE3A610BCCB3B0D97E"
       - version: "21.1.4"
         url: "https://tools.fortify.com/scancentral/Fortify_ScanCentral_Client_21.1.4_x64.zip"
       - version: "20.2"

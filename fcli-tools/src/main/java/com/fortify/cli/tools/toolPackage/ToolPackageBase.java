@@ -7,6 +7,7 @@ import com.fortify.cli.tools.model.ToolPackageVersion;
 import com.fortify.cli.tools.picocli.command.mixin.DownloadPathMixin;
 import com.fortify.cli.tools.picocli.command.mixin.InstallPathMixin;
 import com.fortify.cli.tools.picocli.command.mixin.PackageVersionMixin;
+import com.fortify.cli.tools.picocli.command.mixin.PrintChecksumTestInfoMixin;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine;
@@ -37,9 +38,9 @@ public abstract class ToolPackageBase {
     }
 
     @Command(name = "download", description = "Only download to a specified directory.")
-    public void Download(@Mixin DownloadPathMixin dpo, @Mixin PackageVersionMixin pv){
+    public void Download(@Mixin DownloadPathMixin dpo, @Mixin PackageVersionMixin pv, @Mixin PrintChecksumTestInfoMixin pcti){
         String downloadPath = dpo.DownloadPath == null ? "./" + getToolPackagName() : dpo.DownloadPath ;
-        DownloadVersion(downloadPath, pv.DownloadPackageVersion);
+        DownloadVersion(downloadPath, pv.DownloadPackageVersion, pcti.printChecksumTestInfo);
     }
 
     /**
@@ -118,7 +119,7 @@ public abstract class ToolPackageBase {
      *   - If no download path is specified then current directory, with resource name from the URL, will be used.
      *   - If no version is specified, then the default version will be downloaded.
      */
-    private void DownloadVersion(String downloadPath, String versionToDownload) {
+    private void DownloadVersion(String downloadPath, String versionToDownload, boolean printChecksumTestInfo) {
         String manual = "manual";
         versionToDownload = versionToDownload == null ? toolPackage.getDefaultVersion() : versionToDownload;
 
@@ -136,8 +137,24 @@ public abstract class ToolPackageBase {
         System.out.printf("Downloading (%s : %s)%n", getToolPackagName(), versionToDownload);
         try {
             for (ToolPackageVersion ver : toolPackage.getVersions()) {
-                if(ver.getVersion().equalsIgnoreCase(versionToDownload))
-                    HttpDownloadHelper.Download(new URL(ver.getUrl()), ".\\"+ver.GetFileName());
+                if(ver.getVersion().equalsIgnoreCase(versionToDownload)) {
+                    String downloadTo = "./" + ver.getFileName();
+                    HttpDownloadHelper.Download(new URL(ver.getUrl()), downloadTo);
+
+                    // Non-empty means that a checksum was provided in ToolPackages.yaml
+                    if(ver.getChecksum() != null){
+                        if(!ver.getChecksum().match(downloadTo, printChecksumTestInfo)){
+                            System.out.println("WARNING! The file downloaded does not match the checksum provided. There may be an issue with the integrity of the downloaded file.");
+                            System.out.println("PROVIDED CHECKSUM: " + ver.getChecksum());
+                            System.out.println("DOWNLOADED FILE'S CHECKSUM: " + ver.getChecksum().generateFileChecksum(downloadTo));
+                        }else {
+                            System.out.println("File integrity looks okay!");
+                        }
+                    }else if(printChecksumTestInfo){
+                        System.out.println("No checksum is on record for this tool/packge being downloaded. No integrity check will be performed.");
+                    }
+
+                }
             }
         } catch (MalformedURLException e) {
             e.printStackTrace();
