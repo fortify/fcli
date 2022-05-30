@@ -25,7 +25,6 @@
 package com.fortify.cli.ssc.picocli.command.application;
 
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.picocli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
@@ -39,7 +38,6 @@ import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @Command(name = "list", description = "List applications on SSC.")
-@FixSuperclassInjection
 public class SSCApplicationListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
 	
