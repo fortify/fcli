@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_sast.picocli.command.entity.sensor;
+package com.fortify.cli.sc_sast.picocli.command.sensor;
 
 import com.fortify.cli.common.picocli.command.DummyCommand;
 import picocli.CommandLine.Command;

@@ -1,8 +1,9 @@
 package com.fortify.cli.sc_sast.picocli.command;
 
-import com.fortify.cli.sc_sast.picocli.command.entity.pkg.SCSASTPackageCommands;
-import com.fortify.cli.sc_sast.picocli.command.entity.scan.SCSASTScanCommands;
-import com.fortify.cli.sc_sast.picocli.command.entity.sensor.SCSASTSensorCommands;
+import com.fortify.cli.sc_sast.picocli.command.pkg.SCSASTPackageCommands;
+import com.fortify.cli.sc_sast.picocli.command.scan.SCSASTScanCommands;
+import com.fortify.cli.sc_sast.picocli.command.sensor.SCSASTSensorCommands;
+
 import picocli.CommandLine.Command;
 
 @Command(
