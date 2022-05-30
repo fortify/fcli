@@ -127,4 +127,28 @@ public class OutputConfig {
 				.map(Map.Entry::getValue)
 				.reduce(input, (o, t) -> t.apply(o), (m1, m2) -> m2);
 	}
+	
+	public static final OutputConfig csv() {
+		return new OutputConfig().defaultFormat(OutputFormat.csv);
+	}
+	
+	public static final OutputConfig json() {
+		return new OutputConfig().defaultFormat(OutputFormat.json);
+	}
+	
+	public static final OutputConfig table() {
+		return new OutputConfig().defaultFormat(OutputFormat.table);
+	}
+	
+	public static final OutputConfig tree() {
+		return new OutputConfig().defaultFormat(OutputFormat.tree);
+	}
+	
+	public static final OutputConfig xml() {
+		return new OutputConfig().defaultFormat(OutputFormat.xml);
+	}
+	
+	public static final OutputConfig yaml() {
+		return new OutputConfig().defaultFormat(OutputFormat.yaml);
+	}
 }

@@ -24,11 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.command.application;
 
-import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -53,9 +53,7 @@ public class SSCApplicationListCommand extends AbstractSSCUnirestRunnerCommand i
 	
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
-		return new OutputConfig()
-				.defaultFormat(OutputFormat.table)
-				.inputTransformer(json->json.get("data"))
+		return SSCOutputHelper.defaultTableOutputConfig()
 				.defaultColumns("id#name");
 	}
 }

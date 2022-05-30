@@ -26,8 +26,8 @@ package com.fortify.cli.fod.session.summary;
 
 import com.fortify.cli.common.session.summary.AbstractSessionSummaryProvider;
 import com.fortify.cli.common.session.summary.SessionSummary;
-import com.fortify.cli.fod.FoDConstants;
 import com.fortify.cli.fod.session.FoDSessionData;
+import com.fortify.cli.fod.util.FoDConstants;
 
 import jakarta.inject.Singleton;
 

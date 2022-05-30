@@ -26,8 +26,8 @@ package com.fortify.cli.ssc.session.summary;
 
 import com.fortify.cli.common.session.summary.AbstractSessionSummaryProvider;
 import com.fortify.cli.common.session.summary.SessionSummary;
-import com.fortify.cli.ssc.SSCConstants;
 import com.fortify.cli.ssc.session.SSCSessionData;
+import com.fortify.cli.ssc.util.SSCConstants;
 
 import jakarta.inject.Singleton;
 

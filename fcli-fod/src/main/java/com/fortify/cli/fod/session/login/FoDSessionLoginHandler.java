@@ -30,10 +30,10 @@ import java.util.Map;
 import com.fortify.cli.common.rest.data.IConnectionConfig;
 import com.fortify.cli.common.session.ISessionData;
 import com.fortify.cli.common.session.login.AbstractSessionLoginHandler;
-import com.fortify.cli.fod.FoDConstants;
 import com.fortify.cli.fod.rest.unirest.runner.FoDUnauthenticatedUnirestRunner;
 import com.fortify.cli.fod.session.FoDSessionData;
 import com.fortify.cli.fod.session.login.rest.FoDTokenResponse;
+import com.fortify.cli.fod.util.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;

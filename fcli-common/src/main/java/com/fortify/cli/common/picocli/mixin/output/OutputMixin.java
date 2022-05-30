@@ -123,12 +123,14 @@ public class OutputMixin {
 		
 		public void write(JsonNode jsonNode) {
 			jsonNode = config.applyInputTransformations(outputFormat, jsonNode);
-			if ( jsonNode.isArray() ) {
-				jsonNode.elements().forEachRemaining(this::writeRecord);
-			} else if ( jsonNode.isObject() ) {
-				writeRecord(jsonNode);
-			} else {
-				throw new RuntimeException("Not sure what to do here");
+			if ( jsonNode!=null ) {
+				if ( jsonNode.isArray() ) {
+					jsonNode.elements().forEachRemaining(this::writeRecord);
+				} else if ( jsonNode.isObject() ) {
+					writeRecord(jsonNode);
+				} else {
+					throw new RuntimeException("Not sure what to do here");
+				}
 			}
 		}
 		

@@ -25,36 +25,22 @@
 package com.fortify.cli.common.picocli.command.session.logout;
 
 import com.fortify.cli.common.picocli.command.session.AbstractCommandWithSessionPersistenceHelper;
-import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
+import com.fortify.cli.common.picocli.mixin.session.SessionConsumerMixin;
+import com.fortify.cli.common.session.ISessionTypeProvider;
 import com.fortify.cli.common.session.logout.SessionLogoutHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.ParentCommand;
 
 @ReflectiveAccess
-public abstract class AbstractSessionLogoutCommand extends AbstractCommandWithSessionPersistenceHelper implements Runnable {
-	@Getter @Inject private SessionLogoutHelper sessionLogoutHelper;
+public abstract class AbstractSessionLogoutCommand extends AbstractCommandWithSessionPersistenceHelper implements Runnable, ISessionTypeProvider {
+	@Getter	@Inject private SessionLogoutHelper sessionLogoutHelper;
 	@Getter @Mixin private SessionConsumerMixin sessionConsumerMixin;
-	@ParentCommand private SessionLogoutCommand parent;
-	
+
 	@Override
 	public final void run() {
-		if ( parent.isLogoutAll() ) {
-			System.out.println(String.format("Logging out all %s sessions", getSessionType()));
-			getSessionPersistenceHelper().list(getSessionType()).forEach(this::logoutAndDestroy);
-		} else {
-			String authSessionName = sessionConsumerMixin.getSessionName();
-			logoutAndDestroy(authSessionName);
-		}
+		sessionLogoutHelper.logoutAndDestroy(getSessionType(), sessionConsumerMixin.getSessionName());
 	}
-	
-	private final void logoutAndDestroy(String authSessionName) {
-		String authSessionType = getSessionType();
-		sessionLogoutHelper.logoutAndDestroy(authSessionType, authSessionName);
-	}
-	
-	protected abstract String getSessionType();
 }

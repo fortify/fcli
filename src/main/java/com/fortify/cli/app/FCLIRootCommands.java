@@ -25,9 +25,8 @@
 package com.fortify.cli.app;
 
 import com.fortify.cli.common.picocli.mixin.log.LoggingMixin;
-
-import com.fortify.cli.fod.command.FODCommands;
-import com.fortify.cli.sc_dast.picocli.command.SCDASTCommands;
+import com.fortify.cli.fod.picocli.command.FoDCommands;
+import com.fortify.cli.sc_dast.picocli.command.SCDastCommands;
 import com.fortify.cli.sc_sast.picocli.command.SCSASTCommands;
 import com.fortify.cli.ssc.picocli.command.SSCCommands;
 import com.fortify.cli.tools.picocli.command.ToolCommands;
@@ -61,8 +60,8 @@ import picocli.CommandLine.ScopeType;
 	subcommands = {
 			SSCCommands.class,
 			SCSASTCommands.class,
-			SCDASTCommands.class,
-			FODCommands.class,
+			SCDastCommands.class,
+			FoDCommands.class,
 			ToolCommands.class
 	}
 )

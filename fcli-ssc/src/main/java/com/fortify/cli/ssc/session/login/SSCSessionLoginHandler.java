@@ -27,11 +27,11 @@ package com.fortify.cli.ssc.session.login;
 import com.fortify.cli.common.rest.data.IConnectionConfig;
 import com.fortify.cli.common.session.ISessionData;
 import com.fortify.cli.common.session.login.AbstractSessionLoginHandler;
-import com.fortify.cli.ssc.SSCConstants;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCUnauthenticatedUnirestRunner;
 import com.fortify.cli.ssc.session.SSCSessionData;
 import com.fortify.cli.ssc.session.login.rest.SSCTokenRequest;
 import com.fortify.cli.ssc.session.login.rest.SSCTokenResponse;
+import com.fortify.cli.ssc.util.SSCConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;

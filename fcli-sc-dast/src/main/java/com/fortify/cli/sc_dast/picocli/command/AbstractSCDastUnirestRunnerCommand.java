@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.picocli.command;
 
+import com.fortify.cli.common.picocli.annotation.FixSuperclassInjection;
+import com.fortify.cli.common.picocli.mixin.session.SessionConsumerMixin;
 import com.fortify.cli.sc_dast.rest.unirest.runner.SCDastUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -31,30 +33,19 @@ import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine.ArgGroup;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
+@FixSuperclassInjection
 public abstract class AbstractSCDastUnirestRunnerCommand implements Runnable {
 	@Getter @Inject private SCDastUnirestRunner unirestRunner;
-	
-	@ArgGroup(heading = "Optional login session name:%n", order = 1000)
-    @Getter private AuthSessionConsumerNameOptions nameOptions;
-	
-	static class AuthSessionConsumerNameOptions {
-		@Option(names = {"--ssc-auth-session"}, required = false, defaultValue = "default")
-		@Getter private String sscAuthSessionName;
-	}
-	
-	public String getSSCAuthSessionName() {
-		return nameOptions==null ? "default" : nameOptions.getSscAuthSessionName();
-	}
+	@Getter @Mixin  private SessionConsumerMixin sessionConsumerMixin;
 
 	@Override @SneakyThrows
 	public final void run() {
 		// TODO Do we want to do anything with the results, like formatting it based on output options?
 		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(getSSCAuthSessionName(), this::runWithUnirest);
+		unirestRunner.runWithUnirest(sessionConsumerMixin.getSessionName(), this::runWithUnirest);
 	}
 	
 	protected abstract Void runWithUnirest(UnirestInstance unirest);

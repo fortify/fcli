@@ -30,10 +30,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fortify.cli.common.session.AbstractSessionData;
 import com.fortify.cli.common.session.summary.SessionSummary;
-import com.fortify.cli.ssc.SSCConstants;
 import com.fortify.cli.ssc.session.login.SSCSessionLoginConfig;
 import com.fortify.cli.ssc.session.login.rest.SSCTokenResponse;
 import com.fortify.cli.ssc.session.login.rest.SSCTokenResponse.SSCTokenData;
+import com.fortify.cli.ssc.util.SSCConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;

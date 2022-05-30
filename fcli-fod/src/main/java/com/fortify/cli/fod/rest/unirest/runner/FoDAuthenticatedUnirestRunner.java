@@ -26,8 +26,8 @@ package com.fortify.cli.fod.rest.unirest.runner;
 
 import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
 import com.fortify.cli.common.rest.unirest.runner.AbstractSessionUnirestRunner;
-import com.fortify.cli.fod.FoDConstants;
 import com.fortify.cli.fod.session.FoDSessionData;
+import com.fortify.cli.fod.util.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;

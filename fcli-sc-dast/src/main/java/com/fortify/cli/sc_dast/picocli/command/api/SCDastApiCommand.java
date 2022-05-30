@@ -25,7 +25,7 @@
 package com.fortify.cli.sc_dast.picocli.command.api;
 
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.picocli.command.api.APICommandMixin;
+import com.fortify.cli.common.picocli.mixin.api.APICommandMixin;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;

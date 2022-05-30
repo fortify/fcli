@@ -24,29 +24,15 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.command.session;
 
-import com.fortify.cli.common.picocli.command.session.AbstractCommandWithSessionPersistenceHelper;
-import com.fortify.cli.common.picocli.command.session.consumer.SessionConsumerMixin;
-import com.fortify.cli.common.session.logout.SessionLogoutHelper;
-import com.fortify.cli.ssc.SSCConstants;
+import com.fortify.cli.common.picocli.command.session.logout.AbstractSessionLogoutCommand;
+import com.fortify.cli.ssc.util.SSCConstants;
 
-import jakarta.inject.Inject;
-import lombok.Getter;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 
 @Command(name = "logout", description = "Logout from SSC", sortOptions = false)
-public class SSCSessionLogoutCommand extends AbstractCommandWithSessionPersistenceHelper implements Runnable {
-
-	@Getter	@Inject
-	private SessionLogoutHelper sessionLogoutHelper;
-
-	@Getter @Mixin
-	private SessionConsumerMixin sessionConsumerMixin;
-
+public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand {
 	@Override
-	public final void run() {
-		sessionLogoutHelper.logoutAndDestroy(SSCConstants.SESSION_TYPE, sessionConsumerMixin.getSessionName());
+	public String getSessionType() {
+		return SSCConstants.SESSION_TYPE;
 	}
-
-
 }

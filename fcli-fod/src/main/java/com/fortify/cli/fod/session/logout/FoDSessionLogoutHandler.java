@@ -26,9 +26,9 @@ package com.fortify.cli.fod.session.logout;
 
 import com.fortify.cli.common.session.SessionPersistenceHelper;
 import com.fortify.cli.common.session.logout.ISessionLogoutHandler;
-import com.fortify.cli.fod.FoDConstants;
 import com.fortify.cli.fod.rest.unirest.runner.FoDAuthenticatedUnirestRunner;
 import com.fortify.cli.fod.session.FoDSessionData;
+import com.fortify.cli.fod.util.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;

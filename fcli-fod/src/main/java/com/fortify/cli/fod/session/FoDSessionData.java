@@ -30,9 +30,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fortify.cli.common.session.AbstractSessionData;
 import com.fortify.cli.common.session.summary.SessionSummary;
-import com.fortify.cli.fod.FoDConstants;
 import com.fortify.cli.fod.session.login.FoDSessionLoginConfig;
 import com.fortify.cli.fod.session.login.rest.FoDTokenResponse;
+import com.fortify.cli.fod.util.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;

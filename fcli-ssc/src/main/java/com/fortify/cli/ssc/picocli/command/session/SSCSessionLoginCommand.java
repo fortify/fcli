@@ -32,10 +32,10 @@ import com.fortify.cli.common.picocli.command.session.login.LoginConnectionOptio
 import com.fortify.cli.common.picocli.command.session.login.LoginUserCredentialOptions;
 import com.fortify.cli.common.session.login.ISessionLoginHandler;
 import com.fortify.cli.common.time.DateTimeHelper;
-import com.fortify.cli.ssc.SSCConstants;
 import com.fortify.cli.ssc.session.login.ISSCUserCredentialsConfig;
 import com.fortify.cli.ssc.session.login.SSCSessionLoginConfig;
 import com.fortify.cli.ssc.session.login.SSCSessionLoginHandler;
+import com.fortify.cli.ssc.util.SSCConstants;
 
 import jakarta.inject.Inject;
 import lombok.Getter;

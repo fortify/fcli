@@ -26,9 +26,9 @@ package com.fortify.cli.ssc.session.logout;
 
 import com.fortify.cli.common.session.SessionPersistenceHelper;
 import com.fortify.cli.common.session.logout.ISessionLogoutHandler;
-import com.fortify.cli.ssc.SSCConstants;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
 import com.fortify.cli.ssc.session.SSCSessionData;
+import com.fortify.cli.ssc.util.SSCConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
