@@ -18,7 +18,7 @@ public class FoDApplicationReleaseListCommand extends AbstractFoDUnirestRunnerCo
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		final String uri = "/api/v3/releases?orderBy=applicationNameOs";
+		final String uri = "/api/v3/releases?orderBy=applicationName";
 		outputMixin.write(unirest.get(uri) 
 				.accept("application/json")
 				.header("Content-Type", "application/json"),
