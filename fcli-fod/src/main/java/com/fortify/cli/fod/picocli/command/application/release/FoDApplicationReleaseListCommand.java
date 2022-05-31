@@ -18,15 +18,16 @@ public class FoDApplicationReleaseListCommand extends AbstractFoDUnirestRunnerCo
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(unirest.get("/api/v3/releases") // TODO Add paging support 
+		final String uri = "/api/v3/releases?orderBy=applicationNameOs";
+		outputMixin.write(unirest.get(uri) 
 				.accept("application/json")
-				.header("Content-Type", "application/json"));
-
+				.header("Content-Type", "application/json"),
+				FoDOutputHelper.pagingHandler(uri));
 		return null;
 	}
 	
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
-		return FoDOutputHelper.defaultTableOutputConfig().defaultColumns("releaseId#applicationName#releaseName");
+		return FoDOutputHelper.defaultTableOutputConfig().defaultColumns("releaseId#applicationName#releaseName#microserviceName");
 	}
 }

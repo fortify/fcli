@@ -18,10 +18,12 @@ public class FoDApplicationListCommand extends AbstractFoDUnirestRunnerCommand i
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
+		final String uri = "/api/v3/applications?orderBy=applicationName"; 
 		outputMixin.write(
-				unirest.get("/api/v3/applications") // TODO Add paging support
+				unirest.get(uri)
 					.accept("application/json")
-					.header("Content-Type", "application/json"));
+					.header("Content-Type", "application/json"),
+					FoDOutputHelper.pagingHandler(uri));
 
 		return null;
 	}

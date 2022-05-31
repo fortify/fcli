@@ -2,6 +2,7 @@ package com.fortify.cli.common.picocli.mixin.output;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -80,6 +81,10 @@ public class OutputMixin {
 		write(writer->writer::write, httpRequest);
 	}
 	
+	public void write(HttpRequest<?> httpRequest, Function<HttpResponse<JsonNode>, String> nextPageUrlProducer) {
+		write(writer->writer::write, httpRequest, nextPageUrlProducer);
+	}
+	
 	public void write(HttpResponse<JsonNode> httpResponse) {
 		write(writer->writer::write, httpResponse);
 	}
@@ -94,6 +99,12 @@ public class OutputMixin {
 	private <T> void write(Function<OutputOptionsWriter, Consumer<T>> consumer, T input) {
 		try ( var writer = getWriter() ) {
 			consumer.apply(writer).accept(input);
+		}
+	}
+	
+	private <T1, T2> void write(Function<OutputOptionsWriter, BiConsumer<T1, T2>> consumer, T1 input1, T2 input2) {
+		try ( var writer = getWriter() ) {
+			consumer.apply(writer).accept(input1, input2);
 		}
 	}
 	
@@ -136,6 +147,13 @@ public class OutputMixin {
 		
 		public void write(HttpRequest<?> httpRequest) {
 			httpRequest.asObject(JsonNode.class)
+				.ifSuccess(this::write)
+				.ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
+		}
+		
+		@SuppressWarnings("unchecked") // TODO Can we get rid of this warning in a better way?
+		public void write(HttpRequest<?> httpRequest, Function<HttpResponse<JsonNode>, String> nextPageUrlProducer) {
+			httpRequest.asPaged(r->r.asObject(JsonNode.class), nextPageUrlProducer)
 				.ifSuccess(this::write)
 				.ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
 		}
