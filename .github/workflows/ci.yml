@@ -102,7 +102,7 @@ jobs:
         run: ./fcli --help && ./fcli get --help
 
       - name: Package native fcli
-        run: tar -zcvf fcli-linux.tgz ./fcli ./artifact/fcli_completion
+        run: tar -zcvf fcli-linux.tgz fcli -C ./artifact fcli_completion
 
       - uses: actions/upload-artifact@v2
         with:
@@ -139,7 +139,7 @@ jobs:
         run: ./fcli --help && ./fcli get --help
 
       - name: Package native fcli
-        run: tar -zcvf fcli-mac.tgz ./fcli ./artifact/fcli_completion
+        run: tar -zcvf fcli-mac.tgz fcli -C ./artifact fcli_completion
 
       - uses: actions/upload-artifact@v2
         with:
