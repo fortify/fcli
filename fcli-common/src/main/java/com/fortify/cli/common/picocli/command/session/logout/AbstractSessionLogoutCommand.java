@@ -24,10 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.session.logout;
 
+import com.fortify.cli.common.picocli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.picocli.command.session.AbstractCommandWithSessionPersistenceHelper;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.common.picocli.mixin.session.SessionConsumerMixin;
 import com.fortify.cli.common.session.ISessionTypeProvider;
 import com.fortify.cli.common.session.logout.SessionLogoutHelper;
+import com.fortify.cli.common.session.summary.SessionSummaryHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -35,12 +38,16 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
+@FixSuperclassInjection
 public abstract class AbstractSessionLogoutCommand extends AbstractCommandWithSessionPersistenceHelper implements Runnable, ISessionTypeProvider {
 	@Getter	@Inject private SessionLogoutHelper sessionLogoutHelper;
 	@Getter @Mixin private SessionConsumerMixin sessionConsumerMixin;
+	@Inject private SessionSummaryHelper sessionSummaryHelper;
+	@Mixin private OutputMixin outputMixin;
 
 	@Override
 	public final void run() {
 		sessionLogoutHelper.logoutAndDestroy(getSessionType(), sessionConsumerMixin.getSessionName());
+		sessionSummaryHelper.writeSessionSummaries(getSessionType(), outputMixin);
 	}
 }

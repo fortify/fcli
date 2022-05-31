@@ -37,14 +37,14 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public class SSCLSessionLogoutHandler implements ISessionLogoutHandler {
+public class SSCSessionLogoutHandler implements ISessionLogoutHandler {
 	@Getter @Inject private SessionPersistenceHelper sessionPersistenceHelper;
 	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
 
 	@Override
 	public final void logout(String authSessionName) {
 		SSCSessionData data = sessionPersistenceHelper.getData(getSessionType(), authSessionName, SSCSessionData.class);
-		if ( data.hasActiveCachedTokenResponse() ) {
+		if ( data!=null && data.hasActiveCachedTokenResponse() ) {
 			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
 		}
 	}

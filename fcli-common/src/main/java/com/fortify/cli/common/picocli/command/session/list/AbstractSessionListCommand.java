@@ -24,45 +24,23 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.session.list;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.picocli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.common.session.ISessionTypeProvider;
-import com.fortify.cli.common.session.summary.ISessionSummaryProvider;
+import com.fortify.cli.common.session.summary.SessionSummaryHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
-import lombok.Getter;
-import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "sessions", description = "Get information related to authentication sessions.")
 @FixSuperclassInjection
 public abstract class AbstractSessionListCommand implements Runnable, ISessionTypeProvider {
-	@Inject private ObjectMapper objectMapper;
-	@Getter private Map<String, ISessionSummaryProvider> sessionSummaryProviders;
+	@Inject private SessionSummaryHelper sessionSummaryHelper;
 	@Mixin private OutputMixin outputMixin;
-	
-	@Inject
-	public void setSessionSummaryProviders(Collection<ISessionSummaryProvider> sessionSummaryProviders) {
-		this.sessionSummaryProviders = sessionSummaryProviders.stream().collect(
-			Collectors.toMap(ISessionTypeProvider::getSessionType, Function.identity()));
-	}
 
 	@Override
 	public void run() {
-		try ( var writer = outputMixin.getWriter() ) {
-			sessionSummaryProviders.get(getSessionType()).getSessionSummaries().stream()
-				.map(objectMapper::valueToTree)
-				.map(JsonNode.class::cast) // TODO Not sure why this is necessary
-				.forEach(writer::write);
-		}
+		sessionSummaryHelper.writeSessionSummaries(getSessionType(), outputMixin);
 	}
 }

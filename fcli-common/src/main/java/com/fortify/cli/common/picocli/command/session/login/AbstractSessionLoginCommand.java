@@ -24,17 +24,26 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.command.session.login;
 
+import com.fortify.cli.common.picocli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.picocli.command.session.AbstractCommandWithSessionPersistenceHelper;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.common.session.login.ISessionLoginHandler;
+import com.fortify.cli.common.session.summary.SessionSummaryHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
+@FixSuperclassInjection
 public abstract class AbstractSessionLoginCommand<C> extends AbstractCommandWithSessionPersistenceHelper implements Runnable {
+	@Inject private SessionSummaryHelper sessionSummaryHelper;
+	@Mixin private OutputMixin outputMixin;
+	
 	@ArgGroup(heading = "Optional session name:%n", order = 1000)
     @Getter protected SessionNameOptions sessionNameOptions;
 	
@@ -47,6 +56,7 @@ public abstract class AbstractSessionLoginCommand<C> extends AbstractCommandWith
 	@Override @SneakyThrows
 	public final void run() {
 		getLoginHandler().login(getSessionName(), getLoginConfig());
+		sessionSummaryHelper.writeSessionSummaries(getSessionType(), outputMixin);
 	}
 	
 	public final String getSessionName() {

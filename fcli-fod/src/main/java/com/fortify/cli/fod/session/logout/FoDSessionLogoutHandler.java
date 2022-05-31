@@ -44,7 +44,7 @@ public class FoDSessionLogoutHandler implements ISessionLogoutHandler {
 	@Override
 	public final void logout(String authSessionName) {
 		FoDSessionData data = sessionPersistenceHelper.getData(getSessionType(), authSessionName, FoDSessionData.class);
-		if ( data.hasActiveCachedTokenResponse() ) {
+		if ( data!=null && data.hasActiveCachedTokenResponse() ) {
 			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
 		}
 	}
