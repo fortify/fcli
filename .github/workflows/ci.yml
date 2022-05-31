@@ -198,6 +198,12 @@ jobs:
         with:
           path: ./
           
+      - name: Update artifacts
+        run: |
+          tar -zrvf artifacts/fcli-linux.tgz artifacts/fcli_completion
+          tar -zrvf artifacts/fcli-mac.tgz artifacts/fcli_completion
+          rm -f artifacts/fcli_completion
+          
       - name: PROD - Prepare release PR
         if: github.ref == 'refs/heads/main'
         uses: GoogleCloudPlatform/release-please-action@v2

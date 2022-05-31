@@ -151,11 +151,22 @@ asciidoctor {
     }
 }
 
-tasks.register('distDocs', Zip) {
+tasks.register('distDocsHtml5', Zip) {
 	dependsOn 'asciidoctor'
-    archiveFileName = "docs.zip"
+    archiveFileName = "docs-html.zip"
     destinationDirectory = layout.buildDirectory.dir('dist')
-    from layout.buildDirectory.dir("docs")
+    from layout.buildDirectory.dir("docs/html5")
+}
+
+tasks.register('distDocsManPage', Zip) {
+	dependsOn 'asciidoctor'
+    archiveFileName = "docs-manpage.zip"
+    destinationDirectory = layout.buildDirectory.dir('dist')
+    from layout.buildDirectory.dir("docs/manpage")
+}
+
+task distDocs {
+	dependsOn 'distDocsHtml5', 'distDocsManPage'
 }
 
 task dist(type: Copy) {
