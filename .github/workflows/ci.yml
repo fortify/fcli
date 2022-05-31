@@ -102,7 +102,7 @@ jobs:
         run: ./fcli --help && ./fcli get --help
 
       - name: Package native fcli
-        run: tar -zcvf fcli-linux.tgz ./fcli
+        run: tar -zcvf fcli-linux.tgz ./fcli ./artifact/fcli_completion
 
       - uses: actions/upload-artifact@v2
         with:
@@ -139,7 +139,7 @@ jobs:
         run: ./fcli --help && ./fcli get --help
 
       - name: Package native fcli
-        run: tar -zcvf fcli-mac.tgz ./fcli
+        run: tar -zcvf fcli-mac.tgz ./fcli ./artifact/fcli_completion
 
       - uses: actions/upload-artifact@v2
         with:
@@ -198,11 +198,8 @@ jobs:
         with:
           path: ./
           
-      - name: Update artifacts
-        run: |
-          tar -zrvf artifacts/fcli-linux.tgz artifacts/fcli_completion
-          tar -zrvf artifacts/fcli-mac.tgz artifacts/fcli_completion
-          rm -f artifacts/fcli_completion
+      - name: Remove fcli_completion script
+        run: rm -f artifact/fcli_completion
           
       - name: PROD - Prepare release PR
         if: github.ref == 'refs/heads/main'
