@@ -7,6 +7,7 @@ plugins {
 	id("io.micronaut.library") version "3.3.2" apply false
 	id 'eclipse'
 	id "com.github.ben-manes.versions" version "0.42.0"
+	id "org.asciidoctor.jvm.convert" version "3.3.2"
 }
 
 version = "0.1"
@@ -109,13 +110,54 @@ dependencies {
 ext {
 	gradleHelpersLocation = "https://raw.githubusercontent.com/fortify-ps/gradle-helpers/1.6"
 	thirdPartyBaseName = "${rootProject.name}"
+	autoCompleteDir = "${project.buildDir}/autocomplete"
 }
 apply from: "${gradleHelpersLocation}/thirdparty-helper.gradle"
 apply from: "${gradleHelpersLocation}/readme2html.gradle"
 
+mainClassName = "com.fortify.cli.app.FCLIRootCommands"
+
+tasks.register('generateAutoCompleteDir') {
+    doLast {
+        mkdir "${autoCompleteDir}"
+    }
+}
+
+task generateAutoComplete(type: JavaExec) {
+	dependsOn(classes, generateAutoCompleteDir)
+    group = "Documentation"
+    description = "Generate autocomplete"
+    classpath(configurations.runtimeClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
+    main 'picocli.AutoComplete'
+    args mainClassName, "-f", "--completionScript=${autoCompleteDir}/fcli_completion"
+}
+
+task generateManpageAsciiDoc(type: JavaExec) {
+    dependsOn(classes)
+    group = "Documentation"
+    description = "Generate AsciiDoc manpage"
+    classpath(configurations.runtimeClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
+    main 'picocli.codegen.docgen.manpage.ManPageGenerator'
+    args mainClassName, "--outdir=${project.buildDir}/generated-picocli-docs", "-v"
+}
+
+asciidoctor {
+    dependsOn(generateManpageAsciiDoc)
+    sourceDir = file("${project.buildDir}/generated-picocli-docs")
+    outputDir = file("${project.buildDir}/docs")
+    logDocuments = true
+    outputOptions {
+        backends = ['manpage', 'html5']
+    }
+}
+
 task dist(type: Copy) {
-	dependsOn 'build', 'readme2html'
+	dependsOn 'build', 'readme2html', 'asciidoctor', 'generateAutoComplete'
 	from "${buildDir}/html"
+	from "${autoCompleteDir}"
+	from("${buildDir}") {
+		include "docs/**/*"
+	}
 	from("${projectDir}") {
 		include "config/**/*"
 		include "LICENSE.TXT"
