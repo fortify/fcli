@@ -151,13 +151,17 @@ asciidoctor {
     }
 }
 
+tasks.register('distDocs', Zip) {
+	dependsOn 'asciidoctor'
+    archiveFileName = "docs.zip"
+    destinationDirectory = layout.buildDirectory.dir('dist')
+    from layout.buildDirectory.dir("docs")
+}
+
 task dist(type: Copy) {
-	dependsOn 'build', 'readme2html', 'asciidoctor', 'generateAutoComplete'
+	dependsOn 'build', 'readme2html', 'distDocs', 'generateAutoComplete'
 	from "${buildDir}/html"
 	from "${autoCompleteDir}"
-	from("${buildDir}") {
-		include "docs/**/*"
-	}
 	from("${projectDir}") {
 		include "config/**/*"
 		include "LICENSE.TXT"
