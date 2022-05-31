@@ -232,12 +232,47 @@ jobs:
           gh release upload "${{ needs.build.outputs.release_tag }}" $files --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     
+  publishPages:
+    name: publishPages
+    if: needs.build.outputs.do_release
+    needs: [release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check-out source code
+        uses: actions/checkout@v2
+        with:
+          ref: gh_pages
+          path: docs
+        
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: ./
           
+      - name: Update documentation from artifact
+        run: |
+          rm -rf docs/.git*
+          dir=docs/${{ needs.build.outputs.release_tag }}
+          rm -rf "${dir}"
+          mkdir -p "${dir}"
+          unzip artifact/docs-html.zip -d "${dir}"
+          #TODO Create index file
+          
+      - name: Deploy documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_dir: ./docs
+          
+          
+  cleanup:
+    name: cleanup
+    if: needs.build.outputs.do_release 
+    needs: [release, publishPages] 
+    runs-on: ubuntu-latest 
+    steps:
       - name: Delete artifacts if uploaded to release
-        if: needs.build.outputs.do_release
         uses: geekyeggo/delete-artifact@v1
         with:
           name: artifact
-          failOnError: false
-     
-     
+          failOnError: false   
