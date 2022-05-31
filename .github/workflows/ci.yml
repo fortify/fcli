@@ -236,13 +236,13 @@ jobs:
   publishPages:
     name: publishPages
     if: needs.build.outputs.do_release
-    needs: [release]
+    needs: [build, release]
     runs-on: ubuntu-latest
     steps:
-      - name: Check-out source code
+      - name: Check-out existing docs from gh-pages branch
         uses: actions/checkout@v2
         with:
-          ref: gh_pages
+          ref: gh-pages
           path: docs
         
       - name: Download artifacts
@@ -252,12 +252,23 @@ jobs:
           
       - name: Update documentation from artifact
         run: |
+          # Delete all Git-related files
           rm -rf docs/.git*
+          
+          # Define the output directory, based on tag/branch name
           dir=docs/${{ needs.build.outputs.release_tag }}
+          
+          # Delete, recreate and fill the directory for the current tag/branch name,
+          # while leaving documentation for other tags/branches intact (as checked out above)
           rm -rf "${dir}"
           mkdir -p "${dir}"
           unzip artifact/docs-html.zip -d "${dir}"
-          #TODO Create index file
+          
+          #TODO Auto-create file docs/index.html
+          #     With some nice introduction and providing links to the various versions of the documentation
+          #     Each version/branch will get its own subdirectory in the docs directory
+          #     So basically need to iterate over all directories inside docs, and then create a hyperlink
+          #     to docs/<directory>/fcli.html
           
       - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v3
