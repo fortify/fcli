@@ -4,5 +4,5 @@
  * At the moment there's only a small number of configuration commands, we could consider using some command
  * hierarchy if we think the list of direct sub-commands grows too large.
  */
-package com.fortify.cli.common.picocli.command.config;
+package com.fortify.cli.config.picocli.command;
 

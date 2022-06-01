@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.picocli.command.config.autocomplete;
+package com.fortify.cli.config.picocli.command.autocomplete;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.AutoComplete;
@@ -36,7 +36,6 @@ import picocli.CommandLine.Spec;
  * 
  * @author Ruud Senden
  * 
- * TODO: Add this to some proper place in the command structure
  */
 @ReflectiveAccess
 @Command(name = "generate-completion", description = {

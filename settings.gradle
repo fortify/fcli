@@ -1,6 +1,6 @@
 rootProject.name="fcli"
 include 'fcli-common'
-include 'fcli-common-sast'
+include 'fcli-config'
 include 'fcli-ssc'
 include 'fcli-fod'
 include 'fcli-sc-sast'

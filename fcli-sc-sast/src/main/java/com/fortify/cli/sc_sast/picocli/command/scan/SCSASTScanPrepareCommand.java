@@ -24,11 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.picocli.command.scan;
 
-import com.fortify.cli.common.sast.picocli.command.sast_scan.prepare.SastCleanCommand;
-import com.fortify.cli.common.sast.picocli.command.sast_scan.prepare.SastPackageCommand;
-import com.fortify.cli.common.sast.picocli.command.sast_scan.prepare.SastTranslateCommand;
-
 import com.fortify.cli.sc_sast.picocli.command.SCSastSastScanCommandsOrder;
+
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
@@ -37,9 +34,4 @@ import picocli.CommandLine.Command;
 @Command(name = "prepare", description = "Prepare for a ScanCentral SAST scan.")
 @Order(SCSastSastScanCommandsOrder.PREPARE)
 public class SCSASTScanPrepareCommand {
-		public static final class Clean extends SastCleanCommand {}
-	
-		public static final class Translate extends SastTranslateCommand {}
-	
-		public static final class Package extends SastPackageCommand {}
 }

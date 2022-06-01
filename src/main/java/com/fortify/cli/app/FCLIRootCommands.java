@@ -25,11 +25,13 @@
 package com.fortify.cli.app;
 
 import com.fortify.cli.common.picocli.mixin.log.LoggingMixin;
+import com.fortify.cli.config.picocli.command.ConfigCommands;
 import com.fortify.cli.fod.picocli.command.FoDCommands;
 import com.fortify.cli.sc_dast.picocli.command.SCDastCommands;
 import com.fortify.cli.sc_sast.picocli.command.SCSASTCommands;
 import com.fortify.cli.ssc.picocli.command.SSCCommands;
 import com.fortify.cli.tools.picocli.command.ToolCommands;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
@@ -58,6 +60,7 @@ import picocli.CommandLine.ScopeType;
     optionListHeading = "%nGeneric options:%n", // This is supposed to hold only standard help, version, and logging options; command implementations should always use appropriate ArgGroups with headings
 	description = "Command-line interface for working with various Fortify products",
 	subcommands = {
+			ConfigCommands.class,
 			SSCCommands.class,
 			SCSASTCommands.class,
 			SCDastCommands.class,
