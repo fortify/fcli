@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<title>fcli-fod-release-update(1)</title>
+<title>fcli-sc-sast-session(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -438,10 +438,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="manpage">
 <div id="header">
-<h1>fcli-fod-release-update(1) Manual Page</h1>
+<h1>fcli-sc-sast-session(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-release-update - Update an existing application on FoD.</p>
+<p>fcli-sc-sast-session - Commands to manage Fortify ScanCentral SAST sessions.</p>
 </div>
 </div>
 <div id="content">
@@ -449,7 +449,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod release update</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]</p>
+<p><strong>fcli sc-sast session</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                     [COMMAND]</p>
 </div>
 </div>
 </div>
@@ -457,7 +458,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Update an existing application on FoD.</p>
+<p>Commands to manage Fortify ScanCentral SAST sessions.</p>
 </div>
 </div>
 </div>
@@ -481,6 +482,27 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dt class="hdlist1"><strong>-V</strong>, <strong>--version</strong></dt>
 <dd>
 <p>Print version information and exit.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_commands">Commands</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="fcli-sc-sast-session-list.html"><strong>list</strong></a></dt>
+<dd>
+<p>List ScanCentral SAST sessions</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-sc-sast-session-login.html"><strong>login</strong></a></dt>
+<dd>
+<p>Login to ScanCentral SAST</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-sc-sast-session-logout.html"><strong>logout</strong></a></dt>
+<dd>
+<p>Logout from SSC</p>
 </dd>
 </dl>
 </div>
