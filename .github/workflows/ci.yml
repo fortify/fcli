@@ -291,6 +291,7 @@ jobs:
           
           FCLI_RELEASE_ITEMS=${relItems} FCLI_DEV_ITEMS=${devItems} envsubst < ${indexTemplateFile} > ${indexFile}
           
+          # Shouldn't be needed, but just in case this file reappears.
           if [ -f "$nojekyll" ]; then rm $nojekyll; fi
           
       - name: Deploy documentation
@@ -298,6 +299,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs
+          enable_jekyll: true
           
           
   cleanup:
