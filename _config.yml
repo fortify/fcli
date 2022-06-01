@@ -18,9 +18,7 @@ exclude:
   - Gemfile.lock
 
 ### content configuration ###
-title:       "FCLI"
 keywords:    "Fortify, FCLI, CLI"
-description: "FCLI, a universal Fortify tool."
 source_link: ""
 highlighter: rouge
 
