@@ -11,7 +11,7 @@ url: "https://fortify-ps.github.io"
 # Build settings
 markdown: kramdown
 theme: minima
-gems:
+plugins:
   - jekyll-feed
 exclude:
   - Gemfile
