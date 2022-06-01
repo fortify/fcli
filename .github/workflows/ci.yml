@@ -264,11 +264,27 @@ jobs:
           mkdir -p "${dir}"
           unzip artifact/docs-html.zip -d "${dir}"
           
-          #TODO Auto-create file docs/index.html
-          #     With some nice introduction and providing links to the various versions of the documentation
-          #     Each version/branch will get its own subdirectory in the docs directory
-          #     So basically need to iterate over all directories inside docs, and then create a hyperlink
-          #     to docs/<directory>/fcli.html
+          docDir=docs
+          indexFile=${docDir}/index.html
+          indexTemplateFile=${docDir}/index.html.template
+          # Find release and dev directories. 
+          # TODO adjust this to only return directories containing an fcli.html file
+          relDirs=`find ${docDir} -mindepth 1 -maxdepth 1 ! -empty -type d -name "v*" -exec basename {} \; | sort -V`
+          devDirs=`find ${docDir} -mindepth 1 -maxdepth 1 ! -empty -type d -name "dev_*" -exec basename {} \; | sort`
+          
+          relItems=''
+          if [ -z "$relDirs" ]; then relItems='<li><i>No release versions available</i></li>'; fi
+          for relDir in ${relDirs}; do
+            relItems+="<li><a href=\"${relDir}/fcli.html\">${relDir}</a></li>"
+          done
+          
+          devItems=''
+          if [ -z "$devDirs" ]; then devItems='<li><i>No development versions available</i></li>'; fi
+          for devDir in ${devDirs}; do
+            devItems+="<li><a href=\"${devDir}/fcli.html\">${devDir}</a></li>"
+          done
+          
+          FCLI_RELEASE_ITEMS=${relItems} FCLI_DEV_ITEMS=${devItems} envsubst < ${indexTemplateFile} > ${indexFile}
           
       - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v3
