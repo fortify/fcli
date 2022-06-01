@@ -1,0 +1,12 @@
+<svg width='100px' height='100px' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" class="uil-default">
+<path fill="#5f798d" d="M50,10v9c17.09,0,31,13.91,31,31c0,17.09-13.91,31-31,31S19,67.09,19,50h-9
+	c0,22.09,17.91,40,40,40c22.09,0,40-17.91,40-40C90,27.91,72.09,10,50,10z">
+<animateTransform attributeName='transform'
+	AttributeType="XML"
+	type="rotate"
+	from='0 50 50'
+	to='360 50 50'
+	dur='2s'
+	repeatCount='indefinite'/>
+</path>
+</svg>
