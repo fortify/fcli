@@ -265,8 +265,10 @@ jobs:
           unzip artifact/docs-html.zip -d "${dir}"
           
           docDir=docs
-          indexFile=${docDir}/index.html
-          indexTemplateFile=${docDir}/index.html.template
+          # indexFile=${docDir}/index.html
+          # indexTemplateFile=${docDir}/index.html.template
+          indexFile=${docDir}/_posts/2022-06-01-intro.md
+          indexTemplateFile=${docDir}/2022-06-01-intro.md.template
           # Find release and dev directories. 
           # TODO adjust this to only return directories containing an fcli.html file
           relDirs=`find ${docDir} -mindepth 1 -maxdepth 1 ! -empty -type d -name "v*" -exec basename {} \; | sort -V`
@@ -275,13 +277,15 @@ jobs:
           relItems=''
           if [ -z "$relDirs" ]; then relItems='<li><i>No release versions available</i></li>'; fi
           for relDir in ${relDirs}; do
-            relItems+="<li><a href=\"${relDir}/fcli.html\">${relDir}</a></li>"
+            # relItems+="<li><a href=\"${relDir}/fcli.html\">${relDir}</a></li>"
+            relItems+="- [${relDir}](${relDir}/fcli.html) \n"
           done
           
           devItems=''
           if [ -z "$devDirs" ]; then devItems='<li><i>No development versions available</i></li>'; fi
           for devDir in ${devDirs}; do
-            devItems+="<li><a href=\"${devDir}/fcli.html\">${devDir}</a></li>"
+            # devItems+="<li><a href=\"${devDir}/fcli.html\">${devDir}</a></li>"
+            devItems+="- [${devDir}](${devDir}/fcli.html) \n"
           done
           
           FCLI_RELEASE_ITEMS=${relItems} FCLI_DEV_ITEMS=${devItems} envsubst < ${indexTemplateFile} > ${indexFile}
