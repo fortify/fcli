@@ -269,6 +269,7 @@ jobs:
           # indexTemplateFile=${docDir}/index.html.template
           indexFile=${docDir}/_posts/2022-06-01-intro.md
           indexTemplateFile=${docDir}/2022-06-01-intro.md.template
+          nojekyll=${docDir}/.nojekyll
           # Find release and dev directories. 
           # TODO adjust this to only return directories containing an fcli.html file
           relDirs=`find ${docDir} -mindepth 1 -maxdepth 1 ! -empty -type d -name "v*" -exec basename {} \; | sort -V`
@@ -289,6 +290,8 @@ jobs:
           done
           
           FCLI_RELEASE_ITEMS=${relItems} FCLI_DEV_ITEMS=${devItems} envsubst < ${indexTemplateFile} > ${indexFile}
+          
+          if [ -f "$nojekyll" ]; then rm ./.nojekyll; fi
           
       - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v3
