@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,36 +22,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.session.login;
+package com.fortify.cli.sc_sast.session.logout;
 
-import com.fortify.cli.common.session.ISessionData;
-import com.fortify.cli.common.session.ISessionTypeProvider;
 import com.fortify.cli.common.session.SessionPersistenceHelper;
-import com.fortify.cli.common.session.logout.SessionLogoutHelper;
+import com.fortify.cli.common.session.logout.ISessionLogoutHandler;
+import com.fortify.cli.sc_sast.util.SCSastConstants;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.Getter;
 
-public abstract class AbstractSessionLoginHandler<C> implements ISessionLoginHandler<C>, ISessionTypeProvider {
+@Singleton @ReflectiveAccess
+public class SCSastSessionLogoutHandler implements ISessionLogoutHandler {
 	@Getter @Inject private SessionPersistenceHelper sessionPersistenceHelper;
-	@Inject private SessionLogoutHelper sessionLogoutHelper;
-	
-	public final void login(String authSessionName, C loginConfig) {
-		logoutIfSessionExists(authSessionName);
-		ISessionData authSessionData = _login(authSessionName, loginConfig);
-		sessionPersistenceHelper.saveData(getSessionType(), authSessionName, authSessionData);
-		testAuthenticatedConnection(authSessionName, loginConfig);
+
+	@Override
+	public final void logout(String authSessionName) {
+		// Nothing to do; client auth token is a static token that connot be logged out from
 	}
 	
-	protected void testAuthenticatedConnection(String authSessionName, C loginConfig) {}
-
-	private void logoutIfSessionExists(String authSessionName) {
-		String sessionType = getSessionType();
-		if ( sessionPersistenceHelper.exists(sessionType, authSessionName) ) {
-			// Log out from previous session before creating a new session
-			sessionLogoutHelper.logoutAndDestroy(sessionType, authSessionName);
-		}
+	@Override
+	public String getSessionType() {
+		return SCSastConstants.SESSION_TYPE;
 	}
-
-	protected abstract ISessionData _login(String authSessionName, C loginConfig);
 }

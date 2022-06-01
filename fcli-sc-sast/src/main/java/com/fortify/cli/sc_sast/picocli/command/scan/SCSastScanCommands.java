@@ -8,12 +8,12 @@ import picocli.CommandLine.Command;
         description = "Commands related to scanning with Fortify ScanCentral SAST.",
         subcommands = {
                 DummyCommand.class,
-                SCSASTScanPrepareCommand.class,
-                SCSASTScanStartCommand.class,
-                SCSASTScanCancelCommand.class,
-                SCSASTScanStatusCommand.class,
-                SCSASTScanListCommand.class
+                SCSastScanPrepareCommand.class,
+                SCSastScanStartCommand.class,
+                SCSastScanCancelCommand.class,
+                SCSastScanStatusCommand.class,
+                SCSastScanListCommand.class
         }
 )
-public class SCSASTScanCommands {
+public class SCSastScanCommands {
 }

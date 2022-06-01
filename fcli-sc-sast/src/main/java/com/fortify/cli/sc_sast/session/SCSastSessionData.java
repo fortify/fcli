@@ -22,16 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.picocli.command.scan;
+package com.fortify.cli.sc_sast.session;
 
-import com.fortify.cli.sc_sast.picocli.command.SCSastSastScanCommandsOrder;
-import io.micronaut.core.annotation.Order;
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fortify.cli.common.session.AbstractSessionData;
+import com.fortify.cli.common.session.summary.SessionSummary;
+import com.fortify.cli.sc_sast.session.login.SCSastSessionLoginConfig;
+import com.fortify.cli.sc_sast.util.SCSastConstants;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine.Command;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-@ReflectiveAccess
-@Command(name = "start", description = "Start a ScanCentral SAST scan.")
-@Order(SCSastSastScanCommandsOrder.START)
-public class SCSASTScanStartCommand implements Runnable {
-	public void run() {}
+@Data @EqualsAndHashCode(callSuper = true)  @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+public class SCSastSessionData extends AbstractSessionData {
+	@Getter private char[] clientAuthToken;
+	
+	public SCSastSessionData() {}
+	
+	public SCSastSessionData(SCSastSessionLoginConfig config) {
+		super(config.getConnectionConfig());
+		this.clientAuthToken = config.getClientAuthToken();
+	}
+	
+	@JsonIgnore @Override
+	public String getSessionType() {
+		return SCSastConstants.SESSION_TYPE;
+	}
+	
+	@JsonIgnore
+	protected Date getSessionExpiryDate() {
+		return SessionSummary.EXPIRES_UNKNOWN;
+		
+	}
 }

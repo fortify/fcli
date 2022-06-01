@@ -22,16 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.picocli.command.scan;
+package com.fortify.cli.sc_sast.picocli.command.session;
 
-import com.fortify.cli.sc_sast.picocli.command.SCSastSastScanCommandsOrder;
-import io.micronaut.core.annotation.Order;
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.fortify.cli.common.picocli.command.session.logout.AbstractSessionLogoutCommand;
+import com.fortify.cli.sc_sast.util.SCSastConstants;
+
 import picocli.CommandLine.Command;
 
-@ReflectiveAccess
-@Command(name = "status", description = "Get the status of a ScanCentral SAST scan.")
-@Order(SCSastSastScanCommandsOrder.START)
-public class SCSASTScanStatusCommand implements Runnable {
-	public void run() {}
+@Command(name = "logout", description = "Logout from SSC", sortOptions = false)
+public class SCSastSessionLogoutCommand extends AbstractSessionLogoutCommand {
+	@Override
+	public String getSessionType() {
+		return SCSastConstants.SESSION_TYPE;
+	}
 }

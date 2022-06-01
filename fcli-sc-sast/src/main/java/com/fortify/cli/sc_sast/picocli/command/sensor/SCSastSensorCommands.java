@@ -11,5 +11,5 @@ import picocli.CommandLine.Command;
                 DummyCommand.class
         }
 )
-public class SCSASTSensorCommands {
+public class SCSastSensorCommands {
 }
