@@ -291,7 +291,7 @@ jobs:
           
           FCLI_RELEASE_ITEMS=${relItems} FCLI_DEV_ITEMS=${devItems} envsubst < ${indexTemplateFile} > ${indexFile}
           
-          if [ -f "$nojekyll" ]; then rm ./.nojekyll; fi
+          if [ -f "$nojekyll" ]; then rm $nojekyll; fi
           
       - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v3
