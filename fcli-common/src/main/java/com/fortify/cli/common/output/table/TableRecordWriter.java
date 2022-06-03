@@ -83,7 +83,7 @@ public class TableRecordWriter implements IRecordWriter {
 	}
 	
 	private String[] getRow(ObjectNode record, String[] columns) {
-		return Stream.of(columns).map(record::get).map(JsonNode::asText).toArray(String[]::new);
+		return Stream.of(columns).map(record::get).map(JsonNode::asText).map(v->"null".equals(v)?"N/A":v).toArray(String[]::new);
 	}
 
 	private static final <T> Stream<T> asStream(Iterator<T> sourceIterator) {
