@@ -449,7 +449,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-sast scan status</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]</p>
+<p><strong>fcli sc-sast scan status</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                         [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] [<strong>-t</strong>=<em>&lt;token&gt;</em>]
+                         [[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>] [<strong>--fields</strong>=<em>&lt;fields&gt;</em>]
+                         [<strong>--flatten</strong>] [<strong>--[no-]headers</strong>] [<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>]
+                         [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -486,11 +490,67 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_output_options">Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--fmt, --format</strong>=<em>&lt;outputFormat&gt;</em></dt>
+<dd>
+<p>Output format. Possible values: json, yaml, table, tree, xml, csv.</p>
+</dd>
+<dt class="hdlist1"><strong>--fields</strong>=<em>&lt;fields&gt;</em></dt>
+<dd>
+<p>Define the fields to be included in the output, together with optional header names</p>
+</dd>
+<dt class="hdlist1"><strong>--flatten</strong></dt>
+<dd>
+<p>For non-column-based outputs, whether to flatten the structure</p>
+</dd>
+<dt class="hdlist1"><strong>--[no-]headers</strong></dt>
+<dd>
+<p>For column-based outputs, whether to output headers</p>
+</dd>
+<dt class="hdlist1"><strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em></dt>
+<dd>
+<p>Transforms output using JSONPath</p>
+</dd>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Output file</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_scan_status_options">Scan status options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--token, --job-token</strong>=<em>&lt;token&gt;</em></dt>
+<dd>
+<p>The scan job token</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_optional_session_name">Optional session name:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
+</dl>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-06-02 14:33:42 UTC
+Last updated 2022-06-03 11:00:13 UTC
 </div>
 </div>
 </body>
