@@ -1,18 +1,14 @@
 package com.fortify.cli.sc_sast.picocli.command.scan;
 
-import com.fortify.cli.common.picocli.command.DummyCommand;
 import picocli.CommandLine.Command;
 
 @Command(
         name = "scan",
-        description = "Commands related to scanning with Fortify ScanCentral SAST.",
+        description = "Prepare, run and manage ScanCentral SAST scans and results.",
         subcommands = {
-                DummyCommand.class,
-                SCSastScanPrepareCommand.class,
-                SCSastScanStartCommand.class,
                 SCSastScanCancelCommand.class,
-                SCSastScanStatusCommand.class,
-                SCSastScanListCommand.class
+                SCSastScanStartCommand.class,
+                SCSastScanStatusCommand.class
         }
 )
 public class SCSastScanCommands {
