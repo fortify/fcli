@@ -5,8 +5,15 @@ description: > # this means to ignore newlines until "baseurl:"
 baseurl: "/fcli"
 url: "https://fortify-ps.github.io"
 
-
-
+defaults:
+  - scope:
+      path: "dev_*/fcli.html"
+    values:
+      manpage_dev: true
+  - scope:
+      path: "v*/fcli.html"
+    values:
+      manpage_release: true
 
 # Build settings
 markdown: kramdown
