@@ -5,4 +5,11 @@ title:  "About Fortify"
 
 ## About Fortify 
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla non purus aliquam, dictum ex ac, molestie velit. Duis vitae posuere lacus. Duis sodales lorem et quam rhoncus venenatis. Nam semper elit elit, vitae aliquet tortor vehicula vitae. Fusce justo lorem, pharetra et ligula non, tincidunt mollis quam. Integer sed ipsum ac dui posuere pellentesque eu eu arcu. Etiam commodo diam vehicula augue dapibus, ac ultrices nisi pharetra. Sed vel mattis risus. Aliquam scelerisque quis dui condimentum posuere.
+[Fortify](https://www.microfocus.com/en-us/cyberres/application-security) is a family of application security testing tools and solutions that is owned by parent company [Micro Focus](https://www.microfocus.com).
+Fortify has application security testing products that specialize in:
+- Static Application Security Testing (SAST)
+- Dynamic Application Security Testing (DAST)
+- Software Composition Analysis (SCA)
+- Interactive Application Security Testing (IAST)
+- Out-of-band Application Security Testing (OAST)
+- Mobile Application Security Testing (MAST)
