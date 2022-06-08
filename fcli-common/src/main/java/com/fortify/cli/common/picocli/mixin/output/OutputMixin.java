@@ -2,9 +2,12 @@ package com.fortify.cli.common.picocli.mixin.output;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.Objects;
+import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -166,7 +169,7 @@ public class OutputMixin {
 		private void writeRecord(JsonNode jsonNode) {
 			jsonNode = config.applyRecordTransformations(outputFormat, jsonNode); // TODO Before or after other transformations?
 			jsonNode = applyJsonPathTransformation(outputFormat, jsonNode);
-			jsonNode = config.applyFieldsTransformations(outputFormat, optionsArgGroup.fields, jsonNode);
+			jsonNode = config.applyFieldsTransformations(outputFormat, optionsArgGroup.fields, new I18nDefaultFieldNameFormatterProvider(), jsonNode);
 			jsonNode = applyFlattenTransformation(outputFormat, jsonNode);
 			if(jsonNode.getNodeType() == JsonNodeType.ARRAY) {
 				if(jsonNode.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(jsonNode.get(0).toString()));
@@ -225,6 +228,35 @@ public class OutputMixin {
 			printWriter.flush();
 			// TODO Close printwriter and/or underlying streams except for System.out
 			//      once we have implemented output to file.
+		}
+	}
+	
+	private final class I18nDefaultFieldNameFormatterProvider implements IDefaultFieldNameFormatterProvider {
+		private final CommandLine.Model.Messages messages;
+		I18nDefaultFieldNameFormatterProvider() {
+			ResourceBundle resourceBundle = mixee.resourceBundle();
+			messages = resourceBundle==null ? null : new CommandLine.Model.Messages(mixee, resourceBundle);
+		}
+		@Override
+		public Function<String, String> getDefaultFieldNameFormatter(OutputFormat outputFormat) {
+			return field -> getDefaultFieldName(outputFormat, field);
+		}
+
+		private String getDefaultFieldName(OutputFormat outputFormat, String field) {
+			String[] keys = {
+				String.format("output.%s.field.%s.name", outputFormat.name(), field),
+				String.format("output.field.%s.name", field),
+			};
+			
+			return Stream.of(keys)
+			.map(this::getMessageString)
+			.filter(Objects::nonNull)
+			.findFirst()
+			.orElse(outputFormat.getDefaultFieldNameFormatter().apply(field));
+		}
+		
+		private String getMessageString(String key) {
+			return messages==null ? null : messages.getString(key, null);
 		}
 	}
 }

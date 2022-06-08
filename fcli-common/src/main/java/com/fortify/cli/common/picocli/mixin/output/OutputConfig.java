@@ -81,33 +81,33 @@ public class OutputConfig {
 		return defaultFields(OutputFormat::isColumns, outputColumns);
 	}
 	
-	final JsonNode applyFieldsTransformations(OutputFormat outputFormat, String overrideFieldsString, JsonNode input) {
+	final JsonNode applyFieldsTransformations(OutputFormat outputFormat, String overrideFieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
 		if ( StringUtils.isNotEmpty(overrideFieldsString) ) {
-			return applyDefaultFieldsTransformations(outputFormat, overrideFieldsString, input);
+			return applyDefaultFieldsTransformations(outputFormat, overrideFieldsString, defaultFieldNameFormatterProvider, input);
 		} else {
-			return applyDefaultFieldsTransformations(defaultFields, outputFormat, input);
+			return applyDefaultFieldsTransformations(defaultFields, outputFormat, defaultFieldNameFormatterProvider, input);
 		}
 	}
 	
-	private final JsonNode applyDefaultFieldsTransformations(OutputFormat outputFormat, String fieldsString, JsonNode input) {
+	private final JsonNode applyDefaultFieldsTransformations(OutputFormat outputFormat, String fieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
 		LinkedHashMap<Function<OutputFormat, Boolean>, String> fields = new LinkedHashMap<>();
 		fields.put(fmt->true, fieldsString);
-		return applyDefaultFieldsTransformations(fields, outputFormat, input);
+		return applyDefaultFieldsTransformations(fields, outputFormat, defaultFieldNameFormatterProvider, input);
 	}
 	
-	private final JsonNode applyDefaultFieldsTransformations(LinkedHashMap<Function<OutputFormat, Boolean>, String> fields, OutputFormat outputFormat, JsonNode input) {
+	private final JsonNode applyDefaultFieldsTransformations(LinkedHashMap<Function<OutputFormat, Boolean>, String> fields, OutputFormat outputFormat, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
 		return fields.entrySet().stream()
 			.filter(e->e.getKey().apply(outputFormat))
 			.map(Map.Entry::getValue)
-			.map(fieldsString->getFieldsTransformer(outputFormat, fieldsString))
+			.map(fieldsString->getFieldsTransformer(outputFormat, fieldsString, defaultFieldNameFormatterProvider))
 			.reduce(input, (o, t) -> t.transform(o), (m1, m2) -> m2);
 	}
 
-	private IJsonNodeTransformer getFieldsTransformer(OutputFormat outputFormat, String fieldsString) {
+	private IJsonNodeTransformer getFieldsTransformer(OutputFormat outputFormat, String fieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider) {
 		if ( StringUtils.isNotEmpty(fieldsString) && !"all".equals(fieldsString) ) {
-			return PredefinedFieldsTransformerFactory.createFromString(outputFormat.getDefaultFieldNameFormatter(), fieldsString);
+			return PredefinedFieldsTransformerFactory.createFromString(defaultFieldNameFormatterProvider.getDefaultFieldNameFormatter(outputFormat), fieldsString);
 		} else if ( outputFormat.getOutputType()==OutputType.TEXT_COLUMNS ) {
-			return new FlattenTransformer(outputFormat.getDefaultFieldNameFormatter(), ".", false);
+			return new FlattenTransformer(defaultFieldNameFormatterProvider.getDefaultFieldNameFormatter(outputFormat), ".", false);
 		} else {
 			return new IdentityTransformer();
 		}
