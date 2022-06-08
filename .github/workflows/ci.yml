@@ -160,29 +160,29 @@ jobs:
     - uses: actions/download-artifact@v2
       with:
         path: ./
+    
+    - name: Create native fcli
+      run: >-
+        "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
+        ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar fcli
+      shell: cmd
 
-#    - name: Create native fcli
-#      run: >-
-#        "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-#        ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar fcli
-#      shell: cmd
-#
-#    - name: Compress native fcli
-#      uses: svenstaro/upx-action@v2
-#      with:
-#        file: fcli.exe
-#      
-#    - name: Basic test of native fcli
-#      run: |
-#        .\fcli.exe --help 
-#        .\fcli.exe get --help
-#        
-#    - name: Package native fcli
-#      run: 7z a fcli-windows.zip fcli*.exe
-#
-#    - uses: actions/upload-artifact@v2
-#      with:
-#        path: ./fcli-windows.zip
+    - name: Compress native fcli
+      uses: svenstaro/upx-action@v2
+      with:
+        file: fcli.exe
+
+    - name: Basic test of native fcli
+      run: |
+        .\fcli.exe --help 
+        .\fcli.exe get --help
+
+    - name: Package native fcli
+      run: 7z a fcli-windows.zip fcli*.exe
+
+    - uses: actions/upload-artifact@v2
+      with:
+        path: ./fcli-windows.zip
         
   release:
     name: release
@@ -263,36 +263,6 @@ jobs:
           rm -rf "${dir}"
           mkdir -p "${dir}"
           unzip artifact/docs-html.zip -d "${dir}"
-          
-          docDir=docs
-          # indexFile=${docDir}/index.html
-          # indexTemplateFile=${docDir}/index.html.template
-          indexFile=${docDir}/_posts/2022-06-01-intro.md
-          indexTemplateFile=${docDir}/2022-06-01-intro.md.template
-          nojekyll=${docDir}/.nojekyll
-          # Find release and dev directories. 
-          # TODO adjust this to only return directories containing an fcli.html file
-          relDirs=`find ${docDir} -mindepth 1 -maxdepth 1 ! -empty -type d -name "v*" -exec basename {} \; | sort -V`
-          devDirs=`find ${docDir} -mindepth 1 -maxdepth 1 ! -empty -type d -name "dev_*" -exec basename {} \; | sort`
-          
-          relItems=''
-          if [ -z "$relDirs" ]; then relItems='<li><i>No release versions available</i></li>'; fi
-          for relDir in ${relDirs}; do
-            # relItems+="<li><a href=\"${relDir}/fcli.html\">${relDir}</a></li>"
-            relItems+="- [${relDir}](${relDir}/fcli.html) \n"
-          done
-          
-          devItems=''
-          if [ -z "$devDirs" ]; then devItems='<li><i>No development versions available</i></li>'; fi
-          for devDir in ${devDirs}; do
-            # devItems+="<li><a href=\"${devDir}/fcli.html\">${devDir}</a></li>"
-            devItems+="- [${devDir}](${devDir}/fcli.html) \n"
-          done
-          
-          FCLI_RELEASE_ITEMS=${relItems} FCLI_DEV_ITEMS=${devItems} envsubst < ${indexTemplateFile} > ${indexFile}
-          
-          # Shouldn't be needed, but just in case this file reappears.
-          if [ -f "$nojekyll" ]; then rm $nojekyll; fi
           
       - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v3
