@@ -24,6 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.config.FcliConfig;
+import com.fortify.cli.common.locale.LanguageHelper;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.LogFactoryImpl;
@@ -47,6 +50,9 @@ import io.micronaut.context.ApplicationContext;
  * @author Ruud Senden
  */
 public class FortifyCLI {
+	// TODO: I'm not too sure that I feel happy with this. It just feels wrong.
+	private static final LanguageHelper languageHelper = new LanguageHelper(new FcliConfig(new ObjectMapper()));
+
 	/**
 	 * This is the main entry point for executing the Fortify CLI. It will configure logging and
 	 * then get a {@link PicocliRunner} instance from Micronaut, which will perform the
@@ -54,10 +60,13 @@ public class FortifyCLI {
 	 * @param args Command line options passed to Fortify CLI
 	 */
 	public static void main(String[] args) {
+		//Locale.setDefault(new Locale("nl"));
+		//new CommandLine(new InitLocale()).parseArgs(args);
 		FortifyCLILogHelper.configureLogging(args);
+		languageHelper.configureLanguage();
 		System.exit(execute(args));
 	}
-	
+
 	/**
 	 * This method starts the Micronaut {@link ApplicationContext}, then invokes the 
 	 * {@link PicocliRunner#execute(Class, String...)} method on the {@link PicocliRunner}

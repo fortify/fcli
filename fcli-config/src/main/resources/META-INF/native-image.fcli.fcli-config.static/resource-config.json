@@ -1,0 +1,12 @@
+{
+  "bundles" : [
+    {"name" : "i18n_Config"}
+  ],
+  "resources": {
+    "includes": [
+      {"pattern": ".*/i18n_Config.*properties$"}
+    ],
+    "excludes": [
+     ]
+  }
+}

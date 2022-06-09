@@ -31,7 +31,6 @@ import com.fortify.cli.sc_dast.picocli.command.SCDastCommands;
 import com.fortify.cli.sc_sast.picocli.command.SCSastCommands;
 import com.fortify.cli.ssc.picocli.command.SSCCommands;
 import com.fortify.cli.tools.picocli.command.ToolCommands;
-
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
@@ -74,4 +73,5 @@ public class FCLIRootCommands {
 	// not complain about any logging options, we define them here even though we don't actually
 	// do anything with these options here.
 	@Mixin LoggingMixin loggingMixin;
+
 }
