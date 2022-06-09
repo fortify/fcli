@@ -27,6 +27,7 @@ package com.fortify.cli.app;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import com.fortify.cli.common.config.IFortifyCLIInitializer;
 import com.fortify.cli.common.picocli.mixin.log.LoggingMixin;
 import com.fortify.cli.common.picocli.util.DefaultValueProvider;
 
@@ -46,14 +47,14 @@ import picocli.CommandLine.Mixin;
  * 
  * @author Ruud Senden
  */
-public class FortifyCLILogHelper {
+public class FortifyCLILogHelper implements IFortifyCLIInitializer {
 	private static final PrintWriter DUMMY_WRITER = new PrintWriter(new StringWriter());
 	
 	/**
 	 * Configure logging based on the provided command line arguments.
 	 * @param args Arguments passed on the command line
 	 */
-	public static final void configureLogging(String[] args) {
+	public static final void initializeLogging(String[] args) {
 		CommandLine commandLine = new CommandLine(SetupLoggingCommand.class)
 				.setOut(DUMMY_WRITER)
 				.setErr(DUMMY_WRITER)
@@ -63,7 +64,12 @@ public class FortifyCLILogHelper {
 				.setExpandAtFiles(true);
 		commandLine.execute(args);
 	}
-	
+
+	@Override
+	public void initializeFortifyCLI(String[] args) {
+		initializeLogging(args);
+	}
+
 	/**
 	 * {@link Command} implementation for setting up logging, based on the
 	 * options and functionality provided by {@link LoggingMixin}.

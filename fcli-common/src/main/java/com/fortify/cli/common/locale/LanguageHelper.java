@@ -1,12 +1,13 @@
 package com.fortify.cli.common.locale;
 
 import com.fortify.cli.common.config.FcliConfig;
+import com.fortify.cli.common.config.IFortifyCLIInitializer;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.util.Locale;
 
 @Singleton
-public class LanguageHelper {
+public class LanguageHelper implements IFortifyCLIInitializer {
     public static final String[] supportedLanguages = {"en","nl"};
     private static final String CONFIG_KEY = "defaultUserLanguage";
     private final FcliConfig config;
@@ -39,7 +40,7 @@ public class LanguageHelper {
         config.set(CONFIG_KEY, lang);
     }
 
-    public void configureLanguage() {
+    public void initializeLanguage() {
         if(isNullEmptyOrEn()){
             Locale.setDefault(new Locale(""));
             return;
@@ -55,5 +56,10 @@ public class LanguageHelper {
                 l.getDisplayLanguage(l),                        // Readable name of language in language's own script.
                 l.getDisplayLanguage(new Locale("en"))  // Readable name of language in English.
         );
+    }
+
+    @Override
+    public void initializeFortifyCLI(String[] args) {
+        initializeLanguage();
     }
 }

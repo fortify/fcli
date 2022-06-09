@@ -24,10 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.config.FcliConfig;
+import com.fortify.cli.common.config.IFortifyCLIInitializer;
 import com.fortify.cli.common.locale.LanguageHelper;
+import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.env.Environment;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 import org.apache.commons.logging.impl.SimpleLog;
@@ -38,6 +39,7 @@ import org.jasypt.normalization.Normalizer;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
 import io.micronaut.context.ApplicationContext;
+import picocli.CommandLine;
 
 /**
  * <p>This class provides the {@link #main(String[])} entrypoint into the application. 
@@ -50,32 +52,28 @@ import io.micronaut.context.ApplicationContext;
  * @author Ruud Senden
  */
 public class FortifyCLI {
-	// TODO: I'm not too sure that I feel happy with this. It just feels wrong.
-	private static final LanguageHelper languageHelper = new LanguageHelper(new FcliConfig(new ObjectMapper()));
 
 	/**
-	 * This is the main entry point for executing the Fortify CLI. It will configure logging and
-	 * then get a {@link PicocliRunner} instance from Micronaut, which will perform the
-	 * actual work in its {@link PicocliRunner#execute(Class, String...)} method.
+	 * This is the main entry point for executing the Fortify CLI.
 	 * @param args Command line options passed to Fortify CLI
 	 */
 	public static void main(String[] args) {
-		//Locale.setDefault(new Locale("nl"));
-		//new CommandLine(new InitLocale()).parseArgs(args);
-		FortifyCLILogHelper.configureLogging(args);
-		languageHelper.configureLanguage();
 		System.exit(execute(args));
 	}
 
 	/**
-	 * This method starts the Micronaut {@link ApplicationContext}, then invokes the 
-	 * {@link PicocliRunner#execute(Class, String...)} method on the {@link PicocliRunner}
-	 * singleton retrieved from the Micronaut {@link ApplicationContext}
+	 * This method starts the Micronaut {@link ApplicationContext}, then invokes all beans that implement the
+	 * {@link IFortifyCLIInitializer} interface prior to executing {@link CommandLine#execute(String...)}.
 	 * @param args Command line options passed to Fortify CLI
 	 * @return exit code
 	 */
 	private static int execute(String[] args) {
-		return PicocliRunner.execute(FCLIRootCommands.class, args);
+		try (ApplicationContext applicationContext = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
+			try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {
+				applicationContext.getBeansOfType(IFortifyCLIInitializer.class).forEach(b -> b.initializeFortifyCLI(args));
+				return new CommandLine(FCLIRootCommands.class, micronautFactory).execute(args);
+			}
+		}
 	}
 	
 	/**
