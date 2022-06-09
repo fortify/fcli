@@ -1,6 +1,10 @@
 {
+  "bundles" : [
+    {"name" : "i18n_Tools"}
+  ],
   "resources": {
     "includes": [
+      {"pattern": ".*/i18n_Tools.*properties$"},
       {"pattern": "ToolPackages.yaml$"}
     ],
     "excludes": [

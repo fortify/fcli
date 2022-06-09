@@ -38,12 +38,7 @@ import picocli.CommandLine.Spec;
  * 
  */
 @ReflectiveAccess
-@Command(name = "generate-completion", description = {
-		"Generate bash/zsh completion script for ${ROOT-COMMAND-NAME:-the root command of this command}.",
-		"Run the following command to give `${ROOT-COMMAND-NAME:-$PARENTCOMMAND}` TAB completion in the current shell:",
-		"", 
-		"  source <(${PARENT-COMMAND-FULL-NAME:-$PARENTCOMMAND} ${COMMAND-NAME})", 
-		"" })
+@Command(name = "generate-completion")
 public final class AutoCompleteGenerationCommand implements Runnable {
 	@Spec CommandLine.Model.CommandSpec spec;
 

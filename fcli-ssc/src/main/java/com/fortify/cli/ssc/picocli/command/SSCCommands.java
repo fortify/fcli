@@ -21,7 +21,8 @@ import picocli.CommandLine.Command;
                 SSCApplicationVersionArtifactCommands.class,
                 SSCApplicationVersionAttributeCommands.class,
                 SSCSystemEventCommands.class
-        }
+        },
+        resourceBundle = "i18n_SSC"
 )
 public class SSCCommands {
 }
