@@ -24,11 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
-import com.fortify.cli.common.config.IFortifyCLIInitializer;
-import com.fortify.cli.common.locale.LanguageHelper;
-import io.micronaut.configuration.picocli.MicronautFactory;
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.env.Environment;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 import org.apache.commons.logging.impl.SimpleLog;
@@ -36,9 +31,13 @@ import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 import org.jasypt.normalization.Normalizer;
 
+import com.fortify.cli.common.config.IFortifyCLIInitializer;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
+import io.micronaut.configuration.picocli.MicronautFactory;
+import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 import picocli.CommandLine;
 
 /**
