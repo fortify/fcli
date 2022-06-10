@@ -37,6 +37,7 @@ Fortify CLI is currently in an early development stage, functioning as a prototy
 * **Docker images**: TBD
 * **Source code**: https://github.com/fortify-ps/fcli
 * **Automated builds**: https://github.com/fortify-ps/fcli/actions
+* **FCLI Command Line Usage Documentation**: https://fortify-ps.github.io/fcli/
 
 
 ## Developers
