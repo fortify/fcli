@@ -1,6 +1,6 @@
 {
   "bundles" : [
-    {"name" : "com.fortify.cli.ssc.i18n.SSCMessages"}
+    {"name" : "com.fortify.cli.fod.i18n.FoDMessages"}
   ],
   "resources": {
     "includes": [

@@ -1,0 +1,12 @@
+{
+  "bundles" : [
+    {"name" : "com.fortify.cli.tool.i18n.ToolMessages"}
+  ],
+  "resources": {
+    "includes": [
+      {"pattern": "com/fortify/cli/tool/ToolPackages.yaml$"}
+    ],
+    "excludes": [
+     ]
+  }
+}

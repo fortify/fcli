@@ -11,6 +11,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "sc-dast",
         description = "Commands for interacting with Fortify ScanCentral DAST.",
+                resourceBundle = "com.fortify.cli.sc_dast.i18n.SCDastMessages",
         subcommands = {
                 SCDastScanCommands.class,
                 SCDastScanOutputCommands.class,

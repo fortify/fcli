@@ -1,6 +1,6 @@
 {
   "bundles" : [
-    {"name" : "com.fortify.cli.ssc.i18n.SSCMessages"}
+    {"name" : "com.fortify.cli.sc_sast.i18n.SCSastMessages"}
   ],
   "resources": {
     "includes": [

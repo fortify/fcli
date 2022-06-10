@@ -11,6 +11,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "fod",
         description = "Commands for interacting with Fortify on Demand (FoD).",
+        resourceBundle = "com.fortify.cli.fod.i18n.FoDMessages",
         subcommands = {
                 FoDApplicationCommands.class,
                 FoDApplicationReleaseCommands.class,

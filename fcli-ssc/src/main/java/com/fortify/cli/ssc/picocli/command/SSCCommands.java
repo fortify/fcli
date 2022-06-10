@@ -13,6 +13,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "ssc",
         description = "Commands for interacting with Fortify Software Security Center (SSC).",
+        resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages",
         subcommands = {
                 SSCSessionCommands.class,
                 SSCApiCommand.class,
@@ -21,8 +22,7 @@ import picocli.CommandLine.Command;
                 SSCApplicationVersionArtifactCommands.class,
                 SSCApplicationVersionAttributeCommands.class,
                 SSCSystemEventCommands.class
-        },
-        resourceBundle = "i18n_SSC"
+        }
 )
 public class SSCCommands {
 }
