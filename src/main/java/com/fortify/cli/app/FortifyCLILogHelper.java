@@ -31,6 +31,7 @@ import com.fortify.cli.common.config.IFortifyCLIInitializer;
 import com.fortify.cli.common.picocli.mixin.log.LoggingMixin;
 import com.fortify.cli.common.picocli.util.DefaultValueProvider;
 
+import jakarta.inject.Singleton;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -47,6 +48,7 @@ import picocli.CommandLine.Mixin;
  * 
  * @author Ruud Senden
  */
+@Singleton
 public class FortifyCLILogHelper implements IFortifyCLIInitializer {
 	private static final PrintWriter DUMMY_WRITER = new PrintWriter(new StringWriter());
 	
