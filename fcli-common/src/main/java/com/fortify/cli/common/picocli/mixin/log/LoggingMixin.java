@@ -46,10 +46,10 @@ import picocli.CommandLine.ScopeType;
  */
 @ReflectiveAccess
 public class LoggingMixin {
-	@Option(names = "--log-level", scope = ScopeType.INHERIT, description = "Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: ${COMPLETION-CANDIDATES}")
+	@Option(names = "--log-level", scope = ScopeType.INHERIT)
 	private LogLevel logLevel;
 
-	@Option(names = "--log-file", scope = ScopeType.INHERIT, description = "File where logging data will be written. If not specified, no logging data will be witten.")
+	@Option(names = "--log-file", scope = ScopeType.INHERIT)
 	private String logFile;
 	
 	private static enum LogLevel {

@@ -6,6 +6,6 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 public class SCSastScanTokenMixin {
-    @Option(names = {"-t","--token", "--job-token"}, description = "The scan job token", required = true)
+    @Option(names = {"-t","--token", "--job-token"}, required = true)
     @Getter private String token;
 }

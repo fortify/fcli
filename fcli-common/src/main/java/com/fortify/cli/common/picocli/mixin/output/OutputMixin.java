@@ -40,35 +40,25 @@ public class OutputMixin {
 	private OutputOptionsArgGroup outputOptionsArgGroup;
 
 	private static final class OutputOptionsArgGroup {
-	    @CommandLine.Option(names = {"--fmt", "--format"},
-	            description = "Output format. Possible values: ${COMPLETION-CANDIDATES}.",
-	            order=1)
+	    @CommandLine.Option(names = {"--fmt", "--format"}, order=1)
 	    private OutputFormat outputFormat;
 	
-	    @CommandLine.Option(names = {"--fields"},
-	            description = "Define the fields to be included in the output, together with optional header names",
-	            order=2)
+	    @CommandLine.Option(names = {"--fields"}, order=2)
 		@Setter
 	    private String fields;
 	    
-	    @CommandLine.Option(names = {"--flatten"},
-	            description = "For non-column-based outputs, whether to flatten the structure",
-	            order=3, defaultValue = "false")
+	    @CommandLine.Option(names = {"--flatten"}, order=3, defaultValue = "false")
 	    @Getter
 	    private boolean flatten;
 	    
-	    @CommandLine.Option(names = "--no-headers", negatable = true,
-	            description = "For column-based outputs, whether to output headers",
-	            order=3)
+	    @CommandLine.Option(names = "--no-headers", negatable = true, order=3)
 	    @Getter
 	    private boolean withHeaders = true;
 	
-		@CommandLine.Option(names = {"--json-path"}, description = "Transforms output using JSONPath", order = 6)
+		@CommandLine.Option(names = {"--json-path"}, order = 6)
 		@Getter private String jsonPath;
 		
-		@CommandLine.Option(names = {"-o", "--output"},
-	            description = "Output file", 
-	            order=7)
+		@CommandLine.Option(names = {"-o", "--output"}, order=7)
 	    private String outputFile; 
 	}
 	

@@ -54,11 +54,8 @@ import picocli.CommandLine.ScopeType;
 	scope = ScopeType.INHERIT, 
 	mixinStandardHelpOptions = true,
 	usageHelpAutoWidth = true,
-	sortOptions = false,
-	footer = "%n(c) Copyright 2021 Micro Focus", 
+	sortOptions = false, 
 	showAtFileInUsageHelp = false,
-    optionListHeading = "%nGeneric options:%n", // This is supposed to hold only standard help, version, and logging options; command implementations should always use appropriate ArgGroups with headings
-	description = "Command-line interface for working with various Fortify products",
 	resourceBundle = "com.fortify.cli.i18n.FortifyCLIMessages",
 	subcommands = {
 			ConfigCommands.class,
