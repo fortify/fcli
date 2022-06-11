@@ -14,9 +14,8 @@ public class LanguageSetCommand extends AbstractLanguageCommand {
     @CommandLine.Mixin
     private OutputMixin outputMixin;
 
-    @CommandLine.Option(
-            names = {"-l", "--lang"}
-    )
+    // TODO: Need to internationalize paramLabel at some point.
+    @CommandLine.Parameters(index = "0", descriptionKey = "fcli.config.language.set.language")
     private String language;
 
     @PostConstruct

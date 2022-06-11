@@ -17,7 +17,7 @@ public class LanguageHelper implements IFortifyCLIInitializer {
         this.config = config;
     }
 
-    private boolean isNullEmptyOrEn(String lang){
+    public boolean isNullEmptyOrEn(String lang){
         boolean t = false;
         if(lang == null || lang.isEmpty() || lang.toLowerCase() == "en"){
             t = true;
@@ -25,7 +25,7 @@ public class LanguageHelper implements IFortifyCLIInitializer {
         return t;
     }
 
-    private boolean isNullEmptyOrEn(){
+    public boolean isNullEmptyOrEn(){
         return isNullEmptyOrEn(config.get(CONFIG_KEY));
     }
 
