@@ -194,3 +194,35 @@ task dist(type: Copy) {
 	}
 	into "$buildDir/dist"
 }
+
+tasks.register('ConcatenateI18nGeneralMessages') {
+	dependsOn subprojects.build // Makes it so that this only runs after all sub-projects/modules have finished building
+
+	doLast {
+		println ":: COMBINING GENERAL MESSAGE RESOURCES FILES WITH MODULE SPECIFIC RESOURCE FILES ::"
+		def i18nGeneralFiles = fileTree("$buildDir")
+				.filter {File f -> f.path ==~ ".*[\\\\/]build[\\\\/]resources[\\\\/]main[\\\\/].*[\\\\/](FCLIGenericMessages(_\\w{2})?.properties\$)"}
+		def i18nModuleFiles = fileTree("$rootDir")
+				.filter {File f -> f.path ==~ ".*[\\\\/]build[\\\\/]resources[\\\\/]main[\\\\/]com.*[\\\\/](\\w+Messages(_\\w{2})?.properties\$)"}
+
+		for (File moduleFile in i18nModuleFiles){
+			try{
+				def generalFile = null
+				def splitChar = "_"
+				if(moduleFile.name.contains(splitChar)){
+					def moduleFileEnding = moduleFile.name.split(splitChar)[1]
+					generalFile = i18nGeneralFiles.filter {File f -> f.name.endsWith(moduleFileEnding)}.getSingleFile()
+				}else{
+					// In this case, if splitChar is not in the file name, we expect the the file is for the default locale
+					generalFile = i18nGeneralFiles.filter{File f -> f.name.equals("FCLIGeneralMessages.properties")}
+							.getSingleFile()
+				}
+				if(generalFile){
+					println "APPENDING $generalFile.name into $moduleFile.name"
+					moduleFile.text += ("\n" + generalFile.text)
+				}
+			}catch(Exception e){}
+		}
+	}
+}
+classes.finalizedBy('ConcatenateI18nGeneralMessages')
