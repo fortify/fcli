@@ -1,4 +1,6 @@
 rootProject.name="fcli"
+// TODO Remove fcli-picocli-patches once new picocli version is released
+include 'fcli-picocli-patches'
 include 'fcli-common'
 include 'fcli-config'
 include 'fcli-ssc'
@@ -7,4 +9,5 @@ include 'fcli-sc-sast'
 include 'fcli-sc-dast'
 include 'fcli-run'
 include 'fcli-tool'
+
 
