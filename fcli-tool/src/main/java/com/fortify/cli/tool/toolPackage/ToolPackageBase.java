@@ -66,7 +66,7 @@ public abstract class ToolPackageBase {
             description = "List which versions can be downloaded and/or installed."
     )
     public void ListVersions(
-        @CommandLine.Option(names = {"-p", "--printUrl"}, description = "Print the URLs used to download packages from.")
+        @CommandLine.Option(names = {"-p", "--printUrl"}, descriptionKey = "p")
         boolean printPackageVersionUrls
     ){
         String pkgName = getToolPackagName();
