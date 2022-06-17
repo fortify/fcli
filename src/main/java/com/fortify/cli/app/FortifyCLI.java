@@ -24,16 +24,16 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
+import com.fortify.cli.app.exception.I18nParameterExceptionHandler;
+import com.fortify.cli.common.locale.LanguageHelper;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 import org.apache.commons.logging.impl.SimpleLog;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 import org.jasypt.normalization.Normalizer;
-
 import com.fortify.cli.common.config.IFortifyCLIInitializer;
 import com.oracle.svm.core.annotate.AutomaticFeature;
-
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -70,7 +70,13 @@ public class FortifyCLI {
 		try (ApplicationContext applicationContext = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
 			try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {
 				applicationContext.getBeansOfType(IFortifyCLIInitializer.class).forEach(b -> b.initializeFortifyCLI(args));
-				return new CommandLine(FCLIRootCommands.class, micronautFactory).execute(args);
+				CommandLine commandLine = new CommandLine(FCLIRootCommands.class, micronautFactory);
+				return commandLine.setParameterExceptionHandler(
+						new I18nParameterExceptionHandler(
+								commandLine.getParameterExceptionHandler(),
+								applicationContext.getBean(LanguageHelper.class)
+						)
+				).execute(args);
 			}
 		}
 	}
