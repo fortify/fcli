@@ -29,7 +29,7 @@ import com.fortify.cli.ssc.util.SSCConstants;
 
 import picocli.CommandLine.Command;
 
-@Command(name = "logout", sortOptions = false)
+@Command(name = "logout", sortOptions = false, resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages")
 public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand {
 	@Override
 	public String getSessionType() {
