@@ -34,7 +34,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 public class APICommandMixin {
-	@Parameters(index = "0", arity = "1..1") String uri;
+	@Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
 	
 	@Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
 	@Getter private String httpMethod;

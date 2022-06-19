@@ -36,7 +36,7 @@ import picocli.CommandLine.Spec;
 public class OutputMixin {
 	@Spec(Spec.Target.MIXEE) CommandSpec mixee;
 	
-	@ArgGroup(heading = "Output options:%n", exclusive = false)
+	@ArgGroup(headingKey = "arggroup.output.heading", exclusive = false)
 	private OutputOptionsArgGroup outputOptionsArgGroup;
 
 	private static final class OutputOptionsArgGroup {
