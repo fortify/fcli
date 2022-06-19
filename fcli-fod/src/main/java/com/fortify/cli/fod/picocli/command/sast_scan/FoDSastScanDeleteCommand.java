@@ -8,7 +8,7 @@ import lombok.SneakyThrows;
 import picocli.CommandLine;
 
 @ReflectiveAccess
-@CommandLine.Command(name = "delete", description = "Delete a SAST scan from FoD.")
+@CommandLine.Command(name = "delete")
 public class FoDSastScanDeleteCommand extends AbstractFoDUnirestRunnerCommand {
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {

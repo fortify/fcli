@@ -5,7 +5,6 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "release",
         aliases = {"application-release"},
-        description = "Commands for interacting with application releases on FoD.",
         subcommands = {
                 FoDApplicationReleaseCreateCommand.class,
                 FoDApplicationReleaseListCommand.class,

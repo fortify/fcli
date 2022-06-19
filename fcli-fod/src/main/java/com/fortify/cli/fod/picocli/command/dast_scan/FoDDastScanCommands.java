@@ -4,7 +4,6 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "dast",
         aliases = {"dast-scan"},
-        description = "Commands for interacting with DAST scans on FoD.",
         subcommands = {
                 FoDDastScanCreateCommand.class,
                 FoDDastScanGetCommand.class,

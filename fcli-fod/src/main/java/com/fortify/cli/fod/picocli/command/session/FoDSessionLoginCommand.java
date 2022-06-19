@@ -44,14 +44,14 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "login", description = "Login to FoD", sortOptions = false)
+@Command(name = "login", sortOptions = false)
 public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionLoginConfig> {
 	@Getter @Inject private FoDSessionLoginHandler sscLoginHandler;
 	
-	@ArgGroup(exclusive = false, multiplicity = "1", heading = "FoD connection options:%n", order = 1)
+	@ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-connection-options.heading", order = 1)
 	@Getter private LoginConnectionOptions connectionOptions;
 	
-	@ArgGroup(exclusive = false, multiplicity = "1", heading = "FoD authentication options:%n", order = 2)
+	@ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-authentication-options.heading", order = 2)
     @Getter private FoDAuthOptions authOptions;
 	
 	static class FoDAuthOptions {

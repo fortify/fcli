@@ -5,7 +5,6 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "app",
         aliases = {"application"},
-        description = "Commands for interacting with applications on FoD.",
         subcommands = {
                 FoDApplicationCreateCommand.class,
                 FoDApplicationListCommand.class,
