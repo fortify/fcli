@@ -43,38 +43,37 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list", description = "List DAST scans on ScanCentral DAST")
 public class SCDastScanListCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-    @ArgGroup(exclusive = false, heading = "Get a specific scan:%n", order = 1)
+    @ArgGroup(exclusive = false, heading = "arggroup.get-specific-scan-options.heading", order = 1)
     private SCDastGetScanOptions scanOptions;
 
-    @ArgGroup(exclusive = false, heading = "Filter multiple scans:%n", order = 2)
+    @ArgGroup(exclusive = false, headingKey = "arggroup.filter-multiple-scans-options.heading", order = 2)
     private SCDastGetScanListOptions scanListOptions;
     
     @ReflectiveAccess
     public static final class SCDastGetScanListOptions {
-        @Option(names = {"-t", "--text", "--search-text"}, description = "The text to filter results by")
+        @Option(names = {"-t", "--text", "--search-text"})
         @Getter private String searchText;
 
-        @Option(names = { "--start","--start-date"}, description = "The started on start date range")
+        @Option(names = { "--start","--start-date"})
         @Getter private String startDate;
 
-        @Option(names = {"--end","--end-date"}, description = "The started on end date range")
+        @Option(names = {"--end","--end-date"})
         @Getter private String endDate;
 
-        @Option(names = {"-s","--status", "--scan-status"},
-                description = "The specific ScanStatusTypes to filter results. Possible values: ${COMPLETION-CANDIDATES}.")
+        @Option(names = {"-s","--status", "--scan-status"})
         @Getter private SCDastScanStatusTypes scanStatus;
 
-        @Option(names = {"--order","--order-by"}, description = "The field name to order the results by")
+        @Option(names = {"--order","--order-by"})
         @Getter private String orderBy;
 
         private enum Directions {ASC, DESC}
-        @Option(names = {"-d","--direction","--order-by-direction"}, description = "The direction to order the results by. Possible values: ${COMPLETION-CANDIDATES}.")
+        @Option(names = {"-d","--direction","--order-by-direction"})
         @Getter private Directions orderByDirection;
     }
     
     @ReflectiveAccess
     public static class SCDastGetScanOptions {
-        @Option(names = {"-i", "--id", "--scan-id"}, description = "The scan id")
+        @Option(names = {"-i", "--id", "--scan-id"})
         @Getter private String scanId;
     }
 

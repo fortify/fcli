@@ -42,18 +42,18 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "publish", description = "Publishes a DAST scan on ScanCentral DAST to SSC")
+@Command(name = "publish")
 public final class SCDastScanOutputPublishResultsCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
-    @ArgGroup(exclusive = false, heading = "Publish scan options:%n", order = 1)
+    @ArgGroup(exclusive = false, headingKey = "arggroup.publish-options.heading", order = 1)
     @Getter private SCDastScanPublishOptions publishScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
     public static class SCDastScanPublishOptions {
-        @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
+        @Option(names = {"-i","--id", "--scan-id"}, required = true)
         @Getter private int scanId;
     }
 

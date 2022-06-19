@@ -42,26 +42,24 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "complete", description = "Completes a DAST scan on ScanCentral DAST")
+@Command(name = "complete")
 public final class SCDastScanCompleteCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
-    @ArgGroup(exclusive = false, heading = "Complete scan options:%n", order = 1)
+    @ArgGroup(exclusive = false, headingKey = "arggroup.complete-scan-options.heading", order = 1)
     @Getter private SCDastScanCompleteOptions completeScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
     public static class SCDastScanCompleteOptions {
-        @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
+        @Option(names = {"-i","--id", "--scan-id"}, required = true)
         @Getter private int scanId;
 
-        @Option(names = {"-w", "--wait", "--wait-completed"}, defaultValue = "false",
-                description = "Wait until the scan is complete")
+        @Option(names = {"-w", "--wait", "--wait-completed"}, defaultValue = "false")
         @Getter private boolean waitCompleted;
 
-        @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30",
-                description = "When waiting for completion, how long between to poll, in seconds", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+        @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         @Getter private int waitInterval;
     }
 

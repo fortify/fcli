@@ -49,10 +49,10 @@ import picocli.CommandLine.Option;
 @Command(name = "list", description = "List scan settings on ScanCentral DAST")
 public class SCDastScanSettingsListCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
 		
-		@ArgGroup(exclusive = false, heading = "Get a specific scan settings:%n", order = 1)
+		@ArgGroup(exclusive = false, headingKey = "arggroup.specific-scan-setting-options.heading", order = 1)
         private SCDastGetScanSettingsOptions scanSettingsOptions;
 
-        @ArgGroup(exclusive = false, heading = "Filter multiple scan settings:%n", order = 2)
+        @ArgGroup(exclusive = false, headingKey = "arggroup.list-scan-settings-options.heading", order = 2)
         private SCDastGetScanSettingsListOptions scanSettingsListOptions;
 
 
@@ -60,23 +60,23 @@ public class SCDastScanSettingsListCommand extends AbstractSCDastUnirestRunnerCo
 
 		@ReflectiveAccess
 		public static class SCDastGetScanSettingsOptions {
-		    @Option(names = {"-i", "--id", "--scan-settings-id"}, description = "The scan settings id")
+		    @Option(names = {"-i", "--id", "--scan-settings-id"})
 		    @Getter private String scanSettingsId;
 		}
 		
 		@ReflectiveAccess
 		public static class SCDastGetScanSettingsListOptions {
-		    @Option(names = {"-t","--text","--search-text"}, description = "The text to filter results by.")
+		    @Option(names = {"-t","--text","--search-text"})
 		    @Getter private String searchText;
 
-		    @Option(names = {"--start","--start-date"}, description = "The modified start date range.")
+		    @Option(names = {"--start","--start-date"})
 		    @Getter private String startDate;
 
-		    @Option(names = {"--end","--end-date"}, description = "The modified end date range.")
+		    @Option(names = {"--end","--end-date"})
 		    @Getter private String endDate;
 
 		    private enum ScanTypes {Standard, WorkflowDriven, AMI}
-		    @Option(names = {"--type","--scan-type"}, description = "The specific ScanTypes to filter results. [ ${COMPLETION-CANDIDATES} ]")
+		    @Option(names = {"--type","--scan-type"})
 		    @Getter private ScanTypes scanType;
 		}
 		

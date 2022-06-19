@@ -42,10 +42,10 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "resume", description = "Resumes a DAST scan on ScanCentral DAST")
+@Command(name = "resume")
 public final class SCDastScanResumeCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
-    @ArgGroup(exclusive = false, heading = "Resume scan options:%n", order = 1)
+    @ArgGroup(exclusive = false, headingKey = "arggroup.resume-scan-options.heading", order = 1)
     @Getter private SCDastScanResumeOptions resumeScanOptions;
 
     @Mixin private OutputMixin outputMixin;
@@ -55,12 +55,10 @@ public final class SCDastScanResumeCommand extends AbstractSCDastUnirestRunnerCo
         @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
         @Getter private int scanId;
 
-        @Option(names = {"-w", "--wait", "--wait-resumed"}, defaultValue = "false",
-                description = "Wait until the scan is running")
+        @Option(names = {"-w", "--wait", "--wait-resumed"}, defaultValue = "false")
         @Getter private boolean waitResumed;
 
-        @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30",
-                description = "When waiting for completion, how long between to poll, in seconds", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+        @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         @Getter private int waitInterval;
     }
 
