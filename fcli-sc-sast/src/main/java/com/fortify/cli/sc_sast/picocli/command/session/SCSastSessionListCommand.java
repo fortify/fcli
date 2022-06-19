@@ -29,7 +29,7 @@ import com.fortify.cli.sc_sast.util.SCSastConstants;
 
 import picocli.CommandLine.Command;
 
-@Command(name = "list", description = "List ScanCentral SAST sessions", sortOptions = false)
+@Command(name = "list", sortOptions = false)
 public class SCSastSessionListCommand extends AbstractSessionListCommand {
 	@Override
 	public final String getSessionType() {

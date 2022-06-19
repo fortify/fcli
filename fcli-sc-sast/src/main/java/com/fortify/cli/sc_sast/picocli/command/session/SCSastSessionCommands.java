@@ -4,7 +4,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "session",
-        description = "Commands to manage Fortify ScanCentral SAST sessions.",
         subcommands = {
         		SCSastSessionListCommand.class,
                 SCSastSessionLoginCommand.class,

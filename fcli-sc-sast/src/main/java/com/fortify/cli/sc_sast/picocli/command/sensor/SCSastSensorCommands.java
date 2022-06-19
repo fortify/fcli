@@ -5,7 +5,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "sensor",
-        description = "Commands for working with Fortify ScanCental SAST sensors (workers).",
         aliases = {"worker"},
         subcommands = {
                 DummyCommand.class

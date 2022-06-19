@@ -11,11 +11,9 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = "cancel",
-	description = "Cancel a ScanCentral SAST scan."
-)
+@Command(name = "cancel")
 public class SCSastScanCancelCommand extends AbstractSCSastUnirestRunnerCommand implements IOutputConfigSupplier {
-	@ArgGroup(exclusive = false, heading = "Scan status options:%n", order = 1)
+	@ArgGroup(exclusive = false, headingKey = "arggroup.scan-status-options.heading", order = 1)
     private SCSastScanTokenMixin scanStatusOptions;
 
     @Mixin
