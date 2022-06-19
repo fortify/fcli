@@ -44,14 +44,14 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
-@Command(name = "login", description = "Login to SSC", sortOptions = false)
+@Command(name = "login", sortOptions = false)
 public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessionLoginConfig> {
 	@Getter @Inject private SSCSessionLoginHandler sscLoginHandler;
 	
-	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC connection options:%n", order = 1)
+	@ArgGroup(exclusive = false, multiplicity = "1", order = 1, headingKey = "fcli.ssc.session.login.connection.argGroup.heading")
 	@Getter private LoginConnectionOptions connectionOptions;
 	
-	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC authentication options:%n", order = 2)
+	@ArgGroup(exclusive = false, multiplicity = "1", order = 2, headingKey = "fcli.ssc.session.login.authentication.argGroup.heading")
     @Getter private SSCAuthOptions authOptions;
 	
 	static class SSCAuthOptions {

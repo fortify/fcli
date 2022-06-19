@@ -37,9 +37,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "list",
-		description = "List applications on SSC."
-)
+@Command(name = "list")
 public class SSCApplicationListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
 	

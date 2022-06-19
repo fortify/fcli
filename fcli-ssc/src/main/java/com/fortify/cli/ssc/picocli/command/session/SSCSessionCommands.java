@@ -4,7 +4,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "session",
-        description = "Commands to manage Fortify SSC sessions.",
         subcommands = {
         		SSCSessionListCommand.class,
                 SSCSessionLoginCommand.class,

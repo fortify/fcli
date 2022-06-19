@@ -29,7 +29,7 @@ import com.fortify.cli.ssc.util.SSCConstants;
 
 import picocli.CommandLine.Command;
 
-@Command(name = "list", description = "List SSC sessions", sortOptions = false)
+@Command(name = "list", sortOptions = false)
 public class SSCSessionListCommand extends AbstractSessionListCommand {
 	@Override
 	public final String getSessionType() {

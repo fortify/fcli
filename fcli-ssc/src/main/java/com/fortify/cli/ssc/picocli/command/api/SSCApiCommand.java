@@ -38,7 +38,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "api", description = "Invoke SSC REST API")
+@Command(name = "api")
 @FixSuperclassInjection
 public final class SSCApiCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@Mixin private OutputMixin outputMixin;

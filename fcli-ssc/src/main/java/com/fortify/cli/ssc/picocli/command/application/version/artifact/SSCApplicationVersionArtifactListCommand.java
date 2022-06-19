@@ -38,7 +38,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "list", description = "List application version artifacts on SSC.")
+@Command(name = "list")
 public class SSCApplicationVersionArtifactListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private SSCParentApplicationVersionMixin.From parentVersionHandler;
 	@CommandLine.Mixin private OutputMixin outputMixin;
