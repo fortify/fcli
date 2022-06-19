@@ -45,11 +45,11 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "status", description = "Get scan status for a ScanCentral DAST scan")
+@Command(name = "status")
 public class SCDastScanStatusCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
 		@Spec CommandSpec spec;
 
-		@ArgGroup(exclusive = false, heading = "Get a specific scan:%n", order = 1)
+		@ArgGroup(exclusive = false, headingKey = "arggroup.status-scan-options.heading", order = 1)
         @Getter private SCDastGetScanStatusOptions scanStatusOptions;
 
         @Mixin
@@ -57,7 +57,7 @@ public class SCDastScanStatusCommand extends AbstractSCDastUnirestRunnerCommand 
 		
 		@ReflectiveAccess
 		public static class SCDastGetScanStatusOptions {
-		    @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id", required = true)
+		    @Option(names = {"-i","--id", "--scan-id"}, required = true)
 		    @Getter private int scanId;
 		}
 		

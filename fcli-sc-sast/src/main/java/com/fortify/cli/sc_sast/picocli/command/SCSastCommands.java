@@ -9,7 +9,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "sc-sast",
-        description = "Commands for interacting with Fortify ScanCentral SAST.",
         resourceBundle = "com.fortify.cli.sc_sast.i18n.SCSastMessages",
         subcommands = {
         		SCSastSessionCommands.class,
@@ -20,4 +19,7 @@ import picocli.CommandLine.Command;
         }
 )
 public class SCSastCommands {
+	public SCSastCommands(){
+		System.setProperty("productName", "ScanCentral SAST");
+	}
 }

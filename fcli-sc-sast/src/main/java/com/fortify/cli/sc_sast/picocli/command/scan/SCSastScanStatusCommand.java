@@ -12,9 +12,7 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = "status",
-	description = "Get the status of a ScanCentral SAST scan."
-)
+@Command(name = "status")
 public class SCSastScanStatusCommand extends AbstractSCSastUnirestRunnerCommand implements IOutputConfigSupplier {
 	@ArgGroup(exclusive = false, heading = "Scan status options:%n", order = 1)
     private SCSastScanTokenMixin scanStatusOptions;

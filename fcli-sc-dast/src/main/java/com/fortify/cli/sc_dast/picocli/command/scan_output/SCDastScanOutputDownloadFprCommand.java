@@ -46,7 +46,7 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "download-fpr", description = "Download scan results in FPR format from ScanCentral DAST")
 public class SCDastScanOutputDownloadFprCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-		@ArgGroup(exclusive = false, heading = "Download results from a specific scan:%n", order = 1)
+		@ArgGroup(exclusive = false, headingKey = "arggroup.download-fpr-options.heading", order = 1)
         private SCDastTransferScanResultsOptions scanResultsOptions;
 
         @Mixin
@@ -55,10 +55,10 @@ public class SCDastScanOutputDownloadFprCommand extends AbstractSCDastUnirestRun
 		@ReflectiveAccess
 		public static class SCDastTransferScanResultsOptions {
 
-		    @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id", required = true)
+		    @Option(names = {"-i","--id", "--scan-id"}, required = true)
 		    @Getter private int scanId;
 
-		    @Option(names = {"-f", "--file", "--output-file"}, description = "The output file to save the scan results in.", required = true)
+		    @Option(names = {"-f", "--file", "--output-file"}, required = true)
 		    @Getter private String file;
 		}
 		

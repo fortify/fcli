@@ -10,9 +10,7 @@ import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "list",
-        description = "List applications releases on FoD."
-)
+@CommandLine.Command(name = "list")
 public class FoDApplicationReleaseListCommand extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
 

@@ -42,26 +42,24 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "pause", description = "Pauses a DAST scan on ScanCentral DAST")
+@Command(name = "pause")
 public final class SCDastScanPauseCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
-    @ArgGroup(exclusive = false, heading = "Pause scan options:%n", order = 1)
+    @ArgGroup(exclusive = false, headingKey = "arggroup.pause-scan-options.heading", order = 1)
     @Getter private SCDastScanPauseOptions pauseScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
     public static class SCDastScanPauseOptions {
-        @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
+        @Option(names = {"-i","--id", "--scan-id"}, required = true)
         @Getter private int scanId;
 
-        @Option(names = {"-w", "--wait", "--wait-paused"}, defaultValue = "false",
-                description = "Wait until the scan is paused")
+        @Option(names = {"-w", "--wait", "--wait-paused"}, defaultValue = "false")
         @Getter private boolean waitPaused;
 
-        @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30",
-                description = "When waiting for completion, how long between to poll, in seconds", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+        @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         @Getter private int waitInterval;
     }
 

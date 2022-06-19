@@ -5,9 +5,7 @@ import com.fortify.cli.sc_sast.picocli.command.AbstractSCSastUnirestRunnerComman
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
 
-@Command(name = "start",
-        description = "Start a ScanCentral SAST scan."
-)
+@Command(name = "start")
 public class SCSastScanStartCommand extends AbstractSCSastUnirestRunnerCommand {
 
 	@Override

@@ -8,7 +8,7 @@ import lombok.SneakyThrows;
 import picocli.CommandLine;
 
 @ReflectiveAccess
-@CommandLine.Command(name = "delete", description = "Delete an application from FoD.")
+@CommandLine.Command(name = "delete")
 public class FoDApplicationReleaseDeleteCommand extends AbstractFoDUnirestRunnerCommand {
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {

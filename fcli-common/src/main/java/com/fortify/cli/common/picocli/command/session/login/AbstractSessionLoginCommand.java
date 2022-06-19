@@ -44,7 +44,7 @@ public abstract class AbstractSessionLoginCommand<C> extends AbstractCommandWith
 	@Inject private SessionSummaryHelper sessionSummaryHelper;
 	@Mixin private OutputMixin outputMixin;
 	
-	@ArgGroup(heading = "Optional session name:%n", order = 1000)
+	@ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
     @Getter protected SessionNameOptions sessionNameOptions;
 	
 	@ReflectiveAccess

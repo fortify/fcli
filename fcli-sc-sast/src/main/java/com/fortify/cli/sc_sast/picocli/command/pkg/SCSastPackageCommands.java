@@ -5,7 +5,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "package",
-        description = "Commands creating zip packages of a specified project.",
         subcommands = {
                 DummyCommand.class
         }

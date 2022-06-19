@@ -31,7 +31,7 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "logout", description = "Logout from FoD", sortOptions = false)
+@Command(name = "logout", sortOptions = false)
 public class FoDSessionLogoutCommand extends AbstractSessionLogoutCommand {
 	@Override
 	public String getSessionType() {

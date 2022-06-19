@@ -44,14 +44,14 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
-@Command(name = "login", description = "Login to SSC", sortOptions = false)
+@Command(name = "login", sortOptions = false, resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages")
 public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessionLoginConfig> {
 	@Getter @Inject private SSCSessionLoginHandler sscLoginHandler;
 	
-	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC connection options:%n", order = 1)
+	@ArgGroup(exclusive = false, multiplicity = "1", order = 1, headingKey = "fcli.ssc.session.login.connection.argGroup.heading")
 	@Getter private LoginConnectionOptions connectionOptions;
 	
-	@ArgGroup(exclusive = false, multiplicity = "1", heading = "SSC authentication options:%n", order = 2)
+	@ArgGroup(exclusive = false, multiplicity = "1", order = 2, headingKey = "fcli.ssc.session.login.authentication.argGroup.heading")
     @Getter private SSCAuthOptions authOptions;
 	
 	static class SSCAuthOptions {
@@ -67,7 +67,7 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessi
     }
     
     static class SSCUserCredentialOptions extends LoginUserCredentialOptions implements ISSCUserCredentialsConfig {
-    	@Option(names = {"--expire-in"}, required = false, defaultValue = "1d", showDefaultValue = Visibility.ALWAYS) 
+    	@Option(names = {"--expire-in"}, descriptionKey = "fcli.ssc.session.login.expire-in", required = false, defaultValue = "1d", showDefaultValue = Visibility.ALWAYS)
     	@Getter private String expireIn;
     	
     	@Override
@@ -77,7 +77,7 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessi
     }
     
     static class TokenOptions {
-    	@Option(names = {"--token", "-t"}, required = true, interactive = true, arity = "0..1", echo = false) 
+    	@Option(names = {"--token", "-t"}, descriptionKey = "fcli.ssc.session.login.token", required = true, interactive = true, arity = "0..1", echo = false)
     	@Getter private char[] token;
     }
 	

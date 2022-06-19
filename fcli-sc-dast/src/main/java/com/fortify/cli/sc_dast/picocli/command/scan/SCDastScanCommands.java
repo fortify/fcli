@@ -4,7 +4,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "scan",
-        description = "Prepare, run and manage ScanCentral DAST scans and results.",
         subcommands = {
                 SCDastScanCompleteCommand.class,
                 SCDastScanDeleteCommand.class,

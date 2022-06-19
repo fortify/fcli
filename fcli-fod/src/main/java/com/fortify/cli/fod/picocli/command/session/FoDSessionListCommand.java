@@ -29,7 +29,7 @@ import com.fortify.cli.fod.util.FoDConstants;
 
 import picocli.CommandLine.Command;
 
-@Command(name = "list", description = "List FoD sessions", sortOptions = false)
+@Command(name = "list", sortOptions = false)
 public class FoDSessionListCommand extends AbstractSessionListCommand {
 	@Override
 	public final String getSessionType() {

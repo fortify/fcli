@@ -12,7 +12,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "ssc",
-        description = "Commands for interacting with Fortify Software Security Center (SSC).",
         resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages",
         subcommands = {
                 SSCSessionCommands.class,
@@ -25,4 +24,7 @@ import picocli.CommandLine.Command;
         }
 )
 public class SSCCommands {
+        public SSCCommands(){
+                System.setProperty("productName", "Fortify SSC");
+        }
 }

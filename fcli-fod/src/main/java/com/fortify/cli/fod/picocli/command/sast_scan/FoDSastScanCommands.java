@@ -4,7 +4,6 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "sast",
         aliases = {"sast-scan"},
-        description = "Commands for interacting with SAST scans on FoD.",
         subcommands = {
                 FoDSastScanCreateCommand.class,
                 FoDSastScanGetCommand.class,

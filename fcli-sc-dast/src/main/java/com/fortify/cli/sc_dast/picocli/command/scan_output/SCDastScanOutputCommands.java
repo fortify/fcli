@@ -4,7 +4,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "scan-output",
-        description = "Retrieve and manage ScanCentral DAST scan output.",
         subcommands = {
         		SCDastScanOutputDownloadFprCommand.class,
         		SCDastScanOutputDownloadLogsCommand.class,

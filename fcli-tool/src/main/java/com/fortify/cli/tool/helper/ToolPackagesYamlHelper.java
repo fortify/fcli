@@ -15,7 +15,7 @@ public class ToolPackagesYamlHelper {
     public ToolPackagesYamlHelper(){
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         try {
-            InputStream file = classLoader.getResourceAsStream("com.fortify.cli.tools.ToolPackages.yaml");
+            InputStream file = classLoader.getResourceAsStream("com/fortify/cli/tool/ToolPackages.yaml");
             ObjectMapper om = new ObjectMapper(new YAMLFactory());
             toolPackages = om.readValue(file, ToolPackages.class);
         } catch (IOException e) {

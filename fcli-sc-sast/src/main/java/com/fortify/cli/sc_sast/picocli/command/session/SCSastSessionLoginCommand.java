@@ -37,14 +37,14 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Command(name = "login", description = "Login to ScanCentral SAST", sortOptions = false)
+@Command(name = "login", sortOptions = false)
 public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSastSessionLoginConfig> {
 	@Getter @Inject private SCSastSessionLoginHandler sscLoginHandler;
 	
-	@ArgGroup(exclusive = false, multiplicity = "1", heading = "ScanCentral SAST connection options:%n", order = 1)
+	@ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.sc-sast-connection-options.heading", order = 1)
 	@Getter private LoginConnectionOptions connectionOptions;
 	
-	@ArgGroup(exclusive = false, multiplicity = "1", heading = "ScanCentral SAST authentication options:%n", order = 2)
+	@ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.sc-sast-authentication-options.heading", order = 2)
     @Getter private SCSastAuthOptions authOptions;
 	
 	static class SCSastAuthOptions {

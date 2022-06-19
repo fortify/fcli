@@ -42,18 +42,18 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "delete", description = "Deletes a DAST scan on ScanCentral DAST")
+@Command(name = "delete")
 public final class SCDastScanDeleteCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
-    @ArgGroup(exclusive = false, heading = "Delete scan options:%n", order = 1)
+    @ArgGroup(exclusive = false, headingKey = "arggroup.delete-scan-options.heading", order = 1)
     @Getter private SCDastScanDeleteOptions deleteScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
     public static class SCDastScanDeleteOptions {
-        @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
+        @Option(names = {"-i","--id", "--scan-id"}, required = true)
         @Getter private int scanId;
     }
 

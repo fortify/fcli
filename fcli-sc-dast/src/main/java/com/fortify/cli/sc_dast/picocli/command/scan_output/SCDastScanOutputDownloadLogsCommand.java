@@ -44,9 +44,9 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "download-logs", description = "Download scan logs from ScanCentral DAST")
+@Command(name = "download-logs")
 public class SCDastScanOutputDownloadLogsCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-		@ArgGroup(exclusive = false, heading = "Download logs from a specific scan:%n", order = 1)
+		@ArgGroup(exclusive = false, headingKey = "arggroup.download-logs-options.heading", order = 1)
         @Getter private SCDastTransferScanLogsOptions scanLogsOptions;
 
         @Mixin
@@ -54,10 +54,10 @@ public class SCDastScanOutputDownloadLogsCommand extends AbstractSCDastUnirestRu
 		
 		@ReflectiveAccess
 		public static class SCDastTransferScanLogsOptions {
-		    @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id", required = true)
+		    @Option(names = {"-i","--id", "--scan-id"}, required = true)
 		    @Getter private int scanId;
 
-		    @Option(names = {"-f", "--file", "--output-file"}, description = "The output file to save the scan logs in.", required = true)
+		    @Option(names = {"-f", "--file", "--output-file"}, required = true)
 		    @Getter private String file;
 		}
 		

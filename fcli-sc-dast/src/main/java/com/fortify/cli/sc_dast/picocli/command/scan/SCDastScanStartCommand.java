@@ -48,11 +48,11 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "start", description = "Starts DAST scan on ScanCentral DAST")
+@Command(name = "start")
 public final class SCDastScanStartCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
-    @ArgGroup(exclusive = false, heading = "Scan options:%n", order = 1)
+    @ArgGroup(exclusive = false, headingKey = "arggroup.start-scan-options.heading", order = 1)
     @Getter private SCDastScanStartOptions scanOptions;
 
     @Mixin private OutputMixin outputMixin;
@@ -60,26 +60,26 @@ public final class SCDastScanStartCommand extends AbstractSCDastUnirestRunnerCom
     @ReflectiveAccess
     public static class SCDastScanStartOptions {
 
-        @Option(names = {"-s", "--settings","--settings-id","--settings-identifier"}, description = "The Settings Identifier to run the scan with.", required = true)
+        @Option(names = {"-s", "--settings","--settings-id","--settings-identifier"}, required = true)
         @Getter private String settingsId;
 
-        @Option(names = {"-n","--scan-name"}, description = "The name of the SC DAST scan")
+        @Option(names = {"-n","--scan-name"})
         @Getter private String scanName;
 
-        @Option(names = {"--overrides"}, description = "File containing override valuse for the SC DAST scan")
+        @Option(names = {"--overrides"})
         @Getter private File overridesFile;
 
         private enum ScanModes {CrawlOnly, CrawlAndAudit, AuditOnly}
-        @Option(names= {"-M", "--mode", "--scan-mode"}, description = "Overrides the scan mode.")
+        @Option(names= {"-M", "--mode", "--scan-mode"})
         @Getter private ScanModes scanMode;
 
-        @Option(names = {"-U", "--url","--start-url"}, description = "Overrides the scan start URL")
+        @Option(names = {"-U", "--url","--start-url"})
         @Getter private List<String> startUrls;
 
-        @Option(names = {"-P", "--policy","--policy-id"}, description = "Overrides the scan policy id")
+        @Option(names = {"-P", "--policy","--policy-id"})
         @Getter private String policyId;
 
-        @Option(names = {"-L","--login-macro"}, description = "Overrides the scan login macro binary file id")
+        @Option(names = {"-L","--login-macro"})
         @Getter private Integer loginMacroBinaryFileId;
 
         @SneakyThrows

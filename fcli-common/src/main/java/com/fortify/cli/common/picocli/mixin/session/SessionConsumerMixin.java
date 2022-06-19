@@ -33,7 +33,7 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 public class SessionConsumerMixin implements ISessionNameProvider {
-	@ArgGroup(heading = "Optional session name:%n", order = 1000)
+	@ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
     @Getter private SessionConsumerNameOptions nameOptions;
 	
 	static class SessionConsumerNameOptions {
