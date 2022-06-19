@@ -529,33 +529,60 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_scancentral_sast_connection_options">ScanCentral SAST connection options:</h2>
+<h2 id="_sysproductname_connection_options">${sys:productName} connection options:</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><strong>--url</strong>=<em>&lt;url&gt;</em></dt>
+<dd>
+<p>The full url to the ScanCentral SAST server.</p>
+</dd>
 <dt class="hdlist1"><strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em></dt>
+<dd>
+<p>The hostname or IP address of the proxy server.</p>
+</dd>
 <dt class="hdlist1"><strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em></dt>
+<dd>
+<p>Port number used to connect to the proxy server.</p>
+</dd>
 <dt class="hdlist1"><strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em></dt>
+<dd>
+<p>The username used to authenticate with the proxy server.</p>
+</dd>
 <dt class="hdlist1"><strong>--proxy-password</strong></dt>
+<dd>
+<p>The password used to authenticate with the proxy server.</p>
+</dd>
 <dt class="hdlist1"><strong>-k</strong>, <strong>--insecure</strong></dt>
 <dd>
-<p>Disable SSL checks</p>
+<p>Disable SSL checks.</p>
 </dd>
 </dl>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_scancentral_sast_authentication_options">ScanCentral SAST authentication options:</h2>
+<h2 id="_sysproductname_authentication_options">${sys:productName} authentication options:</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><strong>-t</strong>, <strong>--client-auth-token</strong>[=<em>&lt;clientAuthToken&gt;</em>]</dt>
 <dd>
-<p>== Optional session name:</p>
+<p>The ScanCentral SAST client authorization token.</p>
 </dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_optional_session_name">Optional session name:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><strong>-n</strong>, <strong>--session-name</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>A name/alias for your ScanCentral SAST session.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -564,7 +591,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-06-17 04:14:04 UTC
+Last updated 2022-06-19 15:03:11 UTC
 </div>
 </div>
 </body>

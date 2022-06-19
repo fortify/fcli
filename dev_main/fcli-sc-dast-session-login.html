@@ -441,7 +441,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>fcli-sc-dast-session-login(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-sc-dast-session-login - Login to SSC</p>
+<p>fcli-sc-dast-session-login - Login to Fortify SSC to interact with ScanCentral DAST</p>
 </div>
 </div>
 <div id="content">
@@ -465,7 +465,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Login to SSC</p>
+<p>Login to Fortify SSC to interact with ScanCentral DAST</p>
 </div>
 </div>
 </div>
@@ -533,13 +533,28 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><strong>--url</strong>=<em>&lt;url&gt;</em></dt>
+<dd>
+<p>The full url to the ScanCentral DAST server.</p>
+</dd>
 <dt class="hdlist1"><strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em></dt>
+<dd>
+<p>The hostname or IP address of the proxy server.</p>
+</dd>
 <dt class="hdlist1"><strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em></dt>
+<dd>
+<p>Port number used to connect to the proxy server.</p>
+</dd>
 <dt class="hdlist1"><strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em></dt>
+<dd>
+<p>The username used to authenticate with the proxy server.</p>
+</dd>
 <dt class="hdlist1"><strong>--proxy-password</strong></dt>
+<dd>
+<p>The password used to authenticate with the proxy server.</p>
+</dd>
 <dt class="hdlist1"><strong>-k</strong>, <strong>--insecure</strong></dt>
 <dd>
-<p>Disable SSL checks</p>
+<p>Disable SSL checks.</p>
 </dd>
 </dl>
 </div>
@@ -551,16 +566,39 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><strong>-u</strong>, <strong>--user</strong>=<em>&lt;user&gt;</em></dt>
+<dd>
+<p>Your Fortify SSC username.</p>
+</dd>
 <dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;password&gt;</em>]</dt>
+<dd>
+<p>Your Fortify SSC password.</p>
+</dd>
 <dt class="hdlist1"><strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em></dt>
 <dd>
-<p>Default: 1d</p>
+<p>How long your login should be valid for.</p>
+<div class="literalblock">
+<div class="content">
+<pre>Default: 1d</pre>
+</div>
+</div>
 </dd>
 <dt class="hdlist1"><strong>-t</strong>, <strong>--token</strong>[=<em>&lt;token&gt;</em>]</dt>
 <dd>
-<p>== Optional session name:</p>
+<p>As an alternative to a username/password, you can instead provide a SSC API token.</p>
 </dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_optional_session_name">Optional session name:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><strong>-n</strong>, <strong>--session-name</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>A name/alias for your Fortify SSC session.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -569,7 +607,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-06-17 04:14:04 UTC
+Last updated 2022-06-19 15:03:11 UTC
 </div>
 </div>
 </body>
