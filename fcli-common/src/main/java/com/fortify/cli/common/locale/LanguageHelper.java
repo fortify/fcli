@@ -8,7 +8,7 @@ import java.util.Locale;
 
 @Singleton
 public class LanguageHelper implements IFortifyCLIInitializer {
-    public static final String[] supportedLanguages = {"en","nl"};
+    public static final String[] supportedLanguages = {"en","nl","zh"};
     private static final String CONFIG_KEY = "defaultUserLanguage";
     private final FcliConfig config;
 
