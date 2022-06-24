@@ -42,12 +42,19 @@ public class SSCAuthenticatedUnirestRunner extends AbstractSessionUnirestRunner<
 			throw new IllegalStateException("SSC token not available or has expired, please login again");
 		}
 		setTokenHeader(unirestInstance, token);
+		setDefaultHeaders(unirestInstance);
 		ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
 	}
 	
 	private final void setTokenHeader(UnirestInstance unirestInstance, char[] token) {
 		final String authHeader = String.format("FortifyToken %s", String.valueOf(token));
 		unirestInstance.config().setDefaultHeader("Authorization", authHeader);
+	}
+	
+	private final void setDefaultHeaders(UnirestInstance unirestInstance) {
+		unirestInstance.config()
+			.setDefaultHeader("Accept", "application/json")
+			.setDefaultHeader("Content-Type", "application/json");
 	}
 
 	@Override

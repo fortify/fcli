@@ -3,10 +3,10 @@ package com.fortify.cli.ssc.picocli.command.event;
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "system-event",
+        name = "event",
         subcommands = {
-                SSCSystemEventListCommand.class
+                SSCEventListCommand.class
         }
 )
-public class SSCSystemEventCommands {
+public class SSCEventCommands {
 }

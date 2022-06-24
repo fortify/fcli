@@ -22,13 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.application.version;
+package com.fortify.cli.ssc.picocli.command.event;
 
+import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -38,22 +38,20 @@ import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCApplicationVersionListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+public class SSCEventListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(
-				unirest.get("/api/v1/projectVersions?limit=-1")
-					.accept("application/json")
-					.header("Content-Type", "application/json"));
-
+		outputMixin.write(unirest.get("/api/v1/events?limit=-1"));
 		return null;
 	}
 	
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#project.name:Application#name");
+		return new OutputConfig()
+				.defaultFormat(OutputFormat.table)
+				.inputTransformer(json->json.get("data"))
+				.defaultColumns("eventDate#userName#eventType#projectVersionId#entityId");
 	}
 }

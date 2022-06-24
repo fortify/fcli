@@ -1,11 +1,12 @@
 package com.fortify.cli.ssc.picocli.command;
 
 import com.fortify.cli.ssc.picocli.command.api.SSCApiCommand;
-import com.fortify.cli.ssc.picocli.command.application.SSCApplicationCommands;
-import com.fortify.cli.ssc.picocli.command.application.version.SSCApplicationVersionCommands;
-import com.fortify.cli.ssc.picocli.command.application.version.artifact.SSCApplicationVersionArtifactCommands;
-import com.fortify.cli.ssc.picocli.command.application.version.attribute.SSCApplicationVersionAttributeCommands;
-import com.fortify.cli.ssc.picocli.command.event.SSCSystemEventCommands;
+import com.fortify.cli.ssc.picocli.command.app.SSCApplicationCommands;
+import com.fortify.cli.ssc.picocli.command.appversion.SSCApplicationVersionCommands;
+import com.fortify.cli.ssc.picocli.command.appversion_artifact.SSCApplicationVersionArtifactCommands;
+import com.fortify.cli.ssc.picocli.command.appversion_attribute.SSCApplicationVersionAttributeCommands;
+import com.fortify.cli.ssc.picocli.command.event.SSCEventCommands;
+import com.fortify.cli.ssc.picocli.command.plugin.SSCPluginCommands;
 import com.fortify.cli.ssc.picocli.command.session.SSCSessionCommands;
 
 import picocli.CommandLine.Command;
@@ -20,7 +21,8 @@ import picocli.CommandLine.Command;
                 SSCApplicationVersionCommands.class,
                 SSCApplicationVersionArtifactCommands.class,
                 SSCApplicationVersionAttributeCommands.class,
-                SSCSystemEventCommands.class
+                SSCPluginCommands.class,
+                SSCEventCommands.class
         }
 )
 public class SSCCommands {

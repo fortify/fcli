@@ -22,12 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.application;
+package com.fortify.cli.ssc.picocli.command.appversion_artifact;
 
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.picocli.mixin.application.version.SSCParentApplicationVersionMixin;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -38,15 +39,14 @@ import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCApplicationListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+public class SSCApplicationVersionArtifactListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+	@CommandLine.Mixin private SSCParentApplicationVersionMixin.From parentVersionHandler;
 	@CommandLine.Mixin private OutputMixin outputMixin;
-	
+
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(
-				unirest.get("/api/v1/projects?limit=-1")
-					.accept("application/json")
-					.header("Content-Type", "application/json"));
+		outputMixin.write(unirest.get("/api/v1/projectVersions/{id}/artifacts?embed=scans")
+				.routeParam("id", parentVersionHandler.getApplicationVersionId(unirest)));
 
 		return null;
 	}
@@ -54,6 +54,6 @@ public class SSCApplicationListCommand extends AbstractSSCUnirestRunnerCommand i
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
 		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#name");
+				.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
 	}
 }

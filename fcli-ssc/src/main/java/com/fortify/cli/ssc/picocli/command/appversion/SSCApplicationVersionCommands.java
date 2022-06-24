@@ -1,4 +1,4 @@
-package com.fortify.cli.ssc.picocli.command.application.version;
+package com.fortify.cli.ssc.picocli.command.appversion;
 
 import picocli.CommandLine.Command;
 
