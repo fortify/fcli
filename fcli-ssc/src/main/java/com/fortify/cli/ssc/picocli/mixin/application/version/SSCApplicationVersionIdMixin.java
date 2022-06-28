@@ -26,38 +26,46 @@ package com.fortify.cli.ssc.picocli.mixin.application.version;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-public class SSCParentApplicationVersionMixin {
+public class SSCApplicationVersionIdMixin {
 	
-	// get/retrieve/delete/download version <entity> --from
-	public static class From {
-		@Option(names = {"--from"}, required = true, description = "Application version id or <application>/<version> name")
-		private String versionNameOrId;
+	public static abstract class AbstractSSCApplicationVersionMixin {
+		public abstract String getVersionNameOrId();
 		
 		public String getApplicationVersionId(UnirestInstance unirestInstance) {
-			return versionNameOrId; // TODO Find by name if not numeric
+			String versionNameOrId = getVersionNameOrId();
+			// TODO Parse versionNameOrId, to see whether it's an id or app:version
+			// TODO If it's an id, execute GET request to check whether id exists, throw an error if not
+			// TODO If it's app:version, execute GET request to get the corresponding id
+			return versionNameOrId;
 		}
+	}
+	
+	// get/retrieve/delete/download version <entity> --from
+	public static class From extends AbstractSSCApplicationVersionMixin {
+		@Option(names = {"--from"}, required = true, description = "Application version id or <application>:<version> name")
+		@Getter private String versionNameOrId;
 	}
 	
 	// create/update version <entity> --for <version>
-	public static class For {
-		@Option(names = {"--for"}, required = true, description = "Application version id or <application>/<version> name")
-		private String versionNameOrId;
-			
-		public String getApplicationVersionId(UnirestInstance unirestInstance) {
-			return versionNameOrId; // TODO Find by name if not numeric
-		}
+	public static class For extends AbstractSSCApplicationVersionMixin {
+		@Option(names = {"--for"}, required = true, description = "Application version id or <application>:<version> name")
+		@Getter private String versionNameOrId;
 	}
 	
 	// upload version <entity> --to <version>
-	public static class To {
-		@Option(names = {"--to"}, required = true, description = "Application version id or <application>/<version> name")
-		private String versionNameOrId;
-			
-		public String getApplicationVersionId(UnirestInstance unirestInstance) {
-			return versionNameOrId; // TODO Find by name if not numeric
-		}
+	public static class To extends AbstractSSCApplicationVersionMixin {
+		@Option(names = {"--to"}, required = true, description = "Application version id or <application>:<version> name")
+		@Getter private String versionNameOrId;
+	}
+	
+	// delete|update <versionNameOrId>
+	public static class PositionalParameter extends AbstractSSCApplicationVersionMixin {
+		@Parameters(index = "0", arity = "1", description = "Application version id or <application>:<version> name")
+		@Getter private String versionNameOrId;
 	}
 }
