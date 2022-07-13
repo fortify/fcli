@@ -24,23 +24,47 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.mixin.application.version;
 
+import com.fortify.cli.ssc.picocli.command.SSCUrls;
+import com.jayway.jsonpath.JsonPath;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import javax.validation.ValidationException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 @ReflectiveAccess
 public class SSCApplicationVersionIdMixin {
 	
 	public static abstract class AbstractSSCApplicationVersionMixin {
 		public abstract String getVersionNameOrId();
+
+		@SneakyThrows
+		private String encodeValue(String value) {
+			return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+		}
+
+		@Option(names = {"--delim"},
+				description = "Change the default delimiter character when using options that accepts " +
+				"\"application:version\" as an argument or parameter.", defaultValue = ":")
+		private String delimiter;
 		
 		public String getApplicationVersionId(UnirestInstance unirestInstance) {
 			String versionNameOrId = getVersionNameOrId();
-			// TODO Parse versionNameOrId, to see whether it's an id or app:version
-			// TODO If it's an id, execute GET request to check whether id exists, throw an error if not
-			// TODO If it's app:version, execute GET request to get the corresponding id
+
+			if(getVersionNameOrId().contains(delimiter)){
+				String[] app = getVersionNameOrId().split(delimiter);
+				String searchQuery = "?limit=-1&fields=id,name,project&q=" + encodeValue(String.format("project.name:\"%s\",name:\"%s\"", app[0], app[1]));
+				String response = unirestInstance.get(SSCUrls.PROJECT_VERSIONS + searchQuery).getBody().toString();
+				return JsonPath.parse(response).read("$.data[0].id").toString();
+			}
+
+			if(Integer.parseInt(getVersionNameOrId()) <= -1)
+				throw new ValidationException("The provided Application Version ID is not valid.");
 			return versionNameOrId;
 		}
 	}

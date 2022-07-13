@@ -22,15 +22,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.app;
+package com.fortify.cli.ssc.picocli.command.appversion;
 
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.command.SSCUrls;
+import com.fortify.cli.ssc.picocli.mixin.application.version.SSCApplicationVersionIdMixin;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
-
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
@@ -38,13 +38,15 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCApplicationListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+@Command(name = "get")
+public class SSCApplicationVersionGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
-	
+	@CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter versionIdOrName;
+
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(unirest.get(SSCUrls.PROJECTS + "?limit=-1"));
+		String avID = versionIdOrName.getApplicationVersionId(unirest);
+		outputMixin.write(unirest.get(SSCUrls.PROJECT_VERSION(avID)));
 		return null;
 	}
 	
