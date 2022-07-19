@@ -449,10 +449,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc application-version-artifact list</strong> [<strong>-hV</strong>] <strong>--from</strong>=<em>&lt;versionNameOrId&gt;</em>
-[<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
-[[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>] [<strong>--fields</strong>=<em>&lt;fields&gt;</em>] [<strong>--flatten</strong>] [<strong>--[no-]headers</strong>]
-[<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>] [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]]</p>
+<p><strong>fcli ssc application-version-artifact list</strong> [<strong>-hV</strong>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+<strong>--from</strong>=<em>&lt;versionNameOrId&gt;</em> [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+[[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] [[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>] [<strong>--fields</strong>=<em>&lt;fields&gt;</em>]
+[<strong>--flatten</strong>] [<strong>--[no-]headers</strong>] [<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>] [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -469,6 +469,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
+</dd>
 <dt class="hdlist1"><strong>--from</strong>=<em>&lt;versionNameOrId&gt;</em></dt>
 <dd>
 <p>Application version id or &lt;application&gt;:&lt;version&gt; name</p>
@@ -543,7 +547,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-06-28 10:54:13 UTC
+Last updated 2022-07-19 11:43:32 UTC
 </div>
 </div>
 </body>
