@@ -28,6 +28,7 @@ import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.common.SSCUrls;
 import com.fortify.cli.ssc.picocli.mixin.application.version.SSCApplicationVersionIdMixin;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 
@@ -45,9 +46,9 @@ public class SSCApplicationVersionArtifactListCommand extends AbstractSSCUnirest
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(unirest.get("/api/v1/projectVersions/{id}/artifacts?embed=scans")
-				.routeParam("id", parentVersionHandler.getApplicationVersionId(unirest)));
-
+		outputMixin.write(
+				unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentVersionHandler.getApplicationVersionId(unirest)))
+						.queryString("embed","scans"));
 		return null;
 	}
 	
