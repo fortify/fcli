@@ -1,5 +1,6 @@
-package com.fortify.cli.ssc.picocli.command;
+package com.fortify.cli.ssc.common;
 
+import java.util.Locale;
 import java.util.function.Function;
 
 public class SSCUrls {
@@ -443,5 +444,70 @@ public class SSCUrls {
     }
     public static String WEBHOOK_HISTORY(String webHookId, String historyId) {
         return String.format(ApiBase + "/webhooks/%s/history/%s", webHookId, historyId);
+    }
+
+    // FOR DOWNLOAD & UPLOAD
+    public static String DOWNLOAD_ARTIFACT(String artifactId) {
+        return String.format("/download/artifactDownload.html?mat={downloadToken}&id=%s", artifactId);
+    }
+
+    public static String DOWNLOAD_REPORT_LIBRARY(String reportLibraryId) {
+        return String.format("/download/reportLibraryDownload.html?mat={downloadToken}&id=%s", reportLibraryId);
+    }
+
+    public static String DOWNLOAD_REPORT_DEFINITION_TEMPLATE(String reportTemplateId) {
+        return String.format("/download/reportDefinitionTemplateDownload.html?mat={downloadToken}&id=%s", reportTemplateId);
+    }
+
+    public static String DOWNLOAD_RULE_PACK(String rulePackId) {
+        return String.format("/download/rulepackDownload.html?mat={downloadToken}&id=%s", rulePackId);
+    }
+
+    public static String DOWNLOAD_PROJECT_TEMPLATE(String projectTemplateId) {
+        return String.format("/download/projectTemplateDownload.html?mat={downloadToken}&guid=%s", projectTemplateId);
+    }
+
+    public static String DOWNLOAD_CURRENT_FPR(String applicationVersionId, boolean includeSource) {
+        return String.format("/download/currentStateFprDownload.html?mat={downloadToken}&id=%s&includeSource=%b", applicationVersionId, includeSource);
+    }
+
+    public static String DOWNLOAD_CLOUDSCAN_FPR(String jobToken) {
+        return String.format("/download/cloudScanFprDownload.html?mat={downloadToken}&jobToken=%s", jobToken);
+    }
+
+    public static String DOWNLOAD_CLOUDSCAN_LOG(String jobToken) {
+        return String.format("/download/cloudScanLogDownload.html?mat={downloadToken}&jobToken=%s", jobToken);
+    }
+
+    public String UPLOAD_RESULT_FILE(String applicationVersionId){
+        return String.format("/upload/resultFileUpload.html?mat={uploadToken}&entityId=%s", applicationVersionId);
+    }
+
+    public String UPLOAD_REPORT_LIBRARY(){
+        return String.format("/upload/reportLibraryUpload.html?mat={uploadToken}&UPDATE_LIBRARY=false");
+    }
+
+    public String UPLOAD_UPDATED_REPORT_LIBRARY(String uploadToken, String libraryId){
+        return String.format("/upload/reportLibraryUpload.html?mat=%&UPDATE_LIBRARY_ID=%s&UPDATE_LIBRARY=true",
+                uploadToken, libraryId);
+    }
+
+    public String UPLOAD_REPORT_DEFINITION_TEMPLATE(){
+        return String.format("/upload/reportDefinitionTemplateUpload.html?mat={uploadToken}&UPDATE_DEFINITION=false");
+    }
+
+    public String UPLOAD_UPDATED_REPORT_DEFINITION_TEMPLATE(String reportDefinitionTemplateId){
+        return String.format(
+                "/upload/reportDefinitionTemplateUpload.html?mat={uploadToken}&UPDATE_DEFINITION_ID=%s&UPDATE_DEFINITION=true",
+                reportDefinitionTemplateId
+        );
+    }
+
+    public String UPLOAD_RULE_PACK(){
+        return String.format("/upload/rulepackUpload.html?mat={uploadToken}");
+    }
+
+    public String UPLOAD_PROJECT_TEMPLATE(String projectTemplateName){
+        return String.format("/upload/projectTemplateUpload.html?mat={uploadToken}&name=%s", projectTemplateName);
     }
 }
