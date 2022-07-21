@@ -1,7 +1,5 @@
 package com.fortify.cli.ssc.picocli.command.report_template;
 
-import com.fortify.cli.ssc.picocli.command.appversion_artifact.SSCApplicationVersionArtifactDownloadCommand;
-import com.fortify.cli.ssc.picocli.command.appversion_artifact.SSCApplicationVersionArtifactListCommand;
 import picocli.CommandLine.Command;
 
 @Command(
@@ -10,7 +8,7 @@ import picocli.CommandLine.Command;
         subcommands = {
                 SSCReportTemplateDownloadCommand.class,
                 SSCReportTemplateListCommand.class,
-                SSCReportTemplateUploadCommand.class
+                SSCReportTemplateCreateCommand.class
         },
         description = "Commands for interacting with report template definitions on Fortify SSC."
 )
