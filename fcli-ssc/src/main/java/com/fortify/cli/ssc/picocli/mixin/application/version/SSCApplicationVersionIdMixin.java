@@ -92,25 +92,25 @@ public class SSCApplicationVersionIdMixin {
 	
 	// get/retrieve/delete/download version <entity> --from
 	public static class From extends AbstractSSCApplicationVersionMixin {
-		@Option(names = {"--from"}, required = true, description = "Application version id or <application>:<version> name")
+		@Option(names = {"--from"}, required = true, descriptionKey = "ApplicationVersionMixin")
 		@Getter private String versionNameOrId;
 	}
 	
 	// create/update version <entity> --for <version>
 	public static class For extends AbstractSSCApplicationVersionMixin {
-		@Option(names = {"--for"}, required = true, description = "Application version id or <application>:<version> name")
+		@Option(names = {"--for"}, required = true, descriptionKey = "ApplicationVersionMixin")
 		@Getter private String versionNameOrId;
 	}
 	
 	// upload version <entity> --to <version>
 	public static class To extends AbstractSSCApplicationVersionMixin {
-		@Option(names = {"--to"}, required = true, description = "Application version id or <application>:<version> name")
+		@Option(names = {"--to"}, required = true, descriptionKey = "ApplicationVersionMixin")
 		@Getter private String versionNameOrId;
 	}
 	
 	// delete|update <versionNameOrId>
 	public static class PositionalParameter extends AbstractSSCApplicationVersionMixin {
-		@Parameters(index = "0", arity = "1", description = "Application version id or <application>:<version> name")
+		@Parameters(index = "0", arity = "1", descriptionKey = "ApplicationVersionMixin")
 		@Getter private String versionNameOrId;
 	}
 }

@@ -34,7 +34,7 @@ public class SSCUnirestFileTransferRunner {
                     System.out.print(msg);
                 })
                 .asFile(downloadPath, StandardCopyOption.REPLACE_EXISTING);
-        System.out.println("");
+        System.out.println("DONE.\n");
         return null;
     }
 
