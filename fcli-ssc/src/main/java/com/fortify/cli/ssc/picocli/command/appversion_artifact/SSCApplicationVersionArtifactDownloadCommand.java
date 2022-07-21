@@ -43,7 +43,6 @@ import picocli.CommandLine.Command;
 @Command(name = "download")
 public class SSCApplicationVersionArtifactDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter parentVersionHandler;
-	@CommandLine.Mixin private OutputMixin outputMixin;
 	@CommandLine.Option(names = {"-f", "--dest"}, description = "The output location for the file download.")
 	String destination;
 
