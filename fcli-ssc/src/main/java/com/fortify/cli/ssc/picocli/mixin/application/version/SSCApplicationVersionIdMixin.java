@@ -38,7 +38,6 @@ import picocli.CommandLine.Parameters;
 import javax.validation.ValidationException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 
 @ReflectiveAccess
 public class SSCApplicationVersionIdMixin {
@@ -47,7 +46,7 @@ public class SSCApplicationVersionIdMixin {
 		public abstract String getVersionNameOrId();
 
 		@SneakyThrows
-		private String encodeValue(String value) {
+		public static String urlEncodeValue(String value) {
 			return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
 		}
 
@@ -62,7 +61,7 @@ public class SSCApplicationVersionIdMixin {
 
 			if(versionNameOrId.contains(delimiter)){
 				String[] app = versionNameOrId.split(delimiter);
-				String searchQuery = "?limit=1&fields=id,name,project&q=" + encodeValue(String.format("project.name:\"%s\",name:\"%s\"", app[0], app[1]));
+				String searchQuery = "?limit=1&fields=id,name,project&q=" + urlEncodeValue(String.format("project.name:\"%s\",name:\"%s\"", app[0], app[1]));
 				HttpResponse response = unirestInstance.get(SSCUrls.PROJECT_VERSIONS + searchQuery).asObject(ObjectNode.class);
 				String responseBodyJson = response.getBody().toString();
 				av.setApplicationName(app[0]);
