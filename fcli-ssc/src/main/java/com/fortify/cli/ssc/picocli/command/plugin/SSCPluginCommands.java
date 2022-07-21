@@ -9,6 +9,7 @@ import picocli.CommandLine.Command;
         		SSCPluginDeleteCommand.class,
                 SSCPluginListCommand.class
         }
+
 )
 public class SSCPluginCommands {
 }
