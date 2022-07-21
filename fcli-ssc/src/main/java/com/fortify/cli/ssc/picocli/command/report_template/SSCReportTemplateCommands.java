@@ -9,7 +9,8 @@ import picocli.CommandLine.Command;
         aliases = {"rep-templ"},
         subcommands = {
                 SSCReportTemplateDownloadCommand.class,
-                SSCReportTemplateListCommand.class
+                SSCReportTemplateListCommand.class,
+                SSCReportTemplateUploadCommand.class
         },
         description = "Commands for interacting with report template definitions on Fortify SSC."
 )
