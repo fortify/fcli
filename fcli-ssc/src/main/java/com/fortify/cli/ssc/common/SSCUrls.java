@@ -479,35 +479,35 @@ public class SSCUrls {
         return String.format("/download/cloudScanLogDownload.html?mat={downloadToken}&jobToken=%s", jobToken);
     }
 
-    public String UPLOAD_RESULT_FILE(String applicationVersionId){
+    public static String UPLOAD_RESULT_FILE(String applicationVersionId){
         return String.format("/upload/resultFileUpload.html?mat={uploadToken}&entityId=%s", applicationVersionId);
     }
 
-    public String UPLOAD_REPORT_LIBRARY(){
+    public static String UPLOAD_REPORT_LIBRARY(){
         return String.format("/upload/reportLibraryUpload.html?mat={uploadToken}&UPDATE_LIBRARY=false");
     }
 
-    public String UPLOAD_UPDATED_REPORT_LIBRARY(String uploadToken, String libraryId){
+    public static String UPLOAD_UPDATED_REPORT_LIBRARY(String uploadToken, String libraryId){
         return String.format("/upload/reportLibraryUpload.html?mat=%&UPDATE_LIBRARY_ID=%s&UPDATE_LIBRARY=true",
                 uploadToken, libraryId);
     }
 
-    public String UPLOAD_REPORT_DEFINITION_TEMPLATE(){
+    public static String UPLOAD_REPORT_DEFINITION_TEMPLATE(){
         return String.format("/upload/reportDefinitionTemplateUpload.html?mat={uploadToken}&UPDATE_DEFINITION=false");
     }
 
-    public String UPLOAD_UPDATED_REPORT_DEFINITION_TEMPLATE(String reportDefinitionTemplateId){
+    public static String UPLOAD_UPDATED_REPORT_DEFINITION_TEMPLATE(String reportDefinitionTemplateId){
         return String.format(
                 "/upload/reportDefinitionTemplateUpload.html?mat={uploadToken}&UPDATE_DEFINITION_ID=%s&UPDATE_DEFINITION=true",
                 reportDefinitionTemplateId
         );
     }
 
-    public String UPLOAD_RULE_PACK(){
+    public static String UPLOAD_RULE_PACK(){
         return String.format("/upload/rulepackUpload.html?mat={uploadToken}");
     }
 
-    public String UPLOAD_PROJECT_TEMPLATE(String projectTemplateName){
+    public static String UPLOAD_PROJECT_TEMPLATE(String projectTemplateName){
         return String.format("/upload/projectTemplateUpload.html?mat={uploadToken}&name=%s", projectTemplateName);
     }
 }
