@@ -30,11 +30,11 @@ public class SSCUnirestFileTransferRunner {
         unirestInstance.get(url)
                 .routeParam("downloadToken",downloadToken)
                 .downloadMonitor((b, filename, bytesWritten, totalBytes) -> {
-                    String msg = String.format("\rBytes written for \"%s\": %d    \r", filename, bytesWritten);
+                    String msg = String.format("\rBytes written for \"%s\": %d    ", filename, bytesWritten);
                     System.out.print(msg);
                 })
                 .asFile(downloadPath, StandardCopyOption.REPLACE_EXISTING);
-        System.out.println("DONE.\n");
+        System.out.println("\nDONE.\n");
         return null;
     }
 
