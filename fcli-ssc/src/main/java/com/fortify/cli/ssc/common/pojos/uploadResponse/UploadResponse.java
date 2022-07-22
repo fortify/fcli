@@ -6,11 +6,11 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 @JacksonXmlRootElement(localName = "UploadResponse")
 public class UploadResponse{
     @JacksonXmlProperty(isAttribute = true)
-    String entityId;
+    public String entityId;
 
     @JacksonXmlProperty(localName = "code")
-    Code code;
+    public Code code;
 
     @JacksonXmlProperty(localName = "msg")
-    Msg msg;
+    public Msg msg;
 }
