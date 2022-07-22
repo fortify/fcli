@@ -8,7 +8,8 @@ import picocli.CommandLine.Command;
         subcommands = {
                 SSCReportTemplateDownloadCommand.class,
                 SSCReportTemplateListCommand.class,
-                SSCReportTemplateCreateCommand.class
+                SSCReportTemplateCreateCommand.class,
+                SSCReportTemplateGenerateAnswerFileCommand.class
         },
         description = "Commands for interacting with report template definitions on Fortify SSC."
 )

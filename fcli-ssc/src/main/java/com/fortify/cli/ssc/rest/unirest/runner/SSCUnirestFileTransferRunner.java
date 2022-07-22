@@ -38,14 +38,14 @@ public class SSCUnirestFileTransferRunner {
                     System.out.print(msg);
                 })
                 .asFile(downloadPath, StandardCopyOption.REPLACE_EXISTING);
-        System.out.println("\nDONE.\n");
+        System.out.println("\nDOWNLOAD DONE.\n");
         return null;
     }
 
 
 
     @SneakyThrows
-    public static Void Upload(UnirestInstance unirestInstance, String url, String filePath){
+    public static UploadResponse Upload(UnirestInstance unirestInstance, String url, String filePath){
         String uploadToken = getFileTransferToken(unirestInstance, FileTransferTokenType.UPLOAD);
         File f = new File(filePath);
         //InputStream file = new FileInputStream(f); // Supposedly this should be used for larger file uploads, but SSC errors when using this.
@@ -59,8 +59,8 @@ public class SSCUnirestFileTransferRunner {
                 })
                 .asString();
         XmlMapper responseXml = new XmlMapper(new JacksonXmlModule());
-        UploadResponse t1 = responseXml.readValue(r.getBody().toString(), UploadResponse.class);
-        System.out.println(t1);
-        return null;
+        UploadResponse uploadResponseObj = responseXml.readValue(r.getBody().toString(), UploadResponse.class);
+        System.out.println("\nUPLOAD DONE.\n");
+        return uploadResponseObj;
     }
 }
