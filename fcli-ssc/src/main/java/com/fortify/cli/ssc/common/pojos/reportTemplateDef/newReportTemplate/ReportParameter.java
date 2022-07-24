@@ -1,6 +1,6 @@
-package com.fortify.cli.ssc.common.pojos.newReportTemplateDefinition;
+package com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate;
 
-import com.fortify.cli.ssc.common.pojos.newReportTemplateDefinition.enums.ReportParameterType;
+import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.enums.ReportParameterType;
 
 public class ReportParameter {
     public int index;

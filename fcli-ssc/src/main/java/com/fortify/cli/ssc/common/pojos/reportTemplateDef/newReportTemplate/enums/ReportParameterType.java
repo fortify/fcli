@@ -1,4 +1,4 @@
-package com.fortify.cli.ssc.common.pojos.newReportTemplateDefinition.enums;
+package com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.enums;
 
 public enum ReportParameterType {
     BOOLEAN,

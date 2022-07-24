@@ -1,4 +1,4 @@
-package com.fortify.cli.ssc.common.pojos.newReportTemplateDefinition;
+package com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate;
 
 public class ReportParameterOption {
     public boolean defaultValue;
