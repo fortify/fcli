@@ -24,8 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.common.pojos.report.template.existingReportTemplate;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
+
 import java.util.ArrayList;
 
+@ReflectiveAccess
 public class ReportTemplateDef {
     public ReportTemplateDef(){}
     public int count;

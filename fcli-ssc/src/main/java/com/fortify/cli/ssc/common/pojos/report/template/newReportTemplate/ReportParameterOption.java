@@ -24,6 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
+
+@ReflectiveAccess
 public class ReportParameterOption {
     public ReportParameterOption(){}
     public boolean defaultValue;

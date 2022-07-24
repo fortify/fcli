@@ -25,7 +25,9 @@
 package com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate;
 
 import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.enums.ReportParameterType;
+import io.micronaut.core.annotation.ReflectiveAccess;
 
+@ReflectiveAccess
 public class ReportParameter {
     public ReportParameter(){}
     public int index;

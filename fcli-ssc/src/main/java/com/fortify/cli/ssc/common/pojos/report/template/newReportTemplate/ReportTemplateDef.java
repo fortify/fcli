@@ -26,7 +26,9 @@ package com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate;
 
 import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.enums.ReportRenderingEngineType;
 import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.enums.ReportType;
+import io.micronaut.core.annotation.ReflectiveAccess;
 
+@ReflectiveAccess
 public class ReportTemplateDef {
     public ReportTemplateDef(){}
     public String name;
