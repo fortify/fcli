@@ -25,6 +25,7 @@
 package com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate;
 
 public class ReportParameterOption {
+    public ReportParameterOption(){}
     public boolean defaultValue;
     public String description;
     public String displayValue;

@@ -27,6 +27,7 @@ package com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate;
 import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.enums.ReportParameterType;
 
 public class ReportParameter {
+    public ReportParameter(){}
     public int index;
     public String name;
     public String description;

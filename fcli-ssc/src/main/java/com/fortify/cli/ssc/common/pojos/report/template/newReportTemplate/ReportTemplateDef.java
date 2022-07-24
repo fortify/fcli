@@ -28,6 +28,7 @@ import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.enums.
 import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.enums.ReportType;
 
 public class ReportTemplateDef {
+    public ReportTemplateDef(){}
     public String name;
     public String description;
     public ReportType type;

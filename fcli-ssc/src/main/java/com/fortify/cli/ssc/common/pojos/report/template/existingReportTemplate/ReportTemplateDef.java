@@ -27,6 +27,7 @@ package com.fortify.cli.ssc.common.pojos.report.template.existingReportTemplate;
 import java.util.ArrayList;
 
 public class ReportTemplateDef {
+    public ReportTemplateDef(){}
     public int count;
     public Data data;
     public int errorCode;
@@ -37,6 +38,7 @@ public class ReportTemplateDef {
     public int successCount;
 
     public class Data{
+        public Data(){}
         public boolean crossApp;
         public String description;
         public String fileName;
@@ -55,10 +57,12 @@ public class ReportTemplateDef {
     }
 
     public class _href{
+        public _href(){}
         public String href;
     }
 
     public class Parameter{
+        public Parameter(){}
         public String description;
         public int id;
         public String identifier;
@@ -70,6 +74,7 @@ public class ReportTemplateDef {
     }
 
     public class ReportParameterOption{
+        public ReportParameterOption(){}
         public boolean defaultValue;
         public String description;
         public String displayValue;
