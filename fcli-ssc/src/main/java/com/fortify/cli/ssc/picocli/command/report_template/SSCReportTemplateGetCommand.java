@@ -26,11 +26,10 @@ package com.fortify.cli.ssc.picocli.command.report_template;
 
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.common.SSCUrls;
-import com.fortify.cli.ssc.common.pojos.report.template.existingReportTemplate.ReportTemplateDef;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.mixin.report.template.SSCReportTemplateIdMixin;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -39,29 +38,21 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "download")
-public class SSCReportTemplateDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
-	private String destination;
-
-	@CommandLine.Mixin
-	private SSCReportTemplateIdMixin reportTemplateIdMixin;
+@Command(name = "get")
+public class SSCReportTemplateGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+	@CommandLine.Mixin private OutputMixin outputMixin;
+	@CommandLine.Mixin private SSCReportTemplateIdMixin reportTemplateIdMixin;
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		ReportTemplateDef reportTemplate = reportTemplateIdMixin.getReportTemplateDef(unirest);
-		destination = destination != null ? destination : String.format("./%s", reportTemplate.data.fileName);
-		SSCUnirestFileTransferRunner.Download(
-				unirest,
-				SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(reportTemplate.data.id.toString()),
-				destination
-		);
+		outputMixin.write(
+				unirest.get(SSCUrls.REPORT_DEFINITION(reportTemplateIdMixin.getReportTemplateDefId(unirest))));
 		return null;
 	}
 	
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
 		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+				.defaultColumns("id#name#typeDefaultText#templateDocId#inUse");
 	}
 }

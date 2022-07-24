@@ -44,7 +44,9 @@ public class SSCReportTemplateListCommand extends AbstractSSCUnirestRunnerComman
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
 		outputMixin.write(
-				unirest.get(SSCUrls.REPORT_DEFINITIONS));
+				unirest.get(SSCUrls.REPORT_DEFINITIONS)
+						.queryString("limit","-1")
+		);
 		return null;
 	}
 	

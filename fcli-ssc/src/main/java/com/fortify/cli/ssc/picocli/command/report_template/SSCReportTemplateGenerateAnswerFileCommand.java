@@ -25,12 +25,12 @@
 package com.fortify.cli.ssc.picocli.command.report_template;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.ReportParameter;
-import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.ReportParameterOption;
-import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.ReportTemplateDef;
-import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.enums.ReportParameterType;
-import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.enums.ReportRenderingEngineType;
-import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.enums.ReportType;
+import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.ReportParameter;
+import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.ReportParameterOption;
+import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.ReportTemplateDef;
+import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.enums.ReportParameterType;
+import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.enums.ReportRenderingEngineType;
+import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.enums.ReportType;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
@@ -41,7 +41,7 @@ import java.io.File;
 @ReflectiveAccess
 @Command(name = "generate-answerFile", aliases = {"gen-answer"})
 public class SSCReportTemplateGenerateAnswerFileCommand implements Runnable {
-	@CommandLine.Option(names = {"-o", "--output"}, descriptionKey = "")
+	@CommandLine.Option(names = {"-o", "--output"})
 	private String filePath;
 
 	/**

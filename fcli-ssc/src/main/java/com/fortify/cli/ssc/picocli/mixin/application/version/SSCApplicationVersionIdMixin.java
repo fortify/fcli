@@ -25,7 +25,7 @@
 package com.fortify.cli.ssc.picocli.mixin.application.version;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.ssc.common.ApplicationVersion;
+import com.fortify.cli.ssc.common.pojos.application.version.ApplicationVersion;
 import com.fortify.cli.ssc.common.SSCUrls;
 import com.jayway.jsonpath.JsonPath;
 import io.micronaut.core.annotation.ReflectiveAccess;

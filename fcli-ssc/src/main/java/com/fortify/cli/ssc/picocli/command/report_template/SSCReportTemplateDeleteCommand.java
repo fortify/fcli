@@ -24,46 +24,36 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.command.report_template;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.common.SSCUrls;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
+import com.fortify.cli.ssc.picocli.mixin.report.template.SSCReportTemplateIdMixin;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
-import com.jayway.jsonpath.JsonPath;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "upload")
-public class SSCReportTemplateUploadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Option(names = {"-f", "--file"}, descriptionKey = "upload.filePath")
-	private String filePath;
-
-//	@CommandLine.Parameters(paramLabel = "reportTemplateNameOrId", descriptionKey = "fcli.ssc.report-template.download.reportTemplateNameOrId")
-//	private String reportTemplateNameOrId;
+@Command(name = "delete")
+public class SSCReportTemplateDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+	@CommandLine.Mixin private OutputMixin outputMixin;
+	@CommandLine.Mixin private SSCReportTemplateIdMixin reportTemplateIdMixin;
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		SSCUnirestFileTransferRunner.Upload(
-				unirest,
-				SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE(),
-				filePath
-		);
-
+		outputMixin.write(
+				unirest.delete(SSCUrls.REPORT_DEFINITION(reportTemplateIdMixin.getReportTemplateDefId(unirest))));
+		System.out.println("DELETE DONE.");
 		return null;
 	}
 	
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
 		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+				.defaultColumns("id#name#typeDefaultText#templateDocId#inUse");
 	}
 }

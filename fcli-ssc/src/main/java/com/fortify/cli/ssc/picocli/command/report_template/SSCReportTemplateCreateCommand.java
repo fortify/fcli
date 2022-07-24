@@ -30,7 +30,7 @@ import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.common.SSCUrls;
-import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.ReportTemplateDef;
+import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.ReportTemplateDef;
 import com.fortify.cli.ssc.common.pojos.uploadResponse.UploadResponse;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
@@ -47,14 +47,11 @@ import java.io.File;
 @Command(name = "create")
 public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
-	@CommandLine.Option(names = {"-f", "--file"}, descriptionKey = "upload.filePath")
+	@CommandLine.Option(names = {"-f", "--file"})
 	private String filePath;
 
-	@CommandLine.Option(names = {"-a", "--answerFile"}, defaultValue = "./ReportTemplateDefAnswerTemplate.json")
+	@CommandLine.Option(names = {"-a", "--answer-file"}, defaultValue = "./ReportTemplateDefAnswerTemplate.json")
 	private String answerFile;
-
-//	@CommandLine.Parameters(paramLabel = "reportTemplateNameOrId", descriptionKey = "fcli.ssc.report-template.download.reportTemplateNameOrId")
-//	private String reportTemplateNameOrId;
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
