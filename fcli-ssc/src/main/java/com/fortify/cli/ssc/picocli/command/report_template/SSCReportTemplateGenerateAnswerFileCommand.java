@@ -25,12 +25,12 @@
 package com.fortify.cli.ssc.picocli.command.report_template;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.ssc.common.pojos.newReportTemplateDefinition.ReportParameter;
-import com.fortify.cli.ssc.common.pojos.newReportTemplateDefinition.ReportParameterOption;
-import com.fortify.cli.ssc.common.pojos.newReportTemplateDefinition.ReportTemplateDef;
-import com.fortify.cli.ssc.common.pojos.newReportTemplateDefinition.enums.ReportParameterType;
-import com.fortify.cli.ssc.common.pojos.newReportTemplateDefinition.enums.ReportRenderingEngineType;
-import com.fortify.cli.ssc.common.pojos.newReportTemplateDefinition.enums.ReportType;
+import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.ReportParameter;
+import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.ReportParameterOption;
+import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.ReportTemplateDef;
+import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.enums.ReportParameterType;
+import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.enums.ReportRenderingEngineType;
+import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.enums.ReportType;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
