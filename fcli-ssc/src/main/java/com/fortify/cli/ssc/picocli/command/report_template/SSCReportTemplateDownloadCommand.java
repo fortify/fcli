@@ -24,19 +24,15 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.command.report_template;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.ssc.common.SSCUrls;
+import com.fortify.cli.ssc.common.pojos.reportTemplateDef.existingReportTemplate.ReportTemplateDef;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
-import com.jayway.jsonpath.JsonPath;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -53,52 +49,17 @@ public class SSCReportTemplateDownloadCommand extends AbstractSSCUnirestRunnerCo
 	@CommandLine.Parameters(paramLabel = "reportTemplateNameOrId", descriptionKey = "fcli.ssc.report-template.download.reportTemplateNameOrId")
 	private String reportTemplateNameOrId;
 
-	@Getter @Setter private	String reportTemplateName;
-	@Getter @Setter private	String reportTemplateFileName;
-	@Getter @Setter private String reportTemplateId;
-
-	@SneakyThrows
-	private Void fetchReportDefInfo(UnirestInstance unirestInstance){
-		boolean isNumeric = true;
-		int id = -1;
-		try{
-			id = Integer.parseInt(reportTemplateNameOrId);
-		}catch (NumberFormatException e){
-			isNumeric = false;
-		}
-
-		HttpResponse response;
-		if(isNumeric && !isReportName){
-			String url = SSCUrls.REPORT_DEFINITION(Integer.toString(id));
-			response = unirestInstance.get(url)
-					.queryString("fields","id,name,fileName")
-					.asObject(ObjectNode.class);
-			reportTemplateName = JsonPath.parse(response.getBody().toString()).read("$.data.name").toString();
-			reportTemplateFileName = JsonPath.parse(response.getBody().toString()).read("$.data.fileName").toString();
-			reportTemplateId = JsonPath.parse(response.getBody().toString()).read("$.data.id").toString();
-		}else{
-			response = unirestInstance.get(SSCUrls.REPORT_DEFINITIONS)
-					.queryString("limit","1")
-					.queryString("fields","id,name,fileName")
-					.queryString("q", String.format("name:%s", reportTemplateNameOrId))
-					.asObject(ObjectNode.class);
-			reportTemplateName = JsonPath.parse(response.getBody().toString()).read("$.data[0].name").toString();
-			reportTemplateFileName = JsonPath.parse(response.getBody().toString()).read("$.data[0].fileName").toString();
-			reportTemplateId = JsonPath.parse(response.getBody().toString()).read("$.data[0].id").toString();
-		}
-		return null;
-	}
+	private ReportTemplateDef reportTemplate;
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		fetchReportDefInfo(unirest);
-		destination = destination != null ? destination : String.format("./%s", getReportTemplateFileName());
+		reportTemplate = ReportTemplateUtil.fetchReportDefInfo(unirest, reportTemplateNameOrId, isReportName);
+		destination = destination != null ? destination : String.format("./%s", reportTemplate.data.fileName);
 		SSCUnirestFileTransferRunner.Download(
 				unirest,
-				SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(getReportTemplateId()),
+				SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(Integer.toString(reportTemplate.data.id)),
 				destination
 		);
-
 		return null;
 	}
 	
