@@ -30,7 +30,7 @@ import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.common.SSCUrls;
-import com.fortify.cli.ssc.common.pojos.newReportTemplateDefinition.ReportTemplateDef;
+import com.fortify.cli.ssc.common.pojos.reportTemplateDef.newReportTemplate.ReportTemplateDef;
 import com.fortify.cli.ssc.common.pojos.uploadResponse.UploadResponse;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
@@ -41,11 +41,7 @@ import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.nio.file.Paths;
 
 @ReflectiveAccess
 @Command(name = "create")
