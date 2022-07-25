@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<title>fcli-tool(1)</title>
+<title>fcli-ssc-report-template(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -438,10 +438,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="manpage">
 <div id="header">
-<h1>fcli-tool(1) Manual Page</h1>
+<h1>fcli-ssc-report-template(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-tool - Commands for managing other useful tools and utilities.</p>
+<p>fcli-ssc-report-template - Commands for working with report templates.</p>
 </div>
 </div>
 <div id="content">
@@ -449,7 +449,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [COMMAND]</p>
+<p><strong>fcli ssc report-template</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                         [COMMAND]</p>
 </div>
 </div>
 </div>
@@ -457,7 +458,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Commands for managing other useful tools and utilities.</p>
+<p>Commands for working with report templates.</p>
 </div>
 </div>
 </div>
@@ -491,21 +492,29 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-tool-eightball.html"><strong>eightball</strong>, <strong>eb</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-ssc-report-template-create.html"><strong>create</strong></a></dt>
 <dd>
-<p>Eightball is a package with some sample source code for a very simple, single file, java application with a known vulnerability. This is useful if you want to run a quick Static Analysis test.</p>
+<p>Create a new Report Template Definition.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-tool-scanCentralClient.html"><strong>scanCentralClient</strong>, <strong>sc-client</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-ssc-report-template-list.html"><strong>list</strong></a></dt>
 <dd>
-<p>A client tool for interacting with ScanCentral SAST.</p>
+<p>List report template definitions.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-tool-srcAndLibScanner.html"><strong>srcAndLibScanner</strong>, <strong>sourceAndLibScanner</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-ssc-report-template-get.html"><strong>get</strong></a></dt>
 <dd>
-<p>A tool for performing a Software Composition Analysis or Susceptibility Analysis scan with Sonatype.</p>
+<p>Get information on a single report template.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-tool-vulnExporter.html"><strong>vulnExporter</strong>, <strong>vulnerabilityExporter</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-ssc-report-template-download.html"><strong>download</strong></a></dt>
 <dd>
-<p>A tool for exporting Export Fortify vulnerability data to GitHub, GitLab, SonarQube and more.</p>
+<p>Download a report template file.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-report-template-generate-answerFile.html"><strong>generate-answerFile</strong>, <strong>gen-answer</strong></a></dt>
+<dd>
+<p>Generate a new answer file template.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-report-template-delete.html"><strong>delete</strong></a></dt>
+<dd>
+<p>Delete a report template.</p>
 </dd>
 </dl>
 </div>
@@ -515,7 +524,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-07-25 01:27:18 UTC
+Last updated 2022-07-25 01:27:17 UTC
 </div>
 </div>
 </body>

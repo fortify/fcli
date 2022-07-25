@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<title>fcli-tool(1)</title>
+<title>fcli-ssc-report-template-create(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -438,10 +438,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="manpage">
 <div id="header">
-<h1>fcli-tool(1) Manual Page</h1>
+<h1>fcli-ssc-report-template-create(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-tool - Commands for managing other useful tools and utilities.</p>
+<p>fcli-ssc-report-template-create - Create a new Report Template Definition.</p>
 </div>
 </div>
 <div id="content">
@@ -449,7 +449,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [COMMAND]</p>
+<p><strong>fcli ssc report-template create</strong> [<strong>-hV</strong>] [<strong>-a</strong>=<em>&lt;answerFile&gt;</em>] <strong>-f</strong>=<em>&lt;filePath&gt;</em>
+                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                                [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
+                                [[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>] [<strong>--fields</strong>=<em>&lt;fields&gt;</em>]
+                                [<strong>--flatten</strong>] [<strong>--[no-]headers</strong>]
+                                [<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>] [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -457,7 +462,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Commands for managing other useful tools and utilities.</p>
+<p>Create a new Report Template Definition.</p>
 </div>
 </div>
 </div>
@@ -466,6 +471,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;filePath&gt;</em></dt>
+<dd>
+<p>A completed answer file with all the required information about your report parameters. You can use the "generate-answerFile" command to create a new answer file template.</p>
+</dd>
+<dt class="hdlist1"><strong>-a</strong>, <strong>--answer-file</strong>=<em>&lt;answerFile&gt;</em></dt>
+<dd>
+<p>The file with information on all the needed information to setup the report template definition in SSC.</p>
+</dd>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
 <p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
@@ -487,25 +500,46 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_commands">Commands</h2>
+<h2 id="_output_options">Output options:</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-tool-eightball.html"><strong>eightball</strong>, <strong>eb</strong></a></dt>
+<dt class="hdlist1"><strong>--fmt, --format</strong>=<em>&lt;outputFormat&gt;</em></dt>
 <dd>
-<p>Eightball is a package with some sample source code for a very simple, single file, java application with a known vulnerability. This is useful if you want to run a quick Static Analysis test.</p>
+<p>Output format. Possible values: json, yaml, table, tree, xml, csv.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-tool-scanCentralClient.html"><strong>scanCentralClient</strong>, <strong>sc-client</strong></a></dt>
+<dt class="hdlist1"><strong>--fields</strong>=<em>&lt;fields&gt;</em></dt>
 <dd>
-<p>A client tool for interacting with ScanCentral SAST.</p>
+<p>Define the fields to be included in the output, together with optional header names</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-tool-srcAndLibScanner.html"><strong>srcAndLibScanner</strong>, <strong>sourceAndLibScanner</strong></a></dt>
+<dt class="hdlist1"><strong>--flatten</strong></dt>
 <dd>
-<p>A tool for performing a Software Composition Analysis or Susceptibility Analysis scan with Sonatype.</p>
+<p>For non-column-based outputs, whether to flatten the structure</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-tool-vulnExporter.html"><strong>vulnExporter</strong>, <strong>vulnerabilityExporter</strong></a></dt>
+<dt class="hdlist1"><strong>--[no-]headers</strong></dt>
 <dd>
-<p>A tool for exporting Export Fortify vulnerability data to GitHub, GitLab, SonarQube and more.</p>
+<p>For column-based outputs, whether to output headers</p>
+</dd>
+<dt class="hdlist1"><strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em></dt>
+<dd>
+<p>Transforms output using JSONPath</p>
+</dd>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Output file</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_optional_session_name">Optional session name:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>A name/alias for your Fortify SSC session.</p>
 </dd>
 </dl>
 </div>
@@ -515,7 +549,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-07-25 01:27:18 UTC
+Last updated 2022-07-25 01:27:17 UTC
 </div>
 </div>
 </body>
