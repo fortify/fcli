@@ -26,12 +26,14 @@ package com.fortify.cli.ssc.picocli.command.report_template;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
-import com.fortify.cli.ssc.common.SSCUrls;
-import com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate.ReportTemplateDef;
-import com.fortify.cli.ssc.common.pojos.uploadResponse.UploadResponse;
+import com.fortify.cli.ssc.domain.report.template.ReportRenderingEngineType;
+import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.domain.report.template.ReportTemplateDef;
+import com.fortify.cli.ssc.domain.uploadResponse.UploadResponse;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
@@ -50,27 +52,38 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerComm
 	@CommandLine.Option(names = {"-f", "--file"}, required = true)
 	private String filePath;
 
-	@CommandLine.Option(names = {"-a", "--answer-file"}, defaultValue = "./ReportTemplateDefAnswerTemplate.json")
+	@CommandLine.Option(names = {"-a", "--answer-file"}, defaultValue = "./ReportTemplateDefAnswerTemplate.yml")
 	private String answerFile;
+
+	private int indexVal=0;
+	private int getIndexVal(){return indexVal++;}
+
+	private ReportTemplateDef processAnswerFile(ReportTemplateDef rtd, String fileName, int templateDocId){
+		rtd.templateDocId = templateDocId;
+		rtd.renderingEngine = ReportRenderingEngineType.BIRT;
+		rtd.fileName =  fileName;
+		rtd.parameters.stream().forEach(e -> e.index = getIndexVal());
+		rtd.guid = java.util.UUID.randomUUID().toString();
+		return rtd;
+	}
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		UploadResponse uploadResponse = SSCUnirestFileTransferRunner.Upload(
+		UploadResponse uploadResponse = SSCUnirestFileTransferRunner.upload(
 				unirest,
-				SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE(),
+				SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
 				filePath
 		);
 
 		File answerFileObj = new File(answerFile);
 		File rptFileObj = new File(filePath);
 
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 		ReportTemplateDef rtd = mapper.readValue(answerFileObj, ReportTemplateDef.class);
-		rtd.templateDocId = uploadResponse.entityId;
-		rtd.fileName =  rptFileObj.getName();
+		rtd = processAnswerFile(rtd, rptFileObj.getName(), Integer.parseInt(uploadResponse.entityId));
 
 		HttpResponse creationResponse = unirest.post(SSCUrls.REPORT_DEFINITIONS)
-				.body(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(rtd)).asObject(ObjectNode.class);
+				.body((new ObjectMapper()).writeValueAsString(rtd)).asObject(ObjectNode.class);
 		outputMixin.write(creationResponse);
 		return null;
 	}

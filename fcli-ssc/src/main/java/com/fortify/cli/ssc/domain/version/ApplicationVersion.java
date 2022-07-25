@@ -22,13 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.common.pojos.uploadResponse;
+package com.fortify.cli.ssc.domain.version;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
-import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
+import lombok.Setter;
 
-@ReflectiveAccess
-public class Msg {
-    @JacksonXmlText(value = true)
-    String value;
+public class ApplicationVersion {
+    @Getter @Setter String applicationId;
+    @Getter @Setter String applicationName;
+    @Getter @Setter String applicationVersionId;
+    @Getter @Setter String applicationVersionName;
 }

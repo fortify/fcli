@@ -1,0 +1,27 @@
+---
+name: Change-Me                 # The name to give to the report
+description: Change-Me          # Description of what your report is for and what kind of information it will contain.
+type: ISSUE                     # Possible values here are ISSUE or PROJECT.
+typeDefaultText: Change-Me      # This default describes the type of report this is. For example, existing values that other reports use are: "Portfolio Reports", "Application Reports", or "Issue Reports". You are free to specify some other value that fits the type of report template you have.
+parameters:
+- name: Change-Me0              # The parameter name.
+  paramOrder: 0                 # Represents the ordering of your parameters in the SSC Web UI.
+  description: Change-Me0       # Description of the parameter.
+  identifier: Change-Me0        # This is the ID/name of the report parameter in your report template.
+  type: SINGLE_SELECT_DEFAULT   # Possible values are BOOLEAN, MULTI_PROJECT, PROJECT_ATTRIBUTE, SINGLE_PROJECT, SINGLE_SELECT_DEFAULT, STRING.
+  reportParameterOptions:       # Used only when the parameter is of type "SINGLE_SELECT_DEFAULT". The options represent the different pre-defined options/values that you will allow the user to select from.
+  - index: 0
+    defaultValue: true          # Is this option the default value for the parameter.
+    description: Change-Me1     # Description for this parameter option.
+    displayValue: Change-Me1    # The value to be shown in the SSC web UI
+    reportValue: Change-Me1     # The value to actually be injected into the report parameter
+  - index: 1
+    defaultValue: false
+    description: Change-Me2
+    displayValue: Change-Me2
+    reportValue: Change-Me2
+- name: Change-Me3              # Parameters of type BOOLEAN, MULTI_PROJECT, PROJECT_ATTRIBUTE, SINGLE_PROJECT, or STRING don't need a "reportParameterOptions" section.
+  paramOrder: 1
+  description: Change-Me3
+  identifier: Change-Me3
+  type: STRING

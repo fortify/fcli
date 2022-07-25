@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.picocli.command.report_template;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
-import com.fortify.cli.ssc.common.SSCUrls;
+import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.mixin.report.template.SSCReportTemplateIdMixin;
 import com.fortify.cli.ssc.util.SSCOutputHelper;

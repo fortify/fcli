@@ -44,10 +44,10 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "delete")
-public class SSCPluginDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+@Command(name = "uninstall", aliases = {"rm"})
+public class SSCPluginUninstallCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@Mixin private OutputMixin outputMixin;
-	@ArgGroup(headingKey = "fcli.ssc.plugin.delete.options.heading", exclusive = false)
+	@ArgGroup(headingKey = "fcli.ssc.plugin.uninstall.options.heading", exclusive = false)
 	private SSCPluginDeleteOptions deleteOptions;
 	
 	private static class SSCPluginDeleteOptions {

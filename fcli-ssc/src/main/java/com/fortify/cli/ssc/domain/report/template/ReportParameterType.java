@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -22,16 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.common.pojos.report.template.newReportTemplate;
+package com.fortify.cli.ssc.domain.report.template;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public class ReportParameterOption {
-    public ReportParameterOption(){}
-    public boolean defaultValue;
-    public String description;
-    public String displayValue;
-    public int index;
-    public String reportValue;
+public enum ReportParameterType {
+    BOOLEAN,
+    MULTI_PROJECT,
+    PROJECT_ATTRIBUTE,
+    SINGLE_PROJECT,
+    SINGLE_SELECT_DEFAULT,
+    STRING
 }

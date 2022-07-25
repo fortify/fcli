@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.common;
+package com.fortify.cli.ssc.rest;
 
 public class SSCUrls {
     private static final String ApiBase = "/api/v1";
@@ -504,18 +504,15 @@ public class SSCUrls {
         return String.format("/upload/resultFileUpload.html?mat={uploadToken}&entityId=%s", applicationVersionId);
     }
 
-    public static String UPLOAD_REPORT_LIBRARY(){
-        return String.format("/upload/reportLibraryUpload.html?mat={uploadToken}&UPDATE_LIBRARY=false");
+    public static String UPLOAD_REPORT_LIBRARY = "/upload/reportLibraryUpload.html?mat={uploadToken}&UPDATE_LIBRARY=false";
+
+    public static String UPLOAD_UPDATED_REPORT_LIBRARY(String libraryId){
+        return String.format("/upload/reportLibraryUpload.html?mat={uploadToken}&UPDATE_LIBRARY_ID=%s&UPDATE_LIBRARY=true",
+                libraryId
+        );
     }
 
-    public static String UPLOAD_UPDATED_REPORT_LIBRARY(String uploadToken, String libraryId){
-        return String.format("/upload/reportLibraryUpload.html?mat=%&UPDATE_LIBRARY_ID=%s&UPDATE_LIBRARY=true",
-                uploadToken, libraryId);
-    }
-
-    public static String UPLOAD_REPORT_DEFINITION_TEMPLATE(){
-        return String.format("/upload/reportDefinitionTemplateUpload.html?mat={uploadToken}&UPDATE_DEFINITION=false");
-    }
+    public static String UPLOAD_REPORT_DEFINITION_TEMPLATE = "/upload/reportDefinitionTemplateUpload.html?mat={uploadToken}&UPDATE_DEFINITION=false";
 
     public static String UPLOAD_UPDATED_REPORT_DEFINITION_TEMPLATE(String reportDefinitionTemplateId){
         return String.format(
@@ -524,9 +521,9 @@ public class SSCUrls {
         );
     }
 
-    public static String UPLOAD_RULE_PACK(){
-        return String.format("/upload/rulepackUpload.html?mat={uploadToken}");
-    }
+    public static String UPLOAD_RULE_PACK = "/upload/rulepackUpload.html?mat={uploadToken}";
+
+    public static String UPLOAD_PLUGIN = "/upload/pluginFileUpload.html?mat={uploadToken}";
 
     public static String UPLOAD_PROJECT_TEMPLATE(String projectTemplateName){
         return String.format("/upload/projectTemplateUpload.html?mat={uploadToken}&name=%s", projectTemplateName);

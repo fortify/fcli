@@ -22,13 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.common.pojos.uploadResponse;
+package com.fortify.cli.ssc.domain.report.template;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 import io.micronaut.core.annotation.ReflectiveAccess;
+import java.util.ArrayList;
 
 @ReflectiveAccess
-public class Code {
-    @JacksonXmlText(value = true)
-    int value;
+public class ReportTemplateDef {
+    public ReportTemplateDef(){}
+    public boolean crossApp;
+    public String description;
+    public String fileName;
+    public String guid;
+    public String name;
+    public int objectVersion;
+    public ArrayList<ReportParameter> parameters;
+    public int publishVersion;
+    public ReportRenderingEngineType renderingEngine;
+    public int templateDocId;
+    public ReportType type;
+    public String typeDefaultText;
 }

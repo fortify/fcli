@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -22,15 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.common.pojos.report.template.existingReportTemplate;
+package com.fortify.cli.ssc.domain.report.template;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 
-import java.util.ArrayList;
-
 @ReflectiveAccess
-public class ReportTemplateDef {
-    public ReportTemplateDef(){}
+public class ReportTemplateDefResponse {
     public int count;
     public Data data;
     public int errorCode;
@@ -40,22 +37,10 @@ public class ReportTemplateDef {
     public String stackTrace;
     public int successCount;
 
-    public class Data{
-        public Data(){}
-        public boolean crossApp;
-        public String description;
-        public String fileName;
-        public String guid;
+    public class Data extends ReportTemplateDef {
         public Integer id;
+        public int count;
         public boolean inUse;
-        public String name;
-        public int objectVersion;
-        public ArrayList<Parameter> parameters;
-        public int publishVersion;
-        public String renderingEngine;
-        public int templateDocId;
-        public String type;
-        public String typeDefaultText;
         public String _href;
     }
 
@@ -64,25 +49,4 @@ public class ReportTemplateDef {
         public String href;
     }
 
-    public class Parameter{
-        public Parameter(){}
-        public String description;
-        public int id;
-        public String identifier;
-        public String name;
-        public int paramOrder;
-        public int reportDefinitionId;
-        public ArrayList<ReportParameterOption> reportParameterOptions;
-        public String type;
-    }
-
-    public class ReportParameterOption{
-        public ReportParameterOption(){}
-        public boolean defaultValue;
-        public String description;
-        public String displayValue;
-        public int id;
-        public int order;
-        public String reportValue;
-    }
 }

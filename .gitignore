@@ -51,4 +51,5 @@ lombok.config
 fcli.log
 /.apt_generated_tests/
 /ReportTemplateDefAnswerTemplate.json*
+/ReportTemplateDefAnswerTemplate.y*ml*
 /*.rptdesign
