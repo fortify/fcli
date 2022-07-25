@@ -24,9 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.mixin.application.version;
 
-import com.fortify.cli.ssc.picocli.command.SSCUrls;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.ssc.common.pojos.application.version.ApplicationVersion;
+import com.fortify.cli.ssc.common.SSCUrls;
 import com.jayway.jsonpath.JsonPath;
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -35,7 +38,6 @@ import picocli.CommandLine.Parameters;
 import javax.validation.ValidationException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 
 @ReflectiveAccess
 public class SSCApplicationVersionIdMixin {
@@ -44,7 +46,7 @@ public class SSCApplicationVersionIdMixin {
 		public abstract String getVersionNameOrId();
 
 		@SneakyThrows
-		private String encodeValue(String value) {
+		public static String urlEncodeValue(String value) {
 			return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
 		}
 
@@ -52,44 +54,62 @@ public class SSCApplicationVersionIdMixin {
 				description = "Change the default delimiter character when using options that accepts " +
 				"\"application:version\" as an argument or parameter.", defaultValue = ":")
 		private String delimiter;
-		
-		public String getApplicationVersionId(UnirestInstance unirestInstance) {
-			String versionNameOrId = getVersionNameOrId();
 
-			if(getVersionNameOrId().contains(delimiter)){
-				String[] app = getVersionNameOrId().split(delimiter);
-				String searchQuery = "?limit=-1&fields=id,name,project&q=" + encodeValue(String.format("project.name:\"%s\",name:\"%s\"", app[0], app[1]));
-				String response = unirestInstance.get(SSCUrls.PROJECT_VERSIONS + searchQuery).getBody().toString();
-				return JsonPath.parse(response).read("$.data[0].id").toString();
+		public ApplicationVersion getApplicationAndVersion(UnirestInstance unirestInstance){
+			String versionNameOrId = getVersionNameOrId();
+			ApplicationVersion av = new ApplicationVersion();
+
+			if(versionNameOrId.contains(delimiter)){
+				String[] app = versionNameOrId.split(delimiter);
+				String searchQuery = "?limit=1&fields=id,name,project&q=" + urlEncodeValue(String.format("project.name:\"%s\",name:\"%s\"", app[0], app[1]));
+				HttpResponse response = unirestInstance.get(SSCUrls.PROJECT_VERSIONS + searchQuery).asObject(ObjectNode.class);
+				String responseBodyJson = response.getBody().toString();
+				av.setApplicationName(app[0]);
+				av.setApplicationId(JsonPath.parse(responseBodyJson).read("$.data[0].project.id").toString());
+				av.setApplicationVersionName(app[1]);
+				av.setApplicationVersionId(JsonPath.parse(responseBodyJson).read("$.data[0].id").toString());
+				return av;
 			}
 
-			if(Integer.parseInt(getVersionNameOrId()) <= -1)
+			if(Integer.parseInt(versionNameOrId) >= 0){
+				String searchQuery = "?fields=id,name,project";
+				HttpResponse response = unirestInstance.get(SSCUrls.PROJECT_VERSION(versionNameOrId) + searchQuery).asObject(ObjectNode.class);
+				String responseBodyJson = response.getBody().toString();
+				av.setApplicationId(JsonPath.parse(responseBodyJson).read("$.data.project.id").toString());
+				av.setApplicationName(JsonPath.parse(responseBodyJson).read("$.data.project.name").toString());
+				av.setApplicationVersionId(JsonPath.parse(responseBodyJson).read("$.data.id").toString());
+				av.setApplicationVersionName(JsonPath.parse(responseBodyJson).read("$.data.name").toString());
+				return av;
+			}else {
 				throw new ValidationException("The provided Application Version ID is not valid.");
-			return versionNameOrId;
+			}
+		}
+		public String getApplicationVersionId(UnirestInstance unirestInstance) {
+			return getApplicationAndVersion(unirestInstance).getApplicationVersionId();
 		}
 	}
 	
 	// get/retrieve/delete/download version <entity> --from
 	public static class From extends AbstractSSCApplicationVersionMixin {
-		@Option(names = {"--from"}, required = true, description = "Application version id or <application>:<version> name")
+		@Option(names = {"--from"}, required = true, descriptionKey = "ApplicationVersionMixin")
 		@Getter private String versionNameOrId;
 	}
 	
 	// create/update version <entity> --for <version>
 	public static class For extends AbstractSSCApplicationVersionMixin {
-		@Option(names = {"--for"}, required = true, description = "Application version id or <application>:<version> name")
+		@Option(names = {"--for"}, required = true, descriptionKey = "ApplicationVersionMixin")
 		@Getter private String versionNameOrId;
 	}
 	
 	// upload version <entity> --to <version>
 	public static class To extends AbstractSSCApplicationVersionMixin {
-		@Option(names = {"--to"}, required = true, description = "Application version id or <application>:<version> name")
+		@Option(names = {"--to"}, required = true, descriptionKey = "ApplicationVersionMixin")
 		@Getter private String versionNameOrId;
 	}
 	
 	// delete|update <versionNameOrId>
 	public static class PositionalParameter extends AbstractSSCApplicationVersionMixin {
-		@Parameters(index = "0", arity = "1", description = "Application version id or <application>:<version> name")
+		@Parameters(index = "0", arity = "1", descriptionKey = "ApplicationVersionMixin")
 		@Getter private String versionNameOrId;
 	}
 }

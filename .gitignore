@@ -50,3 +50,5 @@ FortifyImportExportUtility-common/lombok.config FortifyImportExportUtility-commo
 lombok.config
 fcli.log
 /.apt_generated_tests/
+/ReportTemplateDefAnswerTemplate.json*
+/*.rptdesign

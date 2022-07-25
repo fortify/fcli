@@ -22,15 +22,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.app;
+package com.fortify.cli.ssc.picocli.command.report_template;
 
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
-import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.common.SSCUrls;
+import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.picocli.mixin.report.template.SSCReportTemplateIdMixin;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
-
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
@@ -38,19 +38,22 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCApplicationListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+@Command(name = "delete")
+public class SSCReportTemplateDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
-	
+	@CommandLine.Mixin private SSCReportTemplateIdMixin reportTemplateIdMixin;
+
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(unirest.get(SSCUrls.PROJECTS + "?limit=-1"));
+		outputMixin.write(
+				unirest.delete(SSCUrls.REPORT_DEFINITION(reportTemplateIdMixin.getReportTemplateDefId(unirest))));
+		System.out.println("DELETE DONE.");
 		return null;
 	}
 	
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
 		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#name");
+				.defaultColumns("id#name#typeDefaultText#templateDocId#inUse");
 	}
 }
