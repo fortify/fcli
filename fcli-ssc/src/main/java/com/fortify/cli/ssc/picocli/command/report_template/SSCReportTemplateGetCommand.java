@@ -53,6 +53,6 @@ public class SSCReportTemplateGetCommand extends AbstractSSCUnirestRunnerCommand
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
 		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#name#typeDefaultText#templateDocId#inUse");
+				.defaultColumns("id#name#type:Report Type#templateDocId#inUse");
 	}
 }

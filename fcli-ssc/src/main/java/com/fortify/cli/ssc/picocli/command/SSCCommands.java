@@ -23,8 +23,8 @@ import picocli.CommandLine.Command;
                 SSCApplicationVersionArtifactCommands.class,
                 SSCApplicationVersionAttributeCommands.class,
                 SSCPluginCommands.class,
-                SSCEventCommands.class,
-                SSCReportTemplateCommands.class
+                SSCReportTemplateCommands.class,
+                SSCEventCommands.class
         }
 )
 public class SSCCommands {
