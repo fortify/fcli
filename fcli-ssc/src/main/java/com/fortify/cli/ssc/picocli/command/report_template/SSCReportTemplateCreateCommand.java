@@ -47,7 +47,7 @@ import java.io.File;
 @Command(name = "create")
 public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
-	@CommandLine.Option(names = {"-f", "--file"})
+	@CommandLine.Option(names = {"-f", "--file"}, required = true)
 	private String filePath;
 
 	@CommandLine.Option(names = {"-a", "--answer-file"}, defaultValue = "./ReportTemplateDefAnswerTemplate.json")
