@@ -25,7 +25,9 @@
 package com.fortify.cli.ssc.common.pojos.uploadResponse;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import io.micronaut.core.annotation.ReflectiveAccess;
 
+@ReflectiveAccess
 public class Code {
     @JacksonXmlText(value = true)
     int value;

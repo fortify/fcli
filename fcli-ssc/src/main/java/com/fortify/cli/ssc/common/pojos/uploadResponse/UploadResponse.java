@@ -26,7 +26,9 @@ package com.fortify.cli.ssc.common.pojos.uploadResponse;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import io.micronaut.core.annotation.ReflectiveAccess;
 
+@ReflectiveAccess
 @JacksonXmlRootElement(localName = "UploadResponse")
 public class UploadResponse{
     @JacksonXmlProperty(isAttribute = true)
