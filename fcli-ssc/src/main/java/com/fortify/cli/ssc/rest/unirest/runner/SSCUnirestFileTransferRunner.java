@@ -29,6 +29,7 @@ import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fortify.cli.ssc.common.pojos.uploadResponse.UploadResponse;
 import com.jayway.jsonpath.JsonPath;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
@@ -36,6 +37,7 @@ import lombok.SneakyThrows;
 import java.io.File;
 import java.nio.file.StandardCopyOption;
 
+@ReflectiveAccess
 public class SSCUnirestFileTransferRunner {
 
     private enum FileTransferTokenType{
