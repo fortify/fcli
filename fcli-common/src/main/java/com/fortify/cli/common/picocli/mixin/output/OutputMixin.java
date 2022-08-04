@@ -2,6 +2,8 @@ package com.fortify.cli.common.picocli.mixin.output;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
@@ -30,6 +32,7 @@ import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
@@ -158,6 +161,7 @@ public class OutputMixin {
 		@SneakyThrows
 		private void writeRecord(JsonNode jsonNode) {
 			jsonNode = config.applyRecordTransformations(outputFormat, jsonNode); // TODO Before or after other transformations?
+			jsonNode = applyOutputFilterTransformation(outputFormat, jsonNode);
 			jsonNode = applyJsonPathTransformation(outputFormat, jsonNode);
 			jsonNode = config.applyFieldsTransformations(outputFormat, optionsArgGroup.fields, new I18nDefaultFieldNameFormatterProvider(), jsonNode);
 			jsonNode = applyFlattenTransformation(outputFormat, jsonNode);
@@ -166,6 +170,21 @@ public class OutputMixin {
 			} else {
 				recordWriter.writeRecord((ObjectNode) jsonNode);
 			}
+		}
+		
+		protected JsonNode applyOutputFilterTransformation(OutputFormat outputFormat, JsonNode data) {
+			List<OptionSpec> options = mixee.options();
+			for ( OptionSpec option : options ) {
+				Object userObject = option.userObject();
+				if ( userObject instanceof Field ) {
+					Field field = (Field)userObject;
+					OutputFilter outputFilter = field.getAnnotation(OutputFilter.class);
+					if ( outputFilter!=null && option.getValue()!=null ) {
+						data = new JsonPathTransformer(String.format("[?(@.%s == \"%s\")]", outputFilter.value(), option.getValue())).transform(data);
+					}
+				}
+			}
+			return data;
 		}
 		
 		// TODO Move to OutputOptionsWriterConfig to allow defaults?
