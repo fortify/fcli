@@ -12015,7 +12015,7 @@ public class CommandLine {
                 try { obj = scope.get(); }
                 catch (Exception ex) { throw new PicocliException("Could not get scope for field " + field, ex); }
                 try {
-                    @SuppressWarnings("unchecked") T result = obj==null ? null : (T) field.get(obj);
+                    @SuppressWarnings("unchecked") T result = (T) field.get(obj);
                     return result;
                 } catch (Exception ex) {
                     throw new PicocliException("Could not get value for field " + field, ex);
