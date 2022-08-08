@@ -179,8 +179,12 @@ public class OutputMixin {
 				if ( userObject instanceof Field ) {
 					Field field = (Field)userObject;
 					OutputFilter outputFilter = field.getAnnotation(OutputFilter.class);
-					if ( outputFilter!=null && option.getValue()!=null ) {
-						data = new JsonPathTransformer(String.format("[?(@.%s == \"%s\")]", outputFilter.value(), option.getValue())).transform(data);
+					try{
+						if ( !data.isEmpty() && outputFilter != null && option.getValue() != null ) {
+							data = new JsonPathTransformer(String.format("[?(@.%s == \"%s\")]", outputFilter.value(), option.getValue())).transform(data);
+						}
+					}catch (CommandLine.PicocliException e){
+						// Sometimes picocli may throw an exception when calling getValue() on an option contained in a non-initialized arggroup.
 					}
 				}
 			}
