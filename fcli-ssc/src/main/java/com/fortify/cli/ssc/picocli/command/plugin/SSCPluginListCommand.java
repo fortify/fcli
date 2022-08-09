@@ -24,8 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.command.plugin;
 
+import com.fortify.cli.common.picocli.mixin.output.AddAsDefaultColumn;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
+import com.fortify.cli.common.picocli.mixin.output.OutputFilter;
+import com.fortify.cli.common.picocli.mixin.output.OutputJsonProperty;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
@@ -35,11 +38,30 @@ import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCPluginListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
+	
+	@Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
+    private String id;
+
+    @Option(names={"--pluginId"}) @OutputFilter @AddAsDefaultColumn
+    private String pluginId;
+
+    @Option(names={"--pluginType"}) @OutputFilter @AddAsDefaultColumn
+    private String pluginType;
+
+    @Option(names={"--pluginName"}) @OutputFilter @AddAsDefaultColumn
+    private String pluginName;
+
+    @Option(names={"--pluginVersion"}) @OutputFilter @AddAsDefaultColumn
+    private String pluginVersion;
+
+    @Option(names={"--pluginState"}) @OutputFilter @AddAsDefaultColumn @OutputJsonProperty("test.abc")
+    private String pluginState;
 	
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
@@ -50,6 +72,6 @@ public class SSCPluginListCommand extends AbstractSSCUnirestRunnerCommand implem
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
 		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
+				.defaultColumns(outputMixin.getDefaultColumns());
 	}
 }
