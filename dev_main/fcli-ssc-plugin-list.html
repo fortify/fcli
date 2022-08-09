@@ -449,7 +449,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc plugin list</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+<p><strong>fcli ssc plugin list</strong> [<strong>-hV</strong>] [<strong>--id</strong>=<em>&lt;id&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--pluginId</strong>=<em>&lt;pluginId&gt;</em>]
+                     [<strong>--pluginName</strong>=<em>&lt;pluginName&gt;</em>] [<strong>--pluginState</strong>=<em>&lt;pluginState&gt;</em>]
+                     [<strong>--pluginType</strong>=<em>&lt;pluginType&gt;</em>]
+                     [<strong>--pluginVersion</strong>=<em>&lt;pluginVersion&gt;</em>]
                      [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] [[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>]
                      [<strong>--fields</strong>=<em>&lt;fields&gt;</em>] [<strong>--flatten</strong>] [<strong>--[no-]headers</strong>]
                      [<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>] [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]]</p>
@@ -469,6 +473,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--id</strong>=<em>&lt;id&gt;</em></dt>
+<dt class="hdlist1"><strong>--pluginId</strong>=<em>&lt;pluginId&gt;</em></dt>
+<dt class="hdlist1"><strong>--pluginType</strong>=<em>&lt;pluginType&gt;</em></dt>
+<dt class="hdlist1"><strong>--pluginName</strong>=<em>&lt;pluginName&gt;</em></dt>
+<dt class="hdlist1"><strong>--pluginVersion</strong>=<em>&lt;pluginVersion&gt;</em></dt>
+<dt class="hdlist1"><strong>--pluginState</strong>=<em>&lt;pluginState&gt;</em></dt>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
 <p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
@@ -539,7 +549,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-08-08 09:56:06 UTC
+Last updated 2022-08-09 15:17:35 UTC
 </div>
 </div>
 </body>
