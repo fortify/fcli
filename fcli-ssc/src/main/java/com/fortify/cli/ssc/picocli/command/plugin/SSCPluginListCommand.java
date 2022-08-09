@@ -60,7 +60,7 @@ public class SSCPluginListCommand extends AbstractSSCUnirestRunnerCommand implem
     @Option(names={"--pluginVersion"}) @OutputFilter @AddAsDefaultColumn
     private String pluginVersion;
 
-    @Option(names={"--pluginState"}) @OutputFilter @AddAsDefaultColumn @OutputJsonProperty("test.abc")
+    @Option(names={"--pluginState"}) @OutputFilter @AddAsDefaultColumn
     private String pluginState;
 	
 	@SneakyThrows
