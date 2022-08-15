@@ -28,8 +28,8 @@ import com.fortify.cli.common.picocli.mixin.output.AddAsDefaultColumn;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputFilter;
-import com.fortify.cli.common.picocli.mixin.output.OutputJsonProperty;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.picocli.option.OptionTargetName;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 

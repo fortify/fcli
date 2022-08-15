@@ -27,8 +27,10 @@ package com.fortify.cli.ssc.picocli.command.app;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
-import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.common.SSCUrls;
+import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.picocli.mixin.filter.SSCFilterMixin;
+import com.fortify.cli.ssc.picocli.mixin.filter.SSCFilterQParam;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -36,15 +38,22 @@ import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCApplicationListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
+	@CommandLine.Mixin private SSCFilterMixin sscFilterMixin;
+	
+	@Option(names={"--name"}) @SSCFilterQParam
+	private String name;
 	
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(unirest.get(SSCUrls.PROJECTS + "?limit=-1"));
+		outputMixin.write(
+				sscFilterMixin.addFilterParams(unirest.get(SSCUrls.PROJECTS + "?limit=-1"))
+		);
 		return null;
 	}
 	

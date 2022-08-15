@@ -1,4 +1,4 @@
-package com.fortify.cli.common.picocli.mixin.output;
+package com.fortify.cli.ssc.picocli.mixin.filter;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -7,7 +7,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import com.fortify.cli.common.picocli.option.DefaultOptionTargetNameProvider;
-import com.fortify.cli.common.picocli.option.OptionTargetName;
 import com.fortify.cli.common.picocli.option.OptionTargetNameProvider;
 
 /**
@@ -22,4 +21,4 @@ import com.fortify.cli.common.picocli.option.OptionTargetNameProvider;
 @Retention(RUNTIME)
 @Target(FIELD)
 @OptionTargetNameProvider(DefaultOptionTargetNameProvider.class)
-public @interface OutputFilter {}
+public @interface SSCFilterQParam {}

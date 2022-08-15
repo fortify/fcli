@@ -2,9 +2,6 @@ package com.fortify.cli.common.picocli.mixin.output;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.util.List;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
@@ -22,6 +19,7 @@ import com.fortify.cli.common.json.transform.jsonpath.JsonPathTransformer;
 import com.fortify.cli.common.output.IRecordWriter;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.RecordWriterConfig;
+import com.fortify.cli.common.picocli.option.OptionAnnotationHelper;
 import com.fortify.cli.common.rest.unirest.exception.IfFailureHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -39,7 +37,14 @@ import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
 public class OutputMixin {
-	@Spec(Spec.Target.MIXEE) CommandSpec mixee;
+	private CommandSpec mixee;
+	private OptionAnnotationHelper optionAnnotationHelper;
+	
+	@Spec(Spec.Target.MIXEE)
+	public void setMixee(CommandSpec mixee) {
+		this.mixee = mixee;
+		this.optionAnnotationHelper = new OptionAnnotationHelper(mixee);
+	}
 	
 	@ArgGroup(headingKey = "arggroup.output.heading", exclusive = false)
 	private OutputOptionsArgGroup outputOptionsArgGroup;
@@ -116,39 +121,15 @@ public class OutputMixin {
 	}
 	
 	public String getDefaultColumns() {
-		return optionsWithAnnotationStream(AddAsDefaultColumn.class)
-				.map(this::getOutputJsonProperty)
+		return optionAnnotationHelper.optionsWithAnnotationStream(AddAsDefaultColumn.class)
+				.map(OutputMixin::getAddAsDefaultColumnJsonProperty)
 				.collect(Collectors.joining ("#"));
 	}
 	
-	protected Stream<OptionSpec> optionsWithAnnotationStream(Class<? extends Annotation> annotationClazz) {
-		return mixee.options().stream().filter(o->hasAnnotation(o, annotationClazz));
+	protected static final String getAddAsDefaultColumnJsonProperty(OptionSpec optionSpec) {
+		return OptionAnnotationHelper.getOptionTargetName(optionSpec, AddAsDefaultColumn.class);
 	}
-	
-	private <T extends Annotation> T getAnnotation(OptionSpec optionSpec, Class<T> annotationClazz) {
-		Object userObject = optionSpec.userObject();
-		return userObject instanceof Field 
-				? ((Field)userObject).getAnnotation(annotationClazz)
-				: null;
-	}
-	
-	private boolean hasAnnotation(OptionSpec optionSpec, Class<? extends Annotation> annotationClazz) {
-		return getAnnotation(optionSpec, annotationClazz) != null;
-	}
-	
-	protected String getOutputJsonProperty(OptionSpec optionSpec) {
-		return getOutputJsonProperty((Field)optionSpec.userObject());
-	}
-	
-	protected String getOutputJsonProperty(Field field) {
-		OutputJsonProperty outputJsonProperty = field.getAnnotation(OutputJsonProperty.class);
-		if ( outputJsonProperty!=null && outputJsonProperty.value()!=null ) {
-			return outputJsonProperty.value();
-		} else {
-			return field.getName();
-		}
-	}
-	
+
 	public final class OutputOptionsWriter implements AutoCloseable { // TODO Implement interface, make implementation private
 		private final OutputMixin optionsHandler = OutputMixin.this;
 		private final OutputOptionsArgGroup optionsArgGroup = optionsHandler.outputOptionsArgGroup!=null ? optionsHandler.outputOptionsArgGroup : new OutputOptionsArgGroup();
@@ -209,31 +190,39 @@ public class OutputMixin {
 		}
 		
 		protected JsonNode applyOutputFilterTransformation(OutputFormat outputFormat, JsonNode data) {
-			// TODO Rewrite to use #optionsWithAnnotationStream()
-			List<OptionSpec> options = mixee.options();
-			for ( OptionSpec option : options ) {
-				Object userObject = option.userObject();
-				if ( userObject instanceof Field ) {
-					Field field = (Field)userObject;
-					OutputFilter outputFilter = field.getAnnotation(OutputFilter.class);
-					try {
-						if ( !data.isEmpty() && outputFilter != null && option.getValue() != null ) {
-							data = new JsonPathTransformer(String.format("[?(@.%s == \"%s\")]", getOutputJsonProperty(field), option.getValue())).transform(data);
-						}
-					} catch (CommandLine.PicocliException e){
-						// Picocli may throw an exception when calling getValue() on an option contained in a non-initialized arggroup.
-					}
-				}
+			// TODO Improve this?
+			for ( OptionSpec optionSpec : optionAnnotationHelper.optionsWithAnnotationStream(OutputFilter.class).collect(Collectors.toList()) ) {
+				data = applyOutputFilterTransformation(outputFormat, data, optionSpec); 
 			}
 			return data;
 		}
 		
+		private JsonNode applyOutputFilterTransformation(OutputFormat outputFormat, JsonNode data, OptionSpec optionSpec) {
+			if ( !data.isEmpty() ) {
+				String fieldName = OptionAnnotationHelper.getOptionTargetName(optionSpec, OutputFilter.class);
+				String value = getOptionValue(optionSpec);
+				if ( value!=null ) {
+					data = new JsonPathTransformer(String.format("[?(@.%s == \"%s\")]", fieldName, value)).transform(data);
+				}
+			}
+			return data;
+		}
+
 		// TODO Move to OutputOptionsWriterConfig to allow defaults?
 		protected JsonNode applyJsonPathTransformation(OutputFormat outputFormat, JsonNode data) {
 			if ( StringUtils.isNotEmpty(optionsArgGroup.jsonPath) ) {
 				data = new JsonPathTransformer(optionsArgGroup.jsonPath).transform(data);
 			}
 			return data;
+		}
+		
+		private final <T> T getOptionValue(OptionSpec optionSpec) {
+			try {
+				return optionSpec.getValue();
+			} catch (CommandLine.PicocliException e){
+				// Picocli may throw an exception when calling getValue() on an option contained in a non-initialized arggroup.
+				return null;
+			}
 		}
 		
 		// TODO Move to OutputOptionsWriterConfig to allow defaults?
