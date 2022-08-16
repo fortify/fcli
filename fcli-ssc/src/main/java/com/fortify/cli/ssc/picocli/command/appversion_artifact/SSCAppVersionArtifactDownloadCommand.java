@@ -22,14 +22,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.appversion;
+package com.fortify.cli.ssc.picocli.command.appversion_artifact;
 
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
-import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.domain.version.ApplicationVersion;
 import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.mixin.application.version.SSCApplicationVersionIdMixin;
+import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -38,21 +39,28 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "get")
-public class SSCApplicationVersionGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
-	@CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter versionIdOrName;
+@Command(name = "download")
+public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+	@CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter parentVersionHandler;
+	@CommandLine.Option(names = {"-f", "--dest"}, description = "The output location for the file download.")
+	String destination;
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		String avID = versionIdOrName.getApplicationVersionId(unirest);
-		outputMixin.write(unirest.get(SSCUrls.PROJECT_VERSION(avID)));
+		ApplicationVersion av = parentVersionHandler.getApplicationAndVersion(unirest);
+		destination = destination != null ? destination : String.format("./scan_%s.fpr", av.getApplicationVersionId());
+		SSCUnirestFileTransferRunner.download(
+				unirest,
+				SSCUrls.DOWNLOAD_CURRENT_FPR(av.getApplicationVersionId(), false),
+				destination
+		);
+
 		return null;
 	}
 	
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
 		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#name");
+				.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
 	}
 }

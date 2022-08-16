@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.appversion_artifact;
+package com.fortify.cli.ssc.picocli.command.appversion;
 
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
@@ -31,7 +31,6 @@ import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.picocli.mixin.application.version.SSCApplicationVersionIdMixin;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
-
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
@@ -39,22 +38,21 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCApplicationVersionArtifactListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
+@Command(name = "get")
+public class SSCAppVersionGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
+	@CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter versionIdOrName;
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(
-				unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentVersionHandler.getApplicationVersionId(unirest)))
-						.queryString("embed","scans"));
+		String avID = versionIdOrName.getApplicationVersionId(unirest);
+		outputMixin.write(unirest.get(SSCUrls.PROJECT_VERSION(avID)));
 		return null;
 	}
 	
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
 		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+				.defaultColumns("id#name");
 	}
 }

@@ -26,12 +26,12 @@ package com.fortify.cli.ssc.picocli.command.appversion_artifact;
 
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.ssc.domain.version.ApplicationVersion;
-import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.picocli.mixin.application.version.SSCApplicationVersionIdMixin;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
@@ -39,22 +39,16 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "download")
-public class SSCApplicationVersionArtifactDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter parentVersionHandler;
-	@CommandLine.Option(names = {"-f", "--dest"}, description = "The output location for the file download.")
-	String destination;
+@Command(name = "list")
+public class SSCAppVersionArtifactListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+	@CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
+	@CommandLine.Mixin private OutputMixin outputMixin;
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		ApplicationVersion av = parentVersionHandler.getApplicationAndVersion(unirest);
-		destination = destination != null ? destination : String.format("./scan_%s.fpr", av.getApplicationVersionId());
-		SSCUnirestFileTransferRunner.download(
-				unirest,
-				SSCUrls.DOWNLOAD_CURRENT_FPR(av.getApplicationVersionId(), false),
-				destination
-		);
-
+		outputMixin.write(
+				unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentVersionHandler.getApplicationVersionId(unirest)))
+						.queryString("embed","scans"));
 		return null;
 	}
 	
