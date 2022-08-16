@@ -42,10 +42,13 @@ public class SSCFilterMixin {
 	}
 	
 	private String getQParamValue(OptionSpec optionspec) {
-		return String.format("%s:\"%s\"", OptionAnnotationHelper.getOptionTargetName(optionspec, SSCFilterQParam.class), getOptionValue(optionspec));
+		String targetName = OptionAnnotationHelper.getOptionTargetName(optionspec, SSCFilterQParam.class);
+		Object value = getOptionValue(optionspec);
+		String format = value instanceof String ? "%s:\"%s\"" : "%s:%s";
+		return String.format(format, targetName, value);
 	}
 	
 	private final boolean hasOptionValue(OptionSpec optionSpec) {
-		return StringUtils.isNotEmpty(getOptionValue(optionSpec));
+		return getOptionValue(optionSpec)!=null;
 	}
 }
