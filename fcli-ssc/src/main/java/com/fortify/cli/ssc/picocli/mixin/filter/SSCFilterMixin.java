@@ -28,7 +28,7 @@ public class SSCFilterMixin {
 		String qParamValue = optionAnnotationHelper.optionsWithAnnotationStream(SSCFilterQParam.class)
 			.filter(this::hasOptionValue)
 			.map(this::getQParamValue)
-			.collect(Collectors.joining(" "));
+			.collect(Collectors.joining("+and+"));
 		return getRequest.queryString("q", qParamValue);
 	}
 	
