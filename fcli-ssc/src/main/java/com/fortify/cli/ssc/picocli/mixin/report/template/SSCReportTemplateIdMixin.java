@@ -26,8 +26,9 @@ package com.fortify.cli.ssc.picocli.mixin.report.template;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.ssc.common.SSCUrls;
-import com.fortify.cli.ssc.common.pojos.report.template.existingReportTemplate.ReportTemplateDef;
+import com.fortify.cli.ssc.domain.report.template.ReportTemplateDefResponse;
+import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.domain.report.template.ReportTemplateDef;
 import com.jayway.jsonpath.JsonPath;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpResponse;
@@ -45,8 +46,8 @@ public class SSCReportTemplateIdMixin {
 	private boolean isReportName = false;
 
 	@SneakyThrows
-	private ReportTemplateDef fetchReportDefInfo(UnirestInstance unirestInstance, String reportTemplateNameOrId, boolean isReportName){
-		ReportTemplateDef returnObj;
+	private ReportTemplateDefResponse fetchReportDefInfo(UnirestInstance unirestInstance, String reportTemplateNameOrId, boolean isReportName){
+		ReportTemplateDefResponse returnObj;
 		ObjectMapper om = new ObjectMapper();
 		HttpResponse response;
 		boolean isNumeric = true;
@@ -70,14 +71,14 @@ public class SSCReportTemplateIdMixin {
 				.queryString("fields","id,name,fileName")
 				.asObject(ObjectNode.class);
 
-		returnObj = om.readValue(response.getBody().toString(), ReportTemplateDef.class);
+		returnObj = om.readValue(response.getBody().toString(), ReportTemplateDefResponse.class);
 		return returnObj;
 	}
 
 	public String getReportTemplateDefId(UnirestInstance unirestInstance) {
 		return Integer.toString(fetchReportDefInfo(unirestInstance, reportTemplateNameOrId, isReportName).data.id);
 	}
-	public ReportTemplateDef getReportTemplateDef(UnirestInstance unirestInstance){
+	public ReportTemplateDefResponse getReportTemplateDef(UnirestInstance unirestInstance){
 		return fetchReportDefInfo(unirestInstance, reportTemplateNameOrId, isReportName);
 	}
 }

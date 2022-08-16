@@ -26,8 +26,8 @@ package com.fortify.cli.ssc.picocli.command.appversion_artifact;
 
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.ssc.common.pojos.application.version.ApplicationVersion;
-import com.fortify.cli.ssc.common.SSCUrls;
+import com.fortify.cli.ssc.domain.version.ApplicationVersion;
+import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.mixin.application.version.SSCApplicationVersionIdMixin;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
@@ -49,7 +49,7 @@ public class SSCApplicationVersionArtifactDownloadCommand extends AbstractSSCUni
 	protected Void runWithUnirest(UnirestInstance unirest) {
 		ApplicationVersion av = parentVersionHandler.getApplicationAndVersion(unirest);
 		destination = destination != null ? destination : String.format("./scan_%s.fpr", av.getApplicationVersionId());
-		SSCUnirestFileTransferRunner.Download(
+		SSCUnirestFileTransferRunner.download(
 				unirest,
 				SSCUrls.DOWNLOAD_CURRENT_FPR(av.getApplicationVersionId(), false),
 				destination

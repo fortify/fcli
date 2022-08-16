@@ -74,10 +74,33 @@ jobs:
   native_linux:
     name: native-image-linux
     needs: build
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
+    env:
+      TOOLCHAIN_BASE: /opt/musl_cc
+      TOOLCHAIN_DIR: /opt/musl_cc/x86_64-linux-musl-native
+      CC: /opt/musl_cc/x86_64-linux-musl-native/bin/gcc
     steps:
       - name: Check-out source code
         uses: actions/checkout@v2
+
+      # Next two actions are prerequisites for creating a statically linked binary of fcli.
+      - name: Install musl toolchain
+        run: |
+          wget --no-check-certificate 'https://github.com/fortify-ps/fcli/raw/musl-cc/v10/x86_64-linux-musl-native.tgz' -O x86_64-linux-musl-native.tgz;
+          mkdir -p $TOOLCHAIN_BASE;
+          tar -zxvf x86_64-linux-musl-native.tgz -C $TOOLCHAIN_BASE;
+          ln -s $TOOLCHAIN_DIR/bin/gcc $TOOLCHAIN_DIR/bin/musl-gcc;
+          echo "$TOOLCHAIN_DIR/bin" >> $GITHUB_PATH
+
+      - name: Install zlib
+        run: |
+          wget https://zlib.net/zlib-1.2.12.tar.gz; 
+          mkdir zlib; 
+          tar -zxvf zlib-1.2.12.tar.gz; 
+          cd zlib-1.2.12; 
+          sudo ./configure --prefix=$TOOLCHAIN_DIR --static; 
+          make; 
+          sudo make install
 
       - uses: DeLaGuardo/setup-graalvm@3
         with:
@@ -90,28 +113,28 @@ jobs:
         with:
           path: ./
 
-#      - name: Create native fcli
-#        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
-#
-#      - name: Compress native fcli
-#        uses: svenstaro/upx-action@v2
-#        with:
-#          file: fcli
-#
-#      - name: Basic test of native fcli
-#        run: ./fcli --help && ./fcli get --help
-#
-#      - name: Package native fcli
-#        run: tar -zcvf fcli-linux.tgz fcli -C ./artifact fcli_completion
-#
-#      - uses: actions/upload-artifact@v2
-#        with:
-#          path: ./fcli-linux.tgz
+      - name: Create native fcli
+        run: native-image ${{ env.native_image_opts }} --static --libc=musl -jar ./artifact/fcli.jar fcli
+
+      - name: Compress native fcli
+        uses: svenstaro/upx-action@v2
+        with:
+          file: fcli
+
+      - name: Basic test of native fcli
+        run: ./fcli --help && ./fcli get --help
+
+      - name: Package native fcli
+        run: tar -zcvf fcli-linux.tgz fcli -C ./artifact fcli_completion
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./fcli-linux.tgz
 
   native_mac:
     name: native-image-mac
     needs: build
-    runs-on: macos-10.15
+    runs-on: macos-12
     steps:
       - name: Check-out source code
         uses: actions/checkout@v2
@@ -148,7 +171,7 @@ jobs:
   native_win:
     name: native-image-win
     needs: build
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
     - uses: DeLaGuardo/setup-graalvm@3
       with:
@@ -163,7 +186,7 @@ jobs:
     
     - name: Create native fcli
       run: >-
-        "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
+        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
         ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar fcli
       shell: cmd
 

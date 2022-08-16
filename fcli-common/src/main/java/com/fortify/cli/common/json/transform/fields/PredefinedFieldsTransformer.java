@@ -32,6 +32,7 @@ import java.util.stream.StreamSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.json.JacksonJsonNodeHelper;
 import com.fortify.cli.common.json.transform.AbstractJsonNodeTransformer;
 import com.fortify.cli.common.json.transform.IJsonNodeTransformer;
@@ -40,6 +41,7 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 
 public class PredefinedFieldsTransformer extends AbstractJsonNodeTransformer implements IJsonNodeTransformer {
+	private static final TextNode NOT_AVAILABLE_NODE = TextNode.valueOf("N/A");
 	private final LinkedHashMap<String, String> pathToHeaderMapping = new LinkedHashMap<>();
 	private final Function<String, String> fieldNameFormatter;
 	@Getter @Accessors(fluent=true) private boolean hasExplicitHeaders = false;
@@ -69,7 +71,13 @@ public class PredefinedFieldsTransformer extends AbstractJsonNodeTransformer imp
 	}
 	
 	private void addConvertedValue(ObjectNode output, String outputFieldName, ObjectNode input, String inputFieldPath) {
-		JsonNode value = getValue(input, inputFieldPath);
+		JsonNode value = null;
+		try{
+			value = getValue(input, inputFieldPath);
+		}catch (com.jayway.jsonpath.PathNotFoundException e){
+			value = NOT_AVAILABLE_NODE;
+		}
+
 		if ( value.isArray() ) {
 			output.put(outputFieldName,
 					StreamSupport.stream(value.spliterator(), false)

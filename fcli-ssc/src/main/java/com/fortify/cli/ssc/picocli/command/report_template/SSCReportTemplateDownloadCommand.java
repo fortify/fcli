@@ -26,8 +26,9 @@ package com.fortify.cli.ssc.picocli.command.report_template;
 
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.ssc.common.SSCUrls;
-import com.fortify.cli.ssc.common.pojos.report.template.existingReportTemplate.ReportTemplateDef;
+import com.fortify.cli.ssc.domain.report.template.ReportTemplateDefResponse;
+import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.domain.report.template.ReportTemplateDef;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.mixin.report.template.SSCReportTemplateIdMixin;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
@@ -49,9 +50,9 @@ public class SSCReportTemplateDownloadCommand extends AbstractSSCUnirestRunnerCo
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		ReportTemplateDef reportTemplate = reportTemplateIdMixin.getReportTemplateDef(unirest);
+		ReportTemplateDefResponse reportTemplate = reportTemplateIdMixin.getReportTemplateDef(unirest);
 		destination = destination != null ? destination : String.format("./%s", reportTemplate.data.fileName);
-		SSCUnirestFileTransferRunner.Download(
+		SSCUnirestFileTransferRunner.download(
 				unirest,
 				SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(reportTemplate.data.id.toString()),
 				destination

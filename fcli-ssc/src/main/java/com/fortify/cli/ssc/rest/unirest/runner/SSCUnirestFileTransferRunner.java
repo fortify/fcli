@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.rest.unirest.runner;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fortify.cli.ssc.common.pojos.uploadResponse.UploadResponse;
+import com.fortify.cli.ssc.domain.uploadResponse.UploadResponse;
 import com.jayway.jsonpath.JsonPath;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpResponse;
@@ -55,7 +55,7 @@ public class SSCUnirestFileTransferRunner {
     }
 
     @SneakyThrows
-    public static Void Download(UnirestInstance unirestInstance, String url, String downloadPath){
+    public static Void download(UnirestInstance unirestInstance, String url, String downloadPath){
         String downloadToken = getFileTransferToken(unirestInstance, FileTransferTokenType.DOWNLOAD);
         unirestInstance.get(url)
                 .routeParam("downloadToken",downloadToken)
@@ -71,7 +71,7 @@ public class SSCUnirestFileTransferRunner {
 
 
     @SneakyThrows
-    public static UploadResponse Upload(UnirestInstance unirestInstance, String url, String filePath){
+    public static UploadResponse upload(UnirestInstance unirestInstance, String url, String filePath){
         String uploadToken = getFileTransferToken(unirestInstance, FileTransferTokenType.UPLOAD);
         File f = new File(filePath);
         //InputStream file = new FileInputStream(f); // Supposedly this should be used for larger file uploads, but SSC errors when using this.

@@ -44,7 +44,8 @@ import picocli.CommandLine.Option;
 @Command(name = "list")
 public class SSCPluginListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
-	
+	// @CommandLine.Mixin private SSCParserPluginSelectorMixin selector;
+
 	@Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
     private String id;
 
@@ -62,7 +63,7 @@ public class SSCPluginListCommand extends AbstractSSCUnirestRunnerCommand implem
 
     @Option(names={"--pluginState"}) @OutputFilter @AddAsDefaultColumn
     private String pluginState;
-	
+
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
 		outputMixin.write(unirest.get("/api/v1/plugins?orderBy=pluginType,pluginName,pluginVersion&limit=-1"));

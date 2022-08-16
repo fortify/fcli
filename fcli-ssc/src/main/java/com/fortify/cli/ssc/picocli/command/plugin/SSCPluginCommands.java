@@ -6,7 +6,11 @@ import picocli.CommandLine.Command;
         name = "plugin",
         aliases = {},
         subcommands = {
-        		SSCPluginDeleteCommand.class,
+                SSCPluginInstallCommand.class,
+        		SSCPluginUninstallCommand.class,
+                SSCPluginEnableCommand.class,
+                SSCPluginDisableCommand.class,
+                SSCPluginGetCommand.class,
                 SSCPluginListCommand.class
         }
 

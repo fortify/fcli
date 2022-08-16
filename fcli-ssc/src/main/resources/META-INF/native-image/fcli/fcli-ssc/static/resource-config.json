@@ -4,6 +4,8 @@
   ],
   "resources": {
     "includes": [
+      {"pattern":".*/ReportTemplateDefAnswerTemplate.yml$"},
+      {"pattern":".*/*.properties$"}
     ],
     "excludes": [
      ]
