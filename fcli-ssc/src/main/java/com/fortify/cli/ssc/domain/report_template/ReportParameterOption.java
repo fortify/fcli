@@ -22,12 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.domain.report.template;
+package com.fortify.cli.ssc.domain.report_template;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public enum ReportType {
-    ISSUE,
-    PROJECT
+public class ReportParameterOption {
+    public ReportParameterOption(){}
+    public boolean defaultValue;
+    public String description;
+    public String displayValue;
+    public int index;
+    public String reportValue;
 }

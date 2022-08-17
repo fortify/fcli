@@ -26,9 +26,8 @@ package com.fortify.cli.ssc.picocli.mixin.report.template;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.ssc.domain.report.template.ReportTemplateDefResponse;
+import com.fortify.cli.ssc.domain.report_template.ReportTemplateDefResponse;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.domain.report.template.ReportTemplateDef;
 import com.jayway.jsonpath.JsonPath;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpResponse;

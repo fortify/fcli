@@ -22,11 +22,20 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.domain.report.template;
+package com.fortify.cli.ssc.domain.report_template;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 
+import java.util.ArrayList;
+
 @ReflectiveAccess
-public enum ReportRenderingEngineType {
-    BIRT
+public class ReportParameter {
+    public ReportParameter(){}
+    public int index;
+    public String name;
+    public String description;
+    public String identifier;
+    public ReportParameterType type;
+    public ArrayList<ReportParameterOption> reportParameterOptions;
+    public int paramOrder;
 }
