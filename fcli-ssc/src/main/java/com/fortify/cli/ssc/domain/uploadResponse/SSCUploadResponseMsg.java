@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -22,31 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.domain.report_template;
+package com.fortify.cli.ssc.domain.uploadResponse;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public class ReportTemplateDefResponse {
-    public int count;
-    public Data data;
-    public int errorCode;
-    public String _href;
-    public String message;
-    public int responseCode;
-    public String stackTrace;
-    public int successCount;
-
-    public class Data extends ReportTemplateDef {
-        public Integer id;
-        public int count;
-        public boolean inUse;
-        public String _href;
-    }
-
-    public class _href{
-        public _href(){}
-        public String href;
-    }
-
+public class SSCUploadResponseMsg {
+    @JacksonXmlText(value = true)
+    public
+    String value;
 }

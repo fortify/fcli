@@ -25,13 +25,21 @@
 package com.fortify.cli.ssc.domain.report_template;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import java.util.ArrayList;
 
 @ReflectiveAccess
-public enum ReportParameterType {
-    BOOLEAN,
-    MULTI_PROJECT,
-    PROJECT_ATTRIBUTE,
-    SINGLE_PROJECT,
-    SINGLE_SELECT_DEFAULT,
-    STRING
+public class SSCReportTemplateDef {
+    public SSCReportTemplateDef(){}
+    public boolean crossApp;
+    public String description;
+    public String fileName;
+    public String guid;
+    public String name;
+    public int objectVersion;
+    public ArrayList<SSCReportParameter> parameters;
+    public int publishVersion;
+    public SSCReportRenderingEngineType renderingEngine;
+    public int templateDocId;
+    public SSCReportType type;
+    public String typeDefaultText;
 }

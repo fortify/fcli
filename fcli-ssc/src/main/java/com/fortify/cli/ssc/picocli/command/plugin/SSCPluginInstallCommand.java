@@ -31,8 +31,8 @@ import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.domain.plugin.parser.xml.Plugin;
-import com.fortify.cli.ssc.domain.uploadResponse.UploadResponse;
+import com.fortify.cli.ssc.domain.plugin.parser.xml.SSCPluginXmlPlugin;
+import com.fortify.cli.ssc.domain.uploadResponse.SSCUploadResponse;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
@@ -64,7 +64,7 @@ public class SSCPluginInstallCommand extends AbstractSSCUnirestRunnerCommand imp
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		UploadResponse uploadResponse = SSCUnirestFileTransferRunner.upload(
+		SSCUploadResponse uploadResponse = SSCUnirestFileTransferRunner.upload(
 				unirest,
 				SSCUrls.UPLOAD_PLUGIN,
 				pluginJarFile.getPath().toString()
@@ -94,9 +94,9 @@ public class SSCPluginInstallCommand extends AbstractSSCUnirestRunnerCommand imp
 	}
 
 	@SneakyThrows
-	private int checkSuccess(UploadResponse uploadResponse, UnirestInstance unirest){
+	private int checkSuccess(SSCUploadResponse uploadResponse, UnirestInstance unirest){
 		XmlMapper mapper = new XmlMapper();
-		Plugin pluginXmlObj = mapper.readValue(getPluginXml(pluginJarFile.toPath()), Plugin.class);
+		SSCPluginXmlPlugin pluginXmlObj = mapper.readValue(getPluginXml(pluginJarFile.toPath()), SSCPluginXmlPlugin.class);
 
 		if(!uploadResponse.msg.value.toLowerCase().contains("success"))
 			throw new RuntimeException(String.format("Plugin upload not successful:\n\tCODE: %s\n\tMSG: %s", uploadResponse.code.value, uploadResponse.msg.value.replace("\n"," ")));

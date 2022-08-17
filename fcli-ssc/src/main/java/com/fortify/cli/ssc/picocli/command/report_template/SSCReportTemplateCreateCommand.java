@@ -30,10 +30,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
-import com.fortify.cli.ssc.domain.report_template.ReportRenderingEngineType;
+import com.fortify.cli.ssc.domain.report_template.SSCReportRenderingEngineType;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.domain.report_template.ReportTemplateDef;
-import com.fortify.cli.ssc.domain.uploadResponse.UploadResponse;
+import com.fortify.cli.ssc.domain.report_template.SSCReportTemplateDef;
+import com.fortify.cli.ssc.domain.uploadResponse.SSCUploadResponse;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCUnirestFileTransferRunner;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
@@ -58,9 +58,9 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerComm
 	private int indexVal=0;
 	private int getIndexVal(){return indexVal++;}
 
-	private ReportTemplateDef processAnswerFile(ReportTemplateDef rtd, String fileName, int templateDocId){
+	private SSCReportTemplateDef processAnswerFile(SSCReportTemplateDef rtd, String fileName, int templateDocId){
 		rtd.templateDocId = templateDocId;
-		rtd.renderingEngine = ReportRenderingEngineType.BIRT;
+		rtd.renderingEngine = SSCReportRenderingEngineType.BIRT;
 		rtd.fileName =  fileName;
 		rtd.parameters.stream().forEach(e -> e.index = getIndexVal());
 		rtd.guid = java.util.UUID.randomUUID().toString();
@@ -69,7 +69,7 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerComm
 
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		UploadResponse uploadResponse = SSCUnirestFileTransferRunner.upload(
+		SSCUploadResponse uploadResponse = SSCUnirestFileTransferRunner.upload(
 				unirest,
 				SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
 				filePath
@@ -79,7 +79,7 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerComm
 		File rptFileObj = new File(filePath);
 
 		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-		ReportTemplateDef rtd = mapper.readValue(answerFileObj, ReportTemplateDef.class);
+		SSCReportTemplateDef rtd = mapper.readValue(answerFileObj, SSCReportTemplateDef.class);
 		rtd = processAnswerFile(rtd, rptFileObj.getName(), Integer.parseInt(uploadResponse.entityId));
 
 		HttpResponse creationResponse = unirest.post(SSCUrls.REPORT_DEFINITIONS)

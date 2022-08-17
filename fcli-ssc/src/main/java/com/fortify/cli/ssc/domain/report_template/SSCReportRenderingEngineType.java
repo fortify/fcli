@@ -27,11 +27,6 @@ package com.fortify.cli.ssc.domain.report_template;
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public class ReportParameterOption {
-    public ReportParameterOption(){}
-    public boolean defaultValue;
-    public String description;
-    public String displayValue;
-    public int index;
-    public String reportValue;
+public enum SSCReportRenderingEngineType {
+    BIRT
 }

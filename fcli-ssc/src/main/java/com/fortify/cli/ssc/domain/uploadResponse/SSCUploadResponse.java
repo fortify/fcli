@@ -24,12 +24,19 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.domain.uploadResponse;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public class Msg {
-    @JacksonXmlText(value = true)
-    public
-    String value;
+@JacksonXmlRootElement(localName = "UploadResponse")
+public class SSCUploadResponse {
+    @JacksonXmlProperty(isAttribute = true)
+    public String entityId;
+
+    @JacksonXmlProperty(localName = "code")
+    public SSCUploadResponseCode code;
+
+    @JacksonXmlProperty(localName = "msg")
+    public SSCUploadResponseMsg msg;
 }

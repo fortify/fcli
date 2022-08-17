@@ -25,7 +25,7 @@
 package com.fortify.cli.ssc.picocli.mixin.application.version;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.ssc.domain.version.ApplicationVersion;
+import com.fortify.cli.ssc.domain.version.SSCApplicationVersion;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.jayway.jsonpath.JsonPath;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -55,9 +55,9 @@ public class SSCApplicationVersionIdMixin {
 				"\"application:version\" as an argument or parameter.", defaultValue = ":")
 		private String delimiter;
 
-		public ApplicationVersion getApplicationAndVersion(UnirestInstance unirestInstance){
+		public SSCApplicationVersion getApplicationAndVersion(UnirestInstance unirestInstance){
 			String versionNameOrId = getVersionNameOrId();
-			ApplicationVersion av = new ApplicationVersion();
+			SSCApplicationVersion av = new SSCApplicationVersion();
 
 			if(versionNameOrId.contains(delimiter)){
 				String[] app = versionNameOrId.split(delimiter);
