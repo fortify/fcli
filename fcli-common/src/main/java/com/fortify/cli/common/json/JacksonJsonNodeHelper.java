@@ -28,6 +28,11 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -122,5 +127,39 @@ public class JacksonJsonNodeHelper {
 	
 	public static final Stream<JsonNode> stream(ArrayNode arrayNode) {
 		return StreamSupport.stream(iterable(arrayNode).spliterator(), false);
+	}
+	
+	public static final ArrayNodeCollector arrayNodeCollector() {
+		return new ArrayNodeCollector();
+	}
+	
+	private static final class ArrayNodeCollector implements Collector<JsonNode, ArrayNode, ArrayNode> {
+	    @Override
+	    public Supplier<ArrayNode> supplier() {
+	        return objectMapper::createArrayNode;
+	    }
+
+	    @Override
+	    public BiConsumer<ArrayNode, JsonNode> accumulator() {
+	        return ArrayNode::add;
+	    }
+
+	    @Override
+	    public BinaryOperator<ArrayNode> combiner() {
+	        return (x, y) -> {
+	            x.addAll(y);
+	            return x;
+	        };
+	    }
+
+	    @Override
+	    public Function<ArrayNode, ArrayNode> finisher() {
+	        return accumulator -> accumulator;
+	    }
+
+	    @Override
+	    public Set<Characteristics> characteristics() {
+	        return EnumSet.of(Characteristics.UNORDERED);
+	    }
 	}
 }

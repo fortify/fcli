@@ -24,10 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.command.appversion_attribute;
 
-import com.fortify.cli.common.picocli.mixin.output.AddAsDefaultColumn;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.common.picocli.mixin.output.OutputFilter;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.mixin.application.version.SSCApplicationVersionIdMixin;
@@ -36,43 +34,33 @@ import com.fortify.cli.ssc.util.SSCOutputHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCAppVersionAttributeListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
-	@CommandLine.Mixin private OutputMixin outputMixin;
-	
-	@Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
-    private String id;
-	
-	@Option(names={"--category"}) @OutputFilter @AddAsDefaultColumn
-    private String category;
-	
-	@Option(names={"--guid"}) @OutputFilter @AddAsDefaultColumn
-    private String guid;
-	
-	@Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
-    private String name;
-	
-	@Option(names={"--value"}) @OutputFilter @AddAsDefaultColumn
-    private String valueString;
-	
-	// TODO Add the ability to filter on a single value?
+@Command(name = "update")
+public class SSCAppVersionAttributeUpdateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+	@Mixin private SSCApplicationVersionIdMixin.For parentVersionMixin;
+	@Mixin private SSCAppVersionAttributeUpdateMixin attributeUpdateMixin;
+	@Mixin private OutputMixin outputMixin;
 	
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(new SSCAppVersionAttributeListHelper()
-				.execute(unirest, parentVersionHandler.getApplicationVersionId(unirest)));
+		SSCAttributeDefinitionHelper helper = new SSCAttributeDefinitionHelper(unirest);
+		String applicationVersionId = parentVersionMixin.getApplicationVersionId(unirest);
+		outputMixin.write(
+			new SSCAppVersionAttributeListHelper()
+				.attributeDefinitionHelper(helper)
+				.request("attrUpdate", attributeUpdateMixin.getAttributeUpdateRequest(unirest, helper, applicationVersionId))
+				.attrIdsToInclude(attributeUpdateMixin.getAttributeIds(helper))
+				.execute(unirest, applicationVersionId));
+		
 		return null;
 	}
-	
+
 	@Override
 	public OutputConfig getOutputOptionsWriterConfig() {
 		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns(outputMixin.getDefaultColumns());
+			.defaultColumns("id#category#guid#name#valueString");
 	}
 }

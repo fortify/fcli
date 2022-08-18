@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 import com.fortify.cli.common.picocli.option.OptionAnnotationHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.GetRequest;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;

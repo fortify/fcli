@@ -22,15 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.picocli.command.appversion_attribute;
+package com.fortify.cli.ssc.picocli.command.attribute_definition;
 
 import com.fortify.cli.common.picocli.mixin.output.AddAsDefaultColumn;
 import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
 import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.common.picocli.mixin.output.OutputFilter;
 import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.picocli.mixin.application.version.SSCApplicationVersionIdMixin;
+import com.fortify.cli.ssc.picocli.command.attribute_definition.domain.SSCAttributeDefinitionCategory;
+import com.fortify.cli.ssc.picocli.command.attribute_definition.domain.SSCAttributeDefinitionType;
+import com.fortify.cli.ssc.picocli.mixin.filter.SSCFilterMixin;
+import com.fortify.cli.ssc.picocli.mixin.filter.SSCFilterQParam;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -42,31 +44,33 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAppVersionAttributeListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
+public class SSCAttributeDefinitionListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@CommandLine.Mixin private OutputMixin outputMixin;
+	@CommandLine.Mixin private SSCFilterMixin sscFilterMixin;
 	
-	@Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
-    private String id;
+	@Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
+	private Integer id;
 	
-	@Option(names={"--category"}) @OutputFilter @AddAsDefaultColumn
-    private String category;
+	@Option(names={"--category"}) @SSCFilterQParam @AddAsDefaultColumn
+	private SSCAttributeDefinitionCategory category;
 	
-	@Option(names={"--guid"}) @OutputFilter @AddAsDefaultColumn
-    private String guid;
+	@Option(names={"--guid"}) @SSCFilterQParam @AddAsDefaultColumn
+	private String guid;
 	
-	@Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
-    private String name;
+	@Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
+	private String name;
 	
-	@Option(names={"--value"}) @OutputFilter @AddAsDefaultColumn
-    private String valueString;
+	@Option(names={"--type"}) @SSCFilterQParam @AddAsDefaultColumn
+	private SSCAttributeDefinitionType type;
 	
-	// TODO Add the ability to filter on a single value?
-	
+	@Option(names={"--required"}, arity = "1") @SSCFilterQParam @AddAsDefaultColumn
+	private Boolean required;
+
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(new SSCAppVersionAttributeListHelper()
-				.execute(unirest, parentVersionHandler.getApplicationVersionId(unirest)));
+		outputMixin.write(
+				sscFilterMixin.addFilterParams(unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name"))
+		);
 		return null;
 	}
 	
