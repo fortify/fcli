@@ -85,6 +85,9 @@ allprojects {
 		
 		// Encryption library
 		implementation('org.jasypt:jasypt:1.9.3:lite')
+
+		// For curses based UI
+		implementation("com.googlecode.lanterna:lanterna:3.1.1")
 	}
 }
 

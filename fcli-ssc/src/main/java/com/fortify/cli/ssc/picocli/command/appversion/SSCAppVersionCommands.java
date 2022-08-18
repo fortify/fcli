@@ -6,7 +6,8 @@ import picocli.CommandLine.Command;
         name = "appversion",
         subcommands = {
         	SSCAppVersionListCommand.class,
-            SSCAppVersionGetCommand.class
+            SSCAppVersionGetCommand.class,
+            SSCAppVersionCreateWizardCommand.class
         }
 )
 public class SSCAppVersionCommands {
