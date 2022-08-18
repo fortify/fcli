@@ -24,8 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.common.picocli.mixin.output;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -43,14 +46,15 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 @Accessors(fluent = true)
+// TODO Add null checks in case any input or record transformation returns null?
 public class OutputConfig {
 	@Getter @Setter private OutputFormat defaultFormat;
 	private final LinkedHashMap<Function<OutputFormat, Boolean>, String> defaultFields = new LinkedHashMap<>();
-	private final LinkedHashMap<Function<OutputFormat, Boolean>, UnaryOperator<JsonNode>> inputTransformers = new LinkedHashMap<>();
-	private final LinkedHashMap<Function<OutputFormat, Boolean>, UnaryOperator<JsonNode>> recordTransformers = new LinkedHashMap<>();
+	private final List<BiFunction<OutputFormat,JsonNode,JsonNode>> inputTransformers = new ArrayList<>();
+	private final List<BiFunction<OutputFormat,JsonNode,JsonNode>> recordTransformers = new ArrayList<>();
 	
-	public final OutputConfig inputTransformer(Function<OutputFormat, Boolean> applyIf, UnaryOperator<JsonNode> transformer) {
-		inputTransformers.put(applyIf, transformer);
+	public final OutputConfig inputTransformer(final Function<OutputFormat, Boolean> applyIf, final UnaryOperator<JsonNode> transformer) {
+		inputTransformers.add((fmt,o)->!applyIf.apply(fmt) ? o : transformer.apply(o));
 		return this;
 	}
 	
@@ -59,7 +63,7 @@ public class OutputConfig {
 	}
 	
 	public final OutputConfig recordTransformer(Function<OutputFormat, Boolean> applyIf, UnaryOperator<JsonNode> transformer) {
-		recordTransformers.put(applyIf, transformer);
+		recordTransformers.add((fmt,o)->!applyIf.apply(fmt) ? o : transformer.apply(o));
 		return this;
 	}
 	
@@ -121,11 +125,9 @@ public class OutputConfig {
 		return applyTransformations(recordTransformers, outputFormat, input);
 	}
 	
-	private final JsonNode applyTransformations(LinkedHashMap<Function<OutputFormat, Boolean>, UnaryOperator<JsonNode>> optionalTransformations, OutputFormat outputFormat, JsonNode input) {
-		return optionalTransformations.entrySet().stream()
-				.filter(e->e.getKey().apply(outputFormat))
-				.map(Map.Entry::getValue)
-				.reduce(input, (o, t) -> t.apply(o), (m1, m2) -> m2);
+	private final JsonNode applyTransformations(List<BiFunction<OutputFormat, JsonNode, JsonNode>> transformations, OutputFormat outputFormat, JsonNode input) {
+		return transformations.stream()
+				.reduce(input, (o, t) -> t.apply(outputFormat, o), (m1, m2) -> m2);
 	}
 	
 	public static final OutputConfig csv() {

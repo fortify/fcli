@@ -28,6 +28,8 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.ParseContext;
@@ -68,8 +71,24 @@ public class JacksonJsonNodeHelper {
         return objectMapper;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static final <R> R evaluateJsonPath(Object input, String path, Class<R> returnClass) {
-		return INSTANCE.parseContext.parse(input).read(path, returnClass);
+		DocumentContext context = INSTANCE.parseContext.parse(input);
+		if ( !ObjectNode.class.isAssignableFrom(returnClass) ) {
+			return context.read(path, returnClass);
+		} else {
+			JsonNode jsonNode = context.read(path, JsonNode.class);
+			if ( jsonNode instanceof ObjectNode ) {
+				return (R)jsonNode;
+			} else if ( jsonNode==null || !jsonNode.isArray() || jsonNode.size()>1 ) {
+				throw new IllegalStateException("Unable to get ObjectNode for JSONPath "+path+", json node: "+jsonNode);
+			} else if ( jsonNode.size()==0 ) {
+				// What to return here; null, empty ObjectNode, NullNode?
+				return null;
+			} else {
+				return (R)jsonNode.get(0);
+			}
+		}
 	}
 	
 	public static final ObjectNode getFirstObjectNode(JsonNode input) {
@@ -86,7 +105,7 @@ public class JacksonJsonNodeHelper {
 		throw new IllegalArgumentException("Input must be an ObjectNode or array of ObjectNodes");
 	}
 
-	public static JsonNode filterJsonNode (JsonNode node, Set<String> outputFields){
+	public static final JsonNode filterJsonNode (JsonNode node, Set<String> outputFields){
 		Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields();
 		while (nodeFields.hasNext()) {
 			Map.Entry<String, JsonNode> nodeField = nodeFields.next();
@@ -94,5 +113,14 @@ public class JacksonJsonNodeHelper {
 		}
 
 		return node;
+	}
+	
+	public static final Iterable<JsonNode> iterable(ArrayNode arrayNode) {
+		Iterator<JsonNode> iterator = arrayNode.iterator();
+		return () -> iterator;
+	}
+	
+	public static final Stream<JsonNode> stream(ArrayNode arrayNode) {
+		return StreamSupport.stream(iterable(arrayNode).spliterator(), false);
 	}
 }

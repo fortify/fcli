@@ -177,15 +177,18 @@ public class OutputMixin {
 
 		@SneakyThrows
 		private void writeRecord(JsonNode jsonNode) {
+			// TODO Add null checks in case any input or record transformation returns null?
 			jsonNode = config.applyRecordTransformations(outputFormat, jsonNode); // TODO Before or after other transformations?
 			jsonNode = applyOutputFilterTransformation(outputFormat, jsonNode);
 			jsonNode = applyJsonPathTransformation(outputFormat, jsonNode);
 			jsonNode = config.applyFieldsTransformations(outputFormat, optionsArgGroup.fields, new I18nDefaultFieldNameFormatterProvider(), jsonNode);
 			jsonNode = applyFlattenTransformation(outputFormat, jsonNode);
-			if(jsonNode.getNodeType() == JsonNodeType.ARRAY) {
-				if(jsonNode.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(jsonNode.get(0).toString()));
-			} else {
-				recordWriter.writeRecord((ObjectNode) jsonNode);
+			if ( jsonNode!=null ) {
+				if(jsonNode.getNodeType() == JsonNodeType.ARRAY) {
+					if(jsonNode.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(jsonNode.get(0).toString()));
+				} else {
+					recordWriter.writeRecord((ObjectNode) jsonNode);
+				}
 			}
 		}
 		
