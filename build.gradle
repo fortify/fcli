@@ -87,7 +87,8 @@ allprojects {
 		implementation('org.jasypt:jasypt:1.9.3:lite')
 
 		// For curses based UI
-		implementation("com.googlecode.lanterna:lanterna:3.1.1")
+		//implementation("com.googlecode.lanterna:lanterna:3.1.1")
+		implementation("com.gitlab.klamonte:jexer:1.6.0")
 	}
 }
 
