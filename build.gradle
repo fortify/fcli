@@ -87,8 +87,10 @@ allprojects {
 		implementation('org.jasypt:jasypt:1.9.3:lite')
 
 		// For curses based UI
-		//implementation("com.googlecode.lanterna:lanterna:3.1.1")
-		implementation("com.gitlab.klamonte:jexer:1.6.0")
+		implementation("org.fusesource.jansi:jansi:2.4.0")  // Probably needed to enable ANSI escapes in windows.
+		//implementation("com.googlecode.lanterna:lanterna:3.1.1") // No good. Doesn't work directly in CMD
+		//implementation("com.gitlab.klamonte:jexer:1.6.0")  // A little better, but still essentially the same issue as lanterna
+		implementation("org.jline:jline:3.21.0")  // Looks like it may work, but will require bunch of tweaking.
 	}
 }
 
