@@ -34,6 +34,7 @@ import com.fortify.cli.ssc.util.SSCOutputHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
+import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.jline.keymap.KeyMap;
 import org.jline.reader.LineReader;
@@ -56,13 +57,13 @@ public class SSCAppVersionCreateWizardCommand extends AbstractSSCUnirestRunnerCo
 	@CommandLine.Mixin private OutputMixin outputMixin;
 	@CommandLine.Mixin private SSCFilterMixin sscFilterMixin;
 
-	private void jline3Test() throws IOException {
+	private static void jline3Test() throws IOException {
 		System.setProperty("org.jline.terminal.dumb", "true");
 
-		// JANSI test
+		// JANSI to enable ANSI in Window's CMD
 		AnsiConsole.systemInstall();
 
-		// JLine3 test
+		// JLine3 stuff
 		Terminal terminal = TerminalBuilder.terminal();
 		terminal.enterRawMode();
 
@@ -71,65 +72,97 @@ public class SSCAppVersionCreateWizardCommand extends AbstractSSCUnirestRunnerCo
 				.build();
 
 		ArrayList<String> options = new ArrayList<>();
-		options.add("option-1");
-		options.add("option-2");
-		options.add("option-3");
-		int selected = menu(terminal, reader, options);
+		options.add("App1 : Ver1");
+		options.add("App1 : Ver2");
+		options.add("Pizza App : v1.3.23");
+
+		String msg = "Please select an Application Version:";
+		int selected = menu(terminal, reader, options, msg);
 
 		terminal.writer().println(String.format("\nYou selected: %s", options.get(selected)));
 		terminal.writer().flush();
-		// JLine3 test : END
 	}
 
-	private void drawMenu(Terminal terminal, List<String> options, int selectedOption){
+	private static void drawMenu(Terminal terminal, List<String> options, int selectedOption, String message){
+		String instructions = "(Use \"w\" and \"s\" to move up/down and the \"enter\" key to select.)\n";
 		int pos = 0;
-
-		terminal.writer().print(ansi().eraseScreen().reset());
+		terminal.writer().print(ansi().eraseScreen().cursor(0,0).reset());
 		terminal.writer().flush();
-		//System.out.println(ansi().eraseScreen().reset());
+
+		terminal.writer().println(ansi().fg(Ansi.Color.GREEN).a(instructions).fg(Ansi.Color.RED).a(message).reset());
 		for (String opt : options){
 			if(pos == selectedOption){
 				terminal.writer().println(ansi().bg(255).fg(0).a(opt).reset());
-				//System.out.println(ansi().bg(255).fg(0).a(opt).reset());
 			}else {
 				terminal.writer().println(ansi().bg(0).fg(255).a(opt).reset());
-				//System.out.println(ansi().bg(0).fg(255).a(opt).reset());
 			}
 			pos++;
 		}
 		terminal.writer().flush();
 	}
 
-	private int menu(Terminal terminal, LineReader reader, List<String> options){
-		int selection = 0;
-		// draw initial menu
-		drawMenu(terminal, options, selection);
+	// Use this to just update the two lines in the menu. This looks MUCH better than re-drawing the entire menu.
+	private static void updateMenu(Terminal terminal, List<String> options, int lineOffset, int currentSelection, int newSelection){
+		// probably at the very top or bottom of the menu
+		if(currentSelection == newSelection){
+			return;
+		}
 
-		// loop:
+		// unselect old option
+		terminal.writer().print(
+				ansi()
+						.cursor(lineOffset + currentSelection,0)
+						.eraseLine()
+						.bg(Ansi.Color.BLACK)
+						.fg(Ansi.Color.WHITE)
+						.a(options.get(currentSelection))
+						.cursorToColumn(0)
+						.reset()
+		);
+
+		// select new option
+		terminal.writer().print(
+				ansi()
+						.cursor(lineOffset + newSelection,0)
+						.eraseLine()
+						.bg(Ansi.Color.WHITE)
+						.fg(Ansi.Color.BLACK)
+						.a(options.get(newSelection))
+						.cursorToColumn(0)
+						.reset()
+		);
+		terminal.writer().flush();
+	}
+
+	private static int menu(Terminal terminal, LineReader reader, List<String> options, String message){
+		int selection = 0;
+		drawMenu(terminal, options, selection, message);
+		int startingOptionOffset = 3;
+
 		while (true) {
 			int c = ((LineReaderImpl) reader).readCharacter();
-			if(c == 119){ // up
+			if(c == 119){ // "w" key is "up"
 				if(selection == 0){
 					continue;
 				}
 				selection--;
-				drawMenu(terminal, options, selection);
+				updateMenu(terminal, options, startingOptionOffset, selection + 1, selection);
 				continue;
-			}else if(c == 115){ // down
+			}else if(c == 115){ // "s" key is "down"
 				if(selection == options.size()-1){
 					continue;
 				}
 				selection++;
-				drawMenu(terminal, options, selection);
+				updateMenu(terminal, options, startingOptionOffset, selection - 1, selection);
 				continue;
 			}
 			if (c == 10 || c == 13) return selection;
 		}
-			// read key
-			// if needed, redraw updated menu
-			// if needed return selection
 	}
 
+	public static void nap() throws InterruptedException {
+		Thread.sleep(500);
+	}
 	@SneakyThrows
 	protected Void runWithUnirest(UnirestInstance unirest) {
 		jline3Test();
