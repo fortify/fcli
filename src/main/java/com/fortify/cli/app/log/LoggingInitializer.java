@@ -22,13 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.app;
+package com.fortify.cli.app.log;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import com.fortify.cli.common.config.IFortifyCLIInitializer;
-import com.fortify.cli.common.picocli.mixin.log.LoggingMixin;
 import com.fortify.cli.common.picocli.util.DefaultValueProvider;
 
 import jakarta.inject.Singleton;
@@ -49,7 +48,7 @@ import picocli.CommandLine.Mixin;
  * @author Ruud Senden
  */
 @Singleton
-public class FortifyCLILogHelper implements IFortifyCLIInitializer {
+public class LoggingInitializer implements IFortifyCLIInitializer {
 	private static final PrintWriter DUMMY_WRITER = new PrintWriter(new StringWriter());
 	
 	/**

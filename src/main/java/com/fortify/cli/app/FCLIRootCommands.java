@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
-import com.fortify.cli.common.picocli.mixin.log.LoggingMixin;
+import com.fortify.cli.app.log.LoggingMixin;
 import com.fortify.cli.config.picocli.command.ConfigCommands;
 import com.fortify.cli.fod.picocli.command.FoDCommands;
 import com.fortify.cli.sc_dast.picocli.command.SCDastCommands;

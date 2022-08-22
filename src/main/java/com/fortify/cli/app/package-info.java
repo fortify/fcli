@@ -1,6 +1,5 @@
 /**
- * This package contains the main entrypoint for fcli, and functionality to configure 
- * logging before running the actual application.
+ * This package contains the main entrypoint for fcli.
  */
 package com.fortify.cli.app;
 

@@ -1,4 +1,4 @@
-package com.fortify.cli.app.exception;
+package com.fortify.cli.app.i18n;
 
 import com.fortify.cli.common.locale.LanguageHelper;
 import picocli.CommandLine;
