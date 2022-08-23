@@ -4,7 +4,7 @@ import com.fortify.cli.sc_dast.picocli.command.scan.SCDastScanCommands;
 import com.fortify.cli.sc_dast.picocli.command.scan_output.SCDastScanOutputCommands;
 import com.fortify.cli.sc_dast.picocli.command.scan_settings.SCDastScanSettingsCommands;
 import com.fortify.cli.sc_dast.picocli.command.sensor.SCDastSensorCommands;
-import com.fortify.cli.ssc.picocli.command.session.SSCSessionCommands;
+import com.fortify.cli.ssc.session.cli.SSCSessionCommands;
 
 import picocli.CommandLine.Command;
 

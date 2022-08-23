@@ -25,7 +25,7 @@
 package com.fortify.cli.sc_dast.picocli.command;
 
 import com.fortify.cli.common.picocli.annotation.FixSuperclassInjection;
-import com.fortify.cli.common.picocli.mixin.session.SessionConsumerMixin;
+import com.fortify.cli.common.session.cli.SessionNameMixin;
 import com.fortify.cli.sc_dast.rest.unirest.runner.SCDastUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -39,13 +39,13 @@ import picocli.CommandLine.Mixin;
 @FixSuperclassInjection
 public abstract class AbstractSCDastUnirestRunnerCommand implements Runnable {
 	@Getter @Inject private SCDastUnirestRunner unirestRunner;
-	@Getter @Mixin  private SessionConsumerMixin sessionConsumerMixin;
+	@Getter @Mixin  private SessionNameMixin sessionNameMixin;
 
 	@Override @SneakyThrows
 	public final void run() {
 		// TODO Do we want to do anything with the results, like formatting it based on output options?
 		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(sessionConsumerMixin.getSessionName(), this::runWithUnirest);
+		unirestRunner.runWithUnirest(sessionNameMixin.getSessionName(), this::runWithUnirest);
 	}
 	
 	protected abstract Void runWithUnirest(UnirestInstance unirest);

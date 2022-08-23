@@ -9,7 +9,7 @@ import com.fortify.cli.ssc.picocli.command.attribute_definition.SSCAttributeDefi
 import com.fortify.cli.ssc.picocli.command.event.SSCEventCommands;
 import com.fortify.cli.ssc.picocli.command.plugin.SSCPluginCommands;
 import com.fortify.cli.ssc.picocli.command.report_template.SSCReportTemplateCommands;
-import com.fortify.cli.ssc.picocli.command.session.SSCSessionCommands;
+import com.fortify.cli.ssc.session.cli.SSCSessionCommands;
 
 import picocli.CommandLine.Command;
 

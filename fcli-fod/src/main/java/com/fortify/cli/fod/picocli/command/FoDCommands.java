@@ -4,7 +4,7 @@ import com.fortify.cli.fod.picocli.command.application.FoDApplicationCommands;
 import com.fortify.cli.fod.picocli.command.application.release.FoDApplicationReleaseCommands;
 import com.fortify.cli.fod.picocli.command.dast_scan.FoDDastScanCommands;
 import com.fortify.cli.fod.picocli.command.sast_scan.FoDSastScanCommands;
-import com.fortify.cli.fod.picocli.command.session.FoDSessionCommands;
+import com.fortify.cli.fod.session.cli.FoDSessionCommands;
 
 import picocli.CommandLine.Command;
 

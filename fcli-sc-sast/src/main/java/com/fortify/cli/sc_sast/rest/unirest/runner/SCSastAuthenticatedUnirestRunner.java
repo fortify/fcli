@@ -25,8 +25,8 @@
 package com.fortify.cli.sc_sast.rest.unirest.runner;
 
 import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
-import com.fortify.cli.common.rest.unirest.runner.AbstractSessionUnirestRunner;
-import com.fortify.cli.sc_sast.session.SCSastSessionData;
+import com.fortify.cli.common.session.unirest.AbstractSessionUnirestRunner;
+import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
 import com.fortify.cli.sc_sast.util.SCSastConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

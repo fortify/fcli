@@ -3,7 +3,7 @@ package com.fortify.cli.sc_sast.picocli.command;
 import com.fortify.cli.sc_sast.picocli.command.pkg.SCSastPackageCommands;
 import com.fortify.cli.sc_sast.picocli.command.scan.SCSastScanCommands;
 import com.fortify.cli.sc_sast.picocli.command.sensor.SCSastSensorCommands;
-import com.fortify.cli.sc_sast.picocli.command.session.SCSastSessionCommands;
+import com.fortify.cli.sc_sast.session.cli.SCSastSessionCommands;
 
 import picocli.CommandLine.Command;
 
