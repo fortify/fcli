@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.rest.unirest.runner;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fortify.cli.ssc.domain.uploadResponse.UploadResponse;
+import com.fortify.cli.ssc.domain.uploadResponse.SSCUploadResponse;
 import com.jayway.jsonpath.JsonPath;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpResponse;
@@ -71,7 +71,7 @@ public class SSCUnirestFileTransferRunner {
 
 
     @SneakyThrows
-    public static UploadResponse upload(UnirestInstance unirestInstance, String url, String filePath){
+    public static SSCUploadResponse upload(UnirestInstance unirestInstance, String url, String filePath){
         String uploadToken = getFileTransferToken(unirestInstance, FileTransferTokenType.UPLOAD);
         File f = new File(filePath);
         //InputStream file = new FileInputStream(f); // Supposedly this should be used for larger file uploads, but SSC errors when using this.
@@ -85,7 +85,7 @@ public class SSCUnirestFileTransferRunner {
                 })
                 .asString();
         XmlMapper responseXml = new XmlMapper(new JacksonXmlModule());
-        UploadResponse uploadResponseObj = responseXml.readValue(r.getBody().toString(), UploadResponse.class);
+        SSCUploadResponse uploadResponseObj = responseXml.readValue(r.getBody().toString(), SSCUploadResponse.class);
         System.out.println("\nUPLOAD DONE.\n");
         return uploadResponseObj;
     }

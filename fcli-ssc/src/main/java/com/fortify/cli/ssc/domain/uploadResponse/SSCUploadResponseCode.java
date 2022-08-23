@@ -28,7 +28,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public class Code {
+public class SSCUploadResponseCode {
     @JacksonXmlText(value = true)
     public int value;
 }
