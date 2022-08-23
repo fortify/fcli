@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -22,12 +22,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.domain.report.template;
+package com.fortify.cli.ssc.domain.uploadResponse;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public enum ReportType {
-    ISSUE,
-    PROJECT
+@JacksonXmlRootElement(localName = "UploadResponse")
+public class SSCUploadResponse {
+    @JacksonXmlProperty(isAttribute = true)
+    public String entityId;
+
+    @JacksonXmlProperty(localName = "code")
+    public SSCUploadResponseCode code;
+
+    @JacksonXmlProperty(localName = "msg")
+    public SSCUploadResponseMsg msg;
 }

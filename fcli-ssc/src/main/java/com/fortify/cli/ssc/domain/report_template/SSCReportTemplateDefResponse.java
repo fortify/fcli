@@ -22,16 +22,31 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.domain.report.template;
+package com.fortify.cli.ssc.domain.report_template;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public enum ReportParameterType {
-    BOOLEAN,
-    MULTI_PROJECT,
-    PROJECT_ATTRIBUTE,
-    SINGLE_PROJECT,
-    SINGLE_SELECT_DEFAULT,
-    STRING
+public class SSCReportTemplateDefResponse {
+    public int count;
+    public Data data;
+    public int errorCode;
+    public String _href;
+    public String message;
+    public int responseCode;
+    public String stackTrace;
+    public int successCount;
+
+    public class Data extends SSCReportTemplateDef {
+        public Integer id;
+        public int count;
+        public boolean inUse;
+        public String _href;
+    }
+
+    public class _href{
+        public _href(){}
+        public String href;
+    }
+
 }

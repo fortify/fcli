@@ -8,11 +8,11 @@ import java.util.List;
 
 @ReflectiveAccess
 @JacksonXmlRootElement(localName = "plugin")
-public class Plugin {
+public class SSCPluginXmlPlugin {
     @JacksonXmlElementWrapper(localName = "plugin-info")
-    public PluginInfo pluginInfo;
+    public SSCPluginXmlPluginInfo pluginInfo;
     @JacksonXmlElementWrapper(localName = "issue-parser")
-    public IssueParser issue_parser;
+    public SSCPluginXmlIssueParser issue_parser;
     public String xmlns;
     public String xsi;
     public String type;
@@ -22,10 +22,10 @@ public class Plugin {
     public String text;
 
     public static class Images {
-        public List<Image> image;
+        public List<SSCPluginXmlImage> image;
     }
 
     public static class Localization {
-        public List<Language> language;
+        public List<SSCPluginXmlLanguage> language;
     }
 }

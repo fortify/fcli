@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -22,24 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.domain.report.template;
+package com.fortify.cli.ssc.domain.report_template;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import java.util.ArrayList;
 
 @ReflectiveAccess
-public class ReportTemplateDef {
-    public ReportTemplateDef(){}
+public class SSCReportTemplateDef {
+    public SSCReportTemplateDef(){}
     public boolean crossApp;
     public String description;
     public String fileName;
     public String guid;
     public String name;
     public int objectVersion;
-    public ArrayList<ReportParameter> parameters;
+    public ArrayList<SSCReportParameter> parameters;
     public int publishVersion;
-    public ReportRenderingEngineType renderingEngine;
+    public SSCReportRenderingEngineType renderingEngine;
     public int templateDocId;
-    public ReportType type;
+    public SSCReportType type;
     public String typeDefaultText;
 }
