@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<title>fcli-fod-sast(1)</title>
+<title>fcli-ssc-attribute-definition-list(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -438,10 +438,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="manpage">
 <div id="header">
-<h1>fcli-fod-sast(1) Manual Page</h1>
+<h1>fcli-ssc-attribute-definition-list(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-sast - Commands for interacting with SAST scans on FoD.</p>
+<p>fcli-ssc-attribute-definition-list - Command-line interface for working with various Fortify products</p>
 </div>
 </div>
 <div id="content">
@@ -449,7 +449,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod sast</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [COMMAND]</p>
+<p><strong>fcli ssc attribute-definition list</strong> [<strong>-hV</strong>] [<strong>--category</strong>=<em>&lt;category&gt;</em>]
+                                   [<strong>--guid</strong>=<em>&lt;guid&gt;</em>] [<strong>--id</strong>=<em>&lt;id&gt;</em>]
+                                   [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--name</strong>=<em>&lt;name&gt;</em>]
+                                   [<strong>--required</strong>=<em>&lt;required&gt;</em>] [<strong>--type</strong>=<em>&lt;type&gt;</em>]
+                                   [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
+                                   [[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>] [<strong>--fields</strong>=<em>&lt;fields&gt;</em>]
+                                   [<strong>--flatten</strong>] [<strong>--[no-]headers</strong>]
+                                   [<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>] [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -457,7 +465,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Commands for interacting with SAST scans on FoD.</p>
+<p>Command-line interface for working with various Fortify products</p>
 </div>
 </div>
 </div>
@@ -466,6 +474,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--id</strong>=<em>&lt;id&gt;</em></dt>
+<dt class="hdlist1"><strong>--category</strong>=<em>&lt;category&gt;</em></dt>
+<dt class="hdlist1"><strong>--guid</strong>=<em>&lt;guid&gt;</em></dt>
+<dt class="hdlist1"><strong>--name</strong>=<em>&lt;name&gt;</em></dt>
+<dt class="hdlist1"><strong>--type</strong>=<em>&lt;type&gt;</em></dt>
+<dt class="hdlist1"><strong>--required</strong>=<em>&lt;required&gt;</em></dt>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
 <p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
@@ -487,29 +501,46 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_commands">Commands</h2>
+<h2 id="_output_options">Output options:</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-fod-sast-create.html"><strong>create</strong></a></dt>
+<dt class="hdlist1"><strong>--fmt, --format</strong>=<em>&lt;outputFormat&gt;</em></dt>
 <dd>
-<p>Create a new SAST scan on FoD.</p>
+<p>Output format. Possible values: json, yaml, table, tree, xml, csv.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-fod-sast-get.html"><strong>get</strong></a></dt>
+<dt class="hdlist1"><strong>--fields</strong>=<em>&lt;fields&gt;</em></dt>
 <dd>
-<p>Get a specific SAST scan from FoD.</p>
+<p>Define the fields to be included in the output, together with optional header names</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-fod-sast-list.html"><strong>list</strong></a></dt>
+<dt class="hdlist1"><strong>--flatten</strong></dt>
 <dd>
-<p>List SAST scans on FoD.</p>
+<p>For non-column-based outputs, whether to flatten the structure</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-fod-sast-update.html"><strong>update</strong></a></dt>
+<dt class="hdlist1"><strong>--[no-]headers</strong></dt>
 <dd>
-<p>Update an existing SAST scan on FoD.</p>
+<p>For column-based outputs, whether to output headers</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-fod-sast-delete.html"><strong>delete</strong></a></dt>
+<dt class="hdlist1"><strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em></dt>
 <dd>
-<p>Delete an SAST scan from FoD.</p>
+<p>Transforms output using JSONPath</p>
+</dd>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Output file</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_optional_session_name">Optional session name:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>A name/alias for your Fortify SSC session.</p>
 </dd>
 </dl>
 </div>
