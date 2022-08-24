@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.session.manager;
 
-import com.fortify.cli.common.rest.IConnectionConfig;
-import com.fortify.cli.common.rest.IConnectionConfigProvider;
+import com.fortify.cli.common.rest.runner.IConnectionConfig;
+import com.fortify.cli.common.rest.runner.IConnectionConfigProvider;
 
 import lombok.Data;
 

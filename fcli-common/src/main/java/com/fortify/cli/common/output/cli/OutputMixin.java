@@ -14,13 +14,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.cli.option.OptionAnnotationHelper;
+import com.fortify.cli.common.output.cli.filter.AddAsDefaultColumn;
+import com.fortify.cli.common.output.cli.filter.OptionAnnotationHelper;
+import com.fortify.cli.common.output.cli.filter.OutputFilter;
 import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.output.transform.jsonpath.JsonPathTransformer;
 import com.fortify.cli.common.output.writer.IRecordWriter;
 import com.fortify.cli.common.output.writer.OutputFormat;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
-import com.fortify.cli.common.rest.IfFailureHandler;
+import com.fortify.cli.common.rest.runner.IfFailureHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
@@ -271,6 +273,10 @@ public class OutputMixin {
 			// TODO Close printwriter and/or underlying streams except for System.out
 			//      once we have implemented output to file.
 		}
+	}
+	
+	public static interface IDefaultFieldNameFormatterProvider {
+		public Function<String, String> getDefaultFieldNameFormatter(OutputFormat outputFormat);
 	}
 	
 	private final class I18nDefaultFieldNameFormatterProvider implements IDefaultFieldNameFormatterProvider {

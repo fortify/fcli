@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli;
 
-import com.fortify.cli.common.rest.IConnectionConfig;
+import com.fortify.cli.common.rest.runner.IConnectionConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;

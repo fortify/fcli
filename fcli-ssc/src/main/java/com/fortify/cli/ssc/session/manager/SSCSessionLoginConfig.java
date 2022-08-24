@@ -30,8 +30,8 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.codec.binary.Base64;
 
-import com.fortify.cli.common.rest.IConnectionConfig;
-import com.fortify.cli.common.rest.IConnectionConfigProvider;
+import com.fortify.cli.common.rest.runner.IConnectionConfig;
+import com.fortify.cli.common.rest.runner.IConnectionConfigProvider;
 
 import io.micronaut.core.util.StringUtils;
 import lombok.Data;

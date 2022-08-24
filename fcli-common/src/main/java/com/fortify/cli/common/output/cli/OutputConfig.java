@@ -33,6 +33,7 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.OutputMixin.IDefaultFieldNameFormatterProvider;
 import com.fortify.cli.common.output.transform.IJsonNodeTransformer;
 import com.fortify.cli.common.output.transform.fields.PredefinedFieldsTransformerFactory;
 import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;

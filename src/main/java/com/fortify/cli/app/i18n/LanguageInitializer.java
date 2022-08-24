@@ -3,17 +3,17 @@ package com.fortify.cli.app.i18n;
 import java.util.Locale;
 
 import com.fortify.cli.app.IFortifyCLIInitializer;
-import com.fortify.cli.common.config.LanguageConfig;
+import com.fortify.cli.config.language.manager.LanguageConfigManager;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
 public class LanguageInitializer implements IFortifyCLIInitializer {
-    private final LanguageConfig config;
+    private final LanguageConfigManager config;
 
     @Inject
-    public LanguageInitializer(LanguageConfig config) {
+    public LanguageInitializer(LanguageConfigManager config) {
         this.config = config;
     }
 

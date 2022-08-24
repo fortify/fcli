@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.fod.rest.unirest.runner;
 
-import com.fortify.cli.common.rest.AbstractConfigurableUnirestRunner;
-import com.fortify.cli.common.rest.ThrowUnexpectedHttpResponseExceptionInterceptor;
+import com.fortify.cli.common.rest.runner.AbstractConfigurableUnirestRunner;
+import com.fortify.cli.common.rest.runner.ThrowUnexpectedHttpResponseExceptionInterceptor;
 
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;

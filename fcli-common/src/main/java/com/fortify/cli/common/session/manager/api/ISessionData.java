@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.manager.api;
 
-import com.fortify.cli.common.rest.IConnectionConfigProvider;
+import com.fortify.cli.common.rest.runner.IConnectionConfigProvider;
 
 /** 
  * Marker interface for auth session data

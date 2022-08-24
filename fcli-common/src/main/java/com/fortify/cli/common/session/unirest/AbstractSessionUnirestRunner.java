@@ -27,7 +27,7 @@ package com.fortify.cli.common.session.unirest;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.rest.ConnectionConfigUnirestRunner;
+import com.fortify.cli.common.rest.runner.ConnectionConfigUnirestRunner;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
 

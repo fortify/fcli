@@ -1,6 +1,5 @@
 package com.fortify.cli.ssc.picocli.command;
 
-import com.fortify.cli.ssc.picocli.command.api.SSCApiCommand;
 import com.fortify.cli.ssc.picocli.command.app.SSCAppCommands;
 import com.fortify.cli.ssc.picocli.command.appversion.SSCAppVersionCommands;
 import com.fortify.cli.ssc.picocli.command.appversion_artifact.SSCAppVersionArtifactCommands;
@@ -9,6 +8,7 @@ import com.fortify.cli.ssc.picocli.command.attribute_definition.SSCAttributeDefi
 import com.fortify.cli.ssc.picocli.command.event.SSCEventCommands;
 import com.fortify.cli.ssc.picocli.command.plugin.SSCPluginCommands;
 import com.fortify.cli.ssc.picocli.command.report_template.SSCReportTemplateCommands;
+import com.fortify.cli.ssc.picocli.rest.cli.SSCRestCommand;
 import com.fortify.cli.ssc.session.cli.SSCSessionCommands;
 
 import picocli.CommandLine.Command;
@@ -18,7 +18,7 @@ import picocli.CommandLine.Command;
         resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages",
         subcommands = {
                 SSCSessionCommands.class,
-                SSCApiCommand.class,
+                SSCRestCommand.class,
                 SSCAppCommands.class,
                 SSCAppVersionCommands.class,
                 SSCAppVersionArtifactCommands.class,

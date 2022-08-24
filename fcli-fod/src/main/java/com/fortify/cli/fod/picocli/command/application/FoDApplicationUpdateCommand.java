@@ -1,6 +1,6 @@
 package com.fortify.cli.fod.picocli.command.application;
 
-import com.fortify.cli.common.cli.DummyCommand;
+import com.fortify.cli.common.dummy.cli.DummyCommand;
 
 import picocli.CommandLine;
 

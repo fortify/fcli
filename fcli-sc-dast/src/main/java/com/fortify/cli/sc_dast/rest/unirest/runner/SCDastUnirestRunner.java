@@ -28,9 +28,9 @@ import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.rest.ThrowUnexpectedHttpResponseExceptionInterceptor;
+import com.fortify.cli.common.rest.runner.BasicUnirestRunner;
+import com.fortify.cli.common.rest.runner.ThrowUnexpectedHttpResponseExceptionInterceptor;
 import com.fortify.cli.common.util.JsonHelper;
-import com.fortify.cli.common.rest.BasicUnirestRunner;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
