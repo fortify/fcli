@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli;
 
-import com.fortify.cli.common.cli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.output.cli.OutputMixin;
 import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
@@ -37,7 +36,6 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@FixSuperclassInjection
 public abstract class AbstractSessionLogoutCommand implements Runnable, ISessionTypeProvider {
 	@Inject private SessionDataManager sessionDataManager;
 	@Getter	@Inject private SessionLogoutManager sessionLogoutManager;

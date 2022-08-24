@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli;
 
-import com.fortify.cli.common.cli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.output.cli.OutputMixin;
 import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
 import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
@@ -34,7 +33,6 @@ import jakarta.inject.Inject;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@FixSuperclassInjection
 public abstract class AbstractSessionListCommand implements Runnable, ISessionTypeProvider {
 	@Inject private SessionSummaryManager sessionSummaryManager;
 	@Mixin private OutputMixin outputMixin;

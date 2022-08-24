@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.picocli.command;
 
-import com.fortify.cli.common.cli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.session.cli.SessionNameMixin;
 import com.fortify.cli.sc_sast.rest.unirest.runner.SCSastAuthenticatedUnirestRunner;
 
@@ -36,7 +35,6 @@ import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@FixSuperclassInjection
 public abstract class AbstractSCSastUnirestRunnerCommand implements Runnable {
 	@Getter @Inject private SCSastAuthenticatedUnirestRunner unirestRunner;
 	@Getter @Mixin  private SessionNameMixin sessionNameMixin;

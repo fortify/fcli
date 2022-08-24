@@ -9,8 +9,6 @@ import picocli.CommandLine;
         name = "set"
 )
 public class LanguageSetCommand extends AbstractLanguageCommand {
-    private String settingName = "defaultUserLanguage";
-
     @CommandLine.Mixin
     private OutputMixin outputMixin;
 

@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli;
 
-import com.fortify.cli.common.cli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.output.cli.OutputMixin;
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
 import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
@@ -39,7 +38,6 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@FixSuperclassInjection
 public abstract class AbstractSessionLoginCommand<C> implements Runnable {
 	@Inject private SessionDataManager sessionDataManager;
 	@Inject private SessionSummaryManager sessionSummaryManager;

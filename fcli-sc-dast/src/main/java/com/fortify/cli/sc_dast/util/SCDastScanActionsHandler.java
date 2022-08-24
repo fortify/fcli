@@ -16,9 +16,7 @@ import com.fortify.cli.common.util.JsonHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpResponse;
-import kong.unirest.RequestBodyEntity;
 import kong.unirest.UnirestInstance;
-import kong.unirest.UnirestParsingException;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 

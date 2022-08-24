@@ -25,7 +25,6 @@
 package com.fortify.cli.ssc.picocli.command.api;
 
 import com.fortify.cli.common.api.cli.APICommandMixin;
-import com.fortify.cli.common.cli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.OutputConfig;
 import com.fortify.cli.common.output.cli.OutputMixin;
@@ -39,7 +38,6 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = "api")
-@FixSuperclassInjection
 public final class SSCApiCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
 	@Mixin private OutputMixin outputMixin;
 	@Mixin private APICommandMixin apiCommandMixin;
