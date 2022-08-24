@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_sast.picocli.command.pkg;
+package com.fortify.cli.sc_sast.pkg.cli;
 
 import com.fortify.cli.common.dummy.cli.DummyCommand;
 

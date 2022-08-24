@@ -1,6 +1,6 @@
-package com.fortify.cli.sc_sast.picocli.command.scan;
+package com.fortify.cli.sc_sast.scan.cli;
 
-import com.fortify.cli.sc_sast.picocli.command.AbstractSCSastUnirestRunnerCommand;
+import com.fortify.cli.sc_sast.rest.cli.AbstractSCSastUnirestRunnerCommand;
 
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;

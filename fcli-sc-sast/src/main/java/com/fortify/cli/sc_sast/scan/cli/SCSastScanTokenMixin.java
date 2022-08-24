@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_sast.picocli.mixin.scan;
+package com.fortify.cli.sc_sast.scan.cli;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;

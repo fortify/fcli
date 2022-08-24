@@ -1,10 +1,9 @@
-package com.fortify.cli.sc_sast.picocli.command.scan;
+package com.fortify.cli.sc_sast.scan.cli;
 
 import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.OutputConfig;
 import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.sc_sast.picocli.command.AbstractSCSastUnirestRunnerCommand;
-import com.fortify.cli.sc_sast.picocli.mixin.scan.SCSastScanTokenMixin;
+import com.fortify.cli.sc_sast.rest.cli.AbstractSCSastUnirestRunnerCommand;
 
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.ArgGroup;

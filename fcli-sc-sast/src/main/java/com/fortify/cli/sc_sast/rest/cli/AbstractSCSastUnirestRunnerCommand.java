@@ -22,10 +22,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.picocli.command;
+package com.fortify.cli.sc_sast.rest.cli;
 
 import com.fortify.cli.common.session.cli.SessionNameMixin;
-import com.fortify.cli.sc_sast.rest.unirest.runner.SCSastAuthenticatedUnirestRunner;
+import com.fortify.cli.sc_sast.rest.runner.SCSastAuthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;

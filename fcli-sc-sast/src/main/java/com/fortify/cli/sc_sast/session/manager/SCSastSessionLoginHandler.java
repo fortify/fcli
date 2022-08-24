@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.runner.ThrowUnexpectedHttpResponseExceptionInterceptor;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.AbstractSessionHandlerAction;
-import com.fortify.cli.sc_sast.rest.unirest.runner.SCSastAuthenticatedUnirestRunner;
+import com.fortify.cli.sc_sast.rest.runner.SCSastAuthenticatedUnirestRunner;
 import com.fortify.cli.sc_sast.util.SCSastConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

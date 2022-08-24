@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_sast.picocli.command.scan;
+package com.fortify.cli.sc_sast.scan.cli;
 
 import picocli.CommandLine.Command;
 

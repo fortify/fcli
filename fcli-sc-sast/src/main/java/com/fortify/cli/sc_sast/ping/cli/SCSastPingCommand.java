@@ -1,6 +1,7 @@
-package com.fortify.cli.sc_sast.picocli.command;
+package com.fortify.cli.sc_sast.ping.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.sc_sast.rest.cli.AbstractSCSastUnirestRunnerCommand;
 
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;

@@ -1,8 +1,10 @@
-package com.fortify.cli.sc_sast.picocli.command;
+package com.fortify.cli.sc_sast._main.cli;
 
-import com.fortify.cli.sc_sast.picocli.command.pkg.SCSastPackageCommands;
-import com.fortify.cli.sc_sast.picocli.command.scan.SCSastScanCommands;
-import com.fortify.cli.sc_sast.picocli.command.sensor.SCSastSensorCommands;
+import com.fortify.cli.sc_sast.ping.cli.SCSastPingCommand;
+import com.fortify.cli.sc_sast.pkg.cli.SCSastPackageCommands;
+import com.fortify.cli.sc_sast.rest.cli.SCSastRestCommand;
+import com.fortify.cli.sc_sast.scan.cli.SCSastScanCommands;
+import com.fortify.cli.sc_sast.sensor.cli.SCSastSensorCommands;
 import com.fortify.cli.sc_sast.session.cli.SCSastSessionCommands;
 
 import picocli.CommandLine.Command;
@@ -14,6 +16,7 @@ import picocli.CommandLine.Command;
         		SCSastSessionCommands.class,
         		SCSastPingCommand.class,
                 SCSastPackageCommands.class,
+                SCSastRestCommand.class,
                 SCSastScanCommands.class,
                 SCSastSensorCommands.class
         }

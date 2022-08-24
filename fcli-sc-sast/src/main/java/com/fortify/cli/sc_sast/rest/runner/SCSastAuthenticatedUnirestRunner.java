@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.rest.unirest.runner;
+package com.fortify.cli.sc_sast.rest.runner;
 
 import com.fortify.cli.common.rest.runner.ThrowUnexpectedHttpResponseExceptionInterceptor;
 import com.fortify.cli.common.session.unirest.AbstractSessionUnirestRunner;
