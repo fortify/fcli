@@ -28,9 +28,9 @@ import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JacksonJsonNodeHelper;
-import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
-import com.fortify.cli.common.rest.unirest.runner.UnirestRunner;
+import com.fortify.cli.common.rest.ThrowUnexpectedHttpResponseExceptionInterceptor;
+import com.fortify.cli.common.util.JsonHelper;
+import com.fortify.cli.common.rest.BasicUnirestRunner;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -41,14 +41,14 @@ import lombok.Getter;
 
 @Singleton @ReflectiveAccess
 public class SCDastUnirestRunner {
-	@Getter @Inject private UnirestRunner unirestRunner;
+	@Getter @Inject private BasicUnirestRunner basicUnirestRunner;
 	@Getter @Inject private SSCAuthenticatedUnirestRunner sscUnirestRunner;
 	
 	public <R> R runWithUnirest(String sscAuthSessionName, Function<UnirestInstance, R> runner) {
 		return sscUnirestRunner.runWithUnirest(sscAuthSessionName, sscUnirest -> {
 			String scDastApiUrl = getSCDastApiUrlFromSSC(sscUnirest);
 			String authHeader = sscUnirest.config().getDefaultHeaders().get("Authorization").stream().filter(h->h.startsWith("FortifyToken")).findFirst().orElseThrow();
-			return unirestRunner.runWithUnirest(scDastUnirest->{
+			return basicUnirestRunner.runWithUnirest(scDastUnirest->{
 				scDastUnirest.config()
 						.defaultBaseUrl(scDastApiUrl)
 						.setDefaultHeader("Authorization", authHeader)
@@ -71,18 +71,18 @@ public class SCDastUnirestRunner {
 				.asObject(ObjectNode.class)
 				.getBody(); 
 		
-		return JacksonJsonNodeHelper.evaluateJsonPath(configData, "$.data.properties", ArrayNode.class);
+		return JsonHelper.evaluateJsonPath(configData, "$.data.properties", ArrayNode.class);
 	}
 	
 	private void checkSCDastIsEnabled(ArrayNode properties) {
-		boolean scDastEnabled = JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.enabled')].value", Boolean.class);
+		boolean scDastEnabled = JsonHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.enabled')].value", Boolean.class);
 		if (!scDastEnabled) {
 			throw new IllegalStateException("ScanCentral DAST must be enabled in SSC");
 		}
 	}
 	
 	private String getSCDastUrlFromProperties(ArrayNode properties) {
-		String scDastUrl = JacksonJsonNodeHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.server.url')].value", String.class);
+		String scDastUrl = JsonHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.server.url')].value", String.class);
 		if ( scDastUrl.isEmpty() ) {
 			throw new IllegalStateException("SSC returns an empty ScanCentral DAST URL");
 		}

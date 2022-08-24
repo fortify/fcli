@@ -1,7 +1,7 @@
 package com.fortify.cli.sc_sast.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
+import com.fortify.cli.common.output.cli.OutputConfig;
 
 public class SCSastOutputHelper {
 	public static final OutputConfig defaultTableOutputConfig() {

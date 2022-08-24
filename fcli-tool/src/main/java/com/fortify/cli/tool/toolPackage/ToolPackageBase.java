@@ -1,6 +1,6 @@
 package com.fortify.cli.tool.toolPackage;
 
-import com.fortify.cli.common.http.HttpDownloadHelper;
+import com.fortify.cli.common.util.HttpDownloadHelper;
 import com.fortify.cli.tool.helper.ToolPackagesYamlHelper;
 import com.fortify.cli.tool.model.ToolPackage;
 import com.fortify.cli.tool.model.ToolPackageVersion;

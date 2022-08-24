@@ -24,9 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.picocli.command.scan;
 
-import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
-import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.OutputConfig;
+import com.fortify.cli.common.output.cli.OutputMixin;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.util.SCDastOutputHelper;
 import com.fortify.cli.sc_dast.util.SCDastScanStatusTypes;

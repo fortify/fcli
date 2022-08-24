@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.rest.unirest.runner;
 
-import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
+import com.fortify.cli.common.rest.ThrowUnexpectedHttpResponseExceptionInterceptor;
 import com.fortify.cli.common.session.unirest.AbstractSessionUnirestRunner;
 import com.fortify.cli.ssc.session.manager.SSCSessionData;
 import com.fortify.cli.ssc.util.SSCConstants;

@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli;
 
-import com.fortify.cli.common.picocli.annotation.FixSuperclassInjection;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.cli.annotation.FixSuperclassInjection;
+import com.fortify.cli.common.output.cli.OutputMixin;
 import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
 import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
 

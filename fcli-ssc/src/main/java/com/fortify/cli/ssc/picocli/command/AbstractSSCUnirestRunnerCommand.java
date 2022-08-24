@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.command;
 
-import com.fortify.cli.common.picocli.annotation.FixSuperclassInjection;
+import com.fortify.cli.common.cli.annotation.FixSuperclassInjection;
 import com.fortify.cli.common.session.cli.SessionNameMixin;
 import com.fortify.cli.ssc.rest.unirest.runner.SSCAuthenticatedUnirestRunner;
 

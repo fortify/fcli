@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
-import com.fortify.cli.common.json.JacksonJsonNodeHelper;
+import com.fortify.cli.common.util.JsonHelper;
 
 import kong.unirest.Body;
 import kong.unirest.HttpMethod;
@@ -90,7 +90,7 @@ public class SSCBulkRequestBuilder {
 		public ObjectNode body(String requestName) {
 			Integer index = nameToIndexMap.get(requestName);
 			String path = String.format("$[%s].responses[0].body", index);
-			return JacksonJsonNodeHelper.evaluateJsonPath(bulkResponse, path, ObjectNode.class);
+			return JsonHelper.evaluateJsonPath(bulkResponse, path, ObjectNode.class);
 		}
 		
 		public JsonNode data(String requestName) {

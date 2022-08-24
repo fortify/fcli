@@ -31,7 +31,7 @@ import com.fortify.cli.common.session.cli.AbstractSessionLoginCommand;
 import com.fortify.cli.common.session.cli.LoginConnectionOptions;
 import com.fortify.cli.common.session.cli.LoginUserCredentialOptions;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
-import com.fortify.cli.common.time.DateTimeHelper;
+import com.fortify.cli.common.util.DateTimeHelper;
 import com.fortify.cli.ssc.session.manager.ISSCUserCredentialsConfig;
 import com.fortify.cli.ssc.session.manager.SSCSessionLoginConfig;
 import com.fortify.cli.ssc.session.manager.SSCSessionLoginHandler;

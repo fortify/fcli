@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.manager;
 
-import com.fortify.cli.common.rest.data.IConnectionConfig;
-import com.fortify.cli.common.rest.data.IConnectionConfigProvider;
+import com.fortify.cli.common.rest.IConnectionConfig;
+import com.fortify.cli.common.rest.IConnectionConfigProvider;
 
 import io.micronaut.core.util.StringUtils;
 import lombok.Data;

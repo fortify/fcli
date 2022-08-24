@@ -24,10 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.command.event;
 
-import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
-import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.OutputConfig;
+import com.fortify.cli.common.output.cli.OutputMixin;
+import com.fortify.cli.common.output.writer.OutputFormat;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

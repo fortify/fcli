@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JacksonJsonNodeHelper;
+import com.fortify.cli.common.util.JsonHelper;
 import com.fortify.cli.ssc.rest.helper.SSCBulkRequestBuilder;
 import com.fortify.cli.ssc.rest.helper.SSCBulkRequestBuilder.SSCBulkResponse;
 
@@ -129,11 +129,11 @@ public class SSCAppVersionAttributeListHelper {
 	
 	private JsonNode combineBodies(JsonNode attributeDefinitionsBody, JsonNode attributesBody) {
 		return new ObjectMapper().createObjectNode().set("data", 
-			JacksonJsonNodeHelper.stream((ArrayNode)attributeDefinitionsBody.get("data"))
+			JsonHelper.stream((ArrayNode)attributeDefinitionsBody.get("data"))
 			.filter(this::isIncluded)
 			.map(attrDef->combine((ObjectNode)attrDef, getAttributeNode(attributesBody, attrDef)))
 			.map(this::addValueString)
-			.collect(JacksonJsonNodeHelper.arrayNodeCollector()));
+			.collect(JsonHelper.arrayNodeCollector()));
 	}
 	
 	private boolean isIncluded(JsonNode attrDef) {
@@ -142,7 +142,7 @@ public class SSCAppVersionAttributeListHelper {
 	
 	private ObjectNode getAttributeNode(JsonNode attributeBody, JsonNode attrDef) {
 		String guid = attrDef.get("guid").asText();
-		return JacksonJsonNodeHelper
+		return JsonHelper
 				.evaluateJsonPath(attributeBody, String.format("$.data[?(@.guid == '%s')]", guid), ObjectNode.class);
 	}
 	
@@ -168,7 +168,7 @@ public class SSCAppVersionAttributeListHelper {
 		if ( attr.has("value") && !attr.get("value").isNull() ) {
 			valueString = attr.get("value").asText();
 		} else if ( attr.has("values") && !attr.get("values").isEmpty() ) {
-			valueString = concatStringArray(JacksonJsonNodeHelper.evaluateJsonPath(attr, "$.values[*].name", ArrayNode.class));
+			valueString = concatStringArray(JsonHelper.evaluateJsonPath(attr, "$.values[*].name", ArrayNode.class));
 		}
 		attr.put("valueString", valueString);
 		return attr;
@@ -181,6 +181,6 @@ public class SSCAppVersionAttributeListHelper {
 	 * @return
 	 */
 	private String concatStringArray(ArrayNode array) {
-		return JacksonJsonNodeHelper.stream(array).map(JsonNode::asText).collect(Collectors.joining(", "));
+		return JsonHelper.stream(array).map(JsonNode::asText).collect(Collectors.joining(", "));
 	}
 }

@@ -6,8 +6,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import com.fortify.cli.common.picocli.option.DefaultOptionTargetNameProvider;
-import com.fortify.cli.common.picocli.option.OptionTargetNameProvider;
+import com.fortify.cli.common.cli.option.DefaultOptionTargetNameProvider;
+import com.fortify.cli.common.cli.option.OptionTargetNameProvider;
 
 /**
  * This annotation allows for filtering the output, based on input property names.

@@ -24,11 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.picocli.command.api;
 
-import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.picocli.mixin.api.APICommandMixin;
-import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
-import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.api.cli.APICommandMixin;
+import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.OutputConfig;
+import com.fortify.cli.common.output.cli.OutputMixin;
+import com.fortify.cli.common.output.writer.OutputFormat;
 import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

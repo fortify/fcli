@@ -1,8 +1,8 @@
 package com.fortify.cli.fod.picocli.command.application.release;
 
-import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
-import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.OutputConfig;
+import com.fortify.cli.common.output.cli.OutputMixin;
 import com.fortify.cli.fod.picocli.command.AbstractFoDUnirestRunnerCommand;
 import com.fortify.cli.fod.util.FoDOutputHelper;
 

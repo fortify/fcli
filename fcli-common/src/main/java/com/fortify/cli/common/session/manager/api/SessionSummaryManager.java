@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.output.cli.OutputMixin;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

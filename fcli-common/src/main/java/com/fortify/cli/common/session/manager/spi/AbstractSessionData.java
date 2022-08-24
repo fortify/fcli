@@ -28,9 +28,9 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fortify.cli.common.rest.data.BasicConnectionConfig;
-import com.fortify.cli.common.rest.data.IConnectionConfig;
-import com.fortify.cli.common.rest.data.IConnectionConfigProvider;
+import com.fortify.cli.common.rest.BasicConnectionConfig;
+import com.fortify.cli.common.rest.IConnectionConfig;
+import com.fortify.cli.common.rest.IConnectionConfigProvider;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.api.SessionSummary;
 

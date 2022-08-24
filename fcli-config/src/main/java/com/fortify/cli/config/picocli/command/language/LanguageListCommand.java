@@ -1,7 +1,5 @@
 package com.fortify.cli.config.picocli.command.language;
 
-import com.fortify.cli.common.locale.AbstractLanguageCommand;
-import com.fortify.cli.common.locale.LanguageHelper;
 import jakarta.annotation.PostConstruct;
 import picocli.CommandLine;
 
@@ -17,8 +15,8 @@ public class LanguageListCommand extends AbstractLanguageCommand {
     @Override
     public void run() {
         System.out.println("Below is a list of supported languages with fcli:");
-        for(String lang : languageHelper.supportedLanguages){
-            System.out.println(languageHelper.getLanguageForHelp(lang));
+        for(String lang : languageConfig.supportedLanguages){
+            System.out.println(languageConfig.getLanguageForHelp(lang));
         }
     }
 

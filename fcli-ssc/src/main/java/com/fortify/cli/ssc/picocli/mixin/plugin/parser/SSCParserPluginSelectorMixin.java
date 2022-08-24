@@ -24,10 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.mixin.plugin.parser;
 
-import com.fortify.cli.common.picocli.mixin.output.AddAsDefaultColumn;
-import com.fortify.cli.common.picocli.mixin.output.OutputFilter;
 import picocli.CommandLine;
 import javax.validation.ValidationException;
+
+import com.fortify.cli.common.output.cli.AddAsDefaultColumn;
+import com.fortify.cli.common.output.cli.OutputFilter;
 
 public class SSCParserPluginSelectorMixin {
     @CommandLine.ArgGroup(heading = "Identifier\n")

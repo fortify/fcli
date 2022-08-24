@@ -25,7 +25,7 @@
 package com.fortify.cli.sc_sast.session.manager;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.rest.unirest.exception.ThrowUnexpectedHttpResponseExceptionInterceptor;
+import com.fortify.cli.common.rest.ThrowUnexpectedHttpResponseExceptionInterceptor;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.AbstractSessionHandlerAction;
 import com.fortify.cli.sc_sast.rest.unirest.runner.SCSastAuthenticatedUnirestRunner;

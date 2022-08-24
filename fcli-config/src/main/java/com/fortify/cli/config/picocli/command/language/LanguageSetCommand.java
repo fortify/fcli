@@ -1,7 +1,7 @@
 package com.fortify.cli.config.picocli.command.language;
 
-import com.fortify.cli.common.locale.AbstractLanguageCommand;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.output.cli.OutputMixin;
+
 import jakarta.annotation.PostConstruct;
 import picocli.CommandLine;
 
@@ -21,6 +21,6 @@ public class LanguageSetCommand extends AbstractLanguageCommand {
     @PostConstruct
     @Override
     public void run() {
-        languageHelper.setLanguageConfig(language);
+        languageConfig.setLanguage(language);
     }
 }

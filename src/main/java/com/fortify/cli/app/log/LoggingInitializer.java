@@ -27,8 +27,8 @@ package com.fortify.cli.app.log;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import com.fortify.cli.common.config.IFortifyCLIInitializer;
-import com.fortify.cli.common.picocli.util.DefaultValueProvider;
+import com.fortify.cli.app.FortifyCLIDefaultValueProvider;
+import com.fortify.cli.app.IFortifyCLIInitializer;
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine;
@@ -61,7 +61,7 @@ public class LoggingInitializer implements IFortifyCLIInitializer {
 				.setErr(DUMMY_WRITER)
 				.setUnmatchedArgumentsAllowed(true)
 				.setUnmatchedOptionsArePositionalParams(true)
-				.setDefaultValueProvider(new DefaultValueProvider())
+				.setDefaultValueProvider(new FortifyCLIDefaultValueProvider())
 				.setExpandAtFiles(true);
 		commandLine.execute(args);
 	}

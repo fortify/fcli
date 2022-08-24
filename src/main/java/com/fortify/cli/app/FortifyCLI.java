@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
-import com.fortify.cli.common.locale.LanguageHelper;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 import org.apache.commons.logging.impl.SimpleLog;
@@ -33,7 +32,7 @@ import org.graalvm.nativeimage.hosted.RuntimeReflection;
 import org.jasypt.normalization.Normalizer;
 
 import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
-import com.fortify.cli.common.config.IFortifyCLIInitializer;
+import com.fortify.cli.common.config.LanguageConfig;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
@@ -75,7 +74,7 @@ public class FortifyCLI {
 				return commandLine.setParameterExceptionHandler(
 						new I18nParameterExceptionHandler(
 								commandLine.getParameterExceptionHandler(),
-								applicationContext.getBean(LanguageHelper.class)
+								applicationContext.getBean(LanguageConfig.class)
 						)
 				).execute(args);
 			}

@@ -24,11 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.picocli.command.appversion_attribute;
 
-import com.fortify.cli.common.picocli.mixin.output.AddAsDefaultColumn;
-import com.fortify.cli.common.picocli.mixin.output.IOutputConfigSupplier;
-import com.fortify.cli.common.picocli.mixin.output.OutputConfig;
-import com.fortify.cli.common.picocli.mixin.output.OutputFilter;
-import com.fortify.cli.common.picocli.mixin.output.OutputMixin;
+import com.fortify.cli.common.output.cli.AddAsDefaultColumn;
+import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.OutputConfig;
+import com.fortify.cli.common.output.cli.OutputFilter;
+import com.fortify.cli.common.output.cli.OutputMixin;
 import com.fortify.cli.ssc.picocli.command.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.picocli.mixin.application.version.SSCApplicationVersionIdMixin;
 import com.fortify.cli.ssc.util.SSCOutputHelper;

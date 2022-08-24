@@ -1,6 +1,5 @@
 package com.fortify.cli.config.picocli.command.language;
 
-import com.fortify.cli.common.locale.AbstractLanguageCommand;
 import jakarta.annotation.PostConstruct;
 import picocli.CommandLine;
 
@@ -13,7 +12,7 @@ public class LanguageGetCommand extends AbstractLanguageCommand {
     @PostConstruct
     @Override
     public void run() {
-        System.out.println(languageHelper.getLanguageForHelp(languageHelper.getLanguageConfig()));
+        System.out.println(languageConfig.getLanguageForHelp(languageConfig.getLanguage()));
     }
 
 }
