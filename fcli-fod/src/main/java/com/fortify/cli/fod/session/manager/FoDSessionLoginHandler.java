@@ -30,7 +30,7 @@ import java.util.Map;
 import com.fortify.cli.common.rest.runner.IConnectionConfig;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.AbstractSessionHandlerAction;
-import com.fortify.cli.fod.rest.unirest.runner.FoDUnauthenticatedUnirestRunner;
+import com.fortify.cli.fod.rest.runner.FoDUnauthenticatedUnirestRunner;
 import com.fortify.cli.fod.util.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

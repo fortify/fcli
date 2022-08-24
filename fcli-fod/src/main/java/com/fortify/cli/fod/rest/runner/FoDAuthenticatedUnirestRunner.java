@@ -22,43 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.session.manager;
+package com.fortify.cli.fod.rest.runner;
 
-import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
-import com.fortify.cli.fod.rest.runner.FoDAuthenticatedUnirestRunner;
+import com.fortify.cli.common.rest.runner.ThrowUnexpectedHttpResponseExceptionInterceptor;
+import com.fortify.cli.common.session.unirest.AbstractSessionUnirestRunner;
+import com.fortify.cli.fod.session.manager.FoDSessionData;
 import com.fortify.cli.fod.util.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public class FoDSessionLogoutHandler implements ISessionLogoutHandler {
-	@Getter @Inject private SessionDataManager sessionDataManager;
-	@Getter @Inject private FoDAuthenticatedUnirestRunner unirestRunner;
-
+public class FoDAuthenticatedUnirestRunner extends AbstractSessionUnirestRunner<FoDSessionData> {
 	@Override
-	public final void logout(String authSessionName) {
-		FoDSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, FoDSessionData.class);
-		if ( data!=null && data.hasActiveCachedTokenResponse() ) {
-			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
+	protected void configure(String authSessionName, FoDSessionData authSessionData, UnirestInstance unirestInstance) {
+		String token = authSessionData.getActiveBearerToken();
+		if ( token==null ) {
+			throw new IllegalStateException("FoD token not available or has expired, please login again");
 		}
+		setBearerHeader(unirestInstance, token);
+		ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
 	}
 	
-	private final Void logout(UnirestInstance unirestInstance, FoDSessionData authSessionData) {
-		try {
-			// TODO Invalidate token if possible in FoD
-		} catch ( RuntimeException e ) {
-			System.out.println("Error deserializing token:" + e.getMessage());
-		}
-		return null;
+	private final void setBearerHeader(UnirestInstance unirestInstance, String token) {
+		final String authHeader = String.format("Bearer %s", token);
+		unirestInstance.config().setDefaultHeader("Authorization", authHeader);
 	}
 
 	@Override
-	public String getSessionType() {
+	public final String getSessionType() {
 		return FoDConstants.SESSION_TYPE;
+	}
+
+	@Override
+	protected Class<FoDSessionData> getSessionDataClass() {
+		return FoDSessionData.class;
 	}
 }

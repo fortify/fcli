@@ -29,7 +29,6 @@ import com.fortify.cli.common.output.cli.OutputConfig;
 import com.fortify.cli.common.output.cli.OutputMixin;
 import com.fortify.cli.common.output.writer.OutputFormat;
 import com.fortify.cli.common.rest.cli.RestMixin;
-import com.fortify.cli.fod.picocli.command.AbstractFoDUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;

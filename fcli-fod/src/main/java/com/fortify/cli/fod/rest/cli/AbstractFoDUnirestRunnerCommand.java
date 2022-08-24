@@ -22,43 +22,29 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.session.manager;
+package com.fortify.cli.fod.rest.cli;
 
-import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
+import com.fortify.cli.common.session.cli.SessionNameMixin;
 import com.fortify.cli.fod.rest.runner.FoDAuthenticatedUnirestRunner;
-import com.fortify.cli.fod.util.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.SneakyThrows;
+import picocli.CommandLine.Mixin;
 
-@Singleton @ReflectiveAccess
-public class FoDSessionLogoutHandler implements ISessionLogoutHandler {
-	@Getter @Inject private SessionDataManager sessionDataManager;
+@ReflectiveAccess
+public abstract class AbstractFoDUnirestRunnerCommand implements Runnable {
 	@Getter @Inject private FoDAuthenticatedUnirestRunner unirestRunner;
+	@Getter @Mixin  private SessionNameMixin sessionNameMixin;
 
-	@Override
-	public final void logout(String authSessionName) {
-		FoDSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, FoDSessionData.class);
-		if ( data!=null && data.hasActiveCachedTokenResponse() ) {
-			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
-		}
+	@Override @SneakyThrows
+	public final void run() {
+		// TODO Do we want to do anything with the results, like formatting it based on output options?
+		//      Or do we let the actual implementation handle this?
+		unirestRunner.runWithUnirest(sessionNameMixin.getSessionName(), this::runWithUnirest);
 	}
 	
-	private final Void logout(UnirestInstance unirestInstance, FoDSessionData authSessionData) {
-		try {
-			// TODO Invalidate token if possible in FoD
-		} catch ( RuntimeException e ) {
-			System.out.println("Error deserializing token:" + e.getMessage());
-		}
-		return null;
-	}
-
-	@Override
-	public String getSessionType() {
-		return FoDConstants.SESSION_TYPE;
-	}
+	protected abstract Void runWithUnirest(UnirestInstance unirest);
 }
