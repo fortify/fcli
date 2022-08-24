@@ -22,11 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.scan_output;
+package com.fortify.cli.sc_dast.scan.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.rest.cli.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.util.SCDastScanActionsHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -42,29 +42,29 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "publish")
-public final class SCDastScanOutputPublishResultsCommand extends AbstractSCDastUnirestRunnerCommand {
+@Command(name = "delete")
+public final class SCDastScanDeleteCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
-    @ArgGroup(exclusive = false, headingKey = "arggroup.publish-options.heading", order = 1)
-    @Getter private SCDastScanPublishOptions publishScanOptions;
+    @ArgGroup(exclusive = false, headingKey = "arggroup.delete-scan-options.heading", order = 1)
+    @Getter private SCDastScanDeleteOptions deleteScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public static class SCDastScanPublishOptions {
+    public static class SCDastScanDeleteOptions {
         @Option(names = {"-i","--id", "--scan-id"}, required = true)
         @Getter private int scanId;
     }
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-        if(publishScanOptions == null){
+        if(deleteScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
                     "Error: No parameter found. Provide the required scan-settings identifier.");
         }
         SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-        JsonNode response = actionsHandler.publishScan(publishScanOptions.getScanId());
+        JsonNode response = actionsHandler.deleteScan(deleteScanOptions.getScanId());
 
         if(response != null) outputMixin.write(response);
 

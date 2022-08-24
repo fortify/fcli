@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_dast.picocli.command.sensor;
+package com.fortify.cli.sc_dast.sensor.cli;
 
 import com.fortify.cli.common.dummy.cli.DummyCommand;
 

@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.scan_output;
+package com.fortify.cli.sc_dast.scan_output.cli;
 
 import java.io.File;
 
@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.OutputConfig;
 import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.rest.cli.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.util.SCDastOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

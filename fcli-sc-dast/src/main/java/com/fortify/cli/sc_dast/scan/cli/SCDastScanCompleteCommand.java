@@ -22,11 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.scan;
+package com.fortify.cli.sc_dast.scan.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.rest.cli.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.util.SCDastScanActionsHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -42,31 +42,39 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "delete")
-public final class SCDastScanDeleteCommand extends AbstractSCDastUnirestRunnerCommand {
+@Command(name = "complete")
+public final class SCDastScanCompleteCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
-    @ArgGroup(exclusive = false, headingKey = "arggroup.delete-scan-options.heading", order = 1)
-    @Getter private SCDastScanDeleteOptions deleteScanOptions;
+    @ArgGroup(exclusive = false, headingKey = "arggroup.complete-scan-options.heading", order = 1)
+    @Getter private SCDastScanCompleteOptions completeScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public static class SCDastScanDeleteOptions {
+    public static class SCDastScanCompleteOptions {
         @Option(names = {"-i","--id", "--scan-id"}, required = true)
         @Getter private int scanId;
+
+        @Option(names = {"-w", "--wait", "--wait-completed"}, defaultValue = "false")
+        @Getter private boolean waitCompleted;
+
+        @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+        @Getter private int waitInterval;
     }
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-        if(deleteScanOptions == null){
+        if(completeScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
-                    "Error: No parameter found. Provide the required scan-settings identifier.");
+                    "Error: No parameter found. Provide the required scan id.");
         }
         SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-        JsonNode response = actionsHandler.deleteScan(deleteScanOptions.getScanId());
+        JsonNode response = actionsHandler.completeScan(completeScanOptions.getScanId());
 
         if(response != null) outputMixin.write(response);
+
+        if(completeScanOptions.isWaitCompleted()){ actionsHandler.waitCompleted(completeScanOptions.getScanId(), completeScanOptions.getWaitInterval()); }
 
         return null;
     }

@@ -22,11 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.scan;
+package com.fortify.cli.sc_dast.scan.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.rest.cli.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.util.SCDastScanActionsHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

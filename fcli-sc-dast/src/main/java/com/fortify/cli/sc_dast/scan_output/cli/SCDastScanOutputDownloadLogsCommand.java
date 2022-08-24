@@ -22,67 +22,63 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.scan;
+package com.fortify.cli.sc_dast.scan_output.cli;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.io.File;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.OutputConfig;
 import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.rest.cli.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.util.SCDastOutputHelper;
-import com.fortify.cli.sc_dast.util.SCDastScanActionsHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "status")
-public class SCDastScanStatusCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-		@Spec CommandSpec spec;
-
-		@ArgGroup(exclusive = false, headingKey = "arggroup.status-scan-options.heading", order = 1)
-        @Getter private SCDastGetScanStatusOptions scanStatusOptions;
+@Command(name = "download-logs")
+public class SCDastScanOutputDownloadLogsCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
+		@ArgGroup(exclusive = false, headingKey = "arggroup.download-logs-options.heading", order = 1)
+        @Getter private SCDastTransferScanLogsOptions scanLogsOptions;
 
         @Mixin
-        @Getter private OutputMixin outputMixin;
+        @Getter private OutputMixin OutputMixin;
 		
 		@ReflectiveAccess
-		public static class SCDastGetScanStatusOptions {
+		public static class SCDastTransferScanLogsOptions {
 		    @Option(names = {"-i","--id", "--scan-id"}, required = true)
 		    @Getter private int scanId;
+
+		    @Option(names = {"-f", "--file", "--output-file"}, required = true)
+		    @Getter private String file;
 		}
 		
 		@SneakyThrows
-        protected Void runWithUnirest(UnirestInstance unirest) {
-			if(scanStatusOptions == null){
-				throw new CommandLine.ParameterException(spec.commandLine(),
-						"Error: No parameter found. Provide the required scan id.");
-			}
-            SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
+        protected Void runWithUnirest(UnirestInstance unirest){
+            File outputFile = unirest.get("/api/v2/scans/{scanId}/download-logs")
+	    		.routeParam("scanId", String.valueOf(scanLogsOptions.getScanId()))
+	            .accept("application/json")
+	            .header("Content-Type", "application/json")
+	            .asFile(scanLogsOptions.getFile())
+	            .getBody(); // TODO Do we need to call getBody()? Do we need to do anything with the return value? 
 
-			JsonNode response = actionsHandler.getScanStatus(scanStatusOptions.getScanId());
+		    ObjectNode output = new ObjectMapper().createObjectNode();
+		    output.put("path", outputFile.getPath());
 
-			if( response.has("statusCode") ) {
-				outputMixin.overrideOutputFields("statusCode#statusText#message");
-			}
-
-            outputMixin.write(response);
+            OutputMixin.write(output);
             return null;
         }
-		
+
 		@Override
 		public OutputConfig getOutputOptionsWriterConfig() {
-			return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns(
-					"scanStatusType:Scan status type" +
-					"#scanStatusTypeString:Scan status");
+			return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns("path"); // TODO Move to constants?
 		}
 }

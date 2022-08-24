@@ -22,13 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.picocli.command.scan_output;
+package com.fortify.cli.sc_dast.scan.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.OutputConfig;
 import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.sc_dast.picocli.command.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.rest.cli.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.util.SCDastOutputHelper;
 import com.fortify.cli.sc_dast.util.SCDastScanActionsHandler;
 
@@ -45,62 +45,44 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "get-results", description = "Get scan results from ScanCentral DAST")
-public class SCDastScanOutputGetResultsCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
+@Command(name = "status")
+public class SCDastScanStatusCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
 		@Spec CommandSpec spec;
-		@ArgGroup(exclusive = false, headingKey = "arggroup.download-results-options.heading", order = 1)
-		private SCDastScanResultsOptions scanResultsOptions;
 
-		@Mixin private OutputMixin outputMixin;
+		@ArgGroup(exclusive = false, headingKey = "arggroup.status-scan-options.heading", order = 1)
+        @Getter private SCDastGetScanStatusOptions scanStatusOptions;
 
+        @Mixin
+        @Getter private OutputMixin outputMixin;
+		
 		@ReflectiveAccess
-		public static class SCDastScanResultsOptions {
-			@Option(names = { "-i", "--id", "--scan-id" }, required = true)
-			@Getter private int scanId;
-
-			@Option(names = { "-w", "--wait", "--wait-completion" }, defaultValue = "false")
-			@Getter private boolean waitCompletion;
-
-			@Option(names = { "--interval", "--wait-interval" }, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-			@Getter private int waitInterval;
-
-			@Option(names = { "--detailed" }, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-			@Getter private boolean detailed;
+		public static class SCDastGetScanStatusOptions {
+		    @Option(names = {"-i","--id", "--scan-id"}, required = true)
+		    @Getter private int scanId;
 		}
-
+		
 		@SneakyThrows
-		protected Void runWithUnirest(UnirestInstance unirest) {
-			SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-			if (scanResultsOptions == null) {
+        protected Void runWithUnirest(UnirestInstance unirest) {
+			if(scanStatusOptions == null){
 				throw new CommandLine.ParameterException(spec.commandLine(),
 						"Error: No parameter found. Provide the required scan id.");
 			}
-			if ( scanResultsOptions.isWaitCompletion()) {
-				if (scanResultsOptions.isDetailed()) {
-					actionsHandler.waitCompletionWithDetails(scanResultsOptions.getScanId(),
-							scanResultsOptions.getWaitInterval());
-				} else {
-					actionsHandler.waitCompletion(scanResultsOptions.getScanId(), scanResultsOptions.getWaitInterval());
-				}
-			}
+            SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
 
-			JsonNode response = actionsHandler.getScanResults(scanResultsOptions.getScanId());
+			JsonNode response = actionsHandler.getScanStatus(scanStatusOptions.getScanId());
 
 			if( response.has("statusCode") ) {
 				outputMixin.overrideOutputFields("statusCode#statusText#message");
 			}
 
-			outputMixin.write(response);
-
-			return null;
-		}
-
+            outputMixin.write(response);
+            return null;
+        }
+		
 		@Override
 		public OutputConfig getOutputOptionsWriterConfig() {
 			return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns(
-					"criticalCount:Critical#" +
-	                "highCount:High#" +
-	                "mediumCount:Medium#" +
-	                "lowCount:Low");
+					"scanStatusType:Scan status type" +
+					"#scanStatusTypeString:Scan status");
 		}
 }
