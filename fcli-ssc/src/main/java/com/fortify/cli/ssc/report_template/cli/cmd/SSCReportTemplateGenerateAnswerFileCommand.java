@@ -55,7 +55,7 @@ public class SSCReportTemplateGenerateAnswerFileCommand implements Runnable {
 	@SneakyThrows
 	@Override
 	public void run() {
-		InputStream internalCopy = this.getClass().getClassLoader().getResourceAsStream("com/fortify/cli/ssc/report-template/" + templateFileName);
+		InputStream internalCopy = this.getClass().getClassLoader().getResourceAsStream("com/fortify/cli/ssc/report_template/" + templateFileName);
 		Path outputFile = new File(filePath).toPath();
 		if(Files.notExists(outputFile) || overwrite.booleanValue()){
 			Files.copy(internalCopy, outputFile , REPLACE_EXISTING);
