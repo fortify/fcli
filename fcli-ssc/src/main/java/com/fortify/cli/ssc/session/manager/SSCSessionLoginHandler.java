@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.session.manager;
 import com.fortify.cli.common.rest.runner.IConnectionConfig;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.AbstractSessionHandlerAction;
-import com.fortify.cli.ssc.rest.unirest.runner.SSCUnauthenticatedUnirestRunner;
+import com.fortify.cli.ssc.rest.runner.SSCUnauthenticatedUnirestRunner;
 import com.fortify.cli.ssc.util.SSCConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

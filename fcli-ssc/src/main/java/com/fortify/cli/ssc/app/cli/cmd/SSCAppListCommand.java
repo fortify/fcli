@@ -22,44 +22,43 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.session.manager;
+package com.fortify.cli.ssc.app.cli.cmd;
 
-import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
-import com.fortify.cli.ssc.rest.runner.SSCAuthenticatedUnirestRunner;
-import com.fortify.cli.ssc.util.SSCConstants;
-
+import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.OutputConfig;
+import com.fortify.cli.common.output.cli.OutputMixin;
+import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.rest.filter.cli.mixin.SSCFilterMixin;
+import com.fortify.cli.ssc.rest.filter.cli.mixin.SSCFilterQParam;
+import com.fortify.cli.ssc.util.SSCOutputHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
+import lombok.SneakyThrows;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
-@Singleton @ReflectiveAccess
-public class SSCSessionLogoutHandler implements ISessionLogoutHandler {
-	@Getter @Inject private SessionDataManager sessionDataManager;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-
-	@Override
-	public final void logout(String authSessionName) {
-		SSCSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, SSCSessionData.class);
-		if ( data!=null && data.hasActiveCachedTokenResponse() ) {
-			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
-		}
-	}
+@ReflectiveAccess
+@Command(name = "list")
+public class SSCAppListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+	@CommandLine.Mixin private OutputMixin outputMixin;
+	@CommandLine.Mixin private SSCFilterMixin sscFilterMixin;
 	
-	private final Void logout(UnirestInstance unirestInstance, SSCSessionData authSessionData) {
-		try {
-			// TODO Current SSC versions don't allow current token to be invalidated
-			// TODO Invalidate token if username/password are available in login  session data 
-		} catch ( RuntimeException e ) {
-			System.out.println("Error deserializing token:" + e.getMessage());
-		}
+	@Option(names={"--name"}) @SSCFilterQParam
+	private String name;
+	
+	@SneakyThrows
+	protected Void runWithUnirest(UnirestInstance unirest) {
+		outputMixin.write(
+				sscFilterMixin.addFilterParams(unirest.get(SSCUrls.PROJECTS).queryString("limit","-1"))
+		);
 		return null;
 	}
-
+	
 	@Override
-	public String getSessionType() {
-		return SSCConstants.SESSION_TYPE;
+	public OutputConfig getOutputOptionsWriterConfig() {
+		return SSCOutputHelper.defaultTableOutputConfig()
+				.defaultColumns("id#name");
 	}
 }

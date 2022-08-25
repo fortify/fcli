@@ -29,7 +29,7 @@ import com.fortify.cli.config._main.cli.ConfigCommands;
 import com.fortify.cli.fod._main.cli.FoDCommands;
 import com.fortify.cli.sc_dast._main.cli.SCDastCommands;
 import com.fortify.cli.sc_sast._main.cli.SCSastCommands;
-import com.fortify.cli.ssc.picocli.command.SSCCommands;
+import com.fortify.cli.ssc._main.cli.cmd.SSCCommands;
 import com.fortify.cli.tool.picocli.command.ToolCommands;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

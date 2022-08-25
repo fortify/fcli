@@ -8,10 +8,10 @@
  * sublicense, and/or sell copies of the Software, and to permit persons to 
  * whom the Software is furnished to do so, subject to the following 
  * conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included 
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY 
  * KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE 
  * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
@@ -22,44 +22,39 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.session.manager;
+package com.fortify.cli.ssc.plugin.cli.cmd;
 
-import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
-import com.fortify.cli.ssc.rest.runner.SSCAuthenticatedUnirestRunner;
-import com.fortify.cli.ssc.util.SSCConstants;
-
+import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.OutputConfig;
+import com.fortify.cli.common.output.cli.OutputMixin;
+import com.fortify.cli.ssc.util.SSCOutputHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
+import lombok.SneakyThrows;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
-@Singleton @ReflectiveAccess
-public class SSCSessionLogoutHandler implements ISessionLogoutHandler {
-	@Getter @Inject private SessionDataManager sessionDataManager;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
+@ReflectiveAccess
+@Command(name = "get")
+public class SSCPluginGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+	@CommandLine.Mixin private OutputMixin outputMixin;
 
-	@Override
-	public final void logout(String authSessionName) {
-		SSCSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, SSCSessionData.class);
-		if ( data!=null && data.hasActiveCachedTokenResponse() ) {
-			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
-		}
-	}
-	
-	private final Void logout(UnirestInstance unirestInstance, SSCSessionData authSessionData) {
-		try {
-			// TODO Current SSC versions don't allow current token to be invalidated
-			// TODO Invalidate token if username/password are available in login  session data 
-		} catch ( RuntimeException e ) {
-			System.out.println("Error deserializing token:" + e.getMessage());
-		}
+	@CommandLine.Mixin
+	private SSCPluginCommonOptions.SSCPluginSelectSingleRequiredMixin id;
+
+	@SneakyThrows
+	protected Void runWithUnirest(UnirestInstance unirest) {
+		outputMixin.write(
+				unirest.get(SSCUrls.PLUGIN(id.getNumericPluginId(unirest).toString()))
+		);
 		return null;
 	}
 
 	@Override
-	public String getSessionType() {
-		return SSCConstants.SESSION_TYPE;
+	public OutputConfig getOutputOptionsWriterConfig() {
+		return SSCOutputHelper.defaultTableOutputConfig()
+				.defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
 	}
 }

@@ -22,42 +22,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.session.manager;
+package com.fortify.cli.ssc.session.cli.cmd;
 
-import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
-import com.fortify.cli.ssc.rest.runner.SSCAuthenticatedUnirestRunner;
+import com.fortify.cli.common.session.cli.AbstractSessionLogoutCommand;
 import com.fortify.cli.ssc.util.SSCConstants;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
+import picocli.CommandLine.Command;
 
-@Singleton @ReflectiveAccess
-public class SSCSessionLogoutHandler implements ISessionLogoutHandler {
-	@Getter @Inject private SessionDataManager sessionDataManager;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-
-	@Override
-	public final void logout(String authSessionName) {
-		SSCSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, SSCSessionData.class);
-		if ( data!=null && data.hasActiveCachedTokenResponse() ) {
-			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
-		}
-	}
-	
-	private final Void logout(UnirestInstance unirestInstance, SSCSessionData authSessionData) {
-		try {
-			// TODO Current SSC versions don't allow current token to be invalidated
-			// TODO Invalidate token if username/password are available in login  session data 
-		} catch ( RuntimeException e ) {
-			System.out.println("Error deserializing token:" + e.getMessage());
-		}
-		return null;
-	}
-
+@Command(name = "logout", sortOptions = false, resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages")
+public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand {
 	@Override
 	public String getSessionType() {
 		return SSCConstants.SESSION_TYPE;

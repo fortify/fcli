@@ -22,44 +22,29 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.session.manager;
+package com.fortify.cli.ssc.rest.cli.cmd;
 
-import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
+import com.fortify.cli.common.session.cli.SessionNameMixin;
 import com.fortify.cli.ssc.rest.runner.SSCAuthenticatedUnirestRunner;
-import com.fortify.cli.ssc.util.SSCConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.SneakyThrows;
+import picocli.CommandLine.Mixin;
 
-@Singleton @ReflectiveAccess
-public class SSCSessionLogoutHandler implements ISessionLogoutHandler {
-	@Getter @Inject private SessionDataManager sessionDataManager;
+@ReflectiveAccess
+public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
 	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
+	@Getter @Mixin  private SessionNameMixin sessionNameMixin;
 
-	@Override
-	public final void logout(String authSessionName) {
-		SSCSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, SSCSessionData.class);
-		if ( data!=null && data.hasActiveCachedTokenResponse() ) {
-			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
-		}
+	@Override @SneakyThrows
+	public final void run() {
+		// TODO Do we want to do anything with the results, like formatting it based on output options?
+		//      Or do we let the actual implementation handle this?
+		unirestRunner.runWithUnirest(sessionNameMixin.getSessionName(), this::runWithUnirest);
 	}
 	
-	private final Void logout(UnirestInstance unirestInstance, SSCSessionData authSessionData) {
-		try {
-			// TODO Current SSC versions don't allow current token to be invalidated
-			// TODO Invalidate token if username/password are available in login  session data 
-		} catch ( RuntimeException e ) {
-			System.out.println("Error deserializing token:" + e.getMessage());
-		}
-		return null;
-	}
-
-	@Override
-	public String getSessionType() {
-		return SSCConstants.SESSION_TYPE;
-	}
+	protected abstract Void runWithUnirest(UnirestInstance unirest);
 }
