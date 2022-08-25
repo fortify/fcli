@@ -35,15 +35,15 @@ import lombok.Data;
 
 @Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public final class FoDTokenResponse {
-	@JsonProperty("access_token") private String accessToken;
-	@JsonProperty("expires_at") private long expiresAt;
+    @JsonProperty("access_token") private String accessToken;
+    @JsonProperty("expires_at") private long expiresAt;
 
-	@JsonProperty("expires_in")
-	public void setExpiresIn(long expiresIn) {
-		this.expiresAt = new Date().getTime()+((expiresIn-5)*1000);
-	}
+    @JsonProperty("expires_in")
+    public void setExpiresIn(long expiresIn) {
+        this.expiresAt = new Date().getTime()+((expiresIn-5)*1000);
+    }
 
-	@JsonIgnore public boolean isActive() {
-		return new Date().getTime() < expiresAt;
-	}
+    @JsonIgnore public boolean isActive() {
+        return new Date().getTime() < expiresAt;
+    }
 }

@@ -39,19 +39,19 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCEventListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private OutputMixin outputMixin;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(unirest.get("/api/v1/events?limit=-1"));
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return new OutputConfig()
-				.defaultFormat(OutputFormat.table)
-				.inputTransformer(json->json.get("data"))
-				.defaultColumns("eventDate#userName#eventType#projectVersionId#entityId");
-	}
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(unirest.get("/api/v1/events?limit=-1"));
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return new OutputConfig()
+                .defaultFormat(OutputFormat.table)
+                .inputTransformer(json->json.get("data"))
+                .defaultColumns("eventDate#userName#eventType#projectVersionId#entityId");
+    }
 }

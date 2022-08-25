@@ -31,8 +31,8 @@ import picocli.CommandLine.Command;
 
 @Command(name = "logout", sortOptions = false)
 public class SCSastSessionLogoutCommand extends AbstractSessionLogoutCommand {
-	@Override
-	public String getSessionType() {
-		return SCSastConstants.SESSION_TYPE;
-	}
+    @Override
+    public String getSessionType() {
+        return SCSastConstants.SESSION_TYPE;
+    }
 }

@@ -12,20 +12,20 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "list")
 public class FoDApplicationReleaseListCommand extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private OutputMixin outputMixin;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		final String uri = "/api/v3/releases?orderBy=applicationName";
-		outputMixin.write(unirest.get(uri) 
-				.accept("application/json")
-				.header("Content-Type", "application/json"),
-				FoDOutputHelper.pagingHandler(uri));
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return FoDOutputHelper.defaultTableOutputConfig().defaultColumns("releaseId#applicationName#releaseName#microserviceName");
-	}
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        final String uri = "/api/v3/releases?orderBy=applicationName";
+        outputMixin.write(unirest.get(uri) 
+                .accept("application/json")
+                .header("Content-Type", "application/json"),
+                FoDOutputHelper.pagingHandler(uri));
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return FoDOutputHelper.defaultTableOutputConfig().defaultColumns("releaseId#applicationName#releaseName#microserviceName");
+    }
 }

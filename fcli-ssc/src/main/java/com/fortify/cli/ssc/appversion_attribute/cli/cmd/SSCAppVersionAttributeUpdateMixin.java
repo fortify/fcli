@@ -43,49 +43,49 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 public class SSCAppVersionAttributeUpdateMixin {
-	private static final ObjectMapper objectMapper = new ObjectMapper();
-	
-	@Option(names={"-a","--attribute"}, paramLabel = "[CATEGORY:]ATTR=VALUE[,VALUE...]", required = true)
-	private Map<String,String> attributes;
-	
-	public HttpRequest<?> getAttributeUpdateRequest(UnirestInstance unirest, SSCAttributeDefinitionHelper helper, String applicationVersionId) {
-		ArrayNode attrUpdateData = objectMapper.createArrayNode().addAll( 
-				attributes.entrySet().stream().map(e -> createAttrUpdateNode(e, helper))
-				.collect(Collectors.toList()));
-		return unirest.put("/api/v1/projectVersions/{id}/attributes")
-				.routeParam("id", applicationVersionId).body(attrUpdateData);
-	}
-	
-	public Set<String> getAttributeIds(SSCAttributeDefinitionHelper helper) {
-		return attributes.keySet().stream().map(helper::getAttributeId).collect(Collectors.toSet());
-	}
-	
-	private ObjectNode createAttrUpdateNode(Map.Entry<String, String> attrEntry, SSCAttributeDefinitionHelper helper) {
-		String attrNameOrId = attrEntry.getKey();
-		String attrGuid = helper.getAttributeGuid(attrNameOrId);
-		String attrId = helper.getAttributeId(attrGuid);
-		String type = helper.getAttributeType(attrGuid);
-		List<String> valueGuids = Stream.of(attrEntry.getValue().split(","))
-				.filter(Predicate.not(String::isBlank))
-				.map(v->helper.getOptionGuid(attrGuid, v))
-				.collect(Collectors.toList());
-		
-		ObjectNode attrUpdateNode = objectMapper.createObjectNode();
-		attrUpdateNode.put("attributeDefinitionId", attrId);
-		if ( !"MULTIPLE".equals(type) && valueGuids.size()>1 ) {
-			throw new IllegalArgumentException("Attribute "+attrNameOrId+" can only contain a single value");
-		}
-		if ( "MULTIPLE".equals(type) || "SINGLE".equals(type) ) {
-			ArrayNode valueNodes = objectMapper.createArrayNode().addAll(
-					valueGuids.stream().map(this::createAttrValueNode).collect(Collectors.toList()));
-			attrUpdateNode.set("values", valueNodes);
-		} else {
-			attrUpdateNode.put("value", valueGuids.get(0));
-		}
-		return attrUpdateNode;
-	}
-	
-	private ObjectNode createAttrValueNode(String optionGuid) {
-		return objectMapper.createObjectNode().put("guid", optionGuid);
-	}
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    
+    @Option(names={"-a","--attribute"}, paramLabel = "[CATEGORY:]ATTR=VALUE[,VALUE...]", required = true)
+    private Map<String,String> attributes;
+    
+    public HttpRequest<?> getAttributeUpdateRequest(UnirestInstance unirest, SSCAttributeDefinitionHelper helper, String applicationVersionId) {
+        ArrayNode attrUpdateData = objectMapper.createArrayNode().addAll( 
+                attributes.entrySet().stream().map(e -> createAttrUpdateNode(e, helper))
+                .collect(Collectors.toList()));
+        return unirest.put("/api/v1/projectVersions/{id}/attributes")
+                .routeParam("id", applicationVersionId).body(attrUpdateData);
+    }
+    
+    public Set<String> getAttributeIds(SSCAttributeDefinitionHelper helper) {
+        return attributes.keySet().stream().map(helper::getAttributeId).collect(Collectors.toSet());
+    }
+    
+    private ObjectNode createAttrUpdateNode(Map.Entry<String, String> attrEntry, SSCAttributeDefinitionHelper helper) {
+        String attrNameOrId = attrEntry.getKey();
+        String attrGuid = helper.getAttributeGuid(attrNameOrId);
+        String attrId = helper.getAttributeId(attrGuid);
+        String type = helper.getAttributeType(attrGuid);
+        List<String> valueGuids = Stream.of(attrEntry.getValue().split(","))
+                .filter(Predicate.not(String::isBlank))
+                .map(v->helper.getOptionGuid(attrGuid, v))
+                .collect(Collectors.toList());
+        
+        ObjectNode attrUpdateNode = objectMapper.createObjectNode();
+        attrUpdateNode.put("attributeDefinitionId", attrId);
+        if ( !"MULTIPLE".equals(type) && valueGuids.size()>1 ) {
+            throw new IllegalArgumentException("Attribute "+attrNameOrId+" can only contain a single value");
+        }
+        if ( "MULTIPLE".equals(type) || "SINGLE".equals(type) ) {
+            ArrayNode valueNodes = objectMapper.createArrayNode().addAll(
+                    valueGuids.stream().map(this::createAttrValueNode).collect(Collectors.toList()));
+            attrUpdateNode.set("values", valueNodes);
+        } else {
+            attrUpdateNode.put("value", valueGuids.get(0));
+        }
+        return attrUpdateNode;
+    }
+    
+    private ObjectNode createAttrValueNode(String optionGuid) {
+        return objectMapper.createObjectNode().put("guid", optionGuid);
+    }
 }

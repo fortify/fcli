@@ -34,36 +34,36 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DateTimeHelper {
-	private static final Pattern periodPattern = Pattern.compile("([0-9]+)([hdwmy])");
+    private static final Pattern periodPattern = Pattern.compile("([0-9]+)([hdwmy])");
 
-	public static long parsePeriod(String period){
-	    if(period == null) return 0;
-	    period = period.toLowerCase(Locale.ENGLISH);
-	    Matcher matcher = periodPattern.matcher(period);
-	    Instant instant=Instant.EPOCH;
-	    while(matcher.find()){
-	        int num = Integer.parseInt(matcher.group(1));
-	        String typ = matcher.group(2);
-	        switch (typ) {
-	        	case "m":
-	        		instant=instant.plus(Duration.ofMinutes(num));
-	        		break;
-	            case "h":
-	                instant=instant.plus(Duration.ofHours(num));
-	                break;
-	            case "d":
-	                instant=instant.plus(Duration.ofDays(num));
-	                break;
-	        }
-	    }
-	    return instant.toEpochMilli();
-	}
-	
-	public static final Date getCurrentDatePlusPeriod(String period) {
-		return new Date(System.currentTimeMillis() + parsePeriod(period));
-	}
-	
-	public static final OffsetDateTime getCurrentOffsetDateTimePlusPeriod(String period) {
-		return OffsetDateTime.now(ZoneOffset.UTC).plusNanos(parsePeriod(period)*1000000);
-	}
+    public static long parsePeriod(String period){
+        if(period == null) return 0;
+        period = period.toLowerCase(Locale.ENGLISH);
+        Matcher matcher = periodPattern.matcher(period);
+        Instant instant=Instant.EPOCH;
+        while(matcher.find()){
+            int num = Integer.parseInt(matcher.group(1));
+            String typ = matcher.group(2);
+            switch (typ) {
+                case "m":
+                    instant=instant.plus(Duration.ofMinutes(num));
+                    break;
+                case "h":
+                    instant=instant.plus(Duration.ofHours(num));
+                    break;
+                case "d":
+                    instant=instant.plus(Duration.ofDays(num));
+                    break;
+            }
+        }
+        return instant.toEpochMilli();
+    }
+    
+    public static final Date getCurrentDatePlusPeriod(String period) {
+        return new Date(System.currentTimeMillis() + parsePeriod(period));
+    }
+    
+    public static final OffsetDateTime getCurrentOffsetDateTimePlusPeriod(String period) {
+        return OffsetDateTime.now(ZoneOffset.UTC).plusNanos(parsePeriod(period)*1000000);
+    }
 }

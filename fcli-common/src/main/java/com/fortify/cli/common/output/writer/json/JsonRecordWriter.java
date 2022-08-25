@@ -39,44 +39,44 @@ import com.fortify.cli.common.output.writer.RecordWriterConfig;
 import lombok.SneakyThrows;
 
 public class JsonRecordWriter implements IRecordWriter {
-	private final RecordWriterConfig config;
-	private JsonGenerator generator;
-	
-	public JsonRecordWriter(RecordWriterConfig config) {
-		this.config = config;
-	}
-	
-	private PrintWriter getPrintWriter() {
-		return config.getPrintWriter();
-	}
-	
-	@SneakyThrows
-	private JsonGenerator getGenerator() {
-		if ( generator==null ) {
-			PrettyPrinter pp = !config.isPretty() ? null : new DefaultPrettyPrinter(); 
-			this.generator = JsonFactory.builder().
-					build().createGenerator(getPrintWriter())
-					.setPrettyPrinter(pp)
-					.setCodec(new ObjectMapper())
-					.disable(Feature.AUTO_CLOSE_TARGET);
-			if ( !config.isSingular() ) {
-				generator.writeStartArray();
-			}
-		}
-		return generator;
-	}
+    private final RecordWriterConfig config;
+    private JsonGenerator generator;
+    
+    public JsonRecordWriter(RecordWriterConfig config) {
+        this.config = config;
+    }
+    
+    private PrintWriter getPrintWriter() {
+        return config.getPrintWriter();
+    }
+    
+    @SneakyThrows
+    private JsonGenerator getGenerator() {
+        if ( generator==null ) {
+            PrettyPrinter pp = !config.isPretty() ? null : new DefaultPrettyPrinter(); 
+            this.generator = JsonFactory.builder().
+                    build().createGenerator(getPrintWriter())
+                    .setPrettyPrinter(pp)
+                    .setCodec(new ObjectMapper())
+                    .disable(Feature.AUTO_CLOSE_TARGET);
+            if ( !config.isSingular() ) {
+                generator.writeStartArray();
+            }
+        }
+        return generator;
+    }
 
-	@Override @SneakyThrows
-	public void writeRecord(ObjectNode record) {
-		getGenerator().writeTree(record);
-	}
+    @Override @SneakyThrows
+    public void writeRecord(ObjectNode record) {
+        getGenerator().writeTree(record);
+    }
 
-	@Override @SneakyThrows
-	public void finishOutput() {
-		if ( !config.isSingular() ) {
-			getGenerator().writeEndArray();
-			getGenerator().close();
-		}
-		getPrintWriter().println(); // End with a newline
-	}
+    @Override @SneakyThrows
+    public void finishOutput() {
+        if ( !config.isSingular() ) {
+            getGenerator().writeEndArray();
+            getGenerator().close();
+        }
+        getPrintWriter().println(); // End with a newline
+    }
 }

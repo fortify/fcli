@@ -25,9 +25,9 @@
 package com.fortify.cli.workflow.command;
 
 public final class RunCommandsOrder {
-	public static final int
-		WORKFLOW = 100,
-		FORTIFY  = 200,
-		CMD      = 300;
-		
+    public static final int
+        WORKFLOW = 100,
+        FORTIFY  = 200,
+        CMD      = 300;
+        
 }

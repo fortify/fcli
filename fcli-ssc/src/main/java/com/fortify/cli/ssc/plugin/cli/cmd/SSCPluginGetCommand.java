@@ -39,22 +39,22 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "get")
 public class SSCPluginGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private OutputMixin outputMixin;
 
-	@CommandLine.Mixin
-	private SSCPluginCommonOptions.SSCPluginSelectSingleRequiredMixin id;
+    @CommandLine.Mixin
+    private SSCPluginCommonOptions.SSCPluginSelectSingleRequiredMixin id;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(
-				unirest.get(SSCUrls.PLUGIN(id.getNumericPluginId(unirest).toString()))
-		);
-		return null;
-	}
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(
+                unirest.get(SSCUrls.PLUGIN(id.getNumericPluginId(unirest).toString()))
+        );
+        return null;
+    }
 
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
-	}
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
+    }
 }

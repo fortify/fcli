@@ -30,27 +30,27 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.transform.AbstractJsonNodeTransformer;
 
 public class ToSingleObjectNodeTransformer extends AbstractJsonNodeTransformer {
-	public final boolean failOnMultiple;
-	
-	public ToSingleObjectNodeTransformer(boolean failOnMultiple) {
-		super(false);
-		this.failOnMultiple = failOnMultiple;
-	}
-	
-	@Override
-	protected JsonNode transformObjectNode(ObjectNode input) {
-		return input;
-	}
-	
-	@Override
-	protected JsonNode transformArrayNode(ArrayNode input) {
-		if ( input==null || input.size()==0 ) {
-			return null;
-		} else if ( input.size()>1 && failOnMultiple ) {
-			throw new IllegalArgumentException("Expected single JSON object, received multiple");
-		} else {
-			return input.get(0);
-		}
-	}
+    public final boolean failOnMultiple;
+    
+    public ToSingleObjectNodeTransformer(boolean failOnMultiple) {
+        super(false);
+        this.failOnMultiple = failOnMultiple;
+    }
+    
+    @Override
+    protected JsonNode transformObjectNode(ObjectNode input) {
+        return input;
+    }
+    
+    @Override
+    protected JsonNode transformArrayNode(ArrayNode input) {
+        if ( input==null || input.size()==0 ) {
+            return null;
+        } else if ( input.size()>1 && failOnMultiple ) {
+            throw new IllegalArgumentException("Expected single JSON object, received multiple");
+        } else {
+            return input.get(0);
+        }
+    }
 
 }

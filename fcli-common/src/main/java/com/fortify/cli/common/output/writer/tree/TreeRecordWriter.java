@@ -38,20 +38,20 @@ import hu.webarticum.treeprinter.SimpleTreeNode;
 import hu.webarticum.treeprinter.printer.listing.ListingTreePrinter;
 
 public class TreeRecordWriter implements IRecordWriter {
-	//private final RecordWriterConfig config;
-	
-	public TreeRecordWriter(RecordWriterConfig config) {
-		//this.config = config;
-	}
+    //private final RecordWriterConfig config;
+    
+    public TreeRecordWriter(RecordWriterConfig config) {
+        //this.config = config;
+    }
 
-	@Override
-	public void writeRecord(ObjectNode record) {
+    @Override
+    public void writeRecord(ObjectNode record) {
         SimpleTreeNode rootNode = new SimpleTreeNode("-+-");
         treeBuilder(rootNode, record, null);
         ListingTreePrinter.builder().ascii().build().print(rootNode); // TODO print to actual output, but for some reason line below doesn't work
         //ListingTreePrinter.createBuilder().ascii().build().print(rootNode, config.getPrintWriterSupplier().get());  // print with ascii
         //new ListingTreePrinter().print(rootNode); // print with unicode
-	}
+    }
 
     private static void treeBuilder(SimpleTreeNode treeNode, JsonNode inputNode, String firstLevelLabelSuffix){
         firstLevelLabelSuffix = (firstLevelLabelSuffix == null) ? "" : firstLevelLabelSuffix;

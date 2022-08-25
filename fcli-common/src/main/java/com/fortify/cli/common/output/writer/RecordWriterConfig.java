@@ -31,8 +31,8 @@ import lombok.Data;
 
 @Data @Builder
 public class RecordWriterConfig {
-	private PrintWriter printWriter;
-	private boolean singular;                          // Write singular output rather than array/list/...
-	@Builder.Default private boolean pretty = true;    // Pretty-print
-	private boolean headersEnabled;                    // Whether to print headers
+    private PrintWriter printWriter;
+    private boolean singular;                          // Write singular output rather than array/list/...
+    @Builder.Default private boolean pretty = true;    // Pretty-print
+    private boolean headersEnabled;                    // Whether to print headers
 }

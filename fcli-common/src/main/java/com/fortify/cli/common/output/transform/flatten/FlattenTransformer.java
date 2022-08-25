@@ -37,66 +37,66 @@ import io.micronaut.core.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 
 public class FlattenTransformer extends AbstractJsonNodeTransformer {
-	private final Function<String, String> fieldNameFormatter;
-	private final String separator;
-	private final boolean flattenNestedArrays;
+    private final Function<String, String> fieldNameFormatter;
+    private final String separator;
+    private final boolean flattenNestedArrays;
 
-	public FlattenTransformer(Function<String, String> fieldNameFormatter, String separator, boolean flattenNestedArrays) {
-		super(false);
-		this.fieldNameFormatter = fieldNameFormatter;
-		this.separator = separator;
-		this.flattenNestedArrays = flattenNestedArrays;
-	}
+    public FlattenTransformer(Function<String, String> fieldNameFormatter, String separator, boolean flattenNestedArrays) {
+        super(false);
+        this.fieldNameFormatter = fieldNameFormatter;
+        this.separator = separator;
+        this.flattenNestedArrays = flattenNestedArrays;
+    }
 
-	@Override
-	protected JsonNode transformObjectNode(ObjectNode input) {
-		return new ObjectNodeFlattener(input, fieldNameFormatter, separator, flattenNestedArrays).flatten();
-	}
+    @Override
+    protected JsonNode transformObjectNode(ObjectNode input) {
+        return new ObjectNodeFlattener(input, fieldNameFormatter, separator, flattenNestedArrays).flatten();
+    }
 
-	@RequiredArgsConstructor
-	private final class ObjectNodeFlattener {
-		private final ObjectNode root;
-		private final Function<String, String> fieldNameFormatter;
-		private final String separator;
-		private final boolean flattenNestedArrays;
-		private ObjectNode result = null;
+    @RequiredArgsConstructor
+    private final class ObjectNodeFlattener {
+        private final ObjectNode root;
+        private final Function<String, String> fieldNameFormatter;
+        private final String separator;
+        private final boolean flattenNestedArrays;
+        private ObjectNode result = null;
 
-		public ObjectNode flatten() {
-			if (result == null) {
-				result = new ObjectNode(JsonNodeFactory.instance);
-				flatten(root, "");
-			}
-			return result;
-		}
+        public ObjectNode flatten() {
+            if (result == null) {
+                result = new ObjectNode(JsonNodeFactory.instance);
+                flatten(root, "");
+            }
+            return result;
+        }
 
-		private void flatten(JsonNode node, String prefix) {
-			if (node.isObject()) {
-				ObjectNode object = (ObjectNode) node;
-				object.fields().forEachRemaining(entry -> {
-					flatten(entry.getValue(), getPrefix(prefix, entry.getKey()));
-				});
-			} else if (node.isArray() && flattenNestedArrays) {
-				ArrayNode array = (ArrayNode) node;
-				AtomicInteger counter = new AtomicInteger();
-				array.elements().forEachRemaining(item -> {
-					flatten(item, getPrefix(prefix, counter.getAndIncrement()));
-				});
-			} else {
-				result.set(fieldNameFormatter.apply(prefix), node);
-			}
-		}
+        private void flatten(JsonNode node, String prefix) {
+            if (node.isObject()) {
+                ObjectNode object = (ObjectNode) node;
+                object.fields().forEachRemaining(entry -> {
+                    flatten(entry.getValue(), getPrefix(prefix, entry.getKey()));
+                });
+            } else if (node.isArray() && flattenNestedArrays) {
+                ArrayNode array = (ArrayNode) node;
+                AtomicInteger counter = new AtomicInteger();
+                array.elements().forEachRemaining(item -> {
+                    flatten(item, getPrefix(prefix, counter.getAndIncrement()));
+                });
+            } else {
+                result.set(fieldNameFormatter.apply(prefix), node);
+            }
+        }
 
-		private String getPrefix(String prefix, String key) {
-			return StringUtils.isEmpty(prefix) 
-					? key
-					: (prefix + separator + key);
-		}
-		
-		private String getPrefix(String prefix, int count) {
-			return StringUtils.isEmpty(prefix) 
-					? String.valueOf(count)
-					: (prefix + separator + count);
-		}
+        private String getPrefix(String prefix, String key) {
+            return StringUtils.isEmpty(prefix) 
+                    ? key
+                    : (prefix + separator + key);
+        }
+        
+        private String getPrefix(String prefix, int count) {
+            return StringUtils.isEmpty(prefix) 
+                    ? String.valueOf(count)
+                    : (prefix + separator + count);
+        }
 
-	}
+    }
 }

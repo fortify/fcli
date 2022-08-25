@@ -28,8 +28,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IJsonNodeTransformer;
 
 public class IdentityTransformer implements IJsonNodeTransformer {
-	@Override
-	public JsonNode transform(JsonNode input) {
-		return input;
-	}
+    @Override
+    public JsonNode transform(JsonNode input) {
+        return input;
+    }
 }

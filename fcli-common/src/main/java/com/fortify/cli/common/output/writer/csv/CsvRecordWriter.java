@@ -38,50 +38,50 @@ import com.fortify.cli.common.output.writer.RecordWriterConfig;
 import lombok.SneakyThrows;
 
 public class CsvRecordWriter implements IRecordWriter {
-	private final RecordWriterConfig config;
-	private CsvGenerator generator;
+    private final RecordWriterConfig config;
+    private CsvGenerator generator;
 
-	public CsvRecordWriter(RecordWriterConfig config) {
-		this.config = config;
-	}
-	
-	private PrintWriter getPrintWriter() {
-		return config.getPrintWriter();
-	}
-	
-	@SneakyThrows
-	private CsvGenerator getGenerator(ObjectNode record) {
-		if ( generator==null ) {
-			if ( record!=null ) {
-				CsvSchema.Builder schemaBuilder = CsvSchema.builder();
-				record.fieldNames().forEachRemaining(schemaBuilder::addColumn);
-				CsvSchema schema = schemaBuilder.build()
-						.withUseHeader(config.isHeadersEnabled());
-				this.generator = (CsvGenerator)CsvFactory.builder().
-						build().createGenerator(getPrintWriter())
-						.setCodec(new ObjectMapper())
-						.enable(Feature.IGNORE_UNKNOWN)
-						.disable(Feature.AUTO_CLOSE_TARGET);
-				this.generator.setSchema(schema);
-				if ( !config.isSingular() ) {
-					generator.writeStartArray();
-				}
-			}
-		}
-		return generator;
-	}
+    public CsvRecordWriter(RecordWriterConfig config) {
+        this.config = config;
+    }
+    
+    private PrintWriter getPrintWriter() {
+        return config.getPrintWriter();
+    }
+    
+    @SneakyThrows
+    private CsvGenerator getGenerator(ObjectNode record) {
+        if ( generator==null ) {
+            if ( record!=null ) {
+                CsvSchema.Builder schemaBuilder = CsvSchema.builder();
+                record.fieldNames().forEachRemaining(schemaBuilder::addColumn);
+                CsvSchema schema = schemaBuilder.build()
+                        .withUseHeader(config.isHeadersEnabled());
+                this.generator = (CsvGenerator)CsvFactory.builder().
+                        build().createGenerator(getPrintWriter())
+                        .setCodec(new ObjectMapper())
+                        .enable(Feature.IGNORE_UNKNOWN)
+                        .disable(Feature.AUTO_CLOSE_TARGET);
+                this.generator.setSchema(schema);
+                if ( !config.isSingular() ) {
+                    generator.writeStartArray();
+                }
+            }
+        }
+        return generator;
+    }
 
-	@Override @SneakyThrows
-	public void writeRecord(ObjectNode record) {
-		getGenerator(record).writeTree(record);
-	}
-	
-	@Override @SneakyThrows
-	public void finishOutput() {
-		if ( !config.isSingular() && generator!=null ) {
-			generator.writeEndArray();
-			generator.close();
-		}
-	}
+    @Override @SneakyThrows
+    public void writeRecord(ObjectNode record) {
+        getGenerator(record).writeTree(record);
+    }
+    
+    @Override @SneakyThrows
+    public void finishOutput() {
+        if ( !config.isSingular() && generator!=null ) {
+            generator.writeEndArray();
+            generator.close();
+        }
+    }
 
 }

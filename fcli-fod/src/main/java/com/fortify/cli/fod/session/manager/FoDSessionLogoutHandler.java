@@ -37,28 +37,28 @@ import lombok.Getter;
 
 @Singleton @ReflectiveAccess
 public class FoDSessionLogoutHandler implements ISessionLogoutHandler {
-	@Getter @Inject private SessionDataManager sessionDataManager;
-	@Getter @Inject private FoDAuthenticatedUnirestRunner unirestRunner;
+    @Getter @Inject private SessionDataManager sessionDataManager;
+    @Getter @Inject private FoDAuthenticatedUnirestRunner unirestRunner;
 
-	@Override
-	public final void logout(String authSessionName) {
-		FoDSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, FoDSessionData.class);
-		if ( data!=null && data.hasActiveCachedTokenResponse() ) {
-			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
-		}
-	}
-	
-	private final Void logout(UnirestInstance unirestInstance, FoDSessionData authSessionData) {
-		try {
-			// TODO Invalidate token if possible in FoD
-		} catch ( RuntimeException e ) {
-			System.out.println("Error deserializing token:" + e.getMessage());
-		}
-		return null;
-	}
+    @Override
+    public final void logout(String authSessionName) {
+        FoDSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, FoDSessionData.class);
+        if ( data!=null && data.hasActiveCachedTokenResponse() ) {
+            unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
+        }
+    }
+    
+    private final Void logout(UnirestInstance unirestInstance, FoDSessionData authSessionData) {
+        try {
+            // TODO Invalidate token if possible in FoD
+        } catch ( RuntimeException e ) {
+            System.out.println("Error deserializing token:" + e.getMessage());
+        }
+        return null;
+    }
 
-	@Override
-	public String getSessionType() {
-		return FoDConstants.SESSION_TYPE;
-	}
+    @Override
+    public String getSessionType() {
+        return FoDConstants.SESSION_TYPE;
+    }
 }

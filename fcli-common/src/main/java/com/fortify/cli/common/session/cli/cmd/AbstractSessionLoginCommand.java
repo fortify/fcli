@@ -39,30 +39,30 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 public abstract class AbstractSessionLoginCommand<C> implements Runnable {
-	@Inject private SessionDataManager sessionDataManager;
-	@Inject private SessionSummaryManager sessionSummaryManager;
-	@Mixin private OutputMixin outputMixin;
-	
-	@ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
+    @Inject private SessionDataManager sessionDataManager;
+    @Inject private SessionSummaryManager sessionSummaryManager;
+    @Mixin private OutputMixin outputMixin;
+    
+    @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
     @Getter protected SessionNameOptions sessionNameOptions;
-	
-	@ReflectiveAccess
-	private static class SessionNameOptions {
-		@Option(names = {"--session-name", "-n"}, required = false, defaultValue = "default")
-		@Getter protected String sessionName;
-	}
-	
-	@Override @SneakyThrows
-	public final void run() {
-		getLoginHandler().login(getSessionName(), getLoginConfig());
-		sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
-	}
-	
-	public final String getSessionName() {
-		return sessionNameOptions==null ? "default" : sessionNameOptions.getSessionName();
-	}
-	
-	protected abstract String getSessionType();
-	protected abstract C getLoginConfig();
-	protected abstract ISessionLoginHandler<C> getLoginHandler();
+    
+    @ReflectiveAccess
+    private static class SessionNameOptions {
+        @Option(names = {"--session-name", "-n"}, required = false, defaultValue = "default")
+        @Getter protected String sessionName;
+    }
+    
+    @Override @SneakyThrows
+    public final void run() {
+        getLoginHandler().login(getSessionName(), getLoginConfig());
+        sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
+    }
+    
+    public final String getSessionName() {
+        return sessionNameOptions==null ? "default" : sessionNameOptions.getSessionName();
+    }
+    
+    protected abstract String getSessionType();
+    protected abstract C getLoginConfig();
+    protected abstract ISessionLoginHandler<C> getLoginHandler();
 }

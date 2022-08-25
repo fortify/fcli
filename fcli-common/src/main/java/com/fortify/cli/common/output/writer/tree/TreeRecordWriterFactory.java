@@ -30,9 +30,9 @@ import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
 public class TreeRecordWriterFactory implements IRecordWriterFactory {
 
-	@Override
-	public IRecordWriter createRecordWriter(RecordWriterConfig config) {
-		return new TreeRecordWriter(config);
-	}
+    @Override
+    public IRecordWriter createRecordWriter(RecordWriterConfig config) {
+        return new TreeRecordWriter(config);
+    }
 
 }

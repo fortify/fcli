@@ -40,19 +40,19 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "get")
 public class SSCAppVersionGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
-	@CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter versionIdOrName;
+    @CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter versionIdOrName;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		String avID = versionIdOrName.getApplicationVersionId(unirest);
-		outputMixin.write(unirest.get(SSCUrls.PROJECT_VERSION(avID)));
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#name");
-	}
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        String avID = versionIdOrName.getApplicationVersionId(unirest);
+        outputMixin.write(unirest.get(SSCUrls.PROJECT_VERSION(avID)));
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#name");
+    }
 }

@@ -41,55 +41,55 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 
 public class PredefinedFieldsTransformer extends AbstractJsonNodeTransformer implements IJsonNodeTransformer {
-	private static final TextNode NOT_AVAILABLE_NODE = TextNode.valueOf("N/A");
-	private final LinkedHashMap<String, String> pathToHeaderMapping = new LinkedHashMap<>();
-	private final Function<String, String> fieldNameFormatter;
-	@Getter @Accessors(fluent=true) private boolean hasExplicitHeaders = false;
-	
-	public PredefinedFieldsTransformer(Function<String, String> fieldNameformatter) {
-		super(false);
-		this.fieldNameFormatter = fieldNameformatter;
-	}
-	
-	public final PredefinedFieldsTransformer addField(String propertyPath) {
-		pathToHeaderMapping.put(propertyPath, fieldNameFormatter.apply(propertyPath));
-		return this;
-	}
+    private static final TextNode NOT_AVAILABLE_NODE = TextNode.valueOf("N/A");
+    private final LinkedHashMap<String, String> pathToHeaderMapping = new LinkedHashMap<>();
+    private final Function<String, String> fieldNameFormatter;
+    @Getter @Accessors(fluent=true) private boolean hasExplicitHeaders = false;
+    
+    public PredefinedFieldsTransformer(Function<String, String> fieldNameformatter) {
+        super(false);
+        this.fieldNameFormatter = fieldNameformatter;
+    }
+    
+    public final PredefinedFieldsTransformer addField(String propertyPath) {
+        pathToHeaderMapping.put(propertyPath, fieldNameFormatter.apply(propertyPath));
+        return this;
+    }
 
-	public final PredefinedFieldsTransformer addField(String propertyPath, String header) {
-		pathToHeaderMapping.put(propertyPath, header);
-		hasExplicitHeaders = true;
-		return this;
-	}
-	
-	@Override
-	protected final ObjectNode transformObjectNode(ObjectNode input) {
-		ObjectNode output = new ObjectNode(JsonNodeFactory.instance);
-		pathToHeaderMapping.entrySet().stream()
-			.forEach(mapping->addConvertedValue(output, mapping.getValue(), input, mapping.getKey()));
-		return output;
-	}
-	
-	private void addConvertedValue(ObjectNode output, String outputFieldName, ObjectNode input, String inputFieldPath) {
-		JsonNode value = null;
-		try{
-			value = getValue(input, inputFieldPath);
-		}catch (com.jayway.jsonpath.PathNotFoundException e){
-			value = NOT_AVAILABLE_NODE;
-		}
+    public final PredefinedFieldsTransformer addField(String propertyPath, String header) {
+        pathToHeaderMapping.put(propertyPath, header);
+        hasExplicitHeaders = true;
+        return this;
+    }
+    
+    @Override
+    protected final ObjectNode transformObjectNode(ObjectNode input) {
+        ObjectNode output = new ObjectNode(JsonNodeFactory.instance);
+        pathToHeaderMapping.entrySet().stream()
+            .forEach(mapping->addConvertedValue(output, mapping.getValue(), input, mapping.getKey()));
+        return output;
+    }
+    
+    private void addConvertedValue(ObjectNode output, String outputFieldName, ObjectNode input, String inputFieldPath) {
+        JsonNode value = null;
+        try{
+            value = getValue(input, inputFieldPath);
+        }catch (com.jayway.jsonpath.PathNotFoundException e){
+            value = NOT_AVAILABLE_NODE;
+        }
 
-		if ( value.isArray() ) {
-			output.put(outputFieldName,
-					StreamSupport.stream(value.spliterator(), false)
-						.map(JsonNode::asText)
-						.collect(Collectors.joining(", ")) );
-		} else {
-			output.set(outputFieldName, value);
-		}
-	}
+        if ( value.isArray() ) {
+            output.put(outputFieldName,
+                    StreamSupport.stream(value.spliterator(), false)
+                        .map(JsonNode::asText)
+                        .collect(Collectors.joining(", ")) );
+        } else {
+            output.set(outputFieldName, value);
+        }
+    }
 
-	private JsonNode getValue(ObjectNode input, String propertyPath) {
-		if ( !propertyPath.startsWith("$") ) { propertyPath = "$."+propertyPath; }
-		return JsonHelper.evaluateJsonPath(input, propertyPath, JsonNode.class);
-	}
+    private JsonNode getValue(ObjectNode input, String propertyPath) {
+        if ( !propertyPath.startsWith("$") ) { propertyPath = "$."+propertyPath; }
+        return JsonHelper.evaluateJsonPath(input, propertyPath, JsonNode.class);
+    }
 }

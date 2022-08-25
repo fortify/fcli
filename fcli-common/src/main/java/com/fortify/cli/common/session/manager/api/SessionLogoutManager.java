@@ -36,18 +36,18 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public final class SessionLogoutManager {
-	private final SessionDataManager sessionDataManager;
-	private final Map<String, ISessionLogoutHandler> sessionLogoutHandlers;
-	
-	@Inject
-	SessionLogoutManager(SessionDataManager sessionDataManager, Collection<ISessionLogoutHandler> sessionLogoutHandlers) {
-		this.sessionDataManager = sessionDataManager;
-		this.sessionLogoutHandlers = sessionLogoutHandlers.stream().collect(
-				Collectors.toMap(ISessionLogoutHandler::getSessionType, Function.identity()));
-	}
-	
-	public final void logoutAndDestroy(String authSessionType, String authSessionName) {
-		sessionLogoutHandlers.get(authSessionType).logout(authSessionName);
-		sessionDataManager.destroy(authSessionType, authSessionName);
-	}
+    private final SessionDataManager sessionDataManager;
+    private final Map<String, ISessionLogoutHandler> sessionLogoutHandlers;
+    
+    @Inject
+    SessionLogoutManager(SessionDataManager sessionDataManager, Collection<ISessionLogoutHandler> sessionLogoutHandlers) {
+        this.sessionDataManager = sessionDataManager;
+        this.sessionLogoutHandlers = sessionLogoutHandlers.stream().collect(
+                Collectors.toMap(ISessionLogoutHandler::getSessionType, Function.identity()));
+    }
+    
+    public final void logoutAndDestroy(String authSessionType, String authSessionName) {
+        sessionLogoutHandlers.get(authSessionType).logout(authSessionName);
+        sessionDataManager.destroy(authSessionType, authSessionName);
+    }
 }

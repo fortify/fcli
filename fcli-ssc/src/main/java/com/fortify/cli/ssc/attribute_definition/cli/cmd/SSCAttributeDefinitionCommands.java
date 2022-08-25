@@ -5,7 +5,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "attribute-definition",
         subcommands = {
-        	SSCAttributeDefinitionListCommand.class
+            SSCAttributeDefinitionListCommand.class
         }
 )
 public class SSCAttributeDefinitionCommands {

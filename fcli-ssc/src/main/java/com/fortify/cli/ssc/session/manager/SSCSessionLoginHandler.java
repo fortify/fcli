@@ -37,43 +37,43 @@ import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
 public class SSCSessionLoginHandler extends AbstractSessionHandlerAction<SSCSessionLoginConfig> {
-	@Inject private SSCUnauthenticatedUnirestRunner unauthenticatedUnirestRunner;
+    @Inject private SSCUnauthenticatedUnirestRunner unauthenticatedUnirestRunner;
 
-	public final String getSessionType() {
-		return SSCConstants.SESSION_TYPE;
-	}
+    public final String getSessionType() {
+        return SSCConstants.SESSION_TYPE;
+    }
 
-	@Override
-	public final ISessionData _login(String authSessionName, SSCSessionLoginConfig sscLoginConfig) {
-		SSCSessionData sessionData = null;
-		IConnectionConfig connectionConfig = sscLoginConfig.getConnectionConfig();
-		if ( sscLoginConfig.getToken()!=null ) {
-			sessionData = new SSCSessionData(sscLoginConfig);
-		} else if ( sscLoginConfig.hasUserCredentialsConfig() ) {
-			sessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateSessionData(unirest, sscLoginConfig));
-		} else {
-			throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
-		}
-		return sessionData;
-	}
-	
-	private final SSCSessionData generateSessionData(UnirestInstance unirest, SSCSessionLoginConfig sscLoginConfig) {
-		SSCTokenResponse sscTokenResponse = generateToken(unirest, sscLoginConfig.getSscUserCredentialsConfig());
-		return new SSCSessionData(sscLoginConfig, sscTokenResponse);
-	}
-	
-	private final SSCTokenResponse generateToken(UnirestInstance unirestInstance, ISSCUserCredentialsConfig sscUserCredentialsConfig) {
-		SSCTokenRequest tokenRequest = SSCTokenRequest.builder()
-				.type("UnifiedLoginToken")
-				.terminalDate(sscUserCredentialsConfig.getExpiresAt())
-				.build();
-		return unirestInstance.post("/api/v1/tokens")
-				.accept("application/json")
-				.header("Content-Type", "application/json")
-				.basicAuth(sscUserCredentialsConfig.getUser(), new String(sscUserCredentialsConfig.getPassword()))
-				.body(tokenRequest)
-				.asObject(SSCTokenResponse.class)
-				.getBody();
-	}
-	
+    @Override
+    public final ISessionData _login(String authSessionName, SSCSessionLoginConfig sscLoginConfig) {
+        SSCSessionData sessionData = null;
+        IConnectionConfig connectionConfig = sscLoginConfig.getConnectionConfig();
+        if ( sscLoginConfig.getToken()!=null ) {
+            sessionData = new SSCSessionData(sscLoginConfig);
+        } else if ( sscLoginConfig.hasUserCredentialsConfig() ) {
+            sessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateSessionData(unirest, sscLoginConfig));
+        } else {
+            throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
+        }
+        return sessionData;
+    }
+    
+    private final SSCSessionData generateSessionData(UnirestInstance unirest, SSCSessionLoginConfig sscLoginConfig) {
+        SSCTokenResponse sscTokenResponse = generateToken(unirest, sscLoginConfig.getSscUserCredentialsConfig());
+        return new SSCSessionData(sscLoginConfig, sscTokenResponse);
+    }
+    
+    private final SSCTokenResponse generateToken(UnirestInstance unirestInstance, ISSCUserCredentialsConfig sscUserCredentialsConfig) {
+        SSCTokenRequest tokenRequest = SSCTokenRequest.builder()
+                .type("UnifiedLoginToken")
+                .terminalDate(sscUserCredentialsConfig.getExpiresAt())
+                .build();
+        return unirestInstance.post("/api/v1/tokens")
+                .accept("application/json")
+                .header("Content-Type", "application/json")
+                .basicAuth(sscUserCredentialsConfig.getUser(), new String(sscUserCredentialsConfig.getPassword()))
+                .body(tokenRequest)
+                .asObject(SSCTokenResponse.class)
+                .getBody();
+    }
+    
 }

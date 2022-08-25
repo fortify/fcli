@@ -29,23 +29,23 @@ import java.util.function.Function;
 import io.micronaut.core.util.StringUtils;
 
 public class PredefinedFieldsTransformerFactory {
-	public static final PredefinedFieldsTransformer createFromString(Function<String, String> fieldNameformatter, String fieldMapperString) {
-		if ( StringUtils.isEmpty(fieldMapperString) ) { return null; } // TODO: null or empty FieldMapper?
-		PredefinedFieldsTransformer predefinedFieldsTransformer = new PredefinedFieldsTransformer(fieldNameformatter);
-		String[] fieldMappings = fieldMapperString.split("#");
-		for (String fieldMapping : fieldMappings) {
-			String[] elts = fieldMapping.split(":");
-			switch (elts.length) {
-			case 0: throw new IllegalStateException("This shouldn't happen");
-			case 1: predefinedFieldsTransformer.addField(elts[0]); break;
-			case 2: predefinedFieldsTransformer.addField(elts[0], elts[1]); break;
-			default: throw new IllegalArgumentException("Each field mapping may contain at most one ':' separator");
-			}
-		}
-		return predefinedFieldsTransformer;
-	}
-	
-	public static final PredefinedFieldsTransformer createEmpty(Function<String, String> fieldNameformatter) {
-		return new PredefinedFieldsTransformer(fieldNameformatter);
-	}
+    public static final PredefinedFieldsTransformer createFromString(Function<String, String> fieldNameformatter, String fieldMapperString) {
+        if ( StringUtils.isEmpty(fieldMapperString) ) { return null; } // TODO: null or empty FieldMapper?
+        PredefinedFieldsTransformer predefinedFieldsTransformer = new PredefinedFieldsTransformer(fieldNameformatter);
+        String[] fieldMappings = fieldMapperString.split("#");
+        for (String fieldMapping : fieldMappings) {
+            String[] elts = fieldMapping.split(":");
+            switch (elts.length) {
+            case 0: throw new IllegalStateException("This shouldn't happen");
+            case 1: predefinedFieldsTransformer.addField(elts[0]); break;
+            case 2: predefinedFieldsTransformer.addField(elts[0], elts[1]); break;
+            default: throw new IllegalArgumentException("Each field mapping may contain at most one ':' separator");
+            }
+        }
+        return predefinedFieldsTransformer;
+    }
+    
+    public static final PredefinedFieldsTransformer createEmpty(Function<String, String> fieldNameformatter) {
+        return new PredefinedFieldsTransformer(fieldNameformatter);
+    }
 }

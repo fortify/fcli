@@ -32,14 +32,14 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class SSCSessionSummaryProvider extends AbstractSessionSummaryProvider {
-	public final String getSessionType() {
-		return SSCConstants.SESSION_TYPE;
-	}
-	
-	@Override
-	protected SessionSummary getSessionSummary(String authSessionName) {
-		return getSessionDataManager()
-				.getData(getSessionType(), authSessionName, SSCSessionData.class)
-				.getSummary(authSessionName);
-	}
+    public final String getSessionType() {
+        return SSCConstants.SESSION_TYPE;
+    }
+    
+    @Override
+    protected SessionSummary getSessionSummary(String authSessionName) {
+        return getSessionDataManager()
+                .getData(getSessionType(), authSessionName, SSCSessionData.class)
+                .getSummary(authSessionName);
+    }
 }

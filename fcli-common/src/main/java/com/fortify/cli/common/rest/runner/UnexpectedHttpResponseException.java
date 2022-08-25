@@ -29,39 +29,39 @@ import kong.unirest.HttpResponse;
 import kong.unirest.UnirestException;
 
 public final class UnexpectedHttpResponseException extends UnirestException {
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public UnexpectedHttpResponseException(HttpResponse<?> failureResponse) {
-		super(getMessage(failureResponse), getCause(failureResponse));
-	}
-	
-	public UnexpectedHttpResponseException(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
-		super(getMessage(failureResponse, requestSummary), getCause(failureResponse));
-	}
+    public UnexpectedHttpResponseException(HttpResponse<?> failureResponse) {
+        super(getMessage(failureResponse), getCause(failureResponse));
+    }
+    
+    public UnexpectedHttpResponseException(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
+        super(getMessage(failureResponse, requestSummary), getCause(failureResponse));
+    }
 
-	private static final String getMessage(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
-		var httpMethod = requestSummary.getHttpMethod().name();
-		var url = requestSummary.getUrl();
-		return String.format("%s %s: %s", httpMethod, url, getMessage(failureResponse));
-	}
+    private static final String getMessage(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
+        var httpMethod = requestSummary.getHttpMethod().name();
+        var url = requestSummary.getUrl();
+        return String.format("%s %s: %s", httpMethod, url, getMessage(failureResponse));
+    }
 
-	private static final String getMessage(HttpResponse<?> failureResponse) {
-		if ( isHttpFailure(failureResponse) ) {
-			// TODO Any way we can include the original request URL in the message?
-			return String.format("%d %s", failureResponse.getStatus(), failureResponse.getStatusText());
-		} else if ( failureResponse.getParsingError().isPresent() ) {
-			return "Error parsing response";
-		} else {
-			return "Unknown error";
-		}
-	}
-	
-	private static final Throwable getCause(HttpResponse<?> failureResponse) {
-		return isHttpFailure(failureResponse) ? null : failureResponse.getParsingError().orElse(null);
-	}
-	
-	private static final boolean isHttpFailure(HttpResponse<?> failureResponse) {
-		int httpStatus = failureResponse.getStatus();
-		return httpStatus < 200 || httpStatus >= 300;
-	}
+    private static final String getMessage(HttpResponse<?> failureResponse) {
+        if ( isHttpFailure(failureResponse) ) {
+            // TODO Any way we can include the original request URL in the message?
+            return String.format("%d %s", failureResponse.getStatus(), failureResponse.getStatusText());
+        } else if ( failureResponse.getParsingError().isPresent() ) {
+            return "Error parsing response";
+        } else {
+            return "Unknown error";
+        }
+    }
+    
+    private static final Throwable getCause(HttpResponse<?> failureResponse) {
+        return isHttpFailure(failureResponse) ? null : failureResponse.getParsingError().orElse(null);
+    }
+    
+    private static final boolean isHttpFailure(HttpResponse<?> failureResponse) {
+        int httpStatus = failureResponse.getStatus();
+        return httpStatus < 200 || httpStatus >= 300;
+    }
 }

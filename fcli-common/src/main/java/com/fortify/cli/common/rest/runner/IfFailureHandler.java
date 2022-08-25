@@ -27,7 +27,7 @@ package com.fortify.cli.common.rest.runner;
 import kong.unirest.HttpResponse;
 
 public class IfFailureHandler {
-	public static final void handle(HttpResponse<?> failureResponse) {
-		throw new UnexpectedHttpResponseException(failureResponse);
-	}
+    public static final void handle(HttpResponse<?> failureResponse) {
+        throw new UnexpectedHttpResponseException(failureResponse);
+    }
 }

@@ -25,5 +25,5 @@
 package com.fortify.cli.common.output.cli.mixin;
 
 public interface IOutputConfigSupplier {
-	public OutputConfig getOutputOptionsWriterConfig();
+    public OutputConfig getOutputOptionsWriterConfig();
 }

@@ -48,49 +48,49 @@ import java.io.File;
 @ReflectiveAccess
 @Command(name = "create")
 public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
-	@CommandLine.Option(names = {"-f", "--file"}, required = true)
-	private String filePath;
+    @CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Option(names = {"-f", "--file"}, required = true)
+    private String filePath;
 
-	@CommandLine.Option(names = {"-a", "--answer-file"}, defaultValue = "./ReportTemplateDefAnswerTemplate.yml")
-	private String answerFile;
+    @CommandLine.Option(names = {"-a", "--answer-file"}, defaultValue = "./ReportTemplateDefAnswerTemplate.yml")
+    private String answerFile;
 
-	private int indexVal=0;
-	private int getIndexVal(){return indexVal++;}
+    private int indexVal=0;
+    private int getIndexVal(){return indexVal++;}
 
-	private SSCReportTemplateDef processAnswerFile(SSCReportTemplateDef rtd, String fileName, int templateDocId){
-		rtd.templateDocId = templateDocId;
-		rtd.renderingEngine = SSCReportRenderingEngineType.BIRT;
-		rtd.fileName =  fileName;
-		rtd.parameters.stream().forEach(e -> e.index = getIndexVal());
-		rtd.guid = java.util.UUID.randomUUID().toString();
-		return rtd;
-	}
+    private SSCReportTemplateDef processAnswerFile(SSCReportTemplateDef rtd, String fileName, int templateDocId){
+        rtd.templateDocId = templateDocId;
+        rtd.renderingEngine = SSCReportRenderingEngineType.BIRT;
+        rtd.fileName =  fileName;
+        rtd.parameters.stream().forEach(e -> e.index = getIndexVal());
+        rtd.guid = java.util.UUID.randomUUID().toString();
+        return rtd;
+    }
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		SSCUploadResponse uploadResponse = SSCFileTransferHelper.upload(
-				unirest,
-				SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
-				filePath
-		);
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        SSCUploadResponse uploadResponse = SSCFileTransferHelper.upload(
+                unirest,
+                SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
+                filePath
+        );
 
-		File answerFileObj = new File(answerFile);
-		File rptFileObj = new File(filePath);
+        File answerFileObj = new File(answerFile);
+        File rptFileObj = new File(filePath);
 
-		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-		SSCReportTemplateDef rtd = mapper.readValue(answerFileObj, SSCReportTemplateDef.class);
-		rtd = processAnswerFile(rtd, rptFileObj.getName(), Integer.parseInt(uploadResponse.entityId));
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        SSCReportTemplateDef rtd = mapper.readValue(answerFileObj, SSCReportTemplateDef.class);
+        rtd = processAnswerFile(rtd, rptFileObj.getName(), Integer.parseInt(uploadResponse.entityId));
 
-		HttpResponse creationResponse = unirest.post(SSCUrls.REPORT_DEFINITIONS)
-				.body((new ObjectMapper()).writeValueAsString(rtd)).asObject(ObjectNode.class);
-		outputMixin.write(creationResponse);
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#name:Report Name");
-	}
+        HttpResponse creationResponse = unirest.post(SSCUrls.REPORT_DEFINITIONS)
+                .body((new ObjectMapper()).writeValueAsString(rtd)).asObject(ObjectNode.class);
+        outputMixin.write(creationResponse);
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#name:Report Name");
+    }
 }

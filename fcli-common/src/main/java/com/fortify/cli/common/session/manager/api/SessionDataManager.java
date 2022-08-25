@@ -41,44 +41,44 @@ import lombok.SneakyThrows;
 
 @Singleton @ReflectiveAccess
 public final class SessionDataManager {
-	@Getter @Inject private ObjectMapper objectMapper;
+    @Getter @Inject private ObjectMapper objectMapper;
 
-	@SneakyThrows // TODO Do we want to use SneakyThrows? 
-	public final void saveData(String authSessionType, String authSessionName, ISessionData sessionData) {
-		String authSessionDataJson = objectMapper.writeValueAsString(sessionData);
-		FcliHomeHelper.saveSecuredFile(Paths.get("authSessions", authSessionType, authSessionName), authSessionDataJson);
-	}
-	
-	@SneakyThrows // TODO Do we want to use SneakyThrows?
-	public final <T extends ISessionData> T getData(String authSessionType, String authSessionName, Class<T> returnType) {
-		Path authSessionDataPath = Paths.get("authSessions", authSessionType, authSessionName);
-		try {
-			String authSessionDataJson = FcliHomeHelper.readSecuredFile(authSessionDataPath, false);
-			return authSessionDataJson==null ? null : objectMapper.readValue(authSessionDataJson, returnType);
-		} catch ( Exception e ) {
-			FcliHomeHelper.deleteFile(authSessionDataPath);
-			throw new IllegalStateException("Error reading auth session data, please try logging in again", e);
-		}
-	}
-	
-	public final boolean exists(String authSessionType, String authSessionName) {
-		return FcliHomeHelper.isReadable(Paths.get("authSessions", authSessionType, authSessionName));
-	}
-	
-	@SneakyThrows // TODO Do we want to use SneakyThrows?
-	public final List<String> list(String authSessionType) {
-		Path path = Paths.get("authSessions", authSessionType);
-		if ( !FcliHomeHelper.exists(path) ) {
-			return Collections.emptyList();
-		}
-		return FcliHomeHelper.listFilesInDir(path, false)
-				.map(Path::getFileName)
-				.map(Path::toString)
-				.collect(Collectors.toList());
-	}
-	
-	@SneakyThrows // TODO Do we want to use SneakyThrows?
-	public final void destroy(String authSessionType, String authSessionName) {
-		FcliHomeHelper.deleteFile(Paths.get("authSessions", authSessionType, authSessionName));
-	}
+    @SneakyThrows // TODO Do we want to use SneakyThrows? 
+    public final void saveData(String authSessionType, String authSessionName, ISessionData sessionData) {
+        String authSessionDataJson = objectMapper.writeValueAsString(sessionData);
+        FcliHomeHelper.saveSecuredFile(Paths.get("authSessions", authSessionType, authSessionName), authSessionDataJson);
+    }
+    
+    @SneakyThrows // TODO Do we want to use SneakyThrows?
+    public final <T extends ISessionData> T getData(String authSessionType, String authSessionName, Class<T> returnType) {
+        Path authSessionDataPath = Paths.get("authSessions", authSessionType, authSessionName);
+        try {
+            String authSessionDataJson = FcliHomeHelper.readSecuredFile(authSessionDataPath, false);
+            return authSessionDataJson==null ? null : objectMapper.readValue(authSessionDataJson, returnType);
+        } catch ( Exception e ) {
+            FcliHomeHelper.deleteFile(authSessionDataPath);
+            throw new IllegalStateException("Error reading auth session data, please try logging in again", e);
+        }
+    }
+    
+    public final boolean exists(String authSessionType, String authSessionName) {
+        return FcliHomeHelper.isReadable(Paths.get("authSessions", authSessionType, authSessionName));
+    }
+    
+    @SneakyThrows // TODO Do we want to use SneakyThrows?
+    public final List<String> list(String authSessionType) {
+        Path path = Paths.get("authSessions", authSessionType);
+        if ( !FcliHomeHelper.exists(path) ) {
+            return Collections.emptyList();
+        }
+        return FcliHomeHelper.listFilesInDir(path, false)
+                .map(Path::getFileName)
+                .map(Path::toString)
+                .collect(Collectors.toList());
+    }
+    
+    @SneakyThrows // TODO Do we want to use SneakyThrows?
+    public final void destroy(String authSessionType, String authSessionName) {
+        FcliHomeHelper.deleteFile(Paths.get("authSessions", authSessionType, authSessionName));
+    }
 }

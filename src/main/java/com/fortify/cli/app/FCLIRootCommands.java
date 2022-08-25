@@ -51,26 +51,26 @@ import picocli.CommandLine.ScopeType;
 @Singleton
 @ReflectiveAccess
 @Command(name = "fcli", 
-	scope = ScopeType.INHERIT, 
-	mixinStandardHelpOptions = true,
-	usageHelpAutoWidth = true,
-	sortOptions = false, 
-	showAtFileInUsageHelp = false,
-	resourceBundle = "com.fortify.cli.i18n.FortifyCLIMessages",
-	subcommands = {
-			ConfigCommands.class,
-			SSCCommands.class,
-			SCSastCommands.class,
-			SCDastCommands.class,
-			FoDCommands.class,
-			ToolCommands.class
-	}
+    scope = ScopeType.INHERIT, 
+    mixinStandardHelpOptions = true,
+    usageHelpAutoWidth = true,
+    sortOptions = false, 
+    showAtFileInUsageHelp = false,
+    resourceBundle = "com.fortify.cli.i18n.FortifyCLIMessages",
+    subcommands = {
+            ConfigCommands.class,
+            SSCCommands.class,
+            SCSastCommands.class,
+            SCDastCommands.class,
+            FoDCommands.class,
+            ToolCommands.class
+    }
 )
 public class FCLIRootCommands {
-	// Setting up logging is handled in the main class by a separate Picocli instance, to allow
-	// for setting up logging early in the process. In order to have our main command structure
-	// not complain about any logging options, we define them here even though we don't actually
-	// do anything with these options here.
-	@Mixin LoggingMixin loggingMixin;
+    // Setting up logging is handled in the main class by a separate Picocli instance, to allow
+    // for setting up logging early in the process. In order to have our main command structure
+    // not complain about any logging options, we define them here even though we don't actually
+    // do anything with these options here.
+    @Mixin LoggingMixin loggingMixin;
 
 }

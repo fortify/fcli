@@ -13,25 +13,25 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = "status")
 public class SCSastScanStatusCommand extends AbstractSCSastUnirestRunnerCommand implements IOutputConfigSupplier {
-	@ArgGroup(exclusive = false, heading = "Scan status options:%n", order = 1)
+    @ArgGroup(exclusive = false, heading = "Scan status options:%n", order = 1)
     private SCSastScanTokenMixin scanStatusOptions;
 
     @Mixin
     private OutputMixin outputMixin;
     
-	@Override
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(
-				unirest.get("/rest/v2/job/{token}/status")
-					.routeParam("token", scanStatusOptions.getToken()));
+    @Override
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(
+                unirest.get("/rest/v2/job/{token}/status")
+                    .routeParam("token", scanStatusOptions.getToken()));
         return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SCSastOutputHelper.defaultTableOutputConfig()
-				//.inputTransformer(j->j.get(0))
-				.defaultColumns("state#hasFiles#sscUploadState#scaProgress");
-	}
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SCSastOutputHelper.defaultTableOutputConfig()
+                //.inputTransformer(j->j.get(0))
+                .defaultColumns("state#hasFiles#sscUploadState#scaProgress");
+    }
 
 }

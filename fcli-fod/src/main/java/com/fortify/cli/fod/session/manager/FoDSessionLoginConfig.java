@@ -32,21 +32,21 @@ import lombok.Data;
 
 @Data
 public class FoDSessionLoginConfig implements IConnectionConfigProvider {
-	private IConnectionConfig connectionConfig;
-	private IFoDUserCredentialsConfig fodUserCredentialsConfig;
-	private IFoDClientCredentialsConfig fodClientCredentialsConfig;
-	private String[] scopes = {"api-tenant"};
-	private boolean renewAllowed;
+    private IConnectionConfig connectionConfig;
+    private IFoDUserCredentialsConfig fodUserCredentialsConfig;
+    private IFoDClientCredentialsConfig fodClientCredentialsConfig;
+    private String[] scopes = {"api-tenant"};
+    private boolean renewAllowed;
 
-	public final boolean hasUserCredentialsConfig() {
-		return fodUserCredentialsConfig!=null 
-				&& StringUtils.isNotEmpty(fodUserCredentialsConfig.getUser())
-				&& fodUserCredentialsConfig.getPassword()!=null;
-	}
-	
-	public final boolean hasClientCredentials() {
-		return fodClientCredentialsConfig!=null
-				&& StringUtils.isNotEmpty(fodClientCredentialsConfig.getClientId())
-				&& StringUtils.isNotEmpty(fodClientCredentialsConfig.getClientSecret());
-	}
+    public final boolean hasUserCredentialsConfig() {
+        return fodUserCredentialsConfig!=null 
+                && StringUtils.isNotEmpty(fodUserCredentialsConfig.getUser())
+                && fodUserCredentialsConfig.getPassword()!=null;
+    }
+    
+    public final boolean hasClientCredentials() {
+        return fodClientCredentialsConfig!=null
+                && StringUtils.isNotEmpty(fodClientCredentialsConfig.getClientId())
+                && StringUtils.isNotEmpty(fodClientCredentialsConfig.getClientSecret());
+    }
 }

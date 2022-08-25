@@ -35,29 +35,29 @@ import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
 public class SCSastAuthenticatedUnirestRunner extends AbstractSessionUnirestRunner<SCSastSessionData> {
-	@Override
-	protected void configure(String authSessionName, SCSastSessionData authSessionData, UnirestInstance unirestInstance) {
-		char[] token = authSessionData.getClientAuthToken();
-		if ( token==null ) {
-			throw new IllegalStateException("ScanCentral SAST client auth token not available, please login");
-		}
-		setTokenHeader(unirestInstance, token);
-		ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
-	}
-	
-	private final void setTokenHeader(UnirestInstance unirestInstance, char[] token) {
-		unirestInstance.config()
-			.setDefaultHeader("fortify-client", String.valueOf(token))
-			.setDefaultHeader("Accept", "application/json");
-	}
+    @Override
+    protected void configure(String authSessionName, SCSastSessionData authSessionData, UnirestInstance unirestInstance) {
+        char[] token = authSessionData.getClientAuthToken();
+        if ( token==null ) {
+            throw new IllegalStateException("ScanCentral SAST client auth token not available, please login");
+        }
+        setTokenHeader(unirestInstance, token);
+        ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
+    }
+    
+    private final void setTokenHeader(UnirestInstance unirestInstance, char[] token) {
+        unirestInstance.config()
+            .setDefaultHeader("fortify-client", String.valueOf(token))
+            .setDefaultHeader("Accept", "application/json");
+    }
 
-	@Override
-	public final String getSessionType() {
-		return SCSastConstants.SESSION_TYPE;
-	}
+    @Override
+    public final String getSessionType() {
+        return SCSastConstants.SESSION_TYPE;
+    }
 
-	@Override
-	protected Class<SCSastSessionData> getSessionDataClass() {
-		return SCSastSessionData.class;
-	}
+    @Override
+    protected Class<SCSastSessionData> getSessionDataClass() {
+        return SCSastSessionData.class;
+    }
 }

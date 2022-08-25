@@ -5,7 +5,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "session",
         subcommands = {
-        		SSCSessionListCommand.class,
+                SSCSessionListCommand.class,
                 SSCSessionLoginCommand.class,
                 SSCSessionLogoutCommand.class 
         }

@@ -33,14 +33,14 @@ import lombok.Data;
 
 @Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public final class SSCTokenResponse {
-	private SSCTokenResponse.SSCTokenData data;
-	@Data @ReflectiveAccess
-	public static final class SSCTokenData {
-		private int id;
-		private Date terminalDate;
-		private Date creationDate;
-		private String type;
-		private char[] token;
-		private String _href;
-	}
+    private SSCTokenResponse.SSCTokenData data;
+    @Data @ReflectiveAccess
+    public static final class SSCTokenData {
+        private int id;
+        private Date terminalDate;
+        private Date creationDate;
+        private String type;
+        private char[] token;
+        private String _href;
+    }
 }

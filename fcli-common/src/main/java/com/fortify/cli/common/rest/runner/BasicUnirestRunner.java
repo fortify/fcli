@@ -40,20 +40,20 @@ import lombok.Getter;
 //multiple commands in a composite command or workflow.
 @ReflectiveAccess
 public class BasicUnirestRunner {
-	@Getter @Inject private ObjectMapper objectMapper;
-	
-	private final UnirestInstance createUnirestInstance() {
-		UnirestInstance instance = Unirest.spawnInstance();
-		instance.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
-		return instance;
-	}
-	
-	public <R> R runWithUnirest(Function<UnirestInstance, R> runner) {
-		if ( runner == null ) {
-			throw new IllegalStateException("Unirest runner may not be null");
-		}
-		try ( var unirestInstance = createUnirestInstance() ) {
-			return runner.apply(unirestInstance);
-		}
-	}
+    @Getter @Inject private ObjectMapper objectMapper;
+    
+    private final UnirestInstance createUnirestInstance() {
+        UnirestInstance instance = Unirest.spawnInstance();
+        instance.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
+        return instance;
+    }
+    
+    public <R> R runWithUnirest(Function<UnirestInstance, R> runner) {
+        if ( runner == null ) {
+            throw new IllegalStateException("Unirest runner may not be null");
+        }
+        try ( var unirestInstance = createUnirestInstance() ) {
+            return runner.apply(unirestInstance);
+        }
+    }
 }

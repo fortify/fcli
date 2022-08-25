@@ -27,5 +27,5 @@ package com.fortify.cli.common.session.manager.api;
 import java.util.Collection;
 
 public interface ISessionSummaryProvider extends ISessionTypeProvider {
-	public Collection<SessionSummary> getSessionSummaries();
+    public Collection<SessionSummary> getSessionSummaries();
 }

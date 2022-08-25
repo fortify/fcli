@@ -35,35 +35,35 @@ import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
 public class SSCAuthenticatedUnirestRunner extends AbstractSessionUnirestRunner<SSCSessionData> {
-	@Override
-	protected void configure(String authSessionName, SSCSessionData authSessionData, UnirestInstance unirestInstance) {
-		char[] token = authSessionData.getActiveToken();
-		if ( token==null ) {
-			throw new IllegalStateException("SSC token not available or has expired, please login again");
-		}
-		setTokenHeader(unirestInstance, token);
-		setDefaultHeaders(unirestInstance);
-		ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
-	}
-	
-	private final void setTokenHeader(UnirestInstance unirestInstance, char[] token) {
-		final String authHeader = String.format("FortifyToken %s", String.valueOf(token));
-		unirestInstance.config().setDefaultHeader("Authorization", authHeader);
-	}
-	
-	private final void setDefaultHeaders(UnirestInstance unirestInstance) {
-		unirestInstance.config()
-			.setDefaultHeader("Accept", "application/json")
-			.setDefaultHeader("Content-Type", "application/json");
-	}
+    @Override
+    protected void configure(String authSessionName, SSCSessionData authSessionData, UnirestInstance unirestInstance) {
+        char[] token = authSessionData.getActiveToken();
+        if ( token==null ) {
+            throw new IllegalStateException("SSC token not available or has expired, please login again");
+        }
+        setTokenHeader(unirestInstance, token);
+        setDefaultHeaders(unirestInstance);
+        ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
+    }
+    
+    private final void setTokenHeader(UnirestInstance unirestInstance, char[] token) {
+        final String authHeader = String.format("FortifyToken %s", String.valueOf(token));
+        unirestInstance.config().setDefaultHeader("Authorization", authHeader);
+    }
+    
+    private final void setDefaultHeaders(UnirestInstance unirestInstance) {
+        unirestInstance.config()
+            .setDefaultHeader("Accept", "application/json")
+            .setDefaultHeader("Content-Type", "application/json");
+    }
 
-	@Override
-	public final String getSessionType() {
-		return SSCConstants.SESSION_TYPE;
-	}
+    @Override
+    public final String getSessionType() {
+        return SSCConstants.SESSION_TYPE;
+    }
 
-	@Override
-	protected Class<SSCSessionData> getSessionDataClass() {
-		return SSCSessionData.class;
-	}
+    @Override
+    protected Class<SSCSessionData> getSessionDataClass() {
+        return SSCSessionData.class;
+    }
 }

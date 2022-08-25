@@ -37,29 +37,29 @@ import lombok.Getter;
 
 @Singleton @ReflectiveAccess
 public class SSCSessionLogoutHandler implements ISessionLogoutHandler {
-	@Getter @Inject private SessionDataManager sessionDataManager;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
+    @Getter @Inject private SessionDataManager sessionDataManager;
+    @Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
 
-	@Override
-	public final void logout(String authSessionName) {
-		SSCSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, SSCSessionData.class);
-		if ( data!=null && data.hasActiveCachedTokenResponse() ) {
-			unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
-		}
-	}
-	
-	private final Void logout(UnirestInstance unirestInstance, SSCSessionData authSessionData) {
-		try {
-			// TODO Current SSC versions don't allow current token to be invalidated
-			// TODO Invalidate token if username/password are available in login  session data 
-		} catch ( RuntimeException e ) {
-			System.out.println("Error deserializing token:" + e.getMessage());
-		}
-		return null;
-	}
+    @Override
+    public final void logout(String authSessionName) {
+        SSCSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, SSCSessionData.class);
+        if ( data!=null && data.hasActiveCachedTokenResponse() ) {
+            unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
+        }
+    }
+    
+    private final Void logout(UnirestInstance unirestInstance, SSCSessionData authSessionData) {
+        try {
+            // TODO Current SSC versions don't allow current token to be invalidated
+            // TODO Invalidate token if username/password are available in login  session data 
+        } catch ( RuntimeException e ) {
+            System.out.println("Error deserializing token:" + e.getMessage());
+        }
+        return null;
+    }
 
-	@Override
-	public String getSessionType() {
-		return SSCConstants.SESSION_TYPE;
-	}
+    @Override
+    public String getSessionType() {
+        return SSCConstants.SESSION_TYPE;
+    }
 }

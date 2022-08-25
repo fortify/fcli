@@ -39,58 +39,58 @@ import lombok.EqualsAndHashCode;
 
 @Data @EqualsAndHashCode(callSuper = true)  @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public class SSCSessionData extends AbstractSessionData {
-	private char[] predefinedToken;
-	private SSCTokenResponse cachedTokenResponse;
-	
-	public SSCSessionData() {}
-	
-	public SSCSessionData(SSCSessionLoginConfig config) {
-		super(config.getConnectionConfig());
-		this.predefinedToken = config.getToken();
-	}
-	
-	public SSCSessionData(SSCSessionLoginConfig config, SSCTokenResponse cachedTokenResponse) {
-		this(config);
-		this.cachedTokenResponse = cachedTokenResponse;
-	}
-	
-	@JsonIgnore @Override
-	public String getSessionType() {
-		return SSCConstants.SESSION_TYPE;
-	}
-	
-	@JsonIgnore 
-	public final char[] getActiveToken() {
-		if ( hasActiveCachedTokenResponse() ) {
-			return getCachedTokenResponseData().getToken();
-		} else {
-			return predefinedToken;
-		}
-	}
-	
-	@JsonIgnore
-	public final boolean hasActiveCachedTokenResponse() {
-		return getCachedTokenResponseData()!=null && getCachedTokenResponseData().getTerminalDate().after(new Date()); 
-	}
-	
-	@JsonIgnore
-	private SSCTokenData getCachedTokenResponseData() {
-		return cachedTokenResponse==null || cachedTokenResponse.getData()==null 
-				? null
-				: cachedTokenResponse.getData();
-	}
-	
-	@JsonIgnore
-	private Date getCachedTokenTerminalDate() {
-		return getCachedTokenResponseData()==null ? null : getCachedTokenResponseData().getTerminalDate();
-	}
-	
-	@JsonIgnore
-	protected Date getSessionExpiryDate() {
-		Date sessionExpiryDate = SessionSummary.EXPIRES_UNKNOWN;
-		if ( getCachedTokenTerminalDate()!=null ) {
-			sessionExpiryDate = getCachedTokenTerminalDate();
-		}
-		return sessionExpiryDate;
-	}
+    private char[] predefinedToken;
+    private SSCTokenResponse cachedTokenResponse;
+    
+    public SSCSessionData() {}
+    
+    public SSCSessionData(SSCSessionLoginConfig config) {
+        super(config.getConnectionConfig());
+        this.predefinedToken = config.getToken();
+    }
+    
+    public SSCSessionData(SSCSessionLoginConfig config, SSCTokenResponse cachedTokenResponse) {
+        this(config);
+        this.cachedTokenResponse = cachedTokenResponse;
+    }
+    
+    @JsonIgnore @Override
+    public String getSessionType() {
+        return SSCConstants.SESSION_TYPE;
+    }
+    
+    @JsonIgnore 
+    public final char[] getActiveToken() {
+        if ( hasActiveCachedTokenResponse() ) {
+            return getCachedTokenResponseData().getToken();
+        } else {
+            return predefinedToken;
+        }
+    }
+    
+    @JsonIgnore
+    public final boolean hasActiveCachedTokenResponse() {
+        return getCachedTokenResponseData()!=null && getCachedTokenResponseData().getTerminalDate().after(new Date()); 
+    }
+    
+    @JsonIgnore
+    private SSCTokenData getCachedTokenResponseData() {
+        return cachedTokenResponse==null || cachedTokenResponse.getData()==null 
+                ? null
+                : cachedTokenResponse.getData();
+    }
+    
+    @JsonIgnore
+    private Date getCachedTokenTerminalDate() {
+        return getCachedTokenResponseData()==null ? null : getCachedTokenResponseData().getTerminalDate();
+    }
+    
+    @JsonIgnore
+    protected Date getSessionExpiryDate() {
+        Date sessionExpiryDate = SessionSummary.EXPIRES_UNKNOWN;
+        if ( getCachedTokenTerminalDate()!=null ) {
+            sessionExpiryDate = getCachedTokenTerminalDate();
+        }
+        return sessionExpiryDate;
+    }
 }

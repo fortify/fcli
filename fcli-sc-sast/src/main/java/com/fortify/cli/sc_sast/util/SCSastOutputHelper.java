@@ -4,12 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 
 public class SCSastOutputHelper {
-	public static final OutputConfig defaultTableOutputConfig() {
-		return OutputConfig.table().inputTransformer(SCSastOutputHelper::getItems);
-	}
-	
-	private static final JsonNode getItems(JsonNode input) {
-		// TODO Get actual contents
-		return input;
-	}
+    public static final OutputConfig defaultTableOutputConfig() {
+        return OutputConfig.table().inputTransformer(SCSastOutputHelper::getItems);
+    }
+    
+    private static final JsonNode getItems(JsonNode input) {
+        // TODO Get actual contents
+        return input;
+    }
 }

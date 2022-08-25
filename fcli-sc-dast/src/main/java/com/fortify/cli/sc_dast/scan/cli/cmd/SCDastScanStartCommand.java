@@ -112,7 +112,7 @@ public final class SCDastScanStartCommand extends AbstractSCDastUnirestRunnerCom
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-    	if(scanOptions == null){
+        if(scanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
                     "Error: No parameter found. Provide the required scan-settings identifier.");
         }

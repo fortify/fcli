@@ -25,6 +25,6 @@
 package com.fortify.cli.fod.session.manager;
 
 public interface IFoDClientCredentialsConfig {
-	String getClientId();
-	String getClientSecret();
+    String getClientId();
+    String getClientSecret();
 }

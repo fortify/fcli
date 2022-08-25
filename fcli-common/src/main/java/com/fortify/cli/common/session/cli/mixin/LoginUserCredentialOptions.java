@@ -30,9 +30,9 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 public class LoginUserCredentialOptions {
-	@Option(names = {"--user", "-u"}, required = true)
-	@Getter protected String user;
-	
-	@Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
-	@Getter protected char[] password;
+    @Option(names = {"--user", "-u"}, required = true)
+    @Getter protected String user;
+    
+    @Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
+    @Getter protected char[] password;
 }

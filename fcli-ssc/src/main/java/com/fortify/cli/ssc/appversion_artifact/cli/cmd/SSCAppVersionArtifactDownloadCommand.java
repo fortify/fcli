@@ -41,26 +41,26 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "download")
 public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter parentVersionHandler;
-	@CommandLine.Option(names = {"-f", "--dest"}, description = "The output location for the file download.")
-	String destination;
+    @CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter parentVersionHandler;
+    @CommandLine.Option(names = {"-f", "--dest"}, description = "The output location for the file download.")
+    String destination;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		SSCApplicationVersion av = parentVersionHandler.getApplicationAndVersion(unirest);
-		destination = destination != null ? destination : String.format("./scan_%s.fpr", av.getApplicationVersionId());
-		SSCFileTransferHelper.download(
-				unirest,
-				SSCUrls.DOWNLOAD_CURRENT_FPR(av.getApplicationVersionId(), false),
-				destination
-		);
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        SSCApplicationVersion av = parentVersionHandler.getApplicationAndVersion(unirest);
+        destination = destination != null ? destination : String.format("./scan_%s.fpr", av.getApplicationVersionId());
+        SSCFileTransferHelper.download(
+                unirest,
+                SSCUrls.DOWNLOAD_CURRENT_FPR(av.getApplicationVersionId(), false),
+                destination
+        );
 
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
-	}
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+    }
 }

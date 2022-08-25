@@ -48,7 +48,7 @@ public final class LanguageConfigManager {
         );
     }
 
-	public Locale getLocale() {
-		return isNullEmptyOrEn() ? new Locale("") : new Locale(getLanguage());
-	}
+    public Locale getLocale() {
+        return isNullEmptyOrEn() ? new Locale("") : new Locale(getLanguage());
+    }
 }

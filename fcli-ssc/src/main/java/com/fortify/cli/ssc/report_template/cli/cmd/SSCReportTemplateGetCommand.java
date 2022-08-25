@@ -40,19 +40,19 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "get")
 public class SSCReportTemplateGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
-	@CommandLine.Mixin private SSCReportTemplateIdMixin reportTemplateIdMixin;
+    @CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private SSCReportTemplateIdMixin reportTemplateIdMixin;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(
-				unirest.get(SSCUrls.REPORT_DEFINITION(reportTemplateIdMixin.getReportTemplateDefId(unirest))));
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#name#type:Report Type#templateDocId#inUse");
-	}
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(
+                unirest.get(SSCUrls.REPORT_DEFINITION(reportTemplateIdMixin.getReportTemplateDefId(unirest))));
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#name#type:Report Type#templateDocId#inUse");
+    }
 }

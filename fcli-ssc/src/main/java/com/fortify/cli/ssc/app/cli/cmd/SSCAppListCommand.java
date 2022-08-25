@@ -42,23 +42,23 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAppListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
-	@CommandLine.Mixin private SSCFilterMixin sscFilterMixin;
-	
-	@Option(names={"--name"}) @SSCFilterQParam
-	private String name;
-	
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(
-				sscFilterMixin.addFilterParams(unirest.get(SSCUrls.PROJECTS).queryString("limit","-1"))
-		);
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#name");
-	}
+    @CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private SSCFilterMixin sscFilterMixin;
+    
+    @Option(names={"--name"}) @SSCFilterQParam
+    private String name;
+    
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(
+                sscFilterMixin.addFilterParams(unirest.get(SSCUrls.PROJECTS).queryString("limit","-1"))
+        );
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#name");
+    }
 }

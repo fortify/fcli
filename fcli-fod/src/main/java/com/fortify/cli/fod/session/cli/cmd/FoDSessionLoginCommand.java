@@ -46,54 +46,54 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "login", sortOptions = false)
 public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionLoginConfig> {
-	@Getter @Inject private FoDSessionLoginHandler fodLoginHandler;
-	
-	@ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-connection-options.heading", order = 1)
-	@Getter private LoginConnectionOptions connectionOptions;
-	
-	@ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-authentication-options.heading", order = 2)
+    @Getter @Inject private FoDSessionLoginHandler fodLoginHandler;
+    
+    @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-connection-options.heading", order = 1)
+    @Getter private LoginConnectionOptions connectionOptions;
+    
+    @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-authentication-options.heading", order = 2)
     @Getter private FoDAuthOptions authOptions;
-	
-	static class FoDAuthOptions {
-		@ArgGroup(exclusive = true, multiplicity = "1", order = 3)
-	    @Getter private FoDCredentialOptions credentialOptions;
-	}
-	
+    
+    static class FoDAuthOptions {
+        @ArgGroup(exclusive = true, multiplicity = "1", order = 3)
+        @Getter private FoDCredentialOptions credentialOptions;
+    }
+    
     static class FoDCredentialOptions {
-    	@ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
-    	@Getter private FoDUserCredentialOptions userCredentialOptions = new FoDUserCredentialOptions();
-    	@ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
-    	@Getter private FoDClientCredentialOptions clientCredentialOptions = new FoDClientCredentialOptions();
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
+        @Getter private FoDUserCredentialOptions userCredentialOptions = new FoDUserCredentialOptions();
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
+        @Getter private FoDClientCredentialOptions clientCredentialOptions = new FoDClientCredentialOptions();
     }
     
     static class FoDUserCredentialOptions extends LoginUserCredentialOptions implements IFoDUserCredentialsConfig {
-    	@Option(names = {"--tenant"}, required = true) 
-    	@Getter private String tenant;
+        @Option(names = {"--tenant"}, required = true) 
+        @Getter private String tenant;
     }
     
     static class FoDClientCredentialOptions implements IFoDClientCredentialsConfig {
-    	@Option(names = {"--client-id"}, required = true) 
-    	@Getter private String clientId;
-    	@Option(names = {"--client-secret"}, required = true, interactive = true, arity = "0..1", echo = false) 
-    	@Getter private String clientSecret;
+        @Option(names = {"--client-id"}, required = true) 
+        @Getter private String clientId;
+        @Option(names = {"--client-secret"}, required = true, interactive = true, arity = "0..1", echo = false) 
+        @Getter private String clientSecret;
     }
-	
-	@Override
-	protected String getSessionType() {
-		return FoDConstants.SESSION_TYPE;
-	}
-	
-	@Override
-	protected final FoDSessionLoginConfig getLoginConfig() {
-		FoDSessionLoginConfig config = new FoDSessionLoginConfig();
-		config.setConnectionConfig(getConnectionOptions());
-		Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getUserCredentialOptions).ifPresent(config::setFodUserCredentialsConfig);
-		Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getClientCredentialOptions).ifPresent(config::setFodClientCredentialsConfig);
-		return config;
-	}
+    
+    @Override
+    protected String getSessionType() {
+        return FoDConstants.SESSION_TYPE;
+    }
+    
+    @Override
+    protected final FoDSessionLoginConfig getLoginConfig() {
+        FoDSessionLoginConfig config = new FoDSessionLoginConfig();
+        config.setConnectionConfig(getConnectionOptions());
+        Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getUserCredentialOptions).ifPresent(config::setFodUserCredentialsConfig);
+        Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getClientCredentialOptions).ifPresent(config::setFodClientCredentialsConfig);
+        return config;
+    }
 
-	@Override
-	protected ISessionLoginHandler<FoDSessionLoginConfig> getLoginHandler() {
-		return fodLoginHandler;
-	}
+    @Override
+    protected ISessionLoginHandler<FoDSessionLoginConfig> getLoginHandler() {
+        return fodLoginHandler;
+    }
 }

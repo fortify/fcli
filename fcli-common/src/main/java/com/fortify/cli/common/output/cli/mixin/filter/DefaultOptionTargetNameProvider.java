@@ -14,16 +14,16 @@ import picocli.CommandLine.Option;
  *
  */
 public class DefaultOptionTargetNameProvider implements IOptionTargetNameProvider {
-	@Override
-	public String getOptionTargetName(OptionSpec optionSpec) {
-		return getOptionTargetName((Field)optionSpec.userObject());
-	}
-	
-	public String getOptionTargetName(Field field) {
-		OptionTargetName annotation = field.getAnnotation(OptionTargetName.class);
-		if ( annotation!=null && annotation.value()!=null) {
-			return annotation.value();
-		}
-		return field.getName();
-	}
+    @Override
+    public String getOptionTargetName(OptionSpec optionSpec) {
+        return getOptionTargetName((Field)optionSpec.userObject());
+    }
+    
+    public String getOptionTargetName(Field field) {
+        OptionTargetName annotation = field.getAnnotation(OptionTargetName.class);
+        if ( annotation!=null && annotation.value()!=null) {
+            return annotation.value();
+        }
+        return field.getName();
+    }
 }

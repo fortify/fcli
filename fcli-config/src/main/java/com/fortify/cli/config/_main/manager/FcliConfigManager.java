@@ -48,74 +48,74 @@ import lombok.SneakyThrows;
 // TODO Use SneakThrows or use proper exception handling?
 @Singleton
 public class FcliConfigManager {
-	private static final Path CONFIG_PATH = Paths.get("config.json");
-	private final ObjectMapper objectMapper; 
-	private final Map<String,String> config = new HashMap<>();
-	private boolean dirty = false;
-	
-	@Inject
-	public FcliConfigManager(ObjectMapper objectMapper) {
-		this.objectMapper = objectMapper;
-		load();
-	}
-	
-	public void set(String name, String value) {
-		config.put(name, value);
-		dirty = true;
-	}
-	
-	public String get(String name) {
-		return config.get(name);
-	}
-	
-	public boolean contains(String name) {
-		return config.containsKey(name);
-	}
-	
-	public Map<String,String> all() {
-		return Collections.unmodifiableMap(config);
-	}
-	
-	@SneakyThrows
-	private void load() {
-		String configString = FcliHomeHelper.readFile(CONFIG_PATH, false);
-		if ( StringUtils.isNotEmpty(configString) ) {
-			loadFromJson(configString);
-		}
-	}
+    private static final Path CONFIG_PATH = Paths.get("config.json");
+    private final ObjectMapper objectMapper; 
+    private final Map<String,String> config = new HashMap<>();
+    private boolean dirty = false;
+    
+    @Inject
+    public FcliConfigManager(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+        load();
+    }
+    
+    public void set(String name, String value) {
+        config.put(name, value);
+        dirty = true;
+    }
+    
+    public String get(String name) {
+        return config.get(name);
+    }
+    
+    public boolean contains(String name) {
+        return config.containsKey(name);
+    }
+    
+    public Map<String,String> all() {
+        return Collections.unmodifiableMap(config);
+    }
+    
+    @SneakyThrows
+    private void load() {
+        String configString = FcliHomeHelper.readFile(CONFIG_PATH, false);
+        if ( StringUtils.isNotEmpty(configString) ) {
+            loadFromJson(configString);
+        }
+    }
 
-	@PreDestroy @SneakyThrows
-	public void save() {
-		if ( dirty ) {
-			FcliHomeHelper.saveFile(CONFIG_PATH, getAsJson());
-		}
-		dirty = false;
-	}
-	
-	@SneakyThrows
-	private final String getAsJson() {
-		List<ConfigProperty> configPropertyList = config.entrySet().stream().map(this::mapEntryToConfigProperty).collect(Collectors.toList());
-		return objectMapper.writeValueAsString(configPropertyList);
-	}
-	
-	@SneakyThrows
-	private void loadFromJson(String configString) {
-		config.clear();
-		ConfigProperty[] configPropertyArray = objectMapper.readValue(configString, ConfigProperty[].class);
-		Stream.of(configPropertyArray).forEach(this::addMapEntry);
-	}
-	
-	private final ConfigProperty mapEntryToConfigProperty(Map.Entry<String, String> entry) {
-		return new ConfigProperty(entry.getKey(), entry.getValue());
-	}
-	
-	private final void addMapEntry(ConfigProperty configProperty) {
-		config.put(configProperty.getKey(), configProperty.getValue()); 
-	}
-	
-	@Data @AllArgsConstructor @NoArgsConstructor
-	@ReflectiveAccess
-	protected static final class ConfigProperty {
-		private String key, value;
-	}
+    @PreDestroy @SneakyThrows
+    public void save() {
+        if ( dirty ) {
+            FcliHomeHelper.saveFile(CONFIG_PATH, getAsJson());
+        }
+        dirty = false;
+    }
+    
+    @SneakyThrows
+    private final String getAsJson() {
+        List<ConfigProperty> configPropertyList = config.entrySet().stream().map(this::mapEntryToConfigProperty).collect(Collectors.toList());
+        return objectMapper.writeValueAsString(configPropertyList);
+    }
+    
+    @SneakyThrows
+    private void loadFromJson(String configString) {
+        config.clear();
+        ConfigProperty[] configPropertyArray = objectMapper.readValue(configString, ConfigProperty[].class);
+        Stream.of(configPropertyArray).forEach(this::addMapEntry);
+    }
+    
+    private final ConfigProperty mapEntryToConfigProperty(Map.Entry<String, String> entry) {
+        return new ConfigProperty(entry.getKey(), entry.getValue());
+    }
+    
+    private final void addMapEntry(ConfigProperty configProperty) {
+        config.put(configProperty.getKey(), configProperty.getValue()); 
+    }
+    
+    @Data @AllArgsConstructor @NoArgsConstructor
+    @ReflectiveAccess
+    protected static final class ConfigProperty {
+        private String key, value;
+    }
 }

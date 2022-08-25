@@ -48,8 +48,8 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list", description = "List scan settings on ScanCentral DAST")
 public class SCDastScanSettingsListCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-		
-		@ArgGroup(exclusive = false, headingKey = "arggroup.specific-scan-setting-options.heading", order = 1)
+        
+        @ArgGroup(exclusive = false, headingKey = "arggroup.specific-scan-setting-options.heading", order = 1)
         private SCDastGetScanSettingsOptions scanSettingsOptions;
 
         @ArgGroup(exclusive = false, headingKey = "arggroup.list-scan-settings-options.heading", order = 2)
@@ -58,29 +58,29 @@ public class SCDastScanSettingsListCommand extends AbstractSCDastUnirestRunnerCo
 
         @Mixin private OutputMixin outputMixin;
 
-		@ReflectiveAccess
-		public static class SCDastGetScanSettingsOptions {
-		    @Option(names = {"-i", "--id", "--scan-settings-id"})
-		    @Getter private String scanSettingsId;
-		}
-		
-		@ReflectiveAccess
-		public static class SCDastGetScanSettingsListOptions {
-		    @Option(names = {"-t","--text","--search-text"})
-		    @Getter private String searchText;
+        @ReflectiveAccess
+        public static class SCDastGetScanSettingsOptions {
+            @Option(names = {"-i", "--id", "--scan-settings-id"})
+            @Getter private String scanSettingsId;
+        }
+        
+        @ReflectiveAccess
+        public static class SCDastGetScanSettingsListOptions {
+            @Option(names = {"-t","--text","--search-text"})
+            @Getter private String searchText;
 
-		    @Option(names = {"--start","--start-date"})
-		    @Getter private String startDate;
+            @Option(names = {"--start","--start-date"})
+            @Getter private String startDate;
 
-		    @Option(names = {"--end","--end-date"})
-		    @Getter private String endDate;
+            @Option(names = {"--end","--end-date"})
+            @Getter private String endDate;
 
-		    private enum ScanTypes {Standard, WorkflowDriven, AMI}
-		    @Option(names = {"--type","--scan-type"})
-		    @Getter private ScanTypes scanType;
-		}
-		
-		@SneakyThrows
+            private enum ScanTypes {Standard, WorkflowDriven, AMI}
+            @Option(names = {"--type","--scan-type"})
+            @Getter private ScanTypes scanType;
+        }
+        
+        @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
             String urlPath = "/api/v2/application-version-scan-settings/scan-settings-summary-list?" ;
 
@@ -89,50 +89,50 @@ public class SCDastScanSettingsListCommand extends AbstractSCDastUnirestRunnerCo
             } else {
                 if(scanSettingsListOptions != null){
                     if (scanSettingsListOptions.getSearchText() != null){
-						urlPath += String.format("searchText=%s&",scanSettingsListOptions.getSearchText());
+                        urlPath += String.format("searchText=%s&",scanSettingsListOptions.getSearchText());
                     }
                     if(scanSettingsListOptions.getStartDate() != null){
-						urlPath += String.format("modifiedStartDate=%s&",scanSettingsListOptions.getStartDate());
+                        urlPath += String.format("modifiedStartDate=%s&",scanSettingsListOptions.getStartDate());
                     }
                     if(scanSettingsListOptions.getEndDate() != null){
-						urlPath += String.format("modifiedEndDate=%s&",scanSettingsListOptions.getEndDate());
+                        urlPath += String.format("modifiedEndDate=%s&",scanSettingsListOptions.getEndDate());
                     }
                     if(scanSettingsListOptions.getScanType() != null){
-						urlPath += String.format("scanType=%s&",scanSettingsListOptions.getScanType());
+                        urlPath += String.format("scanType=%s&",scanSettingsListOptions.getScanType());
                     }
                 }
             }
 
-			try {
-				outputMixin.write(unirest.get(urlPath)
-						.accept("application/json")
-						.header("Content-Type", "application/json"));
-			} catch (UnexpectedHttpResponseException e) {
-				ObjectNode output = new ObjectMapper().createObjectNode();
-				String escapedPath = urlPath
-						.replace("/","\\/")
-						.replace("?","\\?");
-				Pattern pattern = Pattern.compile("(?<="+escapedPath+": )(?<code>\\d{3})\\W(?<text>.*)");
-				Matcher matcher = pattern.matcher(e.getMessage());
-				String fields;
-				if(matcher.find()){
-					output.put("statusCode", matcher.group("code"));
-					output.put("statusText", matcher.group("text"));
-					fields = "statusCode#statusText#message";
-				} else {
-					output.put("statusText", "Error");
-					fields = "statusText#message";
-				}
-				output.put("message",e.getLocalizedMessage());
-				outputMixin.overrideOutputFields(fields);
+            try {
+                outputMixin.write(unirest.get(urlPath)
+                        .accept("application/json")
+                        .header("Content-Type", "application/json"));
+            } catch (UnexpectedHttpResponseException e) {
+                ObjectNode output = new ObjectMapper().createObjectNode();
+                String escapedPath = urlPath
+                        .replace("/","\\/")
+                        .replace("?","\\?");
+                Pattern pattern = Pattern.compile("(?<="+escapedPath+": )(?<code>\\d{3})\\W(?<text>.*)");
+                Matcher matcher = pattern.matcher(e.getMessage());
+                String fields;
+                if(matcher.find()){
+                    output.put("statusCode", matcher.group("code"));
+                    output.put("statusText", matcher.group("text"));
+                    fields = "statusCode#statusText#message";
+                } else {
+                    output.put("statusText", "Error");
+                    fields = "statusText#message";
+                }
+                output.put("message",e.getLocalizedMessage());
+                outputMixin.overrideOutputFields(fields);
 
-				outputMixin.write(output);
-			}
+                outputMixin.write(output);
+            }
             return null;
         }
-		
-		@Override
-		public OutputConfig getOutputOptionsWriterConfig() {
-			return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns("id#name#cicdToken:Settings Id#");
-		}
+        
+        @Override
+        public OutputConfig getOutputOptionsWriterConfig() {
+            return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns("id#name#cicdToken:Settings Id#");
+        }
 }

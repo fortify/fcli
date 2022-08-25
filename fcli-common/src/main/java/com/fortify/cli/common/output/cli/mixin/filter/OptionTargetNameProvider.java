@@ -16,5 +16,5 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface OptionTargetNameProvider {
-	Class<? extends IOptionTargetNameProvider> value();	
+    Class<? extends IOptionTargetNameProvider> value(); 
 }

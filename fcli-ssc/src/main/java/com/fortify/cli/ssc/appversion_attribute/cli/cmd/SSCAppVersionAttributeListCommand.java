@@ -44,36 +44,36 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAppVersionAttributeListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
-	@CommandLine.Mixin private OutputMixin outputMixin;
-	
-	@Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
+    @CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
+    @CommandLine.Mixin private OutputMixin outputMixin;
+    
+    @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
     private String id;
-	
-	@Option(names={"--category"}) @OutputFilter @AddAsDefaultColumn
+    
+    @Option(names={"--category"}) @OutputFilter @AddAsDefaultColumn
     private String category;
-	
-	@Option(names={"--guid"}) @OutputFilter @AddAsDefaultColumn
+    
+    @Option(names={"--guid"}) @OutputFilter @AddAsDefaultColumn
     private String guid;
-	
-	@Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
+    
+    @Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
     private String name;
-	
-	@Option(names={"--value"}) @OutputFilter @AddAsDefaultColumn
+    
+    @Option(names={"--value"}) @OutputFilter @AddAsDefaultColumn
     private String valueString;
-	
-	// TODO Add the ability to filter on a single value?
-	
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(new SSCAppVersionAttributeListHelper()
-				.execute(unirest, parentVersionHandler.getApplicationVersionId(unirest)));
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns(outputMixin.getDefaultColumns());
-	}
+    
+    // TODO Add the ability to filter on a single value?
+    
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(new SSCAppVersionAttributeListHelper()
+                .execute(unirest, parentVersionHandler.getApplicationVersionId(unirest)));
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns(outputMixin.getDefaultColumns());
+    }
 }

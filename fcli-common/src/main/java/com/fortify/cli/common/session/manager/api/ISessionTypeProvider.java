@@ -25,5 +25,5 @@
 package com.fortify.cli.common.session.manager.api;
 
 public interface ISessionTypeProvider {
-	public String getSessionType();
+    public String getSessionType();
 }

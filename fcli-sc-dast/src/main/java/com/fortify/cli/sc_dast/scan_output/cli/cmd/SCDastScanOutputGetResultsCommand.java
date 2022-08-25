@@ -47,60 +47,60 @@ import picocli.CommandLine.Spec;
 @ReflectiveAccess
 @Command(name = "get-results", description = "Get scan results from ScanCentral DAST")
 public class SCDastScanOutputGetResultsCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-		@Spec CommandSpec spec;
-		@ArgGroup(exclusive = false, headingKey = "arggroup.download-results-options.heading", order = 1)
-		private SCDastScanResultsOptions scanResultsOptions;
+        @Spec CommandSpec spec;
+        @ArgGroup(exclusive = false, headingKey = "arggroup.download-results-options.heading", order = 1)
+        private SCDastScanResultsOptions scanResultsOptions;
 
-		@Mixin private OutputMixin outputMixin;
+        @Mixin private OutputMixin outputMixin;
 
-		@ReflectiveAccess
-		public static class SCDastScanResultsOptions {
-			@Option(names = { "-i", "--id", "--scan-id" }, required = true)
-			@Getter private int scanId;
+        @ReflectiveAccess
+        public static class SCDastScanResultsOptions {
+            @Option(names = { "-i", "--id", "--scan-id" }, required = true)
+            @Getter private int scanId;
 
-			@Option(names = { "-w", "--wait", "--wait-completion" }, defaultValue = "false")
-			@Getter private boolean waitCompletion;
+            @Option(names = { "-w", "--wait", "--wait-completion" }, defaultValue = "false")
+            @Getter private boolean waitCompletion;
 
-			@Option(names = { "--interval", "--wait-interval" }, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-			@Getter private int waitInterval;
+            @Option(names = { "--interval", "--wait-interval" }, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+            @Getter private int waitInterval;
 
-			@Option(names = { "--detailed" }, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-			@Getter private boolean detailed;
-		}
+            @Option(names = { "--detailed" }, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+            @Getter private boolean detailed;
+        }
 
-		@SneakyThrows
-		protected Void runWithUnirest(UnirestInstance unirest) {
-			SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-			if (scanResultsOptions == null) {
-				throw new CommandLine.ParameterException(spec.commandLine(),
-						"Error: No parameter found. Provide the required scan id.");
-			}
-			if ( scanResultsOptions.isWaitCompletion()) {
-				if (scanResultsOptions.isDetailed()) {
-					actionsHandler.waitCompletionWithDetails(scanResultsOptions.getScanId(),
-							scanResultsOptions.getWaitInterval());
-				} else {
-					actionsHandler.waitCompletion(scanResultsOptions.getScanId(), scanResultsOptions.getWaitInterval());
-				}
-			}
+        @SneakyThrows
+        protected Void runWithUnirest(UnirestInstance unirest) {
+            SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
+            if (scanResultsOptions == null) {
+                throw new CommandLine.ParameterException(spec.commandLine(),
+                        "Error: No parameter found. Provide the required scan id.");
+            }
+            if ( scanResultsOptions.isWaitCompletion()) {
+                if (scanResultsOptions.isDetailed()) {
+                    actionsHandler.waitCompletionWithDetails(scanResultsOptions.getScanId(),
+                            scanResultsOptions.getWaitInterval());
+                } else {
+                    actionsHandler.waitCompletion(scanResultsOptions.getScanId(), scanResultsOptions.getWaitInterval());
+                }
+            }
 
-			JsonNode response = actionsHandler.getScanResults(scanResultsOptions.getScanId());
+            JsonNode response = actionsHandler.getScanResults(scanResultsOptions.getScanId());
 
-			if( response.has("statusCode") ) {
-				outputMixin.overrideOutputFields("statusCode#statusText#message");
-			}
+            if( response.has("statusCode") ) {
+                outputMixin.overrideOutputFields("statusCode#statusText#message");
+            }
 
-			outputMixin.write(response);
+            outputMixin.write(response);
 
-			return null;
-		}
+            return null;
+        }
 
-		@Override
-		public OutputConfig getOutputOptionsWriterConfig() {
-			return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns(
-					"criticalCount:Critical#" +
-	                "highCount:High#" +
-	                "mediumCount:Medium#" +
-	                "lowCount:Low");
-		}
+        @Override
+        public OutputConfig getOutputOptionsWriterConfig() {
+            return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns(
+                    "criticalCount:Critical#" +
+                    "highCount:High#" +
+                    "mediumCount:Medium#" +
+                    "lowCount:Low");
+        }
 }

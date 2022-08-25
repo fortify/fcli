@@ -38,36 +38,36 @@ import lombok.EqualsAndHashCode;
 
 @Data @EqualsAndHashCode(callSuper = true) @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public class FoDSessionData extends AbstractSessionData {
-	private FoDTokenResponse cachedTokenResponse;
-	
-	public FoDSessionData() {}
-	
-	public FoDSessionData(FoDSessionLoginConfig loginConfig, FoDTokenResponse tokenResponse) {
-		super(loginConfig.getConnectionConfig());
-		this.cachedTokenResponse = tokenResponse;
-	}
-	
-	@JsonIgnore @Override
-	public String getSessionType() {
-		return FoDConstants.SESSION_TYPE;
-	}
-	
-	@JsonIgnore
-	public final boolean hasActiveCachedTokenResponse() {
-		return getCachedTokenResponse()!=null && cachedTokenResponse.isActive(); 
-	}
-	
-	@JsonIgnore 
-	public String getActiveBearerToken() {
-		return hasActiveCachedTokenResponse() ? cachedTokenResponse.getAccessToken() : null; 
-	}
-	
-	@JsonIgnore @Override
-	protected Date getSessionExpiryDate() {
-		Date sessionExpiryDate = SessionSummary.EXPIRES_UNKNOWN;
-		if ( getCachedTokenResponse()!=null ) {
-			sessionExpiryDate = new Date(getCachedTokenResponse().getExpiresAt());
-		}
-		return sessionExpiryDate;
-	}
+    private FoDTokenResponse cachedTokenResponse;
+    
+    public FoDSessionData() {}
+    
+    public FoDSessionData(FoDSessionLoginConfig loginConfig, FoDTokenResponse tokenResponse) {
+        super(loginConfig.getConnectionConfig());
+        this.cachedTokenResponse = tokenResponse;
+    }
+    
+    @JsonIgnore @Override
+    public String getSessionType() {
+        return FoDConstants.SESSION_TYPE;
+    }
+    
+    @JsonIgnore
+    public final boolean hasActiveCachedTokenResponse() {
+        return getCachedTokenResponse()!=null && cachedTokenResponse.isActive(); 
+    }
+    
+    @JsonIgnore 
+    public String getActiveBearerToken() {
+        return hasActiveCachedTokenResponse() ? cachedTokenResponse.getAccessToken() : null; 
+    }
+    
+    @JsonIgnore @Override
+    protected Date getSessionExpiryDate() {
+        Date sessionExpiryDate = SessionSummary.EXPIRES_UNKNOWN;
+        if ( getCachedTokenResponse()!=null ) {
+            sessionExpiryDate = new Date(getCachedTokenResponse().getExpiresAt());
+        }
+        return sessionExpiryDate;
+    }
 }

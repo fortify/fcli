@@ -25,10 +25,10 @@
 package com.fortify.cli.common.rest.runner;
 
 public interface IConnectionConfig {
-	String  getUrl();
-	String  getProxyHost();
-	Integer getProxyPort();
-	String  getProxyUser();
-	char[]  getProxyPassword();
-	boolean isInsecureModeEnabled();
+    String  getUrl();
+    String  getProxyHost();
+    Integer getProxyPort();
+    String  getProxyUser();
+    char[]  getProxyPassword();
+    boolean isInsecureModeEnabled();
 }

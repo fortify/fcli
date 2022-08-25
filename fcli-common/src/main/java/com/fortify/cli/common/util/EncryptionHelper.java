@@ -28,22 +28,22 @@ import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.jasypt.iv.RandomIvGenerator;
 
 public class EncryptionHelper {
-	private static final StandardPBEStringEncryptor encryptor = createAES256TextEncryptor();
-	public static final String encrypt(String source) {
-		if ( source==null ) { return null; }
-		return encryptor.encrypt(source);
-	}
+    private static final StandardPBEStringEncryptor encryptor = createAES256TextEncryptor();
+    public static final String encrypt(String source) {
+        if ( source==null ) { return null; }
+        return encryptor.encrypt(source);
+    }
 
-	public static final String decrypt(String source) {
-		if ( source==null ) { return null; }
-		return encryptor.decrypt(source);
-	}
-	
-	private static final StandardPBEStringEncryptor createAES256TextEncryptor() {
-		var encryptor = new StandardPBEStringEncryptor();
+    public static final String decrypt(String source) {
+        if ( source==null ) { return null; }
+        return encryptor.decrypt(source);
+    }
+    
+    private static final StandardPBEStringEncryptor createAES256TextEncryptor() {
+        var encryptor = new StandardPBEStringEncryptor();
         encryptor.setAlgorithm("PBEWithHMACSHA512AndAES_256");
         encryptor.setIvGenerator(new RandomIvGenerator());
         encryptor.setPassword("ds$%YTjdwaf#$47672dfdsGVFDa");
         return encryptor;
-	}
+    }
 }

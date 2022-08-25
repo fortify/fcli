@@ -31,15 +31,15 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 public class SessionNameMixin {
-	@ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
+    @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
     @Getter private SessionConsumerNameOptions nameOptions;
-	
-	static class SessionConsumerNameOptions {
-		@Option(names = {"--session"}, required = false, defaultValue = "default")
-		@Getter private String sessionName;
-	}
-	
-	public String getSessionName() {
-		return nameOptions==null ? "default" : nameOptions.getSessionName();
-	}
+    
+    static class SessionConsumerNameOptions {
+        @Option(names = {"--session"}, required = false, defaultValue = "default")
+        @Getter private String sessionName;
+    }
+    
+    public String getSessionName() {
+        return nameOptions==null ? "default" : nameOptions.getSessionName();
+    }
 }

@@ -7,7 +7,7 @@ import picocli.CommandLine.Command;
         aliases = {},
         subcommands = {
                 SSCPluginInstallCommand.class,
-        		SSCPluginUninstallCommand.class,
+                SSCPluginUninstallCommand.class,
                 SSCPluginEnableCommand.class,
                 SSCPluginDisableCommand.class,
                 SSCPluginGetCommand.class,

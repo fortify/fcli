@@ -29,14 +29,14 @@ import com.fortify.cli.common.output.transform.IJsonNodeTransformer;
 import com.fortify.cli.common.util.JsonHelper;
 
 public class JsonPathTransformer implements IJsonNodeTransformer {
-	private final String jsonPathExpression;
-	
-	public JsonPathTransformer(String jsonPathExpression) {
-		this.jsonPathExpression = jsonPathExpression;
-	}
+    private final String jsonPathExpression;
+    
+    public JsonPathTransformer(String jsonPathExpression) {
+        this.jsonPathExpression = jsonPathExpression;
+    }
 
-	@Override
-	public JsonNode transform(JsonNode input) {
-		return JsonHelper.evaluateJsonPath(input, jsonPathExpression, JsonNode.class);
-	}
+    @Override
+    public JsonNode transform(JsonNode input) {
+        return JsonHelper.evaluateJsonPath(input, jsonPathExpression, JsonNode.class);
+    }
 }

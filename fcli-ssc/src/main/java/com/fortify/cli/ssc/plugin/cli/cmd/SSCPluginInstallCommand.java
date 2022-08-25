@@ -54,91 +54,91 @@ import java.nio.file.Path;
 @ReflectiveAccess
 @Command(name = "install", aliases = {"add"})
 public class SSCPluginInstallCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@Mixin private OutputMixin outputMixin;
+    @Mixin private OutputMixin outputMixin;
 
-	@Option(names = {"-f", "--file"}, required = true)
-	private File pluginJarFile;
+    @Option(names = {"-f", "--file"}, required = true)
+    private File pluginJarFile;
 
-	@Option(names = {"--no-auto-enable"}, defaultValue = "false")
-	private Boolean noAutoEnable;
+    @Option(names = {"--no-auto-enable"}, defaultValue = "false")
+    private Boolean noAutoEnable;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		SSCUploadResponse uploadResponse = SSCFileTransferHelper.upload(
-				unirest,
-				SSCUrls.UPLOAD_PLUGIN,
-				pluginJarFile.getPath().toString()
-		);
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        SSCUploadResponse uploadResponse = SSCFileTransferHelper.upload(
+                unirest,
+                SSCUrls.UPLOAD_PLUGIN,
+                pluginJarFile.getPath().toString()
+        );
 
-		int id = checkSuccess(uploadResponse, unirest);
-		enablePlugin(unirest, id);
+        int id = checkSuccess(uploadResponse, unirest);
+        enablePlugin(unirest, id);
 
-		outputMixin.write(
-				unirest.get(SSCUrls.PLUGIN(Integer.toString(id)))
-		);
-		return null;
-	}
+        outputMixin.write(
+                unirest.get(SSCUrls.PLUGIN(Integer.toString(id)))
+        );
+        return null;
+    }
 
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
-	}
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
+    }
 
-	public String getPluginXml(Path zipFile) throws IOException {
-		try (FileSystem fileSystem = FileSystems.newFileSystem(zipFile, null)) {
-			Path fileToExtract = fileSystem.getPath("plugin.xml");
-			String pluginXml = Files.readString(fileToExtract);
-			return pluginXml;
-		}
-	}
+    public String getPluginXml(Path zipFile) throws IOException {
+        try (FileSystem fileSystem = FileSystems.newFileSystem(zipFile, null)) {
+            Path fileToExtract = fileSystem.getPath("plugin.xml");
+            String pluginXml = Files.readString(fileToExtract);
+            return pluginXml;
+        }
+    }
 
-	@SneakyThrows
-	private int checkSuccess(SSCUploadResponse uploadResponse, UnirestInstance unirest){
-		XmlMapper mapper = new XmlMapper();
-		SSCPluginXmlPlugin pluginXmlObj = mapper.readValue(getPluginXml(pluginJarFile.toPath()), SSCPluginXmlPlugin.class);
+    @SneakyThrows
+    private int checkSuccess(SSCUploadResponse uploadResponse, UnirestInstance unirest){
+        XmlMapper mapper = new XmlMapper();
+        SSCPluginXmlPlugin pluginXmlObj = mapper.readValue(getPluginXml(pluginJarFile.toPath()), SSCPluginXmlPlugin.class);
 
-		if(!uploadResponse.msg.value.toLowerCase().contains("success"))
-			throw new RuntimeException(String.format("Plugin upload not successful:\n\tCODE: %s\n\tMSG: %s", uploadResponse.code.value, uploadResponse.msg.value.replace("\n"," ")));
+        if(!uploadResponse.msg.value.toLowerCase().contains("success"))
+            throw new RuntimeException(String.format("Plugin upload not successful:\n\tCODE: %s\n\tMSG: %s", uploadResponse.code.value, uploadResponse.msg.value.replace("\n"," ")));
 
-		String id = "-1";
-		int timesChecked=0;
-		String searchQuery = String.format("$.data[?(@.pluginId == \"%s\")]", pluginXmlObj.id);
-		while(true) {
-			long millis = System.currentTimeMillis();
-			HttpResponse response = unirest.get(SSCUrls.PLUGINS)
-					.queryString("orderBy","-id")
-					.queryString("limit","-1").asObject(ObjectNode.class);
+        String id = "-1";
+        int timesChecked=0;
+        String searchQuery = String.format("$.data[?(@.pluginId == \"%s\")]", pluginXmlObj.id);
+        while(true) {
+            long millis = System.currentTimeMillis();
+            HttpResponse response = unirest.get(SSCUrls.PLUGINS)
+                    .queryString("orderBy","-id")
+                    .queryString("limit","-1").asObject(ObjectNode.class);
 
-			String candidate = JsonPath.parse(response.getBody().toString()).read(searchQuery).toString();
+            String candidate = JsonPath.parse(response.getBody().toString()).read(searchQuery).toString();
 
-			if(candidate != null && !candidate.isBlank())
-				id = JsonPath.parse(candidate).read("$.[0].id").toString();
+            if(candidate != null && !candidate.isBlank())
+                id = JsonPath.parse(candidate).read("$.[0].id").toString();
 
-			if(timesChecked > 5 || !id.equals("-1"))
-				break;
+            if(timesChecked > 5 || !id.equals("-1"))
+                break;
 
-			timesChecked += 1;
-			Thread.sleep(1000 - millis % 1000);
-		}
+            timesChecked += 1;
+            Thread.sleep(1000 - millis % 1000);
+        }
 
-		if(id.equals("-1")){
-			System.out.println("The plugin uploaded successfully, but fcli timed-out when trying to verify that the plugin has installed correctly. Please login to SSC to verify that the plugin has installed successfully.");
-			System.exit(1);
-		}
+        if(id.equals("-1")){
+            System.out.println("The plugin uploaded successfully, but fcli timed-out when trying to verify that the plugin has installed correctly. Please login to SSC to verify that the plugin has installed successfully.");
+            System.exit(1);
+        }
 
-		return Integer.parseInt(id);
-	}
+        return Integer.parseInt(id);
+    }
 
-	private void enablePlugin(UnirestInstance unirest, int pluginId){
-		ObjectNode plugins = new ObjectMapper().createObjectNode();
-		plugins.putArray("pluginIds").add(pluginId);
+    private void enablePlugin(UnirestInstance unirest, int pluginId){
+        ObjectNode plugins = new ObjectMapper().createObjectNode();
+        plugins.putArray("pluginIds").add(pluginId);
 
-		HttpResponse response = null;
-		if(!noAutoEnable){
-			response = unirest.post(SSCUrls.PLUGINS_ACTION_ENABLE)
-					.body(plugins.toString())
-					.contentType("application/json").asObject(ObjectNode.class);
-		}
-	}
+        HttpResponse response = null;
+        if(!noAutoEnable){
+            response = unirest.post(SSCUrls.PLUGINS_ACTION_ENABLE)
+                    .body(plugins.toString())
+                    .contentType("application/json").asObject(ObjectNode.class);
+        }
+    }
 }

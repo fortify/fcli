@@ -25,5 +25,5 @@
 package com.fortify.cli.common.session.manager.spi;
 
 public interface ISessionLoginHandler<C> {
-	public void login(String authSessionName, C loginConfigData);
+    public void login(String authSessionName, C loginConfigData);
 }

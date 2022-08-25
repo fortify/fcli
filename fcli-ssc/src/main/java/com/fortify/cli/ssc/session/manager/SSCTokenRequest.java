@@ -36,8 +36,8 @@ import lombok.NoArgsConstructor;
 
 @Data @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
 public final class SSCTokenRequest {
-	private String type;
-	private String description;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") 
-	private OffsetDateTime terminalDate;
+    private String type;
+    private String description;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") 
+    private OffsetDateTime terminalDate;
 }

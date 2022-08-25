@@ -35,15 +35,15 @@ import jakarta.inject.Inject;
 import lombok.Getter;
 
 public abstract class AbstractSessionSummaryProvider implements ISessionSummaryProvider {
-	@Getter @Inject private SessionDataManager sessionDataManager;
-	
-	@Override
-	public Collection<SessionSummary> getSessionSummaries() {
-		return getSessionDataManager()
-				.list(getSessionType()).stream()
-				.map(this::getSessionSummary)
-				.collect(Collectors.toList());
-	}
-	
-	protected abstract SessionSummary getSessionSummary(String sessionName);
+    @Getter @Inject private SessionDataManager sessionDataManager;
+    
+    @Override
+    public Collection<SessionSummary> getSessionSummaries() {
+        return getSessionDataManager()
+                .list(getSessionType()).stream()
+                .map(this::getSessionSummary)
+                .collect(Collectors.toList());
+    }
+    
+    protected abstract SessionSummary getSessionSummary(String sessionName);
 }

@@ -5,7 +5,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "session",
         subcommands = {
-        		FoDSessionListCommand.class,
+                FoDSessionListCommand.class,
                 FoDSessionLoginCommand.class,
                 FoDSessionLogoutCommand.class 
         }

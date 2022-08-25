@@ -5,7 +5,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "appversion-artifact",
         subcommands = {
-        	SSCAppVersionArtifactListCommand.class,
+            SSCAppVersionArtifactListCommand.class,
             SSCAppVersionArtifactDownloadCommand.class
         }
 )

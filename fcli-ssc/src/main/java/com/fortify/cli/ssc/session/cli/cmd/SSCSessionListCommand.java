@@ -31,8 +31,8 @@ import picocli.CommandLine.Command;
 
 @Command(name = "list", sortOptions = false, resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages")
 public class SSCSessionListCommand extends AbstractSessionListCommand {
-	@Override
-	public final String getSessionType() {
-		return SSCConstants.SESSION_TYPE;
-	}
+    @Override
+    public final String getSessionType() {
+        return SSCConstants.SESSION_TYPE;
+    }
 }

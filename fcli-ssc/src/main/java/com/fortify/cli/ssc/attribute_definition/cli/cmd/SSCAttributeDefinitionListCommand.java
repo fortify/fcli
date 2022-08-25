@@ -45,38 +45,38 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAttributeDefinitionListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
-	@CommandLine.Mixin private SSCFilterMixin sscFilterMixin;
-	
-	@Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
-	private Integer id;
-	
-	@Option(names={"--category"}) @SSCFilterQParam @AddAsDefaultColumn
-	private SSCAttributeDefinitionCategory category;
-	
-	@Option(names={"--guid"}) @SSCFilterQParam @AddAsDefaultColumn
-	private String guid;
-	
-	@Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
-	private String name;
-	
-	@Option(names={"--type"}) @SSCFilterQParam @AddAsDefaultColumn
-	private SSCAttributeDefinitionType type;
-	
-	@Option(names={"--required"}, arity = "1") @SSCFilterQParam @AddAsDefaultColumn
-	private Boolean required;
+    @CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private SSCFilterMixin sscFilterMixin;
+    
+    @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
+    private Integer id;
+    
+    @Option(names={"--category"}) @SSCFilterQParam @AddAsDefaultColumn
+    private SSCAttributeDefinitionCategory category;
+    
+    @Option(names={"--guid"}) @SSCFilterQParam @AddAsDefaultColumn
+    private String guid;
+    
+    @Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
+    private String name;
+    
+    @Option(names={"--type"}) @SSCFilterQParam @AddAsDefaultColumn
+    private SSCAttributeDefinitionType type;
+    
+    @Option(names={"--required"}, arity = "1") @SSCFilterQParam @AddAsDefaultColumn
+    private Boolean required;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(
-				sscFilterMixin.addFilterParams(unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name"))
-		);
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns(outputMixin.getDefaultColumns());
-	}
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(
+                sscFilterMixin.addFilterParams(unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name"))
+        );
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns(outputMixin.getDefaultColumns());
+    }
 }

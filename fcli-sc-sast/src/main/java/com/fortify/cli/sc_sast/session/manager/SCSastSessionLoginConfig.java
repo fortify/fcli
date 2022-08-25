@@ -31,6 +31,6 @@ import lombok.Data;
 
 @Data
 public class SCSastSessionLoginConfig implements IConnectionConfigProvider {
-	private IConnectionConfig connectionConfig;
-	private char[] clientAuthToken;
+    private IConnectionConfig connectionConfig;
+    private char[] clientAuthToken;
 }

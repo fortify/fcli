@@ -36,18 +36,18 @@ import lombok.Getter;
 //      multiple commands in a composite command or workflow.
 @ReflectiveAccess
 public abstract class AbstractConfigurableUnirestRunner {
-	@Getter @Inject private ConnectionConfigUnirestRunner unirestRunner;
-	
-	public <R> R runWithUnirest(IConnectionConfig connectionConfig, Function<UnirestInstance, R> runner) {
-		return unirestRunner.runWithUnirest(connectionConfig, unirest -> {
-			configure(unirest);
-			return runner.apply(unirest);
-		});
-	}
+    @Getter @Inject private ConnectionConfigUnirestRunner unirestRunner;
+    
+    public <R> R runWithUnirest(IConnectionConfig connectionConfig, Function<UnirestInstance, R> runner) {
+        return unirestRunner.runWithUnirest(connectionConfig, unirest -> {
+            configure(unirest);
+            return runner.apply(unirest);
+        });
+    }
 
-	/**
-	 * Subclasses must implement this method to perform any additional configuration of the given
-	 * {@link UnirestInstance}.
-	 */
-	protected abstract void configure(UnirestInstance unirestInstance);
+    /**
+     * Subclasses must implement this method to perform any additional configuration of the given
+     * {@link UnirestInstance}.
+     */
+    protected abstract void configure(UnirestInstance unirestInstance);
 }

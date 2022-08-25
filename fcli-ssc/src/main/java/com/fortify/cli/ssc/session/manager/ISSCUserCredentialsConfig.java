@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.session.manager;
 import java.time.OffsetDateTime;
 
 public interface ISSCUserCredentialsConfig {
-	String getUser();
-	char[] getPassword();
-	OffsetDateTime getExpiresAt();
+    String getUser();
+    char[] getPassword();
+    OffsetDateTime getExpiresAt();
 }

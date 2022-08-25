@@ -31,8 +31,8 @@ import picocli.CommandLine.Command;
 
 @Command(name = "list", sortOptions = false)
 public class FoDSessionListCommand extends AbstractSessionListCommand {
-	@Override
-	public final String getSessionType() {
-		return FoDConstants.SESSION_TYPE;
-	}
+    @Override
+    public final String getSessionType() {
+        return FoDConstants.SESSION_TYPE;
+    }
 }

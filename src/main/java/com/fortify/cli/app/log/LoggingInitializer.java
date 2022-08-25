@@ -49,45 +49,45 @@ import picocli.CommandLine.Mixin;
  */
 @Singleton
 public class LoggingInitializer implements IFortifyCLIInitializer {
-	private static final PrintWriter DUMMY_WRITER = new PrintWriter(new StringWriter());
-	
-	/**
-	 * Configure logging based on the provided command line arguments.
-	 * @param args Arguments passed on the command line
-	 */
-	public static final void initializeLogging(String[] args) {
-		CommandLine commandLine = new CommandLine(SetupLoggingCommand.class)
-				.setOut(DUMMY_WRITER)
-				.setErr(DUMMY_WRITER)
-				.setUnmatchedArgumentsAllowed(true)
-				.setUnmatchedOptionsArePositionalParams(true)
-				.setDefaultValueProvider(new FortifyCLIDefaultValueProvider())
-				.setExpandAtFiles(true);
-		commandLine.execute(args);
-	}
+    private static final PrintWriter DUMMY_WRITER = new PrintWriter(new StringWriter());
+    
+    /**
+     * Configure logging based on the provided command line arguments.
+     * @param args Arguments passed on the command line
+     */
+    public static final void initializeLogging(String[] args) {
+        CommandLine commandLine = new CommandLine(SetupLoggingCommand.class)
+                .setOut(DUMMY_WRITER)
+                .setErr(DUMMY_WRITER)
+                .setUnmatchedArgumentsAllowed(true)
+                .setUnmatchedOptionsArePositionalParams(true)
+                .setDefaultValueProvider(new FortifyCLIDefaultValueProvider())
+                .setExpandAtFiles(true);
+        commandLine.execute(args);
+    }
 
-	@Override
-	public void initializeFortifyCLI(String[] args) {
-		initializeLogging(args);
-	}
+    @Override
+    public void initializeFortifyCLI(String[] args) {
+        initializeLogging(args);
+    }
 
-	/**
-	 * {@link Command} implementation for setting up logging, based on the
-	 * options and functionality provided by {@link LoggingMixin}.
-	 * 
-	 * @author Ruud Senden
-	 */
-	@Command()
-	public static final class SetupLoggingCommand implements Runnable {
-		@Mixin LoggingMixin loggingMixin;
-		
-		/**
-		 * Configure logging by calling the {@link LoggingMixin#configureLogging()}
-		 * method.
-		 */
-		@Override
-		public void run() {
-			loggingMixin.configureLogging();
-		}
-	}
+    /**
+     * {@link Command} implementation for setting up logging, based on the
+     * options and functionality provided by {@link LoggingMixin}.
+     * 
+     * @author Ruud Senden
+     */
+    @Command()
+    public static final class SetupLoggingCommand implements Runnable {
+        @Mixin LoggingMixin loggingMixin;
+        
+        /**
+         * Configure logging by calling the {@link LoggingMixin#configureLogging()}
+         * method.
+         */
+        @Override
+        public void run() {
+            loggingMixin.configureLogging();
+        }
+    }
 }

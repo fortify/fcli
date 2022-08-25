@@ -38,35 +38,35 @@ import lombok.Data;
 
 @Data
 public class SSCSessionLoginConfig implements IConnectionConfigProvider {
-	private IConnectionConfig connectionConfig;
-	private ISSCUserCredentialsConfig sscUserCredentialsConfig;
-	private char[] token;
-	
-	public void setToken(char[] token) {
-		this.token = token==null ? null : toBase64Token(token);
-	}
-	
-	/**
-	 * Make sure that we're using a Base64 encoded token as required by SSC
-	 * @param token Encoded or non-encoded token
-	 * @return Base64 encoded token
-	 */
-	private final char[] toBase64Token(char[] token) {
-		final byte[] tokenBytes = toByteArray(token);
-		final byte[] encodedToken = Base64.isBase64(tokenBytes) ? tokenBytes : Base64.encodeBase64(tokenBytes);
-		return StandardCharsets.UTF_8.decode(ByteBuffer.wrap(encodedToken)).array();
-	}
-	
-	private final byte[] toByteArray(char[] input) {
-		ByteBuffer bb = StandardCharsets.UTF_8.encode(CharBuffer.wrap(input));
-		byte[] result = new byte[bb.remaining()];
-		bb.get(result);
-		return result;
-	}
+    private IConnectionConfig connectionConfig;
+    private ISSCUserCredentialsConfig sscUserCredentialsConfig;
+    private char[] token;
+    
+    public void setToken(char[] token) {
+        this.token = token==null ? null : toBase64Token(token);
+    }
+    
+    /**
+     * Make sure that we're using a Base64 encoded token as required by SSC
+     * @param token Encoded or non-encoded token
+     * @return Base64 encoded token
+     */
+    private final char[] toBase64Token(char[] token) {
+        final byte[] tokenBytes = toByteArray(token);
+        final byte[] encodedToken = Base64.isBase64(tokenBytes) ? tokenBytes : Base64.encodeBase64(tokenBytes);
+        return StandardCharsets.UTF_8.decode(ByteBuffer.wrap(encodedToken)).array();
+    }
+    
+    private final byte[] toByteArray(char[] input) {
+        ByteBuffer bb = StandardCharsets.UTF_8.encode(CharBuffer.wrap(input));
+        byte[] result = new byte[bb.remaining()];
+        bb.get(result);
+        return result;
+    }
 
-	public final boolean hasUserCredentialsConfig() {
-		return sscUserCredentialsConfig!=null 
-				&& StringUtils.isNotEmpty(sscUserCredentialsConfig.getUser())
-				&& sscUserCredentialsConfig.getPassword()!=null;
-	}
+    public final boolean hasUserCredentialsConfig() {
+        return sscUserCredentialsConfig!=null 
+                && StringUtils.isNotEmpty(sscUserCredentialsConfig.getUser())
+                && sscUserCredentialsConfig.getPassword()!=null;
+    }
 }

@@ -42,27 +42,27 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 @Command(name = "update")
 public class SSCAppVersionAttributeUpdateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@Mixin private SSCApplicationVersionIdMixin.For parentVersionMixin;
-	@Mixin private SSCAppVersionAttributeUpdateMixin attributeUpdateMixin;
-	@Mixin private OutputMixin outputMixin;
-	
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		SSCAttributeDefinitionHelper helper = new SSCAttributeDefinitionHelper(unirest);
-		String applicationVersionId = parentVersionMixin.getApplicationVersionId(unirest);
-		outputMixin.write(
-			new SSCAppVersionAttributeListHelper()
-				.attributeDefinitionHelper(helper)
-				.request("attrUpdate", attributeUpdateMixin.getAttributeUpdateRequest(unirest, helper, applicationVersionId))
-				.attrIdsToInclude(attributeUpdateMixin.getAttributeIds(helper))
-				.execute(unirest, applicationVersionId));
-		
-		return null;
-	}
+    @Mixin private SSCApplicationVersionIdMixin.For parentVersionMixin;
+    @Mixin private SSCAppVersionAttributeUpdateMixin attributeUpdateMixin;
+    @Mixin private OutputMixin outputMixin;
+    
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        SSCAttributeDefinitionHelper helper = new SSCAttributeDefinitionHelper(unirest);
+        String applicationVersionId = parentVersionMixin.getApplicationVersionId(unirest);
+        outputMixin.write(
+            new SSCAppVersionAttributeListHelper()
+                .attributeDefinitionHelper(helper)
+                .request("attrUpdate", attributeUpdateMixin.getAttributeUpdateRequest(unirest, helper, applicationVersionId))
+                .attrIdsToInclude(attributeUpdateMixin.getAttributeIds(helper))
+                .execute(unirest, applicationVersionId));
+        
+        return null;
+    }
 
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-			.defaultColumns("id#category#guid#name#valueString");
-	}
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+            .defaultColumns("id#category#guid#name#valueString");
+    }
 }

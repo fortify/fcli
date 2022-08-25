@@ -39,34 +39,34 @@ import picocli.CommandLine.Option;
 
 @Command(name = "login", sortOptions = false)
 public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSastSessionLoginConfig> {
-	@Getter @Inject private SCSastSessionLoginHandler scSastLoginHandler;
-	
-	@ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.sc-sast-connection-options.heading", order = 1)
-	@Getter private LoginConnectionOptions connectionOptions;
-	
-	@ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.sc-sast-authentication-options.heading", order = 2)
+    @Getter @Inject private SCSastSessionLoginHandler scSastLoginHandler;
+    
+    @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.sc-sast-connection-options.heading", order = 1)
+    @Getter private LoginConnectionOptions connectionOptions;
+    
+    @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.sc-sast-authentication-options.heading", order = 2)
     @Getter private SCSastAuthOptions authOptions;
-	
-	static class SCSastAuthOptions {
-		@Option(names = {"--client-auth-token", "-t"}, required = true, interactive = true, arity = "0..1", echo = false) 
-    	@Getter private char[] clientAuthToken;
-	}
-	
-	@Override
-	protected String getSessionType() {
-		return SCSastConstants.SESSION_TYPE;
-	}
-	
-	@Override
-	protected final SCSastSessionLoginConfig getLoginConfig() {
-		SCSastSessionLoginConfig config = new SCSastSessionLoginConfig();
-		config.setConnectionConfig(getConnectionOptions());
-		config.setClientAuthToken(authOptions.clientAuthToken);
-		return config;
-	}
-	
-	@Override
-	protected ISessionLoginHandler<SCSastSessionLoginConfig> getLoginHandler() {
-		return scSastLoginHandler;
-	}
+    
+    static class SCSastAuthOptions {
+        @Option(names = {"--client-auth-token", "-t"}, required = true, interactive = true, arity = "0..1", echo = false) 
+        @Getter private char[] clientAuthToken;
+    }
+    
+    @Override
+    protected String getSessionType() {
+        return SCSastConstants.SESSION_TYPE;
+    }
+    
+    @Override
+    protected final SCSastSessionLoginConfig getLoginConfig() {
+        SCSastSessionLoginConfig config = new SCSastSessionLoginConfig();
+        config.setConnectionConfig(getConnectionOptions());
+        config.setClientAuthToken(authOptions.clientAuthToken);
+        return config;
+    }
+    
+    @Override
+    protected ISessionLoginHandler<SCSastSessionLoginConfig> getLoginHandler() {
+        return scSastLoginHandler;
+    }
 }

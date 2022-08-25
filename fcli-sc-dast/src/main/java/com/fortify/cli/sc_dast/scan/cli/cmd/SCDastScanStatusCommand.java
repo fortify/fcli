@@ -47,42 +47,42 @@ import picocli.CommandLine.Spec;
 @ReflectiveAccess
 @Command(name = "status")
 public class SCDastScanStatusCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-		@Spec CommandSpec spec;
+        @Spec CommandSpec spec;
 
-		@ArgGroup(exclusive = false, headingKey = "arggroup.status-scan-options.heading", order = 1)
+        @ArgGroup(exclusive = false, headingKey = "arggroup.status-scan-options.heading", order = 1)
         @Getter private SCDastGetScanStatusOptions scanStatusOptions;
 
         @Mixin
         @Getter private OutputMixin outputMixin;
-		
-		@ReflectiveAccess
-		public static class SCDastGetScanStatusOptions {
-		    @Option(names = {"-i","--id", "--scan-id"}, required = true)
-		    @Getter private int scanId;
-		}
-		
-		@SneakyThrows
+        
+        @ReflectiveAccess
+        public static class SCDastGetScanStatusOptions {
+            @Option(names = {"-i","--id", "--scan-id"}, required = true)
+            @Getter private int scanId;
+        }
+        
+        @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest) {
-			if(scanStatusOptions == null){
-				throw new CommandLine.ParameterException(spec.commandLine(),
-						"Error: No parameter found. Provide the required scan id.");
-			}
+            if(scanStatusOptions == null){
+                throw new CommandLine.ParameterException(spec.commandLine(),
+                        "Error: No parameter found. Provide the required scan id.");
+            }
             SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
 
-			JsonNode response = actionsHandler.getScanStatus(scanStatusOptions.getScanId());
+            JsonNode response = actionsHandler.getScanStatus(scanStatusOptions.getScanId());
 
-			if( response.has("statusCode") ) {
-				outputMixin.overrideOutputFields("statusCode#statusText#message");
-			}
+            if( response.has("statusCode") ) {
+                outputMixin.overrideOutputFields("statusCode#statusText#message");
+            }
 
             outputMixin.write(response);
             return null;
         }
-		
-		@Override
-		public OutputConfig getOutputOptionsWriterConfig() {
-			return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns(
-					"scanStatusType:Scan status type" +
-					"#scanStatusTypeString:Scan status");
-		}
+        
+        @Override
+        public OutputConfig getOutputOptionsWriterConfig() {
+            return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns(
+                    "scanStatusType:Scan status type" +
+                    "#scanStatusTypeString:Scan status");
+        }
 }

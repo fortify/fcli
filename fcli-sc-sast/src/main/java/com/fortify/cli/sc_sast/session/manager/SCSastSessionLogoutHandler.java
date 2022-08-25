@@ -35,15 +35,15 @@ import lombok.Getter;
 
 @Singleton @ReflectiveAccess
 public class SCSastSessionLogoutHandler implements ISessionLogoutHandler {
-	@Getter @Inject private SessionDataManager sessionDataManager;
+    @Getter @Inject private SessionDataManager sessionDataManager;
 
-	@Override
-	public final void logout(String authSessionName) {
-		// Nothing to do; client auth token is a static token that connot be logged out from
-	}
-	
-	@Override
-	public String getSessionType() {
-		return SCSastConstants.SESSION_TYPE;
-	}
+    @Override
+    public final void logout(String authSessionName) {
+        // Nothing to do; client auth token is a static token that connot be logged out from
+    }
+    
+    @Override
+    public String getSessionType() {
+        return SCSastConstants.SESSION_TYPE;
+    }
 }

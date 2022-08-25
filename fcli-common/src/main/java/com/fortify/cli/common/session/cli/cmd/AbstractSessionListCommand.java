@@ -34,11 +34,11 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 public abstract class AbstractSessionListCommand implements Runnable, ISessionTypeProvider {
-	@Inject private SessionSummaryManager sessionSummaryManager;
-	@Mixin private OutputMixin outputMixin;
+    @Inject private SessionSummaryManager sessionSummaryManager;
+    @Mixin private OutputMixin outputMixin;
 
-	@Override
-	public void run() {
-		sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
-	}
+    @Override
+    public void run() {
+        sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
+    }
 }

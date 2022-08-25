@@ -39,28 +39,28 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 @ReflectiveAccess
 @Command(name = "generate-answerFile", aliases = {"gen-answer"})
 public class SSCReportTemplateGenerateAnswerFileCommand implements Runnable {
-	String templateFileName = "ReportTemplateDefAnswerTemplate.yml";
+    String templateFileName = "ReportTemplateDefAnswerTemplate.yml";
 
-	@CommandLine.Option(names = {"-f"}, defaultValue = "./ReportTemplateDefAnswerTemplate.yml")
-	private String filePath;
+    @CommandLine.Option(names = {"-f"}, defaultValue = "./ReportTemplateDefAnswerTemplate.yml")
+    private String filePath;
 
-	@CommandLine.Option(names = {"--force"}, defaultValue = "false")
-	private Boolean overwrite;
+    @CommandLine.Option(names = {"--force"}, defaultValue = "false")
+    private Boolean overwrite;
 
-	/**
-	 * Create a template yaml file (the answer file) so that the user can provide the needed information for  creating a
-	 * new report template definition. This is an alternative to using the "create" command with a ton of options,
-	 * parameters, and whatnot.
-	 */
-	@SneakyThrows
-	@Override
-	public void run() {
-		InputStream internalCopy = this.getClass().getClassLoader().getResourceAsStream("com/fortify/cli/ssc/report_template/" + templateFileName);
-		Path outputFile = new File(filePath).toPath();
-		if(Files.notExists(outputFile) || overwrite.booleanValue()){
-			Files.copy(internalCopy, outputFile , REPLACE_EXISTING);
-		}else {
-			System.out.println("File exists. Use --force if you want to overwrite.");
-		}
-	}
+    /**
+     * Create a template yaml file (the answer file) so that the user can provide the needed information for  creating a
+     * new report template definition. This is an alternative to using the "create" command with a ton of options,
+     * parameters, and whatnot.
+     */
+    @SneakyThrows
+    @Override
+    public void run() {
+        InputStream internalCopy = this.getClass().getClassLoader().getResourceAsStream("com/fortify/cli/ssc/report_template/" + templateFileName);
+        Path outputFile = new File(filePath).toPath();
+        if(Files.notExists(outputFile) || overwrite.booleanValue()){
+            Files.copy(internalCopy, outputFile , REPLACE_EXISTING);
+        }else {
+            System.out.println("File exists. Use --force if you want to overwrite.");
+        }
+    }
 }

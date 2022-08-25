@@ -27,6 +27,6 @@ package com.fortify.cli.common.output.writer;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public interface IRecordWriter {
-	public void writeRecord(ObjectNode record);
-	default void finishOutput() {}
+    public void writeRecord(ObjectNode record);
+    default void finishOutput() {}
 }

@@ -35,28 +35,28 @@ import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
 public class FoDAuthenticatedUnirestRunner extends AbstractSessionUnirestRunner<FoDSessionData> {
-	@Override
-	protected void configure(String authSessionName, FoDSessionData authSessionData, UnirestInstance unirestInstance) {
-		String token = authSessionData.getActiveBearerToken();
-		if ( token==null ) {
-			throw new IllegalStateException("FoD token not available or has expired, please login again");
-		}
-		setBearerHeader(unirestInstance, token);
-		ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
-	}
-	
-	private final void setBearerHeader(UnirestInstance unirestInstance, String token) {
-		final String authHeader = String.format("Bearer %s", token);
-		unirestInstance.config().setDefaultHeader("Authorization", authHeader);
-	}
+    @Override
+    protected void configure(String authSessionName, FoDSessionData authSessionData, UnirestInstance unirestInstance) {
+        String token = authSessionData.getActiveBearerToken();
+        if ( token==null ) {
+            throw new IllegalStateException("FoD token not available or has expired, please login again");
+        }
+        setBearerHeader(unirestInstance, token);
+        ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
+    }
+    
+    private final void setBearerHeader(UnirestInstance unirestInstance, String token) {
+        final String authHeader = String.format("Bearer %s", token);
+        unirestInstance.config().setDefaultHeader("Authorization", authHeader);
+    }
 
-	@Override
-	public final String getSessionType() {
-		return FoDConstants.SESSION_TYPE;
-	}
+    @Override
+    public final String getSessionType() {
+        return FoDConstants.SESSION_TYPE;
+    }
 
-	@Override
-	protected Class<FoDSessionData> getSessionDataClass() {
-		return FoDSessionData.class;
-	}
+    @Override
+    protected Class<FoDSessionData> getSessionDataClass() {
+        return FoDSessionData.class;
+    }
 }

@@ -38,17 +38,17 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 @Command(name = "rest")
 public final class SCSastRestCommand extends AbstractSCSastUnirestRunnerCommand implements IOutputConfigSupplier {
-	@Mixin private OutputMixin outputMixin;
-	@Mixin private RestMixin restMixin;
-	
-	@Override
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(restMixin.prepareRequest(unirest));
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return new OutputConfig().defaultFormat(OutputFormat.json);
-	}
+    @Mixin private OutputMixin outputMixin;
+    @Mixin private RestMixin restMixin;
+    
+    @Override
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(restMixin.prepareRequest(unirest));
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return new OutputConfig().defaultFormat(OutputFormat.json);
+    }
 }

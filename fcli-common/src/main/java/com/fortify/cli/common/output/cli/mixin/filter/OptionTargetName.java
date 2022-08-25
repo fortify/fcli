@@ -16,5 +16,5 @@ import picocli.CommandLine.Option;
 @Retention(RUNTIME)
 @Target(FIELD)
 public @interface OptionTargetName {
-	String value();
+    String value();
 }

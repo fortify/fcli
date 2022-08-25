@@ -56,110 +56,110 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
  *
  */
 public class JsonHelper {
-	private static final ObjectMapper objectMapper = _createObjectMapper();
-	private final ParseContext parseContext;
-	private static final JsonHelper INSTANCE = new JsonHelper();
+    private static final ObjectMapper objectMapper = _createObjectMapper();
+    private final ParseContext parseContext;
+    private static final JsonHelper INSTANCE = new JsonHelper();
 
-	public JsonHelper() {
-		this.parseContext = JsonPath.using(Configuration.builder()
-				.jsonProvider(new JacksonJsonNodeJsonProvider(objectMapper))
-				.mappingProvider(new JacksonMappingProvider(objectMapper))
-				.options(EnumSet.noneOf(Option.class))
-				.build());
-	}
-	
-	private static final ObjectMapper _createObjectMapper() {
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    public JsonHelper() {
+        this.parseContext = JsonPath.using(Configuration.builder()
+                .jsonProvider(new JacksonJsonNodeJsonProvider(objectMapper))
+                .mappingProvider(new JacksonMappingProvider(objectMapper))
+                .options(EnumSet.noneOf(Option.class))
+                .build());
+    }
+    
+    private static final ObjectMapper _createObjectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
         objectMapper.configure(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS, true);
         return objectMapper;
-	}
+    }
 
-	@SuppressWarnings("unchecked")
-	public static final <R> R evaluateJsonPath(Object input, String path, Class<R> returnClass) {
-		DocumentContext context = INSTANCE.parseContext.parse(input);
-		if ( !ObjectNode.class.isAssignableFrom(returnClass) ) {
-			return context.read(path, returnClass);
-		} else {
-			JsonNode jsonNode = context.read(path, JsonNode.class);
-			if ( jsonNode instanceof ObjectNode ) {
-				return (R)jsonNode;
-			} else if ( jsonNode==null || !jsonNode.isArray() || jsonNode.size()>1 ) {
-				throw new IllegalStateException("Unable to get ObjectNode for JSONPath "+path+", json node: "+jsonNode);
-			} else if ( jsonNode.size()==0 ) {
-				// What to return here; null, empty ObjectNode, NullNode?
-				return null;
-			} else {
-				return (R)jsonNode.get(0);
-			}
-		}
-	}
-	
-	public static final ObjectNode getFirstObjectNode(JsonNode input) {
-		if ( input instanceof ObjectNode ) {
-			return (ObjectNode)input;
-		} else if ( input instanceof ArrayNode ) {
-			ArrayNode array = (ArrayNode)input;
-			if ( array.size()==0 ) { return null; }
-			JsonNode node = array.get(0);
-			if ( node instanceof ObjectNode ) {
-				return (ObjectNode)node;
-			}
-		}
-		throw new IllegalArgumentException("Input must be an ObjectNode or array of ObjectNodes");
-	}
+    @SuppressWarnings("unchecked")
+    public static final <R> R evaluateJsonPath(Object input, String path, Class<R> returnClass) {
+        DocumentContext context = INSTANCE.parseContext.parse(input);
+        if ( !ObjectNode.class.isAssignableFrom(returnClass) ) {
+            return context.read(path, returnClass);
+        } else {
+            JsonNode jsonNode = context.read(path, JsonNode.class);
+            if ( jsonNode instanceof ObjectNode ) {
+                return (R)jsonNode;
+            } else if ( jsonNode==null || !jsonNode.isArray() || jsonNode.size()>1 ) {
+                throw new IllegalStateException("Unable to get ObjectNode for JSONPath "+path+", json node: "+jsonNode);
+            } else if ( jsonNode.size()==0 ) {
+                // What to return here; null, empty ObjectNode, NullNode?
+                return null;
+            } else {
+                return (R)jsonNode.get(0);
+            }
+        }
+    }
+    
+    public static final ObjectNode getFirstObjectNode(JsonNode input) {
+        if ( input instanceof ObjectNode ) {
+            return (ObjectNode)input;
+        } else if ( input instanceof ArrayNode ) {
+            ArrayNode array = (ArrayNode)input;
+            if ( array.size()==0 ) { return null; }
+            JsonNode node = array.get(0);
+            if ( node instanceof ObjectNode ) {
+                return (ObjectNode)node;
+            }
+        }
+        throw new IllegalArgumentException("Input must be an ObjectNode or array of ObjectNodes");
+    }
 
-	public static final JsonNode filterJsonNode (JsonNode node, Set<String> outputFields){
-		Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields();
-		while (nodeFields.hasNext()) {
-			Map.Entry<String, JsonNode> nodeField = nodeFields.next();
-			if( !outputFields.contains(nodeField.getKey())) { nodeFields.remove(); }
-		}
+    public static final JsonNode filterJsonNode (JsonNode node, Set<String> outputFields){
+        Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields();
+        while (nodeFields.hasNext()) {
+            Map.Entry<String, JsonNode> nodeField = nodeFields.next();
+            if( !outputFields.contains(nodeField.getKey())) { nodeFields.remove(); }
+        }
 
-		return node;
-	}
-	
-	public static final Iterable<JsonNode> iterable(ArrayNode arrayNode) {
-		Iterator<JsonNode> iterator = arrayNode.iterator();
-		return () -> iterator;
-	}
-	
-	public static final Stream<JsonNode> stream(ArrayNode arrayNode) {
-		return StreamSupport.stream(iterable(arrayNode).spliterator(), false);
-	}
-	
-	public static final ArrayNodeCollector arrayNodeCollector() {
-		return new ArrayNodeCollector();
-	}
-	
-	private static final class ArrayNodeCollector implements Collector<JsonNode, ArrayNode, ArrayNode> {
-	    @Override
-	    public Supplier<ArrayNode> supplier() {
-	        return objectMapper::createArrayNode;
-	    }
+        return node;
+    }
+    
+    public static final Iterable<JsonNode> iterable(ArrayNode arrayNode) {
+        Iterator<JsonNode> iterator = arrayNode.iterator();
+        return () -> iterator;
+    }
+    
+    public static final Stream<JsonNode> stream(ArrayNode arrayNode) {
+        return StreamSupport.stream(iterable(arrayNode).spliterator(), false);
+    }
+    
+    public static final ArrayNodeCollector arrayNodeCollector() {
+        return new ArrayNodeCollector();
+    }
+    
+    private static final class ArrayNodeCollector implements Collector<JsonNode, ArrayNode, ArrayNode> {
+        @Override
+        public Supplier<ArrayNode> supplier() {
+            return objectMapper::createArrayNode;
+        }
 
-	    @Override
-	    public BiConsumer<ArrayNode, JsonNode> accumulator() {
-	        return ArrayNode::add;
-	    }
+        @Override
+        public BiConsumer<ArrayNode, JsonNode> accumulator() {
+            return ArrayNode::add;
+        }
 
-	    @Override
-	    public BinaryOperator<ArrayNode> combiner() {
-	        return (x, y) -> {
-	            x.addAll(y);
-	            return x;
-	        };
-	    }
+        @Override
+        public BinaryOperator<ArrayNode> combiner() {
+            return (x, y) -> {
+                x.addAll(y);
+                return x;
+            };
+        }
 
-	    @Override
-	    public Function<ArrayNode, ArrayNode> finisher() {
-	        return accumulator -> accumulator;
-	    }
+        @Override
+        public Function<ArrayNode, ArrayNode> finisher() {
+            return accumulator -> accumulator;
+        }
 
-	    @Override
-	    public Set<Characteristics> characteristics() {
-	        return EnumSet.of(Characteristics.UNORDERED);
-	    }
-	}
+        @Override
+        public Set<Characteristics> characteristics() {
+            return EnumSet.of(Characteristics.UNORDERED);
+        }
+    }
 }

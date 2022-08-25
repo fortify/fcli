@@ -39,44 +39,44 @@ import lombok.Data;
 
 @Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractSessionData implements ISessionData {
-	private BasicConnectionConfig basicConnectionConfig;
-	private Date created = new Date();
-	
-	public AbstractSessionData() {}
-	
-	public AbstractSessionData(IConnectionConfig connectionConfig) {
-		this.basicConnectionConfig = BasicConnectionConfig.from(connectionConfig);
-	}
-	
-	/** 
-	 * Implement {@link IConnectionConfigProvider#getConnectionConfig()}. Note that for
-	 * our {@link #basicConnectionConfig} field we want to have getters and setters that
-	 * use the concrete {@link BasicConnectionConfig} type for proper Jackson 
-	 * (de-)serialization. We want a separate getter that implements 
-	 * {@link IConnectionConfigProvider#getConnectionConfig()}, which returns an instance
-	 * of the {@link IConnectionConfig} interface.
-	 * 
-	 */
-	@JsonIgnore @Override 
-	public final IConnectionConfig getConnectionConfig() {
-		return getBasicConnectionConfig();
-	}
+    private BasicConnectionConfig basicConnectionConfig;
+    private Date created = new Date();
+    
+    public AbstractSessionData() {}
+    
+    public AbstractSessionData(IConnectionConfig connectionConfig) {
+        this.basicConnectionConfig = BasicConnectionConfig.from(connectionConfig);
+    }
+    
+    /** 
+     * Implement {@link IConnectionConfigProvider#getConnectionConfig()}. Note that for
+     * our {@link #basicConnectionConfig} field we want to have getters and setters that
+     * use the concrete {@link BasicConnectionConfig} type for proper Jackson 
+     * (de-)serialization. We want a separate getter that implements 
+     * {@link IConnectionConfigProvider#getConnectionConfig()}, which returns an instance
+     * of the {@link IConnectionConfig} interface.
+     * 
+     */
+    @JsonIgnore @Override 
+    public final IConnectionConfig getConnectionConfig() {
+        return getBasicConnectionConfig();
+    }
 
-	@JsonIgnore public final SessionSummary getSummary(String authSessionName) {
-		return SessionSummary.builder()
-				.name(authSessionName)
-				.type(getSessionType())
-				.url(getConnectionConfig().getUrl())
-				.created(getCreated())
-				.expires(getSessionExpiryDate())
-				.build();
-	}
-	
-	/**
-	 * Subclasses may override this method to provide an actual session expiration date/time if available 
-	 * @return Date/time when this session will expire
-	 */
-	@JsonIgnore protected Date getSessionExpiryDate() {
-		return null;
-	}
+    @JsonIgnore public final SessionSummary getSummary(String authSessionName) {
+        return SessionSummary.builder()
+                .name(authSessionName)
+                .type(getSessionType())
+                .url(getConnectionConfig().getUrl())
+                .created(getCreated())
+                .expires(getSessionExpiryDate())
+                .build();
+    }
+    
+    /**
+     * Subclasses may override this method to provide an actual session expiration date/time if available 
+     * @return Date/time when this session will expire
+     */
+    @JsonIgnore protected Date getSessionExpiryDate() {
+        return null;
+    }
 }

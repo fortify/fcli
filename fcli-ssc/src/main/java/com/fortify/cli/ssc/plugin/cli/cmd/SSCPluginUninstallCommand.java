@@ -46,55 +46,55 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "uninstall", aliases = {"rm"})
 public class SSCPluginUninstallCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@Mixin private OutputMixin outputMixin;
-	@ArgGroup(headingKey = "fcli.ssc.plugin.uninstall.options.heading", exclusive = false)
-	private SSCPluginDeleteOptions deleteOptions;
-	
-	private static class SSCPluginDeleteOptions {
-		@ArgGroup(exclusive=false) SSCPluginSelectSingleRequiredOptions pluginSelectOptions;
-		@Option(names="--no-auto-disable", negatable=true)
-		private boolean autoDisable = true;
-		
-		public Integer getNumericPluginId(UnirestInstance unirest) {
-			return pluginSelectOptions==null ? null : pluginSelectOptions.getNumericPluginId();
-		}
-	}
-	
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		String numericPluginId = ""+deleteOptions.getNumericPluginId(unirest);
-		// TODO Check whether plugin id exists
-		disablePluginIfNecessary(unirest, numericPluginId);
-		outputMixin.write(
-				unirest.delete("/api/v1/plugins/{id}")
-					.routeParam("id", ""+numericPluginId));
-		return null;
-	}
-	
-	private void disablePluginIfNecessary(UnirestInstance unirest, String numericPluginId) {
-		JsonNode pluginData = unirest.get("/api/v1/plugins/{id}?fields=pluginState")
-				.routeParam("id", ""+numericPluginId)
-				.asObject(JsonNode.class).getBody();
-		if ("STARTED".equals(pluginData.get("data").get("pluginState").asText()) ) {
-			if ( !deleteOptions.autoDisable ) {
-				throw new IllegalStateException("Plugin cannot be deleted, as it is currently enabled, and --no-auto-disable has been specified");
-			}
-			unirest.post("/api/v1/plugins/action/disable")
-				.body(new PluginIds(numericPluginId))
-				.asEmpty();
-		}
-	}
-	
-	private static final class PluginIds {
-		public PluginIds(String... pluginIds) {
-			this.pluginIds = Arrays.stream(pluginIds).mapToInt(Integer::parseInt).toArray();
-		}
-		@JsonProperty private int[] pluginIds;
-	}
+    @Mixin private OutputMixin outputMixin;
+    @ArgGroup(headingKey = "fcli.ssc.plugin.uninstall.options.heading", exclusive = false)
+    private SSCPluginDeleteOptions deleteOptions;
+    
+    private static class SSCPluginDeleteOptions {
+        @ArgGroup(exclusive=false) SSCPluginSelectSingleRequiredOptions pluginSelectOptions;
+        @Option(names="--no-auto-disable", negatable=true)
+        private boolean autoDisable = true;
+        
+        public Integer getNumericPluginId(UnirestInstance unirest) {
+            return pluginSelectOptions==null ? null : pluginSelectOptions.getNumericPluginId();
+        }
+    }
+    
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        String numericPluginId = ""+deleteOptions.getNumericPluginId(unirest);
+        // TODO Check whether plugin id exists
+        disablePluginIfNecessary(unirest, numericPluginId);
+        outputMixin.write(
+                unirest.delete("/api/v1/plugins/{id}")
+                    .routeParam("id", ""+numericPluginId));
+        return null;
+    }
+    
+    private void disablePluginIfNecessary(UnirestInstance unirest, String numericPluginId) {
+        JsonNode pluginData = unirest.get("/api/v1/plugins/{id}?fields=pluginState")
+                .routeParam("id", ""+numericPluginId)
+                .asObject(JsonNode.class).getBody();
+        if ("STARTED".equals(pluginData.get("data").get("pluginState").asText()) ) {
+            if ( !deleteOptions.autoDisable ) {
+                throw new IllegalStateException("Plugin cannot be deleted, as it is currently enabled, and --no-auto-disable has been specified");
+            }
+            unirest.post("/api/v1/plugins/action/disable")
+                .body(new PluginIds(numericPluginId))
+                .asEmpty();
+        }
+    }
+    
+    private static final class PluginIds {
+        public PluginIds(String... pluginIds) {
+            this.pluginIds = Arrays.stream(pluginIds).mapToInt(Integer::parseInt).toArray();
+        }
+        @JsonProperty private int[] pluginIds;
+    }
 
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("message#errorCode#responseCode");
-	}
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("message#errorCode#responseCode");
+    }
 }

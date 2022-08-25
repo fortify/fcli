@@ -28,5 +28,5 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 @FunctionalInterface
 public interface IJsonNodeTransformer {
-	public JsonNode transform(JsonNode input);
+    public JsonNode transform(JsonNode input);
 }

@@ -13,5 +13,5 @@ import picocli.CommandLine.Model.OptionSpec;
  *
  */
 public interface IOptionTargetNameProvider {
-	String getOptionTargetName(OptionSpec optionSpec);
+    String getOptionTargetName(OptionSpec optionSpec);
 }

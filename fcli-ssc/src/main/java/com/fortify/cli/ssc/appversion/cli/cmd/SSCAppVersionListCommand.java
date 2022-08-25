@@ -43,26 +43,26 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAppVersionListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
-	@CommandLine.Mixin private SSCFilterMixin sscFilterMixin;
-	
-	@Option(names={"--applicationName"}) @SSCFilterQParam @OptionTargetName("project.name")
-	private String applicationName;
-	
-	@Option(names={"--name"}) @SSCFilterQParam
-	private String name;
+    @CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private SSCFilterMixin sscFilterMixin;
+    
+    @Option(names={"--applicationName"}) @SSCFilterQParam @OptionTargetName("project.name")
+    private String applicationName;
+    
+    @Option(names={"--name"}) @SSCFilterQParam
+    private String name;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(
-				sscFilterMixin.addFilterParams(unirest.get("/api/v1/projectVersions?limit=-1"))
-		);
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#project.name:Application#name");
-	}
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(
+                sscFilterMixin.addFilterParams(unirest.get("/api/v1/projectVersions?limit=-1"))
+        );
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#project.name:Application#name");
+    }
 }

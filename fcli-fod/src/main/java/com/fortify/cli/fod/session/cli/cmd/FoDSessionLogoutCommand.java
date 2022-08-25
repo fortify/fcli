@@ -33,8 +33,8 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "logout", sortOptions = false)
 public class FoDSessionLogoutCommand extends AbstractSessionLogoutCommand {
-	@Override
-	public String getSessionType() {
-		return FoDConstants.SESSION_TYPE;
-	}
+    @Override
+    public String getSessionType() {
+        return FoDConstants.SESSION_TYPE;
+    }
 }

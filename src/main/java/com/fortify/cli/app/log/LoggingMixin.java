@@ -46,46 +46,46 @@ import picocli.CommandLine.ScopeType;
  */
 @ReflectiveAccess
 public class LoggingMixin {
-	@Option(names = "--log-level", scope = ScopeType.INHERIT)
-	private LogLevel logLevel;
+    @Option(names = "--log-level", scope = ScopeType.INHERIT)
+    private LogLevel logLevel;
 
-	@Option(names = "--log-file", scope = ScopeType.INHERIT)
-	private String logFile;
-	
-	private static enum LogLevel {
-	    TRACE(Level.TRACE),
-	    DEBUG(Level.DEBUG),
-	    INFO(Level.INFO),
-	    WARN(Level.WARN),
-	    ERROR(Level.ERROR);
+    @Option(names = "--log-file", scope = ScopeType.INHERIT)
+    private String logFile;
+    
+    private static enum LogLevel {
+        TRACE(Level.TRACE),
+        DEBUG(Level.DEBUG),
+        INFO(Level.INFO),
+        WARN(Level.WARN),
+        ERROR(Level.ERROR);
 
-		private final Level logbackLevel;
-		LogLevel(Level logbackLevel) {
-			this.logbackLevel = logbackLevel;
-		}
-	}
+        private final Level logbackLevel;
+        LogLevel(Level logbackLevel) {
+            this.logbackLevel = logbackLevel;
+        }
+    }
 
-	public void configureLogging() {
-		if ( logFile!=null || logLevel!=null ) {
-			LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-			Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-			configureLogFile(rootLogger, logFile==null ? "fcli.log" : logFile);
-			configureLogLevel(rootLogger, logLevel==null ? LogLevel.INFO : logLevel);
-		}
-	}
+    public void configureLogging() {
+        if ( logFile!=null || logLevel!=null ) {
+            LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+            Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+            configureLogFile(rootLogger, logFile==null ? "fcli.log" : logFile);
+            configureLogLevel(rootLogger, logLevel==null ? LogLevel.INFO : logLevel);
+        }
+    }
 
-	private void configureLogFile(Logger rootLogger, String logFile) {
-		FileAppender<ILoggingEvent> fileAppender = new FileAppender<ILoggingEvent>();
+    private void configureLogFile(Logger rootLogger, String logFile) {
+        FileAppender<ILoggingEvent> fileAppender = new FileAppender<ILoggingEvent>();
         fileAppender.setFile(logFile);
         fileAppender.setAppend(false);
         fileAppender.setEncoder(((ConsoleAppender<ILoggingEvent>)rootLogger.getAppender("default")).getEncoder());
         fileAppender.setContext(rootLogger.getLoggerContext());
         fileAppender.start();
         rootLogger.addAppender(fileAppender);
-	}
+    }
 
-	private void configureLogLevel(Logger rootLogger, LogLevel level) {
-		rootLogger.setLevel(level.logbackLevel);
-	}
+    private void configureLogLevel(Logger rootLogger, LogLevel level) {
+        rootLogger.setLevel(level.logbackLevel);
+    }
 
 }

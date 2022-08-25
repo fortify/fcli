@@ -34,23 +34,23 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 public class RestMixin {
-	@Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
-	
-	@Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
-	@Getter private String httpMethod;
-	
-	@Option(names = {"--data", "-d"}, required = false)
-	@Getter private String data; // TODO Add ability to read data from file
-	
-	// TODO Add options for content-type, arbitrary headers, ...?
-	
-	public final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
-		if ( StringUtils.isEmpty(uri) ) {
-			throw new IllegalArgumentException("Uri must be specified");
-		}
-		var request = unirest.request(httpMethod, uri);
-		// TODO Add Content-Type & accept headers
-		return data==null ? request : request.body(data);
-	}
-	
+    @Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
+    
+    @Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
+    @Getter private String httpMethod;
+    
+    @Option(names = {"--data", "-d"}, required = false)
+    @Getter private String data; // TODO Add ability to read data from file
+    
+    // TODO Add options for content-type, arbitrary headers, ...?
+    
+    public final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
+        if ( StringUtils.isEmpty(uri) ) {
+            throw new IllegalArgumentException("Uri must be specified");
+        }
+        var request = unirest.request(httpMethod, uri);
+        // TODO Add Content-Type & accept headers
+        return data==null ? request : request.body(data);
+    }
+    
 }

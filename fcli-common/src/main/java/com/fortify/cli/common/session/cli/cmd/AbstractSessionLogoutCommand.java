@@ -38,15 +38,15 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 public abstract class AbstractSessionLogoutCommand implements Runnable, ISessionTypeProvider {
-	@Inject private SessionDataManager sessionDataManager;
-	@Getter	@Inject private SessionLogoutManager sessionLogoutManager;
-	@Getter @Mixin private SessionNameMixin sessionNameMixin;
-	@Inject private SessionSummaryManager sessionSummaryManager;
-	@Mixin private OutputMixin outputMixin;
+    @Inject private SessionDataManager sessionDataManager;
+    @Getter @Inject private SessionLogoutManager sessionLogoutManager;
+    @Getter @Mixin private SessionNameMixin sessionNameMixin;
+    @Inject private SessionSummaryManager sessionSummaryManager;
+    @Mixin private OutputMixin outputMixin;
 
-	@Override
-	public final void run() {
-		sessionLogoutManager.logoutAndDestroy(getSessionType(), sessionNameMixin.getSessionName());
-		sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
-	}
+    @Override
+    public final void run() {
+        sessionLogoutManager.logoutAndDestroy(getSessionType(), sessionNameMixin.getSessionName());
+        sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
+    }
 }

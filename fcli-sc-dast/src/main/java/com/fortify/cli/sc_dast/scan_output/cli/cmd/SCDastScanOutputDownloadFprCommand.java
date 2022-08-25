@@ -46,40 +46,40 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "download-fpr", description = "Download scan results in FPR format from ScanCentral DAST")
 public class SCDastScanOutputDownloadFprCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-		@ArgGroup(exclusive = false, headingKey = "arggroup.download-fpr-options.heading", order = 1)
+        @ArgGroup(exclusive = false, headingKey = "arggroup.download-fpr-options.heading", order = 1)
         private SCDastTransferScanResultsOptions scanResultsOptions;
 
         @Mixin
         private OutputMixin OutputMixin;
         
-		@ReflectiveAccess
-		public static class SCDastTransferScanResultsOptions {
+        @ReflectiveAccess
+        public static class SCDastTransferScanResultsOptions {
 
-		    @Option(names = {"-i","--id", "--scan-id"}, required = true)
-		    @Getter private int scanId;
+            @Option(names = {"-i","--id", "--scan-id"}, required = true)
+            @Getter private int scanId;
 
-		    @Option(names = {"-f", "--file", "--output-file"}, required = true)
-		    @Getter private String file;
-		}
-		
-		@SneakyThrows
+            @Option(names = {"-f", "--file", "--output-file"}, required = true)
+            @Getter private String file;
+        }
+        
+        @SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest){
-			File outputFile = unirest.get("/api/v2/scans/{scanId}/download-results")
-		    		.routeParam("scanId", String.valueOf(scanResultsOptions.getScanId()))
-		            .accept("application/json")
-		            .header("Content-Type", "application/json")
-		            .asFile(scanResultsOptions.getFile())
-		            .getBody(); // TODO Do we need to call getBody()? Do we need to do anything with the return value? 
+            File outputFile = unirest.get("/api/v2/scans/{scanId}/download-results")
+                    .routeParam("scanId", String.valueOf(scanResultsOptions.getScanId()))
+                    .accept("application/json")
+                    .header("Content-Type", "application/json")
+                    .asFile(scanResultsOptions.getFile())
+                    .getBody(); // TODO Do we need to call getBody()? Do we need to do anything with the return value? 
 
-			    ObjectNode output = new ObjectMapper().createObjectNode();
-			    output.put("path", outputFile.getPath());
+                ObjectNode output = new ObjectMapper().createObjectNode();
+                output.put("path", outputFile.getPath());
 
-	            OutputMixin.write(output);
-	            return null;
+                OutputMixin.write(output);
+                return null;
         }
 
-		@Override
-		public OutputConfig getOutputOptionsWriterConfig() {
-			return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns("path");
-		}
+        @Override
+        public OutputConfig getOutputOptionsWriterConfig() {
+            return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns("path");
+        }
 }

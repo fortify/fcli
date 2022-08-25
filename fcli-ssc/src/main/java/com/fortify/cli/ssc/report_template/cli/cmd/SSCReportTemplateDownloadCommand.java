@@ -41,27 +41,27 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "download")
 public class SSCReportTemplateDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
-	private String destination;
+    @CommandLine.Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
+    private String destination;
 
-	@CommandLine.Mixin
-	private SSCReportTemplateIdMixin reportTemplateIdMixin;
+    @CommandLine.Mixin
+    private SSCReportTemplateIdMixin reportTemplateIdMixin;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		SSCReportTemplateDefResponse reportTemplate = reportTemplateIdMixin.getReportTemplateDef(unirest);
-		destination = destination != null ? destination : String.format("./%s", reportTemplate.data.fileName);
-		SSCFileTransferHelper.download(
-				unirest,
-				SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(reportTemplate.data.id.toString()),
-				destination
-		);
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
-	}
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        SSCReportTemplateDefResponse reportTemplate = reportTemplateIdMixin.getReportTemplateDef(unirest);
+        destination = destination != null ? destination : String.format("./%s", reportTemplate.data.fileName);
+        SSCFileTransferHelper.download(
+                unirest,
+                SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(reportTemplate.data.id.toString()),
+                destination
+        );
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+    }
 }

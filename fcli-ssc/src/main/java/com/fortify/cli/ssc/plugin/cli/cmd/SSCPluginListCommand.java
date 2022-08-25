@@ -43,10 +43,10 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCPluginListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
-	// @CommandLine.Mixin private SSCParserPluginSelectorMixin selector;
+    @CommandLine.Mixin private OutputMixin outputMixin;
+    // @CommandLine.Mixin private SSCParserPluginSelectorMixin selector;
 
-	@Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
     private String id;
 
     @Option(names={"--pluginId"}) @OutputFilter @AddAsDefaultColumn
@@ -64,15 +64,15 @@ public class SSCPluginListCommand extends AbstractSSCUnirestRunnerCommand implem
     @Option(names={"--pluginState"}) @OutputFilter @AddAsDefaultColumn
     private String pluginState;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(unirest.get("/api/v1/plugins?orderBy=pluginType,pluginName,pluginVersion&limit=-1"));
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns(outputMixin.getDefaultColumns());
-	}
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(unirest.get("/api/v1/plugins?orderBy=pluginType,pluginName,pluginVersion&limit=-1"));
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns(outputMixin.getDefaultColumns());
+    }
 }

@@ -41,53 +41,53 @@ import com.github.freva.asciitable.HorizontalAlign;
 import lombok.SneakyThrows;
 
 public class TableRecordWriter implements IRecordWriter {
-	private final RecordWriterConfig config;
-	private String[] columns;
-	private final List<String[]> rows = new ArrayList<>();
+    private final RecordWriterConfig config;
+    private String[] columns;
+    private final List<String[]> rows = new ArrayList<>();
 
-	public TableRecordWriter(RecordWriterConfig config) {
-		this.config = config;
-	}
+    public TableRecordWriter(RecordWriterConfig config) {
+        this.config = config;
+    }
 
-	@Override @SneakyThrows
-	public void writeRecord(ObjectNode record) {
-		String[] columns = getColumns(record);
-		String[] row = getRow(record, columns);
-		rows.add(row);
-	}
+    @Override @SneakyThrows
+    public void writeRecord(ObjectNode record) {
+        String[] columns = getColumns(record);
+        String[] row = getRow(record, columns);
+        rows.add(row);
+    }
 
-	@Override @SneakyThrows
-	public void finishOutput() {
-		config.getPrintWriter().println(getTable(columns, rows.toArray(new String[rows.size()][])));
-	}
+    @Override @SneakyThrows
+    public void finishOutput() {
+        config.getPrintWriter().println(getTable(columns, rows.toArray(new String[rows.size()][])));
+    }
 
-	private String getTable(String[] columns, String[][] data) {
-		if ( columns == null ) {
-			return "No data"; // TODO properly handle this
-		} else {
-			Column[] columnObjects = Stream.of(columns).map(columnName->
-					new Column()
-						.dataAlign(HorizontalAlign.LEFT)
-						.headerAlign(HorizontalAlign.LEFT)
-						.header(config.isHeadersEnabled()?columnName:null))
-						.toArray(Column[]::new);
-			return AsciiTable.getTable(AsciiTable.NO_BORDERS, columnObjects, data); 
-		}
-	}
+    private String getTable(String[] columns, String[][] data) {
+        if ( columns == null ) {
+            return "No data"; // TODO properly handle this
+        } else {
+            Column[] columnObjects = Stream.of(columns).map(columnName->
+                    new Column()
+                        .dataAlign(HorizontalAlign.LEFT)
+                        .headerAlign(HorizontalAlign.LEFT)
+                        .header(config.isHeadersEnabled()?columnName:null))
+                        .toArray(Column[]::new);
+            return AsciiTable.getTable(AsciiTable.NO_BORDERS, columnObjects, data); 
+        }
+    }
 
-	private String[] getColumns(ObjectNode firstObjectNode) {
-		if ( columns==null ) { 
-			columns = asStream(firstObjectNode.fieldNames()).toArray(String[]::new);
-		}
-		return columns;
-	}
-	
-	private String[] getRow(ObjectNode record, String[] columns) {
-		return Stream.of(columns).map(record::get).map(JsonNode::asText).map(v->"null".equals(v)?"N/A":v).toArray(String[]::new);
-	}
+    private String[] getColumns(ObjectNode firstObjectNode) {
+        if ( columns==null ) { 
+            columns = asStream(firstObjectNode.fieldNames()).toArray(String[]::new);
+        }
+        return columns;
+    }
+    
+    private String[] getRow(ObjectNode record, String[] columns) {
+        return Stream.of(columns).map(record::get).map(JsonNode::asText).map(v->"null".equals(v)?"N/A":v).toArray(String[]::new);
+    }
 
-	private static final <T> Stream<T> asStream(Iterator<T> sourceIterator) {
-		Iterable<T> iterable = () -> sourceIterator;
+    private static final <T> Stream<T> asStream(Iterator<T> sourceIterator) {
+        Iterable<T> iterable = () -> sourceIterator;
         return StreamSupport.stream(iterable.spliterator(), false);
     }
 

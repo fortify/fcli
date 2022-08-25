@@ -49,109 +49,109 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 // TODO Add null checks in case any input or record transformation returns null?
 public class OutputConfig {
-	@Getter @Setter private OutputFormat defaultFormat;
-	private final LinkedHashMap<Function<OutputFormat, Boolean>, String> defaultFields = new LinkedHashMap<>();
-	private final List<BiFunction<OutputFormat,JsonNode,JsonNode>> inputTransformers = new ArrayList<>();
-	private final List<BiFunction<OutputFormat,JsonNode,JsonNode>> recordTransformers = new ArrayList<>();
-	
-	public final OutputConfig inputTransformer(final Function<OutputFormat, Boolean> applyIf, final UnaryOperator<JsonNode> transformer) {
-		inputTransformers.add((fmt,o)->!applyIf.apply(fmt) ? o : transformer.apply(o));
-		return this;
-	}
-	
-	public final OutputConfig inputTransformer(UnaryOperator<JsonNode> transformer) {
-		return inputTransformer(fmt->true, transformer);
-	}
-	
-	public final OutputConfig recordTransformer(Function<OutputFormat, Boolean> applyIf, UnaryOperator<JsonNode> transformer) {
-		recordTransformers.add((fmt,o)->!applyIf.apply(fmt) ? o : transformer.apply(o));
-		return this;
-	}
-	
-	public final OutputConfig recordTransformer(UnaryOperator<JsonNode> transformer) {
-		return recordTransformer(fmt->true, transformer);
-	}
-	
-	public final OutputConfig defaultFields(Function<OutputFormat, Boolean> applyIf, String fields) {
-		defaultFields.put(applyIf, fields);
-		return this;
-	}
-	
-	public final OutputConfig defaultFields(String fields) {
-		defaultFields.put(fmt->true, fields);
-		return this;
-	}
-	
-	public final OutputConfig defaultColumns(String outputColumns) {
-		return defaultFields(OutputFormat::isColumns, outputColumns);
-	}
-	
-	final JsonNode applyFieldsTransformations(OutputFormat outputFormat, String overrideFieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
-		if ( StringUtils.isNotEmpty(overrideFieldsString) ) {
-			return applyDefaultFieldsTransformations(outputFormat, overrideFieldsString, defaultFieldNameFormatterProvider, input);
-		} else {
-			return applyDefaultFieldsTransformations(defaultFields, outputFormat, defaultFieldNameFormatterProvider, input);
-		}
-	}
-	
-	private final JsonNode applyDefaultFieldsTransformations(OutputFormat outputFormat, String fieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
-		LinkedHashMap<Function<OutputFormat, Boolean>, String> fields = new LinkedHashMap<>();
-		fields.put(fmt->true, fieldsString);
-		return applyDefaultFieldsTransformations(fields, outputFormat, defaultFieldNameFormatterProvider, input);
-	}
-	
-	private final JsonNode applyDefaultFieldsTransformations(LinkedHashMap<Function<OutputFormat, Boolean>, String> fields, OutputFormat outputFormat, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
-		return fields.entrySet().stream()
-			.filter(e->e.getKey().apply(outputFormat))
-			.map(Map.Entry::getValue)
-			.map(fieldsString->getFieldsTransformer(outputFormat, fieldsString, defaultFieldNameFormatterProvider))
-			.reduce(input, (o, t) -> t.transform(o), (m1, m2) -> m2);
-	}
+    @Getter @Setter private OutputFormat defaultFormat;
+    private final LinkedHashMap<Function<OutputFormat, Boolean>, String> defaultFields = new LinkedHashMap<>();
+    private final List<BiFunction<OutputFormat,JsonNode,JsonNode>> inputTransformers = new ArrayList<>();
+    private final List<BiFunction<OutputFormat,JsonNode,JsonNode>> recordTransformers = new ArrayList<>();
+    
+    public final OutputConfig inputTransformer(final Function<OutputFormat, Boolean> applyIf, final UnaryOperator<JsonNode> transformer) {
+        inputTransformers.add((fmt,o)->!applyIf.apply(fmt) ? o : transformer.apply(o));
+        return this;
+    }
+    
+    public final OutputConfig inputTransformer(UnaryOperator<JsonNode> transformer) {
+        return inputTransformer(fmt->true, transformer);
+    }
+    
+    public final OutputConfig recordTransformer(Function<OutputFormat, Boolean> applyIf, UnaryOperator<JsonNode> transformer) {
+        recordTransformers.add((fmt,o)->!applyIf.apply(fmt) ? o : transformer.apply(o));
+        return this;
+    }
+    
+    public final OutputConfig recordTransformer(UnaryOperator<JsonNode> transformer) {
+        return recordTransformer(fmt->true, transformer);
+    }
+    
+    public final OutputConfig defaultFields(Function<OutputFormat, Boolean> applyIf, String fields) {
+        defaultFields.put(applyIf, fields);
+        return this;
+    }
+    
+    public final OutputConfig defaultFields(String fields) {
+        defaultFields.put(fmt->true, fields);
+        return this;
+    }
+    
+    public final OutputConfig defaultColumns(String outputColumns) {
+        return defaultFields(OutputFormat::isColumns, outputColumns);
+    }
+    
+    final JsonNode applyFieldsTransformations(OutputFormat outputFormat, String overrideFieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
+        if ( StringUtils.isNotEmpty(overrideFieldsString) ) {
+            return applyDefaultFieldsTransformations(outputFormat, overrideFieldsString, defaultFieldNameFormatterProvider, input);
+        } else {
+            return applyDefaultFieldsTransformations(defaultFields, outputFormat, defaultFieldNameFormatterProvider, input);
+        }
+    }
+    
+    private final JsonNode applyDefaultFieldsTransformations(OutputFormat outputFormat, String fieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
+        LinkedHashMap<Function<OutputFormat, Boolean>, String> fields = new LinkedHashMap<>();
+        fields.put(fmt->true, fieldsString);
+        return applyDefaultFieldsTransformations(fields, outputFormat, defaultFieldNameFormatterProvider, input);
+    }
+    
+    private final JsonNode applyDefaultFieldsTransformations(LinkedHashMap<Function<OutputFormat, Boolean>, String> fields, OutputFormat outputFormat, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
+        return fields.entrySet().stream()
+            .filter(e->e.getKey().apply(outputFormat))
+            .map(Map.Entry::getValue)
+            .map(fieldsString->getFieldsTransformer(outputFormat, fieldsString, defaultFieldNameFormatterProvider))
+            .reduce(input, (o, t) -> t.transform(o), (m1, m2) -> m2);
+    }
 
-	private IJsonNodeTransformer getFieldsTransformer(OutputFormat outputFormat, String fieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider) {
-		if ( StringUtils.isNotEmpty(fieldsString) && !"all".equals(fieldsString) ) {
-			return PredefinedFieldsTransformerFactory.createFromString(defaultFieldNameFormatterProvider.getDefaultFieldNameFormatter(outputFormat), fieldsString);
-		} else if ( outputFormat.getOutputType()==OutputType.TEXT_COLUMNS ) {
-			return new FlattenTransformer(defaultFieldNameFormatterProvider.getDefaultFieldNameFormatter(outputFormat), ".", false);
-		} else {
-			return new IdentityTransformer();
-		}
-	}
-	
-	final JsonNode applyInputTransformations(OutputFormat outputFormat, JsonNode input) {
-		return applyTransformations(inputTransformers, outputFormat, input);
-	}
-	
-	final JsonNode applyRecordTransformations(OutputFormat outputFormat, JsonNode input) {
-		return applyTransformations(recordTransformers, outputFormat, input);
-	}
-	
-	private final JsonNode applyTransformations(List<BiFunction<OutputFormat, JsonNode, JsonNode>> transformations, OutputFormat outputFormat, JsonNode input) {
-		return transformations.stream()
-				.reduce(input, (o, t) -> t.apply(outputFormat, o), (m1, m2) -> m2);
-	}
-	
-	public static final OutputConfig csv() {
-		return new OutputConfig().defaultFormat(OutputFormat.csv);
-	}
-	
-	public static final OutputConfig json() {
-		return new OutputConfig().defaultFormat(OutputFormat.json);
-	}
-	
-	public static final OutputConfig table() {
-		return new OutputConfig().defaultFormat(OutputFormat.table);
-	}
-	
-	public static final OutputConfig tree() {
-		return new OutputConfig().defaultFormat(OutputFormat.tree);
-	}
-	
-	public static final OutputConfig xml() {
-		return new OutputConfig().defaultFormat(OutputFormat.xml);
-	}
-	
-	public static final OutputConfig yaml() {
-		return new OutputConfig().defaultFormat(OutputFormat.yaml);
-	}
+    private IJsonNodeTransformer getFieldsTransformer(OutputFormat outputFormat, String fieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider) {
+        if ( StringUtils.isNotEmpty(fieldsString) && !"all".equals(fieldsString) ) {
+            return PredefinedFieldsTransformerFactory.createFromString(defaultFieldNameFormatterProvider.getDefaultFieldNameFormatter(outputFormat), fieldsString);
+        } else if ( outputFormat.getOutputType()==OutputType.TEXT_COLUMNS ) {
+            return new FlattenTransformer(defaultFieldNameFormatterProvider.getDefaultFieldNameFormatter(outputFormat), ".", false);
+        } else {
+            return new IdentityTransformer();
+        }
+    }
+    
+    final JsonNode applyInputTransformations(OutputFormat outputFormat, JsonNode input) {
+        return applyTransformations(inputTransformers, outputFormat, input);
+    }
+    
+    final JsonNode applyRecordTransformations(OutputFormat outputFormat, JsonNode input) {
+        return applyTransformations(recordTransformers, outputFormat, input);
+    }
+    
+    private final JsonNode applyTransformations(List<BiFunction<OutputFormat, JsonNode, JsonNode>> transformations, OutputFormat outputFormat, JsonNode input) {
+        return transformations.stream()
+                .reduce(input, (o, t) -> t.apply(outputFormat, o), (m1, m2) -> m2);
+    }
+    
+    public static final OutputConfig csv() {
+        return new OutputConfig().defaultFormat(OutputFormat.csv);
+    }
+    
+    public static final OutputConfig json() {
+        return new OutputConfig().defaultFormat(OutputFormat.json);
+    }
+    
+    public static final OutputConfig table() {
+        return new OutputConfig().defaultFormat(OutputFormat.table);
+    }
+    
+    public static final OutputConfig tree() {
+        return new OutputConfig().defaultFormat(OutputFormat.tree);
+    }
+    
+    public static final OutputConfig xml() {
+        return new OutputConfig().defaultFormat(OutputFormat.xml);
+    }
+    
+    public static final OutputConfig yaml() {
+        return new OutputConfig().defaultFormat(OutputFormat.yaml);
+    }
 }

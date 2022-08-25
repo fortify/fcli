@@ -41,56 +41,56 @@ import lombok.Getter;
 
 @Singleton @ReflectiveAccess
 public class SCDastUnirestRunner {
-	@Getter @Inject private BasicUnirestRunner basicUnirestRunner;
-	@Getter @Inject private SSCAuthenticatedUnirestRunner sscUnirestRunner;
-	
-	public <R> R runWithUnirest(String sscAuthSessionName, Function<UnirestInstance, R> runner) {
-		return sscUnirestRunner.runWithUnirest(sscAuthSessionName, sscUnirest -> {
-			String scDastApiUrl = getSCDastApiUrlFromSSC(sscUnirest);
-			String authHeader = sscUnirest.config().getDefaultHeaders().get("Authorization").stream().filter(h->h.startsWith("FortifyToken")).findFirst().orElseThrow();
-			return basicUnirestRunner.runWithUnirest(scDastUnirest->{
-				scDastUnirest.config()
-						.defaultBaseUrl(scDastApiUrl)
-						.setDefaultHeader("Authorization", authHeader)
-						.verifySsl(sscUnirest.config().isVerifySsl());
-				ThrowUnexpectedHttpResponseExceptionInterceptor.configure(scDastUnirest);
-				return runner.apply(scDastUnirest);
-			});
-		});
-	}
+    @Getter @Inject private BasicUnirestRunner basicUnirestRunner;
+    @Getter @Inject private SSCAuthenticatedUnirestRunner sscUnirestRunner;
+    
+    public <R> R runWithUnirest(String sscAuthSessionName, Function<UnirestInstance, R> runner) {
+        return sscUnirestRunner.runWithUnirest(sscAuthSessionName, sscUnirest -> {
+            String scDastApiUrl = getSCDastApiUrlFromSSC(sscUnirest);
+            String authHeader = sscUnirest.config().getDefaultHeaders().get("Authorization").stream().filter(h->h.startsWith("FortifyToken")).findFirst().orElseThrow();
+            return basicUnirestRunner.runWithUnirest(scDastUnirest->{
+                scDastUnirest.config()
+                        .defaultBaseUrl(scDastApiUrl)
+                        .setDefaultHeader("Authorization", authHeader)
+                        .verifySsl(sscUnirest.config().isVerifySsl());
+                ThrowUnexpectedHttpResponseExceptionInterceptor.configure(scDastUnirest);
+                return runner.apply(scDastUnirest);
+            });
+        });
+    }
 
-	private String getSCDastApiUrlFromSSC(UnirestInstance sscUnirest) {
-		ArrayNode properties = getSCDastConfigurationProperties(sscUnirest);
-		checkSCDastIsEnabled(properties);
-		String scDastUrl = getSCDastUrlFromProperties(properties);
-		return normalizeSCDastUrl(scDastUrl);
-	}
+    private String getSCDastApiUrlFromSSC(UnirestInstance sscUnirest) {
+        ArrayNode properties = getSCDastConfigurationProperties(sscUnirest);
+        checkSCDastIsEnabled(properties);
+        String scDastUrl = getSCDastUrlFromProperties(properties);
+        return normalizeSCDastUrl(scDastUrl);
+    }
 
-	private final ArrayNode getSCDastConfigurationProperties(UnirestInstance sscUnirest) {
-		ObjectNode configData = sscUnirest.get("/api/v1/configuration?group=edast")
-				.asObject(ObjectNode.class)
-				.getBody(); 
-		
-		return JsonHelper.evaluateJsonPath(configData, "$.data.properties", ArrayNode.class);
-	}
-	
-	private void checkSCDastIsEnabled(ArrayNode properties) {
-		boolean scDastEnabled = JsonHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.enabled')].value", Boolean.class);
-		if (!scDastEnabled) {
-			throw new IllegalStateException("ScanCentral DAST must be enabled in SSC");
-		}
-	}
-	
-	private String getSCDastUrlFromProperties(ArrayNode properties) {
-		String scDastUrl = JsonHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.server.url')].value", String.class);
-		if ( scDastUrl.isEmpty() ) {
-			throw new IllegalStateException("SSC returns an empty ScanCentral DAST URL");
-		}
-		return scDastUrl;
-	}
-	
-	private String normalizeSCDastUrl(String scDastUrl) {
-		// We remove '/api' and any trailing slashes from the URL as most users will specify relative URL's starting with /api/v2/...
-		return scDastUrl.replaceAll("/api/?$","").replaceAll("/+$", "");
-	}
+    private final ArrayNode getSCDastConfigurationProperties(UnirestInstance sscUnirest) {
+        ObjectNode configData = sscUnirest.get("/api/v1/configuration?group=edast")
+                .asObject(ObjectNode.class)
+                .getBody(); 
+        
+        return JsonHelper.evaluateJsonPath(configData, "$.data.properties", ArrayNode.class);
+    }
+    
+    private void checkSCDastIsEnabled(ArrayNode properties) {
+        boolean scDastEnabled = JsonHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.enabled')].value", Boolean.class);
+        if (!scDastEnabled) {
+            throw new IllegalStateException("ScanCentral DAST must be enabled in SSC");
+        }
+    }
+    
+    private String getSCDastUrlFromProperties(ArrayNode properties) {
+        String scDastUrl = JsonHelper.evaluateJsonPath(properties, "$.[?(@.name=='edast.server.url')].value", String.class);
+        if ( scDastUrl.isEmpty() ) {
+            throw new IllegalStateException("SSC returns an empty ScanCentral DAST URL");
+        }
+        return scDastUrl;
+    }
+    
+    private String normalizeSCDastUrl(String scDastUrl) {
+        // We remove '/api' and any trailing slashes from the URL as most users will specify relative URL's starting with /api/v2/...
+        return scDastUrl.replaceAll("/api/?$","").replaceAll("/+$", "");
+    }
 }

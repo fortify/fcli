@@ -25,7 +25,7 @@
 package com.fortify.cli.fod.session.manager;
 
 public interface IFoDUserCredentialsConfig {
-	String getUser();
-	char[] getPassword();
-	String getTenant();
+    String getUser();
+    char[] getPassword();
+    String getTenant();
 }

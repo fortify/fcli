@@ -40,20 +40,20 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "delete")
 public class SSCReportTemplateDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
-	@CommandLine.Mixin private SSCReportTemplateIdMixin reportTemplateIdMixin;
+    @CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private SSCReportTemplateIdMixin reportTemplateIdMixin;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(
-				unirest.delete(SSCUrls.REPORT_DEFINITION(reportTemplateIdMixin.getReportTemplateDefId(unirest))));
-		System.out.println("DELETE DONE.");
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#name#typeDefaultText#templateDocId#inUse");
-	}
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(
+                unirest.delete(SSCUrls.REPORT_DEFINITION(reportTemplateIdMixin.getReportTemplateDefId(unirest))));
+        System.out.println("DELETE DONE.");
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#name#typeDefaultText#templateDocId#inUse");
+    }
 }

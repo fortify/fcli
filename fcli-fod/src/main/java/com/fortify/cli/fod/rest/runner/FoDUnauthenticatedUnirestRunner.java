@@ -32,7 +32,7 @@ import kong.unirest.UnirestInstance;
 
 @Singleton
 public final class FoDUnauthenticatedUnirestRunner extends AbstractConfigurableUnirestRunner {
-	protected void configure(UnirestInstance unirestInstance) {
-		ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
-	}
+    protected void configure(UnirestInstance unirestInstance) {
+        ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirestInstance);
+    }
 }

@@ -40,61 +40,61 @@ import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
 public class FoDSessionLoginHandler extends AbstractSessionHandlerAction<FoDSessionLoginConfig> {
-	@Inject private FoDUnauthenticatedUnirestRunner unauthenticatedUnirestRunner;
+    @Inject private FoDUnauthenticatedUnirestRunner unauthenticatedUnirestRunner;
 
-	public final String getSessionType() {
-		return FoDConstants.SESSION_TYPE;
-	}
+    public final String getSessionType() {
+        return FoDConstants.SESSION_TYPE;
+    }
 
-	@Override
-	public final ISessionData _login(String authSessionName, FoDSessionLoginConfig fodLoginConfig) {
-		FoDSessionData sessionData = null;
-		IConnectionConfig connectionConfig = fodLoginConfig.getConnectionConfig();
-		if ( fodLoginConfig.hasClientCredentials() ) {
-			sessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateClientCredentialsAuthSessionData(unirest, fodLoginConfig));
-		} else if ( fodLoginConfig.hasUserCredentialsConfig() ) {
-			sessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateUserCredentialsAuthSessionData(unirest, fodLoginConfig));
-		} else {
-			throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
-		}
-		return sessionData;
-	}
-	
-	private final FoDSessionData generateClientCredentialsAuthSessionData(UnirestInstance unirest, FoDSessionLoginConfig fodLoginConfig) {
-		FoDTokenResponse tokenResponse = generateToken(unirest, getClientCredentialsTokenRequest(fodLoginConfig));
-		return new FoDSessionData(fodLoginConfig, tokenResponse);
-	}
-	
-	private final FoDSessionData generateUserCredentialsAuthSessionData(UnirestInstance unirest, FoDSessionLoginConfig fodLoginConfig) {
-		FoDTokenResponse tokenResponse = generateToken(unirest, getUserCredentialsTokenRequest(fodLoginConfig));
-		return new FoDSessionData(fodLoginConfig, tokenResponse);
-	}
-	
-	private Map<String, Object> getUserCredentialsTokenRequest(FoDSessionLoginConfig config) {
-		Map<String,Object> result = new LinkedHashMap<>();
-		result.put("scope", String.join(",", config.getScopes()));
-		result.put("grant_type", "password");
-		result.put("username", String.format("%s\\%s", config.getFodUserCredentialsConfig().getTenant(), config.getFodUserCredentialsConfig().getUser()));
-		result.put("password", String.valueOf(config.getFodUserCredentialsConfig().getPassword()));
-		return result;
-	}
-	
-	private Map<String, Object> getClientCredentialsTokenRequest(FoDSessionLoginConfig config) {
-		Map<String,Object> result = new LinkedHashMap<>();
-		result.put("scope", String.join(",", config.getScopes()));
-		result.put("grant_type", "client_credentials");
-		result.put("client_id", config.getFodClientCredentialsConfig().getClientId());
-		result.put("client_secret", config.getFodClientCredentialsConfig().getClientSecret());
-		return result;
-	}
-	
-	private final FoDTokenResponse generateToken(UnirestInstance unirestInstance, Map<String, Object> tokenRequestData) {
-		 return unirestInstance.post("/oauth/token")
-				.accept("application/json")
-				.header("Content-Type", "application/x-www-form-urlencoded")
-				.fields(tokenRequestData)
-				.asObject(FoDTokenResponse.class)
-				.getBody();
-	}
+    @Override
+    public final ISessionData _login(String authSessionName, FoDSessionLoginConfig fodLoginConfig) {
+        FoDSessionData sessionData = null;
+        IConnectionConfig connectionConfig = fodLoginConfig.getConnectionConfig();
+        if ( fodLoginConfig.hasClientCredentials() ) {
+            sessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateClientCredentialsAuthSessionData(unirest, fodLoginConfig));
+        } else if ( fodLoginConfig.hasUserCredentialsConfig() ) {
+            sessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateUserCredentialsAuthSessionData(unirest, fodLoginConfig));
+        } else {
+            throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
+        }
+        return sessionData;
+    }
+    
+    private final FoDSessionData generateClientCredentialsAuthSessionData(UnirestInstance unirest, FoDSessionLoginConfig fodLoginConfig) {
+        FoDTokenResponse tokenResponse = generateToken(unirest, getClientCredentialsTokenRequest(fodLoginConfig));
+        return new FoDSessionData(fodLoginConfig, tokenResponse);
+    }
+    
+    private final FoDSessionData generateUserCredentialsAuthSessionData(UnirestInstance unirest, FoDSessionLoginConfig fodLoginConfig) {
+        FoDTokenResponse tokenResponse = generateToken(unirest, getUserCredentialsTokenRequest(fodLoginConfig));
+        return new FoDSessionData(fodLoginConfig, tokenResponse);
+    }
+    
+    private Map<String, Object> getUserCredentialsTokenRequest(FoDSessionLoginConfig config) {
+        Map<String,Object> result = new LinkedHashMap<>();
+        result.put("scope", String.join(",", config.getScopes()));
+        result.put("grant_type", "password");
+        result.put("username", String.format("%s\\%s", config.getFodUserCredentialsConfig().getTenant(), config.getFodUserCredentialsConfig().getUser()));
+        result.put("password", String.valueOf(config.getFodUserCredentialsConfig().getPassword()));
+        return result;
+    }
+    
+    private Map<String, Object> getClientCredentialsTokenRequest(FoDSessionLoginConfig config) {
+        Map<String,Object> result = new LinkedHashMap<>();
+        result.put("scope", String.join(",", config.getScopes()));
+        result.put("grant_type", "client_credentials");
+        result.put("client_id", config.getFodClientCredentialsConfig().getClientId());
+        result.put("client_secret", config.getFodClientCredentialsConfig().getClientSecret());
+        return result;
+    }
+    
+    private final FoDTokenResponse generateToken(UnirestInstance unirestInstance, Map<String, Object> tokenRequestData) {
+         return unirestInstance.post("/oauth/token")
+                .accept("application/json")
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .fields(tokenRequestData)
+                .asObject(FoDTokenResponse.class)
+                .getBody();
+    }
 
 }

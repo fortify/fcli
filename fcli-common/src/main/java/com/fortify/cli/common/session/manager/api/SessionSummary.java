@@ -36,23 +36,23 @@ import lombok.NoArgsConstructor;
 
 @Data @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
 public class SessionSummary {
-	public static final Date EXPIRES_UNKNOWN = null;
-	public static final Date EXPIRES_NEVER = new Date(Long.MAX_VALUE);
-	private String name;
-	private String type;
-	private String url;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss z") 
-	private Date created;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss z") 
-	private Date expires;
-	
-	public String getExpired() {
-		if ( expires==null ) { 
-			return "Unknown";
-		} else if ( expires.after(new Date()) ) {
-			return "No";
-		} else {
-			return "Yes";
-		}
-	}
+    public static final Date EXPIRES_UNKNOWN = null;
+    public static final Date EXPIRES_NEVER = new Date(Long.MAX_VALUE);
+    private String name;
+    private String type;
+    private String url;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss z") 
+    private Date created;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss z") 
+    private Date expires;
+    
+    public String getExpired() {
+        if ( expires==null ) { 
+            return "Unknown";
+        } else if ( expires.after(new Date()) ) {
+            return "No";
+        } else {
+            return "Yes";
+        }
+    }
 }

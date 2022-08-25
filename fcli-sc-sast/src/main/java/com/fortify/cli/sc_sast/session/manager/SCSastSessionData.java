@@ -39,23 +39,23 @@ import lombok.Getter;
 
 @Data @EqualsAndHashCode(callSuper = true)  @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public class SCSastSessionData extends AbstractSessionData {
-	@Getter private char[] clientAuthToken;
-	
-	public SCSastSessionData() {}
-	
-	public SCSastSessionData(SCSastSessionLoginConfig config) {
-		super(config.getConnectionConfig());
-		this.clientAuthToken = config.getClientAuthToken();
-	}
-	
-	@JsonIgnore @Override
-	public String getSessionType() {
-		return SCSastConstants.SESSION_TYPE;
-	}
-	
-	@JsonIgnore
-	protected Date getSessionExpiryDate() {
-		return SessionSummary.EXPIRES_UNKNOWN;
-		
-	}
+    @Getter private char[] clientAuthToken;
+    
+    public SCSastSessionData() {}
+    
+    public SCSastSessionData(SCSastSessionLoginConfig config) {
+        super(config.getConnectionConfig());
+        this.clientAuthToken = config.getClientAuthToken();
+    }
+    
+    @JsonIgnore @Override
+    public String getSessionType() {
+        return SCSastConstants.SESSION_TYPE;
+    }
+    
+    @JsonIgnore
+    protected Date getSessionExpiryDate() {
+        return SessionSummary.EXPIRES_UNKNOWN;
+        
+    }
 }

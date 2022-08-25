@@ -25,5 +25,5 @@
 package com.fortify.cli.common.rest.runner;
 
 public interface IConnectionConfigProvider {
-	public IConnectionConfig getConnectionConfig();
+    public IConnectionConfig getConnectionConfig();
 }

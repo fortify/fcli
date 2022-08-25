@@ -36,16 +36,16 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 public abstract class AbstractSCDastUnirestRunnerCommand implements Runnable {
-	@Getter @Inject private SCDastUnirestRunner unirestRunner;
-	@Getter @Mixin  private SessionNameMixin sessionNameMixin;
+    @Getter @Inject private SCDastUnirestRunner unirestRunner;
+    @Getter @Mixin  private SessionNameMixin sessionNameMixin;
 
-	@Override @SneakyThrows
-	public final void run() {
-		// TODO Do we want to do anything with the results, like formatting it based on output options?
-		//      Or do we let the actual implementation handle this?
-		unirestRunner.runWithUnirest(sessionNameMixin.getSessionName(), this::runWithUnirest);
-	}
-	
-	protected abstract Void runWithUnirest(UnirestInstance unirest);
-	
+    @Override @SneakyThrows
+    public final void run() {
+        // TODO Do we want to do anything with the results, like formatting it based on output options?
+        //      Or do we let the actual implementation handle this?
+        unirestRunner.runWithUnirest(sessionNameMixin.getSessionName(), this::runWithUnirest);
+    }
+    
+    protected abstract Void runWithUnirest(UnirestInstance unirest);
+    
 }

@@ -27,5 +27,5 @@ package com.fortify.cli.common.session.manager.spi;
 import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
 
 public interface ISessionLogoutHandler extends ISessionTypeProvider {
-	public void logout(String authSessionName);
+    public void logout(String authSessionName);
 }

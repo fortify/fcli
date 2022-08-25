@@ -32,14 +32,14 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class FoDSessionSummaryProvider extends AbstractSessionSummaryProvider {
-	public final String getSessionType() {
-		return FoDConstants.SESSION_TYPE;
-	}
-	
-	@Override
-	protected SessionSummary getSessionSummary(String authSessionName) {
-		return getSessionDataManager()
-				.getData(getSessionType(), authSessionName, FoDSessionData.class)
-				.getSummary(authSessionName);
-	}
+    public final String getSessionType() {
+        return FoDConstants.SESSION_TYPE;
+    }
+    
+    @Override
+    protected SessionSummary getSessionSummary(String authSessionName) {
+        return getSessionDataManager()
+                .getData(getSessionType(), authSessionName, FoDSessionData.class)
+                .getSummary(authSessionName);
+    }
 }

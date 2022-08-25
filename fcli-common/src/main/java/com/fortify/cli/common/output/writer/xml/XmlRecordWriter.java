@@ -37,38 +37,38 @@ import com.fortify.cli.common.output.writer.RecordWriterConfig;
 import lombok.SneakyThrows;
 
 public class XmlRecordWriter implements IRecordWriter {
-	private final RecordWriterConfig config;
-	private ToXmlGenerator generator;
+    private final RecordWriterConfig config;
+    private ToXmlGenerator generator;
 
-	public XmlRecordWriter(RecordWriterConfig config) {
-		this.config = config;
-	}
-	
-	@SneakyThrows
-	private ToXmlGenerator getGenerator() {
-		if ( generator==null ) {
-			XmlFactory factory = new XmlFactory();
-		    this.generator = (ToXmlGenerator)factory.createGenerator(config.getPrintWriter())
-		    		.setCodec(new ObjectMapper())
-		    		.disable(Feature.AUTO_CLOSE_TARGET);
-		    if ( config.isPretty() ) generator = (ToXmlGenerator)generator.useDefaultPrettyPrinter();
-			if ( !config.isSingular() ) {
-				generator.setNextName(new QName(null, "items"));
-				generator.writeStartObject();
-			}
-		}
-		return generator;
-	}
+    public XmlRecordWriter(RecordWriterConfig config) {
+        this.config = config;
+    }
+    
+    @SneakyThrows
+    private ToXmlGenerator getGenerator() {
+        if ( generator==null ) {
+            XmlFactory factory = new XmlFactory();
+            this.generator = (ToXmlGenerator)factory.createGenerator(config.getPrintWriter())
+                    .setCodec(new ObjectMapper())
+                    .disable(Feature.AUTO_CLOSE_TARGET);
+            if ( config.isPretty() ) generator = (ToXmlGenerator)generator.useDefaultPrettyPrinter();
+            if ( !config.isSingular() ) {
+                generator.setNextName(new QName(null, "items"));
+                generator.writeStartObject();
+            }
+        }
+        return generator;
+    }
 
-	@Override @SneakyThrows
-	public void writeRecord(ObjectNode record) {
-		getGenerator().writeFieldName("item");
-		getGenerator().writeTree(record);
-	}
-	
-	@Override @SneakyThrows
-	public void finishOutput() {
-		getGenerator().writeEndObject();
-		getGenerator().close();
-	}
+    @Override @SneakyThrows
+    public void writeRecord(ObjectNode record) {
+        getGenerator().writeFieldName("item");
+        getGenerator().writeTree(record);
+    }
+    
+    @Override @SneakyThrows
+    public void finishOutput() {
+        getGenerator().writeEndObject();
+        getGenerator().close();
+    }
 }

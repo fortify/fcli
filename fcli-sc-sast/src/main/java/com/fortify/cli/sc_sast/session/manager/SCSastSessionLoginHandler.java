@@ -39,32 +39,32 @@ import lombok.Getter;
 
 @Singleton @ReflectiveAccess
 public class SCSastSessionLoginHandler extends AbstractSessionHandlerAction<SCSastSessionLoginConfig> {
-	@Getter @Inject private SCSastAuthenticatedUnirestRunner unirestRunner;
-	
-	public final String getSessionType() {
-		return SCSastConstants.SESSION_TYPE;
-	}
+    @Getter @Inject private SCSastAuthenticatedUnirestRunner unirestRunner;
+    
+    public final String getSessionType() {
+        return SCSastConstants.SESSION_TYPE;
+    }
 
-	@Override
-	public final ISessionData _login(String authSessionName, SCSastSessionLoginConfig sscLoginConfig) {
-		SCSastSessionData sessionData = null;
-		if ( sscLoginConfig.getClientAuthToken()!=null ) {
-			sessionData = new SCSastSessionData(sscLoginConfig);
-		} else {
-			throw new IllegalArgumentException("ScanCentral SAST client auth token must be provided ");
-		}
-		return sessionData;
-	}
-	
-	@Override
-	protected void testAuthenticatedConnection(String authSessionName, SCSastSessionLoginConfig loginConfig) {
-		unirestRunner.runWithUnirest(authSessionName, this::testWithUnirest);
-	}
-	
-	protected Void testWithUnirest(UnirestInstance unirest) {
-		// TODO Review this
-		ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirest);
-		unirest.get("/rest/v2/ping").asObject(JsonNode.class).getBody();
-		return null;
-	}
+    @Override
+    public final ISessionData _login(String authSessionName, SCSastSessionLoginConfig sscLoginConfig) {
+        SCSastSessionData sessionData = null;
+        if ( sscLoginConfig.getClientAuthToken()!=null ) {
+            sessionData = new SCSastSessionData(sscLoginConfig);
+        } else {
+            throw new IllegalArgumentException("ScanCentral SAST client auth token must be provided ");
+        }
+        return sessionData;
+    }
+    
+    @Override
+    protected void testAuthenticatedConnection(String authSessionName, SCSastSessionLoginConfig loginConfig) {
+        unirestRunner.runWithUnirest(authSessionName, this::testWithUnirest);
+    }
+    
+    protected Void testWithUnirest(UnirestInstance unirest) {
+        // TODO Review this
+        ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirest);
+        unirest.get("/rest/v2/ping").asObject(JsonNode.class).getBody();
+        return null;
+    }
 }

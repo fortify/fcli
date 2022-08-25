@@ -40,14 +40,14 @@ import picocli.CommandLine.Spec;
 @ReflectiveAccess
 @Command(name = "generate-completion")
 public final class AutoCompleteGenerationCommand implements Runnable {
-	@Spec CommandLine.Model.CommandSpec spec;
+    @Spec CommandLine.Model.CommandSpec spec;
 
-	public void run() {
-		String script = AutoComplete.bash(spec.root().name(), spec.root().commandLine());
-		// not PrintWriter.println: scripts with Windows line separators fail in strange
-		// ways!
-		spec.commandLine().getOut().print(script);
-		spec.commandLine().getOut().print('\n');
-		spec.commandLine().getOut().flush();
-	}
+    public void run() {
+        String script = AutoComplete.bash(spec.root().name(), spec.root().commandLine());
+        // not PrintWriter.println: scripts with Windows line separators fail in strange
+        // ways!
+        spec.commandLine().getOut().print(script);
+        spec.commandLine().getOut().print('\n');
+        spec.commandLine().getOut().flush();
+    }
 }

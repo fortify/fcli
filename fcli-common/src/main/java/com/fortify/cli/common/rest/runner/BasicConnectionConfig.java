@@ -32,21 +32,21 @@ import lombok.NoArgsConstructor;
 
 @Data @ReflectiveAccess @NoArgsConstructor @AllArgsConstructor @Builder
 public class BasicConnectionConfig implements IConnectionConfig {
-	private String  url;
-	private String  proxyHost;
-	private Integer proxyPort;
-	private String  proxyUser;
-	private char[]  proxyPassword;
-	private boolean insecureModeEnabled;
-	
-	public static final BasicConnectionConfig from(IConnectionConfig other) {
-		return BasicConnectionConfig.builder()
-			.url(other.getUrl())
-			.proxyHost(other.getProxyHost())
-			.proxyPort(other.getProxyPort())
-			.proxyUser(other.getProxyUser())
-			.proxyPassword(other.getProxyPassword())
-			.insecureModeEnabled(other.isInsecureModeEnabled())
-			.build();
-	}
+    private String  url;
+    private String  proxyHost;
+    private Integer proxyPort;
+    private String  proxyUser;
+    private char[]  proxyPassword;
+    private boolean insecureModeEnabled;
+    
+    public static final BasicConnectionConfig from(IConnectionConfig other) {
+        return BasicConnectionConfig.builder()
+            .url(other.getUrl())
+            .proxyHost(other.getProxyHost())
+            .proxyPort(other.getProxyPort())
+            .proxyUser(other.getProxyUser())
+            .proxyPassword(other.getProxyPassword())
+            .insecureModeEnabled(other.isInsecureModeEnabled())
+            .build();
+    }
 }

@@ -32,21 +32,21 @@ import kong.unirest.UnirestException;
 import kong.unirest.UnirestInstance;
 
 public class ThrowUnexpectedHttpResponseExceptionInterceptor implements Interceptor {
-	private static final ThrowUnexpectedHttpResponseExceptionInterceptor INSTANCE = new ThrowUnexpectedHttpResponseExceptionInterceptor();
-	
-	public static final void configure(UnirestInstance unirestInstance) {
-		unirestInstance.config().interceptor(INSTANCE);
-	}
-	
-	@Override
-	public void onResponse(HttpResponse<?> response, HttpRequestSummary requestSummary, Config config) {
-		if ( !response.isSuccess() ) {
-			throw new UnexpectedHttpResponseException(response, requestSummary);
-		}
-	}
-	
-	@Override
-	public HttpResponse<?> onFail(Exception e, HttpRequestSummary request, Config config) throws UnirestException {
-		throw (e instanceof UnirestException) ? (UnirestException)e : new UnirestException(e); 
-	}
+    private static final ThrowUnexpectedHttpResponseExceptionInterceptor INSTANCE = new ThrowUnexpectedHttpResponseExceptionInterceptor();
+    
+    public static final void configure(UnirestInstance unirestInstance) {
+        unirestInstance.config().interceptor(INSTANCE);
+    }
+    
+    @Override
+    public void onResponse(HttpResponse<?> response, HttpRequestSummary requestSummary, Config config) {
+        if ( !response.isSuccess() ) {
+            throw new UnexpectedHttpResponseException(response, requestSummary);
+        }
+    }
+    
+    @Override
+    public HttpResponse<?> onFail(Exception e, HttpRequestSummary request, Config config) throws UnirestException {
+        throw (e instanceof UnirestException) ? (UnirestException)e : new UnirestException(e); 
+    }
 }

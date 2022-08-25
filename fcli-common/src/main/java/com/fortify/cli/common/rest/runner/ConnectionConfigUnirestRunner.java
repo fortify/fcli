@@ -40,45 +40,45 @@ import lombok.Getter;
 //      multiple commands in a composite command or workflow.
 @ReflectiveAccess @Singleton
 public class ConnectionConfigUnirestRunner {
-	@Getter @Inject private BasicUnirestRunner basicUnirestRunner;
-	@Getter @Inject private ObjectMapper objectMapper;
-	
-	/**
-	 * Run the given runner with a {@link UnirestInstance} that has been configured
-	 * based on the given {@link IConnectionConfig}.
-	 * @param <R> Return type
-	 * @param connectionConfig with which to configure the connection
-	 * @param runner to perform the actual work with a configured {@link UnirestInstance}
-	 * @return Return value of runner; note that this return value shouldn't contain any reference to the 
-	 *         {@link UnirestInstance} as that might be closed once this call returns.
-	 */
-	public <R> R runWithUnirest(IConnectionConfig connectionConfig, Function<UnirestInstance, R> runner) {
-		if ( connectionConfig == null ) {
-			throw new IllegalStateException("Connection configuration data may not be null");
-		}
-		return basicUnirestRunner.runWithUnirest(unirest -> {
-			_configure(connectionConfig, unirest);
-			return runner.apply(unirest);
-		});
-	}
+    @Getter @Inject private BasicUnirestRunner basicUnirestRunner;
+    @Getter @Inject private ObjectMapper objectMapper;
+    
+    /**
+     * Run the given runner with a {@link UnirestInstance} that has been configured
+     * based on the given {@link IConnectionConfig}.
+     * @param <R> Return type
+     * @param connectionConfig with which to configure the connection
+     * @param runner to perform the actual work with a configured {@link UnirestInstance}
+     * @return Return value of runner; note that this return value shouldn't contain any reference to the 
+     *         {@link UnirestInstance} as that might be closed once this call returns.
+     */
+    public <R> R runWithUnirest(IConnectionConfig connectionConfig, Function<UnirestInstance, R> runner) {
+        if ( connectionConfig == null ) {
+            throw new IllegalStateException("Connection configuration data may not be null");
+        }
+        return basicUnirestRunner.runWithUnirest(unirest -> {
+            _configure(connectionConfig, unirest);
+            return runner.apply(unirest);
+        });
+    }
 
-	/**
-	 * Perform basic connection configuration.
-	 * @param connectionConfig used to configure the {@link UnirestInstance}
-	 * @param unirestInstance {@link UnirestInstance} to be configured
-	 */
-	private final void _configure(IConnectionConfig connectionConfig, UnirestInstance unirestInstance) {
-		unirestInstance.config()
-			.defaultBaseUrl(normalizeUrl(connectionConfig.getUrl()))
-			.verifySsl(connectionConfig.isInsecureModeEnabled());
-		if ( StringUtils.isNotEmpty(connectionConfig.getProxyHost()) ) {
-			unirestInstance.config().proxy(connectionConfig.getProxyHost(), connectionConfig.getProxyPort(), connectionConfig.getProxyUser(), 
-					connectionConfig.getProxyHost()==null ? null : String.valueOf(connectionConfig.getProxyPassword()));
-		}
-	}
-	
-	protected String normalizeUrl(String url) {
-		// We remove any trailing slashes, assuming that most users will specify relative URL's starting with /
-		return url.replaceAll("/+$", "");
-	}
+    /**
+     * Perform basic connection configuration.
+     * @param connectionConfig used to configure the {@link UnirestInstance}
+     * @param unirestInstance {@link UnirestInstance} to be configured
+     */
+    private final void _configure(IConnectionConfig connectionConfig, UnirestInstance unirestInstance) {
+        unirestInstance.config()
+            .defaultBaseUrl(normalizeUrl(connectionConfig.getUrl()))
+            .verifySsl(connectionConfig.isInsecureModeEnabled());
+        if ( StringUtils.isNotEmpty(connectionConfig.getProxyHost()) ) {
+            unirestInstance.config().proxy(connectionConfig.getProxyHost(), connectionConfig.getProxyPort(), connectionConfig.getProxyUser(), 
+                    connectionConfig.getProxyHost()==null ? null : String.valueOf(connectionConfig.getProxyPassword()));
+        }
+    }
+    
+    protected String normalizeUrl(String url) {
+        // We remove any trailing slashes, assuming that most users will specify relative URL's starting with /
+        return url.replaceAll("/+$", "");
+    }
 }

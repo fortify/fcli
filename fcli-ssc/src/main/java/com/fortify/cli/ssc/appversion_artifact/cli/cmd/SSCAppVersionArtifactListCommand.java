@@ -41,20 +41,20 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAppVersionArtifactListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
-	@CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
+    @CommandLine.Mixin private OutputMixin outputMixin;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(
-				unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentVersionHandler.getApplicationVersionId(unirest)))
-						.queryString("embed","scans"));
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
-	}
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        outputMixin.write(
+                unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentVersionHandler.getApplicationVersionId(unirest)))
+                        .queryString("embed","scans"));
+        return null;
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+    }
 }

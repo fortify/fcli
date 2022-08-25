@@ -46,57 +46,57 @@ import picocli.CommandLine.Option;
 
 @Command(name = "login", sortOptions = false, resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages")
 public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessionLoginConfig> {
-	@Getter @Inject private SSCSessionLoginHandler sscLoginHandler;
-	
-	@ArgGroup(exclusive = false, multiplicity = "1", order = 1, headingKey = "fcli.ssc.session.login.connection.argGroup.heading")
-	@Getter private LoginConnectionOptions connectionOptions;
-	
-	@ArgGroup(exclusive = false, multiplicity = "1", order = 2, headingKey = "fcli.ssc.session.login.authentication.argGroup.heading")
+    @Getter @Inject private SSCSessionLoginHandler sscLoginHandler;
+    
+    @ArgGroup(exclusive = false, multiplicity = "1", order = 1, headingKey = "fcli.ssc.session.login.connection.argGroup.heading")
+    @Getter private LoginConnectionOptions connectionOptions;
+    
+    @ArgGroup(exclusive = false, multiplicity = "1", order = 2, headingKey = "fcli.ssc.session.login.authentication.argGroup.heading")
     @Getter private SSCAuthOptions authOptions;
-	
-	static class SSCAuthOptions {
-		@ArgGroup(exclusive = true, multiplicity = "1", order = 3)
-	    @Getter private SSCCredentialOptions credentialOptions;
-	}
-	
+    
+    static class SSCAuthOptions {
+        @ArgGroup(exclusive = true, multiplicity = "1", order = 3)
+        @Getter private SSCCredentialOptions credentialOptions;
+    }
+    
     static class SSCCredentialOptions {
-    	@ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
-    	@Getter private SSCUserCredentialOptions userOptions = new SSCUserCredentialOptions();
-    	@ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
-    	@Getter private TokenOptions tokenOptions = new TokenOptions();
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
+        @Getter private SSCUserCredentialOptions userOptions = new SSCUserCredentialOptions();
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
+        @Getter private TokenOptions tokenOptions = new TokenOptions();
     }
     
     static class SSCUserCredentialOptions extends LoginUserCredentialOptions implements ISSCUserCredentialsConfig {
-    	@Option(names = {"--expire-in"}, descriptionKey = "fcli.ssc.session.login.expire-in", required = false, defaultValue = "1d", showDefaultValue = Visibility.ALWAYS)
-    	@Getter private String expireIn;
-    	
-    	@Override
-    	public OffsetDateTime getExpiresAt() {
-    		return DateTimeHelper.getCurrentOffsetDateTimePlusPeriod(expireIn);
-    	}
+        @Option(names = {"--expire-in"}, descriptionKey = "fcli.ssc.session.login.expire-in", required = false, defaultValue = "1d", showDefaultValue = Visibility.ALWAYS)
+        @Getter private String expireIn;
+        
+        @Override
+        public OffsetDateTime getExpiresAt() {
+            return DateTimeHelper.getCurrentOffsetDateTimePlusPeriod(expireIn);
+        }
     }
     
     static class TokenOptions {
-    	@Option(names = {"--token", "-t"}, descriptionKey = "fcli.ssc.session.login.token", required = true, interactive = true, arity = "0..1", echo = false)
-    	@Getter private char[] token;
+        @Option(names = {"--token", "-t"}, descriptionKey = "fcli.ssc.session.login.token", required = true, interactive = true, arity = "0..1", echo = false)
+        @Getter private char[] token;
     }
-	
-	@Override
-	protected String getSessionType() {
-		return SSCConstants.SESSION_TYPE;
-	}
-	
-	@Override
-	protected final SSCSessionLoginConfig getLoginConfig() {
-		SSCSessionLoginConfig config = new SSCSessionLoginConfig();
-		config.setConnectionConfig(getConnectionOptions());
-		Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getUserOptions).ifPresent(config::setSscUserCredentialsConfig);
-		Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getTokenOptions).map(TokenOptions::getToken).ifPresent(config::setToken);
-		return config;
-	}
-	
-	@Override
-	protected ISessionLoginHandler<SSCSessionLoginConfig> getLoginHandler() {
-		return sscLoginHandler;
-	}
+    
+    @Override
+    protected String getSessionType() {
+        return SSCConstants.SESSION_TYPE;
+    }
+    
+    @Override
+    protected final SSCSessionLoginConfig getLoginConfig() {
+        SSCSessionLoginConfig config = new SSCSessionLoginConfig();
+        config.setConnectionConfig(getConnectionOptions());
+        Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getUserOptions).ifPresent(config::setSscUserCredentialsConfig);
+        Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getTokenOptions).map(TokenOptions::getToken).ifPresent(config::setToken);
+        return config;
+    }
+    
+    @Override
+    protected ISessionLoginHandler<SSCSessionLoginConfig> getLoginHandler() {
+        return sscLoginHandler;
+    }
 }

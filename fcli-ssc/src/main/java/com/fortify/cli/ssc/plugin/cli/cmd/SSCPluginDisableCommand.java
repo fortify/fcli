@@ -41,30 +41,30 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "disable")
 public class SSCPluginDisableCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-	@CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private OutputMixin outputMixin;
 
-	@CommandLine.Option(names = {"--id"})
-	private Integer id;
+    @CommandLine.Option(names = {"--id"})
+    private Integer id;
 
-	@SneakyThrows
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		ObjectNode plugins = new ObjectMapper().createObjectNode();
-		plugins.putArray("pluginIds").add(id.intValue());
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        ObjectNode plugins = new ObjectMapper().createObjectNode();
+        plugins.putArray("pluginIds").add(id.intValue());
 
-		outputMixin.write(
-				unirest.post(SSCUrls.PLUGINS_ACTION_DISABLE)
-						.body(plugins.toString())
-						.contentType("application/json")
-		);
-		outputMixin.write(
-				unirest.get(SSCUrls.PLUGIN(id.toString()))
-		);
-		return null;
-	}
+        outputMixin.write(
+                unirest.post(SSCUrls.PLUGINS_ACTION_DISABLE)
+                        .body(plugins.toString())
+                        .contentType("application/json")
+        );
+        outputMixin.write(
+                unirest.get(SSCUrls.PLUGIN(id.toString()))
+        );
+        return null;
+    }
 
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return SSCOutputHelper.defaultTableOutputConfig()
-				.defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
-	}
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputHelper.defaultTableOutputConfig()
+                .defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
+    }
 }

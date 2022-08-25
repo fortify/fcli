@@ -30,9 +30,9 @@ import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
 public class JsonRecordWriterFactory implements IRecordWriterFactory {
 
-	@Override
-	public IRecordWriter createRecordWriter(RecordWriterConfig config) {
-		return new JsonRecordWriter(config);
-	}
+    @Override
+    public IRecordWriter createRecordWriter(RecordWriterConfig config) {
+        return new JsonRecordWriter(config);
+    }
 
 }
