@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.rest.cli;
+package com.fortify.cli.sc_sast.rest.cli.cmd;
 
 import com.fortify.cli.common.session.cli.SessionNameMixin;
 import com.fortify.cli.sc_sast.rest.runner.SCSastAuthenticatedUnirestRunner;

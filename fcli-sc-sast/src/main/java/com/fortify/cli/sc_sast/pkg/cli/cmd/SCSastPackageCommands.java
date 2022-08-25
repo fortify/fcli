@@ -1,15 +1,14 @@
-package com.fortify.cli.sc_sast.sensor.cli;
+package com.fortify.cli.sc_sast.pkg.cli.cmd;
 
 import com.fortify.cli.common.dummy.cli.DummyCommand;
 
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "sensor",
-        aliases = {"worker"},
+        name = "package",
         subcommands = {
                 DummyCommand.class
         }
 )
-public class SCSastSensorCommands {
+public class SCSastPackageCommands {
 }

@@ -22,33 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.rest.cli;
+package com.fortify.cli.sc_sast.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.OutputConfig;
-import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.common.output.writer.OutputFormat;
-import com.fortify.cli.common.rest.cli.RestMixin;
+import com.fortify.cli.common.session.cli.AbstractSessionListCommand;
+import com.fortify.cli.sc_sast.util.SCSastConstants;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
-@Command(name = "rest")
-public final class SCSastRestCommand extends AbstractSCSastUnirestRunnerCommand implements IOutputConfigSupplier {
-	@Mixin private OutputMixin outputMixin;
-	@Mixin private RestMixin restMixin;
-	
+@Command(name = "list", sortOptions = false)
+public class SCSastSessionListCommand extends AbstractSessionListCommand {
 	@Override
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(restMixin.prepareRequest(unirest));
-		return null;
-	}
-	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return new OutputConfig().defaultFormat(OutputFormat.json);
+	public final String getSessionType() {
+		return SCSastConstants.SESSION_TYPE;
 	}
 }

@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_sast.scan.cli;
+package com.fortify.cli.sc_sast.scan.cli.cmd;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;

@@ -1,7 +1,7 @@
-package com.fortify.cli.sc_sast.ping.cli;
+package com.fortify.cli.sc_sast.ping.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.sc_sast.rest.cli.AbstractSCSastUnirestRunnerCommand;
+import com.fortify.cli.sc_sast.rest.cli.cmd.AbstractSCSastUnirestRunnerCommand;
 
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;

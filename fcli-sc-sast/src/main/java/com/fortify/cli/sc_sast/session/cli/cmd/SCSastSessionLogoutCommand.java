@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.session.cli;
+package com.fortify.cli.sc_sast.session.cli.cmd;
 
 import com.fortify.cli.common.session.cli.AbstractSessionLogoutCommand;
 import com.fortify.cli.sc_sast.util.SCSastConstants;
