@@ -22,9 +22,9 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.session.cli;
+package com.fortify.cli.common.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.OutputMixin;
+import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
 import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;

@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.fod.rest.cli.cmd;
 
-import com.fortify.cli.common.session.cli.SessionNameMixin;
+import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.fod.rest.runner.FoDAuthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

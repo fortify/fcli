@@ -24,10 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.attribute_definition.cli.cmd;
 
-import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.OutputConfig;
-import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.common.output.cli.filter.AddAsDefaultColumn;
+import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.ssc.attribute_definition.domain.SSCAttributeDefinitionCategory;
 import com.fortify.cli.ssc.attribute_definition.domain.SSCAttributeDefinitionType;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;

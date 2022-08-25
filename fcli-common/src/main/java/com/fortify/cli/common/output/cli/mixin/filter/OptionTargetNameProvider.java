@@ -1,4 +1,4 @@
-package com.fortify.cli.common.output.cli.filter;
+package com.fortify.cli.common.output.cli.mixin.filter;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 

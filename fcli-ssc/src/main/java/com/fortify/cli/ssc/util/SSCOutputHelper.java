@@ -1,6 +1,6 @@
 package com.fortify.cli.ssc.util;
 
-import com.fortify.cli.common.output.cli.OutputConfig;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 
 public class SSCOutputHelper {
 	public static final OutputConfig defaultTableOutputConfig() {

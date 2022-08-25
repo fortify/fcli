@@ -28,9 +28,9 @@ import java.util.Arrays;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.OutputConfig;
-import com.fortify.cli.common.output.cli.OutputMixin;
+import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.plugin.cli.cmd.SSCPluginCommonOptions.SSCPluginSelectSingleRequiredOptions;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputHelper;

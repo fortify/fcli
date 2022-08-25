@@ -22,35 +22,31 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.rest.cli;
+package com.fortify.cli.common.session.cli.cmd;
+
+import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
+import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
+import com.fortify.cli.common.session.manager.api.SessionDataManager;
+import com.fortify.cli.common.session.manager.api.SessionLogoutManager;
+import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import io.micronaut.core.util.StringUtils;
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import jakarta.inject.Inject;
 import lombok.Getter;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-public class RestMixin {
-	@Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
-	
-	@Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
-	@Getter private String httpMethod;
-	
-	@Option(names = {"--data", "-d"}, required = false)
-	@Getter private String data; // TODO Add ability to read data from file
-	
-	// TODO Add options for content-type, arbitrary headers, ...?
-	
-	public final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
-		if ( StringUtils.isEmpty(uri) ) {
-			throw new IllegalArgumentException("Uri must be specified");
-		}
-		var request = unirest.request(httpMethod, uri);
-		// TODO Add Content-Type & accept headers
-		return data==null ? request : request.body(data);
+public abstract class AbstractSessionLogoutCommand implements Runnable, ISessionTypeProvider {
+	@Inject private SessionDataManager sessionDataManager;
+	@Getter	@Inject private SessionLogoutManager sessionLogoutManager;
+	@Getter @Mixin private SessionNameMixin sessionNameMixin;
+	@Inject private SessionSummaryManager sessionSummaryManager;
+	@Mixin private OutputMixin outputMixin;
+
+	@Override
+	public final void run() {
+		sessionLogoutManager.logoutAndDestroy(getSessionType(), sessionNameMixin.getSessionName());
+		sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
 	}
-	
 }

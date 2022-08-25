@@ -3,7 +3,7 @@ package com.fortify.cli.fod.util;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.OutputConfig;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 
 import io.micronaut.http.uri.UriBuilder;
 import kong.unirest.HttpResponse;

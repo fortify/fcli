@@ -1,6 +1,6 @@
 package com.fortify.cli.sc_dast.sensor.cli.cmd;
 
-import com.fortify.cli.common.dummy.cli.DummyCommand;
+import com.fortify.cli.common.dummy.cli.cmd.DummyCommand;
 
 import picocli.CommandLine.Command;
 

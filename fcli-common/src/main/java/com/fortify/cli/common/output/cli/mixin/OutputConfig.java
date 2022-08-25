@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.cli;
+package com.fortify.cli.common.output.cli.mixin;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -33,7 +33,7 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.OutputMixin.IDefaultFieldNameFormatterProvider;
+import com.fortify.cli.common.output.cli.mixin.OutputMixin.IDefaultFieldNameFormatterProvider;
 import com.fortify.cli.common.output.transform.IJsonNodeTransformer;
 import com.fortify.cli.common.output.transform.fields.PredefinedFieldsTransformerFactory;
 import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;

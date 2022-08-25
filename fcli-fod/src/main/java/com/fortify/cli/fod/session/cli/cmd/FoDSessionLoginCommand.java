@@ -26,9 +26,9 @@ package com.fortify.cli.fod.session.cli.cmd;
 
 import java.util.Optional;
 
-import com.fortify.cli.common.session.cli.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.cli.LoginConnectionOptions;
-import com.fortify.cli.common.session.cli.LoginUserCredentialOptions;
+import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
+import com.fortify.cli.common.session.cli.mixin.LoginConnectionOptions;
+import com.fortify.cli.common.session.cli.mixin.LoginUserCredentialOptions;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
 import com.fortify.cli.fod.session.manager.FoDSessionLoginConfig;
 import com.fortify.cli.fod.session.manager.FoDSessionLoginHandler;

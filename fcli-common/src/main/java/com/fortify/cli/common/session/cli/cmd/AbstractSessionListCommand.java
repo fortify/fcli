@@ -22,30 +22,23 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.session.cli;
+package com.fortify.cli.common.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.OutputMixin;
+import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
-import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.api.SessionLogoutManager;
 import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
-import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-public abstract class AbstractSessionLogoutCommand implements Runnable, ISessionTypeProvider {
-	@Inject private SessionDataManager sessionDataManager;
-	@Getter	@Inject private SessionLogoutManager sessionLogoutManager;
-	@Getter @Mixin private SessionNameMixin sessionNameMixin;
+public abstract class AbstractSessionListCommand implements Runnable, ISessionTypeProvider {
 	@Inject private SessionSummaryManager sessionSummaryManager;
 	@Mixin private OutputMixin outputMixin;
 
 	@Override
-	public final void run() {
-		sessionLogoutManager.logoutAndDestroy(getSessionType(), sessionNameMixin.getSessionName());
+	public void run() {
 		sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
 	}
 }

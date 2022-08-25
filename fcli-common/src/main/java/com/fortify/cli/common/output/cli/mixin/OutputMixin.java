@@ -1,4 +1,4 @@
-package com.fortify.cli.common.output.cli;
+package com.fortify.cli.common.output.cli.mixin;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -14,9 +14,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.filter.AddAsDefaultColumn;
-import com.fortify.cli.common.output.cli.filter.OptionAnnotationHelper;
-import com.fortify.cli.common.output.cli.filter.OutputFilter;
+import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
+import com.fortify.cli.common.output.cli.mixin.filter.OptionAnnotationHelper;
+import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.output.transform.jsonpath.JsonPathTransformer;
 import com.fortify.cli.common.output.writer.IRecordWriter;

@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.cli.cmd;
 
-import com.fortify.cli.common.session.cli.AbstractSessionListCommand;
+import com.fortify.cli.common.session.cli.cmd.AbstractSessionListCommand;
 import com.fortify.cli.fod.util.FoDConstants;
 
 import picocli.CommandLine.Command;

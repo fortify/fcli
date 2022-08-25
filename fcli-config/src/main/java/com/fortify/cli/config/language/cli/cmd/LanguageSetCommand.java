@@ -1,6 +1,6 @@
 package com.fortify.cli.config.language.cli.cmd;
 
-import com.fortify.cli.common.output.cli.OutputMixin;
+import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 
 import jakarta.annotation.PostConstruct;
 import picocli.CommandLine;

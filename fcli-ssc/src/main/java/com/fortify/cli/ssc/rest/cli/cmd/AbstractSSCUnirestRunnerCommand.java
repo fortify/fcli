@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.rest.cli.cmd;
 
-import com.fortify.cli.common.session.cli.SessionNameMixin;
+import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.ssc.rest.runner.SSCAuthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

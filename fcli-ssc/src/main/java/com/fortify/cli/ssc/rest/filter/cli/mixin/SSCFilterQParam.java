@@ -6,8 +6,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import com.fortify.cli.common.output.cli.filter.DefaultOptionTargetNameProvider;
-import com.fortify.cli.common.output.cli.filter.OptionTargetNameProvider;
+import com.fortify.cli.common.output.cli.mixin.filter.DefaultOptionTargetNameProvider;
+import com.fortify.cli.common.output.cli.mixin.filter.OptionTargetNameProvider;
 
 /**
  * This annotation allows for filtering the output, based on input property names.

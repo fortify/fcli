@@ -27,9 +27,9 @@ package com.fortify.cli.ssc.session.cli.cmd;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
-import com.fortify.cli.common.session.cli.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.cli.LoginConnectionOptions;
-import com.fortify.cli.common.session.cli.LoginUserCredentialOptions;
+import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
+import com.fortify.cli.common.session.cli.mixin.LoginConnectionOptions;
+import com.fortify.cli.common.session.cli.mixin.LoginUserCredentialOptions;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
 import com.fortify.cli.common.util.DateTimeHelper;
 import com.fortify.cli.ssc.session.manager.ISSCUserCredentialsConfig;

@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
-import com.fortify.cli.common.session.cli.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.cli.LoginConnectionOptions;
+import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
+import com.fortify.cli.common.session.cli.mixin.LoginConnectionOptions;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionLoginConfig;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionLoginHandler;

@@ -22,43 +22,35 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.session.cli;
-
-import com.fortify.cli.common.rest.runner.IConnectionConfig;
+package com.fortify.cli.common.rest.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import io.micronaut.core.util.StringUtils;
+import kong.unirest.HttpRequest;
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-/**
- * Configure connection options to a remote system
- * Usually this would be included in a {@link SessionLoginCommand} implementation
- * as follows:
- * <pre>
- * {@code
- *   {@literal @}ArgGroup(exclusive = false, multiplicity = "1", heading = "<System> Connection Options:%n")
- *   {@literal @}Getter private LoginConnectionOptions conn;
- * }
- * </pre>
- * @author Ruud Senden
- */
 @ReflectiveAccess
-public class LoginConnectionOptions implements IConnectionConfig {
-	@Option(names = {"--url"}, required = true, order=1)
-	@Getter private String url;
+public class RestMixin {
+	@Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
 	
-	@Option(names = {"--proxy-host"}, required = false, order=2)
-	@Getter private String proxyHost;
+	@Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
+	@Getter private String httpMethod;
 	
-	@Option(names = {"--proxy-port"}, required = false, order=3)
-	@Getter private Integer proxyPort;
+	@Option(names = {"--data", "-d"}, required = false)
+	@Getter private String data; // TODO Add ability to read data from file
 	
-	@Option(names = {"--proxy-user"}, required = false, order=4)
-	@Getter private String proxyUser;
+	// TODO Add options for content-type, arbitrary headers, ...?
 	
-	@Option(names = {"--proxy-password"}, required = false, interactive = true, echo = false, order=5)
-	@Getter private char[] proxyPassword;
+	public final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
+		if ( StringUtils.isEmpty(uri) ) {
+			throw new IllegalArgumentException("Uri must be specified");
+		}
+		var request = unirest.request(httpMethod, uri);
+		// TODO Add Content-Type & accept headers
+		return data==null ? request : request.body(data);
+	}
 	
-	@Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
-	@Getter private boolean insecureModeEnabled;
 }

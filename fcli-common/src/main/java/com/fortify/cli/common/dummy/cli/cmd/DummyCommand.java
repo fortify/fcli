@@ -1,4 +1,4 @@
-package com.fortify.cli.common.dummy.cli;
+package com.fortify.cli.common.dummy.cli.cmd;
 
 import picocli.CommandLine;
 

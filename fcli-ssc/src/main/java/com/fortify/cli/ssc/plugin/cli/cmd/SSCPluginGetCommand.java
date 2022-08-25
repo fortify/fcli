@@ -24,11 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
+import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.OutputConfig;
-import com.fortify.cli.common.output.cli.OutputMixin;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;

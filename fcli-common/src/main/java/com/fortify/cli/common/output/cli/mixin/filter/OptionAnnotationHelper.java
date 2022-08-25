@@ -1,4 +1,4 @@
-package com.fortify.cli.common.output.cli.filter;
+package com.fortify.cli.common.output.cli.mixin.filter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;

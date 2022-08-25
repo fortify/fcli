@@ -2,7 +2,7 @@ package com.fortify.cli.ssc.rest.filter.cli.mixin;
 
 import java.util.stream.Collectors;
 
-import com.fortify.cli.common.output.cli.filter.OptionAnnotationHelper;
+import com.fortify.cli.common.output.cli.mixin.filter.OptionAnnotationHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;

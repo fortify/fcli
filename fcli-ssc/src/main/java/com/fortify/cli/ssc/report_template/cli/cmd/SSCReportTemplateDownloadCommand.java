@@ -24,11 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
-import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.OutputConfig;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
+import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.ssc.report_template.cli.mixin.SSCReportTemplateIdMixin;
 import com.fortify.cli.ssc.report_template.domain.SSCReportTemplateDefResponse;
 import com.fortify.cli.ssc.util.SSCOutputHelper;

@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.rest.cli.cmd;
 
-import com.fortify.cli.common.session.cli.SessionNameMixin;
+import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.sc_dast.rest.runner.SCDastUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

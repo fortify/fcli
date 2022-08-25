@@ -25,7 +25,7 @@
 package com.fortify.cli.fod.rest.runner;
 
 import com.fortify.cli.common.rest.runner.ThrowUnexpectedHttpResponseExceptionInterceptor;
-import com.fortify.cli.common.session.unirest.AbstractSessionUnirestRunner;
+import com.fortify.cli.common.session.rest.runner.AbstractSessionUnirestRunner;
 import com.fortify.cli.fod.session.manager.FoDSessionData;
 import com.fortify.cli.fod.util.FoDConstants;
 

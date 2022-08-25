@@ -22,23 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.session.cli;
-
-import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
-import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
+package com.fortify.cli.common.session.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
-import picocli.CommandLine.Mixin;
+import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-public abstract class AbstractSessionListCommand implements Runnable, ISessionTypeProvider {
-	@Inject private SessionSummaryManager sessionSummaryManager;
-	@Mixin private OutputMixin outputMixin;
-
-	@Override
-	public void run() {
-		sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
+public class SessionNameMixin {
+	@ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
+    @Getter private SessionConsumerNameOptions nameOptions;
+	
+	static class SessionConsumerNameOptions {
+		@Option(names = {"--session"}, required = false, defaultValue = "default")
+		@Getter private String sessionName;
+	}
+	
+	public String getSessionName() {
+		return nameOptions==null ? "default" : nameOptions.getSessionName();
 	}
 }

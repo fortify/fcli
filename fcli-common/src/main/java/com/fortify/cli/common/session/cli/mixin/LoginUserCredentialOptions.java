@@ -22,24 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.session.cli;
+package com.fortify.cli.common.session.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-public class SessionNameMixin {
-	@ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
-    @Getter private SessionConsumerNameOptions nameOptions;
+public class LoginUserCredentialOptions {
+	@Option(names = {"--user", "-u"}, required = true)
+	@Getter protected String user;
 	
-	static class SessionConsumerNameOptions {
-		@Option(names = {"--session"}, required = false, defaultValue = "default")
-		@Getter private String sessionName;
-	}
-	
-	public String getSessionName() {
-		return nameOptions==null ? "default" : nameOptions.getSessionName();
-	}
+	@Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
+	@Getter protected char[] password;
 }

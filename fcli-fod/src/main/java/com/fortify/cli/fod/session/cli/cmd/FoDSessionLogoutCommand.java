@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.cli.cmd;
 
-import com.fortify.cli.common.session.cli.AbstractSessionLogoutCommand;
+import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
 import com.fortify.cli.fod.util.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

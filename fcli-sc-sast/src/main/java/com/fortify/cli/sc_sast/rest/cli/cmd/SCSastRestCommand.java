@@ -24,11 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.rest.cli.cmd;
 
-import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.OutputConfig;
-import com.fortify.cli.common.output.cli.OutputMixin;
+import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.output.writer.OutputFormat;
-import com.fortify.cli.common.rest.cli.RestMixin;
+import com.fortify.cli.common.rest.cli.mixin.RestMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;

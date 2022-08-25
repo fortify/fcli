@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.session.cli.cmd;
 
-import com.fortify.cli.common.session.cli.AbstractSessionListCommand;
+import com.fortify.cli.common.session.cli.cmd.AbstractSessionListCommand;
 import com.fortify.cli.ssc.util.SSCConstants;
 
 import picocli.CommandLine.Command;

@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
-import com.fortify.cli.common.session.cli.AbstractSessionLogoutCommand;
+import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
 import com.fortify.cli.sc_sast.util.SCSastConstants;
 
 import picocli.CommandLine.Command;

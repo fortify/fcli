@@ -25,7 +25,7 @@
 package com.fortify.cli.sc_sast.rest.runner;
 
 import com.fortify.cli.common.rest.runner.ThrowUnexpectedHttpResponseExceptionInterceptor;
-import com.fortify.cli.common.session.unirest.AbstractSessionUnirestRunner;
+import com.fortify.cli.common.session.rest.runner.AbstractSessionUnirestRunner;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
 import com.fortify.cli.sc_sast.util.SCSastConstants;
 

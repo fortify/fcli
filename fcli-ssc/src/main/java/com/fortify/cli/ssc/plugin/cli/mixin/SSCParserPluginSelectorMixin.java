@@ -27,8 +27,8 @@ package com.fortify.cli.ssc.plugin.cli.mixin;
 import picocli.CommandLine;
 import javax.validation.ValidationException;
 
-import com.fortify.cli.common.output.cli.filter.AddAsDefaultColumn;
-import com.fortify.cli.common.output.cli.filter.OutputFilter;
+import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
+import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 
 public class SSCParserPluginSelectorMixin {
     @CommandLine.ArgGroup(heading = "Identifier\n")
