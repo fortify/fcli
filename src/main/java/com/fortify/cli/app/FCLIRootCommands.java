@@ -25,7 +25,7 @@
 package com.fortify.cli.app;
 
 import com.fortify.cli.app.log.LoggingMixin;
-import com.fortify.cli.config._main.cli.ConfigCommands;
+import com.fortify.cli.config._main.cli.cmd.ConfigCommands;
 import com.fortify.cli.fod._main.cli.cmd.FoDCommands;
 import com.fortify.cli.sc_dast._main.cli.cmd.SCDastCommands;
 import com.fortify.cli.sc_sast._main.cli.cmd.SCSastCommands;

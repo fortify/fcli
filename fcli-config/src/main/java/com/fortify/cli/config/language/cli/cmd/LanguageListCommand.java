@@ -1,4 +1,4 @@
-package com.fortify.cli.config.language.cli;
+package com.fortify.cli.config.language.cli.cmd;
 
 import com.fortify.cli.config.language.manager.LanguageConfigManager;
 

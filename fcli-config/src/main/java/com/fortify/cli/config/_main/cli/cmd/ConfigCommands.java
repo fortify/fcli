@@ -1,7 +1,7 @@
-package com.fortify.cli.config._main.cli;
+package com.fortify.cli.config._main.cli.cmd;
 
-import com.fortify.cli.config.autocomplete.cli.AutoCompleteGenerationCommand;
-import com.fortify.cli.config.language.cli.LanguageCommands;
+import com.fortify.cli.config.autocomplete.cli.cmd.AutoCompleteGenerationCommand;
+import com.fortify.cli.config.language.cli.cmd.LanguageCommands;
 
 import picocli.CommandLine.Command;
 

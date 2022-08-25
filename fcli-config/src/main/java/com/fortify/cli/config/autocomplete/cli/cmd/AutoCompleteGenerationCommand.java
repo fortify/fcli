@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.config.autocomplete.cli;
+package com.fortify.cli.config.autocomplete.cli.cmd;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.AutoComplete;
