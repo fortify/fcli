@@ -1,9 +1,9 @@
-package com.fortify.cli.sc_dast._main.cli;
+package com.fortify.cli.sc_dast._main.cli.cmd;
 
-import com.fortify.cli.sc_dast.scan.cli.SCDastScanCommands;
-import com.fortify.cli.sc_dast.scan_output.cli.SCDastScanOutputCommands;
-import com.fortify.cli.sc_dast.scan_settings.cli.SCDastScanSettingsCommands;
-import com.fortify.cli.sc_dast.sensor.cli.SCDastSensorCommands;
+import com.fortify.cli.sc_dast.scan.cli.cmd.SCDastScanCommands;
+import com.fortify.cli.sc_dast.scan_output.cli.cmd.SCDastScanOutputCommands;
+import com.fortify.cli.sc_dast.scan_settings.cli.cmd.SCDastScanSettingsCommands;
+import com.fortify.cli.sc_dast.sensor.cli.cmd.SCDastSensorCommands;
 import com.fortify.cli.ssc.session.cli.SSCSessionCommands;
 
 import picocli.CommandLine.Command;

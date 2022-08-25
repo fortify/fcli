@@ -22,33 +22,30 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.rest.cli;
+package com.fortify.cli.sc_dast.rest.cli.cmd;
 
-import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.OutputConfig;
-import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.common.output.writer.OutputFormat;
-import com.fortify.cli.common.rest.cli.RestMixin;
+import com.fortify.cli.common.session.cli.SessionNameMixin;
+import com.fortify.cli.sc_dast.rest.runner.SCDastUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine.Command;
+import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "rest")
-public final class SCDastRestCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-	@Mixin private OutputMixin outputMixin;
-	@Mixin private RestMixin restMixin;
-	
-	@Override
-	protected Void runWithUnirest(UnirestInstance unirest) {
-		outputMixin.write(restMixin.prepareRequest(unirest));
-		return null;
+public abstract class AbstractSCDastUnirestRunnerCommand implements Runnable {
+	@Getter @Inject private SCDastUnirestRunner unirestRunner;
+	@Getter @Mixin  private SessionNameMixin sessionNameMixin;
+
+	@Override @SneakyThrows
+	public final void run() {
+		// TODO Do we want to do anything with the results, like formatting it based on output options?
+		//      Or do we let the actual implementation handle this?
+		unirestRunner.runWithUnirest(sessionNameMixin.getSessionName(), this::runWithUnirest);
 	}
 	
-	@Override
-	public OutputConfig getOutputOptionsWriterConfig() {
-		return new OutputConfig().defaultFormat(OutputFormat.json);
-	}
+	protected abstract Void runWithUnirest(UnirestInstance unirest);
+	
 }

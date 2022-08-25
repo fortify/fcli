@@ -22,11 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.scan.cli;
+package com.fortify.cli.sc_dast.scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.sc_dast.rest.cli.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.rest.cli.cmd.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.util.SCDastScanActionsHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -42,22 +42,22 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "pause")
-public final class SCDastScanPauseCommand extends AbstractSCDastUnirestRunnerCommand {
+@Command(name = "complete")
+public final class SCDastScanCompleteCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
-    @ArgGroup(exclusive = false, headingKey = "arggroup.pause-scan-options.heading", order = 1)
-    @Getter private SCDastScanPauseOptions pauseScanOptions;
+    @ArgGroup(exclusive = false, headingKey = "arggroup.complete-scan-options.heading", order = 1)
+    @Getter private SCDastScanCompleteOptions completeScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public static class SCDastScanPauseOptions {
+    public static class SCDastScanCompleteOptions {
         @Option(names = {"-i","--id", "--scan-id"}, required = true)
         @Getter private int scanId;
 
-        @Option(names = {"-w", "--wait", "--wait-paused"}, defaultValue = "false")
-        @Getter private boolean waitPaused;
+        @Option(names = {"-w", "--wait", "--wait-completed"}, defaultValue = "false")
+        @Getter private boolean waitCompleted;
 
         @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         @Getter private int waitInterval;
@@ -65,16 +65,16 @@ public final class SCDastScanPauseCommand extends AbstractSCDastUnirestRunnerCom
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-        if(pauseScanOptions == null){
+        if(completeScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
                     "Error: No parameter found. Provide the required scan id.");
         }
         SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-        JsonNode response = actionsHandler.pauseScan(pauseScanOptions.getScanId());
+        JsonNode response = actionsHandler.completeScan(completeScanOptions.getScanId());
 
         if(response != null) outputMixin.write(response);
 
-        if(pauseScanOptions.isWaitPaused()){ actionsHandler.waitPaused(pauseScanOptions.getScanId(), pauseScanOptions.getWaitInterval()); }
+        if(completeScanOptions.isWaitCompleted()){ actionsHandler.waitCompleted(completeScanOptions.getScanId(), completeScanOptions.getWaitInterval()); }
 
         return null;
     }

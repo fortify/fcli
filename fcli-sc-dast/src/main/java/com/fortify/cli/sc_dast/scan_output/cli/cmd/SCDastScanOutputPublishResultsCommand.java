@@ -22,11 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.scan.cli;
+package com.fortify.cli.sc_dast.scan_output.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.sc_dast.rest.cli.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.rest.cli.cmd.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.util.SCDastScanActionsHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -42,38 +42,31 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "resume")
-public final class SCDastScanResumeCommand extends AbstractSCDastUnirestRunnerCommand {
+@Command(name = "publish")
+public final class SCDastScanOutputPublishResultsCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
-    @ArgGroup(exclusive = false, headingKey = "arggroup.resume-scan-options.heading", order = 1)
-    @Getter private SCDastScanResumeOptions resumeScanOptions;
+
+    @ArgGroup(exclusive = false, headingKey = "arggroup.publish-options.heading", order = 1)
+    @Getter private SCDastScanPublishOptions publishScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public static class SCDastScanResumeOptions {
-        @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
+    public static class SCDastScanPublishOptions {
+        @Option(names = {"-i","--id", "--scan-id"}, required = true)
         @Getter private int scanId;
-
-        @Option(names = {"-w", "--wait", "--wait-resumed"}, defaultValue = "false")
-        @Getter private boolean waitResumed;
-
-        @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-        @Getter private int waitInterval;
     }
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-        if(resumeScanOptions == null){
+        if(publishScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
                     "Error: No parameter found. Provide the required scan-settings identifier.");
         }
         SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-        JsonNode response = actionsHandler.resumeScan(resumeScanOptions.getScanId());
+        JsonNode response = actionsHandler.publishScan(publishScanOptions.getScanId());
 
         if(response != null) outputMixin.write(response);
-
-        if(resumeScanOptions.isWaitResumed()){ actionsHandler.waitResumed(resumeScanOptions.getScanId(), resumeScanOptions.getWaitInterval()); }
 
         return null;
     }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,14 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.scan.cli;
+package com.fortify.cli.sc_dast.scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.OutputConfig;
 import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.sc_dast.rest.cli.AbstractSCDastUnirestRunnerCommand;
-import com.fortify.cli.sc_dast.util.SCDastOutputHelper;
+import com.fortify.cli.sc_dast.rest.cli.cmd.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.util.SCDastScanActionsHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -45,44 +42,32 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "status")
-public class SCDastScanStatusCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-		@Spec CommandSpec spec;
+@Command(name = "delete")
+public final class SCDastScanDeleteCommand extends AbstractSCDastUnirestRunnerCommand {
+    @Spec CommandSpec spec;
 
-		@ArgGroup(exclusive = false, headingKey = "arggroup.status-scan-options.heading", order = 1)
-        @Getter private SCDastGetScanStatusOptions scanStatusOptions;
+    @ArgGroup(exclusive = false, headingKey = "arggroup.delete-scan-options.heading", order = 1)
+    @Getter private SCDastScanDeleteOptions deleteScanOptions;
 
-        @Mixin
-        @Getter private OutputMixin outputMixin;
-		
-		@ReflectiveAccess
-		public static class SCDastGetScanStatusOptions {
-		    @Option(names = {"-i","--id", "--scan-id"}, required = true)
-		    @Getter private int scanId;
-		}
-		
-		@SneakyThrows
-        protected Void runWithUnirest(UnirestInstance unirest) {
-			if(scanStatusOptions == null){
-				throw new CommandLine.ParameterException(spec.commandLine(),
-						"Error: No parameter found. Provide the required scan id.");
-			}
-            SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
+    @Mixin private OutputMixin outputMixin;
+    
+    @ReflectiveAccess
+    public static class SCDastScanDeleteOptions {
+        @Option(names = {"-i","--id", "--scan-id"}, required = true)
+        @Getter private int scanId;
+    }
 
-			JsonNode response = actionsHandler.getScanStatus(scanStatusOptions.getScanId());
-
-			if( response.has("statusCode") ) {
-				outputMixin.overrideOutputFields("statusCode#statusText#message");
-			}
-
-            outputMixin.write(response);
-            return null;
+    @SneakyThrows
+    protected Void runWithUnirest(UnirestInstance unirest) {
+        if(deleteScanOptions == null){
+            throw new CommandLine.ParameterException(spec.commandLine(),
+                    "Error: No parameter found. Provide the required scan-settings identifier.");
         }
-		
-		@Override
-		public OutputConfig getOutputOptionsWriterConfig() {
-			return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns(
-					"scanStatusType:Scan status type" +
-					"#scanStatusTypeString:Scan status");
-		}
+        SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
+        JsonNode response = actionsHandler.deleteScan(deleteScanOptions.getScanId());
+
+        if(response != null) outputMixin.write(response);
+
+        return null;
+    }
 }

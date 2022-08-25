@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.scan_output.cli;
+package com.fortify.cli.sc_dast.scan_output.cli.cmd;
 
 import java.io.File;
 
@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.OutputConfig;
 import com.fortify.cli.common.output.cli.OutputMixin;
-import com.fortify.cli.sc_dast.rest.cli.AbstractSCDastUnirestRunnerCommand;
+import com.fortify.cli.sc_dast.rest.cli.cmd.AbstractSCDastUnirestRunnerCommand;
 import com.fortify.cli.sc_dast.util.SCDastOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -44,16 +44,17 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "download-logs")
-public class SCDastScanOutputDownloadLogsCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-		@ArgGroup(exclusive = false, headingKey = "arggroup.download-logs-options.heading", order = 1)
-        @Getter private SCDastTransferScanLogsOptions scanLogsOptions;
+@Command(name = "download-fpr", description = "Download scan results in FPR format from ScanCentral DAST")
+public class SCDastScanOutputDownloadFprCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
+		@ArgGroup(exclusive = false, headingKey = "arggroup.download-fpr-options.heading", order = 1)
+        private SCDastTransferScanResultsOptions scanResultsOptions;
 
         @Mixin
-        @Getter private OutputMixin OutputMixin;
-		
+        private OutputMixin OutputMixin;
+        
 		@ReflectiveAccess
-		public static class SCDastTransferScanLogsOptions {
+		public static class SCDastTransferScanResultsOptions {
+
 		    @Option(names = {"-i","--id", "--scan-id"}, required = true)
 		    @Getter private int scanId;
 
@@ -63,22 +64,22 @@ public class SCDastScanOutputDownloadLogsCommand extends AbstractSCDastUnirestRu
 		
 		@SneakyThrows
         protected Void runWithUnirest(UnirestInstance unirest){
-            File outputFile = unirest.get("/api/v2/scans/{scanId}/download-logs")
-	    		.routeParam("scanId", String.valueOf(scanLogsOptions.getScanId()))
-	            .accept("application/json")
-	            .header("Content-Type", "application/json")
-	            .asFile(scanLogsOptions.getFile())
-	            .getBody(); // TODO Do we need to call getBody()? Do we need to do anything with the return value? 
+			File outputFile = unirest.get("/api/v2/scans/{scanId}/download-results")
+		    		.routeParam("scanId", String.valueOf(scanResultsOptions.getScanId()))
+		            .accept("application/json")
+		            .header("Content-Type", "application/json")
+		            .asFile(scanResultsOptions.getFile())
+		            .getBody(); // TODO Do we need to call getBody()? Do we need to do anything with the return value? 
 
-		    ObjectNode output = new ObjectMapper().createObjectNode();
-		    output.put("path", outputFile.getPath());
+			    ObjectNode output = new ObjectMapper().createObjectNode();
+			    output.put("path", outputFile.getPath());
 
-            OutputMixin.write(output);
-            return null;
+	            OutputMixin.write(output);
+	            return null;
         }
 
 		@Override
 		public OutputConfig getOutputOptionsWriterConfig() {
-			return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns("path"); // TODO Move to constants?
+			return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns("path");
 		}
 }
