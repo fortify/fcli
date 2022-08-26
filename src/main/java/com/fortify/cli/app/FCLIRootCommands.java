@@ -24,12 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
-import com.fortify.cli.common.picocli.mixin.log.LoggingMixin;
-import com.fortify.cli.config.picocli.command.ConfigCommands;
-import com.fortify.cli.fod.picocli.command.FoDCommands;
-import com.fortify.cli.sc_dast.picocli.command.SCDastCommands;
-import com.fortify.cli.sc_sast.picocli.command.SCSastCommands;
-import com.fortify.cli.ssc.picocli.command.SSCCommands;
+import com.fortify.cli.app.log.LoggingMixin;
+import com.fortify.cli.config._main.cli.cmd.ConfigCommands;
+import com.fortify.cli.fod._main.cli.cmd.FoDCommands;
+import com.fortify.cli.sc_dast._main.cli.cmd.SCDastCommands;
+import com.fortify.cli.sc_sast._main.cli.cmd.SCSastCommands;
+import com.fortify.cli.ssc._main.cli.cmd.SSCCommands;
 import com.fortify.cli.tool.picocli.command.ToolCommands;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -51,26 +51,26 @@ import picocli.CommandLine.ScopeType;
 @Singleton
 @ReflectiveAccess
 @Command(name = "fcli", 
-	scope = ScopeType.INHERIT, 
-	mixinStandardHelpOptions = true,
-	usageHelpAutoWidth = true,
-	sortOptions = false, 
-	showAtFileInUsageHelp = false,
-	resourceBundle = "com.fortify.cli.i18n.FortifyCLIMessages",
-	subcommands = {
-			ConfigCommands.class,
-			SSCCommands.class,
-			SCSastCommands.class,
-			SCDastCommands.class,
-			FoDCommands.class,
-			ToolCommands.class
-	}
+    scope = ScopeType.INHERIT, 
+    mixinStandardHelpOptions = true,
+    usageHelpAutoWidth = true,
+    sortOptions = false, 
+    showAtFileInUsageHelp = false,
+    resourceBundle = "com.fortify.cli.i18n.FortifyCLIMessages",
+    subcommands = {
+            ConfigCommands.class,
+            SSCCommands.class,
+            SCSastCommands.class,
+            SCDastCommands.class,
+            FoDCommands.class,
+            ToolCommands.class
+    }
 )
 public class FCLIRootCommands {
-	// Setting up logging is handled in the main class by a separate Picocli instance, to allow
-	// for setting up logging early in the process. In order to have our main command structure
-	// not complain about any logging options, we define them here even though we don't actually
-	// do anything with these options here.
-	@Mixin LoggingMixin loggingMixin;
+    // Setting up logging is handled in the main class by a separate Picocli instance, to allow
+    // for setting up logging early in the process. In order to have our main command structure
+    // not complain about any logging options, we define them here even though we don't actually
+    // do anything with these options here.
+    @Mixin LoggingMixin loggingMixin;
 
 }

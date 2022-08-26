@@ -11,14 +11,12 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JacksonJsonNodeHelper;
+import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
+import com.fortify.cli.common.util.JsonHelper;
 
-import com.fortify.cli.common.rest.unirest.exception.UnexpectedHttpResponseException;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpResponse;
-import kong.unirest.RequestBodyEntity;
 import kong.unirest.UnirestInstance;
-import kong.unirest.UnirestParsingException;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
@@ -69,7 +67,7 @@ public class SCDastScanActionsHandler {
         outputFields.add("statusCode");
         outputFields.add("statusText");
         outputFields.add("message");
-        JacksonJsonNodeHelper.filterJsonNode(response, outputFields);
+        JsonHelper.filterJsonNode(response, outputFields);
 
         return response;
     }

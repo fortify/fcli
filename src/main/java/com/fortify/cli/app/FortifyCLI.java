@@ -24,15 +24,15 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
-import com.fortify.cli.app.exception.I18nParameterExceptionHandler;
-import com.fortify.cli.common.locale.LanguageHelper;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 import org.apache.commons.logging.impl.SimpleLog;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 import org.jasypt.normalization.Normalizer;
-import com.fortify.cli.common.config.IFortifyCLIInitializer;
+
+import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
+import com.fortify.cli.config.language.manager.LanguageConfigManager;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
@@ -52,52 +52,52 @@ import picocli.CommandLine;
  */
 public class FortifyCLI {
 
-	/**
-	 * This is the main entry point for executing the Fortify CLI.
-	 * @param args Command line options passed to Fortify CLI
-	 */
-	public static void main(String[] args) {
-		System.exit(execute(args));
-	}
+    /**
+     * This is the main entry point for executing the Fortify CLI.
+     * @param args Command line options passed to Fortify CLI
+     */
+    public static void main(String[] args) {
+        System.exit(execute(args));
+    }
 
-	/**
-	 * This method starts the Micronaut {@link ApplicationContext}, then invokes all beans that implement the
-	 * {@link IFortifyCLIInitializer} interface prior to executing {@link CommandLine#execute(String...)}.
-	 * @param args Command line options passed to Fortify CLI
-	 * @return exit code
-	 */
-	private static int execute(String[] args) {
-		try (ApplicationContext applicationContext = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
-			try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {
-				applicationContext.getBeansOfType(IFortifyCLIInitializer.class).forEach(b -> b.initializeFortifyCLI(args));
-				CommandLine commandLine = new CommandLine(FCLIRootCommands.class, micronautFactory);
-				return commandLine.setParameterExceptionHandler(
-						new I18nParameterExceptionHandler(
-								commandLine.getParameterExceptionHandler(),
-								applicationContext.getBean(LanguageHelper.class)
-						)
-				).execute(args);
-			}
-		}
-	}
-	
-	/**
-	 * Register classes for runtime reflection in GraalVM native images
-	 */
-	@AutomaticFeature
-	public static final class RuntimeReflectionRegistrationFeature implements Feature {
-		public void beforeAnalysis(BeforeAnalysisAccess access) {
-			// This jasypt class uses reflection, so we perform a dummy operation to have GraalVM native image generation detect this
-			Normalizer.normalizeToNfc("dummy");
-			
-			// TODO Review whether these are all necessary
-			RuntimeReflection.register(String.class);
-			RuntimeReflection.register(LogFactoryImpl.class);
-			RuntimeReflection.register(LogFactoryImpl.class.getDeclaredConstructors());
-			RuntimeReflection.register(LogFactory.class);
-			RuntimeReflection.register(LogFactory.class.getDeclaredConstructors());
-			RuntimeReflection.register(SimpleLog.class);
-			RuntimeReflection.register(SimpleLog.class.getDeclaredConstructors());
-		}
-	}
+    /**
+     * This method starts the Micronaut {@link ApplicationContext}, then invokes all beans that implement the
+     * {@link IFortifyCLIInitializer} interface prior to executing {@link CommandLine#execute(String...)}.
+     * @param args Command line options passed to Fortify CLI
+     * @return exit code
+     */
+    private static int execute(String[] args) {
+        try (ApplicationContext applicationContext = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
+            try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {
+                applicationContext.getBeansOfType(IFortifyCLIInitializer.class).forEach(b -> b.initializeFortifyCLI(args));
+                CommandLine commandLine = new CommandLine(FCLIRootCommands.class, micronautFactory);
+                return commandLine.setParameterExceptionHandler(
+                        new I18nParameterExceptionHandler(
+                                commandLine.getParameterExceptionHandler(),
+                                applicationContext.getBean(LanguageConfigManager.class)
+                        )
+                ).execute(args);
+            }
+        }
+    }
+    
+    /**
+     * Register classes for runtime reflection in GraalVM native images
+     */
+    @AutomaticFeature
+    public static final class RuntimeReflectionRegistrationFeature implements Feature {
+        public void beforeAnalysis(BeforeAnalysisAccess access) {
+            // This jasypt class uses reflection, so we perform a dummy operation to have GraalVM native image generation detect this
+            Normalizer.normalizeToNfc("dummy");
+            
+            // TODO Review whether these are all necessary
+            RuntimeReflection.register(String.class);
+            RuntimeReflection.register(LogFactoryImpl.class);
+            RuntimeReflection.register(LogFactoryImpl.class.getDeclaredConstructors());
+            RuntimeReflection.register(LogFactory.class);
+            RuntimeReflection.register(LogFactory.class.getDeclaredConstructors());
+            RuntimeReflection.register(SimpleLog.class);
+            RuntimeReflection.register(SimpleLog.class.getDeclaredConstructors());
+        }
+    }
 }
