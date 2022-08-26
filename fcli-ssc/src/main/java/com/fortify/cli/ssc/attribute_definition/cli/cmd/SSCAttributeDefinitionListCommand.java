@@ -31,8 +31,8 @@ import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.ssc.attribute_definition.domain.SSCAttributeDefinitionCategory;
 import com.fortify.cli.ssc.attribute_definition.domain.SSCAttributeDefinitionType;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.rest.filter.cli.mixin.SSCFilterMixin;
-import com.fortify.cli.ssc.rest.filter.cli.mixin.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterMixin;
+import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

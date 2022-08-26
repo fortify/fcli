@@ -1,4 +1,4 @@
-package com.fortify.cli.ssc.rest.filter.cli.mixin;
+package com.fortify.cli.ssc.rest.cli.mixin.filter;
 
 import java.util.stream.Collectors;
 

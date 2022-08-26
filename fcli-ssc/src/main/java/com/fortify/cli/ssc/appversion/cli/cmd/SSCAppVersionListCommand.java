@@ -29,8 +29,8 @@ import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.output.cli.mixin.filter.OptionTargetName;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.rest.filter.cli.mixin.SSCFilterMixin;
-import com.fortify.cli.ssc.rest.filter.cli.mixin.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterMixin;
+import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
