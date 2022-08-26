@@ -24,32 +24,29 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCApplicationVersionIdMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAppVersionArtifactListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+public class SSCAppVersionArtifactListCommand extends AbstractSSCTableOutputCommand {
     @CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
-    @CommandLine.Mixin private OutputMixin outputMixin;
-
-    @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
-        outputMixin.write(
-                unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentVersionHandler.getApplicationVersionId(unirest)))
-                        .queryString("embed","scans"));
-        return null;
+    
+    // TODO Add filtering/default column options, use default implementation for getOutputOptionsWriterConfig
+    
+    @Override
+    protected GetRequest generateRequest(UnirestInstance unirest) {
+        return unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentVersionHandler.getApplicationVersionId(unirest)))
+                .queryString("embed","scans");
     }
     
     @Override

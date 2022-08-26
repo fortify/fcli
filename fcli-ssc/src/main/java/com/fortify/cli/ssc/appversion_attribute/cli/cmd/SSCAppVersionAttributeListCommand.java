@@ -24,28 +24,23 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_attribute.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCApplicationVersionIdMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAppVersionAttributeListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+public class SSCAppVersionAttributeListCommand extends AbstractSSCTableOutputCommand {
     @CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
-    @CommandLine.Mixin private OutputMixin outputMixin;
     
     @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
     private String id;
@@ -64,16 +59,8 @@ public class SSCAppVersionAttributeListCommand extends AbstractSSCUnirestRunnerC
     
     // TODO Add the ability to filter on a single value?
     
-    @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
-        outputMixin.write(new SSCAppVersionAttributeListHelper()
-                .execute(unirest, parentVersionHandler.getApplicationVersionId(unirest)));
-        return null;
-    }
-    
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
-                .defaultColumns(outputMixin.getDefaultColumns());
+    protected JsonNode generateOutput(UnirestInstance unirest) {
+        return new SSCAppVersionAttributeListHelper()
+                .execute(unirest, parentVersionHandler.getApplicationVersionId(unirest));
     }
 }

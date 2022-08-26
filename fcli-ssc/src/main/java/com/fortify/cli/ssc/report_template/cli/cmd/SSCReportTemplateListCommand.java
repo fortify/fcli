@@ -24,35 +24,38 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
+import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCReportTemplateListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
-
-    @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
-        outputMixin.write(
-                unirest.get(SSCUrls.REPORT_DEFINITIONS)
-                        .queryString("limit","-1")
-        );
-        return null;
-    }
+public class SSCReportTemplateListCommand extends AbstractSSCTableOutputCommand {
+    // TODO Check whether SSC allows for q-based filtering on any of these fields
+    @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
+    private String id;
     
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
-                .defaultColumns("id#name#type:Report type#templateDocId#inUse");
+    @Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
+    private String name;
+    
+    @Option(names={"--type"}) @OutputFilter @AddAsDefaultColumn
+    private String type;
+    
+    @Option(names={"--templateDocId"}) @OutputFilter @AddAsDefaultColumn
+    private String templateDocId;
+    
+    @Option(names={"--inUse"}) @OutputFilter @AddAsDefaultColumn
+    private String inUse;
+    
+    
+    protected GetRequest generateRequest(UnirestInstance unirest) {
+        return unirest.get(SSCUrls.REPORT_DEFINITIONS).queryString("limit","-1");
     }
 }

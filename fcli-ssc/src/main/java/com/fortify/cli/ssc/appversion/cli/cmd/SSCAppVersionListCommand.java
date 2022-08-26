@@ -24,45 +24,38 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OptionTargetName;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterMixin;
+import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAppVersionListCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
-    @CommandLine.Mixin private SSCFilterMixin sscFilterMixin;
+public class SSCAppVersionListCommand extends AbstractSSCTableOutputCommand {
+    @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
+    private Integer id;
     
-    @Option(names={"--applicationName"}) @SSCFilterQParam @OptionTargetName("project.name")
+    @Option(names={"--applicationName"}) @SSCFilterQParam 
+    @OptionTargetName("project.name") @AddAsDefaultColumn 
     private String applicationName;
     
-    @Option(names={"--name"}) @SSCFilterQParam
+    @Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
     private String name;
-
-    @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
-        outputMixin.write(
-                sscFilterMixin.addFilterParams(unirest.get("/api/v1/projectVersions?limit=-1"))
-        );
-        return null;
-    }
     
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
-                .defaultColumns("id#project.name:Application#name");
+    @Option(names={"--issueTemplate"}) @OutputFilter @AddAsDefaultColumn
+    private String issueTemplateName;
+    
+    @Option(names={"--createdBy"}) @OutputFilter @AddAsDefaultColumn
+    private String createdBy;
+
+    protected GetRequest generateRequest(UnirestInstance unirest) {
+        return unirest.get("/api/v1/projectVersions?limit=-1");
     }
 }
