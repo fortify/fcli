@@ -449,10 +449,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc event list</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                    [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] [[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>]
-                    [<strong>--fields</strong>=<em>&lt;fields&gt;</em>] [<strong>--flatten</strong>] [<strong>--[no-]headers</strong>]
-                    [<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>] [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]]</p>
+<p><strong>fcli ssc event list</strong> [<strong>-hV</strong>] [<strong>--applicationVersionId</strong>=<em>&lt;projectVersionId&gt;</em>]
+                    [<strong>--detailedNote</strong>=<em>&lt;detailedNote&gt;</em>] [<strong>--entityId</strong>=<em>&lt;entityId&gt;</em>]
+                    [<strong>--eventDate</strong>=<em>&lt;eventDate&gt;</em>] [<strong>--eventType</strong>=<em>&lt;eventType&gt;</em>]
+                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                    [<strong>--userName</strong>=<em>&lt;userName&gt;</em>] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
+                    [[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>] [<strong>--fields</strong>=<em>&lt;fields&gt;</em>] [<strong>--flatten</strong>] [<strong>--</strong>
+                  *  [no-]headers*] [<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>] [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -469,6 +472,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--eventDate</strong>=<em>&lt;eventDate&gt;</em></dt>
+<dt class="hdlist1"><strong>--userName</strong>=<em>&lt;userName&gt;</em></dt>
+<dt class="hdlist1"><strong>--eventType</strong>=<em>&lt;eventType&gt;</em></dt>
+<dt class="hdlist1"><strong>--detailedNote</strong>=<em>&lt;detailedNote&gt;</em></dt>
+<dt class="hdlist1"><strong>--applicationVersionId</strong>=<em>&lt;projectVersionId&gt;</em></dt>
+<dt class="hdlist1"><strong>--entityId</strong>=<em>&lt;entityId&gt;</em></dt>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
 <p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
@@ -539,7 +548,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-08-26 08:43:12 UTC
+Last updated 2022-08-29 11:37:51 UTC
 </div>
 </div>
 </body>
