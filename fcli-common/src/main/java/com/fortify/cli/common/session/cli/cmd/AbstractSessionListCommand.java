@@ -27,12 +27,13 @@ package com.fortify.cli.common.session.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
 import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
+import com.fortify.cli.common.util.FixInjection;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
+@ReflectiveAccess @FixInjection
 public abstract class AbstractSessionListCommand implements Runnable, ISessionTypeProvider {
     @Inject private SessionSummaryManager sessionSummaryManager;
     @Mixin private OutputMixin outputMixin;

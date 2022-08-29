@@ -25,6 +25,7 @@
 package com.fortify.cli.sc_sast.rest.cli.cmd;
 
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
+import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.sc_sast.rest.runner.SCSastAuthenticatedUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -34,7 +35,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
+@ReflectiveAccess @FixInjection
 public abstract class AbstractSCSastUnirestRunnerCommand implements Runnable {
     @Getter @Inject private SCSastAuthenticatedUnirestRunner unirestRunner;
     @Getter @Mixin  private SessionNameMixin sessionNameMixin;

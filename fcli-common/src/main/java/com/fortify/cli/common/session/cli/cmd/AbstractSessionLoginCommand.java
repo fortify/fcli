@@ -28,6 +28,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
 import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
+import com.fortify.cli.common.util.FixInjection;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -37,7 +38,7 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
+@ReflectiveAccess @FixInjection
 public abstract class AbstractSessionLoginCommand<C> implements Runnable {
     @Inject private SessionDataManager sessionDataManager;
     @Inject private SessionSummaryManager sessionSummaryManager;

@@ -30,13 +30,14 @@ import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
 import com.fortify.cli.common.session.manager.api.SessionLogoutManager;
 import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
+import com.fortify.cli.common.util.FixInjection;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
+@ReflectiveAccess @FixInjection
 public abstract class AbstractSessionLogoutCommand implements Runnable, ISessionTypeProvider {
     @Inject private SessionDataManager sessionDataManager;
     @Getter @Inject private SessionLogoutManager sessionLogoutManager;

@@ -6,6 +6,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
+import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterMixin;
 import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
@@ -27,7 +28,7 @@ import picocli.CommandLine.Option;
  *   
  * @author rsenden
  */
-@ReflectiveAccess
+@ReflectiveAccess @FixInjection
 public abstract class AbstractSSCTableOutputCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @Getter @Mixin private OutputMixin outputMixin;
     @Mixin private SSCFilterMixin sscFilterMixin;
