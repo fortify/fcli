@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.appversion.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCApplicationVersionIdMixin;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
@@ -41,7 +41,7 @@ import picocli.CommandLine.Command;
 @Command(name = "get")
 public class SSCAppVersionGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @CommandLine.Mixin private OutputMixin outputMixin;
-    @CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter versionIdOrName;
+    @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter versionIdOrName;
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {

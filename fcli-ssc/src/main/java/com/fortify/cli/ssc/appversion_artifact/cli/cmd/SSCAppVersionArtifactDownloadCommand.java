@@ -29,8 +29,8 @@ import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCApplicationVersionIdMixin;
-import com.fortify.cli.ssc.appversion.domain.SSCApplicationVersion;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -41,13 +41,13 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "download")
 public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private SSCApplicationVersionIdMixin.PositionalParameter parentVersionHandler;
+    @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter parentVersionHandler;
     @CommandLine.Option(names = {"-f", "--dest"}, description = "The output location for the file download.")
     String destination;
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-        SSCApplicationVersion av = parentVersionHandler.getApplicationAndVersion(unirest);
+        SSCAppVersionDescriptor av = parentVersionHandler.getApplicationAndVersion(unirest);
         destination = destination != null ? destination : String.format("./scan_%s.fpr", av.getApplicationVersionId());
         SSCFileTransferHelper.download(
                 unirest,

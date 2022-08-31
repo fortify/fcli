@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.appversion_attribute.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCApplicationVersionIdMixin;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 
@@ -40,7 +40,7 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAppVersionAttributeListCommand extends AbstractSSCTableOutputCommand {
-    @CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
+    @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentVersionHandler;
     
     @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
     private String id;

@@ -49,6 +49,8 @@ import com.jayway.jsonpath.ParseContext;
 import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
+import lombok.Getter;
+
 /**
  * This bean provides utility methods for working with Jackson JsonNode trees.
  * 
@@ -56,7 +58,7 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
  *
  */
 public class JsonHelper {
-    private static final ObjectMapper objectMapper = _createObjectMapper();
+    @Getter private static final ObjectMapper objectMapper = _createObjectMapper();
     private final ParseContext parseContext;
     private static final JsonHelper INSTANCE = new JsonHelper();
 

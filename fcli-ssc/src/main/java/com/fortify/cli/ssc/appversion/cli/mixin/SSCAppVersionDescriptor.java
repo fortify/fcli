@@ -22,14 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion.domain;
+package com.fortify.cli.ssc.appversion.cli.mixin;
 
-import lombok.Getter;
-import lombok.Setter;
+import java.util.Map;
 
-public class SSCApplicationVersion {
-    @Getter @Setter String applicationId;
-    @Getter @Setter String applicationName;
-    @Getter @Setter String applicationVersionId;
-    @Getter @Setter String applicationVersionName;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.Data;
+
+@Data
+public class SSCAppVersionDescriptor {
+    private String applicationId;
+    private String applicationName;
+    @JsonProperty("id") private String applicationVersionId;
+    @JsonProperty("name") private String applicationVersionName;
+    
+    @JsonProperty("project")
+    private void unpackProject(Map<String, String> project) {
+        applicationId = project.get("id");
+        applicationName = project.get("name");
+    }
 }

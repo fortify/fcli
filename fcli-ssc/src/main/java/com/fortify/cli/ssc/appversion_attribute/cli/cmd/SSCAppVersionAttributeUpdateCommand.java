@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.appversion_attribute.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCApplicationVersionIdMixin;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAttributeDefinitionHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
@@ -42,7 +42,7 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 @Command(name = "update")
 public class SSCAppVersionAttributeUpdateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @Mixin private SSCApplicationVersionIdMixin.For parentVersionMixin;
+    @Mixin private SSCAppVersionResolverMixin.For parentVersionMixin;
     @Mixin private SSCAppVersionAttributeUpdateMixin attributeUpdateMixin;
     @Mixin private OutputMixin outputMixin;
     

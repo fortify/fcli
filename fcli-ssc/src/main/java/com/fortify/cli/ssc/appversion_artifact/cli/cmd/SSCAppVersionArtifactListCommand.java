@@ -25,7 +25,7 @@
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCApplicationVersionIdMixin;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
@@ -39,7 +39,7 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAppVersionArtifactListCommand extends AbstractSSCTableOutputCommand {
-    @CommandLine.Mixin private SSCApplicationVersionIdMixin.From parentVersionHandler;
+    @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentVersionHandler;
     
     // TODO Add filtering/default column options, use default implementation for getOutputOptionsWriterConfig
     
