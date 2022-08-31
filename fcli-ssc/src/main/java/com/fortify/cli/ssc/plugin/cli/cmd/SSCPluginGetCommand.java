@@ -29,7 +29,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
@@ -54,7 +54,6 @@ public class SSCPluginGetCommand extends AbstractSSCUnirestRunnerCommand impleme
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
-                .defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
+        return SSCPluginCommandOutputHelper.defaultTableOutputConfig();
     }
 }

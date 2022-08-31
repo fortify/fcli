@@ -24,32 +24,25 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
-import com.fortify.cli.ssc.rest.transfer.domain.SSCUploadResponse;
+import java.io.File;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.ssc.plugin.domain.SSCPluginXmlPlugin;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
-import com.jayway.jsonpath.JsonPath;
+import com.fortify.cli.common.util.JsonHelper;
+import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
+import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
+import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddUploadTokenFunction;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @ReflectiveAccess
 @Command(name = "install", aliases = {"add"})
@@ -59,86 +52,30 @@ public class SSCPluginInstallCommand extends AbstractSSCUnirestRunnerCommand imp
     @Option(names = {"-f", "--file"}, required = true)
     private File pluginJarFile;
 
-    @Option(names = {"--no-auto-enable"}, defaultValue = "false")
-    private Boolean noAutoEnable;
+    @Option(names = {"--no-auto-enable"}, negatable = true)
+    private boolean autoEnable = true;
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-        SSCUploadResponse uploadResponse = SSCFileTransferHelper.upload(
+        JsonNode pluginBody = SSCFileTransferHelper.upload(
                 unirest,
-                SSCUrls.UPLOAD_PLUGIN,
-                pluginJarFile.getPath().toString()
+                SSCUrls.PLUGINS,
+                pluginJarFile.getPath().toString(),
+                ISSCAddUploadTokenFunction.QUERYSTRING_MAT,
+                JsonNode.class
         );
+        
+        if(autoEnable){
+            Integer pluginId = JsonHelper.evaluateJsonPath(pluginBody, "$.data.id", Integer.class);
+            pluginBody = SSCPluginStateHelper.enablePlugin(unirest, pluginId);
+        }
 
-        int id = checkSuccess(uploadResponse, unirest);
-        enablePlugin(unirest, id);
-
-        outputMixin.write(
-                unirest.get(SSCUrls.PLUGIN(Integer.toString(id)))
-        );
+        outputMixin.write(pluginBody);
         return null;
     }
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
-                .defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
-    }
-
-    public String getPluginXml(Path zipFile) throws IOException {
-        try (FileSystem fileSystem = FileSystems.newFileSystem(zipFile, null)) {
-            Path fileToExtract = fileSystem.getPath("plugin.xml");
-            String pluginXml = Files.readString(fileToExtract);
-            return pluginXml;
-        }
-    }
-
-    @SneakyThrows
-    private int checkSuccess(SSCUploadResponse uploadResponse, UnirestInstance unirest){
-        XmlMapper mapper = new XmlMapper();
-        SSCPluginXmlPlugin pluginXmlObj = mapper.readValue(getPluginXml(pluginJarFile.toPath()), SSCPluginXmlPlugin.class);
-
-        if(!uploadResponse.msg.value.toLowerCase().contains("success"))
-            throw new RuntimeException(String.format("Plugin upload not successful:\n\tCODE: %s\n\tMSG: %s", uploadResponse.code.value, uploadResponse.msg.value.replace("\n"," ")));
-
-        String id = "-1";
-        int timesChecked=0;
-        String searchQuery = String.format("$.data[?(@.pluginId == \"%s\")]", pluginXmlObj.id);
-        while(true) {
-            long millis = System.currentTimeMillis();
-            HttpResponse response = unirest.get(SSCUrls.PLUGINS)
-                    .queryString("orderBy","-id")
-                    .queryString("limit","-1").asObject(ObjectNode.class);
-
-            String candidate = JsonPath.parse(response.getBody().toString()).read(searchQuery).toString();
-
-            if(candidate != null && !candidate.isBlank())
-                id = JsonPath.parse(candidate).read("$.[0].id").toString();
-
-            if(timesChecked > 5 || !id.equals("-1"))
-                break;
-
-            timesChecked += 1;
-            Thread.sleep(1000 - millis % 1000);
-        }
-
-        if(id.equals("-1")){
-            System.out.println("The plugin uploaded successfully, but fcli timed-out when trying to verify that the plugin has installed correctly. Please login to SSC to verify that the plugin has installed successfully.");
-            System.exit(1);
-        }
-
-        return Integer.parseInt(id);
-    }
-
-    private void enablePlugin(UnirestInstance unirest, int pluginId){
-        ObjectNode plugins = new ObjectMapper().createObjectNode();
-        plugins.putArray("pluginIds").add(pluginId);
-
-        HttpResponse response = null;
-        if(!noAutoEnable){
-            response = unirest.post(SSCUrls.PLUGINS_ACTION_ENABLE)
-                    .body(plugins.toString())
-                    .contentType("application/json").asObject(ObjectNode.class);
-        }
+        return SSCPluginCommandOutputHelper.defaultTableOutputConfig();
     }
 }

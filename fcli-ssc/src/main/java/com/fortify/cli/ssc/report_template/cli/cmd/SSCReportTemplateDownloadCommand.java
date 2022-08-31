@@ -27,6 +27,7 @@ package com.fortify.cli.ssc.report_template.cli.cmd;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
+import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.ssc.report_template.cli.mixin.SSCReportTemplateIdMixin;
@@ -54,7 +55,8 @@ public class SSCReportTemplateDownloadCommand extends AbstractSSCUnirestRunnerCo
         SSCFileTransferHelper.download(
                 unirest,
                 SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(reportTemplate.data.id.toString()),
-                destination
+                destination,
+                ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN
         );
         return null;
     }

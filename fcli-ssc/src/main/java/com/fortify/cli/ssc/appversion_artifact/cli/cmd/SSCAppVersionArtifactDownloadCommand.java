@@ -27,6 +27,7 @@ package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
+import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionDescriptor;
@@ -52,7 +53,8 @@ public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunn
         SSCFileTransferHelper.download(
                 unirest,
                 SSCUrls.DOWNLOAD_CURRENT_FPR(av.getApplicationVersionId(), false),
-                destination
+                destination,
+                ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN
         );
 
         return null;

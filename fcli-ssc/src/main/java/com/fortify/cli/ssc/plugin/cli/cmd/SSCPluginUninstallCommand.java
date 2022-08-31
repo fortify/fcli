@@ -24,14 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
-import java.util.Arrays;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.plugin.cli.cmd.SSCPluginCommonOptions.SSCPluginSelectSingleRequiredOptions;
+import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 
@@ -62,7 +60,7 @@ public class SSCPluginUninstallCommand extends AbstractSSCUnirestRunnerCommand i
     
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-        String numericPluginId = ""+deleteOptions.getNumericPluginId(unirest);
+        int numericPluginId = deleteOptions.getNumericPluginId(unirest);
         // TODO Check whether plugin id exists
         disablePluginIfNecessary(unirest, numericPluginId);
         outputMixin.write(
@@ -71,7 +69,7 @@ public class SSCPluginUninstallCommand extends AbstractSSCUnirestRunnerCommand i
         return null;
     }
     
-    private void disablePluginIfNecessary(UnirestInstance unirest, String numericPluginId) {
+    private void disablePluginIfNecessary(UnirestInstance unirest, int numericPluginId) {
         JsonNode pluginData = unirest.get("/api/v1/plugins/{id}?fields=pluginState")
                 .routeParam("id", ""+numericPluginId)
                 .asObject(JsonNode.class).getBody();
@@ -79,17 +77,8 @@ public class SSCPluginUninstallCommand extends AbstractSSCUnirestRunnerCommand i
             if ( !deleteOptions.autoDisable ) {
                 throw new IllegalStateException("Plugin cannot be deleted, as it is currently enabled, and --no-auto-disable has been specified");
             }
-            unirest.post("/api/v1/plugins/action/disable")
-                .body(new PluginIds(numericPluginId))
-                .asEmpty();
+            SSCPluginStateHelper.disablePlugin(unirest, numericPluginId);
         }
-    }
-    
-    private static final class PluginIds {
-        public PluginIds(String... pluginIds) {
-            this.pluginIds = Arrays.stream(pluginIds).mapToInt(Integer::parseInt).toArray();
-        }
-        @JsonProperty private int[] pluginIds;
     }
 
     @Override

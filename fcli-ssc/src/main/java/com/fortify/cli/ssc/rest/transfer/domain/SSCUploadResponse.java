@@ -26,10 +26,13 @@ package com.fortify.cli.ssc.rest.transfer.domain;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Data;
 
 @ReflectiveAccess
 @JacksonXmlRootElement(localName = "UploadResponse")
+@Data
 public class SSCUploadResponse {
     @JacksonXmlProperty(isAttribute = true)
     public String entityId;

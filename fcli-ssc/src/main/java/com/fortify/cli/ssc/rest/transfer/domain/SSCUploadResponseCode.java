@@ -25,9 +25,12 @@
 package com.fortify.cli.ssc.rest.transfer.domain;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Data;
 
 @ReflectiveAccess
+@Data
 public class SSCUploadResponseCode {
     @JacksonXmlText(value = true)
     public int value;

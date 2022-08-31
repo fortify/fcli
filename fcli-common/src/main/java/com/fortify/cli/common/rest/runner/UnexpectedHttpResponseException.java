@@ -42,13 +42,13 @@ public final class UnexpectedHttpResponseException extends UnirestException {
     private static final String getMessage(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
         var httpMethod = requestSummary.getHttpMethod().name();
         var url = requestSummary.getUrl();
-        return String.format("%s %s: %s", httpMethod, url, getMessage(failureResponse));
+        return String.format("\nRequest: %s %s: %s", httpMethod, url, getMessage(failureResponse));
     }
 
     private static final String getMessage(HttpResponse<?> failureResponse) {
         if ( isHttpFailure(failureResponse) ) {
-            // TODO Any way we can include the original request URL in the message?
-            return String.format("%d %s", failureResponse.getStatus(), failureResponse.getStatusText());
+            // TODO Better format response body if it's a standard XML or JSON response containing an msg property
+            return String.format("\nResponse: %d %s\nResponse Body:\n%s", failureResponse.getStatus(), failureResponse.getStatusText(), failureResponse.getBody());
         } else if ( failureResponse.getParsingError().isPresent() ) {
             return "Error parsing response";
         } else {

@@ -24,69 +24,142 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.rest.transfer;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fortify.cli.ssc.rest.transfer.domain.SSCUploadResponse;
-import com.jayway.jsonpath.JsonPath;
-import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpResponse;
-import kong.unirest.Unirest;
-import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
 import java.io.File;
 import java.nio.file.StandardCopyOption;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fortify.cli.common.util.JsonHelper;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
+import kong.unirest.HttpRequestWithBody;
+import kong.unirest.ObjectMapper;
+import kong.unirest.ProgressMonitor;
+import kong.unirest.UnirestInstance;
+import kong.unirest.jackson.JacksonObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 
 @ReflectiveAccess
 public class SSCFileTransferHelper {
+    private static final JacksonObjectMapper XMLMAPPER = new JacksonObjectMapper(new XmlMapper());
 
-    private enum FileTransferTokenType{
+    @SneakyThrows
+    public static final File download(UnirestInstance unirest, String endpoint, String downloadPath, ISSCAddDownloadTokenFunction addTokenFunction) {
+        try ( SSCFileTransferTokenSupplier tokenSupplier = new SSCFileTransferTokenSupplier(unirest, SSCFileTransferTokenType.DOWNLOAD); ) {
+            return addTokenFunction.apply(tokenSupplier.get(), unirest.get(endpoint))
+                .downloadMonitor(new SSCProgressMonitor("Download"))
+                .asFile(downloadPath, StandardCopyOption.REPLACE_EXISTING)
+                .getBody();
+        }
+    }
+
+    @SneakyThrows
+    public static final <T> T upload(UnirestInstance unirest, String endpoint, String filePath, ISSCAddUploadTokenFunction addTokenFunction, Class<T> returnType) {
+        try ( SSCFileTransferTokenSupplier tokenSupplier = new SSCFileTransferTokenSupplier(unirest, SSCFileTransferTokenType.UPLOAD); ) {
+            File f = new File(filePath);
+            
+            String acceptHeaderValue = unirest.config().getDefaultHeaders().getFirst("Accept");
+            ObjectMapper objectMapper = unirest.config().getObjectMapper();
+            if ( endpoint.startsWith("/upload") ) {
+                // SSC always returns XML data on these endpoints, so we use the appropriate Accept header and ObjectMapper
+                acceptHeaderValue = "application/xml";
+                objectMapper = XMLMAPPER;
+            }
+            
+            return addTokenFunction.apply(tokenSupplier.get(), unirest.post(endpoint))
+                .multiPartContent() // Force multipart request with correct Content-Type header
+                .field("file", f)
+                .uploadMonitor(new SSCProgressMonitor("Upload"))
+                .headerReplace("Accept", acceptHeaderValue) 
+                .withObjectMapper(objectMapper)
+                .asObject(returnType).getBody();
+        }
+    }
+    
+    @FunctionalInterface
+    public static interface ISSCAddFileTransferTokenFunction<T extends HttpRequest<?>> extends BiFunction<String, T, T> {}
+    
+    @FunctionalInterface
+    public static interface ISSCAddDownloadTokenFunction extends ISSCAddFileTransferTokenFunction<GetRequest> {
+        public static final ISSCAddDownloadTokenFunction ROUTEPARAM_DOWNLOADTOKEN = 
+                (token, unirest) -> unirest.routeParam("downloadToken", token);
+        public static final ISSCAddDownloadTokenFunction QUERYSTRING_MAT = 
+                (token, unirest) -> unirest.queryString("mat", token);
+        public static final ISSCAddDownloadTokenFunction AUTHHEADER = 
+                (token, unirest) -> unirest.headerReplace("Authorization", "FortifyToken "+token);
+    }
+    
+    @FunctionalInterface
+    public static interface ISSCAddUploadTokenFunction extends ISSCAddFileTransferTokenFunction<HttpRequestWithBody> {
+        public static final ISSCAddUploadTokenFunction ROUTEPARAM_UPLOADTOKEN = 
+                (token, unirest) -> unirest.routeParam("uploadToken", token);
+        public static final ISSCAddUploadTokenFunction QUERYSTRING_MAT = 
+                (token, unirest) -> unirest.queryString("mat", token);
+        public static final ISSCAddUploadTokenFunction AUTHHEADER = 
+                (token, unirest) -> unirest.headerReplace("Authorization", "FortifyToken "+token);
+    }
+    
+    @RequiredArgsConstructor
+    private static final class SSCProgressMonitor implements ProgressMonitor {
+        private static final boolean hasConsole = System.console()!=null;
+        private final String action;
+        private int lineLength=0;
+        
+        @Override
+        public void accept(String field, String fileName, Long bytesWritten, Long totalBytes) {
+            if ( hasConsole ) { // Only output progress when connected to a console, i.e. disable if output is being redirected
+                // TODO Should we output to stdout or stderr?
+                // TODO Should we use picocli Ansi class instead?
+                String msg = String.format("\r%s %s: %d of %d bytes complete          \r", action, fileName, bytesWritten, totalBytes);
+                lineLength = Math.max(lineLength, msg.length());
+                System.out.print(
+                    msg
+                );
+                if ( bytesWritten.equals(totalBytes) ) {
+                    // Overwrite the status line with spaces. Alternatively, we could just print a newline to keep the latest progress message
+                    System.out.print("\r"+" ".repeat(lineLength)+"\r");
+                }
+            }
+        }
+    }
+    
+    private static enum SSCFileTransferTokenType {
         UPLOAD,
         DOWNLOAD
     }
-    private static String getFileTransferToken(UnirestInstance unirest, FileTransferTokenType tokenType){
-        String t = tokenType == FileTransferTokenType.UPLOAD ? "UPLOAD" : "DOWNLOAD";
-        HttpResponse response = unirest.post("/api/v1/fileTokens")
-                .body(String.format("{ \"fileTokenType\": \"%s\"}", t))
-                .accept("application/json")
-                .contentType("application/json")
-                .asObject(ObjectNode.class);
-        return JsonPath.parse(response.getBody().toString()).read("$.data.token").toString();
-    }
-
-    @SneakyThrows
-    public static Void download(UnirestInstance unirestInstance, String url, String downloadPath){
-        String downloadToken = getFileTransferToken(unirestInstance, FileTransferTokenType.DOWNLOAD);
-        unirestInstance.get(url)
-                .routeParam("downloadToken",downloadToken)
-                .downloadMonitor((b, filename, bytesWritten, totalBytes) -> {
-                    String msg = String.format("\rBytes written for \"%s\": %d    ", filename, bytesWritten);
-                    System.out.print(msg);
-                })
-                .asFile(downloadPath, StandardCopyOption.REPLACE_EXISTING);
-        System.out.println("\nDOWNLOAD DONE.\n");
-        return null;
-    }
-
-
-
-    @SneakyThrows
-    public static SSCUploadResponse upload(UnirestInstance unirestInstance, String url, String filePath){
-        String uploadToken = getFileTransferToken(unirestInstance, FileTransferTokenType.UPLOAD);
-        File f = new File(filePath);
-        //InputStream file = new FileInputStream(f); // Supposedly this should be used for larger file uploads, but SSC errors when using this.
-
-        HttpResponse r = Unirest.post(unirestInstance.config().getDefaultBaseUrl() + url)
-                .routeParam("uploadToken",uploadToken)
-                .field("file", f)
-                .uploadMonitor((field, fileName, bytesWritten, totalBytes) -> {
-                    String msg = String.format("\rBytes uploaded for for \"%s\": %d    \r", f.getName(), bytesWritten);
-                    System.out.print(msg);
-                })
-                .asString();
-        XmlMapper responseXml = new XmlMapper(new JacksonXmlModule());
-        SSCUploadResponse uploadResponseObj = responseXml.readValue(r.getBody().toString(), SSCUploadResponse.class);
-        System.out.println("\nUPLOAD DONE.\n");
-        return uploadResponseObj;
+    
+    private static final class SSCFileTransferTokenSupplier implements AutoCloseable, Supplier<String> {
+        private final UnirestInstance unirest;
+        private final String token;
+        
+        public SSCFileTransferTokenSupplier(UnirestInstance unirest, SSCFileTransferTokenType tokenType) {
+            this.unirest = unirest;
+            ObjectNode response = unirest.post("/api/v1/fileTokens")
+                    .body(String.format("{ \"fileTokenType\": \"%s\"}", tokenType.name()))
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .asObject(ObjectNode.class)
+                    .getBody();
+            this.token = JsonHelper.evaluateJsonPath(response, "$.data.token", String.class);
+        }
+        
+        @Override
+        public String get() {
+            return token;
+        }
+        
+        @Override
+        public void close() {
+            try {
+                unirest.delete("/api/v1/fileTokens").getBody();
+            } catch (Exception e) {
+                // TODO Log warning
+            }
+        }
     }
 }
