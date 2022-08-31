@@ -205,7 +205,7 @@ public class OutputMixin {
         private JsonNode applyOutputFilterTransformation(OutputFormat outputFormat, JsonNode data, OptionSpec optionSpec) {
             if ( !data.isEmpty() ) {
                 String fieldName = OptionAnnotationHelper.getOptionTargetName(optionSpec, OutputFilter.class);
-                String value = getOptionValue(optionSpec);
+                Object value = getOptionValue(optionSpec);
                 if ( value!=null ) {
                     data = new JsonPathTransformer(String.format("[?(@.%s == \"%s\")]", fieldName, value)).transform(data);
                 }
