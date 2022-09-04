@@ -38,7 +38,6 @@ import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddUploadTokenFunction;
-import com.fortify.cli.ssc.rest.transfer.domain.SSCUploadResponse;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -72,12 +71,19 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerComm
 
     @SneakyThrows
     protected Void runWithUnirest(UnirestInstance unirest) {
-        SSCUploadResponse uploadResponse = SSCFileTransferHelper.upload(
+        ObjectNode uploadResponse = SSCFileTransferHelper.upload(
                 unirest,
                 SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
                 filePath,
                 ISSCAddUploadTokenFunction.ROUTEPARAM_UPLOADTOKEN,
-                SSCUploadResponse.class
+                ObjectNode.class
+        );
+
+        int uploadedDocId = Integer.parseInt(
+                uploadResponse
+                        .get("entityId")
+                        .toString()
+                        .replaceAll("\"","")
         );
 
         File answerFileObj = new File(answerFile);
@@ -85,7 +91,7 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerComm
 
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         SSCReportTemplateDef rtd = mapper.readValue(answerFileObj, SSCReportTemplateDef.class);
-        rtd = processAnswerFile(rtd, rptFileObj.getName(), Integer.parseInt(uploadResponse.entityId));
+        rtd = processAnswerFile(rtd, rptFileObj.getName(), uploadedDocId);
 
         HttpResponse creationResponse = unirest.post(SSCUrls.REPORT_DEFINITIONS)
                 .body((new ObjectMapper()).writeValueAsString(rtd)).asObject(ObjectNode.class);
@@ -96,6 +102,6 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerComm
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
         return SSCOutputHelper.defaultTableOutputConfig()
-                .defaultColumns("id#name:Report Name");
+                .defaultColumns("id#name#type#templateDocId#inUse");
     }
 }
