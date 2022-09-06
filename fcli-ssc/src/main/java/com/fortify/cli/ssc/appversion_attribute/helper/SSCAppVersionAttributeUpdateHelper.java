@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion_attribute.cli.cmd;
+package com.fortify.cli.ssc.appversion_attribute.helper;
 
 import java.util.List;
 import java.util.Map;
@@ -34,40 +34,38 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.ssc.appversion_attribute.helper.SSCAttributeDefinitionHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine.Option;
+import lombok.RequiredArgsConstructor;
 
-@ReflectiveAccess
-public class SSCAppVersionAttributeUpdateMixin {
+@ReflectiveAccess @RequiredArgsConstructor
+public final class SSCAppVersionAttributeUpdateHelper {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private final SSCAttributeDefinitionHelper attributeDefinitionHelper;
+    private final Map<String,String> attributes;
     
-    @Option(names={"-a","--attribute"}, paramLabel = "[CATEGORY:]ATTR=VALUE[,VALUE...]", required = true)
-    private Map<String,String> attributes;
-    
-    public HttpRequest<?> getAttributeUpdateRequest(UnirestInstance unirest, SSCAttributeDefinitionHelper helper, String applicationVersionId) {
+    public HttpRequest<?> getAttributeUpdateRequest(UnirestInstance unirest, String applicationVersionId) {
         ArrayNode attrUpdateData = objectMapper.createArrayNode().addAll( 
-                attributes.entrySet().stream().map(e -> createAttrUpdateNode(e, helper))
+                attributes.entrySet().stream().map(this::createAttrUpdateNode)
                 .collect(Collectors.toList()));
         return unirest.put("/api/v1/projectVersions/{id}/attributes")
                 .routeParam("id", applicationVersionId).body(attrUpdateData);
     }
     
-    public Set<String> getAttributeIds(SSCAttributeDefinitionHelper helper) {
-        return attributes.keySet().stream().map(helper::getAttributeId).collect(Collectors.toSet());
+    public Set<String> getAttributeIds() {
+        return attributes.keySet().stream().map(attributeDefinitionHelper::getAttributeId).collect(Collectors.toSet());
     }
     
-    private ObjectNode createAttrUpdateNode(Map.Entry<String, String> attrEntry, SSCAttributeDefinitionHelper helper) {
+    private ObjectNode createAttrUpdateNode(Map.Entry<String, String> attrEntry) {
         String attrNameOrId = attrEntry.getKey();
-        String attrGuid = helper.getAttributeGuid(attrNameOrId);
-        String attrId = helper.getAttributeId(attrGuid);
-        String type = helper.getAttributeType(attrGuid);
+        String attrGuid = attributeDefinitionHelper.getAttributeGuid(attrNameOrId);
+        String attrId = attributeDefinitionHelper.getAttributeId(attrGuid);
+        String type = attributeDefinitionHelper.getAttributeType(attrGuid);
         List<String> valueGuids = Stream.of(attrEntry.getValue().split(","))
                 .filter(Predicate.not(String::isBlank))
-                .map(v->helper.getOptionGuid(attrGuid, v))
+                .map(v->attributeDefinitionHelper.getOptionGuid(attrGuid, v))
                 .collect(Collectors.toList());
         
         ObjectNode attrUpdateNode = objectMapper.createObjectNode();

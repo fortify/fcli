@@ -40,6 +40,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 public class SSCAppVersionResolverMixin {
+    private static final String ALIAS = "--appVersion";
     
     public static abstract class AbstractSSCApplicationVersionMixin {
         public abstract String getVersionNameOrId();
@@ -80,19 +81,19 @@ public class SSCAppVersionResolverMixin {
     
     // get/retrieve/delete/download version <entity> --from
     public static class From extends AbstractSSCApplicationVersionMixin {
-        @Option(names = {"--from"}, required = true, descriptionKey = "ApplicationVersionMixin")
+        @Option(names = {"--from", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
         @Getter private String versionNameOrId;
     }
     
     // create/update version <entity> --for <version>
     public static class For extends AbstractSSCApplicationVersionMixin {
-        @Option(names = {"--for"}, required = true, descriptionKey = "ApplicationVersionMixin")
+        @Option(names = {"--for", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
         @Getter private String versionNameOrId;
     }
     
     // upload version <entity> --to <version>
     public static class To extends AbstractSSCApplicationVersionMixin {
-        @Option(names = {"--to"}, required = true, descriptionKey = "ApplicationVersionMixin")
+        @Option(names = {"--to", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
         @Getter private String versionNameOrId;
     }
     

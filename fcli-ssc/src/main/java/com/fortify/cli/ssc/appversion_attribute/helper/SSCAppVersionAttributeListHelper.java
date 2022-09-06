@@ -50,7 +50,7 @@ import kong.unirest.UnirestInstance;
  * 
  * @author rsenden
  */
-public class SSCAppVersionAttributeListHelper {
+public final class SSCAppVersionAttributeListHelper {
     private ObjectNode cachedAttributeDefinitionsBody;
     private Map<String, HttpRequest<?>> requests = new LinkedHashMap<>();
     private Set<String> attrIdsToInclude = null;

@@ -22,47 +22,46 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion_attribute.cli.cmd;
+package com.fortify.cli.ssc.appversion_auth_entity.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
-import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
-import com.fortify.cli.ssc.appversion_attribute.helper.SSCAttributeDefinitionHelper;
+import com.fortify.cli.ssc.appversion_auth_entity.helper.SSCAppVersionAddAuthEntitiesHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "update")
-public class SSCAppVersionAttributeUpdateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @Mixin private SSCAppVersionResolverMixin.For parentVersionMixin;
-    @Mixin private SSCAppVersionAttributeUpdateMixin attributeUpdateMixin;
+@Command(name = "add")
+public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+    @Parameters(index = "0..*", arity = "1..*")
+    private String[] authEntitySpecs;
+    @Mixin private SSCAppVersionResolverMixin.For parentVersionHandler;
     @Mixin private OutputMixin outputMixin;
+    @Option(names="--allowMultiMatch", defaultValue = "false")
+    private boolean allowMultiMatch;
     
-    @SneakyThrows
+    @Override
     protected Void runWithUnirest(UnirestInstance unirest) {
-        SSCAttributeDefinitionHelper helper = new SSCAttributeDefinitionHelper(unirest);
-        String applicationVersionId = parentVersionMixin.getApplicationVersionId(unirest);
+        String applicationVersionId = parentVersionHandler.getApplicationVersionId(unirest);
         outputMixin.write(
-            new SSCAppVersionAttributeListHelper()
-                .attributeDefinitionHelper(helper)
-                .request("attrUpdate", attributeUpdateMixin.getAttributeUpdateRequest(unirest, helper, applicationVersionId))
-                .attrIdsToInclude(attributeUpdateMixin.getAttributeIds(helper))
-                .execute(unirest, applicationVersionId));
+            SSCAppVersionAddAuthEntitiesHelper.generateUpdateRequest(unirest, applicationVersionId, authEntitySpecs, allowMultiMatch)
+        );
         
         return null;
     }
-
+    
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
         return SSCOutputHelper.defaultTableOutputConfig()
-            .defaultColumns("id#category#guid#name#valueString");
+            .defaultColumns("id#entityName:Name#displayName#type#email#isLdap");
     }
 }

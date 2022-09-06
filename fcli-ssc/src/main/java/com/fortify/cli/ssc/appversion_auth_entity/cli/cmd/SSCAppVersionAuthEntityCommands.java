@@ -5,8 +5,9 @@ import picocli.CommandLine.Command;
 @Command(
         name = "appversion-user",
         subcommands = {
+                SSCAppVersionAuthEntityAddCommand.class,
+                SSCAppVersionAuthEntityDeleteCommand.class,
                 SSCAppVersionAuthEntityListCommand.class,
-                SSCAppVersionAuthEntityUpdateCommand.class
         }
 )
 public class SSCAppVersionAuthEntityCommands {
