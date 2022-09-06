@@ -116,24 +116,34 @@ public class SSCAppVersionAuthEntityUpdateCommand extends AbstractSSCUnirestRunn
     private static final class SSCAuthEntityMatcher implements Predicate<JsonNode> {
         private final String[] authEntities;
         private final MatchMode matchMode;
+        private final Set<String> previousMatchedAuthEntities = new HashSet<>();
         
         @Override
         public boolean test(JsonNode node) {
             Set<String> values = new HashSet<>(Arrays.asList( new String[]{
                     getLowerCase(node, "id"),
                     getLowerCase(node, "entityName"),
-                    getLowerCase(node, "displayName"),
                     getLowerCase(node, "email")
             } )); 
             boolean isMatching = 
                     authEntities!=null &&
-                    Stream.of(authEntities).map(String::toLowerCase).anyMatch(values::contains);
+                    Stream.of(authEntities).map(String::toLowerCase)
+                    .filter(values::contains)
+                    .filter(this::hasPreviousMatch)
+                    .count() > 0;
             return matchMode==MatchMode.INCLUDE ? isMatching : !isMatching;
         }
 
         private String getLowerCase(JsonNode node, String field) {
             String result = JsonHelper.evaluateJsonPath(node, field, String.class);
             return result == null ? null : result.toLowerCase();
+        }
+        
+        private boolean hasPreviousMatch(String authEntity) {
+            if ( !previousMatchedAuthEntities.add(authEntity) ) {
+                throw new IllegalArgumentException(String.format("Multiple records match '%s'; please use a unique identifier", authEntity));
+            }
+            return true;
         }
     }
     
