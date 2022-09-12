@@ -834,7 +834,7 @@ public class CommandLine {
     }
 
     /** Returns whether abbreviation of subcommands should be allowed when matching subcommands. The default is {@code false}.
-     * @return {@code true} if subcommands can be matched when they are abbrevations of the {@code getCommandName()} value of a registered one, {@code false} otherwise.
+     * @return {@code true} if subcommands can be matched when they are abbreviations of the {@code getCommandName()} value of a registered one, {@code false} otherwise.
      *       For example, if true, for a subcommand with name {@code helpCommand}, inputs like {@code h}, {@code h-c} and {@code hC} are all recognized.
      * @since 4.4 */
     public boolean isAbbreviatedSubcommandsAllowed() {
@@ -860,7 +860,7 @@ public class CommandLine {
     }
 
     /** Returns whether abbreviation of option names should be allowed when matching options. The default is {@code false}.
-     * @return {@code true} if options can be matched when they are abbrevations of the {@code names()} value of a registered one, {@code false} otherwise.
+     * @return {@code true} if options can be matched when they are abbreviations of the {@code names()} value of a registered one, {@code false} otherwise.
      *       For example, if true, for a subcommand with name {@code --helpMe}, inputs like {@code --h}, {@code --h-m} and {@code --hM} are all recognized.
      * @since 4.4 */
     public boolean isAbbreviatedOptionsAllowed() {
@@ -5612,6 +5612,10 @@ public class CommandLine {
     private static class DefaultFactory implements IFactory {
         static Class<?> GROOVY_CLOSURE_CLASS = loadClosureClass();
         private static Class<?> loadClosureClass() {
+            if (Boolean.getBoolean("picocli.disable.closures")) {
+                tracer().info("DefaultFactory: groovy Closures in annotations are disabled and will not be loaded");
+                return null;
+            }
             try { return Class.forName("groovy.lang.Closure"); }
             catch (Exception ignored) { return null;}
         }
@@ -5991,6 +5995,16 @@ public class CommandLine {
          * @since 4.0
          */
         public interface IScope extends IGetter, ISetter {}
+        
+        /** This interface provides access to an {@link IScope} instance. 
+         * @since 4.7
+         */
+        public interface IScoped {
+            /** Get the {@link IScope} instance.
+             * 
+             *  @return {@link IScope} instance */
+            IScope getScope();
+        }
 
         /** Customizable getter for obtaining the current value of an option or positional parameter.
          * When an option or positional parameter is matched on the command line, its getter or setter is invoked to capture the value.
@@ -6601,9 +6615,17 @@ public class CommandLine {
                 commands.remove(interpolator.interpolate(alias));
             }
             private void inheritAttributesFrom(CommandSpec root) {
-                inherited = true;
+                setInheritedDeep();
                 initFrom(root);
                 updatedSubcommandsToInheritFrom(root);
+            }
+            // Issue #1741: ensure all commands in the hierarchy downwards have `inherited = true` set
+            // before mixing in the standard help options
+            private void setInheritedDeep() {
+                inherited = true;
+                for (CommandLine sub : subcommands().values()) {
+                    sub.getCommandSpec().setInheritedDeep();
+                }
             }
             private void updatedSubcommandsToInheritFrom(CommandSpec root) {
                 if (root != this && root.mixinStandardHelpOptions()) { // #1331 only add, don't remove
@@ -7821,17 +7843,18 @@ public class CommandLine {
             /**
              * Sets the maximum usage help long options column max width to the specified value.
              * This value controls the maximum width of the long options column: any positional parameter labels or long options that are longer than the specified value will overflow into the description column, and cause the description to be displayed on the next line.
-             * @param newValue the new maximum usage help long options column max width. Must be 20 or greater.
+             * @param newValue the new maximum usage help long options column max width. Must be 20 or greater, otherwise the new value will be ignored.
              * @return this {@code UsageMessageSpec} for method chaining
-             * @throws IllegalArgumentException if the specified long options column max is less than 20
              * @since 4.2 */
             public UsageMessageSpec longOptionsMaxWidth(int newValue) {
                 if (newValue < DEFAULT_USAGE_LONG_OPTIONS_WIDTH) {
-                    throw new InitializationException("Invalid usage long options max width " + newValue + ". Minimum value is " + DEFAULT_USAGE_LONG_OPTIONS_WIDTH);
+                    CommandLine.tracer().info("Invalid usage long options max width %d. Minimum value is %d", newValue,  DEFAULT_USAGE_LONG_OPTIONS_WIDTH);
                 } else if (newValue > width() - DEFAULT_USAGE_LONG_OPTIONS_WIDTH) {
-                    throw new InitializationException("Invalid usage long options max width " + newValue + ". Value must not exceed width(" + width() + ") - " + DEFAULT_USAGE_LONG_OPTIONS_WIDTH);
+                    CommandLine.tracer().info("Invalid usage long options max width %d. Value must not exceed width(%d) - %d", newValue , width(), DEFAULT_USAGE_LONG_OPTIONS_WIDTH);
+                } else {
+                    longOptionsMaxWidth = newValue;
                 }
-                longOptionsMaxWidth = newValue; return this;
+                return this;
             }
 
             private int getSysPropertyWidthOrDefault(int defaultWidth, boolean detectTerminalSize) {
@@ -9153,9 +9176,26 @@ public class CommandLine {
              * @return whether this argument applies to all descendent subcommands of the command where it is defined
              * @since 4.3 */
             public ScopeType scopeType() { return scopeType; }
+            
+            /** Check whether the {@link #getValue()} method is able to get an actual value from the current {@link #getter()}. 
+             * @since 4.7 */
+            public boolean isValueGettable() {
+                if (getter instanceof IScoped) {
+                    IScoped scoped = (IScoped) getter;
+                    IScope scope = scoped.getScope();
+                    if ( scope==null ) { return false; }
+                    try {
+                        return scope.get() != null;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                }
+                return true;
+            }
 
             /** Returns the current value of this argument. Delegates to the current {@link #getter()}. */
             public <T> T getValue() throws PicocliException {
+                if ( !isValueGettable() ) { return null; }
                 try {
                     return getter.<T>get();
                 } catch (PicocliException ex) { throw ex;
@@ -11584,19 +11624,19 @@ public class CommandLine {
                 } catch (Exception ignored) { return "?"; }
             }
             public Messages parent() {
-                CommandSpec parentSpec = this.spec.parent();
-                if ( parent==null || parent.spec!=parentSpec ) {
-                    parent = null; // Refresh if parentSpec doesn't match
-                    while ( parent==null && parentSpec!=null ) {
-                        String parentResourceBundleBaseName = parentSpec.resourceBundleBaseName();
-                        if ( parentResourceBundleBaseName!=null && !parentResourceBundleBaseName.equals(this.bundleBaseName)) {
-                            parent = new Messages(parentSpec, parentResourceBundleBaseName);
-                        } else {
-                            parentSpec = parentSpec.parent();
-                        }
-                    }
-                }
-                return parent;
+            	CommandSpec parentSpec = this.spec.parent();
+            	if (parent == null || parent.spec != parentSpec) {
+            		parent = null; // Refresh if parentSpec doesn't match
+            		while (parent == null && parentSpec != null) {
+		            	String parentResourceBundleBaseName = parentSpec.resourceBundleBaseName();
+		            	if (parentResourceBundleBaseName != null && !parentResourceBundleBaseName.equals(this.bundleBaseName)) {
+		            		parent = new Messages(parentSpec, parentResourceBundleBaseName);
+		            	} else {
+		            		parentSpec = parentSpec.parent();
+		            	}
+            		}
+            	}
+	            return parent;
             }
             private static Set<String> keys(ResourceBundle rb) {
                 if (rb == null) { return Collections.emptySet(); }
@@ -11613,7 +11653,7 @@ public class CommandLine {
             public static Messages copy(CommandSpec spec, Messages original) {
                 return original == null ? null : new Messages(spec, original.bundleBaseName, original.rb);
             }
-            /** Returns {@code true} if the specified {@code Messages} is {@code null} or empty */
+            /** Returns {@code true} if the specified {@code Messages} is {@code null}, has a {@code null ResourceBundle}, or has a {@code null parent Messages}. */
             public static boolean empty(Messages messages) { return messages == null || messages.isEmpty(); }
 
             /** Returns the String value found in the resource bundle for the specified key, or the specified default value if not found.
@@ -11627,17 +11667,17 @@ public class CommandLine {
                 String cmd = spec.qualifiedName(".");
                 String qualifiedKey = cmd + "." + key;
                 String result = getStringForExactKey(qualifiedKey);
-                if ( result==null ) { result = getStringForExactKey(key); }
-                return result!=null ? result : defaultValue;
-            }
-            
-            private String getStringForExactKey(String key) {
-                if (keys.contains(key)) { return rb.getString(key); }
-                else if (parent()!=null) { return parent().getStringForExactKey(key); }
-                else { return null; }
+                if (result == null) { result = getStringForExactKey(key); }
+                return result != null ? result : defaultValue;
             }
 
-            boolean isEmpty() { return (rb == null || keys.isEmpty()) && (parent()==null || parent().isEmpty()); }
+            private String getStringForExactKey(String key) {
+            	if (keys.contains(key)) { return rb.getString(key); }
+            	else if (parent() != null) { return parent().getStringForExactKey(key); }
+            	else { return null; }
+            }
+
+            boolean isEmpty() { return (rb == null || keys.isEmpty()) && (parent() == null || parent().isEmpty()); }
 
             /** Returns the String array value found in the resource bundle for the specified key, or the specified default value if not found.
              * Multi-line strings can be specified in the resource bundle with {@code key.0}, {@code key.1}, {@code key.2}, etc.
@@ -11651,13 +11691,13 @@ public class CommandLine {
                 String cmd = spec.qualifiedName(".");
                 String qualifiedKey = cmd + "." + key;
                 String[] result = getStringArrayForExactKey(qualifiedKey);
-                if ( result==null ) { result = getStringArrayForExactKey(key); }
-                return result!=null ? result : defaultValues;
+                if (result == null) { result = getStringArrayForExactKey(key); }
+                return result != null ? result : defaultValues;
             }
             private String[] getStringArrayForExactKey(String key) {
-                List<String> result = addAllWithPrefix(rb, key, keys, new ArrayList<String>());
-                if (!result.isEmpty()) { return result.toArray(new String[0]); }
-                return parent()==null ? null : parent().getStringArrayForExactKey(key);
+            	List<String> result = addAllWithPrefix(rb, key, keys, new ArrayList<String>());
+            	if (!result.isEmpty()) { return result.toArray(new String[0]); }
+            	return parent() == null ? null : parent().getStringArrayForExactKey(key);
             }
             private static List<String> addAllWithPrefix(ResourceBundle rb, String key, Set<String> keys, List<String> result) {
                 if (keys.contains(key)) { result.add(rb.getString(key)); }
@@ -11724,7 +11764,7 @@ public class CommandLine {
 
                 CommandUserObject userObject = CommandUserObject.create(command, factory);
                 t.debug("Creating CommandSpec for %s with factory %s", userObject, factory.getClass().getName());
-                CommandSpec result = CommandSpec.wrapWithoutInspection(userObject);
+                CommandSpec result = CommandSpec.wrapWithoutInspection(userObject, factory);
 
                 boolean hasCommandAnnotation = false;
                 if (userObject.isMethod()) {
@@ -12005,11 +12045,14 @@ public class CommandLine {
             }
         }
 
-        static class FieldBinding implements IGetter, ISetter {
+        static class FieldBinding implements IGetter, ISetter, IScoped {
             private final IScope scope;
             private final Field field;
             FieldBinding(Object scope, Field field) { this(ObjectScope.asScope(scope), field); }
             FieldBinding(IScope scope, Field field) { this.scope = scope; this.field = field; }
+            public IScope getScope() {
+                return scope;
+            }
             public <T> T get() throws PicocliException {
                 Object obj;
                 try { obj = scope.get(); }
@@ -12038,7 +12081,7 @@ public class CommandLine {
                         field.getDeclaringClass().getName(), field.getName());
             }
         }
-        static class MethodBinding implements IGetter, ISetter {
+        static class MethodBinding implements IGetter, ISetter, IScoped {
             private final IScope scope;
             private final Method method;
             private final CommandSpec spec;
@@ -12047,6 +12090,9 @@ public class CommandLine {
                 this.scope = scope;
                 this.method = method;
                 this.spec = spec;
+            }
+            public IScope getScope() {
+                return scope;
             }
             @SuppressWarnings("unchecked") public <T> T get() { return (T) currentValue; }
             public <T> T set(T value) throws PicocliException {
@@ -18265,7 +18311,7 @@ public class CommandLine {
         /** Returns whether the current trace level is WARN or higher. */
         public boolean isWarn()  { return level.isEnabled(TraceLevel.WARN); }
         /** Returns whether the current trace level is OFF (the lowest). */
-        public boolean isOff()  { return level== TraceLevel.OFF; }
+        public boolean isOff()  { return level == TraceLevel.OFF; }
         /** Prints the specified message if the current trace level is WARN or higher.
          * @param msg the message to print; may use {@link String#format(String, Object...)} syntax
          * @param params Arguments referenced by the format specifiers in the format string. If there are more arguments than format specifiers, the extra arguments are ignored. The number of arguments is variable and may be zero.
