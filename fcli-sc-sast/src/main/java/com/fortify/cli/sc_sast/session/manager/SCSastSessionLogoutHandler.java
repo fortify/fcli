@@ -25,7 +25,7 @@
 package com.fortify.cli.sc_sast.session.manager;
 
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
+import com.fortify.cli.common.session.manager.spi.AbstractSessionLogoutHandler;
 import com.fortify.cli.sc_sast.util.SCSastConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -34,11 +34,11 @@ import jakarta.inject.Singleton;
 import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public class SCSastSessionLogoutHandler implements ISessionLogoutHandler {
+public class SCSastSessionLogoutHandler extends AbstractSessionLogoutHandler<Void> {
     @Getter @Inject private SessionDataManager sessionDataManager;
 
     @Override
-    public final void logout(String authSessionName) {
+    public final void _logout(String authSessionName, Void logoutConfig) {
         // Nothing to do; client auth token is a static token that connot be logged out from
     }
     

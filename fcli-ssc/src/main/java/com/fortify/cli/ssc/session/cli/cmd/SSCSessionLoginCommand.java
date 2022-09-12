@@ -28,8 +28,8 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.cli.mixin.LoginConnectionOptions;
-import com.fortify.cli.common.session.cli.mixin.LoginUserCredentialOptions;
+import com.fortify.cli.common.session.cli.mixin.ConnectionOptions;
+import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
 import com.fortify.cli.common.util.DateTimeHelper;
 import com.fortify.cli.ssc.session.manager.ISSCUserCredentialsConfig;
@@ -49,7 +49,7 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessi
     @Getter @Inject private SSCSessionLoginHandler sscLoginHandler;
     
     @ArgGroup(exclusive = false, multiplicity = "1", order = 1, headingKey = "fcli.ssc.session.login.connection.argGroup.heading")
-    @Getter private LoginConnectionOptions connectionOptions;
+    @Getter private ConnectionOptions connectionOptions;
     
     @ArgGroup(exclusive = false, multiplicity = "1", order = 2, headingKey = "fcli.ssc.session.login.authentication.argGroup.heading")
     @Getter private SSCAuthOptions authOptions;
@@ -66,7 +66,7 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessi
         @Getter private TokenOptions tokenOptions = new TokenOptions();
     }
     
-    static class SSCUserCredentialOptions extends LoginUserCredentialOptions implements ISSCUserCredentialsConfig {
+    static class SSCUserCredentialOptions extends UserCredentialOptions implements ISSCUserCredentialsConfig {
         @Option(names = {"--expire-in"}, descriptionKey = "fcli.ssc.session.login.expire-in", required = false, defaultValue = "1d", showDefaultValue = Visibility.ALWAYS)
         @Getter private String expireIn;
         
@@ -82,7 +82,7 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessi
     }
     
     @Override
-    protected String getSessionType() {
+    public String getSessionType() {
         return SSCConstants.SESSION_TYPE;
     }
     

@@ -68,6 +68,15 @@ public class SSCSessionData extends AbstractSessionData {
         }
     }
     
+    @JsonIgnore 
+    public final String getTokenId() {
+        if ( hasActiveCachedTokenResponse() ) {
+            return getCachedTokenResponseData().getId();
+        } else {
+            return null;
+        }
+    }
+    
     @JsonIgnore
     public final boolean hasActiveCachedTokenResponse() {
         return getCachedTokenResponseData()!=null && getCachedTokenResponseData().getTerminalDate().after(new Date()); 

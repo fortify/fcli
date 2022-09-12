@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,32 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.session.manager.api;
+package com.fortify.cli.common.session.manager.spi;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
+import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
+import com.fortify.cli.common.session.manager.api.SessionDataManager;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import lombok.Getter;
 
-@Singleton
-public final class SessionLogoutManager {
-    private final SessionDataManager sessionDataManager;
-    private final Map<String, ISessionLogoutHandler> sessionLogoutHandlers;
+public abstract class AbstractSessionLogoutHandler<O> implements ISessionLogoutHandler<O>, ISessionTypeProvider {
+    @Getter @Inject private SessionDataManager sessionDataManager;
     
-    @Inject
-    SessionLogoutManager(SessionDataManager sessionDataManager, Collection<ISessionLogoutHandler> sessionLogoutHandlers) {
-        this.sessionDataManager = sessionDataManager;
-        this.sessionLogoutHandlers = sessionLogoutHandlers.stream().collect(
-                Collectors.toMap(ISessionLogoutHandler::getSessionType, Function.identity()));
+    public final void logout(String authSessionName, O logoutConfig) {
+        String sessionType = getSessionType();
+        if ( sessionDataManager.exists(sessionType, authSessionName) ) {
+            _logout(authSessionName, logoutConfig);
+            sessionDataManager.destroy(sessionType, authSessionName);
+        }
     }
-    
-    public final void logoutAndDestroy(String authSessionType, String authSessionName) {
-        sessionLogoutHandlers.get(authSessionType).logout(authSessionName);
-        sessionDataManager.destroy(authSessionType, authSessionName);
-    }
+
+    protected abstract void _logout(String authSessionName, O logoutConfig); 
 }

@@ -24,8 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.session.manager;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.session.manager.api.IUserCredentials;
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
+import com.fortify.cli.common.session.manager.spi.AbstractSessionLogoutHandler;
+import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.runner.SSCAuthenticatedUnirestRunner;
 import com.fortify.cli.ssc.util.SSCConstants;
 
@@ -36,24 +39,28 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public class SSCSessionLogoutHandler implements ISessionLogoutHandler {
+public class SSCSessionLogoutHandler extends AbstractSessionLogoutHandler<IUserCredentials> {
     @Getter @Inject private SessionDataManager sessionDataManager;
     @Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
 
     @Override
-    public final void logout(String authSessionName) {
+    public final void _logout(String authSessionName, IUserCredentials uc) {
         SSCSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, SSCSessionData.class);
-        if ( data!=null && data.hasActiveCachedTokenResponse() ) {
-            unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
+        String tokenId = data==null ? null : data.getTokenId();
+        if ( tokenId!=null && uc!=null ) {
+            unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, uc, tokenId));
         }
     }
     
-    private final Void logout(UnirestInstance unirestInstance, SSCSessionData authSessionData) {
+    private final Void logout(UnirestInstance unirestInstance, IUserCredentials uc, String tokenId) {
         try {
-            // TODO Current SSC versions don't allow current token to be invalidated
-            // TODO Invalidate token if username/password are available in login  session data 
+            unirestInstance.delete(SSCUrls.TOKENS)
+                .queryString("ids", tokenId)
+                .basicAuth(uc.getUser(), new String(uc.getPassword()))
+                .asObject(JsonNode.class).getBody();
         } catch ( RuntimeException e ) {
-            System.out.println("Error deserializing token:" + e.getMessage());
+            // TODO Log warning instead of printing to stdout
+            System.out.println("Error revoking token:" + e.getMessage());
         }
         return null;
     }

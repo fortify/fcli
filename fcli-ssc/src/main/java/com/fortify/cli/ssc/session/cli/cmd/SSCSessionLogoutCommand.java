@@ -25,14 +25,49 @@
 package com.fortify.cli.ssc.session.cli.cmd;
 
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
+import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
+import com.fortify.cli.common.session.manager.api.IUserCredentials;
+import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
+import com.fortify.cli.ssc.session.manager.SSCSessionLogoutHandler;
 import com.fortify.cli.ssc.util.SSCConstants;
 
+import jakarta.inject.Inject;
+import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 @Command(name = "logout", sortOptions = false, resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages")
-public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand {
+public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand<IUserCredentials> {
+    @Inject SSCSessionLogoutHandler logoutHandler;
+    
+    @ArgGroup(exclusive = false, multiplicity = "1", order = 1, headingKey = "fcli.ssc.session.logout.authentication.argGroup.heading")
+    @Getter private SSCAuthOptions authOptions;
+    
+    static class SSCAuthOptions {
+        @ArgGroup(exclusive = true, multiplicity = "1", order = 2)
+        @Getter private SSCCredentialOptions credentialOptions;
+    }
+    
+    static class SSCCredentialOptions {
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
+        @Getter private UserCredentialOptions userOptions;
+        @Option(names={"--no-revoke-token"})
+        @Getter private boolean noRevokeToken; // If this option is specified, then userOptions will be null and token will not be revoked
+    }
+    
     @Override
     public String getSessionType() {
         return SSCConstants.SESSION_TYPE;
+    }
+
+    @Override
+    protected IUserCredentials getLogoutConfig() {
+        return getAuthOptions().getCredentialOptions().getUserOptions();
+    }
+
+    @Override
+    protected ISessionLogoutHandler<IUserCredentials> getLogoutHandler() {
+        return logoutHandler;
     }
 }

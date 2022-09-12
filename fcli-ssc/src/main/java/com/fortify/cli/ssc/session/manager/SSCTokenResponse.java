@@ -36,7 +36,7 @@ public final class SSCTokenResponse {
     private SSCTokenResponse.SSCTokenData data;
     @Data @ReflectiveAccess
     public static final class SSCTokenData {
-        private int id;
+        private String id;
         private Date terminalDate;
         private Date creationDate;
         private String type;

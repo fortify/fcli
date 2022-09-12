@@ -25,6 +25,8 @@
 package com.fortify.cli.common.session.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
+import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
 import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
@@ -34,36 +36,21 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess @FixInjection
-public abstract class AbstractSessionLoginCommand<C> implements Runnable {
+public abstract class AbstractSessionLoginCommand<C> implements Runnable, ISessionTypeProvider {
     @Inject private SessionDataManager sessionDataManager;
     @Inject private SessionSummaryManager sessionSummaryManager;
+    @Getter @Mixin private SessionNameMixin sessionNameMixin;
     @Mixin private OutputMixin outputMixin;
-    
-    @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
-    @Getter protected SessionNameOptions sessionNameOptions;
-    
-    @ReflectiveAccess
-    private static class SessionNameOptions {
-        @Option(names = {"--session-name", "-n"}, required = false, defaultValue = "default")
-        @Getter protected String sessionName;
-    }
     
     @Override @SneakyThrows
     public final void run() {
-        getLoginHandler().login(getSessionName(), getLoginConfig());
+        getLoginHandler().login(sessionNameMixin.getSessionName(), getLoginConfig());
         sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
     }
     
-    public final String getSessionName() {
-        return sessionNameOptions==null ? "default" : sessionNameOptions.getSessionName();
-    }
-    
-    protected abstract String getSessionType();
     protected abstract C getLoginConfig();
     protected abstract ISessionLoginHandler<C> getLoginHandler();
 }

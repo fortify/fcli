@@ -25,7 +25,7 @@
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.cli.mixin.LoginConnectionOptions;
+import com.fortify.cli.common.session.cli.mixin.ConnectionOptions;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionLoginConfig;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionLoginHandler;
@@ -42,7 +42,7 @@ public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSas
     @Getter @Inject private SCSastSessionLoginHandler scSastLoginHandler;
     
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.sc-sast-connection-options.heading", order = 1)
-    @Getter private LoginConnectionOptions connectionOptions;
+    @Getter private ConnectionOptions connectionOptions;
     
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.sc-sast-authentication-options.heading", order = 2)
     @Getter private SCSastAuthOptions authOptions;
@@ -53,7 +53,7 @@ public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSas
     }
     
     @Override
-    protected String getSessionType() {
+    public String getSessionType() {
         return SCSastConstants.SESSION_TYPE;
     }
     

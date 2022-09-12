@@ -25,16 +25,26 @@
 package com.fortify.cli.fod.session.cli.cmd;
 
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
+import com.fortify.cli.fod.session.manager.FoDSessionLogoutHandler;
 import com.fortify.cli.fod.util.FoDConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import jakarta.inject.Inject;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @Command(name = "logout", sortOptions = false)
-public class FoDSessionLogoutCommand extends AbstractSessionLogoutCommand {
+public class FoDSessionLogoutCommand extends AbstractSessionLogoutCommand<Void> {
+    @Getter @Inject private FoDSessionLogoutHandler logoutHandler;
+    
     @Override
     public String getSessionType() {
         return FoDConstants.SESSION_TYPE;
+    }
+    
+    @Override
+    protected Void getLogoutConfig() {
+        return null;
     }
 }

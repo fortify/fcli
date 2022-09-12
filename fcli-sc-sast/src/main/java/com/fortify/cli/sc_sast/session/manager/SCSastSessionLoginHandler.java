@@ -27,7 +27,7 @@ package com.fortify.cli.sc_sast.session.manager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.runner.ThrowUnexpectedHttpResponseExceptionInterceptor;
 import com.fortify.cli.common.session.manager.api.ISessionData;
-import com.fortify.cli.common.session.manager.spi.AbstractSessionHandlerAction;
+import com.fortify.cli.common.session.manager.spi.AbstractSessionLoginHandler;
 import com.fortify.cli.sc_sast.rest.runner.SCSastAuthenticatedUnirestRunner;
 import com.fortify.cli.sc_sast.util.SCSastConstants;
 
@@ -38,8 +38,9 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public class SCSastSessionLoginHandler extends AbstractSessionHandlerAction<SCSastSessionLoginConfig> {
+public class SCSastSessionLoginHandler extends AbstractSessionLoginHandler<SCSastSessionLoginConfig> {
     @Getter @Inject private SCSastAuthenticatedUnirestRunner unirestRunner;
+    @Inject SCSastSessionLogoutHandler logoutHandler;
     
     public final String getSessionType() {
         return SCSastConstants.SESSION_TYPE;
@@ -66,5 +67,10 @@ public class SCSastSessionLoginHandler extends AbstractSessionHandlerAction<SCSa
         ThrowUnexpectedHttpResponseExceptionInterceptor.configure(unirest);
         unirest.get("/rest/v2/ping").asObject(JsonNode.class).getBody();
         return null;
+    }
+    
+    @Override
+    protected void _logoutBeforeNewLogin(String authSessionName, SCSastSessionLoginConfig loginConfig) {
+        logoutHandler.logout(authSessionName, null);
     }
 }

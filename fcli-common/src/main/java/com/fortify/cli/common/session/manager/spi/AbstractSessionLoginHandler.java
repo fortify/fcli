@@ -26,32 +26,31 @@ package com.fortify.cli.common.session.manager.spi;
 
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
-import com.fortify.cli.common.session.manager.api.SessionLogoutManager;
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
 
 import jakarta.inject.Inject;
 import lombok.Getter;
 
-public abstract class AbstractSessionHandlerAction<C> implements ISessionLoginHandler<C>, ISessionTypeProvider {
+public abstract class AbstractSessionLoginHandler<I> implements ISessionLoginHandler<I>, ISessionTypeProvider {
     @Getter @Inject private SessionDataManager sessionDataManager;
-    @Inject private SessionLogoutManager sessionLogoutManager;
     
-    public final void login(String authSessionName, C loginConfig) {
-        logoutIfSessionExists(authSessionName);
+    public final void login(String authSessionName, I loginConfig) {
+        logoutIfSessionExists(authSessionName, loginConfig);
         ISessionData authSessionData = _login(authSessionName, loginConfig);
         sessionDataManager.saveData(getSessionType(), authSessionName, authSessionData);
         testAuthenticatedConnection(authSessionName, loginConfig);
     }
     
-    protected void testAuthenticatedConnection(String authSessionName, C loginConfig) {}
+    protected void testAuthenticatedConnection(String authSessionName, I loginConfig) {}
 
-    private void logoutIfSessionExists(String authSessionName) {
+    private void logoutIfSessionExists(String authSessionName, I loginConfig) {
         String sessionType = getSessionType();
         if ( sessionDataManager.exists(sessionType, authSessionName) ) {
-            // Log out from previous session before creating a new session
-            sessionLogoutManager.logoutAndDestroy(sessionType, authSessionName);
+            _logoutBeforeNewLogin(authSessionName, loginConfig);
+            sessionDataManager.destroy(sessionType, authSessionName);
         }
     }
 
-    protected abstract ISessionData _login(String authSessionName, C loginConfig);
+    protected abstract ISessionData _login(String authSessionName, I loginConfig);
+    protected abstract void _logoutBeforeNewLogin(String authSessionName, I loginConfig);
 }

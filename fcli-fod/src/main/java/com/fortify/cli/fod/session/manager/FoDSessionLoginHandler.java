@@ -29,7 +29,7 @@ import java.util.Map;
 
 import com.fortify.cli.common.rest.runner.IConnectionConfig;
 import com.fortify.cli.common.session.manager.api.ISessionData;
-import com.fortify.cli.common.session.manager.spi.AbstractSessionHandlerAction;
+import com.fortify.cli.common.session.manager.spi.AbstractSessionLoginHandler;
 import com.fortify.cli.fod.rest.runner.FoDUnauthenticatedUnirestRunner;
 import com.fortify.cli.fod.util.FoDConstants;
 
@@ -39,11 +39,17 @@ import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
-public class FoDSessionLoginHandler extends AbstractSessionHandlerAction<FoDSessionLoginConfig> {
+public class FoDSessionLoginHandler extends AbstractSessionLoginHandler<FoDSessionLoginConfig> {
     @Inject private FoDUnauthenticatedUnirestRunner unauthenticatedUnirestRunner;
+    @Inject private FoDSessionLogoutHandler logoutHandler;
 
     public final String getSessionType() {
         return FoDConstants.SESSION_TYPE;
+    }
+    
+    @Override
+    protected void _logoutBeforeNewLogin(String authSessionName, FoDSessionLoginConfig loginConfig) {
+        logoutHandler.logout(authSessionName, null);
     }
 
     @Override

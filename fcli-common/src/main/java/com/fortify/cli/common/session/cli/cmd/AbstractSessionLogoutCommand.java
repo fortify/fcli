@@ -28,8 +28,8 @@ import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.api.SessionLogoutManager;
 import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
+import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
 import com.fortify.cli.common.util.FixInjection;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -38,16 +38,20 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess @FixInjection
-public abstract class AbstractSessionLogoutCommand implements Runnable, ISessionTypeProvider {
+public abstract class AbstractSessionLogoutCommand<C> implements Runnable, ISessionTypeProvider {
     @Inject private SessionDataManager sessionDataManager;
-    @Getter @Inject private SessionLogoutManager sessionLogoutManager;
-    @Getter @Mixin private SessionNameMixin sessionNameMixin;
     @Inject private SessionSummaryManager sessionSummaryManager;
+    @Getter @Mixin private SessionNameMixin sessionNameMixin;
     @Mixin private OutputMixin outputMixin;
 
     @Override
     public final void run() {
-        sessionLogoutManager.logoutAndDestroy(getSessionType(), sessionNameMixin.getSessionName());
-        sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
+        String sessionType = getSessionType();
+        String authSessionName = sessionNameMixin.getSessionName();
+        getLogoutHandler().logout(authSessionName, getLogoutConfig());
+        sessionSummaryManager.writeSessionSummaries(sessionType, outputMixin);
     }
+    
+    protected abstract C getLogoutConfig();
+    protected abstract ISessionLogoutHandler<C> getLogoutHandler();
 }

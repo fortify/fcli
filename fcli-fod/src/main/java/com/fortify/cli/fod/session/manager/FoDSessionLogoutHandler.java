@@ -24,8 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.manager;
 
-import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
+import com.fortify.cli.common.session.manager.spi.AbstractSessionLogoutHandler;
 import com.fortify.cli.fod.rest.runner.FoDAuthenticatedUnirestRunner;
 import com.fortify.cli.fod.util.FoDConstants;
 
@@ -36,13 +35,12 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 @Singleton @ReflectiveAccess
-public class FoDSessionLogoutHandler implements ISessionLogoutHandler {
-    @Getter @Inject private SessionDataManager sessionDataManager;
+public class FoDSessionLogoutHandler extends AbstractSessionLogoutHandler<Void> {
     @Getter @Inject private FoDAuthenticatedUnirestRunner unirestRunner;
-
+    
     @Override
-    public final void logout(String authSessionName) {
-        FoDSessionData data = sessionDataManager.getData(getSessionType(), authSessionName, FoDSessionData.class);
+    public final void _logout(String authSessionName, Void logoutConfig) {
+        FoDSessionData data = getSessionDataManager().getData(getSessionType(), authSessionName, FoDSessionData.class);
         if ( data!=null && data.hasActiveCachedTokenResponse() ) {
             unirestRunner.runWithUnirest(authSessionName, unirestInstance->logout(unirestInstance, data));
         }

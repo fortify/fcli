@@ -26,7 +26,7 @@ package com.fortify.cli.ssc.session.manager;
 
 import com.fortify.cli.common.rest.runner.IConnectionConfig;
 import com.fortify.cli.common.session.manager.api.ISessionData;
-import com.fortify.cli.common.session.manager.spi.AbstractSessionHandlerAction;
+import com.fortify.cli.common.session.manager.spi.AbstractSessionLoginHandler;
 import com.fortify.cli.ssc.rest.runner.SSCUnauthenticatedUnirestRunner;
 import com.fortify.cli.ssc.util.SSCConstants;
 
@@ -36,11 +36,17 @@ import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 
 @Singleton @ReflectiveAccess
-public class SSCSessionLoginHandler extends AbstractSessionHandlerAction<SSCSessionLoginConfig> {
+public class SSCSessionLoginHandler extends AbstractSessionLoginHandler<SSCSessionLoginConfig> {
     @Inject private SSCUnauthenticatedUnirestRunner unauthenticatedUnirestRunner;
+    @Inject private SSCSessionLogoutHandler logoutHandler;
 
     public final String getSessionType() {
         return SSCConstants.SESSION_TYPE;
+    }
+    
+    @Override
+    protected void _logoutBeforeNewLogin(String authSessionName, SSCSessionLoginConfig loginConfig) {
+        logoutHandler.logout(authSessionName, loginConfig.getSscUserCredentialsConfig());
     }
 
     @Override

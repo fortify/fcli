@@ -27,8 +27,8 @@ package com.fortify.cli.fod.session.cli.cmd;
 import java.util.Optional;
 
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.cli.mixin.LoginConnectionOptions;
-import com.fortify.cli.common.session.cli.mixin.LoginUserCredentialOptions;
+import com.fortify.cli.common.session.cli.mixin.ConnectionOptions;
+import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
 import com.fortify.cli.fod.session.manager.FoDSessionLoginConfig;
 import com.fortify.cli.fod.session.manager.FoDSessionLoginHandler;
@@ -49,7 +49,7 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
     @Getter @Inject private FoDSessionLoginHandler fodLoginHandler;
     
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-connection-options.heading", order = 1)
-    @Getter private LoginConnectionOptions connectionOptions;
+    @Getter private ConnectionOptions connectionOptions;
     
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-authentication-options.heading", order = 2)
     @Getter private FoDAuthOptions authOptions;
@@ -66,7 +66,7 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
         @Getter private FoDClientCredentialOptions clientCredentialOptions = new FoDClientCredentialOptions();
     }
     
-    static class FoDUserCredentialOptions extends LoginUserCredentialOptions implements IFoDUserCredentialsConfig {
+    static class FoDUserCredentialOptions extends UserCredentialOptions implements IFoDUserCredentialsConfig {
         @Option(names = {"--tenant"}, required = true) 
         @Getter private String tenant;
     }
@@ -79,7 +79,7 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
     }
     
     @Override
-    protected String getSessionType() {
+    public String getSessionType() {
         return FoDConstants.SESSION_TYPE;
     }
     

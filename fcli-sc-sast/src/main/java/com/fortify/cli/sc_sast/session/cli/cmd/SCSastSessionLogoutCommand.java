@@ -25,14 +25,29 @@
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
+import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
+import com.fortify.cli.sc_sast.session.manager.SCSastSessionLogoutHandler;
 import com.fortify.cli.sc_sast.util.SCSastConstants;
 
+import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
 
 @Command(name = "logout", sortOptions = false)
-public class SCSastSessionLogoutCommand extends AbstractSessionLogoutCommand {
+public class SCSastSessionLogoutCommand extends AbstractSessionLogoutCommand<Void> {
+    @Inject private SCSastSessionLogoutHandler logoutHandler;
+    
     @Override
     public String getSessionType() {
         return SCSastConstants.SESSION_TYPE;
+    }
+    
+    @Override
+    protected Void getLogoutConfig() {
+        return null;
+    }
+    
+    @Override
+    protected ISessionLogoutHandler<Void> getLogoutHandler() {
+        return logoutHandler;
     }
 }
