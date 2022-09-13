@@ -63,7 +63,7 @@ public class SCDastScanOutputDownloadFprCommand extends AbstractSCDastUnirestRun
         }
         
         @SneakyThrows
-        protected Void runWithUnirest(UnirestInstance unirest){
+        protected Void run(UnirestInstance unirest){
             File outputFile = unirest.get("/api/v2/scans/{scanId}/download-results")
                     .routeParam("scanId", String.valueOf(scanResultsOptions.getScanId()))
                     .accept("application/json")

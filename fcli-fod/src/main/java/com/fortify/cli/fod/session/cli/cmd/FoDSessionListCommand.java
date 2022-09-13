@@ -25,14 +25,13 @@
 package com.fortify.cli.fod.session.cli.cmd;
 
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionListCommand;
-import com.fortify.cli.fod.util.FoDConstants;
+import com.fortify.cli.fod.session.manager.FoDSessionDataManager;
 
+import jakarta.inject.Inject;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 
 @Command(name = "list", sortOptions = false)
 public class FoDSessionListCommand extends AbstractSessionListCommand {
-    @Override
-    public final String getSessionType() {
-        return FoDConstants.SESSION_TYPE;
-    }
+    @Getter @Inject private FoDSessionDataManager sessionDataManager;
 }

@@ -28,37 +28,28 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.manager.api.SessionSummary;
 import com.fortify.cli.common.session.manager.spi.AbstractSessionData;
-import com.fortify.cli.ssc.session.manager.SSCTokenResponse.SSCTokenData;
-import com.fortify.cli.ssc.util.SSCConstants;
+import com.fortify.cli.ssc.token.helper.SSCTokenCreateResponse;
+import com.fortify.cli.ssc.token.helper.SSCTokenCreateResponse.SSCTokenData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data @EqualsAndHashCode(callSuper = true)  @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
-public class SSCSessionData extends AbstractSessionData {
+public class SSCSessionData extends AbstractSessionData implements ISSCSessionData {
     private char[] predefinedToken;
-    private SSCTokenResponse cachedTokenResponse;
+    private SSCTokenCreateResponse cachedTokenResponse;
     
-    public SSCSessionData() {}
+    protected SSCSessionData() {}
     
-    public SSCSessionData(SSCSessionLoginConfig config) {
-        super(config.getUrlConfig());
-        this.predefinedToken = config.getToken();
+    public SSCSessionData(IUrlConfig urlConfig) {
+        super(urlConfig);
     }
     
-    public SSCSessionData(SSCSessionLoginConfig config, SSCTokenResponse cachedTokenResponse) {
-        this(config);
-        this.cachedTokenResponse = cachedTokenResponse;
-    }
-    
-    @JsonIgnore @Override
-    public String getSessionType() {
-        return SSCConstants.SESSION_TYPE;
-    }
-    
+    @Override
     @JsonIgnore 
     public final char[] getActiveToken() {
         if ( hasActiveCachedTokenResponse() ) {
@@ -95,7 +86,7 @@ public class SSCSessionData extends AbstractSessionData {
     }
     
     @JsonIgnore
-    protected Date getSessionExpiryDate() {
+    public Date getExpiryDate() {
         Date sessionExpiryDate = SessionSummary.EXPIRES_UNKNOWN;
         if ( getCachedTokenTerminalDate()!=null ) {
             sessionExpiryDate = getCachedTokenTerminalDate();

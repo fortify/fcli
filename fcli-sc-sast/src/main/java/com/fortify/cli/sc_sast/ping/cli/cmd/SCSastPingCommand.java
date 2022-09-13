@@ -10,7 +10,7 @@ import picocli.CommandLine.Command;
 public class SCSastPingCommand extends AbstractSCSastUnirestRunnerCommand {
 
     @Override
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         System.out.println(unirest.get("/rest/v2/ping").asObject(JsonNode.class).getBody());
         return null;
     }

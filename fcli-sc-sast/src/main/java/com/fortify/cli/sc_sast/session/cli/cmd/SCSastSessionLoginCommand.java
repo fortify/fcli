@@ -24,22 +24,23 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
+import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
-import com.fortify.cli.sc_sast.session.manager.SCSastSessionLoginConfig;
-import com.fortify.cli.sc_sast.session.manager.SCSastSessionLoginHandler;
-import com.fortify.cli.sc_sast.util.SCSastConstants;
+import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
+import com.fortify.cli.sc_sast.session.manager.SCSastSessionDataManager;
 
 import jakarta.inject.Inject;
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "login", sortOptions = false)
-public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSastSessionLoginConfig> {
-    @Getter @Inject private SCSastSessionLoginHandler scSastLoginHandler;
+public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSastSessionData> {
+    @Getter @Inject private SCSastSessionDataManager sessionDataManager;
     
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.sc-sast-connection-options.heading", order = 1)
     @Getter private UrlConfigOptions urlConfigOptions;
@@ -53,20 +54,27 @@ public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSas
     }
     
     @Override
-    public String getSessionType() {
-        return SCSastConstants.SESSION_TYPE;
+    protected void logoutBeforeNewLogin(String sessionName, SCSastSessionData sessionData) {
+        // TODO Nothing to do for now
     }
     
     @Override
-    protected final SCSastSessionLoginConfig getLoginConfig() {
-        SCSastSessionLoginConfig config = new SCSastSessionLoginConfig();
-        config.setUrlConfig(getUrlConfigOptions());
-        config.setClientAuthToken(authOptions.clientAuthToken);
-        return config;
+    protected SCSastSessionData login(String sessionName) {
+        return new SCSastSessionData(urlConfigOptions, authOptions.getClientAuthToken());
     }
     
     @Override
-    protected ISessionLoginHandler<SCSastSessionLoginConfig> getLoginHandler() {
-        return scSastLoginHandler;
+    protected void testAuthenticatedConnection(String sessionName) {
+        super.testAuthenticatedConnection(sessionName);
+        // TODO Call testWithUnirest()
     }
+    
+    protected Void testWithUnirest(UnirestInstance unirest) {
+        // TODO Review this
+        UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
+        unirest.get("/rest/v2/ping").asObject(JsonNode.class).getBody();
+        return null;
+    }
+    
+    
 }

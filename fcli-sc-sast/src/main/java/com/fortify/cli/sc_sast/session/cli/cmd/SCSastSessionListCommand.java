@@ -25,14 +25,13 @@
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionListCommand;
-import com.fortify.cli.sc_sast.util.SCSastConstants;
+import com.fortify.cli.sc_sast.session.manager.SCSastSessionDataManager;
 
+import jakarta.inject.Inject;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 
 @Command(name = "list", sortOptions = false)
 public class SCSastSessionListCommand extends AbstractSessionListCommand {
-    @Override
-    public final String getSessionType() {
-        return SCSastConstants.SESSION_TYPE;
-    }
+    @Getter @Inject private SCSastSessionDataManager sessionDataManager;
 }

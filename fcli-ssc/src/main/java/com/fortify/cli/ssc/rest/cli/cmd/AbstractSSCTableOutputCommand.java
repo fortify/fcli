@@ -34,7 +34,7 @@ public abstract class AbstractSSCTableOutputCommand extends AbstractSSCUnirestRu
     @Mixin private SSCFilterMixin sscFilterMixin;
     
     @Override
-    protected final Void runWithUnirest(UnirestInstance unirest) {
+    protected final Void run(UnirestInstance unirest) {
         outputMixin.write(generateOutput(unirest));
         return null;
     }

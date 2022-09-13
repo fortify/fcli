@@ -20,7 +20,7 @@ public class SCSastScanStatusCommand extends AbstractSCSastUnirestRunnerCommand 
     private OutputMixin outputMixin;
     
     @Override
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         outputMixin.write(
                 unirest.get("/rest/v2/job/{token}/status")
                     .routeParam("token", scanStatusOptions.getToken()));

@@ -44,7 +44,7 @@ public class SSCAppVersionGetCommand extends AbstractSSCUnirestRunnerCommand imp
     @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter versionIdOrName;
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         String avID = versionIdOrName.getApplicationVersionId(unirest);
         outputMixin.write(unirest.get(SSCUrls.PROJECT_VERSION(avID)));
         return null;

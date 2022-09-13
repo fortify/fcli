@@ -55,7 +55,7 @@ public class SSCAuthEntityDeleteCommand extends AbstractSSCUnirestRunnerCommand 
     private boolean allowMultiMatch;
     
     @Override
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         ArrayNode allAuthEntities = (ArrayNode)unirest.get(SSCUrls.AUTH_ENTITIES)
                 .queryString("limit", "-1")
                 .asObject(JsonNode.class).getBody().get("data");

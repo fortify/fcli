@@ -80,7 +80,7 @@ public class SCDastScanListCommand extends AbstractSCDastUnirestRunnerCommand im
     @Mixin private OutputMixin outputMixin;
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         String urlPath = "/api/v2/scans/scan-summary-list";
         String urlParams = "";
 

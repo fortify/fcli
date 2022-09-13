@@ -47,7 +47,7 @@ public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunn
     String destination;
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         SSCAppVersionDescriptor av = parentVersionHandler.getApplicationAndVersion(unirest);
         destination = destination != null ? destination : String.format("./scan_%s.fpr", av.getApplicationVersionId());
         SSCFileTransferHelper.download(

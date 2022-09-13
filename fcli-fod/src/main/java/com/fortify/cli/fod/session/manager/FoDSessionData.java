@@ -28,9 +28,10 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.manager.api.SessionSummary;
 import com.fortify.cli.common.session.manager.spi.AbstractSessionData;
-import com.fortify.cli.fod.util.FoDConstants;
+import com.fortify.cli.fod.oauth.helper.FoDTokenCreateResponse;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
@@ -38,18 +39,13 @@ import lombok.EqualsAndHashCode;
 
 @Data @EqualsAndHashCode(callSuper = true) @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public class FoDSessionData extends AbstractSessionData {
-    private FoDTokenResponse cachedTokenResponse;
+    private FoDTokenCreateResponse cachedTokenResponse;
     
     public FoDSessionData() {}
     
-    public FoDSessionData(FoDSessionLoginConfig loginConfig, FoDTokenResponse tokenResponse) {
-        super(loginConfig.getUrlConfig());
+    public FoDSessionData(IUrlConfig urlConfig, FoDTokenCreateResponse tokenResponse) {
+        super(urlConfig);
         this.cachedTokenResponse = tokenResponse;
-    }
-    
-    @JsonIgnore @Override
-    public String getSessionType() {
-        return FoDConstants.SESSION_TYPE;
     }
     
     @JsonIgnore
@@ -63,7 +59,7 @@ public class FoDSessionData extends AbstractSessionData {
     }
     
     @JsonIgnore @Override
-    protected Date getSessionExpiryDate() {
+    public Date getExpiryDate() {
         Date sessionExpiryDate = SessionSummary.EXPIRES_UNKNOWN;
         if ( getCachedTokenResponse()!=null ) {
             sessionExpiryDate = new Date(getCachedTokenResponse().getExpiresAt());

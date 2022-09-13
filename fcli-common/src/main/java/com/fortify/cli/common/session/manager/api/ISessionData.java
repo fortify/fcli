@@ -24,11 +24,16 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.manager.api;
 
-import com.fortify.cli.common.rest.runner.IUrlConfigProvider;
+import java.util.Date;
+
+import com.fortify.cli.common.rest.runner.config.IUrlConfigProvider;
 
 /** 
- * Marker interface for auth session data
+ * Interface describing session data
  * 
  * @author Ruud Senden
  */
-public interface ISessionData extends IUrlConfigProvider, ISessionTypeProvider {}
+public interface ISessionData extends IUrlConfigProvider {
+    Date getCreatedDate();
+    Date getExpiryDate();
+}

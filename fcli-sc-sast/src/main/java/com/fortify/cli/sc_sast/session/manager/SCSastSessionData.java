@@ -28,9 +28,9 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.manager.api.SessionSummary;
 import com.fortify.cli.common.session.manager.spi.AbstractSessionData;
-import com.fortify.cli.sc_sast.util.SCSastConstants;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
@@ -43,14 +43,9 @@ public class SCSastSessionData extends AbstractSessionData {
     
     public SCSastSessionData() {}
     
-    public SCSastSessionData(SCSastSessionLoginConfig config) {
-        super(config.getUrlConfig());
-        this.clientAuthToken = config.getClientAuthToken();
-    }
-    
-    @JsonIgnore @Override
-    public String getSessionType() {
-        return SCSastConstants.SESSION_TYPE;
+    public SCSastSessionData(IUrlConfig urlConfig, char[] clientAuthToken) {
+        super(urlConfig);
+        this.clientAuthToken = clientAuthToken;
     }
     
     @JsonIgnore

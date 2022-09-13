@@ -26,7 +26,7 @@ package com.fortify.cli.ssc.session.manager;
 
 import java.time.OffsetDateTime;
 
-import com.fortify.cli.common.session.manager.api.IUserCredentials;
+import com.fortify.cli.common.rest.runner.config.IUserCredentials;
 
 public interface ISSCUserCredentialsConfig extends IUserCredentials {
     OffsetDateTime getExpiresAt();

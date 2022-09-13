@@ -58,7 +58,7 @@ public final class SCDastScanDeleteCommand extends AbstractSCDastUnirestRunnerCo
     }
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         if(deleteScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
                     "Error: No parameter found. Provide the required scan-settings identifier.");

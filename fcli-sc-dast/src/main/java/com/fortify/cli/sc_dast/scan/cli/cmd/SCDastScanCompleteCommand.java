@@ -64,7 +64,7 @@ public final class SCDastScanCompleteCommand extends AbstractSCDastUnirestRunner
     }
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         if(completeScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
                     "Error: No parameter found. Provide the required scan id.");

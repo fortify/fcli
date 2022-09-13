@@ -44,7 +44,7 @@ public class SSCReportTemplateDeleteCommand extends AbstractSSCUnirestRunnerComm
     @CommandLine.Mixin private SSCReportTemplateIdMixin reportTemplateIdMixin;
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         outputMixin.write(
                 unirest.delete(SSCUrls.REPORT_DEFINITION(reportTemplateIdMixin.getReportTemplateDefId(unirest))));
         System.out.println("DELETE DONE.");

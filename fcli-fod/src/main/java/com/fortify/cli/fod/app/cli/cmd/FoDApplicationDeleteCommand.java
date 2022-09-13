@@ -11,7 +11,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "delete")
 public class FoDApplicationDeleteCommand extends AbstractFoDUnirestRunnerCommand {
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         System.err.println("ERROR: Not yet implemented");
         return null;
     }

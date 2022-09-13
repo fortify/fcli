@@ -24,76 +24,47 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.cli.cmd;
 
-import java.util.Optional;
-
-import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
+import com.fortify.cli.common.rest.runner.UnirestRunner;
+import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
-import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
-import com.fortify.cli.fod.session.manager.FoDSessionLoginConfig;
-import com.fortify.cli.fod.session.manager.FoDSessionLoginHandler;
-import com.fortify.cli.fod.session.manager.IFoDClientCredentialsConfig;
-import com.fortify.cli.fod.session.manager.IFoDUserCredentialsConfig;
-import com.fortify.cli.fod.util.FoDConstants;
+import com.fortify.cli.fod.oauth.helper.FoDOAuthHelper;
+import com.fortify.cli.fod.oauth.helper.FoDTokenCreateResponse;
+import com.fortify.cli.fod.session.cli.mixin.FoDSessionLoginOptions;
+import com.fortify.cli.fod.session.manager.FoDSessionData;
+import com.fortify.cli.fod.session.manager.FoDSessionDataManager;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = "login", sortOptions = false)
-public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionLoginConfig> {
-    @Getter @Inject private FoDSessionLoginHandler fodLoginHandler;
-    
-    @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-connection-options.heading", order = 1)
-    @Getter private UrlConfigOptions urlConfigOptions;
-    
-    @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-authentication-options.heading", order = 2)
-    @Getter private FoDAuthOptions authOptions;
-    
-    static class FoDAuthOptions {
-        @ArgGroup(exclusive = true, multiplicity = "1", order = 3)
-        @Getter private FoDCredentialOptions credentialOptions;
-    }
-    
-    static class FoDCredentialOptions {
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
-        @Getter private FoDUserCredentialOptions userCredentialOptions = new FoDUserCredentialOptions();
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
-        @Getter private FoDClientCredentialOptions clientCredentialOptions = new FoDClientCredentialOptions();
-    }
-    
-    static class FoDUserCredentialOptions extends UserCredentialOptions implements IFoDUserCredentialsConfig {
-        @Option(names = {"--tenant"}, required = true) 
-        @Getter private String tenant;
-    }
-    
-    static class FoDClientCredentialOptions implements IFoDClientCredentialsConfig {
-        @Option(names = {"--client-id"}, required = true) 
-        @Getter private String clientId;
-        @Option(names = {"--client-secret"}, required = true, interactive = true, arity = "0..1", echo = false) 
-        @Getter private String clientSecret;
-    }
+public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionData> {
+    @Getter @Inject private FoDSessionDataManager sessionDataManager;
+    @Getter @Inject private FoDOAuthHelper oauthHelper;
+    @Inject private UnirestRunner unirestRunner;
+    @Mixin private FoDSessionLoginOptions loginOptions;
     
     @Override
-    public String getSessionType() {
-        return FoDConstants.SESSION_TYPE;
-    }
-    
-    @Override
-    protected final FoDSessionLoginConfig getLoginConfig() {
-        FoDSessionLoginConfig config = new FoDSessionLoginConfig();
-        config.setUrlConfig(getUrlConfigOptions());
-        Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getUserCredentialOptions).ifPresent(config::setFodUserCredentialsConfig);
-        Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getClientCredentialOptions).ifPresent(config::setFodClientCredentialsConfig);
-        return config;
+    protected void logoutBeforeNewLogin(String sessionName, FoDSessionData sessionData) {
+        // TODO Can we revoke a previously generated FoD token?
     }
 
     @Override
-    protected ISessionLoginHandler<FoDSessionLoginConfig> getLoginHandler() {
-        return fodLoginHandler;
+    protected FoDSessionData login(String sessionName) {
+        FoDSessionData sessionData;
+        IUrlConfig urlConfig = loginOptions.getUrlConfigOptions();
+        if ( loginOptions.hasClientCredentials() ) {
+            FoDTokenCreateResponse createTokenResponse = oauthHelper.createToken(urlConfig, loginOptions.getClientCredentialOptions(), loginOptions.getScopes());
+            sessionData = new FoDSessionData(urlConfig, createTokenResponse);
+        } else if ( loginOptions.hasUserCredentialsConfig() ) {
+            FoDTokenCreateResponse createTokenResponse = oauthHelper.createToken(urlConfig, loginOptions.getUserCredentialOptions(), loginOptions.getScopes());
+            sessionData = new FoDSessionData(urlConfig, createTokenResponse);
+        } else {
+            throw new IllegalArgumentException("Either FoD client or user credentials must be provided");
+        }
+        return sessionData;
     }
 }

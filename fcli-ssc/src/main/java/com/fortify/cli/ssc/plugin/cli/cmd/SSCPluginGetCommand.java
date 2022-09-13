@@ -45,7 +45,7 @@ public class SSCPluginGetCommand extends AbstractSSCUnirestRunnerCommand impleme
     private SSCPluginCommonOptions.SSCPluginSelectSingleRequiredMixin id;
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         outputMixin.write(
                 unirest.get(SSCUrls.PLUGIN(id.getNumericPluginId(unirest).toString()))
         );

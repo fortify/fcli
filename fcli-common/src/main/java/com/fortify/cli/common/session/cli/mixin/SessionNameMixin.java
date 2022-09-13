@@ -35,11 +35,15 @@ public class SessionNameMixin {
     @Getter private SessionConsumerNameOptions nameOptions;
     
     static class SessionConsumerNameOptions {
-        @Option(names = {"--session"}, required = false, defaultValue = "default")
+        @Option(names = {"--session"}, required = false)
         @Getter private String sessionName;
     }
     
     public String getSessionName() {
-        return nameOptions==null ? "default" : nameOptions.getSessionName();
+        return hasSessionName() ? nameOptions.getSessionName() : "default";
+    }
+    
+    public boolean hasSessionName() {
+        return nameOptions!=null && nameOptions.getSessionName()!=null;
     }
 }

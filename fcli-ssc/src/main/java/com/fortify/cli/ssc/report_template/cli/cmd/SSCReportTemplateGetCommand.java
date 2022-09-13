@@ -44,7 +44,7 @@ public class SSCReportTemplateGetCommand extends AbstractSSCUnirestRunnerCommand
     @CommandLine.Mixin private SSCReportTemplateIdMixin reportTemplateIdMixin;
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         outputMixin.write(
                 unirest.get(SSCUrls.REPORT_DEFINITION(reportTemplateIdMixin.getReportTemplateDefId(unirest))));
         return null;

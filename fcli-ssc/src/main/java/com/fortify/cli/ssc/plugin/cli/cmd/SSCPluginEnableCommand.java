@@ -47,7 +47,7 @@ public class SSCPluginEnableCommand extends AbstractSSCUnirestRunnerCommand impl
     private int id;
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         outputMixin.write(SSCPluginStateHelper.enablePlugin(unirest, id));
         return null;
     }

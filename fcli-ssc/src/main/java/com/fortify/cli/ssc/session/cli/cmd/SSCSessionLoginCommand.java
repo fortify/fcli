@@ -24,79 +24,59 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.session.cli.cmd;
 
-import java.time.OffsetDateTime;
-import java.util.Optional;
-
-import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
+import com.fortify.cli.common.rest.runner.config.IUrlConfig;
+import com.fortify.cli.common.rest.runner.config.IUserCredentials;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
-import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
-import com.fortify.cli.common.util.DateTimeHelper;
-import com.fortify.cli.ssc.session.manager.ISSCUserCredentialsConfig;
-import com.fortify.cli.ssc.session.manager.SSCSessionLoginConfig;
-import com.fortify.cli.ssc.session.manager.SSCSessionLoginHandler;
-import com.fortify.cli.ssc.util.SSCConstants;
+import com.fortify.cli.ssc.session.cli.mixin.SSCSessionLoginOptions;
+import com.fortify.cli.ssc.session.cli.mixin.SSCSessionLoginOptions.SSCUserCredentialOptions;
+import com.fortify.cli.ssc.session.manager.SSCSessionData;
+import com.fortify.cli.ssc.session.manager.SSCSessionDataManager;
+import com.fortify.cli.ssc.token.helper.SSCTokenCreateRequest;
+import com.fortify.cli.ssc.token.helper.SSCTokenCreateResponse;
+import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
 import jakarta.inject.Inject;
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Help.Visibility;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Mixin;
 
 @Command(name = "login", sortOptions = false, resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages")
-public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessionLoginConfig> {
-    @Getter @Inject private SSCSessionLoginHandler sscLoginHandler;
+public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessionData> {
+    @Getter @Inject private SSCSessionDataManager sessionDataManager;
+    @Inject private SSCTokenHelper tokenHelper;
+    @Mixin private SSCSessionLoginOptions sessionLoginOptions;
     
-    @ArgGroup(exclusive = false, multiplicity = "1", order = 1, headingKey = "fcli.ssc.session.login.connection.argGroup.heading")
-    @Getter private UrlConfigOptions urlConfigOptions;
-    
-    @ArgGroup(exclusive = false, multiplicity = "1", order = 2, headingKey = "fcli.ssc.session.login.authentication.argGroup.heading")
-    @Getter private SSCAuthOptions authOptions;
-    
-    static class SSCAuthOptions {
-        @ArgGroup(exclusive = true, multiplicity = "1", order = 3)
-        @Getter private SSCCredentialOptions credentialOptions;
-    }
-    
-    static class SSCCredentialOptions {
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
-        @Getter private SSCUserCredentialOptions userOptions = new SSCUserCredentialOptions();
-        @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
-        @Getter private TokenOptions tokenOptions = new TokenOptions();
-    }
-    
-    static class SSCUserCredentialOptions extends UserCredentialOptions implements ISSCUserCredentialsConfig {
-        @Option(names = {"--expire-in"}, descriptionKey = "fcli.ssc.session.login.expire-in", required = false, defaultValue = "1d", showDefaultValue = Visibility.ALWAYS)
-        @Getter private String expireIn;
-        
-        @Override
-        public OffsetDateTime getExpiresAt() {
-            return DateTimeHelper.getCurrentOffsetDateTimePlusPeriod(expireIn);
+    @Override
+    protected void logoutBeforeNewLogin(String sessionName, SSCSessionData sessionData) {
+        IUserCredentials userCredentialsConfig = sessionLoginOptions.getUserCredentialOptions();
+        // TODO Should we also check whether SSC URL's from options and session data match?
+        if ( userCredentialsConfig!=null && sessionData.getTokenId()!=null ) {
+            // TODO Catch exceptions, log warning
+            tokenHelper.deleteTokensById(sessionData.getUrlConfig(), userCredentialsConfig, sessionData.getTokenId());
+        } else {
+            // TODO Log warning, trow exception, ...?
         }
     }
     
-    static class TokenOptions {
-        @Option(names = {"--token", "-t"}, descriptionKey = "fcli.ssc.session.login.token", required = true, interactive = true, arity = "0..1", echo = false)
-        @Getter private char[] token;
-    }
-    
     @Override
-    public String getSessionType() {
-        return SSCConstants.SESSION_TYPE;
-    }
-    
-    @Override
-    protected final SSCSessionLoginConfig getLoginConfig() {
-        SSCSessionLoginConfig config = new SSCSessionLoginConfig();
-        config.setUrlConfig(getUrlConfigOptions());
-        Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getUserOptions).ifPresent(config::setSscUserCredentialsConfig);
-        Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getTokenOptions).map(TokenOptions::getToken).ifPresent(config::setToken);
-        return config;
-    }
-    
-    @Override
-    protected ISessionLoginHandler<SSCSessionLoginConfig> getLoginHandler() {
-        return sscLoginHandler;
+    protected SSCSessionData login(String sessionName) {
+        IUrlConfig urlConfig = sessionLoginOptions.getUrlConfigOptions();
+        char[] token = sessionLoginOptions.getBase64EncodedToken();
+        SSCUserCredentialOptions uc = sessionLoginOptions.getUserCredentialOptions();
+        SSCSessionData sessionData = new SSCSessionData(urlConfig);
+        if ( token!=null ) {
+            sessionData.setPredefinedToken(token);
+        } else if ( sessionLoginOptions.hasUserCredentials() ) {
+            SSCTokenCreateRequest tokenCreateRequest = SSCTokenCreateRequest.builder()
+                .description("Auto-generated by fcli ssc session login command")
+                .terminalDate(uc.getExpiresAt())
+                .type("UnifiedLoginToken")
+                .build();
+            SSCTokenCreateResponse tokenCreateResponse = tokenHelper.createToken(urlConfig, uc, tokenCreateRequest);
+            sessionData.setCachedTokenResponse(tokenCreateResponse);
+        } else {
+            throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
+        }
+        return sessionData;
     }
 }

@@ -24,12 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.rest.cli.cmd;
 
-import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.ssc.rest.runner.SSCAuthenticatedUnirestRunner;
+import com.fortify.cli.ssc.rest.cli.mixin.SSCUnirestRunnerMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -37,15 +35,14 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess @FixInjection
 public abstract class AbstractSSCUnirestRunnerCommand implements Runnable {
-    @Getter @Inject private SSCAuthenticatedUnirestRunner unirestRunner;
-    @Getter @Mixin  private SessionNameMixin sessionNameMixin;
+    @Getter @Mixin private SSCUnirestRunnerMixin unirestRunnerMixin;
 
     @Override @SneakyThrows
     public final void run() {
         // TODO Do we want to do anything with the results, like formatting it based on output options?
         //      Or do we let the actual implementation handle this?
-        unirestRunner.runWithUnirest(sessionNameMixin.getSessionName(), this::runWithUnirest);
+        unirestRunnerMixin.run(this::run);
     }
     
-    protected abstract Void runWithUnirest(UnirestInstance unirest);
+    protected abstract Void run(UnirestInstance unirest);
 }

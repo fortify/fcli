@@ -62,7 +62,7 @@ public class SCDastScanOutputDownloadLogsCommand extends AbstractSCDastUnirestRu
         }
         
         @SneakyThrows
-        protected Void runWithUnirest(UnirestInstance unirest){
+        protected Void run(UnirestInstance unirest){
             File outputFile = unirest.get("/api/v2/scans/{scanId}/download-logs")
                 .routeParam("scanId", String.valueOf(scanLogsOptions.getScanId()))
                 .accept("application/json")

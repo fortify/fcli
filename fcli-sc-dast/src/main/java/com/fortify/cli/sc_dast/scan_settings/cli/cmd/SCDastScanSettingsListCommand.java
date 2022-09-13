@@ -81,7 +81,7 @@ public class SCDastScanSettingsListCommand extends AbstractSCDastUnirestRunnerCo
         }
         
         @SneakyThrows
-        protected Void runWithUnirest(UnirestInstance unirest) {
+        protected Void run(UnirestInstance unirest) {
             String urlPath = "/api/v2/application-version-scan-settings/scan-settings-summary-list?" ;
 
             if (scanSettingsOptions != null){

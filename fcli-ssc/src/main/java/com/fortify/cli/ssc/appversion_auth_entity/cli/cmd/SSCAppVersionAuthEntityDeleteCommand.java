@@ -50,7 +50,7 @@ public class SSCAppVersionAuthEntityDeleteCommand extends AbstractSSCUnirestRunn
     private boolean allowMultiMatch;
     
     @Override
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         String applicationVersionId = parentVersionHandler.getApplicationVersionId(unirest);
         outputMixin.write(
             SSCAppVersionDeleteAuthEntitiesHelper.generateUpdateRequest(unirest, applicationVersionId, authEntitySpecs, allowMultiMatch)

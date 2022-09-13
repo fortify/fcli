@@ -49,7 +49,7 @@ public class SSCReportTemplateDownloadCommand extends AbstractSSCUnirestRunnerCo
     private SSCReportTemplateIdMixin reportTemplateIdMixin;
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         SSCReportTemplateDefResponse reportTemplate = reportTemplateIdMixin.getReportTemplateDef(unirest);
         destination = destination != null ? destination : String.format("./%s", reportTemplate.data.fileName);
         SSCFileTransferHelper.download(

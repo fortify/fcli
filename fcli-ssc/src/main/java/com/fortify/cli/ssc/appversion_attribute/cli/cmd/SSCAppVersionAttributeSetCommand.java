@@ -52,7 +52,7 @@ public class SSCAppVersionAttributeSetCommand extends AbstractSSCUnirestRunnerCo
     @Mixin private OutputMixin outputMixin;
     
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         SSCAttributeDefinitionHelper attrDefHelper = new SSCAttributeDefinitionHelper(unirest);
         SSCAppVersionAttributeUpdateHelper attrUpdateHelper = new SSCAppVersionAttributeUpdateHelper(attrDefHelper, attributes);
         String applicationVersionId = parentVersionMixin.getApplicationVersionId(unirest);

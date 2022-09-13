@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.mixin;
 
-import com.fortify.cli.common.session.manager.api.IUserCredentials;
+import com.fortify.cli.common.rest.runner.config.IUserCredentials;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;

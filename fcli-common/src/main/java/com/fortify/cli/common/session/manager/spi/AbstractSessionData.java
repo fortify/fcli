@@ -28,40 +28,32 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fortify.cli.common.rest.runner.IUrlConfig;
-import com.fortify.cli.common.rest.runner.UrlConfig;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fortify.cli.common.rest.runner.config.IUrlConfig;
+import com.fortify.cli.common.rest.runner.config.UrlConfig;
 import com.fortify.cli.common.session.manager.api.ISessionData;
-import com.fortify.cli.common.session.manager.api.SessionSummary;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
+import lombok.Getter;
 
 @Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractSessionData implements ISessionData {
-    private UrlConfig urlConfig;
-    private Date created = new Date();
+    @JsonDeserialize(as = UrlConfig.class) private IUrlConfig urlConfig;
+    @Getter private Date createdDate = new Date();
     
-    public AbstractSessionData() {}
+    // No-arg constructor required for Jackson deserialization
+    protected AbstractSessionData() {}
     
     public AbstractSessionData(IUrlConfig urlConfig) {
-        this.urlConfig = UrlConfig.from(urlConfig);
-    }
-
-    @JsonIgnore public final SessionSummary getSummary(String authSessionName) {
-        return SessionSummary.builder()
-                .name(authSessionName)
-                .type(getSessionType())
-                .url(getUrlConfig().getUrl())
-                .created(getCreated())
-                .expires(getSessionExpiryDate())
-                .build();
+        this.urlConfig = urlConfig;
     }
     
     /**
      * Subclasses may override this method to provide an actual session expiration date/time if available 
      * @return Date/time when this session will expire
      */
-    @JsonIgnore protected Date getSessionExpiryDate() {
+    @JsonIgnore public Date getExpiryDate() {
         return null;
     }
 }

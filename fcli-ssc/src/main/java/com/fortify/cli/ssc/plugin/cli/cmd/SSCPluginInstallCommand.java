@@ -56,7 +56,7 @@ public class SSCPluginInstallCommand extends AbstractSSCUnirestRunnerCommand imp
     private boolean autoEnable = true;
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         JsonNode pluginBody = SSCFileTransferHelper.upload(
                 unirest,
                 SSCUrls.PLUGINS,

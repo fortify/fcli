@@ -59,7 +59,7 @@ public class SSCPluginUninstallCommand extends AbstractSSCUnirestRunnerCommand i
     }
     
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         int numericPluginId = deleteOptions.getNumericPluginId(unirest);
         // TODO Check whether plugin id exists
         disablePluginIfNecessary(unirest, numericPluginId);

@@ -9,7 +9,7 @@ import picocli.CommandLine.Command;
 public class SCSastScanStartCommand extends AbstractSCSastUnirestRunnerCommand {
 
     @Override
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         // TODO Auto-generated method stub
         return null;
     }

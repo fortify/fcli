@@ -19,7 +19,7 @@ public class SCSastScanCancelCommand extends AbstractSCSastUnirestRunnerCommand 
     private OutputMixin outputMixin;
     
     @Override
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         outputMixin.write(
                 unirest.delete("/rest/v2/job/{token}")
                     .routeParam("token", scanStatusOptions.getToken()));

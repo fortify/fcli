@@ -15,7 +15,7 @@ public class FoDApplicationListCommand extends AbstractFoDUnirestRunnerCommand i
     @CommandLine.Mixin private OutputMixin outputMixin;
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         final String uri = "/api/v3/applications?orderBy=applicationName"; 
         outputMixin.write(
                 unirest.get(uri)

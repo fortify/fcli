@@ -26,32 +26,30 @@ package com.fortify.cli.common.session.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
-import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
-import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
-import com.fortify.cli.common.session.manager.spi.ISessionLogoutHandler;
+import com.fortify.cli.common.session.manager.api.ISessionData;
+import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 import com.fortify.cli.common.util.FixInjection;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess @FixInjection
-public abstract class AbstractSessionLogoutCommand<C> implements Runnable, ISessionTypeProvider {
-    @Inject private SessionDataManager sessionDataManager;
-    @Inject private SessionSummaryManager sessionSummaryManager;
+public abstract class AbstractSessionLogoutCommand<D extends ISessionData> implements Runnable {
     @Getter @Mixin private SessionNameMixin sessionNameMixin;
     @Mixin private OutputMixin outputMixin;
 
     @Override
     public final void run() {
-        String sessionType = getSessionType();
-        String authSessionName = sessionNameMixin.getSessionName();
-        getLogoutHandler().logout(authSessionName, getLogoutConfig());
-        sessionSummaryManager.writeSessionSummaries(sessionType, outputMixin);
+        String sessionName = sessionNameMixin.getSessionName();
+        ISessionDataManager<D> sessionDataManager = getSessionDataManager();
+        if ( sessionDataManager.exists(sessionName) ) {
+            logout(sessionName, sessionDataManager.get(sessionName, true));
+            getSessionDataManager().destroy(sessionName);
+        }
+        getSessionDataManager().writeSessionSummaries(outputMixin);
     }
     
-    protected abstract C getLogoutConfig();
-    protected abstract ISessionLogoutHandler<C> getLogoutHandler();
+    protected abstract void logout(String sessionName, D sessionData);
+    protected abstract ISessionDataManager<D> getSessionDataManager();
 }

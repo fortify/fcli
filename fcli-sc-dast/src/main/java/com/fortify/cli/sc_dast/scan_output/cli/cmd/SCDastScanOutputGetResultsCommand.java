@@ -69,7 +69,7 @@ public class SCDastScanOutputGetResultsCommand extends AbstractSCDastUnirestRunn
         }
 
         @SneakyThrows
-        protected Void runWithUnirest(UnirestInstance unirest) {
+        protected Void run(UnirestInstance unirest) {
             SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
             if (scanResultsOptions == null) {
                 throw new CommandLine.ParameterException(spec.commandLine(),

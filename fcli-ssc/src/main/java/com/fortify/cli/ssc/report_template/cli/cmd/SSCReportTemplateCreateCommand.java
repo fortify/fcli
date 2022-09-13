@@ -70,7 +70,7 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerComm
     }
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         ObjectNode uploadResponse = SSCFileTransferHelper.upload(
                 unirest,
                 SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,

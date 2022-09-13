@@ -42,7 +42,7 @@ public final class SCSastRestCommand extends AbstractSCSastUnirestRunnerCommand 
     @Mixin private RestMixin restMixin;
     
     @Override
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         outputMixin.write(restMixin.prepareRequest(unirest));
         return null;
     }

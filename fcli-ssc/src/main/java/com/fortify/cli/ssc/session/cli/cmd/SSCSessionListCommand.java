@@ -25,14 +25,13 @@
 package com.fortify.cli.ssc.session.cli.cmd;
 
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionListCommand;
-import com.fortify.cli.ssc.util.SSCConstants;
+import com.fortify.cli.ssc.session.manager.SSCSessionDataManager;
 
+import jakarta.inject.Inject;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 
 @Command(name = "list", sortOptions = false, resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages")
 public class SSCSessionListCommand extends AbstractSessionListCommand {
-    @Override
-    public final String getSessionType() {
-        return SSCConstants.SESSION_TYPE;
-    }
+    @Getter @Inject private SSCSessionDataManager sessionDataManager;
 }

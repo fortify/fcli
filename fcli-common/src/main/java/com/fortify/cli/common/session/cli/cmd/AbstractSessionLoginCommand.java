@@ -26,31 +26,47 @@ package com.fortify.cli.common.session.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
-import com.fortify.cli.common.session.manager.api.ISessionTypeProvider;
-import com.fortify.cli.common.session.manager.api.SessionDataManager;
-import com.fortify.cli.common.session.manager.api.SessionSummaryManager;
-import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
+import com.fortify.cli.common.session.manager.api.ISessionData;
+import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 import com.fortify.cli.common.util.FixInjection;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess @FixInjection
-public abstract class AbstractSessionLoginCommand<C> implements Runnable, ISessionTypeProvider {
-    @Inject private SessionDataManager sessionDataManager;
-    @Inject private SessionSummaryManager sessionSummaryManager;
+public abstract class AbstractSessionLoginCommand<D extends ISessionData> implements Runnable {
     @Getter @Mixin private SessionNameMixin sessionNameMixin;
     @Mixin private OutputMixin outputMixin;
     
     @Override @SneakyThrows
     public final void run() {
-        getLoginHandler().login(sessionNameMixin.getSessionName(), getLoginConfig());
-        sessionSummaryManager.writeSessionSummaries(getSessionType(), outputMixin);
+        String sessionName = sessionNameMixin.getSessionName();
+        ISessionDataManager<D> sessionDataManager = getSessionDataManager();
+        logoutIfSessionExists(sessionName);
+        D authSessionData = login(sessionName);
+        sessionDataManager.save(sessionName, authSessionData);
+        testAuthenticatedConnection(sessionName);
+        sessionDataManager.writeSessionSummaries(outputMixin);
     }
-    
-    protected abstract C getLoginConfig();
-    protected abstract ISessionLoginHandler<C> getLoginHandler();
+
+    private void logoutIfSessionExists(String sessionName) {
+        ISessionDataManager<D> sessionDataManager = getSessionDataManager();
+        if ( sessionDataManager.exists(sessionName) ) {
+            try {
+                logoutBeforeNewLogin(sessionName, sessionDataManager.get(sessionName, false));
+            } catch ( Exception e ) {
+                // TODO Use proper logger, include exception details
+                System.err.println("WARN: Error logging out previous session");
+            } finally {
+                sessionDataManager.destroy(sessionName);
+            }
+        }
+    }
+
+    protected abstract void logoutBeforeNewLogin(String sessionName, D sessionData);
+    protected abstract D login(String sessionName);
+    protected void testAuthenticatedConnection(String sessionName) {}
+    protected abstract ISessionDataManager<D> getSessionDataManager();
 }

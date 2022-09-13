@@ -64,7 +64,7 @@ public final class SCDastScanPauseCommand extends AbstractSCDastUnirestRunnerCom
     }
 
     @SneakyThrows
-    protected Void runWithUnirest(UnirestInstance unirest) {
+    protected Void run(UnirestInstance unirest) {
         if(pauseScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
                     "Error: No parameter found. Provide the required scan id.");
