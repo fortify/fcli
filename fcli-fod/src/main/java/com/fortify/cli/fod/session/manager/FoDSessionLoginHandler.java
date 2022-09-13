@@ -27,7 +27,7 @@ package com.fortify.cli.fod.session.manager;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.fortify.cli.common.rest.runner.IConnectionConfig;
+import com.fortify.cli.common.rest.runner.IUrlConfig;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.AbstractSessionLoginHandler;
 import com.fortify.cli.fod.rest.runner.FoDUnauthenticatedUnirestRunner;
@@ -55,11 +55,11 @@ public class FoDSessionLoginHandler extends AbstractSessionLoginHandler<FoDSessi
     @Override
     public final ISessionData _login(String authSessionName, FoDSessionLoginConfig fodLoginConfig) {
         FoDSessionData sessionData = null;
-        IConnectionConfig connectionConfig = fodLoginConfig.getConnectionConfig();
+        IUrlConfig urlConfig = fodLoginConfig.getUrlConfig();
         if ( fodLoginConfig.hasClientCredentials() ) {
-            sessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateClientCredentialsAuthSessionData(unirest, fodLoginConfig));
+            sessionData = unauthenticatedUnirestRunner.runWithUnirest(urlConfig, unirest->generateClientCredentialsAuthSessionData(unirest, fodLoginConfig));
         } else if ( fodLoginConfig.hasUserCredentialsConfig() ) {
-            sessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateUserCredentialsAuthSessionData(unirest, fodLoginConfig));
+            sessionData = unauthenticatedUnirestRunner.runWithUnirest(urlConfig, unirest->generateUserCredentialsAuthSessionData(unirest, fodLoginConfig));
         } else {
             throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
         }

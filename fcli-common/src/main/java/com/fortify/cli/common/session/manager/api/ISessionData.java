@@ -24,11 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.manager.api;
 
-import com.fortify.cli.common.rest.runner.IConnectionConfigProvider;
+import com.fortify.cli.common.rest.runner.IUrlConfigProvider;
 
 /** 
  * Marker interface for auth session data
  * 
  * @author Ruud Senden
  */
-public interface ISessionData extends IConnectionConfigProvider, ISessionTypeProvider {}
+public interface ISessionData extends IUrlConfigProvider, ISessionTypeProvider {}

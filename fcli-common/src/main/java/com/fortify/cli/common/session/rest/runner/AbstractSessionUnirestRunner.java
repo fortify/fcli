@@ -27,7 +27,7 @@ package com.fortify.cli.common.session.rest.runner;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.rest.runner.ConnectionConfigUnirestRunner;
+import com.fortify.cli.common.rest.runner.UrlConfigUnirestRunner;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.api.SessionDataManager;
 
@@ -41,7 +41,7 @@ import lombok.Getter;
 //      multiple commands in a composite command or workflow.
 @ReflectiveAccess
 public abstract class AbstractSessionUnirestRunner<D extends ISessionData> {
-    @Getter @Inject private ConnectionConfigUnirestRunner unirestRunner;
+    @Getter @Inject private UrlConfigUnirestRunner unirestRunner;
     @Getter @Inject private ObjectMapper objectMapper;
     @Getter @Inject private SessionDataManager authSessionPersistenceHelper;
     
@@ -59,7 +59,7 @@ public abstract class AbstractSessionUnirestRunner<D extends ISessionData> {
         if ( authSessionData == null ) {
             throw new IllegalStateException("Login session data may not be null");
         }
-        return unirestRunner.runWithUnirest(authSessionData.getConnectionConfig(), unirest -> {
+        return unirestRunner.runWithUnirest(authSessionData.getUrlConfig(), unirest -> {
             configure(authSessionName, authSessionData, unirest);
             return runner.apply(unirest);
         });

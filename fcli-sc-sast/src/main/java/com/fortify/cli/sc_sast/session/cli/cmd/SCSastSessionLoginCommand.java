@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
+import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.cli.mixin.ConnectionOptions;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionLoginConfig;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionLoginHandler;
@@ -42,7 +42,7 @@ public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSas
     @Getter @Inject private SCSastSessionLoginHandler scSastLoginHandler;
     
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.sc-sast-connection-options.heading", order = 1)
-    @Getter private ConnectionOptions connectionOptions;
+    @Getter private UrlConfigOptions urlConfigOptions;
     
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.sc-sast-authentication-options.heading", order = 2)
     @Getter private SCSastAuthOptions authOptions;
@@ -60,7 +60,7 @@ public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSas
     @Override
     protected final SCSastSessionLoginConfig getLoginConfig() {
         SCSastSessionLoginConfig config = new SCSastSessionLoginConfig();
-        config.setConnectionConfig(getConnectionOptions());
+        config.setUrlConfig(getUrlConfigOptions());
         config.setClientAuthToken(authOptions.clientAuthToken);
         return config;
     }

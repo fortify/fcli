@@ -43,7 +43,7 @@ public class FoDSessionData extends AbstractSessionData {
     public FoDSessionData() {}
     
     public FoDSessionData(FoDSessionLoginConfig loginConfig, FoDTokenResponse tokenResponse) {
-        super(loginConfig.getConnectionConfig());
+        super(loginConfig.getUrlConfig());
         this.cachedTokenResponse = tokenResponse;
     }
     

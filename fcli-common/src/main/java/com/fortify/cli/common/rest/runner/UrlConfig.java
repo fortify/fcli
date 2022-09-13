@@ -22,43 +22,31 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.session.cli.mixin;
-
-import com.fortify.cli.common.rest.runner.IConnectionConfig;
+package com.fortify.cli.common.rest.runner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Option;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-/**
- * Configure connection options to a remote system
- * Usually this would be included in a {@link SessionLoginCommand} implementation
- * as follows:
- * <pre>
- * {@code
- *   {@literal @}ArgGroup(exclusive = false, multiplicity = "1", heading = "<System> Connection Options:%n")
- *   {@literal @}Getter private LoginConnectionOptions conn;
- * }
- * </pre>
- * @author Ruud Senden
- */
-@ReflectiveAccess
-public class ConnectionOptions implements IConnectionConfig {
-    @Option(names = {"--url"}, required = true, order=1)
-    @Getter private String url;
+@Data @ReflectiveAccess @NoArgsConstructor @AllArgsConstructor @Builder
+public class UrlConfig implements IUrlConfig {
+    private String  url;
+    private String  proxyHost;
+    private Integer proxyPort;
+    private String  proxyUser;
+    private char[]  proxyPassword;
+    private boolean insecureModeEnabled;
     
-    @Option(names = {"--proxy-host"}, required = false, order=2)
-    @Getter private String proxyHost;
-    
-    @Option(names = {"--proxy-port"}, required = false, order=3)
-    @Getter private Integer proxyPort;
-    
-    @Option(names = {"--proxy-user"}, required = false, order=4)
-    @Getter private String proxyUser;
-    
-    @Option(names = {"--proxy-password"}, required = false, interactive = true, echo = false, order=5)
-    @Getter private char[] proxyPassword;
-    
-    @Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
-    @Getter private boolean insecureModeEnabled;
+    public static final UrlConfig from(IUrlConfig other) {
+        return UrlConfig.builder()
+            .url(other.getUrl())
+            .proxyHost(other.getProxyHost())
+            .proxyPort(other.getProxyPort())
+            .proxyUser(other.getProxyUser())
+            .proxyPassword(other.getProxyPassword())
+            .insecureModeEnabled(other.isInsecureModeEnabled())
+            .build();
+    }
 }

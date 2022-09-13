@@ -45,7 +45,7 @@ public class SSCSessionData extends AbstractSessionData {
     public SSCSessionData() {}
     
     public SSCSessionData(SSCSessionLoginConfig config) {
-        super(config.getConnectionConfig());
+        super(config.getUrlConfig());
         this.predefinedToken = config.getToken();
     }
     

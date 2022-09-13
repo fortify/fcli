@@ -39,41 +39,41 @@ import lombok.Getter;
 //      which should be OK when running individual commands but less performant when running
 //      multiple commands in a composite command or workflow.
 @ReflectiveAccess @Singleton
-public class ConnectionConfigUnirestRunner {
+public class UrlConfigUnirestRunner {
     @Getter @Inject private BasicUnirestRunner basicUnirestRunner;
     @Getter @Inject private ObjectMapper objectMapper;
     
     /**
      * Run the given runner with a {@link UnirestInstance} that has been configured
-     * based on the given {@link IConnectionConfig}.
+     * based on the given {@link IUrlConfig}.
      * @param <R> Return type
-     * @param connectionConfig with which to configure the connection
+     * @param urlConfig with which to configure the connection
      * @param runner to perform the actual work with a configured {@link UnirestInstance}
      * @return Return value of runner; note that this return value shouldn't contain any reference to the 
      *         {@link UnirestInstance} as that might be closed once this call returns.
      */
-    public <R> R runWithUnirest(IConnectionConfig connectionConfig, Function<UnirestInstance, R> runner) {
-        if ( connectionConfig == null ) {
+    public <R> R runWithUnirest(IUrlConfig urlConfig, Function<UnirestInstance, R> runner) {
+        if ( urlConfig == null ) {
             throw new IllegalStateException("Connection configuration data may not be null");
         }
         return basicUnirestRunner.runWithUnirest(unirest -> {
-            _configure(connectionConfig, unirest);
+            _configure(urlConfig, unirest);
             return runner.apply(unirest);
         });
     }
 
     /**
      * Perform basic connection configuration.
-     * @param connectionConfig used to configure the {@link UnirestInstance}
+     * @param urlConfig used to configure the {@link UnirestInstance}
      * @param unirestInstance {@link UnirestInstance} to be configured
      */
-    private final void _configure(IConnectionConfig connectionConfig, UnirestInstance unirestInstance) {
+    private final void _configure(IUrlConfig urlConfig, UnirestInstance unirestInstance) {
         unirestInstance.config()
-            .defaultBaseUrl(normalizeUrl(connectionConfig.getUrl()))
-            .verifySsl(connectionConfig.isInsecureModeEnabled());
-        if ( StringUtils.isNotEmpty(connectionConfig.getProxyHost()) ) {
-            unirestInstance.config().proxy(connectionConfig.getProxyHost(), connectionConfig.getProxyPort(), connectionConfig.getProxyUser(), 
-                    connectionConfig.getProxyHost()==null ? null : String.valueOf(connectionConfig.getProxyPassword()));
+            .defaultBaseUrl(normalizeUrl(urlConfig.getUrl()))
+            .verifySsl(urlConfig.isInsecureModeEnabled());
+        if ( StringUtils.isNotEmpty(urlConfig.getProxyHost()) ) {
+            unirestInstance.config().proxy(urlConfig.getProxyHost(), urlConfig.getProxyPort(), urlConfig.getProxyUser(), 
+                    urlConfig.getProxyHost()==null ? null : String.valueOf(urlConfig.getProxyPassword()));
         }
     }
     

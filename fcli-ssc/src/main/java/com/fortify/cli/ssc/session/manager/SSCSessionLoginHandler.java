@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.session.manager;
 
-import com.fortify.cli.common.rest.runner.IConnectionConfig;
+import com.fortify.cli.common.rest.runner.IUrlConfig;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.AbstractSessionLoginHandler;
 import com.fortify.cli.ssc.rest.runner.SSCUnauthenticatedUnirestRunner;
@@ -52,11 +52,11 @@ public class SSCSessionLoginHandler extends AbstractSessionLoginHandler<SSCSessi
     @Override
     public final ISessionData _login(String authSessionName, SSCSessionLoginConfig sscLoginConfig) {
         SSCSessionData sessionData = null;
-        IConnectionConfig connectionConfig = sscLoginConfig.getConnectionConfig();
+        IUrlConfig urlConfig = sscLoginConfig.getUrlConfig();
         if ( sscLoginConfig.getToken()!=null ) {
             sessionData = new SSCSessionData(sscLoginConfig);
         } else if ( sscLoginConfig.hasUserCredentialsConfig() ) {
-            sessionData = unauthenticatedUnirestRunner.runWithUnirest(connectionConfig, unirest->generateSessionData(unirest, sscLoginConfig));
+            sessionData = unauthenticatedUnirestRunner.runWithUnirest(urlConfig, unirest->generateSessionData(unirest, sscLoginConfig));
         } else {
             throw new IllegalArgumentException("Either SSC token or user credentials must be provided");
         }

@@ -24,13 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.session.manager;
 
-import com.fortify.cli.common.rest.runner.IConnectionConfig;
-import com.fortify.cli.common.rest.runner.IConnectionConfigProvider;
+import com.fortify.cli.common.rest.runner.IUrlConfig;
+import com.fortify.cli.common.rest.runner.IUrlConfigProvider;
 
 import lombok.Data;
 
 @Data
-public class SCSastSessionLoginConfig implements IConnectionConfigProvider {
-    private IConnectionConfig connectionConfig;
+public class SCSastSessionLoginConfig implements IUrlConfigProvider {
+    private IUrlConfig urlConfig;
     private char[] clientAuthToken;
 }

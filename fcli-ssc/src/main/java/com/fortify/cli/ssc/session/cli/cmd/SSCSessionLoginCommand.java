@@ -27,8 +27,8 @@ package com.fortify.cli.ssc.session.cli.cmd;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
+import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.cli.mixin.ConnectionOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
 import com.fortify.cli.common.util.DateTimeHelper;
@@ -49,7 +49,7 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessi
     @Getter @Inject private SSCSessionLoginHandler sscLoginHandler;
     
     @ArgGroup(exclusive = false, multiplicity = "1", order = 1, headingKey = "fcli.ssc.session.login.connection.argGroup.heading")
-    @Getter private ConnectionOptions connectionOptions;
+    @Getter private UrlConfigOptions urlConfigOptions;
     
     @ArgGroup(exclusive = false, multiplicity = "1", order = 2, headingKey = "fcli.ssc.session.login.authentication.argGroup.heading")
     @Getter private SSCAuthOptions authOptions;
@@ -89,7 +89,7 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessi
     @Override
     protected final SSCSessionLoginConfig getLoginConfig() {
         SSCSessionLoginConfig config = new SSCSessionLoginConfig();
-        config.setConnectionConfig(getConnectionOptions());
+        config.setUrlConfig(getUrlConfigOptions());
         Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getUserOptions).ifPresent(config::setSscUserCredentialsConfig);
         Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getTokenOptions).map(TokenOptions::getToken).ifPresent(config::setToken);
         return config;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -24,29 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.runner;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data @ReflectiveAccess @NoArgsConstructor @AllArgsConstructor @Builder
-public class BasicConnectionConfig implements IConnectionConfig {
-    private String  url;
-    private String  proxyHost;
-    private Integer proxyPort;
-    private String  proxyUser;
-    private char[]  proxyPassword;
-    private boolean insecureModeEnabled;
-    
-    public static final BasicConnectionConfig from(IConnectionConfig other) {
-        return BasicConnectionConfig.builder()
-            .url(other.getUrl())
-            .proxyHost(other.getProxyHost())
-            .proxyPort(other.getProxyPort())
-            .proxyUser(other.getProxyUser())
-            .proxyPassword(other.getProxyPassword())
-            .insecureModeEnabled(other.isInsecureModeEnabled())
-            .build();
-    }
+public interface IUrlConfig {
+    String  getUrl();
+    String  getProxyHost();
+    Integer getProxyPort();
+    String  getProxyUser();
+    char[]  getProxyPassword();
+    boolean isInsecureModeEnabled();
 }

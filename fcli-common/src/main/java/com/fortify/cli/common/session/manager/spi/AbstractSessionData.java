@@ -28,9 +28,8 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fortify.cli.common.rest.runner.BasicConnectionConfig;
-import com.fortify.cli.common.rest.runner.IConnectionConfig;
-import com.fortify.cli.common.rest.runner.IConnectionConfigProvider;
+import com.fortify.cli.common.rest.runner.IUrlConfig;
+import com.fortify.cli.common.rest.runner.UrlConfig;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.api.SessionSummary;
 
@@ -39,34 +38,20 @@ import lombok.Data;
 
 @Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractSessionData implements ISessionData {
-    private BasicConnectionConfig basicConnectionConfig;
+    private UrlConfig urlConfig;
     private Date created = new Date();
     
     public AbstractSessionData() {}
     
-    public AbstractSessionData(IConnectionConfig connectionConfig) {
-        this.basicConnectionConfig = BasicConnectionConfig.from(connectionConfig);
-    }
-    
-    /** 
-     * Implement {@link IConnectionConfigProvider#getConnectionConfig()}. Note that for
-     * our {@link #basicConnectionConfig} field we want to have getters and setters that
-     * use the concrete {@link BasicConnectionConfig} type for proper Jackson 
-     * (de-)serialization. We want a separate getter that implements 
-     * {@link IConnectionConfigProvider#getConnectionConfig()}, which returns an instance
-     * of the {@link IConnectionConfig} interface.
-     * 
-     */
-    @JsonIgnore @Override 
-    public final IConnectionConfig getConnectionConfig() {
-        return getBasicConnectionConfig();
+    public AbstractSessionData(IUrlConfig urlConfig) {
+        this.urlConfig = UrlConfig.from(urlConfig);
     }
 
     @JsonIgnore public final SessionSummary getSummary(String authSessionName) {
         return SessionSummary.builder()
                 .name(authSessionName)
                 .type(getSessionType())
-                .url(getConnectionConfig().getUrl())
+                .url(getUrlConfig().getUrl())
                 .created(getCreated())
                 .expires(getSessionExpiryDate())
                 .build();

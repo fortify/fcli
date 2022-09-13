@@ -26,8 +26,8 @@ package com.fortify.cli.fod.session.cli.cmd;
 
 import java.util.Optional;
 
+import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.session.cli.mixin.ConnectionOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.common.session.manager.spi.ISessionLoginHandler;
 import com.fortify.cli.fod.session.manager.FoDSessionLoginConfig;
@@ -49,7 +49,7 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
     @Getter @Inject private FoDSessionLoginHandler fodLoginHandler;
     
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-connection-options.heading", order = 1)
-    @Getter private ConnectionOptions connectionOptions;
+    @Getter private UrlConfigOptions urlConfigOptions;
     
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-authentication-options.heading", order = 2)
     @Getter private FoDAuthOptions authOptions;
@@ -86,7 +86,7 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
     @Override
     protected final FoDSessionLoginConfig getLoginConfig() {
         FoDSessionLoginConfig config = new FoDSessionLoginConfig();
-        config.setConnectionConfig(getConnectionOptions());
+        config.setUrlConfig(getUrlConfigOptions());
         Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getUserCredentialOptions).ifPresent(config::setFodUserCredentialsConfig);
         Optional.ofNullable(authOptions).map(FoDAuthOptions::getCredentialOptions).map(FoDCredentialOptions::getClientCredentialOptions).ifPresent(config::setFodClientCredentialsConfig);
         return config;

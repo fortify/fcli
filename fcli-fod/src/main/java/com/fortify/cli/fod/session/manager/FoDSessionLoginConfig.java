@@ -24,15 +24,15 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.manager;
 
-import com.fortify.cli.common.rest.runner.IConnectionConfig;
-import com.fortify.cli.common.rest.runner.IConnectionConfigProvider;
+import com.fortify.cli.common.rest.runner.IUrlConfig;
+import com.fortify.cli.common.rest.runner.IUrlConfigProvider;
 
 import io.micronaut.core.util.StringUtils;
 import lombok.Data;
 
 @Data
-public class FoDSessionLoginConfig implements IConnectionConfigProvider {
-    private IConnectionConfig connectionConfig;
+public class FoDSessionLoginConfig implements IUrlConfigProvider {
+    private IUrlConfig urlConfig;
     private IFoDUserCredentialsConfig fodUserCredentialsConfig;
     private IFoDClientCredentialsConfig fodClientCredentialsConfig;
     private String[] scopes = {"api-tenant"};
