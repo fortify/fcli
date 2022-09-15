@@ -47,13 +47,13 @@ public final class UnirestUrlConfigConfigurer {
     
     /**
      * Configure the given {@link UnirestInstance} based on the {@link IUrlConfig} returned 
-     * by the given {@link IUrlConfigProvider} instance.
+     * by the given {@link IUrlConfigSupplier} instance.
      * @param unirestInstance {@link UnirestInstance} to be configured
-     * @param urlConfigProvider used to configure the {@link UnirestInstance}
+     * @param urlConfigSupplier used to configure the {@link UnirestInstance}
      */
-    public static final void configure(UnirestInstance unirestInstance, IUrlConfigProvider urlConfigProvider) {
-        if ( urlConfigProvider==null ) { throw new IllegalArgumentException("URL configuration provider may not be null"); }
-        configure(unirestInstance, urlConfigProvider.getUrlConfig());
+    public static final void configure(UnirestInstance unirestInstance, IUrlConfigSupplier urlConfigSupplier) {
+        if ( urlConfigSupplier==null ) { throw new IllegalArgumentException("URL configuration provider may not be null"); }
+        configure(unirestInstance, urlConfigSupplier.getUrlConfig());
     }
     
     private static final String normalizeUrl(String url) {

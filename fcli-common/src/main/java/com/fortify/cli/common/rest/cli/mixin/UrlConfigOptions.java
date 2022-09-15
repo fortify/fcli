@@ -61,4 +61,8 @@ public class UrlConfigOptions implements IUrlConfig {
     
     @Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
     @Getter private boolean insecureModeEnabled;
+    
+    public boolean hasUrlConfig() {
+        return url!=null;
+    }
 }

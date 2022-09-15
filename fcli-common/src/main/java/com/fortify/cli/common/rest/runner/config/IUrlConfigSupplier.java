@@ -24,6 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.runner.config;
 
-public interface IUrlConfigProvider {
+public interface IUrlConfigSupplier {
     public IUrlConfig getUrlConfig();
 }

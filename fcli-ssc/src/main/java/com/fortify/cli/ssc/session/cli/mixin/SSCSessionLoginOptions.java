@@ -1,17 +1,13 @@
 package com.fortify.cli.ssc.session.cli.mixin;
 
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.Optional;
-
-import org.apache.commons.codec.binary.Base64;
 
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.common.util.DateTimeHelper;
 import com.fortify.cli.ssc.session.manager.ISSCUserCredentialsConfig;
+import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 
 import io.micronaut.core.util.StringUtils;
 import lombok.Getter;
@@ -61,23 +57,10 @@ public class SSCSessionLoginOptions {
         return Optional.ofNullable(authOptions).map(SSCAuthOptions::getCredentialOptions).map(SSCCredentialOptions::getTokenOptions).orElse(null);
     }
     
-    public char[] getBase64EncodedToken() {
+    public char[] getRestToken() {
         SSCTokenCredentialOptions tokenCredentialOptions = getTokenCredentialOptions();
         return tokenCredentialOptions==null || tokenCredentialOptions.getToken()==null
-                ? null : toBase64Token(tokenCredentialOptions.getToken());
-    }
-    
-    private final char[] toBase64Token(char[] token) {
-        final byte[] tokenBytes = toByteArray(token);
-        final byte[] encodedToken = Base64.isBase64(tokenBytes) ? tokenBytes : Base64.encodeBase64(tokenBytes);
-        return StandardCharsets.UTF_8.decode(ByteBuffer.wrap(encodedToken)).array();
-    }
-    
-    private final byte[] toByteArray(char[] input) {
-        ByteBuffer bb = StandardCharsets.UTF_8.encode(CharBuffer.wrap(input));
-        byte[] result = new byte[bb.remaining()];
-        bb.get(result);
-        return result;
+                ? null : SSCTokenConverter.toRestToken(tokenCredentialOptions.getToken());
     }
 
     public final boolean hasUserCredentials() {

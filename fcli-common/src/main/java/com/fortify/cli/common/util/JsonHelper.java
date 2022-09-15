@@ -41,6 +41,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -133,6 +134,10 @@ public class JsonHelper {
     
     public static final ArrayNodeCollector arrayNodeCollector() {
         return new ArrayNodeCollector();
+    }
+    
+    public static final ArrayNode toArrayNode(String[] objects) {
+        return Stream.of(objects).map(TextNode::new).collect(arrayNodeCollector());
     }
     
     private static final class ArrayNodeCollector implements Collector<JsonNode, ArrayNode, ArrayNode> {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,18 +22,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.session.manager.api;
+package com.fortify.cli.ssc.token.helper;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
 
-import com.fortify.cli.common.rest.runner.config.IUrlConfigSupplier;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
-/** 
- * Interface describing session data
- * 
- * @author Ruud Senden
- */
-public interface ISessionData extends IUrlConfigSupplier {
-    Date getCreatedDate();
-    Date getExpiryDate();
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
+public final class SSCTokenUpdateRequest {
+    private String description;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") 
+    private OffsetDateTime terminalDate;
 }

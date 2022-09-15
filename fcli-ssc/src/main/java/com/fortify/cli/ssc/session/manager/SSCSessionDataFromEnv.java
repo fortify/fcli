@@ -5,6 +5,7 @@ import static com.fortify.cli.common.util.EnvHelper.*;
 import com.fortify.cli.common.rest.runner.config.IUserCredentials;
 import com.fortify.cli.common.rest.runner.config.UrlConfigFromEnv;
 import com.fortify.cli.ssc.token.helper.SSCTokenCreateRequest;
+import com.fortify.cli.ssc.token.helper.SSCTokenCreateResponse;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
 import lombok.Data;
@@ -31,7 +32,7 @@ public final class SSCSessionDataFromEnv extends SSCSessionData implements IUser
             SSCTokenCreateRequest tokenCreateRequest = SSCTokenCreateRequest.builder()
                 .description("Auto-generated for fcli transient session")
                 .type("UnifiedLoginToken").build();
-            setCachedTokenResponse(tokenHelper.createToken(getUrlConfig(), this, tokenCreateRequest));
+            setCachedTokenResponse(tokenHelper.createToken(getUrlConfig(), this, tokenCreateRequest, SSCTokenCreateResponse.class));
         }
     }
     

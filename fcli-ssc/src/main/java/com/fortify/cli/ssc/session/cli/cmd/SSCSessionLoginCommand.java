@@ -61,7 +61,7 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessi
     @Override
     protected SSCSessionData login(String sessionName) {
         IUrlConfig urlConfig = sessionLoginOptions.getUrlConfigOptions();
-        char[] token = sessionLoginOptions.getBase64EncodedToken();
+        char[] token = sessionLoginOptions.getRestToken();
         SSCUserCredentialOptions uc = sessionLoginOptions.getUserCredentialOptions();
         SSCSessionData sessionData = new SSCSessionData(urlConfig);
         if ( token!=null ) {
@@ -72,7 +72,7 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessi
                 .terminalDate(uc.getExpiresAt())
                 .type("UnifiedLoginToken")
                 .build();
-            SSCTokenCreateResponse tokenCreateResponse = tokenHelper.createToken(urlConfig, uc, tokenCreateRequest);
+            SSCTokenCreateResponse tokenCreateResponse = tokenHelper.createToken(urlConfig, uc, tokenCreateRequest, SSCTokenCreateResponse.class);
             sessionData.setCachedTokenResponse(tokenCreateResponse);
         } else {
             throw new IllegalArgumentException("Either SSC token or user credentials must be provided");

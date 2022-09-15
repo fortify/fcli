@@ -24,11 +24,15 @@ public class SSCFilterMixin {
     }
     
     public GetRequest addFilterParams(GetRequest getRequest) {
-        String qParamValue = optionAnnotationHelper.optionsWithAnnotationStream(SSCFilterQParam.class)
+        String qParamValue = getQParamValue();
+        return getRequest.queryString("q", qParamValue);
+    }
+
+    public String getQParamValue() {
+        return optionAnnotationHelper.optionsWithAnnotationStream(SSCFilterQParam.class)
             .filter(this::hasOptionValue)
             .map(this::getQParamValue)
             .collect(Collectors.joining("+and+"));
-        return getRequest.queryString("q", qParamValue);
     }
     
     private final <T> T getOptionValue(OptionSpec optionSpec) {
