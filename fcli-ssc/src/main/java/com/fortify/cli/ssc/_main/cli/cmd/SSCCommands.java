@@ -11,6 +11,7 @@ import com.fortify.cli.ssc.appversion_auth_entity.cli.cmd.SSCAppVersionAuthEntit
 import com.fortify.cli.ssc.attribute_definition.cli.cmd.SSCAttributeDefinitionCommands;
 import com.fortify.cli.ssc.auth_entity.cli.cmd.SSCAuthEntityCommands;
 import com.fortify.cli.ssc.event.cli.cmd.SSCEventCommands;
+import com.fortify.cli.ssc.issue_template.cli.cmd.SSCIssueTemplateCommands;
 import com.fortify.cli.ssc.plugin.cli.cmd.SSCPluginCommands;
 import com.fortify.cli.ssc.report_template.cli.cmd.SSCReportTemplateCommands;
 import com.fortify.cli.ssc.rest.cli.cmd.SSCRestCommand;
@@ -37,6 +38,7 @@ import picocli.CommandLine.Command;
                 SSCAttributeDefinitionCommands.class,
                 SSCAuthEntityCommands.class,
                 SSCEventCommands.class,
+                SSCIssueTemplateCommands.class,
                 SSCPluginCommands.class,
                 SSCReportTemplateCommands.class,
                 SSCTokenCommands.class,

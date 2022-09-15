@@ -36,6 +36,7 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -138,6 +139,19 @@ public class JsonHelper {
     
     public static final ArrayNode toArrayNode(String[] objects) {
         return Stream.of(objects).map(TextNode::new).collect(arrayNodeCollector());
+    }
+    
+    public static <T> T treeToValue(JsonNode node, Class<T> returnType) {
+        if ( node==null ) { return null; }
+        try {
+            T result = objectMapper.treeToValue(node, returnType);
+            if ( result instanceof IJsonNodeHolder ) {
+                ((IJsonNodeHolder)result).setJsonNode(node);
+            }
+            return result;
+        } catch (JsonProcessingException jpe ) {
+            throw new RuntimeException("Error processing JSON data", jpe);
+        }
     }
     
     private static final class ArrayNodeCollector implements Collector<JsonNode, ArrayNode, ArrayNode> {
