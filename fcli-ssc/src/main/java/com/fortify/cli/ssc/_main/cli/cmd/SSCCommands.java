@@ -16,6 +16,7 @@ import com.fortify.cli.ssc.report_template.cli.cmd.SSCReportTemplateCommands;
 import com.fortify.cli.ssc.rest.cli.cmd.SSCRestCommand;
 import com.fortify.cli.ssc.session.cli.cmd.SSCSessionCommands;
 import com.fortify.cli.ssc.token.cli.cmd.SSCTokenCommands;
+import com.fortify.cli.ssc.token_definition.cli.cmd.SSCTokenDefinitionCommands;
 
 import picocli.CommandLine.Command;
 
@@ -38,7 +39,8 @@ import picocli.CommandLine.Command;
                 SSCEventCommands.class,
                 SSCPluginCommands.class,
                 SSCReportTemplateCommands.class,
-                SSCTokenCommands.class
+                SSCTokenCommands.class,
+                SSCTokenDefinitionCommands.class
         }
 )
 public class SSCCommands {
