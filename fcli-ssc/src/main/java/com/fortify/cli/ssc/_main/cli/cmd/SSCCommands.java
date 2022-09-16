@@ -16,6 +16,7 @@ import com.fortify.cli.ssc.job.cli.cmd.SSCJobCommands;
 import com.fortify.cli.ssc.plugin.cli.cmd.SSCPluginCommands;
 import com.fortify.cli.ssc.report_template.cli.cmd.SSCReportTemplateCommands;
 import com.fortify.cli.ssc.rest.cli.cmd.SSCRestCommand;
+import com.fortify.cli.ssc.seed_bundle.cli.cmd.SSCSeedBundleCommands;
 import com.fortify.cli.ssc.session.cli.cmd.SSCSessionCommands;
 import com.fortify.cli.ssc.token.cli.cmd.SSCTokenCommands;
 import com.fortify.cli.ssc.token_definition.cli.cmd.SSCTokenDefinitionCommands;
@@ -43,6 +44,7 @@ import picocli.CommandLine.Command;
                 SSCJobCommands.class,
                 SSCPluginCommands.class,
                 SSCReportTemplateCommands.class,
+                SSCSeedBundleCommands.class,
                 SSCTokenCommands.class,
                 SSCTokenDefinitionCommands.class
         }
