@@ -4,9 +4,9 @@ import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.runner.UnirestRunner;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
-import com.fortify.cli.common.util.JsonHelper;
 import com.fortify.cli.ssc.rest.cli.mixin.SSCUnirestRunnerMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

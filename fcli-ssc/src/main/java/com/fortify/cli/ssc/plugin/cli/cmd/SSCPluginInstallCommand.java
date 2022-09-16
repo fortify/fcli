@@ -27,10 +27,10 @@ package com.fortify.cli.ssc.plugin.cli.cmd;
 import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.common.util.JsonHelper;
 import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;

@@ -31,7 +31,7 @@ import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fortify.cli.common.util.JsonHelper;
+import com.fortify.cli.common.json.JsonHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;

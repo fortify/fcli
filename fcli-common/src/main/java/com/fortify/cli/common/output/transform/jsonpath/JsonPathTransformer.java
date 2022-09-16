@@ -25,8 +25,8 @@
 package com.fortify.cli.common.output.transform.jsonpath;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IJsonNodeTransformer;
-import com.fortify.cli.common.util.JsonHelper;
 
 public class JsonPathTransformer implements IJsonNodeTransformer {
     private final String jsonPathExpression;

@@ -1,4 +1,4 @@
-package com.fortify.cli.common.util;
+package com.fortify.cli.common.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

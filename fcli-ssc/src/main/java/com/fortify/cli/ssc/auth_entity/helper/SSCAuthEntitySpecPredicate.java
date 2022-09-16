@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.util.JsonHelper;
+import com.fortify.cli.common.json.JsonHelper;
 
 import lombok.RequiredArgsConstructor;
 

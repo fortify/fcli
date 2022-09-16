@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.util.JsonHelper;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
 
 import kong.unirest.UnirestInstance;

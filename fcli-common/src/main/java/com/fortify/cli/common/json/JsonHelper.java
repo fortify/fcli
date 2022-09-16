@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.util;
+package com.fortify.cli.common.json;
 
 import java.util.EnumSet;
 import java.util.Iterator;

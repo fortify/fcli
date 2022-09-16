@@ -1,6 +1,6 @@
 package com.fortify.cli.ssc.issue_template.helper;
 
-import com.fortify.cli.common.util.JsonNodeHolder;
+import com.fortify.cli.common.json.JsonNodeHolder;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.appversion_auth_entity.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fortify.cli.common.util.JsonHelper;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitySpecPredicate;
 import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitySpecPredicate.MatchMode;
 import com.fortify.cli.ssc.rest.SSCUrls;
