@@ -12,6 +12,7 @@ import com.fortify.cli.ssc.attribute_definition.cli.cmd.SSCAttributeDefinitionCo
 import com.fortify.cli.ssc.auth_entity.cli.cmd.SSCAuthEntityCommands;
 import com.fortify.cli.ssc.event.cli.cmd.SSCEventCommands;
 import com.fortify.cli.ssc.issue_template.cli.cmd.SSCIssueTemplateCommands;
+import com.fortify.cli.ssc.job.cli.cmd.SSCJobCommands;
 import com.fortify.cli.ssc.plugin.cli.cmd.SSCPluginCommands;
 import com.fortify.cli.ssc.report_template.cli.cmd.SSCReportTemplateCommands;
 import com.fortify.cli.ssc.rest.cli.cmd.SSCRestCommand;
@@ -39,6 +40,7 @@ import picocli.CommandLine.Command;
                 SSCAuthEntityCommands.class,
                 SSCEventCommands.class,
                 SSCIssueTemplateCommands.class,
+                SSCJobCommands.class,
                 SSCPluginCommands.class,
                 SSCReportTemplateCommands.class,
                 SSCTokenCommands.class,
