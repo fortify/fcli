@@ -40,7 +40,7 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAppVersionAuthEntityListCommand extends AbstractSSCTableOutputCommand {
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentVersionHandler;
+    @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentResolver;
     
     @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
     private Integer id;
@@ -64,7 +64,7 @@ public class SSCAppVersionAuthEntityListCommand extends AbstractSSCTableOutputCo
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(parentVersionHandler.getApplicationVersionId(unirest)))
+        return unirest.get(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(parentResolver.getAppVersionId(unirest)))
                 .queryString("limit","-1");
     }
 }

@@ -44,14 +44,14 @@ import picocli.CommandLine.Parameters;
 public class SSCAppVersionAuthEntityDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @Parameters(index = "0..*", arity = "1..*")
     private String[] authEntitySpecs;
-    @Mixin private SSCAppVersionResolverMixin.From parentVersionHandler;
+    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
     @Mixin private OutputMixin outputMixin;
     @Option(names="--allowMultiMatch", defaultValue = "false")
     private boolean allowMultiMatch;
     
     @Override
     protected Void run(UnirestInstance unirest) {
-        String applicationVersionId = parentVersionHandler.getApplicationVersionId(unirest);
+        String applicationVersionId = parentResolver.getAppVersionId(unirest);
         outputMixin.write(
             SSCAppVersionDeleteAuthEntitiesHelper.generateUpdateRequest(unirest, applicationVersionId, authEntitySpecs, allowMultiMatch)
         );

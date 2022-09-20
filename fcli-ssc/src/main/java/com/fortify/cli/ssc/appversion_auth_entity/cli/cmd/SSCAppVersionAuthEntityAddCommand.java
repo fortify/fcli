@@ -44,14 +44,14 @@ import picocli.CommandLine.Parameters;
 public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @Parameters(index = "0..*", arity = "1..*")
     private String[] authEntitySpecs;
-    @Mixin private SSCAppVersionResolverMixin.For parentVersionHandler;
+    @Mixin private SSCAppVersionResolverMixin.For parentResolver;
     @Mixin private OutputMixin outputMixin;
     @Option(names="--allowMultiMatch", defaultValue = "false")
     private boolean allowMultiMatch;
     
     @Override
     protected Void run(UnirestInstance unirest) {
-        String applicationVersionId = parentVersionHandler.getApplicationVersionId(unirest);
+        String applicationVersionId = parentResolver.getAppVersionId(unirest);
         outputMixin.write(
             SSCAppVersionAddAuthEntitiesHelper.generateUpdateRequest(unirest, applicationVersionId, authEntitySpecs, allowMultiMatch)
         );

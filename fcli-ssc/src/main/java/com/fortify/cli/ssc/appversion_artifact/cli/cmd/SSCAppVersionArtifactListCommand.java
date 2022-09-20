@@ -39,13 +39,13 @@ import picocli.CommandLine.Command;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAppVersionArtifactListCommand extends AbstractSSCTableOutputCommand {
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentVersionHandler;
+    @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentResolver;
     
     // TODO Add filtering/default column options, use default implementation for getOutputOptionsWriterConfig
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentVersionHandler.getApplicationVersionId(unirest)))
+        return unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentResolver.getAppVersionId(unirest)))
                 .queryString("embed","scans");
     }
     

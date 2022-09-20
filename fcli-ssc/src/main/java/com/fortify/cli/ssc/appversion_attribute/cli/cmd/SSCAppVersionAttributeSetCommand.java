@@ -48,14 +48,14 @@ import picocli.CommandLine.Parameters;
 public class SSCAppVersionAttributeSetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @Parameters(index = "0..*", arity = "1..*", paramLabel = "[CATEGORY:]ATTR=VALUE[,VALUE...]")
     private Map<String,String> attributes;
-    @Mixin private SSCAppVersionResolverMixin.For parentVersionMixin;
+    @Mixin private SSCAppVersionResolverMixin.For parentResolver;
     @Mixin private OutputMixin outputMixin;
     
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
         SSCAttributeDefinitionHelper attrDefHelper = new SSCAttributeDefinitionHelper(unirest);
         SSCAppVersionAttributeUpdateHelper attrUpdateHelper = new SSCAppVersionAttributeUpdateHelper(attrDefHelper, attributes);
-        String applicationVersionId = parentVersionMixin.getApplicationVersionId(unirest);
+        String applicationVersionId = parentResolver.getAppVersionId(unirest);
         
         outputMixin.write(
             new SSCAppVersionAttributeListHelper()

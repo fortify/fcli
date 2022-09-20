@@ -24,38 +24,56 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
-import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
-import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
+import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "download")
 public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter parentVersionHandler;
-    @CommandLine.Option(names = {"-f", "--dest"}, description = "The output location for the file download.")
-    String destination;
+    @Parameters(arity = "0..1") private String destination;
+    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
+    
+    @ArgGroup(exclusive=true) private SSCAppVersionArtifactDownloadOptions options = new SSCAppVersionArtifactDownloadOptions();
+    
+    private static final class SSCAppVersionArtifactDownloadOptions {
+        // When downloading an artifact by id, the --no-include-sources option is not applicable, and vice versa 
+        @Option(names = "--no-include-sources", negatable = true) private boolean includeSources = true;
+        @Option(names="--id") private String artifactId;
+    }
 
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
-        SSCAppVersionDescriptor av = parentVersionHandler.getApplicationAndVersion(unirest);
-        destination = destination != null ? destination : String.format("./scan_%s.fpr", av.getApplicationVersionId());
-        SSCFileTransferHelper.download(
-                unirest,
-                SSCUrls.DOWNLOAD_CURRENT_FPR(av.getApplicationVersionId(), false),
-                destination,
-                ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN
-        );
+        SSCAppVersionDescriptor av = parentResolver.getAppVersion(unirest);
+        destination = destination != null ? destination : String.format("./%s_%s.fpr", av.getApplicationName(), av.getVersionName());
+        if ( options.artifactId==null || options.artifactId.isBlank() ) {
+            SSCFileTransferHelper.download(
+                    unirest,
+                    SSCUrls.DOWNLOAD_CURRENT_FPR(av.getVersionId(), options.includeSources),
+                    destination,
+                    ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
+        } else {
+            SSCFileTransferHelper.download(
+                    unirest,
+                    SSCUrls.DOWNLOAD_ARTIFACT(options.artifactId),
+                    destination,
+                    ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
+        }
 
         return null;
     }

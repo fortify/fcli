@@ -27,15 +27,17 @@ package com.fortify.cli.ssc.appversion.cli.mixin;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fortify.cli.common.json.JsonNodeHolder;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Data
-public class SSCAppVersionDescriptor {
+@Data @EqualsAndHashCode(callSuper=true)
+public class SSCAppVersionDescriptor extends JsonNodeHolder {
     private String applicationId;
     private String applicationName;
-    @JsonProperty("id") private String applicationVersionId;
-    @JsonProperty("name") private String applicationVersionName;
+    @JsonProperty("id") private String versionId;
+    @JsonProperty("name") private String versionName;
     
     @JsonProperty("project")
     private void unpackProject(Map<String, String> project) {

@@ -52,7 +52,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = "upload")
 public class SSCAppVersionArtifactUploadCommand extends AbstractSSCTableOutputCommand {
     private static final long SLEEP_TIME = 1000L;
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.To parentVersionHandler;
+    @CommandLine.Mixin private SSCAppVersionResolverMixin.To parentResolver;
     @Parameters(arity="1")
     private String filePath;
 
@@ -70,8 +70,8 @@ public class SSCAppVersionArtifactUploadCommand extends AbstractSSCTableOutputCo
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {
-        SSCAppVersionDescriptor av = parentVersionHandler.getApplicationAndVersion(unirest);
-        HttpRequestWithBody request = unirest.post(SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getApplicationVersionId()));
+        SSCAppVersionDescriptor av = parentResolver.getAppVersion(unirest);
+        HttpRequestWithBody request = unirest.post(SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()));
         if ( engineType!=null && !engineType.isBlank() ) {
             request.queryString("engineType", engineType);
         }

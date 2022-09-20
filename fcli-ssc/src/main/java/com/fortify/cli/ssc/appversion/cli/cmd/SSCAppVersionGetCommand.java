@@ -41,11 +41,11 @@ import picocli.CommandLine.Command;
 @Command(name = "get")
 public class SSCAppVersionGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @CommandLine.Mixin private OutputMixin outputMixin;
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter versionIdOrName;
+    @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter parentResolver;
 
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
-        String avID = versionIdOrName.getApplicationVersionId(unirest);
+        String avID = parentResolver.getAppVersionId(unirest);
         outputMixin.write(unirest.get(SSCUrls.PROJECT_VERSION(avID)));
         return null;
     }

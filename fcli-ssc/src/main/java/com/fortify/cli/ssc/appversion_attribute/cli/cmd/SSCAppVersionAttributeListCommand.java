@@ -40,7 +40,7 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAppVersionAttributeListCommand extends AbstractSSCTableOutputCommand {
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentVersionHandler;
+    @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentResolver;
     
     @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
     private String id;
@@ -61,6 +61,6 @@ public class SSCAppVersionAttributeListCommand extends AbstractSSCTableOutputCom
     
     protected JsonNode generateOutput(UnirestInstance unirest) {
         return new SSCAppVersionAttributeListHelper()
-                .execute(unirest, parentVersionHandler.getApplicationVersionId(unirest));
+                .execute(unirest, parentResolver.getAppVersionId(unirest));
     }
 }

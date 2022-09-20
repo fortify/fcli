@@ -51,7 +51,7 @@ public class SSCAppVersionResolverMixin {
         private String delimiter;
 
         @SneakyThrows
-        public SSCAppVersionDescriptor getApplicationAndVersion(UnirestInstance unirestInstance){
+        public SSCAppVersionDescriptor getAppVersion(UnirestInstance unirestInstance){
             String versionNameOrId = getVersionNameOrId();
             
             GetRequest request = unirestInstance.get("/api/v1/projectVersions?limit=2&fields=id,name,project");
@@ -72,10 +72,11 @@ public class SSCAppVersionResolverMixin {
             } else if ( versions.size()>1 ) {
                 throw new ValidationException("Multiple application versions found for application version name or id: "+versionNameOrId);
             }
-            return JsonHelper.getObjectMapper().treeToValue(versions.get(0), SSCAppVersionDescriptor.class);
+            return JsonHelper.treeToValue(versions.get(0), SSCAppVersionDescriptor.class);
         }
-        public String getApplicationVersionId(UnirestInstance unirestInstance) {
-            return getApplicationAndVersion(unirestInstance).getApplicationVersionId();
+        
+        public String getAppVersionId(UnirestInstance unirestInstance) {
+            return getAppVersion(unirestInstance).getVersionId();
         }
     }
     
