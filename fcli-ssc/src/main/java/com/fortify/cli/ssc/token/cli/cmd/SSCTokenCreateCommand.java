@@ -33,7 +33,8 @@ import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentials;
-import com.fortify.cli.common.util.DateTimeHelper;
+import com.fortify.cli.common.util.DateTimePeriodHelper;
+import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 import com.fortify.cli.ssc.token.helper.SSCTokenCreateRequest;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
@@ -47,6 +48,7 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "create")
 public class SSCTokenCreateCommand extends AbstractSSCTokenCommand implements IOutputConfigSupplier {
+    private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
     @Mixin private OutputMixin outputMixin;
     @Option(names="--type", defaultValue="CIToken", required=true) private String type;
     @Option(names="--expire-in") private String expireIn;
@@ -63,7 +65,7 @@ public class SSCTokenCreateCommand extends AbstractSSCTokenCommand implements IO
     }
     
     private OffsetDateTime getExpiresAt() {
-        return expireIn==null ? null : DateTimeHelper.getCurrentOffsetDateTimePlusPeriod(expireIn);
+        return expireIn==null ? null : PERIOD_HELPER.getCurrentOffsetDateTimePlusPeriod(expireIn);
     }
     
     private JsonNode transformRecord(JsonNode recordJsonNode) {

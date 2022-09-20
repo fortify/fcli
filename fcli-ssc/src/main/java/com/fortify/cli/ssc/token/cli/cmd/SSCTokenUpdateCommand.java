@@ -31,7 +31,8 @@ import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentials;
-import com.fortify.cli.common.util.DateTimeHelper;
+import com.fortify.cli.common.util.DateTimePeriodHelper;
+import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 import com.fortify.cli.ssc.token.helper.SSCTokenUpdateRequest;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
@@ -45,6 +46,7 @@ import picocli.CommandLine.Parameters;
 @ReflectiveAccess
 @Command(name = "update")
 public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand implements IOutputConfigSupplier {
+    private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
     @Mixin private OutputMixin outputMixin;
     @Parameters(arity="1") private String tokenId;
     @Option(names="--expire-in") private String expireIn;
@@ -60,7 +62,7 @@ public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand implements IO
     }
     
     private OffsetDateTime getExpiresAt() {
-        return expireIn==null ? null : DateTimeHelper.getCurrentOffsetDateTimePlusPeriod(expireIn);
+        return expireIn==null ? null : PERIOD_HELPER.getCurrentOffsetDateTimePlusPeriod(expireIn);
     }
 
     @Override

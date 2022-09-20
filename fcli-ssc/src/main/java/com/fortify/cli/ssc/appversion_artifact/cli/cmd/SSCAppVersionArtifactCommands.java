@@ -9,6 +9,7 @@ import picocli.CommandLine.Command;
             SSCAppVersionArtifactDeleteCommand.class,
             SSCAppVersionArtifactDownloadCommand.class,
             SSCAppVersionArtifactListCommand.class,
+            SSCAppVersionArtifactPurgeCommand.class,
             SSCAppVersionArtifactUploadCommand.class
         }
 )

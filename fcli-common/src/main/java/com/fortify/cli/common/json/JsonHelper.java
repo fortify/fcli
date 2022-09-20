@@ -137,7 +137,7 @@ public class JsonHelper {
         return new ArrayNodeCollector();
     }
     
-    public static final ArrayNode toArrayNode(String[] objects) {
+    public static final ArrayNode toArrayNode(String... objects) {
         return Stream.of(objects).map(TextNode::new).collect(arrayNodeCollector());
     }
     

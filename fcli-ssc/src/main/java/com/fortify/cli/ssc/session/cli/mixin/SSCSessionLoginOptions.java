@@ -5,7 +5,8 @@ import java.util.Optional;
 
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
-import com.fortify.cli.common.util.DateTimeHelper;
+import com.fortify.cli.common.util.DateTimePeriodHelper;
+import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.ssc.session.manager.ISSCUserCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 
@@ -16,6 +17,8 @@ import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
 public class SSCSessionLoginOptions {
+    private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
+    
     @ArgGroup(exclusive = false, multiplicity = "1", order = 1, headingKey = "fcli.ssc.session.login.connection.argGroup.heading")
     @Getter private UrlConfigOptions urlConfigOptions;
     
@@ -40,7 +43,7 @@ public class SSCSessionLoginOptions {
         
         @Override
         public OffsetDateTime getExpiresAt() {
-            return DateTimeHelper.getCurrentOffsetDateTimePlusPeriod(expireIn);
+            return PERIOD_HELPER.getCurrentOffsetDateTimePlusPeriod(expireIn);
         }
     }
     

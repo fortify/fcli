@@ -1,16 +1,23 @@
 package com.fortify.cli.ssc.appversion_artifact.helper;
 
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 public final class SSCAppVersionArtifactHelper {
     public static final int DEFAULT_POLL_INTERVAL_SECONDS = 1;
@@ -19,6 +26,15 @@ public final class SSCAppVersionArtifactHelper {
     
     public static final JsonNode delete(UnirestInstance unirest, String artifactId) {
         return unirest.delete(SSCUrls.ARTIFACT(artifactId)).asObject(JsonNode.class).getBody();
+    }
+    
+    public static final JsonNode purge(UnirestInstance unirest, String artifactId) {
+        return unirest.delete(SSCUrls.ARTIFACT(artifactId)).asObject(JsonNode.class).getBody();
+    }
+    
+    public static final JsonNode purge(UnirestInstance unirest, SSCAppVersionArtifactPurgeByDateRequest purgeRequest) {
+        return unirest.post(SSCUrls.PROJECT_VERSIONS_ACTION_PURGE)
+                .body(purgeRequest).asObject(JsonNode.class).getBody();
     }
     
     public static final String waitForNonProcessingState(UnirestInstance unirest, String artifactId, int pollIntervalSeconds, int timeOutSeconds) {
@@ -65,5 +81,12 @@ public final class SSCAppVersionArtifactHelper {
                 "$.data.status",
                 String.class
         );
+    }
+    
+    @Data @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
+    public static final class SSCAppVersionArtifactPurgeByDateRequest {
+        private String[] projectVersionIds;
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") 
+        private OffsetDateTime purgeBefore;
     }
 }
