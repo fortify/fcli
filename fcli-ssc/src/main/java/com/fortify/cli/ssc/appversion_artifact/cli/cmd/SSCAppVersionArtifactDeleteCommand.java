@@ -24,34 +24,33 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
+import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
-import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCAppVersionArtifactListCommand extends AbstractSSCTableOutputCommand {
-    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
-    
-    // TODO Add filtering/default column options, use default implementation for getOutputOptionsWriterConfig
+@Command(name = "delete")
+public class SSCAppVersionArtifactDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+    @Mixin private OutputMixin outputMixin;
+    @Option(names = {"--id"}, description = "Id of the artifact to be deleted")
+    private String artifactId;
     
     @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentResolver.getAppVersionId(unirest)))
-                .queryString("embed","scans");
+    protected Void run(UnirestInstance unirest) {
+        outputMixin.write(SSCAppVersionArtifactHelper.delete(unirest, artifactId));
+        return null;
     }
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
-                .defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+        return OutputConfig.table();
     }
 }

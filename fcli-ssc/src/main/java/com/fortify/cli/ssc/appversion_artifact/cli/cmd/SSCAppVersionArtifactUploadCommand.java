@@ -25,17 +25,13 @@
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
@@ -44,29 +40,37 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "upload")
 public class SSCAppVersionArtifactUploadCommand extends AbstractSSCTableOutputCommand {
-    private static final long SLEEP_TIME = 1000L;
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.To parentResolver;
-    @Parameters(arity="1")
-    private String filePath;
+    private static final int POLL_INTERVAL_SECONDS = SSCAppVersionArtifactHelper.DEFAULT_POLL_INTERVAL_SECONDS;
+    
+    @Mixin private SSCAppVersionResolverMixin.To parentResolver;
+    @Parameters(arity="1") private String filePath;
+    @ArgGroup(exclusive=false) private SSCAppVersionArtifactAutoApproveOptions autoApproveOptions = new SSCAppVersionArtifactAutoApproveOptions();
 
-    @CommandLine.Option(names = {"-a", "--auto-approve"}, defaultValue = "false", description = "Auto approves any uploaded artifact that needs approval.")
-    private Boolean autoApprove;
-
-    @CommandLine.Option(names = {"-w", "--wait"}, defaultValue = "false", description = "Will wait for the artifact to finish processing and auto approve if needed.")
+    @Option(names = {"-w", "--wait"}, defaultValue = "false", description = "Will wait for the artifact to finish processing and auto approve if needed.")
     private Boolean wait;
     
-    @CommandLine.Option(names = {"-e", "--engine-type"}, description = "Engine type for the artifact being uploaded")
+    @Option(names = {"-e", "--engine-type"}, description = "Engine type for the artifact being uploaded")
     private String engineType;
 
-    // Timeout in seconds
-    private int processingTimeOutSeconds = 300;
+    @Option(names = {"-t", "--time-out"}, defaultValue="300")
+    private int processingTimeOutSeconds;
+    
+    private static final class SSCAppVersionArtifactAutoApproveOptions {
+        @Option(names = {"-a", "--auto-approve"}, defaultValue = "false", description = "Auto approves any uploaded artifact that needs approval.")
+        private Boolean autoApprove;
+        
+        @Option(names = {"-m", "--message"}, defaultValue = "Auto-approved by fcli")
+        private String message;
+    }
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {
@@ -81,52 +85,13 @@ public class SSCAppVersionArtifactUploadCommand extends AbstractSSCTableOutputCo
         
         String artifactId = JsonHelper.evaluateJsonPath(uploadResponse, "$.data.id", String.class);
         
-        String state = null;
-        if (wait || autoApprove) {
-            state = waitForNonProcessingState(unirest, artifactId);
-        }
-        if (autoApprove && "REQUIRE_AUTH".equals(state)) {
-            approve(unirest, artifactId);
-            waitForNonProcessingState(unirest, artifactId);
+        if (autoApproveOptions.autoApprove) {
+            SSCAppVersionArtifactHelper.waitAndApprove(unirest, artifactId, autoApproveOptions.message, POLL_INTERVAL_SECONDS, processingTimeOutSeconds);
+        } else if (wait ) {
+            SSCAppVersionArtifactHelper.waitForNonProcessingState(unirest, artifactId, POLL_INTERVAL_SECONDS, processingTimeOutSeconds);
         }
 
         return unirest.get(SSCUrls.ARTIFACT(artifactId)).queryString("embed","scans");
-    }
-
-    public String waitForNonProcessingState(UnirestInstance unirest, String artifactId) {
-        Set<String> incompleteStates = new HashSet<>(Arrays.asList("PROCESSING", "SCHED_PROCESSING"));
-        long startTime = new Date().getTime();
-        String status = getArtifactStatus(unirest, artifactId);
-        while (new Date().getTime() < processingTimeOutSeconds*1000+startTime && incompleteStates.contains(status) ) {
-            try {
-                Thread.sleep(SLEEP_TIME);
-                status = getArtifactStatus(unirest, artifactId);
-            } catch (InterruptedException ignore) {}
-        }
-        if ( incompleteStates.contains(status) ) {
-            throw new RuntimeException("Time-out while waiting for SSC to process the uploaded artifact");
-        }
-        return status;
-    }
-    
-    private void approve(UnirestInstance unirest, String artifactId){
-        int[] artifactIds = {Integer.parseInt(artifactId)};
-
-        JsonNode jsonNode = new ObjectMapper().createObjectNode()
-                .putPOJO("artifactIds", artifactIds)
-                .put("comment","Auto approved via fcli.");
-
-        unirest.post(SSCUrls.ARTIFACTS_ACTION_APPROVE)
-                .body(jsonNode)
-                .asObject(JsonNode.class);
-    }
-    
-    private String getArtifactStatus(UnirestInstance unirest, String artifactId){
-        return JsonHelper.evaluateJsonPath(
-                unirest.get(SSCUrls.ARTIFACT(artifactId)).asObject(JsonNode.class).getBody(),
-                "$.data.status",
-                String.class
-        );
     }
     
     @Override
