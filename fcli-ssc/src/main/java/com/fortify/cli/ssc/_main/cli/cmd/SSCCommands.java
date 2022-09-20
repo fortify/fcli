@@ -8,6 +8,7 @@ import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
 import com.fortify.cli.ssc.appversion_artifact.cli.cmd.SSCAppVersionArtifactCommands;
 import com.fortify.cli.ssc.appversion_attribute.cli.cmd.SSCAppVersionAttributeCommands;
 import com.fortify.cli.ssc.appversion_auth_entity.cli.cmd.SSCAppVersionAuthEntityCommands;
+import com.fortify.cli.ssc.appversion_vuln.cli.cmd.SSCAppVersionVulnCommands;
 import com.fortify.cli.ssc.attribute_definition.cli.cmd.SSCAttributeDefinitionCommands;
 import com.fortify.cli.ssc.auth_entity.cli.cmd.SSCAuthEntityCommands;
 import com.fortify.cli.ssc.event.cli.cmd.SSCEventCommands;
@@ -37,6 +38,7 @@ import picocli.CommandLine.Command;
                 SSCAppVersionArtifactCommands.class,
                 SSCAppVersionAttributeCommands.class,
                 SSCAppVersionAuthEntityCommands.class,
+                SSCAppVersionVulnCommands.class,
                 SSCAttributeDefinitionCommands.class,
                 SSCAuthEntityCommands.class,
                 SSCEventCommands.class,
