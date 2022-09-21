@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,27 +22,29 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion.cli.cmd;
+package com.fortify.cli.ssc.attribute_definition.cli.mixin;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
+import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionDescriptor;
+import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
+import lombok.Getter;
+import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
-@Command(name = "get")
-public class SSCAppVersionGetCommand extends AbstractSSCGetCommand {
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
+public class SSCAttributeDefinitionResolverMixin {
+    @ReflectiveAccess
+    public static abstract class AbstractSSCAttributeDefinitionResolverMixin {
+        public abstract String getAttributeDefinitionNameOrId();
 
-    @Override
-    protected JsonNode generateOutput(UnirestInstance unirest) {
-        return appVersionResolver.getAppVersion(unirest).asJsonNode();
+        public SSCAttributeDefinitionDescriptor getAttributeDefinitionDescriptor(UnirestInstance unirest) {
+            return new SSCAttributeDefinitionHelper(unirest).getAttributeDefinitionDescriptor(getAttributeDefinitionNameOrId());
+        }
     }
     
-    @Override
-    protected boolean isOutputWrappedInDataObject() { return false; }
+    @ReflectiveAccess
+    public static class PositionalParameterSingle extends AbstractSSCAttributeDefinitionResolverMixin {
+        @Parameters(index = "0", arity = "1", paramLabel = "[CATEGORY:]ATTR")
+        @Getter private String attributeDefinitionNameOrId;
+    }
 }

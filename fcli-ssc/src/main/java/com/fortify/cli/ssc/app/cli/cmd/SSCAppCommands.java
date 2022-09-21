@@ -5,6 +5,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "app",
         subcommands = {
+                SSCAppGetCommand.class,
                 SSCAppListCommand.class
         }
 )

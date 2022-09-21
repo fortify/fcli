@@ -30,6 +30,7 @@ import picocli.CommandLine.Command;
         name = "job",
         subcommands = {
                 SSCJobCancelCommand.class,
+                SSCJobGetCommand.class,
                 SSCJobListCommand.class,
                 SSCJobUpdateCommand.class
         }

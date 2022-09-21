@@ -30,7 +30,7 @@ import com.fortify.cli.ssc.appversion_filterset.cli.mixin.SSCAppVersionFilterSet
 import com.fortify.cli.ssc.appversion_filterset.helper.SSCAppVersionFilterSetDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
@@ -64,6 +64,7 @@ public class SSCAppVersionVulnCountCommand extends AbstractSSCTableOutputCommand
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig().defaultColumns("cleanName:Name#totalCount:Total#auditedCount:Audited");
+        return SSCOutputConfigHelper.tableFromData()
+                .defaultColumns("cleanName:Name#totalCount:Total#auditedCount:Audited");
     }
 }

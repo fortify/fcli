@@ -38,7 +38,7 @@ import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 import com.fortify.cli.ssc.token.helper.SSCTokenCreateRequest;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
@@ -80,7 +80,7 @@ public class SSCTokenCreateCommand extends AbstractSSCTokenCommand implements IO
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
+        return SSCOutputConfigHelper.tableFromData()
                 .recordTransformer(this::transformRecord)
                 .defaultColumns("id#username#type#restToken#applicationToken#terminalDate#description");
     }

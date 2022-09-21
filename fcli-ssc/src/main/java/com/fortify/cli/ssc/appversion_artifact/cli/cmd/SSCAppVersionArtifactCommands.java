@@ -8,6 +8,7 @@ import picocli.CommandLine.Command;
             SSCAppVersionArtifactApproveCommand.class,
             SSCAppVersionArtifactDeleteCommand.class,
             SSCAppVersionArtifactDownloadCommand.class,
+            SSCAppVersionArtifactGetCommand.class,
             SSCAppVersionArtifactListCommand.class,
             SSCAppVersionArtifactPurgeCommand.class,
             SSCAppVersionArtifactUploadCommand.class

@@ -31,7 +31,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.plugin.cli.cmd.SSCPluginCommonOptions.SSCPluginSelectSingleRequiredOptions;
 import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -83,7 +83,7 @@ public class SSCPluginUninstallCommand extends AbstractSSCUnirestRunnerCommand i
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
+        return SSCOutputConfigHelper.tableFromData()
                 .defaultColumns("message#errorCode#responseCode");
     }
 }

@@ -30,7 +30,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_auth_entity.helper.SSCAppVersionDeleteAuthEntitiesHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -61,7 +61,7 @@ public class SSCAppVersionAuthEntityDeleteCommand extends AbstractSSCUnirestRunn
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
+        return SSCOutputConfigHelper.tableFromData()
             .defaultColumns("id#entityName:Name#displayName#type#email#isLdap");
     }
 }

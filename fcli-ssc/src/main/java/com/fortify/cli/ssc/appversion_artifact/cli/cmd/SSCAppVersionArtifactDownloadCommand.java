@@ -32,7 +32,7 @@ import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -81,7 +81,7 @@ public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunn
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
+        return SSCOutputConfigHelper.tableFromData()
                 .defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
     }
 }

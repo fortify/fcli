@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -22,20 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.issue_template.cli.cmd;
+package com.fortify.cli.ssc.attribute_definition.helper;
 
-import picocli.CommandLine.Command;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.JsonNodeHolder;
 
-@Command(
-        name = "issue-template",
-        subcommands = {
-                SSCIssueTemplateCreateCommand.class,
-                SSCIssueTemplateDeleteCommand.class,
-                SSCIssueTemplateDownloadCommand.class,
-                SSCIssueTemplateGetCommand.class,
-                SSCIssueTemplateListCommand.class,
-                SSCIssueTemplateUpdateCommand.class
-        }
-)
-public class SSCIssueTemplateCommands {
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data @EqualsAndHashCode(callSuper=true)
+public class SSCAttributeDefinitionDescriptor extends JsonNodeHolder {
+    private String id;
+    private String guid;
+    private String name;
+    private String category;
+    private String type;
+    private boolean required;
+    
+    public JsonNode getOptions() {
+        return asJsonNode().get("options");
+    }
 }

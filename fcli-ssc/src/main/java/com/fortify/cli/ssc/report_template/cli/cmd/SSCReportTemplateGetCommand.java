@@ -24,35 +24,25 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.ssc.report_template.cli.mixin.SSCReportTemplateResolverMixin;
-import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @Command(name = "get")
-public class SSCReportTemplateGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
+public class SSCReportTemplateGetCommand extends AbstractSSCGetCommand {
     @CommandLine.Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
-        outputMixin.write(
-                unirest.get(SSCUrls.REPORT_DEFINITION(reportTemplateResolver.getReportTemplateDescriptor(unirest).getId())));
-        return null;
+    
+    @Override
+    protected JsonNode generateOutput(UnirestInstance unirest) {
+        return reportTemplateResolver.getReportTemplateDescriptor(unirest).asJsonNode();
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
-                .defaultColumns("id#name#type:Report Type#templateDocId#inUse");
-    }
+    protected boolean isOutputWrappedInDataObject() { return false; }
 }

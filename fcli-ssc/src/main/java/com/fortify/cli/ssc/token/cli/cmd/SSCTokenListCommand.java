@@ -37,7 +37,7 @@ import com.fortify.cli.common.rest.runner.config.IUserCredentials;
 import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterMixin;
 import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
@@ -89,7 +89,7 @@ public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IOut
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
+        return SSCOutputConfigHelper.tableFromData()
                 .defaultColumns(outputMixin.getDefaultColumns());
     }
 }

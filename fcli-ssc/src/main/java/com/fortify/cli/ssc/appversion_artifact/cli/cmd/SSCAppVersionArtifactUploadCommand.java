@@ -34,7 +34,6 @@ import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
@@ -96,7 +95,7 @@ public class SSCAppVersionArtifactUploadCommand extends AbstractSSCTableOutputCo
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
+        return super.getOutputOptionsWriterConfig()
                 .defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
     }
 }

@@ -6,6 +6,7 @@ import picocli.CommandLine.Command;
         name = "user",
         subcommands = {
                 SSCAuthEntityDeleteCommand.class,
+                SSCAuthEntityGetCommand.class,
                 SSCAuthEntityListCommand.class
         }
 )

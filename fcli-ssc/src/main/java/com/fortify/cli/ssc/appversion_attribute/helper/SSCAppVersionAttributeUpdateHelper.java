@@ -34,6 +34,8 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionDescriptor;
+import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
@@ -55,14 +57,18 @@ public final class SSCAppVersionAttributeUpdateHelper {
     }
     
     public Set<String> getAttributeIds() {
-        return attributes.keySet().stream().map(attributeDefinitionHelper::getAttributeId).collect(Collectors.toSet());
+        return attributes.keySet().stream()
+                .map(attributeDefinitionHelper::getAttributeDefinitionDescriptor)
+                .map(SSCAttributeDefinitionDescriptor::getId)
+                .collect(Collectors.toSet());
     }
     
     private ObjectNode createAttrUpdateNode(Map.Entry<String, String> attrEntry) {
         String attrNameOrId = attrEntry.getKey();
-        String attrGuid = attributeDefinitionHelper.getAttributeGuid(attrNameOrId);
-        String attrId = attributeDefinitionHelper.getAttributeId(attrGuid);
-        String type = attributeDefinitionHelper.getAttributeType(attrGuid);
+        SSCAttributeDefinitionDescriptor descriptor = attributeDefinitionHelper.getAttributeDefinitionDescriptor(attrNameOrId);
+        String attrGuid = descriptor.getGuid();
+        String attrId = descriptor.getId();
+        String type = descriptor.getType();
         List<String> valueGuids = Stream.of(attrEntry.getValue().split(","))
                 .filter(Predicate.not(String::isBlank))
                 .map(v->attributeDefinitionHelper.getOptionGuid(attrGuid, v))

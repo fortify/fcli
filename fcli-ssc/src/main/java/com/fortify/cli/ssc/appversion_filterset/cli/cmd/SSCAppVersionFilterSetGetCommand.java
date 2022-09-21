@@ -22,46 +22,29 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion_auth_entity.cli.cmd;
+package com.fortify.cli.ssc.appversion_filterset.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
-import com.fortify.cli.ssc.appversion_auth_entity.helper.SSCAppVersionAddAuthEntitiesHelper;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
+import com.fortify.cli.ssc.appversion_filterset.cli.mixin.SSCAppVersionFilterSetResolverMixin;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "add")
-public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @Parameters(index = "0..*", arity = "1..*")
-    private String[] authEntitySpecs;
-    @Mixin private SSCAppVersionResolverMixin.For parentResolver;
-    @Mixin private OutputMixin outputMixin;
-    @Option(names="--allowMultiMatch", defaultValue = "false")
-    private boolean allowMultiMatch;
+@Command(name = "get")
+public class SSCAppVersionFilterSetGetCommand extends AbstractSSCGetCommand {
+    @Mixin SSCAppVersionFilterSetResolverMixin.PositionalParameterSingle filterSetResolver;
+    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
     
     @Override
-    protected Void run(UnirestInstance unirest) {
-        String applicationVersionId = parentResolver.getAppVersionId(unirest);
-        outputMixin.write(
-            SSCAppVersionAddAuthEntitiesHelper.generateUpdateRequest(unirest, applicationVersionId, authEntitySpecs, allowMultiMatch)
-        );
-        
-        return null;
+    protected JsonNode generateOutput(UnirestInstance unirest) {
+        return filterSetResolver.getFilterSetDescriptor(unirest, parentResolver.getAppVersionId(unirest)).asJsonNode();
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData()
-            .defaultColumns("id#entityName:Name#displayName#type#email#isLdap");
-    }
+    protected boolean isOutputWrappedInDataObject() { return false; }
 }

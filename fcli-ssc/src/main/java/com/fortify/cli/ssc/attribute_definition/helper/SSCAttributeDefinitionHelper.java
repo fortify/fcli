@@ -1,4 +1,4 @@
-package com.fortify.cli.ssc.appversion_attribute.helper;
+package com.fortify.cli.ssc.attribute_definition.helper;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -21,18 +22,20 @@ import lombok.Getter;
  *   
  * @author rsenden
  */
+// TODO Properly embed option handling/retrieval in SSCAttributeDefinitionDescriptor
 public final class SSCAttributeDefinitionHelper {
     private final Set<String> attrDuplicateLowerNames = new HashSet<>();
-    private final Set<String> attrRequiredIds = new HashSet<>();
-    private final Map<String, JsonNode> attrDefsById = new HashMap<>();
-    private final Map<String, String> attrIdsByLowerName = new HashMap<>();
-    private final Map<String, String> attrIdsByLowerGuid = new HashMap<>();
+    private final Set<SSCAttributeDefinitionDescriptor> requiredAttrDefDescriptors = new HashSet<>();
+    private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsById = new HashMap<>();
+    private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsByLowerName = new HashMap<>();
+    private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsByLowerGuid = new HashMap<>();
     private final Map<String, SSCAttributeOptionDefinitionHelper> attrOptionsByIdMap = new HashMap<>();
     @Getter private final ObjectNode attributeDefinitionsBody; 
     
     /**
      * This constructor calls the SSC attributeDefinitions endpoint to retrieve attribute definition data,
-     * then calls the {@link #processAttributeDefinition(JsonNode)} method for each attribute definition.
+     * then calls the {@link #processAttributeDefinition(JsonNode)} method for each attribute definition
+     * to collect the relevant details.
      * @param unirest
      */
     public SSCAttributeDefinitionHelper(UnirestInstance unirest) {
@@ -49,87 +52,50 @@ public final class SSCAttributeDefinitionHelper {
      * @param jsonNode representing a single attribute definition
      */
     private void processAttributeDefinition(JsonNode jsonNode) {
-        String id = jsonNode.get("id").asText();
-        String guid = jsonNode.get("guid").asText();
-        String guidLower = guid.toLowerCase();
-        String name = jsonNode.get("name").asText();
-        String nameLower = name.toLowerCase();
-        String category = jsonNode.get("category").asText();
-        String categoryLower = category.toLowerCase();
-        boolean required = jsonNode.get("required").asBoolean();
-        JsonNode options = jsonNode.get("options");
+        SSCAttributeDefinitionDescriptor descriptor = JsonHelper.treeToValue(jsonNode, SSCAttributeDefinitionDescriptor.class);
+        String id = descriptor.getId();
+        String guidLower = descriptor.getGuid().toLowerCase();
+        String nameLower = descriptor.getName().toLowerCase();
+        String categoryLower = descriptor.getCategory().toLowerCase();
         
-        if ( attrIdsByLowerName.containsKey(nameLower) ) {
+        if ( descriptorsByLowerName.containsKey(nameLower) ) {
             attrDuplicateLowerNames.add(nameLower); // SSC allows for having the same attribute name in different categories 
         }
-        if ( required ) {
-            attrRequiredIds.add(id);
+        if ( descriptor.isRequired() ) {
+            requiredAttrDefDescriptors.add(descriptor);
         }
         
-        attrDefsById.put(id, jsonNode);
-        attrOptionsByIdMap.put(id, new SSCAttributeOptionDefinitionHelper(options));
-        attrIdsByLowerGuid.put(guidLower, id);
-        attrIdsByLowerName.put(nameLower, id);
-        attrIdsByLowerName.put(categoryLower+":"+nameLower, id);
+        descriptorsById.put(id, descriptor);
+        descriptorsByLowerGuid.put(guidLower, descriptor);
+        descriptorsByLowerName.put(nameLower, descriptor);
+        descriptorsByLowerName.put(categoryLower+":"+nameLower, descriptor);
+        attrOptionsByIdMap.put(id, new SSCAttributeOptionDefinitionHelper(descriptor.getOptions()));
     }
     
     /**
-     * Get the attribute id for the given attribute id, guid, or name.
+     * Get the attribute definition descriptor for the given attribute id, guid, or name.
      * @param attributeIdOrGuidOrName
-     * @return attribute id
+     * @return {@link SSCAttributeDefinitionDescriptor} instance
      */
-    public String getAttributeId(String attributeIdOrGuidOrName) {
+    public SSCAttributeDefinitionDescriptor getAttributeDefinitionDescriptor(String attributeIdOrGuidOrName) {
         String attributeIdOrGuidOrNameLower = attributeIdOrGuidOrName.toLowerCase();
-        String id = null;
-        if ( attrDefsById.containsKey(attributeIdOrGuidOrNameLower) ) {
-            id = attributeIdOrGuidOrNameLower;
-        } else if ( attrIdsByLowerGuid.containsKey(attributeIdOrGuidOrNameLower) ) { 
-            id = attrIdsByLowerGuid.get(attributeIdOrGuidOrNameLower); 
-        } else if ( attrDuplicateLowerNames.contains(attributeIdOrGuidOrNameLower) ) { 
+        SSCAttributeDefinitionDescriptor descriptor = descriptorsById.get(attributeIdOrGuidOrNameLower);
+        if ( descriptor==null ) { descriptor = descriptorsByLowerGuid.get(attributeIdOrGuidOrNameLower); } 
+        if ( descriptor==null && attrDuplicateLowerNames.contains(attributeIdOrGuidOrNameLower) ) { 
             throw new IllegalArgumentException("Attribute name '"+attributeIdOrGuidOrNameLower+"' is not unique; either use the guid or <category>:<name>"); 
-        } else {
-            id = attrIdsByLowerName.get(attributeIdOrGuidOrNameLower);
         }
-        if ( id==null ) {
+        if ( descriptor==null ) { descriptor = descriptorsByLowerName.get(attributeIdOrGuidOrNameLower); }
+        if ( descriptor==null ) {
             throw new IllegalArgumentException("Attribute id, guid or name '"+attributeIdOrGuidOrName+"' does not exist");
         }
-        return id;
+        return descriptor;
     }
     
     /**
-     * Get the attribute guid for the given attribute id, guid, or name.
-     * @param attributeIdOrGuidOrName
-     * @return attribute name
+     * @return Set of {@link SSCAttributeDefinitionDescriptor} for attributes that are required 
      */
-    public String getAttributeGuid(String attributeIdOrGuidOrName) {
-        return attrDefsById.get(getAttributeId(attributeIdOrGuidOrName)).get("guid").asText();
-    }
-    
-    /**
-     * Get the attribute name for the given attribute id, guid, or name.
-     * @param attributeIdOrGuidOrName
-     * @return attribute name
-     */
-    public String getAttributeName(String attributeIdOrGuidOrName) {
-        return attrDefsById.get(getAttributeId(attributeIdOrGuidOrName)).get("name").asText();
-    }
-    
-    /**
-     * Get the attribute type for the given attribute id, guid, or name.
-     * @param attributeIdOrGuidOrName
-     * @return attribute name
-     */
-    public String getAttributeType(String attributeIdOrGuidOrName) {
-        return attrDefsById.get(getAttributeId(attributeIdOrGuidOrName)).get("type").asText();
-    }
-    
-    /**
-     * Get a set of required attribute id's
-     * @param attributeIdOrGuidOrName
-     * @return attribute name
-     */
-    public Set<String> getRequiredAttributeIds() {
-        return Collections.unmodifiableSet(attrRequiredIds);
+    public Set<SSCAttributeDefinitionDescriptor> getRequiredAttributeDescriptors() {
+        return Collections.unmodifiableSet(requiredAttrDefDescriptors);
     }
     
     /**
@@ -140,7 +106,7 @@ public final class SSCAttributeDefinitionHelper {
      * @return option guid
      */
     public String getOptionGuid(String attributeIdOrGuidOrName, String optionNameOrGuid) {
-        return attrOptionsByIdMap.get(getAttributeId(attributeIdOrGuidOrName)).getOptionGuid(optionNameOrGuid);
+        return attrOptionsByIdMap.get(getAttributeDefinitionDescriptor(attributeIdOrGuidOrName).getId()).getOptionGuid(optionNameOrGuid);
     }
     
     /**
@@ -151,7 +117,7 @@ public final class SSCAttributeDefinitionHelper {
      * @return option name
      */
     public String getOptionName(String attributeIdOrGuidOrName, String optionNameOrGuid) {
-        return attrOptionsByIdMap.get(getAttributeId(attributeIdOrGuidOrName)).getOptionName(optionNameOrGuid);
+        return attrOptionsByIdMap.get(getAttributeDefinitionDescriptor(attributeIdOrGuidOrName).getId()).getOptionName(optionNameOrGuid);
     }
     
     /**

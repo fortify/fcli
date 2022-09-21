@@ -33,7 +33,7 @@ import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixi
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -68,6 +68,6 @@ public class SSCIssueTemplateUpdateCommand extends AbstractSSCUnirestRunnerComma
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig();
+        return SSCOutputConfigHelper.tableFromData();
     }
 }

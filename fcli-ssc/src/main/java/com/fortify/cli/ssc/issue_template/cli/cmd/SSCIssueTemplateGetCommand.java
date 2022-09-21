@@ -22,27 +22,29 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion.cli.cmd;
+package com.fortify.cli.ssc.issue_template.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = "get")
-public class SSCAppVersionGetCommand extends AbstractSSCGetCommand {
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
-
+public class SSCIssueTemplateGetCommand extends AbstractSSCGetCommand {
+    @Mixin private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
+    
     @Override
     protected JsonNode generateOutput(UnirestInstance unirest) {
-        return appVersionResolver.getAppVersion(unirest).asJsonNode();
+        return issueTemplateResolver.getIssueTemplateDescriptor(unirest).asJsonNode();
     }
     
     @Override
-    protected boolean isOutputWrappedInDataObject() { return false; }
+    protected boolean isOutputWrappedInDataObject() {
+        return false;
+    }
 }

@@ -32,9 +32,9 @@ import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateHelper;
-import com.fortify.cli.ssc.appversion_attribute.helper.SSCAttributeDefinitionHelper;
+import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
+import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -69,7 +69,7 @@ public class SSCAppVersionAttributeSetCommand extends AbstractSSCUnirestRunnerCo
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
+        return SSCOutputConfigHelper.tableFromData()
             .defaultColumns("id#category#guid#name#valueString");
     }
 }

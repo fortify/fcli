@@ -24,36 +24,23 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @Command(name = "get")
-public class SSCPluginGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
-
+public class SSCPluginGetCommand extends AbstractSSCGetCommand {
     @CommandLine.Mixin
     private SSCPluginCommonOptions.SSCPluginSelectSingleRequiredMixin id;
 
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
-        outputMixin.write(
-                unirest.get(SSCUrls.PLUGIN(id.getNumericPluginId(unirest).toString()))
-        );
-        return null;
-    }
-
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCPluginCommandOutputHelper.defaultTableOutputConfig();
+    protected GetRequest generateRequest(UnirestInstance unirest) {
+        return unirest.get(SSCUrls.PLUGIN(id.getNumericPluginId(unirest).toString()));
     }
 }

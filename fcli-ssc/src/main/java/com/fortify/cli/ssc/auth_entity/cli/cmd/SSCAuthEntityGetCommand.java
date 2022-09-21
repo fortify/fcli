@@ -22,27 +22,26 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion.cli.cmd;
+package com.fortify.cli.ssc.auth_entity.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "get")
-public class SSCAppVersionGetCommand extends AbstractSSCGetCommand {
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
-
-    @Override
-    protected JsonNode generateOutput(UnirestInstance unirest) {
-        return appVersionResolver.getAppVersion(unirest).asJsonNode();
-    }
+public class SSCAuthEntityGetCommand extends AbstractSSCGetCommand {
+    // TODO Add support for resolving auth entities by name using a ResolverMixin
+    @Parameters(arity="1", description = "Id of auth entity to be retrieved")
+    private String authEntityId;
     
     @Override
-    protected boolean isOutputWrappedInDataObject() { return false; }
+    protected GetRequest generateRequest(UnirestInstance unirest) {
+        return unirest.get(SSCUrls.AUTH_ENTITY(authEntityId));
+    }
 }
