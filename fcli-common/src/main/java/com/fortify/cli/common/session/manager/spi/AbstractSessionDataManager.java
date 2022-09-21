@@ -28,8 +28,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -53,15 +55,17 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
     @SneakyThrows // TODO Do we want to use SneakyThrows?
     public final T get(String sessionName, boolean failIfUnavailable) {
         Path authSessionDataPath = Paths.get("sessions", getSessionTypeName(), sessionName);
-        if ( failIfUnavailable && !exists(sessionName) ) {
-            throw new IllegalStateException(getSessionTypeName()+" session '"+sessionName+"' not found, please login first");
-        }
+        checkSessionExists(sessionName, failIfUnavailable);
         try {
             String authSessionDataJson = FcliHomeHelper.readSecuredFile(authSessionDataPath, failIfUnavailable);
-            return authSessionDataJson==null ? null : objectMapper.readValue(authSessionDataJson, getSessionDataType());
+            T authSessionData = authSessionDataJson==null ? null : objectMapper.readValue(authSessionDataJson, getSessionDataType());
+            checkNonExpiredSessionAvailable(sessionName, failIfUnavailable, authSessionData);
+            return authSessionData;
         } catch ( Exception e ) {
             FcliHomeHelper.deleteFile(authSessionDataPath);
-            throw new IllegalStateException("Error reading auth session data, please try logging in again", e);
+            conditionalThrow(failIfUnavailable, ()->new IllegalStateException("Error reading auth session data, please try logging in again", e));
+            // TODO Log warning message
+            return null;
         }
     }
 
@@ -123,6 +127,22 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
                 .created(sessionData.getCreatedDate())
                 .expires(sessionData.getExpiryDate())
                 .build();
+    }
+    
+    private void conditionalThrow(boolean throwException, Supplier<RuntimeException> exceptionSupplier) {
+        if ( throwException ) { throw exceptionSupplier.get(); }
+    }
+
+    private void checkNonExpiredSessionAvailable(String sessionName, boolean failIfUnavailable, T authSessionData) {
+        if ( failIfUnavailable && (authSessionData==null || authSessionData.getExpiryDate().before(new Date())) ) {
+            throw new IllegalStateException(getSessionTypeName()+" session '"+sessionName+"' cannot be retrieved or has expired, please login again");
+        }
+    }
+
+    private void checkSessionExists(String sessionName, boolean failIfUnavailable) {
+        if ( failIfUnavailable && !exists(sessionName) ) {
+            throw new IllegalStateException(getSessionTypeName()+" session '"+sessionName+"' not found, please login first");
+        }
     }
     
     @Override
