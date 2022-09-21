@@ -32,8 +32,8 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 public class SSCIssueTemplateResolverMixin {
+    @ReflectiveAccess
     private static abstract class AbstractSSCIssueTemplateResolverMixin {
         public abstract String getIssueTemplateNameOrId();
         
@@ -41,7 +41,7 @@ public class SSCIssueTemplateResolverMixin {
             return new SSCIssueTemplateHelper(unirest).getDescriptorByNameOrId(getIssueTemplateNameOrId(), true);
         }
     }
-    
+    @ReflectiveAccess
     public static class PositionalParameterSingle extends AbstractSSCIssueTemplateResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "issueTemplateNameOrId")
         @Getter private String issueTemplateNameOrId;

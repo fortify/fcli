@@ -38,10 +38,9 @@ import lombok.SneakyThrows;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 public class SSCAppVersionResolverMixin {
     private static final String ALIAS = "--appVersion";
-    
+    @ReflectiveAccess
     public static abstract class AbstractSSCApplicationVersionMixin {
         public abstract String getVersionNameOrId();
 
@@ -81,24 +80,28 @@ public class SSCAppVersionResolverMixin {
     }
     
     // get/retrieve/delete/download version <entity> --from
+    @ReflectiveAccess
     public static class From extends AbstractSSCApplicationVersionMixin {
         @Option(names = {"--from", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
         @Getter private String versionNameOrId;
     }
     
     // create/update version <entity> --for <version>
+    @ReflectiveAccess
     public static class For extends AbstractSSCApplicationVersionMixin {
         @Option(names = {"--for", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
         @Getter private String versionNameOrId;
     }
     
     // upload version <entity> --to <version>
+    @ReflectiveAccess
     public static class To extends AbstractSSCApplicationVersionMixin {
         @Option(names = {"--to", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
         @Getter private String versionNameOrId;
     }
     
     // delete|update <versionNameOrId>
+    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCApplicationVersionMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationVersionMixin")
         @Getter private String versionNameOrId;

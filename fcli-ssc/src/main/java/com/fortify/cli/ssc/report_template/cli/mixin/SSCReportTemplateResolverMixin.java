@@ -33,18 +33,20 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 public class SSCReportTemplateResolverMixin {
+    @ReflectiveAccess
     private static abstract class AbstractSSCReportTemplateResolverMixin {
         protected abstract String getReportTemplateNameOrId();
         public SSCReportTemplateDescriptor getReportTemplateDescriptor(UnirestInstance unirest) {
             return new SSCReportTemplateHelper(unirest).getDescriptorByNameOrId(getReportTemplateNameOrId(), true);
         }
     }
+    @ReflectiveAccess
     public static class PositionalParameterSingle extends AbstractSSCReportTemplateResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "reportTemplateNameOrId")
         @Getter private String reportTemplateNameOrId;
     }
+    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCReportTemplateResolverMixin {
         @Option(names="--report-template", required=true, descriptionKey = "reportTemplateNameOrId")
         @Getter private String reportTemplateNameOrId;

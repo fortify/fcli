@@ -33,8 +33,8 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 public class SSCAppVersionFilterSetResolverMixin {
+    @ReflectiveAccess
     private static abstract class AbstractSSCFilterSetResolverMixin {
         public abstract String getFilterSetTitleOrId();
         
@@ -43,11 +43,13 @@ public class SSCAppVersionFilterSetResolverMixin {
         }
     }
     
+    @ReflectiveAccess
     public static class FilterSetOption extends AbstractSSCFilterSetResolverMixin {
         @Option(names="--filterset")
         @Getter private String filterSetTitleOrId;
     }
     
+    @ReflectiveAccess
     public static class PositionalParameterSingle extends AbstractSSCFilterSetResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "filterSetTitleOrId")
         @Getter private String filterSetTitleOrId;

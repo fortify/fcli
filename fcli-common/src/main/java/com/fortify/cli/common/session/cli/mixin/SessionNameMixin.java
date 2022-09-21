@@ -29,8 +29,8 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 public class SessionNameMixin {
+    @ReflectiveAccess
     private static abstract class AbstractSessionNameMixin {
         protected abstract String getSessionNameOrNull();
         public final String getSessionName() {
@@ -43,6 +43,7 @@ public class SessionNameMixin {
         }
     }
     
+    @ReflectiveAccess
     public static class OptionalOption extends AbstractSessionNameMixin {
         @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
         private SessionNameArgGroup nameOptions;
@@ -57,6 +58,7 @@ public class SessionNameMixin {
         }
     }
     
+    @ReflectiveAccess
     public static class OptionalParameter extends AbstractSessionNameMixin {
         @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
         private SessionNameArgGroup nameOptions;

@@ -1,11 +1,13 @@
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 
 public class SSCPluginCommonOptions {
+    @ReflectiveAccess
     public static class SSCPluginSelectSingleRequiredMixin {
         @ArgGroup(headingKey = "fcli.ssc.plugin.select.heading", exclusive = false)
         private SSCPluginSelectSingleRequiredOptions selectOptions;
@@ -21,7 +23,7 @@ public class SSCPluginCommonOptions {
             return selectOptions==null ? null : selectOptions.getNumericPluginId();
         }
     }
-    
+    @ReflectiveAccess
     public static class SSCPluginSelectSingleRequiredOptions {
         @CommandLine.Option(names = {"-i", "--id"}, descriptionKey="fcli.ssc.plugin.select.numericPluginId", paramLabel="<id>", required=true, order=1)
         @Getter private Integer numericPluginId;

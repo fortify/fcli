@@ -24,16 +24,19 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.mixin;
 
-import picocli.CommandLine;
 import javax.validation.ValidationException;
 
 import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine;
+@ReflectiveAccess
 public class SSCParserPluginSelectorMixin {
     @CommandLine.ArgGroup(heading = "Identifier\n")
     private Identifier identifier;
 
+    @ReflectiveAccess
     static class Identifier{
         @CommandLine.Option(names = {"--id"})
         @OutputFilter
@@ -44,6 +47,7 @@ public class SSCParserPluginSelectorMixin {
     @CommandLine.ArgGroup(heading = "Selection Criteria\n")
     private Selectors selectors;
 
+    @ReflectiveAccess
     static class Selectors{
         @CommandLine.Option(names = {"--engineType"})
         @OutputFilter @AddAsDefaultColumn
