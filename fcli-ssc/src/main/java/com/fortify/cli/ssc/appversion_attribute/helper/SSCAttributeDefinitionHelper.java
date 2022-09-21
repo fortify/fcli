@@ -169,7 +169,7 @@ public final class SSCAttributeDefinitionHelper {
         /**
          * This constructor takes a {@link JsonNode} representing an attribute
          * definition options array, and calls the {@link #processOptionDefinition(JsonNode)}
-         * method for each option definition. 
+         * method for each option definition to collect the relevant data. 
          * @param options
          */
         public SSCAttributeOptionDefinitionHelper(JsonNode options) {

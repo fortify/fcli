@@ -17,7 +17,8 @@ public final class SSCIssueTemplateHelper {
     
     /**
      * This constructor calls the SSC projectTemplates endpoint to retrieve issue template data,
-     * then calls the {@link #processIssueTemplate(JsonNode)} method for each issue template.
+     * then calls the {@link #processIssueTemplate(JsonNode)} method for each issue template to 
+     * collect the relevant data.
      * @param unirest
      */
     public SSCIssueTemplateHelper(UnirestInstance unirest) {
