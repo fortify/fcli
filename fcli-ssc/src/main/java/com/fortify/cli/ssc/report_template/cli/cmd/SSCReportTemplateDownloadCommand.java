@@ -24,15 +24,16 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
+import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.ssc.report_template.cli.mixin.SSCReportTemplateResolverMixin;
+import com.fortify.cli.ssc.report_template.helper.SSCReportTemplateDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.ssc.report_template.cli.mixin.SSCReportTemplateIdMixin;
-import com.fortify.cli.ssc.report_template.domain.SSCReportTemplateDefResponse;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
@@ -46,15 +47,15 @@ public class SSCReportTemplateDownloadCommand extends AbstractSSCUnirestRunnerCo
     private String destination;
 
     @CommandLine.Mixin
-    private SSCReportTemplateIdMixin reportTemplateIdMixin;
+    private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
 
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
-        SSCReportTemplateDefResponse reportTemplate = reportTemplateIdMixin.getReportTemplateDef(unirest);
-        destination = destination != null ? destination : String.format("./%s", reportTemplate.data.fileName);
+        SSCReportTemplateDescriptor descriptor = reportTemplateResolver.getReportTemplateDescriptor(unirest);
+        destination = destination != null ? destination : String.format("./%s", descriptor.getFileName());
         SSCFileTransferHelper.download(
                 unirest,
-                SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(reportTemplate.data.id.toString()),
+                SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(descriptor.getId()),
                 destination,
                 ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN
         );

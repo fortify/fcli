@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.report_template.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.ssc.report_template.cli.mixin.SSCReportTemplateIdMixin;
+import com.fortify.cli.ssc.report_template.cli.mixin.SSCReportTemplateResolverMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
@@ -41,12 +41,12 @@ import picocli.CommandLine.Command;
 @Command(name = "get")
 public class SSCReportTemplateGetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @CommandLine.Mixin private OutputMixin outputMixin;
-    @CommandLine.Mixin private SSCReportTemplateIdMixin reportTemplateIdMixin;
+    @CommandLine.Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
 
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
         outputMixin.write(
-                unirest.get(SSCUrls.REPORT_DEFINITION(reportTemplateIdMixin.getReportTemplateDefId(unirest))));
+                unirest.get(SSCUrls.REPORT_DEFINITION(reportTemplateResolver.getReportTemplateDescriptor(unirest).getId())));
         return null;
     }
     

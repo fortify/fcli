@@ -35,17 +35,18 @@ import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "approve")
 public class SSCAppVersionArtifactApproveCommand extends AbstractSSCTableOutputCommand {
     private static final int POLL_INTERVAL_SECONDS = SSCAppVersionArtifactHelper.DEFAULT_POLL_INTERVAL_SECONDS;
     
+    @Parameters(arity="1", description = "Id of the artifact to be approved")
+    private String artifactId;
+    
     @Option(names = {"-w", "--wait"}, defaultValue = "false", description = "Will wait for the artifact to finish processing before/after approving.")
     private Boolean wait;
-    
-    @Option(names = {"--id"}, description = "Id of the artifact to be approved")
-    private String artifactId;
 
     @Option(names = {"-t", "--time-out"}, defaultValue="300")
     private int processingTimeOutSeconds;

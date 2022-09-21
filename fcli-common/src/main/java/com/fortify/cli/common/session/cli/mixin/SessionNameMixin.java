@@ -25,25 +25,49 @@
 package com.fortify.cli.common.session.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 public class SessionNameMixin {
-    @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
-    @Getter private SessionConsumerNameOptions nameOptions;
-    
-    static class SessionConsumerNameOptions {
-        @Option(names = {"--session"}, required = false)
-        @Getter private String sessionName;
+    private static abstract class AbstractSessionNameMixin {
+        protected abstract String getSessionNameOrNull();
+        public final String getSessionName() {
+            return hasSessionName() ? getSessionNameOrNull() : "default";
+        }
+        
+        public final boolean hasSessionName() {
+            String sessionNameOrNull = getSessionNameOrNull();
+            return sessionNameOrNull!=null && !sessionNameOrNull.isBlank();
+        }
     }
     
-    public String getSessionName() {
-        return hasSessionName() ? nameOptions.getSessionName() : "default";
+    public static class OptionalOption extends AbstractSessionNameMixin {
+        @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
+        private SessionNameArgGroup nameOptions;
+    
+        static class SessionNameArgGroup {
+            @Option(names = {"--session"}, required = false)
+            private String sessionName;
+        }
+        @Override
+        protected String getSessionNameOrNull() {
+            return nameOptions==null ? null : nameOptions.sessionName;
+        }
     }
     
-    public boolean hasSessionName() {
-        return nameOptions!=null && nameOptions.getSessionName()!=null;
+    public static class OptionalParameter extends AbstractSessionNameMixin {
+        @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
+        private SessionNameArgGroup nameOptions;
+    
+        static class SessionNameArgGroup {
+            @Parameters(arity="0..1")
+            private String sessionName;
+        }
+        @Override
+        protected String getSessionNameOrNull() {
+            return nameOptions==null ? null : nameOptions.sessionName;
+        }
     }
 }

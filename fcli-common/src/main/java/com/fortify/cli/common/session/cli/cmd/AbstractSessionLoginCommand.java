@@ -37,7 +37,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess @FixInjection
 public abstract class AbstractSessionLoginCommand<D extends ISessionData> implements Runnable {
-    @Getter @Mixin private SessionNameMixin sessionNameMixin;
+    @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
     @Mixin private OutputMixin outputMixin;
     
     @Override @SneakyThrows

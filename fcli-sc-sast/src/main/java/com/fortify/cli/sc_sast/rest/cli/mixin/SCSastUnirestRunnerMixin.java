@@ -19,7 +19,7 @@ import picocli.CommandLine.Mixin;
 public class SCSastUnirestRunnerMixin {
     @Inject private UnirestRunner runner;
     @Inject private SCSastSessionDataManager sessionDataManager;
-    @Mixin private SessionNameMixin sessionNameMixin;
+    @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
     
     public <R> R run(Function<UnirestInstance, R> f) {
         return runner.run(unirest->run(unirest, f));

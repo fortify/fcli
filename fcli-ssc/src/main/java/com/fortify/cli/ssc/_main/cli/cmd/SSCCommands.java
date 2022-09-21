@@ -53,8 +53,4 @@ import picocli.CommandLine.Command;
                 SSCTokenDefinitionCommands.class
         }
 )
-public class SSCCommands {
-        public SSCCommands(){
-                System.setProperty("productName", "Fortify SSC");
-        }
-}
+public class SSCCommands {}

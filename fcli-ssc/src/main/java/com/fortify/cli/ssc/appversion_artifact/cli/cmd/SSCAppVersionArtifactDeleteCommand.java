@@ -34,13 +34,13 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "delete")
 public class SSCAppVersionArtifactDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @Mixin private OutputMixin outputMixin;
-    @Option(names = {"--id"}, description = "Id of the artifact to be deleted")
+    @Parameters(arity="1", description = "Id of the artifact to be deleted")
     private String artifactId;
     
     @Override

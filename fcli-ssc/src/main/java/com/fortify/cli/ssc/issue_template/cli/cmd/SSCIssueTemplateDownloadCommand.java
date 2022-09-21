@@ -46,11 +46,11 @@ public class SSCIssueTemplateDownloadCommand extends AbstractSSCUnirestRunnerCom
     private String destination;
 
     @CommandLine.Mixin
-    private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolverMixin;
+    private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
 
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
-        SSCIssueTemplateDescriptor descriptor = issueTemplateResolverMixin.getIssueTemplateDescriptor(unirest);
+        SSCIssueTemplateDescriptor descriptor = issueTemplateResolver.getIssueTemplateDescriptor(unirest);
         String issueTemplateId = descriptor.getId();
         destination = destination != null ? destination : String.format("./%s", descriptor.getOriginalFileName());
         SSCFileTransferHelper.download(

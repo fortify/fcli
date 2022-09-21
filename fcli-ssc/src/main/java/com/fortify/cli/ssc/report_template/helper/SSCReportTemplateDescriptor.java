@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -22,31 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.report_template.domain;
+package com.fortify.cli.ssc.report_template.helper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.fortify.cli.common.json.JsonNodeHolder;
 
-@ReflectiveAccess
-public class SSCReportTemplateDefResponse {
-    public int count;
-    public Data data;
-    public int errorCode;
-    public String _href;
-    public String message;
-    public int responseCode;
-    public String stackTrace;
-    public int successCount;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-    public class Data extends SSCReportTemplateDef {
-        public Integer id;
-        public int count;
-        public boolean inUse;
-        public String _href;
-    }
-
-    public class _href{
-        public _href(){}
-        public String href;
-    }
-
+@Data @EqualsAndHashCode(callSuper=true)
+public class SSCReportTemplateDescriptor extends JsonNodeHolder {
+    private String id;
+    private String name;
+    private String fileName;
 }

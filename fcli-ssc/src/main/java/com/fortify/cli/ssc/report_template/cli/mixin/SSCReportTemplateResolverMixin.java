@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,38 +22,32 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.report_template.cli.cmd;
+package com.fortify.cli.ssc.report_template.cli.mixin;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.ssc.report_template.cli.mixin.SSCReportTemplateResolverMixin;
 import com.fortify.cli.ssc.report_template.helper.SSCReportTemplateDescriptor;
-import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.report_template.helper.SSCReportTemplateHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
+import lombok.Getter;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "delete")
-public class SSCReportTemplateDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
-    @CommandLine.Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
-        SSCReportTemplateDescriptor descriptor = reportTemplateResolver.getReportTemplateDescriptor(unirest);
-        outputMixin.write(
-                unirest.delete(SSCUrls.REPORT_DEFINITION(descriptor.getId())));
-        return null;
+public class SSCReportTemplateResolverMixin {
+    private static abstract class AbstractSSCReportTemplateResolverMixin {
+        protected abstract String getReportTemplateNameOrId();
+        public SSCReportTemplateDescriptor getReportTemplateDescriptor(UnirestInstance unirest) {
+            return new SSCReportTemplateHelper(unirest).getDescriptorByNameOrId(getReportTemplateNameOrId(), true);
+        }
+    }
+    public static class PositionalParameterSingle extends AbstractSSCReportTemplateResolverMixin {
+        @Parameters(index = "0", arity = "1", descriptionKey = "reportTemplateNameOrId")
+        @Getter private String reportTemplateNameOrId;
+    }
+    public static class RequiredOption extends AbstractSSCReportTemplateResolverMixin {
+        @Option(names="--report-template", required=true, descriptionKey = "reportTemplateNameOrId")
+        @Getter private String reportTemplateNameOrId;
     }
     
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return OutputConfig.table();
-    }
 }

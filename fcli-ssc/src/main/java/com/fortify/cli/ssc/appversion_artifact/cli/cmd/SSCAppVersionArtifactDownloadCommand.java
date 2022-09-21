@@ -37,16 +37,17 @@ import com.fortify.cli.ssc.util.SSCOutputHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
+import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "download")
 public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @Parameters(arity = "0..1") private String destination;
+    @CommandLine.Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
+    private String destination;
     @Mixin private SSCAppVersionResolverMixin.From parentResolver;
     
     @ArgGroup(exclusive=true) private SSCAppVersionArtifactDownloadOptions options = new SSCAppVersionArtifactDownloadOptions();
@@ -54,7 +55,7 @@ public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunn
     private static final class SSCAppVersionArtifactDownloadOptions {
         // When downloading an artifact by id, the --no-include-sources option is not applicable, and vice versa 
         @Option(names = "--no-include-sources", negatable = true) private boolean includeSources = true;
-        @Option(names="--id") private String artifactId;
+        @Option(names="--id") private String artifactId; //TODO Should this be an option or optional positional parameter?
     }
 
     @SneakyThrows

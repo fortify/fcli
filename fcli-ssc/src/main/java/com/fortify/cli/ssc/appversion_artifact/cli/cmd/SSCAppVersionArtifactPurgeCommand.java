@@ -43,6 +43,7 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "purge")
@@ -52,7 +53,7 @@ public class SSCAppVersionArtifactPurgeCommand extends AbstractSSCUnirestRunnerC
     @ArgGroup(exclusive=true, multiplicity="1") private SSCAppVersionArtifactPurgeOptions purgeOptions = new SSCAppVersionArtifactPurgeOptions();
     
     private static final class SSCAppVersionArtifactPurgeOptions {
-        @Option(names = {"--id"}, description = "Id of the artifact to be deleted")
+        @Parameters(arity="1", description = "Id of the artifact to be purged")
         private String artifactId;
         @ArgGroup(exclusive=false) private SSCAppVersionArtifactPurgeByDateOptions purgeByDateOptions;
         

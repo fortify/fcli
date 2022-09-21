@@ -41,12 +41,12 @@ import picocli.CommandLine.Command;
 @Command(name = "delete")
 public class SSCIssueTemplateDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @CommandLine.Mixin private OutputMixin outputMixin;
-    @CommandLine.Mixin private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolverMixin;
+    @CommandLine.Mixin private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
 
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
         outputMixin.write(unirest.delete(
-                SSCUrls.ISSUE_TEMPLATE(issueTemplateResolverMixin.getIssueTemplateDescriptor(unirest).getId())));
+                SSCUrls.ISSUE_TEMPLATE(issueTemplateResolver.getIssueTemplateDescriptor(unirest).getId())));
         return null;
     }
     

@@ -25,7 +25,7 @@ public class FoDUnirestRunnerMixin {
     @Inject private UnirestRunner runner;
     @Inject private FoDSessionDataManager sessionDataManager;
     @Inject private FoDOAuthHelper oauthHelper;
-    @Mixin private SessionNameMixin sessionNameMixin;
+    @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
     
     public <R> R run(Function<UnirestInstance, R> f) {
         return runner.run(unirest->run(unirest, f));

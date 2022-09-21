@@ -22,7 +22,7 @@ public class SSCUnirestRunnerMixin {
     @Inject private UnirestRunner runner;
     @Inject private SSCSessionDataManager sessionDataManager;
     @Inject private SSCTokenHelper tokenHelper;
-    @Mixin private SessionNameMixin sessionNameMixin;
+    @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
     
     public <R> R run(Function<UnirestInstance, R> f) {
         return runner.run(unirest->run(unirest, f));

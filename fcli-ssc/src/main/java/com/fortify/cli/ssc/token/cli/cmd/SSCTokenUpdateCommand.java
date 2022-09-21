@@ -48,7 +48,7 @@ import picocli.CommandLine.Parameters;
 public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand implements IOutputConfigSupplier {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
     @Mixin private OutputMixin outputMixin;
-    @Parameters(arity="1") private String tokenId;
+    @Parameters(arity="1") private String token;
     @Option(names="--expire-in") private String expireIn;
     @Option(names="--description") private String description;    
     
@@ -58,7 +58,7 @@ public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand implements IO
                 .terminalDate(getExpiresAt())
                 .description(description)
                 .build();
-        outputMixin.write(tokenHelper.updateToken(urlConfig, userCredentials, tokenId, tokenUpdateRequest));
+        outputMixin.write(tokenHelper.updateToken(urlConfig, userCredentials, token, tokenUpdateRequest));
     }
     
     private OffsetDateTime getExpiresAt() {

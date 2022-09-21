@@ -46,7 +46,7 @@ import picocli.CommandLine.Option;
 @Command(name = "update")
 public class SSCIssueTemplateUpdateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @CommandLine.Mixin private OutputMixin outputMixin;
-    @CommandLine.Mixin private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolverMixin;
+    @CommandLine.Mixin private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
     @Option(names={"--name","-n"}, required = false)
     private String name;
     @Option(names={"--description","-d"}, required = false)
@@ -56,7 +56,7 @@ public class SSCIssueTemplateUpdateCommand extends AbstractSSCUnirestRunnerComma
 
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
-        SSCIssueTemplateDescriptor descriptor = issueTemplateResolverMixin.getIssueTemplateDescriptor(unirest);
+        SSCIssueTemplateDescriptor descriptor = issueTemplateResolver.getIssueTemplateDescriptor(unirest);
         ObjectNode updateData = (ObjectNode)descriptor.asJsonNode();
         if ( name!=null && !name.isBlank() ) { updateData.put("name", name); }
         if ( description!=null && !description.isBlank() ) { updateData.put("description", description); }

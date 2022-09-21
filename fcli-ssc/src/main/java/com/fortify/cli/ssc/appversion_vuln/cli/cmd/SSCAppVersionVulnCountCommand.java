@@ -43,7 +43,7 @@ import picocli.CommandLine.Option;
 @Command(name = "count")
 public class SSCAppVersionVulnCountCommand extends AbstractSSCTableOutputCommand {
     @Mixin private SSCAppVersionResolverMixin.From parentResolver;
-    @Option(names="--group-by", defaultValue="FOLDER") private String groupBy; 
+    @Option(names="--by", defaultValue="FOLDER") private String groupingType; 
     @Mixin private SSCAppVersionFilterSetResolverMixin.FilterSetOption filterSetResolver;
 
     // TODO Include options for includeRemoved/Hidden/Suppressed?
@@ -55,7 +55,7 @@ public class SSCAppVersionVulnCountCommand extends AbstractSSCTableOutputCommand
         GetRequest request = unirest.get(SSCUrls.PROJECT_VERSION_ISSUE_GROUPS(appVersionId))
                 .queryString("limit","-1")
                 .queryString("qm", "issues")
-                .queryString("groupingtype", groupBy);
+                .queryString("groupingtype", groupingType);
         if ( filterSetDescriptor!=null ) {
             request.queryString("filterset", filterSetDescriptor.getGuid());
         }
