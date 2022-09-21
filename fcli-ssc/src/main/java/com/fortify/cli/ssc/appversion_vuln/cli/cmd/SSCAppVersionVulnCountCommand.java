@@ -26,6 +26,8 @@ package com.fortify.cli.ssc.appversion_vuln.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.appversion_filterset.cli.mixin.SSCAppVersionFilterSetResolverMixin;
+import com.fortify.cli.ssc.appversion_filterset.helper.SSCAppVersionFilterSetDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 import com.fortify.cli.ssc.util.SSCOutputHelper;
@@ -42,18 +44,20 @@ import picocli.CommandLine.Option;
 public class SSCAppVersionVulnCountCommand extends AbstractSSCTableOutputCommand {
     @Mixin private SSCAppVersionResolverMixin.From parentResolver;
     @Option(names="--group-by", defaultValue="FOLDER") private String groupBy; 
-    @Option(names="--filterset") private String filterSetId; // TODO Use mixin to resolve filter set name or id 
+    @Mixin private SSCAppVersionFilterSetResolverMixin.FilterSetOption filterSetResolver;
 
     // TODO Include options for includeRemoved/Hidden/Suppressed?
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {
-        GetRequest request = unirest.get(SSCUrls.PROJECT_VERSION_ISSUE_GROUPS(parentResolver.getAppVersionId(unirest)))
+        String appVersionId = parentResolver.getAppVersionId(unirest);
+        SSCAppVersionFilterSetDescriptor filterSetDescriptor = filterSetResolver.getFilterSetDescriptor(unirest, appVersionId);
+        GetRequest request = unirest.get(SSCUrls.PROJECT_VERSION_ISSUE_GROUPS(appVersionId))
                 .queryString("limit","-1")
                 .queryString("qm", "issues")
                 .queryString("groupingtype", groupBy);
-        if ( filterSetId!=null ) {
-            request.queryString("filterset", filterSetId);
+        if ( filterSetDescriptor!=null ) {
+            request.queryString("filterset", filterSetDescriptor.getGuid());
         }
         return request;
     }
