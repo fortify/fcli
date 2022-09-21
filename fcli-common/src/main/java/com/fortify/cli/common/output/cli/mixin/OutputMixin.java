@@ -207,7 +207,8 @@ public class OutputMixin {
                 String fieldName = OptionAnnotationHelper.getOptionTargetName(optionSpec, OutputFilter.class);
                 Object value = getOptionValue(optionSpec);
                 if ( value!=null ) {
-                    data = new JsonPathTransformer(String.format("[?(@.%s == \"%s\")]", fieldName, value)).transform(data);
+                    String format = value instanceof String ? "[?(@.%s == \"%s\")]" : "[?(@.%s == %s)]";
+                    data = new JsonPathTransformer(String.format(format, fieldName, value)).transform(data);
                 }
             }
             return data;

@@ -22,46 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.issue_template.cli.cmd;
+package com.fortify.cli.ssc.appversion_filterset.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCIssueTemplateListCommand extends AbstractSSCTableOutputCommand {
-    // TODO Check whether SSC allows for q-based filtering on any of these fields
-    @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
-    private String id;
+public class SSCAppVersionFilterSetListCommand extends AbstractSSCTableOutputCommand {
+    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
+
+    @Option(names="--guid") @OutputFilter @AddAsDefaultColumn
+    private String guid;
     
-    @Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
-    private String name;
+    @Option(names="--title") @OutputFilter @AddAsDefaultColumn
+    private String title;
     
-    @Option(names={"--in-use"}) @OutputFilter @AddAsDefaultColumn
-    private String inUse;
+    @Option(names="--default-filterset", arity="1") @OutputFilter @AddAsDefaultColumn
+    private Boolean defaultFilterSet;
     
-    @Option(names={"--default-template"}, arity="1") @SSCFilterQParam @AddAsDefaultColumn
-    private Boolean defaultTemplate;
-    
-    @Option(names={"--publish-version"}) @OutputFilter @AddAsDefaultColumn
-    private String publishVersion;
-    
-    @Option(names={"--original-filename"}) @OutputFilter @AddAsDefaultColumn
-    private String originalFileName;
-    
-    @Option(names={"--description"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names="--description", hidden=true) @OutputFilter @AddAsDefaultColumn
     private String description;
     
+    @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.ISSUE_TEMPLATES).queryString("limit","-1");
+        return unirest.get(SSCUrls.PROJECT_VERSION_FILTER_SETS(parentResolver.getAppVersionId(unirest)))
+            .queryString("limit","-1");
     }
 }
