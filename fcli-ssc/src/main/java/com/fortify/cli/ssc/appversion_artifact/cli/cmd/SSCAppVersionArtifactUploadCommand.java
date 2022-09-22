@@ -29,8 +29,8 @@ import java.io.File;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
@@ -73,7 +73,7 @@ public class SSCAppVersionArtifactUploadCommand extends AbstractSSCTableOutputCo
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {
-        SSCAppVersionDescriptor av = parentResolver.getAppVersion(unirest);
+        SSCAppVersionDescriptor av = parentResolver.getAppVersionDescriptor(unirest);
         HttpRequestWithBody request = unirest.post(SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()));
         if ( engineType!=null && !engineType.isBlank() ) {
             request.queryString("engineType", engineType);

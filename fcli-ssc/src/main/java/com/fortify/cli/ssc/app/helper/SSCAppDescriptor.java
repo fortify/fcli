@@ -22,9 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion.cli.mixin;
-
-import java.util.Map;
+package com.fortify.cli.ssc.app.helper;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fortify.cli.common.json.JsonNodeHolder;
@@ -33,15 +31,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data @EqualsAndHashCode(callSuper=true)
-public class SSCAppVersionDescriptor extends JsonNodeHolder {
-    private String applicationId;
-    private String applicationName;
-    @JsonProperty("id") private String versionId;
-    @JsonProperty("name") private String versionName;
-    
-    @JsonProperty("project")
-    private void unpackProject(Map<String, String> project) {
-        applicationId = project.get("id");
-        applicationName = project.get("name");
-    }
+public class SSCAppDescriptor extends JsonNodeHolder {
+    @JsonProperty("id") private String applicationId;
+    @JsonProperty("name")private String applicationName;
 }

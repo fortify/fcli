@@ -42,17 +42,17 @@ public class SSCAppVersionListCommand extends AbstractSSCTableOutputCommand {
     @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
     private Integer id;
     
-    @Option(names={"--applicationName"}) @SSCFilterQParam 
+    @Option(names={"--application-name"}) @SSCFilterQParam 
     @OptionTargetName("project.name") @AddAsDefaultColumn 
     private String applicationName;
     
     @Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
     private String name;
     
-    @Option(names={"--issueTemplate"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--issue-template"}) @OutputFilter @AddAsDefaultColumn
     private String issueTemplateName;
     
-    @Option(names={"--createdBy"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--created-by"}) @OutputFilter @AddAsDefaultColumn
     private String createdBy;
 
     protected GetRequest generateRequest(UnirestInstance unirest) {

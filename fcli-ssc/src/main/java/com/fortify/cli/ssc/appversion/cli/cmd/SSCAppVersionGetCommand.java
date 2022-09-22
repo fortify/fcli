@@ -40,7 +40,7 @@ public class SSCAppVersionGetCommand extends AbstractSSCGetCommand {
 
     @Override
     protected JsonNode generateOutput(UnirestInstance unirest) {
-        return appVersionResolver.getAppVersion(unirest).asJsonNode();
+        return appVersionResolver.getAppVersionDescriptor(unirest).asJsonNode();
     }
     
     @Override

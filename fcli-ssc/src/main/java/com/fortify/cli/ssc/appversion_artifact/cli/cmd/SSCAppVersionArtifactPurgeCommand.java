@@ -68,7 +68,7 @@ public class SSCAppVersionArtifactPurgeCommand extends AbstractSSCUnirestRunnerC
         if ( purgeOptions.artifactId!=null && !purgeOptions.artifactId.isBlank() ) {
             result = SSCAppVersionArtifactHelper.purge(unirest, purgeOptions.artifactId);
         } else {
-            String[] versionIds = {purgeOptions.purgeByDateOptions.getAppVersion(unirest).getVersionId()};
+            String[] versionIds = {purgeOptions.purgeByDateOptions.getAppVersionDescriptor(unirest).getVersionId()};
             OffsetDateTime dateTime = PERIOD_HELPER.getCurrentOffsetDateTimeMinusPeriod(purgeOptions.purgeByDateOptions.olderThan);
             SSCAppVersionArtifactPurgeByDateRequest request = SSCAppVersionArtifactPurgeByDateRequest.builder()
                     .projectVersionIds(versionIds)

@@ -5,6 +5,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "appversion",
         subcommands = {
+            SSCAppVersionDeleteCommand.class,
             SSCAppVersionListCommand.class,
             SSCAppVersionGetCommand.class
         }

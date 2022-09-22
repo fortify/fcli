@@ -24,86 +24,60 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.mixin;
 
-import javax.validation.ValidationException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionResolverMixin {
-    private static final String ALIAS = "--appVersion";
+    private static final String ALIAS = "--appversion";
     @ReflectiveAccess
-    public static abstract class AbstractSSCApplicationVersionMixin {
-        public abstract String getVersionNameOrId();
+    public static abstract class AbstractSSCAppVersionResolverMixin {
+        public abstract String getAppVersionNameOrId();
 
         @Option(names = {"--delim"},
                 description = "Change the default delimiter character when using options that accepts " +
                 "\"application:version\" as an argument or parameter.", defaultValue = ":")
         private String delimiter;
 
-        @SneakyThrows
-        public SSCAppVersionDescriptor getAppVersion(UnirestInstance unirestInstance){
-            String versionNameOrId = getVersionNameOrId();
-            
-            GetRequest request = unirestInstance.get("/api/v1/projectVersions?limit=2&fields=id,name,project");
-            
-            try {
-                int versionId = Integer.parseInt(versionNameOrId);
-                request = request.queryString("q", String.format("id:%d", versionId));
-            } catch (NumberFormatException nfe) {
-                String[] appAndVersionName = versionNameOrId.split(delimiter);
-                if ( appAndVersionName.length != 2 ) { 
-                    throw new ValidationException("Application version must be specified as either numeric version id, or in the format <application name>"+delimiter+"<version name>"); 
-                }
-                request = request.queryString("q", String.format("project.name:\"%s\",name:\"%s\"", appAndVersionName[0], appAndVersionName[1]));
-            }
-            JsonNode versions = request.asObject(ObjectNode.class).getBody().get("data");
-            if ( versions.size()==0 ) {
-                throw new ValidationException("No application version found for application version name or id: "+versionNameOrId);
-            } else if ( versions.size()>1 ) {
-                throw new ValidationException("Multiple application versions found for application version name or id: "+versionNameOrId);
-            }
-            return JsonHelper.treeToValue(versions.get(0), SSCAppVersionDescriptor.class);
+        public SSCAppVersionDescriptor getAppVersionDescriptor(UnirestInstance unirest, String... fields){
+            return SSCAppVersionHelper.getAppVersion(unirest, getAppVersionNameOrId(), delimiter, fields);
         }
         
-        public String getAppVersionId(UnirestInstance unirestInstance) {
-            return getAppVersion(unirestInstance).getVersionId();
+        public String getAppVersionId(UnirestInstance unirest) {
+            return getAppVersionDescriptor(unirest, "id").getVersionId();
         }
     }
     
     // get/retrieve/delete/download version <entity> --from
     @ReflectiveAccess
-    public static class From extends AbstractSSCApplicationVersionMixin {
+    public static class From extends AbstractSSCAppVersionResolverMixin {
         @Option(names = {"--from", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
-        @Getter private String versionNameOrId;
+        @Getter private String appVersionNameOrId;
     }
     
     // create/update version <entity> --for <version>
     @ReflectiveAccess
-    public static class For extends AbstractSSCApplicationVersionMixin {
+    public static class For extends AbstractSSCAppVersionResolverMixin {
         @Option(names = {"--for", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
-        @Getter private String versionNameOrId;
+        @Getter private String appVersionNameOrId;
     }
     
     // upload version <entity> --to <version>
     @ReflectiveAccess
-    public static class To extends AbstractSSCApplicationVersionMixin {
+    public static class To extends AbstractSSCAppVersionResolverMixin {
         @Option(names = {"--to", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
-        @Getter private String versionNameOrId;
+        @Getter private String appVersionNameOrId;
     }
     
     // delete|update <versionNameOrId>
     @ReflectiveAccess
-    public static class PositionalParameter extends AbstractSSCApplicationVersionMixin {
+    public static class PositionalParameter extends AbstractSSCAppVersionResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationVersionMixin")
-        @Getter private String versionNameOrId;
+        @Getter private String appVersionNameOrId;
     }
 }

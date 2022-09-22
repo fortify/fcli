@@ -22,27 +22,40 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.app.cli.cmd;
+package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.ssc.app.cli.mixin.SSCAppResolverMixin;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
+import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.SneakyThrows;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "get")
-public class SSCAppGetCommand extends AbstractSSCGetCommand {
-    @Mixin private SSCAppResolverMixin.PositionalParameter appResolver;
-    
-    @Override
-    protected JsonNode generateOutput(UnirestInstance unirest) {
-        return appResolver.getAppDescriptor(unirest).asJsonNode();
+@Command(name = "delete")
+public class SSCAppVersionDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+    @CommandLine.Mixin private OutputMixin outputMixin;
+    @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
+
+    @SneakyThrows
+    protected Void run(UnirestInstance unirest) {
+        SSCAppVersionDescriptor descriptor = appVersionResolver.getAppVersionDescriptor(unirest, "id,name,project,createdBy");
+        unirest.delete(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())).asObject(JsonNode.class).getBody();
+        outputMixin.write(descriptor.asObjectNode().put("action", "DELETED"));
+        return null;
     }
     
     @Override
-    protected boolean isOutputWrappedInDataObject() { return false; }
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return SSCOutputConfigHelper.tableFromObjects().defaultColumns("id#project.name#name#createdBy#action");
+    }
 }
