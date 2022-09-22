@@ -24,11 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.role.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
 import com.fortify.cli.ssc.role.cli.mixin.SSCRoleResolverMixin;
-import com.fortify.cli.ssc.util.SSCOutputHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -37,7 +37,7 @@ import picocli.CommandLine.Command;
 
 @ReflectiveAccess
 @Command(name = "get")
-public class SSCRoleGetCommand extends AbstractSSCTableOutputCommand {
+public class SSCRoleGetCommand extends AbstractSSCGetCommand {
     @Mixin
     private SSCRoleResolverMixin.PositionalParameter role;
 
@@ -46,8 +46,11 @@ public class SSCRoleGetCommand extends AbstractSSCTableOutputCommand {
     }
 
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputHelper.defaultTableOutputConfig()
-                .defaultColumns("id#name#permissionIds");
+    protected JsonNode generateOutput(UnirestInstance unirest) {
+        return unirest.get(SSCUrls.ROLE(role.getRoleId(unirest)))
+                .asObject(ObjectNode.class).getBody();
     }
+
+    @Override
+    protected boolean isOutputWrappedInDataObject() { return true; }
 }
