@@ -33,6 +33,7 @@ public class SSCBulkRequestBuilder {
      * @return Self for chaining
      */
     public SSCBulkRequestBuilder request(String name, HttpRequest<?> request) {
+        if ( request==null ) { return this; }
         if ( nameToIndexMap.containsKey(name) ) {
             throw new IllegalArgumentException(String.format("Request name '%s' was already added to bulk request", name));
         }

@@ -24,12 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_attribute.cli.cmd;
 
-import java.util.Map;
-
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateHelper;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
@@ -41,20 +40,18 @@ import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "set")
 public class SSCAppVersionAttributeSetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @Parameters(index = "0..*", arity = "1..*", paramLabel = "[CATEGORY:]ATTR=VALUE[,VALUE...]")
-    private Map<String,String> attributes;
+    @Mixin private SSCAppVersionAttributeUpdateMixin.RequiredPositionalParameter attrUpdateMixin;
     @Mixin private SSCAppVersionResolverMixin.For parentResolver;
     @Mixin private OutputMixin outputMixin;
     
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
         SSCAttributeDefinitionHelper attrDefHelper = new SSCAttributeDefinitionHelper(unirest);
-        SSCAppVersionAttributeUpdateHelper attrUpdateHelper = new SSCAppVersionAttributeUpdateHelper(attrDefHelper, attributes);
+        SSCAppVersionAttributeUpdateHelper attrUpdateHelper = new SSCAppVersionAttributeUpdateHelper(attrDefHelper, attrUpdateMixin.getAttributes());
         String applicationVersionId = parentResolver.getAppVersionId(unirest);
         
         outputMixin.write(

@@ -25,7 +25,6 @@
 package com.fortify.cli.ssc.appversion_auth_entity.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitySpecPredicate;
@@ -35,22 +34,41 @@ import com.fortify.cli.ssc.rest.SSCUrls;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 
-public final class SSCAppVersionDeleteAuthEntitiesHelper {
-    public static final HttpRequest<?> generateUpdateRequest(UnirestInstance unirest, String appVersionId, String[] authEntitySpecs, boolean allowMultipleMatches) {
+public final class SSCAppVersionAuthEntitiesHelper {
+    private final UnirestInstance unirest;
+    private final String appVersionId;
+    private ArrayNode currentAuthEntities;
+    private ArrayNode allAuthEntities;
+    
+    public SSCAppVersionAuthEntitiesHelper(UnirestInstance unirest, String appVersionId) {
+        this.unirest = unirest;
+        this.appVersionId = appVersionId;
+        this.currentAuthEntities = (ArrayNode)unirest.get(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(appVersionId))
+                .queryString("limit","-1").asObject(JsonNode.class).getBody().get("data");
+    }
+    
+    public final HttpRequest<?> generateUpdateRequest() {
         return unirest
                 .put(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(appVersionId))
-                .body(generateBody(unirest, appVersionId, authEntitySpecs, allowMultipleMatches));
-
+                .body(currentAuthEntities);
     }
-
-    private static final ArrayNode generateBody(UnirestInstance unirest, String appVersionId, String[] authEntitySpecs, boolean allowMultipleMatches) {
-        ArrayNode existingAuthEntities = (ArrayNode)unirest
-                .get(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(appVersionId)).queryString("limit","-1")
-                .asObject(JsonNode.class).getBody().get("data");
-        ArrayNode result = new ObjectMapper().createArrayNode();
-        result.addAll(JsonHelper.stream(existingAuthEntities)
+    
+    public final SSCAppVersionAuthEntitiesHelper add(boolean allowMultipleMatches, String... authEntitySpecs) {
+        if ( allAuthEntities==null ) {
+            allAuthEntities = (ArrayNode)unirest.get(SSCUrls.AUTH_ENTITIES)
+                    .queryString("limit","-1").asObject(JsonNode.class).getBody().get("data");
+        }
+        currentAuthEntities.addAll(
+                JsonHelper.stream(allAuthEntities)
+                    .filter(new SSCAuthEntitySpecPredicate(authEntitySpecs, MatchMode.INCLUDE, allowMultipleMatches))
+                    .collect(JsonHelper.arrayNodeCollector()));
+        return this;
+    }
+    
+    public final SSCAppVersionAuthEntitiesHelper remove(boolean allowMultipleMatches, String... authEntitySpecs) {
+        currentAuthEntities = JsonHelper.stream(currentAuthEntities)
                 .filter(new SSCAuthEntitySpecPredicate(authEntitySpecs, MatchMode.EXCLUDE, allowMultipleMatches))
-                .collect(JsonHelper.arrayNodeCollector()));
-        return result;
+                .collect(JsonHelper.arrayNodeCollector());
+        return this;
     }
 }

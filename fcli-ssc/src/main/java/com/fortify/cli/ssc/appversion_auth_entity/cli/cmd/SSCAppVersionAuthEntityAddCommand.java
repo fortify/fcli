@@ -28,7 +28,8 @@ import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
-import com.fortify.cli.ssc.appversion_auth_entity.helper.SSCAppVersionAddAuthEntitiesHelper;
+import com.fortify.cli.ssc.appversion_auth_entity.cli.mixin.SSCAppVersionAuthEntityMixin;
+import com.fortify.cli.ssc.appversion_auth_entity.helper.SSCAppVersionAuthEntitiesHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
@@ -37,13 +38,11 @@ import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "add")
 public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @Parameters(index = "0..*", arity = "1..*")
-    private String[] authEntitySpecs;
+    @Mixin private SSCAppVersionAuthEntityMixin.RequiredPositionalParameter authEntityMixin;
     @Mixin private SSCAppVersionResolverMixin.For parentResolver;
     @Mixin private OutputMixin outputMixin;
     @Option(names="--allowMultiMatch", defaultValue = "false")
@@ -53,7 +52,9 @@ public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCUnirestRunnerC
     protected Void run(UnirestInstance unirest) {
         String applicationVersionId = parentResolver.getAppVersionId(unirest);
         outputMixin.write(
-            SSCAppVersionAddAuthEntitiesHelper.generateUpdateRequest(unirest, applicationVersionId, authEntitySpecs, allowMultiMatch)
+            new SSCAppVersionAuthEntitiesHelper(unirest, applicationVersionId)
+                .add(allowMultiMatch, authEntityMixin.getAuthEntitySpecs())
+                .generateUpdateRequest()
         );
         
         return null;
