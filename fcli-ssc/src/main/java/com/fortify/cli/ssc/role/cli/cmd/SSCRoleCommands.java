@@ -7,7 +7,9 @@ import picocli.CommandLine.Command;
         aliases = {},
         subcommands = {
                 SSCRoleListCommand.class,
-                SSCRoleGetCommand.class
+                SSCRoleGetCommand.class,
+                SSCRoleCreateCommand.class,
+                SSCRoleDeleteCommand.class
         }
 
 )
