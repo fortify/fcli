@@ -2,6 +2,7 @@ package com.fortify.cli.common.output.cli.mixin.filter;
 
 import java.lang.reflect.Field;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Option;
 
@@ -13,6 +14,7 @@ import picocli.CommandLine.Option;
  * @author rsenden
  *
  */
+@ReflectiveAccess
 public class DefaultOptionTargetNameProvider implements IOptionTargetNameProvider {
     @Override
     public String getOptionTargetName(OptionSpec optionSpec) {
