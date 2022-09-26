@@ -42,6 +42,25 @@ public final class SSCAuthEntitySpecPredicate implements Predicate<JsonNode> {
                 .count() > 0;
         return matchMode==MatchMode.INCLUDE ? isMatching : !isMatching;
     }
+    
+    public String[] getUnmatched() {
+        return Stream.of(authEntities).filter(Predicate.not(previousMatchedAuthEntities::contains)).toArray(String[]::new);
+    }
+    
+    public void checkUnmatched() {
+        String[] unmatched = getUnmatched();
+        if ( unmatched!=null && unmatched.length>0 ) {
+            throw new IllegalArgumentException("The following auth entities cannot be found: "+String.join(", ", unmatched));
+        }
+    }
+    
+    public void logUnmatched(String msg) {
+        String[] unmatched = getUnmatched();
+        if ( unmatched!=null && unmatched.length>0 ) {
+            // TODO Use proper logging
+            System.err.println(msg+String.join(", ", unmatched));
+        }
+    }
 
     private String getLowerCase(JsonNode node, String field) {
         String result = JsonHelper.evaluateJsonPath(node, field, String.class);

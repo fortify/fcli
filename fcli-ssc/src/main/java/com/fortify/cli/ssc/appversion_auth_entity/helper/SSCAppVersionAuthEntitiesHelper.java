@@ -27,6 +27,7 @@ package com.fortify.cli.ssc.appversion_auth_entity.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitiesHelper;
 import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitySpecPredicate;
 import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitySpecPredicate.MatchMode;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -37,12 +38,17 @@ import kong.unirest.UnirestInstance;
 public final class SSCAppVersionAuthEntitiesHelper {
     private final UnirestInstance unirest;
     private final String appVersionId;
+    private final SSCAuthEntitiesHelper authEntitiesHelper;
     private ArrayNode currentAuthEntities;
-    private ArrayNode allAuthEntities;
     
     public SSCAppVersionAuthEntitiesHelper(UnirestInstance unirest, String appVersionId) {
+        this(unirest, new SSCAuthEntitiesHelper(unirest), appVersionId);
+    }
+    
+    public SSCAppVersionAuthEntitiesHelper(UnirestInstance unirest, SSCAuthEntitiesHelper authEntitiesHelper, String appVersionId) {
         this.unirest = unirest;
         this.appVersionId = appVersionId;
+        this.authEntitiesHelper = authEntitiesHelper;
         this.currentAuthEntities = (ArrayNode)unirest.get(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(appVersionId))
                 .queryString("limit","-1").asObject(JsonNode.class).getBody().get("data");
     }
@@ -54,21 +60,16 @@ public final class SSCAppVersionAuthEntitiesHelper {
     }
     
     public final SSCAppVersionAuthEntitiesHelper add(boolean allowMultipleMatches, String... authEntitySpecs) {
-        if ( allAuthEntities==null ) {
-            allAuthEntities = (ArrayNode)unirest.get(SSCUrls.AUTH_ENTITIES)
-                    .queryString("limit","-1").asObject(JsonNode.class).getBody().get("data");
-        }
-        currentAuthEntities.addAll(
-                JsonHelper.stream(allAuthEntities)
-                    .filter(new SSCAuthEntitySpecPredicate(authEntitySpecs, MatchMode.INCLUDE, allowMultipleMatches))
-                    .collect(JsonHelper.arrayNodeCollector()));
+        currentAuthEntities.addAll(authEntitiesHelper.getMatchingAuthEntities(allowMultipleMatches, true, authEntitySpecs));
         return this;
     }
     
     public final SSCAppVersionAuthEntitiesHelper remove(boolean allowMultipleMatches, String... authEntitySpecs) {
+        SSCAuthEntitySpecPredicate predicate = new SSCAuthEntitySpecPredicate(authEntitySpecs, MatchMode.EXCLUDE, allowMultipleMatches);
         currentAuthEntities = JsonHelper.stream(currentAuthEntities)
-                .filter(new SSCAuthEntitySpecPredicate(authEntitySpecs, MatchMode.EXCLUDE, allowMultipleMatches))
+                .filter(predicate)
                 .collect(JsonHelper.arrayNodeCollector());
+        predicate.logUnmatched("WARN: The following auth entities are not being removed as they are not assigned to the application version: ");
         return this;
     }
 }
