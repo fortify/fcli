@@ -25,12 +25,9 @@
 package com.fortify.cli.ssc.role.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
 import com.fortify.cli.ssc.role.cli.mixin.SSCRoleResolverMixin;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Command;
@@ -39,18 +36,13 @@ import picocli.CommandLine.Command;
 @Command(name = "get")
 public class SSCRoleGetCommand extends AbstractSSCGetCommand {
     @Mixin
-    private SSCRoleResolverMixin.PositionalParameter role;
-
-    protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.ROLE(role.getRoleId(unirest)));
-    }
+    private SSCRoleResolverMixin.PositionalParameter roleResolver;
 
     @Override
     protected JsonNode generateOutput(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.ROLE(role.getRoleId(unirest)))
-                .asObject(ObjectNode.class).getBody();
+        return roleResolver.getRole(unirest).asJsonNode();
     }
 
     @Override
-    protected boolean isOutputWrappedInDataObject() { return true; }
+    protected boolean isOutputWrappedInDataObject() { return false; }
 }

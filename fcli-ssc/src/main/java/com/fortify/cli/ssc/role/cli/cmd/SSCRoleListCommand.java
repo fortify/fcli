@@ -28,6 +28,7 @@ import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
+import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -37,13 +38,25 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCRoleListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
+
+    @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
     private String id;
 
-    @Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
     private String name;
 
+    @Option(names={"--builtIn"}) @OutputFilter
+    private Boolean builtIn;
+
+    @Option(names={"--allApplicationRole"}) @OutputFilter
+    private Boolean allApplicationRole;
+
+    @Option(names={"--description"}, hidden = true) @AddAsDefaultColumn
+    private String description;
+
+    @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.ROLES).queryString("limit", "-1");
     }
+
 }

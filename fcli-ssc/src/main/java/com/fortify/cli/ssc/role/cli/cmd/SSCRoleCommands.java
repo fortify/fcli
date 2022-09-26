@@ -6,10 +6,10 @@ import picocli.CommandLine.Command;
         name = "role",
         aliases = {},
         subcommands = {
-                SSCRoleListCommand.class,
-                SSCRoleGetCommand.class,
                 SSCRoleCreateCommand.class,
-                SSCRoleDeleteCommand.class
+                SSCRoleDeleteCommand.class,
+                SSCRoleGetCommand.class,
+                SSCRoleListCommand.class
         }
 
 )

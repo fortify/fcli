@@ -24,17 +24,14 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.role.cli.mixin;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
-import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.role.helper.SSCRoleDescriptor;
+import com.fortify.cli.ssc.role.helper.SSCRoleHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import javax.validation.ValidationException;
 
 @ReflectiveAccess
 public class SSCRoleResolverMixin {
@@ -43,27 +40,12 @@ public class SSCRoleResolverMixin {
         public abstract String getRoleNameOrId();
 
         @SneakyThrows
-        public String getRole(UnirestInstance unirestInstance){
-            String roleNameOrId = getRoleNameOrId();
-
-            GetRequest request = unirestInstance.get(SSCUrls.ROLE(roleNameOrId))
-                    .queryString("fields", "id,name");
-
-            try{
-                return request.asObject(ObjectNode.class).getBody().get("data").get("id").asText();
-            }catch (UnexpectedHttpResponseException | NullPointerException e){
-                request = unirestInstance.get(SSCUrls.ROLES)
-                        .queryString("q", String.format("name:\"%s\"",roleNameOrId));
-                try{
-                    return request.asObject(ObjectNode.class).getBody().get("data").get(0).get("id").asText();
-                }catch (UnexpectedHttpResponseException | NullPointerException ee){
-                    throw new ValidationException("Unable to find the specified role.");
-                }
-            }
+        public SSCRoleDescriptor getRole(UnirestInstance unirestInstance){
+            return SSCRoleHelper.getRole(unirestInstance, getRoleNameOrId());
         }
         
         public String getRoleId(UnirestInstance unirestInstance) {
-            return getRole(unirestInstance);
+            return getRole(unirestInstance).getRoleId();
         }
     }
 

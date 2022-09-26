@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
@@ -80,10 +81,7 @@ public class SSCRoleCreateCommand extends AbstractSSCUnirestRunnerCommand implem
         newRole.put("name",name);
         newRole.put("description", description);
         newRole.put("allApplicationRole", allApplicationRole);
-
-        ArrayNode permissionsNode = (new ObjectMapper()).createArrayNode();
-        Arrays.stream(permissionIds).forEach(permissionsNode::add);
-        newRole.set("permissionIds", permissionsNode);
+        newRole.set("permissionIds", JsonHelper.toArrayNode(permissionIds));
 
         outputMixin.write(
                 unirest.post(SSCUrls.ROLES).body(newRole)
