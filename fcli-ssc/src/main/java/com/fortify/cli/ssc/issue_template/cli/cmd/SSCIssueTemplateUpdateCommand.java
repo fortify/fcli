@@ -68,6 +68,6 @@ public class SSCIssueTemplateUpdateCommand extends AbstractSSCUnirestRunnerComma
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData();
+        return SSCOutputConfigHelper.table();
     }
 }

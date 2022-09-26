@@ -44,6 +44,11 @@ public class SSCIssueTemplateResolverMixin {
                     ? null 
                     : new SSCIssueTemplateHelper(unirest).getDescriptorByNameOrId(issueTemplateNameOrId, true);
         }
+        
+        public SSCIssueTemplateDescriptor getIssueTemplateDescriptorOrDefault(UnirestInstance unirest) {
+            SSCIssueTemplateDescriptor descriptor = getIssueTemplateDescriptor(unirest);
+            return descriptor!=null ? descriptor : SSCIssueTemplateHelper.getDefaultIssueTemplateDescriptor(unirest);
+        }
     }
     
     @ReflectiveAccess

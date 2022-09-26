@@ -67,7 +67,7 @@ public class SSCAppVersionArtifactApproveCommand extends AbstractSSCTableOutputC
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData()
+        return SSCOutputConfigHelper.table()
                 .defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
     }
 }

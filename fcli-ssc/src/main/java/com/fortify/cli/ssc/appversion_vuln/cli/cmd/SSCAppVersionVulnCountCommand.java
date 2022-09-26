@@ -64,7 +64,7 @@ public class SSCAppVersionVulnCountCommand extends AbstractSSCTableOutputCommand
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData()
+        return SSCOutputConfigHelper.table()
                 .defaultColumns("cleanName:Name#totalCount:Total#auditedCount:Audited");
     }
 }

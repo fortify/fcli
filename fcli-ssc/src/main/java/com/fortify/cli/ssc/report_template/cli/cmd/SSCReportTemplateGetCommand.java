@@ -42,7 +42,4 @@ public class SSCReportTemplateGetCommand extends AbstractSSCGetCommand {
     protected JsonNode generateOutput(UnirestInstance unirest) {
         return reportTemplateResolver.getReportTemplateDescriptor(unirest).asJsonNode();
     }
-    
-    @Override
-    protected boolean isOutputWrappedInDataObject() { return false; }
 }

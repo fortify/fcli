@@ -42,7 +42,4 @@ public class SSCAppVersionGetCommand extends AbstractSSCGetCommand {
     protected JsonNode generateOutput(UnirestInstance unirest) {
         return appVersionResolver.getAppVersionDescriptor(unirest).asJsonNode();
     }
-    
-    @Override
-    protected boolean isOutputWrappedInDataObject() { return false; }
 }

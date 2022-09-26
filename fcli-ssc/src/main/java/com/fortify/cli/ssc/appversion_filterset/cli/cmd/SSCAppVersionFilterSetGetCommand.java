@@ -44,7 +44,4 @@ public class SSCAppVersionFilterSetGetCommand extends AbstractSSCGetCommand {
     protected JsonNode generateOutput(UnirestInstance unirest) {
         return filterSetResolver.getFilterSetDescriptor(unirest, parentResolver.getAppVersionId(unirest)).asJsonNode();
     }
-    
-    @Override
-    protected boolean isOutputWrappedInDataObject() { return false; }
 }

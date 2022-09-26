@@ -41,7 +41,7 @@ public class SSCAppResolverMixin {
         public abstract String getAppNameOrId();
 
         public SSCAppDescriptor getAppDescriptor(UnirestInstance unirest, String... fields){
-            return SSCAppHelper.getApp(unirest, getAppNameOrId(), fields);
+            return SSCAppHelper.getApp(unirest, getAppNameOrId(), true, fields);
         }
         
         public String getAppId(UnirestInstance unirest) {

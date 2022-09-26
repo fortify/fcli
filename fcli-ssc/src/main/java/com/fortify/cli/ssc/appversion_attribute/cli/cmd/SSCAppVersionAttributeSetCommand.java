@@ -66,7 +66,7 @@ public class SSCAppVersionAttributeSetCommand extends AbstractSSCUnirestRunnerCo
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData()
+        return SSCOutputConfigHelper.table()
             .defaultColumns("id#category#guid#name#valueString");
     }
 }

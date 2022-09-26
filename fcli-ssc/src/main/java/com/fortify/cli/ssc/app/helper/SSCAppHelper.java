@@ -34,7 +34,7 @@ import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 
 public class SSCAppHelper {
-    public static final SSCAppDescriptor getApp(UnirestInstance unirestInstance, String appNameOrId, String... fields) {
+    public static final SSCAppDescriptor getApp(UnirestInstance unirestInstance, String appNameOrId, boolean failIfNotFound, String... fields) {
         GetRequest request = unirestInstance.get("/api/v1/projects?limit=2");
         if ( fields!=null && fields.length>0 ) {
             request.queryString("fields", String.join(",", fields));
@@ -47,11 +47,11 @@ public class SSCAppHelper {
             request = request.queryString("q", String.format("name:\"%s\"", appNameOrId));
         }
         JsonNode apps = request.asObject(ObjectNode.class).getBody().get("data");
-        if ( apps.size()==0 ) {
+        if ( failIfNotFound && apps.size()==0 ) {
             throw new ValidationException("No application found for application name or id: "+appNameOrId);
         } else if ( apps.size()>1 ) {
             throw new ValidationException("Multiple applications found for application name or id: "+appNameOrId);
         }
-        return JsonHelper.treeToValue(apps.get(0), SSCAppDescriptor.class);
+        return apps.size()==0 ? null : JsonHelper.treeToValue(apps.get(0), SSCAppDescriptor.class);
     }
 }

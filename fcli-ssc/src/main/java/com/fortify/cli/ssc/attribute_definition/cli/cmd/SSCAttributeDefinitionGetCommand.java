@@ -42,9 +42,4 @@ public class SSCAttributeDefinitionGetCommand extends AbstractSSCGetCommand {
     protected JsonNode generateOutput(UnirestInstance unirest) {
         return attributeDefinitionResolver.getAttributeDefinitionDescriptor(unirest).asJsonNode();
     }
-    
-    @Override
-    protected boolean isOutputWrappedInDataObject() {
-        return false;
-    }
 }

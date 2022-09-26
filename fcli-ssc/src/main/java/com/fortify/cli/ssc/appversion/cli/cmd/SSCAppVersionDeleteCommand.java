@@ -56,6 +56,6 @@ public class SSCAppVersionDeleteCommand extends AbstractSSCUnirestRunnerCommand 
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromObjects().defaultColumns("id#project.name#name#createdBy#action");
+        return SSCOutputConfigHelper.table().defaultColumns("id#project.name#name#createdBy#action");
     }
 }

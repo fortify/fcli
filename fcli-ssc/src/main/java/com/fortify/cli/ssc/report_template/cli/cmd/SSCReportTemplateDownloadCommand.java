@@ -64,7 +64,7 @@ public class SSCReportTemplateDownloadCommand extends AbstractSSCUnirestRunnerCo
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData()
+        return SSCOutputConfigHelper.table()
                 .defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
     }
 }

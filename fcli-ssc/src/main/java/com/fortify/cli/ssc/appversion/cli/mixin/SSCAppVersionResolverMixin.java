@@ -24,28 +24,49 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.mixin;
 
+import javax.validation.ValidationException;
+
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.Data;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionResolverMixin {
     private static final String ALIAS = "--appversion";
+    
     @ReflectiveAccess
-    public static abstract class AbstractSSCAppVersionResolverMixin {
-        public abstract String getAppVersionNameOrId();
-
+    public static class SSCAppVersionDelimiterMixin {
         @Option(names = {"--delim"},
                 description = "Change the default delimiter character when using options that accepts " +
                 "\"application:version\" as an argument or parameter.", defaultValue = ":")
-        private String delimiter;
+        @Getter private String delimiter;
+        
+        public final SSCAppAndVersionNameDescriptor getAppAndVersionNameDescriptor(String appAndVersionName) {
+            if ( appAndVersionName==null ) { return null; }
+            String[] appAndVersionNameArray = appAndVersionName.split(delimiter);
+            if ( appAndVersionNameArray.length != 2 ) { 
+                throw new ValidationException("Application and version name must be specified in the format <application name>"+delimiter+"<version name>"); 
+            }
+            return new SSCAppAndVersionNameDescriptor(appAndVersionNameArray[0], appAndVersionNameArray[1]);
+        }
+        
+        @Data
+        public static final class SSCAppAndVersionNameDescriptor {
+            private final String appName, versionName;
+        }
+    }
+    
+    @ReflectiveAccess
+    public static abstract class AbstractSSCAppVersionResolverMixin extends SSCAppVersionDelimiterMixin {
+        public abstract String getAppVersionNameOrId();
 
         public SSCAppVersionDescriptor getAppVersionDescriptor(UnirestInstance unirest, String... fields){
-            return SSCAppVersionHelper.getAppVersion(unirest, getAppVersionNameOrId(), delimiter, fields);
+            return SSCAppVersionHelper.getAppVersion(unirest, getAppVersionNameOrId(), getDelimiter(), fields);
         }
         
         public String getAppVersionId(UnirestInstance unirest) {

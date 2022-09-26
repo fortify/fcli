@@ -42,9 +42,4 @@ public class SSCIssueTemplateGetCommand extends AbstractSSCGetCommand {
     protected JsonNode generateOutput(UnirestInstance unirest) {
         return issueTemplateResolver.getIssueTemplateDescriptor(unirest).asJsonNode();
     }
-    
-    @Override
-    protected boolean isOutputWrappedInDataObject() {
-        return false;
-    }
 }

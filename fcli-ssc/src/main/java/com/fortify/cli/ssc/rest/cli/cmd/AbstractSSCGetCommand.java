@@ -40,10 +40,6 @@ public abstract class AbstractSSCGetCommand extends AbstractSSCUnirestRunnerComm
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return isOutputWrappedInDataObject()
-                ? SSCOutputConfigHelper.detailsFromData()
-                : SSCOutputConfigHelper.detailsFromObjects();
+        return SSCOutputConfigHelper.details();
     }
-    
-    protected boolean isOutputWrappedInDataObject() { return true; }
 }

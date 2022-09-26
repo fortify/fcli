@@ -59,6 +59,6 @@ public class SSCSeedBundleUploadCommand extends AbstractSSCUnirestRunnerCommand 
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData();
+        return SSCOutputConfigHelper.table();
     }
 }

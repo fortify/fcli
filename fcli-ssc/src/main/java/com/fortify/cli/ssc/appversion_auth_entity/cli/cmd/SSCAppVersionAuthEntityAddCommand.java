@@ -62,7 +62,7 @@ public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCUnirestRunnerC
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData()
+        return SSCOutputConfigHelper.table()
             .defaultColumns("id#entityName:Name#displayName#type#email#isLdap");
     }
 }

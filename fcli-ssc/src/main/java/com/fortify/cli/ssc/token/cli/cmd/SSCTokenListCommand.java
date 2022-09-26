@@ -89,7 +89,7 @@ public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IOut
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData()
+        return SSCOutputConfigHelper.table()
                 .defaultColumns(outputMixin.getDefaultColumns());
     }
 }

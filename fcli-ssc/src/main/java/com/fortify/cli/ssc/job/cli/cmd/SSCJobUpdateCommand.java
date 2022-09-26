@@ -58,6 +58,6 @@ public class SSCJobUpdateCommand extends AbstractSSCUnirestRunnerCommand impleme
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData();
+        return SSCOutputConfigHelper.table();
     }
 }

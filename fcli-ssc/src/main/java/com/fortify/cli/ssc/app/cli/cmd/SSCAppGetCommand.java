@@ -42,7 +42,4 @@ public class SSCAppGetCommand extends AbstractSSCGetCommand {
     protected JsonNode generateOutput(UnirestInstance unirest) {
         return appResolver.getAppDescriptor(unirest).asJsonNode();
     }
-    
-    @Override
-    protected boolean isOutputWrappedInDataObject() { return false; }
 }
