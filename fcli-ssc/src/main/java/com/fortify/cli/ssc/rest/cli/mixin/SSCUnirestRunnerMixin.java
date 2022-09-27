@@ -56,6 +56,7 @@ public class SSCUnirestRunnerMixin {
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, sessionData.getUrlConfig());
+        unirest.config().requestCompression(false); // TODO For some reason, in native binaries, compression may cause issues
         unirest.config().addDefaultHeader("Authorization", "FortifyToken "+new String(sessionData.getActiveToken()));
     }
     
