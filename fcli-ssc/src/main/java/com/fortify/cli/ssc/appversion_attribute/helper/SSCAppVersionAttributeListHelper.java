@@ -122,7 +122,7 @@ public final class SSCAppVersionAttributeListHelper {
         SSCBulkRequestBuilder bulkRequest = new SSCBulkRequestBuilder();
         requests.entrySet().forEach(e->bulkRequest.request(e.getKey(), e.getValue()));
         if ( cachedAttributeDefinitionsBody==null ) {
-            bulkRequest.request("_defs", unirest.get("/api/v1/attributeDefinitions?limit=-1&fields=guid,name,category&orderby=category,name"));
+            bulkRequest.request("_defs", unirest.get("/api/v1/attributeDefinitions?limit=-1&fields=id,guid,name,category&orderby=category,name"));
         }
         bulkRequest.request("_attrs", unirest.get("/api/v1/projectVersions/{id}/attributes").routeParam("id", applicationVersionId));
         return bulkRequest;

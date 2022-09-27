@@ -29,6 +29,7 @@ import com.fortify.cli.common.json.JsonNodeHolder;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 
 @Data @EqualsAndHashCode(callSuper=true)
 public class SSCAttributeDefinitionDescriptor extends JsonNodeHolder {
@@ -38,8 +39,13 @@ public class SSCAttributeDefinitionDescriptor extends JsonNodeHolder {
     private String category;
     private String type;
     private boolean required;
+    @Accessors(fluent=true) private boolean hasDefault;
     
     public JsonNode getOptions() {
         return asJsonNode().get("options");
+    }
+    
+    public String getFullName() {
+        return category+":"+name;
     }
 }

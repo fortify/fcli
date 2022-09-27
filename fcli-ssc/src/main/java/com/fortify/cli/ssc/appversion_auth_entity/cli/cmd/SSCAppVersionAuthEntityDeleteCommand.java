@@ -29,7 +29,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_auth_entity.cli.mixin.SSCAppVersionAuthEntityMixin;
-import com.fortify.cli.ssc.appversion_auth_entity.helper.SSCAppVersionAuthEntitiesHelper;
+import com.fortify.cli.ssc.appversion_auth_entity.helper.SSCAppVersionAuthEntitiesUpdateBuilder;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
@@ -52,9 +52,9 @@ public class SSCAppVersionAuthEntityDeleteCommand extends AbstractSSCUnirestRunn
     protected Void run(UnirestInstance unirest) {
         String applicationVersionId = parentResolver.getAppVersionId(unirest);
         outputMixin.write(
-                new SSCAppVersionAuthEntitiesHelper(unirest, applicationVersionId)
+                new SSCAppVersionAuthEntitiesUpdateBuilder(unirest)
                 .remove(allowMultiMatch, authEntityMixin.getAuthEntitySpecs())
-                .generateUpdateRequest()
+                .buildRequest(applicationVersionId)
         );
         
         return null;

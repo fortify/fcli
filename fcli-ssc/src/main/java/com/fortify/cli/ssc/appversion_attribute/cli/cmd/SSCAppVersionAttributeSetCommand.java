@@ -30,7 +30,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
-import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateHelper;
+import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateBuilder;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
@@ -51,13 +51,14 @@ public class SSCAppVersionAttributeSetCommand extends AbstractSSCUnirestRunnerCo
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
         SSCAttributeDefinitionHelper attrDefHelper = new SSCAttributeDefinitionHelper(unirest);
-        SSCAppVersionAttributeUpdateHelper attrUpdateHelper = new SSCAppVersionAttributeUpdateHelper(attrDefHelper, attrUpdateMixin.getAttributes());
+        SSCAppVersionAttributeUpdateBuilder attrUpdateHelper = new SSCAppVersionAttributeUpdateBuilder(unirest, attrDefHelper)
+                .add(attrUpdateMixin.getAttributes());
         String applicationVersionId = parentResolver.getAppVersionId(unirest);
         
         outputMixin.write(
             new SSCAppVersionAttributeListHelper()
                 .attributeDefinitionHelper(attrDefHelper)
-                .request("attrUpdate", attrUpdateHelper.getAttributeUpdateRequest(unirest, applicationVersionId))
+                .request("attrUpdate", attrUpdateHelper.buildRequest(applicationVersionId))
                 .attrIdsToInclude(attrUpdateHelper.getAttributeIds())
                 .execute(unirest, applicationVersionId));
         

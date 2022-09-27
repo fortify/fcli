@@ -39,10 +39,9 @@ import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.SSCAp
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.SSCAppVersionDelimiterMixin.SSCAppAndVersionNameDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
-import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateHelper;
+import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateBuilder;
 import com.fortify.cli.ssc.appversion_auth_entity.cli.mixin.SSCAppVersionAuthEntityMixin;
-import com.fortify.cli.ssc.appversion_auth_entity.helper.SSCAppVersionAuthEntitiesHelper;
-import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
+import com.fortify.cli.ssc.appversion_auth_entity.helper.SSCAppVersionAuthEntitiesUpdateBuilder;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -70,19 +69,23 @@ public class SSCAppVersionCreateCommand extends AbstractSSCUnirestRunnerCommand 
     @Mixin private SSCIssueTemplateResolverMixin.OptionalFilterSetOption issueTemplateResolver;
     @Mixin private SSCAppVersionAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
     @Mixin private SSCAppVersionAuthEntityMixin.OptionalUserAddOption userAddMixin;
-    //@Mixin private SSCAppVersionAuthEntityMixin.OptionalUserDelOption userDelMixin; // For now doesn't make sense for create request, but maybe useful when copying users from existing version 
     @Option(names={"--description","-d"}, required = false)
     private String description;
     @Option(names={"--active"}, required = false, defaultValue="true", arity="1")
     private boolean active;
+    @Option(names={"--auto-required-attrs"}, required = false)
+    private boolean autoRequiredAttrs = false;
     
 
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
+        SSCAppVersionAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
+        SSCAppVersionAuthEntitiesUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);
+        
         SSCAppVersionDescriptor descriptor = createUncommittedAppVersion(unirest);
         SSCBulkResponse bulkResponse = new SSCBulkRequestBuilder()
-            .request("attrUpdate", getAttrUpdateRequest(unirest, descriptor))
-            .request("userUpdate", getUserUpdateRequest(unirest, descriptor))
+            .request("attrUpdate", attrUpdateBuilder.buildRequest(descriptor.getVersionId()))
+            .request("userUpdate", authUpdateBuilder.buildRequest(descriptor.getVersionId()))
             .request("commit", getCommitRequest(unirest, descriptor))
             .request("updatedVersion", unirest.get(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())))
             .execute(unirest);
@@ -91,6 +94,20 @@ public class SSCAppVersionCreateCommand extends AbstractSSCUnirestRunnerCommand 
         return null;
     }
     
+    private final SSCAppVersionAuthEntitiesUpdateBuilder getAuthUpdateBuilder(UnirestInstance unirest) {
+        return new SSCAppVersionAuthEntitiesUpdateBuilder(unirest)
+                .add(false, userAddMixin.getAuthEntitySpecs());
+    }
+    
+    private final SSCAppVersionAttributeUpdateBuilder getAttrUpdateBuilder(UnirestInstance unirest) {
+        Map<String, String> attributes = attrUpdateMixin.getAttributes();
+        return new SSCAppVersionAttributeUpdateBuilder(unirest)
+                .add(attributes)
+                .addRequiredAttrs(autoRequiredAttrs)
+                .checkRequiredAttrs(true)
+                .prepareAndCheckRequest();
+    }
+
     private SSCAppVersionDescriptor createUncommittedAppVersion(UnirestInstance unirest) {
         SSCIssueTemplateDescriptor issueTemplateDescriptor = issueTemplateResolver.getIssueTemplateDescriptorOrDefault(unirest);
         SSCAppAndVersionNameDescriptor appAndVersionNameDescriptor = delimiterMixin.getAppAndVersionNameDescriptor(appAndVersionName);
@@ -115,21 +132,6 @@ public class SSCAppVersionCreateCommand extends AbstractSSCUnirestRunnerCommand 
             appNode.put("issueTemplateId", issueTemplateDescriptor.getId());
             return appNode;
         }
-    }
-
-    private final HttpRequest<?> getUserUpdateRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
-        return new SSCAppVersionAuthEntitiesHelper(unirest, descriptor.getVersionId())
-                .add(false, userAddMixin.getAuthEntitySpecs())
-                //.remove(false, userDelMixin.getAuthEntitySpecs())
-                .generateUpdateRequest();
-    }
-    
-    private final HttpRequest<?> getAttrUpdateRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
-        Map<String, String> attributes = attrUpdateMixin.getAttributes();
-        if ( attributes==null || attributes.isEmpty() ) { return null; }
-        SSCAttributeDefinitionHelper attrDefHelper = new SSCAttributeDefinitionHelper(unirest);
-        SSCAppVersionAttributeUpdateHelper attrUpdateHelper = new SSCAppVersionAttributeUpdateHelper(attrDefHelper, attributes);
-        return attrUpdateHelper.getAttributeUpdateRequest(unirest, descriptor.getVersionId());
     }
     
     private final HttpRequest<?> getCommitRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {

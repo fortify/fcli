@@ -22,9 +22,6 @@ public class SSCOutputConfigHelper {
     }
     
     private static final JsonNode getDataOrSelf(JsonNode json) {
-        // We check for both data and responseCode (which should both always be present
-        // in raw SSC responses), to correctly handle the (very unlikely) case where
-        // an already unwrapped data object has a nested data object.
-        return json.has("data") && json.has("responseCode") ? json.get("data") : json;
+        return json.has("data") ? json.get("data") : json;
     }
 }

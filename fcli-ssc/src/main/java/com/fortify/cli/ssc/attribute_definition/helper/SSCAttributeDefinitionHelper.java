@@ -25,7 +25,7 @@ import lombok.Getter;
 // TODO Properly embed option handling/retrieval in SSCAttributeDefinitionDescriptor
 public final class SSCAttributeDefinitionHelper {
     private final Set<String> attrDuplicateLowerNames = new HashSet<>();
-    private final Set<SSCAttributeDefinitionDescriptor> requiredAttrDefDescriptors = new HashSet<>();
+    private final Set<SSCAttributeDefinitionDescriptor> requiredAttrDefWithoutDefaultValueDescriptors = new HashSet<>();
     private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsById = new HashMap<>();
     private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsByLowerName = new HashMap<>();
     private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsByLowerGuid = new HashMap<>();
@@ -39,7 +39,7 @@ public final class SSCAttributeDefinitionHelper {
      * @param unirest
      */
     public SSCAttributeDefinitionHelper(UnirestInstance unirest) {
-        this.attributeDefinitionsBody = unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name&fields=id,guid,name,category,type,required,hidden,hasDefault,options")
+        this.attributeDefinitionsBody = unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name&fields=id,guid,name,category,type,required,hidden,hasDefault,options&q=")
                     .asObject(ObjectNode.class).getBody();
         
         attributeDefinitionsBody.get("data").forEach(this::processAttributeDefinition);
@@ -53,6 +53,7 @@ public final class SSCAttributeDefinitionHelper {
      */
     private void processAttributeDefinition(JsonNode jsonNode) {
         SSCAttributeDefinitionDescriptor descriptor = JsonHelper.treeToValue(jsonNode, SSCAttributeDefinitionDescriptor.class);
+        if ( "DYNAMIC_SCAN_REQUEST".equals(descriptor.getCategory()) ) { return; } // We don't want to process these
         String id = descriptor.getId();
         String guidLower = descriptor.getGuid().toLowerCase();
         String nameLower = descriptor.getName().toLowerCase();
@@ -61,8 +62,8 @@ public final class SSCAttributeDefinitionHelper {
         if ( descriptorsByLowerName.containsKey(nameLower) ) {
             attrDuplicateLowerNames.add(nameLower); // SSC allows for having the same attribute name in different categories 
         }
-        if ( descriptor.isRequired() ) {
-            requiredAttrDefDescriptors.add(descriptor);
+        if ( descriptor.isRequired() && !descriptor.hasDefault() ) {
+            requiredAttrDefWithoutDefaultValueDescriptors.add(descriptor);
         }
         
         descriptorsById.put(id, descriptor);
@@ -94,8 +95,8 @@ public final class SSCAttributeDefinitionHelper {
     /**
      * @return Set of {@link SSCAttributeDefinitionDescriptor} for attributes that are required 
      */
-    public Set<SSCAttributeDefinitionDescriptor> getRequiredAttributeDescriptors() {
-        return Collections.unmodifiableSet(requiredAttrDefDescriptors);
+    public Set<SSCAttributeDefinitionDescriptor> getRequiredAttributeWithoutDefaultValueDescriptors() {
+        return Collections.unmodifiableSet(requiredAttrDefWithoutDefaultValueDescriptors);
     }
     
     /**

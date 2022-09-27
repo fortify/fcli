@@ -48,7 +48,7 @@ public final class SSCAuthEntitiesHelper {
         return allAuthEntities;
     }
     
-    public final ArrayNode getMatchingAuthEntities(boolean allowMultipleMatches, boolean failOnUnmatched, String... authEntitySpecs) {
+    public final ArrayNode getAuthEntities(boolean allowMultipleMatches, boolean failOnUnmatched, String... authEntitySpecs) {
         SSCAuthEntitySpecPredicate predicate = new SSCAuthEntitySpecPredicate(authEntitySpecs, MatchMode.INCLUDE, allowMultipleMatches);
         ArrayNode result = JsonHelper.stream(getAllAuthEntities())
                     .filter(predicate)
