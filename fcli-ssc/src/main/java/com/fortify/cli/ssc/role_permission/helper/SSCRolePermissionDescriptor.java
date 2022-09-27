@@ -26,9 +26,12 @@ package com.fortify.cli.ssc.role_permission.helper;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fortify.cli.common.json.JsonNodeHolder;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@ReflectiveAccess
 @EqualsAndHashCode(callSuper=true)
 @Data
 public class SSCRolePermissionDescriptor extends JsonNodeHolder {

@@ -55,7 +55,7 @@ public class SSCAppVersionResolverMixin {
             return new SSCAppAndVersionNameDescriptor(appAndVersionNameArray[0], appAndVersionNameArray[1]);
         }
         
-        @Data
+        @Data @ReflectiveAccess
         public static final class SSCAppAndVersionNameDescriptor {
             private final String appName, versionName;
         }

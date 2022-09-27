@@ -26,9 +26,11 @@ package com.fortify.cli.ssc.report_template.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@ReflectiveAccess
 @Data @EqualsAndHashCode(callSuper=true)
 public class SSCReportTemplateDescriptor extends JsonNodeHolder {
     private String id;

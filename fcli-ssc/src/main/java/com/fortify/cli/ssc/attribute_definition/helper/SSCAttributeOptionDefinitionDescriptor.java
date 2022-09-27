@@ -27,9 +27,11 @@ package com.fortify.cli.ssc.attribute_definition.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@ReflectiveAccess
 @Data @EqualsAndHashCode(callSuper=true)
 public class SSCAttributeOptionDefinitionDescriptor extends JsonNodeHolder {
     private String guid;
