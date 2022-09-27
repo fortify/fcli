@@ -24,46 +24,26 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.role_permission.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
+import com.fortify.cli.ssc.role_permission.cli.mixin.SSCRolePermissionResolverMixin;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Mixin;
 import static com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper.flattenArrayProperty;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCRolePermissionListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
-    private String id;
-
-    @Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
-    private String name;
+@Command(name = "get")
+public class SSCRolePermissionGetCommand extends AbstractSSCGetCommand {
+    @Mixin
+    private SSCRolePermissionResolverMixin.PositionalParameter rolePermissionResolver;
 
     protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.PERMISSIONS).queryString("limit", "-1");
-    }
-
-    private JsonNode transformRecord(JsonNode recordJsonNode) {
-        ObjectNode record = (ObjectNode)recordJsonNode;
-        String newRecord = "";
-        for (JsonNode e : record.get("dependsOnPermission")) {
-            newRecord += e.get("id").asText() + ",";
-        }
-        if(newRecord.length() > 1){
-            newRecord = newRecord.substring(0,newRecord.length()-1);
-        }
-        record.remove("dependsOnPermission");
-        record.put("dependsOnPermission", newRecord);
-        return record;
+        return unirest.get(SSCUrls.PERMISSION(rolePermissionResolver.getRolePermissionId(unirest)));
     }
 
     @Override

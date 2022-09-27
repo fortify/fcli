@@ -22,19 +22,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
+package com.fortify.cli.ssc.role_permission.helper;
 
-package com.fortify.cli.ssc.role_permission.cli.cmd;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fortify.cli.common.json.JsonNodeHolder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import picocli.CommandLine.Command;
-
-@Command(
-        name = "role-permission",
-        aliases = {"role-perm"},
-        subcommands = {
-                SSCRolePermissionGetCommand.class,
-                SSCRolePermissionListCommand.class
-        }
-
-)
-public class SSCRolePermissionCommands {
+@EqualsAndHashCode(callSuper=true)
+@Data
+public class SSCRolePermissionDescriptor extends JsonNodeHolder {
+    @JsonProperty("id") private String permissionId;
+    @JsonProperty("name") private String name;
+    @JsonProperty("description") private String description;
+    @JsonProperty("assignByDefault") private Boolean assignByDefault;
+    @JsonProperty("dependsOnPermission") private SSCRolePermissionDescriptor[] dependsOnPermissionIds;
 }
