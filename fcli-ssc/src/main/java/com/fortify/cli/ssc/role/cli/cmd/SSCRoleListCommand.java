@@ -45,10 +45,10 @@ public class SSCRoleListCommand extends AbstractSSCTableOutputCommand {
     @Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
     private String name;
 
-    @Option(names={"--builtIn"}) @OutputFilter
+    @Option(names={"--built-in"}) @OutputFilter
     private Boolean builtIn;
 
-    @Option(names={"--allApplicationRole"}) @OutputFilter
+    @Option(names={"--universal-access"}) @OutputFilter
     private Boolean allApplicationRole;
 
     @Option(names={"--description"}, hidden = true) @AddAsDefaultColumn

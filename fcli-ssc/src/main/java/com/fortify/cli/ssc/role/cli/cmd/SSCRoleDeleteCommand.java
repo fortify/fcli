@@ -41,7 +41,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = "delete")
 public class SSCRoleDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @Mixin
-    private SSCRoleResolverMixin.PositionalParameter role;
+    private SSCRoleResolverMixin.PositionalParameter roleResolver;
 
     @Mixin
     private OutputMixin outputMixin;
@@ -49,14 +49,14 @@ public class SSCRoleDeleteCommand extends AbstractSSCUnirestRunnerCommand implem
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
         outputMixin.write(
-                unirest.delete(SSCUrls.ROLE(role.getRoleId(unirest)))
+                unirest.delete(SSCUrls.ROLE(roleResolver.getRoleId(unirest)))
         );
         return null;
     }
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData()
+        return SSCOutputConfigHelper.table()
                 .defaultColumns("message#errorCode#responseCode");
     }
 

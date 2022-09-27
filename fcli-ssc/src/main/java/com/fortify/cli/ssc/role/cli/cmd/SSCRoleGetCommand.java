@@ -42,7 +42,4 @@ public class SSCRoleGetCommand extends AbstractSSCGetCommand {
     protected JsonNode generateOutput(UnirestInstance unirest) {
         return roleResolver.getRole(unirest).asJsonNode();
     }
-
-    @Override
-    protected boolean isOutputWrappedInDataObject() { return false; }
 }

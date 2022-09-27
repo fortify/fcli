@@ -25,10 +25,11 @@
 package com.fortify.cli.ssc.role.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
 import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder;
+import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 
@@ -36,37 +37,48 @@ import javax.validation.ValidationException;
 
 public class SSCRoleHelper {
     public static final SSCRoleDescriptor getRole(UnirestInstance unirestInstance, String roleNameOrId, String... fields) {
-        GetRequest request = unirestInstance.get(SSCUrls.ROLE(roleNameOrId));
+        SSCBulkRequestBuilder bulkRequest = new SSCBulkRequestBuilder();
+        SSCBulkResponse response = null;
+        GetRequest roleRequest = unirestInstance.get(SSCUrls.ROLE(roleNameOrId));
+
+        // TODO: Need to find a better way to build the request URL. But using the #queryString method incorrectly
+        //  encodes spaces with the "+" character. This causes the bulk request to not return data for roles.
+        GetRequest rolesRequest = unirestInstance.get(
+                String.format("%s?q=name:%s&limit=2",
+                        SSCUrls.ROLES,
+                        roleNameOrId.replace(" ", "%20")
+                )
+        );
+
+        if ( fields!=null && fields.length>0 ) {
+            roleRequest.queryString("fields", String.join(",", fields));
+            rolesRequest.queryString("fields", String.join(",", fields));
+        }
+
+        bulkRequest.request("role", roleRequest);
+        bulkRequest.request("roles", rolesRequest);
 
         try{
-            if ( fields!=null && fields.length>0 ) {
-                request.queryString("fields", String.join(",", fields));
-            }
-
-            JsonNode role = request.asObject(ObjectNode.class).getBody().get("data");
-            return JsonHelper.treeToValue(role, SSCRoleDescriptor.class);
-
+            response = bulkRequest.execute(unirestInstance);
         }catch (UnexpectedHttpResponseException | NullPointerException e){
-            try{
-                request = unirestInstance.get(SSCUrls.ROLES)
-                        .queryString("q", String.format("name:\"%s\"",roleNameOrId))
-                        .queryString("limit", "2");
+            throw new ValidationException("Unable to find the specified role: " + roleNameOrId);
+        }
 
-                if ( fields!=null && fields.length>0 ) {
-                    request.queryString("fields", String.join(",", fields));
-                }
-
-                JsonNode roles = request.asObject(ObjectNode.class).getBody().get("data");
-                if ( roles.size()==0 ) {
-                    throw new ValidationException("No role found for the role name or id: " + roleNameOrId);
-                } else if ( roles.size()>1 ) {
-                    throw new ValidationException("Multiple roles found for the role name or id: " + roleNameOrId);
-                }
-                return JsonHelper.treeToValue(roles.get(0), SSCRoleDescriptor.class);
-
-            }catch (UnexpectedHttpResponseException | NullPointerException ee){
-                throw new ValidationException("Unable to find the specified role: " + roleNameOrId);
+        JsonNode role = response.body("role").get("data");
+        if(role != null){
+            if(role.get("id") != null){
+                return JsonHelper.treeToValue(role, SSCRoleDescriptor.class);
             }
         }
+
+        JsonNode roles = response.body("roles").get("data");
+        if (roles == null){
+            throw new ValidationException("No role found for the role name or id: " + roleNameOrId);
+        } else if( roles.size()==0 ) {
+            throw new ValidationException("No role found for the role name or id: " + roleNameOrId);
+        } else if ( roles.size()>1 ) {
+            throw new ValidationException("Multiple roles found for the role name or id: " + roleNameOrId);
+        }
+        return JsonHelper.treeToValue(roles.get(0), SSCRoleDescriptor.class);
     }
 }

@@ -25,8 +25,6 @@
 package com.fortify.cli.ssc.role.cli.cmd;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
@@ -34,18 +32,15 @@ import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.role.cli.mixin.SSCRoleResolverMixin;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.JsonNode;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.util.Arrays;
+import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "create")
@@ -60,7 +55,7 @@ public class SSCRoleCreateCommand extends AbstractSSCUnirestRunnerCommand implem
  */
 
     @Getter
-    @Option(names = {"-n", "--name"}, required = true)
+    @Parameters(index = "0", paramLabel = "role-name")
     private String name;
 
     @Getter
@@ -91,7 +86,7 @@ public class SSCRoleCreateCommand extends AbstractSSCUnirestRunnerCommand implem
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.tableFromData()
+        return SSCOutputConfigHelper.table()
                 .defaultColumns("id#name#permissionIds");
     }
 }
