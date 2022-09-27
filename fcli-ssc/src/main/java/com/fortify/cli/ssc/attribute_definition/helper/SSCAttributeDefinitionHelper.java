@@ -39,7 +39,7 @@ public final class SSCAttributeDefinitionHelper {
      * @param unirest
      */
     public SSCAttributeDefinitionHelper(UnirestInstance unirest) {
-        this.attributeDefinitionsBody = unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name&fields=id,guid,name,category,type,required,hidden,hasDefault,options&q=")
+        this.attributeDefinitionsBody = unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name&fields=id,guid,name,category,type,required,hidden,hasDefault,options")
                     .asObject(ObjectNode.class).getBody();
         
         attributeDefinitionsBody.get("data").forEach(this::processAttributeDefinition);
