@@ -81,8 +81,14 @@ public class TableRecordWriter implements IRecordWriter {
         }
         return columns;
     }
-    
+
+    // TODO: Some REST APIs will return a varying set of properties for individual records. We should review null processing here.
     private String[] getRow(ObjectNode record, String[] columns) {
+        for(String propertyName : columns){
+            if (record.get(propertyName) == null) {
+                record.put(propertyName, "null");
+            }
+        }
         return Stream.of(columns).map(record::get).map(JsonNode::asText).map(v->"null".equals(v)?"N/A":v).toArray(String[]::new);
     }
 
