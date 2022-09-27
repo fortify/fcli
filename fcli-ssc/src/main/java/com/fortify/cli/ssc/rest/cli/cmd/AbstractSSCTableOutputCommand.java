@@ -49,6 +49,6 @@ public abstract class AbstractSSCTableOutputCommand extends AbstractSSCUnirestRu
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
+        return SSCOutputConfigHelper.table().defaultColumns(outputMixin.getDefaultColumns());
     }
 }
