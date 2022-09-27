@@ -450,9 +450,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli ssc session login</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                       [[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>] [<strong>--fields</strong>=<em>&lt;fields&gt;</em>] [<strong>--flatten</strong>]
-                       [<strong>--[no-]headers</strong>] [<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>]
-                       [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]] [[<strong>-n</strong>=<em>&lt;sessionName&gt;</em>]] (<strong>--url</strong>=<em>&lt;url&gt;</em>
+                       [[<em>&lt;sessionName&gt;</em>]] [[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>]
+                       [<strong>--fields</strong>=<em>&lt;fields&gt;</em>] [<strong>--flatten</strong>] [<strong>--[no-]headers</strong>]
+                       [<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>] [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]] (<strong>--url</strong>=<em>&lt;url&gt;</em>
                        [<strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em>] [<strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em>]
                        [<strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em>] [<strong>--proxy-password</strong>]&#8230;&#8203; [<strong>-k</strong>])
                        (<strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>] [<strong>-p</strong>[=<em>&lt;password&gt;</em>]]&#8230;&#8203;                        [<strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em>]) | <strong>-t</strong>[=<em>&lt;token&gt;</em>] [<strong>-t</strong>                        [=<em>&lt;token&gt;</em>]]&#8230;&#8203;</p>
@@ -532,7 +532,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dl>
 <dt class="hdlist1"><strong>--url</strong>=<em>&lt;url&gt;</em></dt>
 <dd>
-<p>The full url to the Fortify SSC server.</p>
+<p>The full url to the null server.</p>
 </dd>
 <dt class="hdlist1"><strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em></dt>
 <dd>
@@ -565,11 +565,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dl>
 <dt class="hdlist1"><strong>-u</strong>, <strong>--user</strong>=<em>&lt;user&gt;</em></dt>
 <dd>
-<p>Your Fortify SSC username.</p>
+<p>Your null username.</p>
 </dd>
 <dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;password&gt;</em>]</dt>
 <dd>
-<p>Your Fortify SSC password.</p>
+<p>Your null password.</p>
 </dd>
 <dt class="hdlist1"><strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em></dt>
 <dd>
@@ -593,10 +593,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-n</strong>, <strong>--session-name</strong>=<em>&lt;sessionName&gt;</em></dt>
-<dd>
-<p>A name/alias for your Fortify SSC session.</p>
-</dd>
+<dt class="hdlist1">[<em>&lt;sessionName&gt;</em>]</dt>
 </dl>
 </div>
 </div>
@@ -605,7 +602,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-09-23 12:48:29 UTC
+Last updated 2022-09-27 13:53:33 UTC
 </div>
 </div>
 </body>

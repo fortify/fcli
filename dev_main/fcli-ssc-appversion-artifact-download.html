@@ -450,10 +450,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli ssc appversion-artifact download</strong> [<strong>-hV</strong>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                                      [<strong>-f</strong>=<em>&lt;destination&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                      [<strong>-f</strong>=<em>&lt;destination&gt;</em>]
+                                      <strong>--from</strong>=<em>&lt;appVersionNameOrId&gt;</em>
+                                      [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                                      [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
-                                      <em>&lt;versionNameOrId&gt;</em></p>
+                                      [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] [<strong>--[no-]</strong>
+                               *       include-sources* | <strong>--id</strong>=<em>&lt;artifactId&gt;</em>]</p>
 </div>
 </div>
 </div>
@@ -470,14 +472,20 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
-<dd>
-<p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
-</dd>
 <dt class="hdlist1"><strong>-f</strong>, <strong>--dest</strong>=<em>&lt;destination&gt;</em></dt>
 <dd>
 <p>The output location for the file download.</p>
 </dd>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--from, --appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dd>
+<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
+</dd>
+<dt class="hdlist1"><strong>--[no-]include-sources</strong></dt>
+<dt class="hdlist1"><strong>--id</strong>=<em>&lt;artifactId&gt;</em></dt>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
 <p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
@@ -505,20 +513,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dl>
 <dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
 <dd>
-<p>A name/alias for your Fortify SSC session.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_arguments">Arguments</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><em>&lt;versionNameOrId&gt;</em></dt>
-<dd>
-<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
+<p>A name/alias for your null session.</p>
 </dd>
 </dl>
 </div>
@@ -528,7 +523,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-09-23 12:48:30 UTC
+Last updated 2022-09-27 13:53:34 UTC
 </div>
 </div>
 </body>
