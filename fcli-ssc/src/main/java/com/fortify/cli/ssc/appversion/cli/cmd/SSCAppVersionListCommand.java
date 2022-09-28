@@ -24,9 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
-import com.fortify.cli.common.output.cli.mixin.filter.OptionTargetName;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
 
@@ -39,23 +39,27 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAppVersionListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--id"}) @SSCFilterQParam
     private Integer id;
     
-    @Option(names={"--application-name"}) @SSCFilterQParam 
-    @OptionTargetName("project.name") @AddAsDefaultColumn 
+    @Option(names={"--application-name"}) @SSCFilterQParam("project.name")
     private String applicationName;
     
-    @Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--name"}) @SSCFilterQParam
     private String name;
     
-    @Option(names={"--issue-template"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--issue-template"}) @OutputFilter
     private String issueTemplateName;
     
-    @Option(names={"--created-by"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--created-by"}) @OutputFilter
     private String createdBy;
 
     protected GetRequest generateRequest(UnirestInstance unirest) {
         return unirest.get("/api/v1/projectVersions?limit=-1");
+    }
+    
+    @Override
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return super.getOutputOptionsWriterConfig().recordTransformer(SSCAppVersionHelper.renameFieldsTransformer());
     }
 }

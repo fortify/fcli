@@ -22,43 +22,40 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.auth_entity.cli.cmd;
+package com.fortify.cli.ssc.user.helper;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+import com.fortify.cli.ssc.user.helper.SSCAuthEntitySpecPredicate.MatchMode;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
-@ReflectiveAccess
-@Command(name = "list")
-public class SSCAuthEntityListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
-    private Integer id;
+public final class SSCAuthEntitiesHelper {
+    private final UnirestInstance unirest;
+    private ArrayNode allAuthEntities;
     
-    @Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
-    private String entityName;
+    public SSCAuthEntitiesHelper(UnirestInstance unirest) {
+        this.unirest = unirest;
+    }
     
-    @Option(names={"--displayName"}) @OutputFilter @AddAsDefaultColumn
-    private String entityDisplayName;
+    public final ArrayNode getAllAuthEntities() {
+        if ( allAuthEntities==null ) {
+            allAuthEntities = (ArrayNode)unirest.get(SSCUrls.AUTH_ENTITIES)
+                    .queryString("limit","-1").asObject(JsonNode.class).getBody().get("data");
+        }
+        return allAuthEntities;
+    }
     
-    @Option(names={"--type"}) @OutputFilter @AddAsDefaultColumn
-    private String type;
-    
-    @Option(names={"--email"}) @OutputFilter @AddAsDefaultColumn
-    private String email;
-    
-    @Option(names={"--isLdap"}) @SSCFilterQParam @AddAsDefaultColumn
-    private Boolean isLdap;
-    
-    @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.AUTH_ENTITIES).queryString("limit","-1");
+    public final ArrayNode getAuthEntities(boolean allowMultipleMatches, boolean failOnUnmatched, String... authEntitySpecs) {
+        SSCAuthEntitySpecPredicate predicate = new SSCAuthEntitySpecPredicate(authEntitySpecs, MatchMode.INCLUDE, allowMultipleMatches);
+        ArrayNode result = JsonHelper.stream(getAllAuthEntities())
+                    .filter(predicate)
+                    .collect(JsonHelper.arrayNodeCollector());
+        if ( failOnUnmatched ) {
+            predicate.checkUnmatched();
+        }
+        return result;
     }
 }

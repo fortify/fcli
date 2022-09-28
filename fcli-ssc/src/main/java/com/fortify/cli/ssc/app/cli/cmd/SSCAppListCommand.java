@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.app.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
@@ -38,10 +37,10 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAppListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--id"}) @SSCFilterQParam
     private String id;
     
-    @Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--name"}) @SSCFilterQParam
     private String name;
     
     @Override

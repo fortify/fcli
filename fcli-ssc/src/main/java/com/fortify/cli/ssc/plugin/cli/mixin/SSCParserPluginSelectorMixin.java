@@ -26,7 +26,6 @@ package com.fortify.cli.ssc.plugin.cli.mixin;
 
 import javax.validation.ValidationException;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -40,7 +39,6 @@ public class SSCParserPluginSelectorMixin {
     static class Identifier{
         @CommandLine.Option(names = {"--id"})
         @OutputFilter
-        @AddAsDefaultColumn
         private Integer id;
 
     }
@@ -50,23 +48,23 @@ public class SSCParserPluginSelectorMixin {
     @ReflectiveAccess
     static class Selectors{
         @CommandLine.Option(names = {"--engineType"})
-        @OutputFilter @AddAsDefaultColumn
+        @OutputFilter
         public String engineType;
 
         @CommandLine.Option(names = {"--pluginId"})
-        @OutputFilter @AddAsDefaultColumn
+        @OutputFilter
         public String pluginId;
 
         @CommandLine.Option(names = {"--pluginState"})
-        @OutputFilter @AddAsDefaultColumn
+        @OutputFilter
         public String pluginState;
 
         @CommandLine.Option(names = {"--pluginName"})
-        @OutputFilter @AddAsDefaultColumn
+        @OutputFilter
         public String pluginName;
 
         @CommandLine.Option(names = {"--pluginVersion"})
-        @OutputFilter @AddAsDefaultColumn
+        @OutputFilter
         public String pluginVersion;
 
     }

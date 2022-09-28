@@ -1,4 +1,4 @@
-package com.fortify.cli.ssc.auth_entity.helper;
+package com.fortify.cli.ssc.user.helper;
 
 import java.util.Arrays;
 import java.util.HashSet;

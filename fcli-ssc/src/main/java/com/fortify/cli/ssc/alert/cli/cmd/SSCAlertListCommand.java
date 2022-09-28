@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.alert.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
@@ -39,22 +38,22 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAlertListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--id"}) @SSCFilterQParam
     private Integer id;
     
-    @Option(names={"--triggeredDate"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--triggeredDate"}) @OutputFilter
     private String triggeredDate;
     
-    @Option(names={"--alertDefinitionName"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--alertDefinitionName"}) @SSCFilterQParam
     private String alertDefinitionName;
     
-    @Option(names={"--userName"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--userName"}) @SSCFilterQParam
     private String userName;
     
-    @Option(names={"--alertMessage"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--alertMessage"}) @OutputFilter
     private String alertMessage;
     
-    @Option(names={"--applicationVersion"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--applicationVersion"}) @OutputFilter
     private String projectAndVersionLabel;
     
     @Override

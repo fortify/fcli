@@ -30,7 +30,6 @@ import java.util.Map;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentials;
@@ -51,25 +50,25 @@ public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IOut
     @Mixin private SSCFilterMixin filterMixin;
     
     // TODO Check whether SSC allows for q-based filtering on any of these fields
-    @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--id"}) @OutputFilter
     private Integer id;
     
-    @Option(names={"--userName"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--userName"}) @SSCFilterQParam
     private String username;
     
-    @Option(names={"--type"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--type"}) @SSCFilterQParam
     private String type;
     
-    @Option(names={"--creationDate"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--creationDate"}) @OutputFilter
     private String creationDate;
     
-    @Option(names={"--terminalDate"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--terminalDate"}) @OutputFilter
     private String terminalDate;
     
-    @Option(names={"--remainingUsages"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--remainingUsages"}) @OutputFilter
     private Integer remainingUsages;
     
-    @Option(names={"--description"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--description"}) @OutputFilter
     private String description;
     
     @Override
@@ -89,7 +88,6 @@ public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IOut
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table()
-                .defaultColumns(outputMixin.getDefaultColumns());
+        return SSCOutputConfigHelper.table();
     }
 }

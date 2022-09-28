@@ -24,28 +24,29 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.role_permission.cli.cmd;
 
+import static com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper.*;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-import static com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper.flattenArrayProperty;
 
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCRolePermissionListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--id"}) @OutputFilter
     private String id;
 
-    @Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--name"}) @OutputFilter
     private String name;
 
     protected GetRequest generateRequest(UnirestInstance unirest) {
@@ -69,7 +70,7 @@ public class SSCRolePermissionListCommand extends AbstractSSCTableOutputCommand 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
         return SSCOutputConfigHelper.table()
-                .recordTransformer(r -> flattenArrayProperty(r, "dependsOnPermission", "id"))
-                .defaultColumns("id#name#dependsOnPermission#description");
+                .recordTransformer(r -> flattenArrayProperty(r, "dependsOnPermission", "id"));
+                //.defaultColumns("id#name#dependsOnPermission#description");
     }
 }

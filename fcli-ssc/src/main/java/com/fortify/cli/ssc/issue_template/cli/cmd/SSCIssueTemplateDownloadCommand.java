@@ -65,7 +65,7 @@ public class SSCIssueTemplateDownloadCommand extends AbstractSSCUnirestRunnerCom
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table()
-                .defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+        return SSCOutputConfigHelper.table();
+                //.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
     }
 }

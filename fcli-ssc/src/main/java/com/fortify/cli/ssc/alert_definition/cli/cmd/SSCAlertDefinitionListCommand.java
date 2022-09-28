@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.alert_definition.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
@@ -39,22 +38,22 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAlertDefinitionListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--id"}) @SSCFilterQParam
     private Integer id;
     
-    @Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--name"}) @SSCFilterQParam
     private String name;
     
-    @Option(names={"--createdBy"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--createdBy"}) @SSCFilterQParam
     private String createdBy;
     
-    @Option(names={"--recipientType"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--recipientType"}) @SSCFilterQParam
     private String recipientType;
     
-    @Option(names={"--entityType"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--entityType"}) @SSCFilterQParam
     private String monitoredEntityType;
     
-    @Option(names={"--triggerDescription"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--triggerDescription"}) @OutputFilter
     private Integer triggerDescriptionName;
     
     @Override

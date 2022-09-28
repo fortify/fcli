@@ -27,12 +27,16 @@ package com.fortify.cli.common.output.writer.table;
 import com.fortify.cli.common.output.writer.IRecordWriter;
 import com.fortify.cli.common.output.writer.IRecordWriterFactory;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
+import com.fortify.cli.common.output.writer.table.TableRecordWriter.TableType;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public class TableRecordWriterFactory implements IRecordWriterFactory {
+    private final TableType tableType;
 
     @Override
     public IRecordWriter createRecordWriter(RecordWriterConfig config) {
-        return new TableRecordWriter(config);
+        return new TableRecordWriter(tableType, config);
     }
-
 }

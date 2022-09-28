@@ -1,4 +1,4 @@
-package com.fortify.cli.ssc.appversion_auth_entity.cli.cmd;
+package com.fortify.cli.ssc.appversion_user.cli.cmd;
 
 import picocli.CommandLine.Command;
 

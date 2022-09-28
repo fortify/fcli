@@ -38,10 +38,11 @@ import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.SSCAppVersionDelimiterMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.SSCAppVersionDelimiterMixin.SSCAppAndVersionNameDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateBuilder;
-import com.fortify.cli.ssc.appversion_auth_entity.cli.mixin.SSCAppVersionAuthEntityMixin;
-import com.fortify.cli.ssc.appversion_auth_entity.helper.SSCAppVersionAuthEntitiesUpdateBuilder;
+import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionAuthEntityMixin;
+import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionAuthEntitiesUpdateBuilder;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -141,6 +142,6 @@ public class SSCAppVersionCreateCommand extends AbstractSSCUnirestRunnerCommand 
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.details();
+        return SSCOutputConfigHelper.details().recordTransformer(SSCAppVersionHelper.renameFieldsTransformer());
     }
 }

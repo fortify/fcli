@@ -29,9 +29,9 @@ public class SCSastScanStatusCommand extends AbstractSCSastUnirestRunnerCommand 
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SCSastOutputHelper.defaultTableOutputConfig()
+        return SCSastOutputHelper.defaultTableOutputConfig();
                 //.inputTransformer(j->j.get(0))
-                .defaultColumns("state#hasFiles#sscUploadState#scaProgress");
+                //.defaultColumns("state#hasFiles#sscUploadState#scaProgress");
     }
 
 }

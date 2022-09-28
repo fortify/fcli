@@ -40,6 +40,6 @@ public abstract class AbstractSSCGetCommand extends AbstractSSCUnirestRunnerComm
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.details();
+        return SSCOutputConfigHelper.details().singular(true);
     }
 }

@@ -67,7 +67,7 @@ public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand implements IO
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table()
-                .defaultColumns("id#username#type#creationDate#terminalDate#description");
+        return SSCOutputConfigHelper.table();
+                //.defaultColumns("id#username#type#creationDate#terminalDate#description");
     }
 }

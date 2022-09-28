@@ -31,37 +31,35 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlFactory;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
-import com.fortify.cli.common.output.writer.IRecordWriter;
+import com.fortify.cli.common.output.writer.AbstractFieldsRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
 import lombok.SneakyThrows;
 
-public class XmlRecordWriter implements IRecordWriter {
-    private final RecordWriterConfig config;
+// TODO Add support for writing a single item if config.singular()==true
+public class XmlRecordWriter extends AbstractFieldsRecordWriter {
     private ToXmlGenerator generator;
 
     public XmlRecordWriter(RecordWriterConfig config) {
-        this.config = config;
+        super(config);
     }
     
     @SneakyThrows
     private ToXmlGenerator getGenerator() {
         if ( generator==null ) {
             XmlFactory factory = new XmlFactory();
-            this.generator = (ToXmlGenerator)factory.createGenerator(config.getPrintWriter())
+            this.generator = (ToXmlGenerator)factory.createGenerator(getConfig().getPrintWriter())
                     .setCodec(new ObjectMapper())
                     .disable(Feature.AUTO_CLOSE_TARGET);
-            if ( config.isPretty() ) generator = (ToXmlGenerator)generator.useDefaultPrettyPrinter();
-            if ( !config.isSingular() ) {
-                generator.setNextName(new QName(null, "items"));
-                generator.writeStartObject();
-            }
+            if ( getConfig().isPretty() ) generator = (ToXmlGenerator)generator.useDefaultPrettyPrinter();
+            generator.setNextName(new QName(null, "items"));
+            generator.writeStartObject();
         }
         return generator;
     }
 
     @Override @SneakyThrows
-    public void writeRecord(ObjectNode record) {
+    public void _writeRecord(ObjectNode record) {
         getGenerator().writeFieldName("item");
         getGenerator().writeTree(record);
     }

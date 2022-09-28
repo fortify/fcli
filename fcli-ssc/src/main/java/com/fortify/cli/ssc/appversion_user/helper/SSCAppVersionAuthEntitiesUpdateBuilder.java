@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion_auth_entity.helper;
+package com.fortify.cli.ssc.appversion_user.helper;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -32,10 +32,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitiesHelper;
-import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitySpecPredicate;
-import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitySpecPredicate.MatchMode;
 import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.user.helper.SSCAuthEntitiesHelper;
+import com.fortify.cli.ssc.user.helper.SSCAuthEntitySpecPredicate;
+import com.fortify.cli.ssc.user.helper.SSCAuthEntitySpecPredicate.MatchMode;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;

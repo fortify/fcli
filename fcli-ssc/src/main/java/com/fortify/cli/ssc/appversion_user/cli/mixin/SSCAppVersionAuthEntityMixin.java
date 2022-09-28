@@ -1,4 +1,4 @@
-package com.fortify.cli.ssc.appversion_auth_entity.cli.mixin;
+package com.fortify.cli.ssc.appversion_user.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;

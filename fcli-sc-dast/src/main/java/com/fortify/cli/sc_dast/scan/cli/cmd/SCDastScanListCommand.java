@@ -119,7 +119,8 @@ public class SCDastScanListCommand extends AbstractSCDastUnirestRunnerCommand im
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns("id#" +
+        return SCDastOutputHelper.defaultTableOutputConfig();
+        /*.defaultColumns("id#" +
                 "name#" +
                 "applicationName:Application#" +
                 "applicationVersionName:Version#" +
@@ -127,6 +128,6 @@ public class SCDastScanListCommand extends AbstractSCDastUnirestRunnerCommand im
                 "lowCount:Low#" +
                 "mediumCount:Medium#" +
                 "highCount:High#" +
-                "criticalCount:Critical");
+                "criticalCount:Critical");*/
     }
 }

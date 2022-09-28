@@ -26,6 +26,7 @@ public class FoDApplicationReleaseListCommand extends AbstractFoDUnirestRunnerCo
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return FoDOutputHelper.defaultTableOutputConfig().defaultColumns("releaseId#applicationName#releaseName#microserviceName");
+        return FoDOutputHelper.defaultTableOutputConfig();
+                //.defaultColumns("releaseId#applicationName#releaseName#microserviceName");
     }
 }

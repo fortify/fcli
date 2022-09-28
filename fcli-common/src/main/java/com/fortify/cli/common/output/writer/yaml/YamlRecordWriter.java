@@ -29,28 +29,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import com.fortify.cli.common.output.writer.IRecordWriter;
+import com.fortify.cli.common.output.writer.AbstractFieldsRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
 import lombok.SneakyThrows;
 
-public class YamlRecordWriter implements IRecordWriter {
-    private final RecordWriterConfig config;
+public class YamlRecordWriter extends AbstractFieldsRecordWriter {
     private YAMLGenerator generator;
 
     public YamlRecordWriter(RecordWriterConfig config) {
-        this.config = config;
+        super(config);
     }
     
     @SneakyThrows
     private YAMLGenerator getGenerator() {
         if ( generator==null ) {
             YAMLFactory factory = new YAMLFactory();
-            this.generator = (YAMLGenerator)factory.createGenerator(config.getPrintWriter())
+            this.generator = (YAMLGenerator)factory.createGenerator(getConfig().getPrintWriter())
                     .setCodec(new ObjectMapper())
                     .disable(Feature.AUTO_CLOSE_TARGET);
-            if ( config.isPretty() ) generator = (YAMLGenerator)generator.useDefaultPrettyPrinter();
-            if ( !config.isSingular() ) {
+            if ( getConfig().isPretty() ) generator = (YAMLGenerator)generator.useDefaultPrettyPrinter();
+            if ( !getConfig().isSingular() ) {
                 generator.writeStartArray();
             }
         }
@@ -58,13 +57,15 @@ public class YamlRecordWriter implements IRecordWriter {
     }
 
     @Override @SneakyThrows
-    public void writeRecord(ObjectNode record) {
+    public void _writeRecord(ObjectNode record) {
         getGenerator().writeTree(record);
     }
     
     @Override @SneakyThrows
     public void finishOutput() {
-        getGenerator().writeEndArray();
+        if ( !getConfig().isSingular() ) {
+            getGenerator().writeEndArray();
+        }
         getGenerator().close();
     }
 }

@@ -49,7 +49,7 @@ public class SSCRolePermissionGetCommand extends AbstractSSCGetCommand {
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
         return SSCOutputConfigHelper.table()
-                .recordTransformer(r -> flattenArrayProperty(r, "dependsOnPermission", "id"))
-                .defaultColumns("id#name#dependsOnPermission#description");
+                .recordTransformer(r -> flattenArrayProperty(r, "dependsOnPermission", "id"));
+                //.defaultColumns("id#name#dependsOnPermission#description");
     }
 }

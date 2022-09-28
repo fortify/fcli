@@ -87,7 +87,7 @@ public class SCDastScanOutputGetResultsCommand extends AbstractSCDastUnirestRunn
             JsonNode response = actionsHandler.getScanResults(scanResultsOptions.getScanId());
 
             if( response.has("statusCode") ) {
-                outputMixin.overrideOutputFields("statusCode#statusText#message");
+                //outputMixin.overrideOutputFields("statusCode#statusText#message");
             }
 
             outputMixin.write(response);
@@ -97,10 +97,11 @@ public class SCDastScanOutputGetResultsCommand extends AbstractSCDastUnirestRunn
 
         @Override
         public OutputConfig getOutputOptionsWriterConfig() {
-            return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns(
+            return SCDastOutputHelper.defaultTableOutputConfig();
+                /*.defaultColumns(
                     "criticalCount:Critical#" +
                     "highCount:High#" +
                     "mediumCount:Medium#" +
-                    "lowCount:Low");
+                    "lowCount:Low");*/
         }
 }

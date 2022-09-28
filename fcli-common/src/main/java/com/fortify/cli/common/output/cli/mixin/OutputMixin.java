@@ -2,21 +2,20 @@ package com.fortify.cli.common.output.cli.mixin;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
+import com.fortify.cli.common.output.cli.mixin.OutputFormatConfigConverter.OutputFormatIterable;
 import com.fortify.cli.common.output.cli.mixin.filter.OptionAnnotationHelper;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
+import com.fortify.cli.common.output.transform.PropertyPathFormatter;
 import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.output.transform.jsonpath.JsonPathTransformer;
 import com.fortify.cli.common.output.writer.IRecordWriter;
@@ -25,15 +24,14 @@ import com.fortify.cli.common.output.writer.RecordWriterConfig;
 import com.fortify.cli.common.rest.runner.IfFailureHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.Messages;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Spec;
 
@@ -50,27 +48,18 @@ public class OutputMixin {
     
     @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false)
     private OutputOptionsArgGroup outputOptionsArgGroup;
+    
+    @Data
+    public static final class OutputFormatConfig {
+        private final OutputFormat outputFormat;
+        private final String options;
+    }
 
     private static final class OutputOptionsArgGroup {
-        @CommandLine.Option(names = {"--fmt", "--format"}, order=1)
-        private OutputFormat outputFormat;
-    
-        @CommandLine.Option(names = {"--fields"}, order=2)
-        @Setter
-        private String fields;
+        @CommandLine.Option(names = {"-o", "--output"}, order=1, converter = OutputFormatConfigConverter.class, completionCandidates = OutputFormatIterable.class, paramLabel = "format[=<options>]")
+        private OutputFormatConfig outputFormatConfig;
         
-        @CommandLine.Option(names = {"--flatten"}, order=3, defaultValue = "false")
-        @Getter
-        private boolean flatten;
-        
-        @CommandLine.Option(names = "--no-headers", negatable = true, order=3)
-        @Getter
-        private boolean withHeaders = true;
-    
-        @CommandLine.Option(names = {"--json-path"}, order = 6)
-        @Getter private String jsonPath;
-        
-        @CommandLine.Option(names = {"-o", "--output"}, order=7)
+        @CommandLine.Option(names = {"--output-to-file"}, order=7)
         private String outputFile; 
     }
     
@@ -93,13 +82,6 @@ public class OutputMixin {
     public void write(HttpResponse<JsonNode> httpResponse) {
         write(writer->writer::write, httpResponse);
     }
-
-    public void overrideOutputFields(String fields) {
-        if ( outputOptionsArgGroup == null){
-            outputOptionsArgGroup = new OutputOptionsArgGroup();
-        }
-        outputOptionsArgGroup.setFields(fields);
-    }
     
     private <T> void write(Function<OutputOptionsWriter, Consumer<T>> consumer, T input) {
         try ( var writer = getWriter() ) {
@@ -120,16 +102,6 @@ public class OutputMixin {
         } else {
             return new OutputConfig();
         }
-    }
-    
-    public String getDefaultColumns() {
-        return optionAnnotationHelper.optionsWithAnnotationStream(AddAsDefaultColumn.class)
-                .map(OutputMixin::getAddAsDefaultColumnJsonProperty)
-                .collect(Collectors.joining ("#"));
-    }
-    
-    protected static final String getAddAsDefaultColumnJsonProperty(OptionSpec optionSpec) {
-        return OptionAnnotationHelper.getOptionTargetName(optionSpec, AddAsDefaultColumn.class);
     }
 
     public final class OutputOptionsWriter implements AutoCloseable { // TODO Implement interface, make implementation private
@@ -180,10 +152,9 @@ public class OutputMixin {
         @SneakyThrows
         private void writeRecord(JsonNode jsonNode) {
             // TODO Add null checks in case any input or record transformation returns null?
-            jsonNode = config.applyRecordTransformations(outputFormat, jsonNode); // TODO Before or after other transformations?
+            jsonNode = config.applyRecordTransformations(outputFormat, jsonNode);
             jsonNode = applyOutputFilterTransformation(outputFormat, jsonNode);
-            jsonNode = applyJsonPathTransformation(outputFormat, jsonNode);
-            jsonNode = config.applyFieldsTransformations(outputFormat, optionsArgGroup.fields, new I18nDefaultFieldNameFormatterProvider(), jsonNode);
+            jsonNode = applyFieldRenameTransformation(outputFormat, jsonNode);
             jsonNode = applyFlattenTransformation(outputFormat, jsonNode);
             if ( jsonNode!=null ) {
                 if(jsonNode.getNodeType() == JsonNodeType.ARRAY) {
@@ -193,7 +164,7 @@ public class OutputMixin {
                 }
             }
         }
-        
+
         protected JsonNode applyOutputFilterTransformation(OutputFormat outputFormat, JsonNode data) {
             // TODO Improve this?
             for ( OptionSpec optionSpec : optionAnnotationHelper.optionsWithAnnotationStream(OutputFilter.class).collect(Collectors.toList()) ) {
@@ -205,7 +176,7 @@ public class OutputMixin {
         private JsonNode applyOutputFilterTransformation(OutputFormat outputFormat, JsonNode data, OptionSpec optionSpec) {
             if ( !data.isEmpty() ) {
                 String fieldName = OptionAnnotationHelper.getOptionTargetName(optionSpec, OutputFilter.class);
-                Object value = getOptionValue(optionSpec);
+                Object value = optionSpec.getValue();
                 if ( value!=null ) {
                     String format = value instanceof String ? "[?(@.%s == \"%s\")]" : "[?(@.%s == %s)]";
                     data = new JsonPathTransformer(String.format(format, fieldName, value)).transform(data);
@@ -213,50 +184,65 @@ public class OutputMixin {
             }
             return data;
         }
-
-        // TODO Move to OutputOptionsWriterConfig to allow defaults?
-        protected JsonNode applyJsonPathTransformation(OutputFormat outputFormat, JsonNode data) {
-            if ( StringUtils.isNotEmpty(optionsArgGroup.jsonPath) ) {
-                data = new JsonPathTransformer(optionsArgGroup.jsonPath).transform(data);
-            }
-            return data;
-        }
         
-        private final <T> T getOptionValue(OptionSpec optionSpec) {
-            try {
-                return optionSpec.getValue();
-            } catch (CommandLine.PicocliException e){
-                // Picocli may throw an exception when calling getValue() on an option contained in a non-initialized arggroup.
-                return null;
-            }
-        }
-        
-        // TODO Move to OutputOptionsWriterConfig to allow defaults?
         protected JsonNode applyFlattenTransformation(OutputFormat outputFormat, JsonNode data) {
-            if ( optionsArgGroup.flatten ) {
-                data = new FlattenTransformer(outputFormat.getDefaultFieldNameFormatter(), ".", false).transform(data);
+            if ( OutputFormat.isFlat(outputFormat) ) {
+                data = new FlattenTransformer(PropertyPathFormatter::camelCase, ".", false).transform(data);
             }
             return data;
+        }
+        
+        protected JsonNode applyFieldRenameTransformation(OutputFormat outputFormat, JsonNode jsonNode) {
+            // jsonNode = applyI18nTransformation(outputFormat, jsonNode); // TODO Rename fields based on message resources
+            // jsonNode = applyFieldFormatTransformation(outputFormat, jsonNode); // TODO Rename fields based on outputFormat.getDefaultFieldNameFormatter()
+            return jsonNode;
         }
 
         private OutputFormat getOutputFormat() {
-            OutputFormat result = optionsArgGroup.outputFormat;
-            if ( result == null ) {
-                result = config.defaultFormat();
-            }
+            OutputFormat result = optionsArgGroup.outputFormatConfig==null 
+                    ? config.defaultFormat() 
+                    : optionsArgGroup.outputFormatConfig.getOutputFormat();
             if ( result == null ) {
                 result = OutputFormat.table;
             }
             return result;
         }
         
+        private Messages getMessages() {
+            ResourceBundle resourceBundle = mixee.resourceBundle();
+            return resourceBundle==null ? null : new Messages(mixee, resourceBundle);
+        }
+        
         private RecordWriterConfig createOutputWriterConfig() {
             return RecordWriterConfig.builder()
                     .printWriter(printWriter)
-                    .headersEnabled(optionsArgGroup.isWithHeaders())
+                    .options(getOutputWriterOptions())
+                    .singular(config.singular())
                     .build();
         }
         
+        private String getOutputWriterOptions() {
+            OutputFormatConfig config = optionsArgGroup.outputFormatConfig;
+            if ( config!=null && config.getOptions()!=null && !config.getOptions().isBlank() ) {
+                return config.getOptions();
+            } else {
+                String keySuffix = "output."+getOutputFormat().getMessageKey()+".options";
+                Messages messages = getMessages();
+                return getClosestMatch(messages, keySuffix);
+            }
+        }
+
+        private String getClosestMatch(Messages messages, String keySuffix) {
+            CommandSpec commandSpec = messages.commandSpec();
+            String value = null;
+            while ( commandSpec!=null && value==null ) {
+                String key = commandSpec.qualifiedName(".")+"."+keySuffix;
+                value = messages.getString(key, null);
+                commandSpec = commandSpec.parent();
+            }
+            return value;
+        }
+
         private final PrintWriter createPrintWriter(OutputConfig config) {
             try {
                 return optionsArgGroup.outputFile == null || "-".equals(optionsArgGroup.outputFile)
@@ -272,19 +258,17 @@ public class OutputMixin {
             recordWriter.finishOutput();
             printWriter.flush();
             // TODO Close printwriter and/or underlying streams except for System.out
-            //      once we have implemented output to file.
         }
     }
     
     public static interface IDefaultFieldNameFormatterProvider {
         public Function<String, String> getDefaultFieldNameFormatter(OutputFormat outputFormat);
     }
-    
+    /*
     private final class I18nDefaultFieldNameFormatterProvider implements IDefaultFieldNameFormatterProvider {
-        private final CommandLine.Model.Messages messages;
+        private final Messages messages;
         I18nDefaultFieldNameFormatterProvider() {
-            ResourceBundle resourceBundle = mixee.resourceBundle();
-            messages = resourceBundle==null ? null : new CommandLine.Model.Messages(mixee, resourceBundle);
+            this.messages = getMessages();
         }
         @Override
         public Function<String, String> getDefaultFieldNameFormatter(OutputFormat outputFormat) {
@@ -308,6 +292,7 @@ public class OutputMixin {
             return messages==null ? null : messages.getString(key, null);
         }
     }
+    */
 }
 
 

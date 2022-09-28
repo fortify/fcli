@@ -24,16 +24,23 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion.helper;
 
+import java.util.function.UnaryOperator;
+
 import javax.validation.ValidationException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 
 public class SSCAppVersionHelper {
+    public static final UnaryOperator<JsonNode> renameFieldsTransformer() {
+        return new RenameFieldsTransformer(new String[] {"project:application"})::transform;
+    }
+    
     public static final SSCAppVersionDescriptor getAppVersion(UnirestInstance unirestInstance, String appVersionNameOrId, String delimiter, String... fields) {
         GetRequest request = unirestInstance.get("/api/v1/projectVersions?limit=2");
         if ( fields!=null && fields.length>0 ) {

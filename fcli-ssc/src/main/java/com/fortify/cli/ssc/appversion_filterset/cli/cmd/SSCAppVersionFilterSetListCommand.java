@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_filterset.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -42,16 +41,16 @@ import picocli.CommandLine.Option;
 public class SSCAppVersionFilterSetListCommand extends AbstractSSCTableOutputCommand {
     @Mixin private SSCAppVersionResolverMixin.From parentResolver;
 
-    @Option(names="--guid") @OutputFilter @AddAsDefaultColumn
+    @Option(names="--guid") @OutputFilter
     private String guid;
     
-    @Option(names="--title") @OutputFilter @AddAsDefaultColumn
+    @Option(names="--title") @OutputFilter
     private String title;
     
-    @Option(names="--default-filterset", arity="1") @OutputFilter @AddAsDefaultColumn
+    @Option(names="--default-filterset", arity="1") @OutputFilter
     private Boolean defaultFilterSet;
     
-    @Option(names="--description", hidden=true) @OutputFilter @AddAsDefaultColumn
+    @Option(names="--description", hidden=true) @OutputFilter
     private String description;
     
     @Override

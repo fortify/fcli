@@ -32,21 +32,23 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.csv.CsvFactory;
 import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.fortify.cli.common.output.writer.IRecordWriter;
+import com.fortify.cli.common.output.writer.AbstractFieldsRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
 import lombok.SneakyThrows;
 
-public class CsvRecordWriter implements IRecordWriter {
-    private final RecordWriterConfig config;
+public class CsvRecordWriter extends AbstractFieldsRecordWriter {
+    public static enum CsvType { HEADERS, NO_HEADERS }
+    private final CsvType csvType;
     private CsvGenerator generator;
-
-    public CsvRecordWriter(RecordWriterConfig config) {
-        this.config = config;
+    
+    public CsvRecordWriter(CsvType csvType, RecordWriterConfig config) {
+        super(config);
+        this.csvType = csvType;
     }
     
     private PrintWriter getPrintWriter() {
-        return config.getPrintWriter();
+        return getConfig().getPrintWriter();
     }
     
     @SneakyThrows
@@ -56,14 +58,14 @@ public class CsvRecordWriter implements IRecordWriter {
                 CsvSchema.Builder schemaBuilder = CsvSchema.builder();
                 record.fieldNames().forEachRemaining(schemaBuilder::addColumn);
                 CsvSchema schema = schemaBuilder.build()
-                        .withUseHeader(config.isHeadersEnabled());
+                        .withUseHeader(CsvType.HEADERS==csvType);
                 this.generator = (CsvGenerator)CsvFactory.builder().
                         build().createGenerator(getPrintWriter())
                         .setCodec(new ObjectMapper())
                         .enable(Feature.IGNORE_UNKNOWN)
                         .disable(Feature.AUTO_CLOSE_TARGET);
                 this.generator.setSchema(schema);
-                if ( !config.isSingular() ) {
+                if ( !getConfig().isSingular() ) {
                     generator.writeStartArray();
                 }
             }
@@ -72,13 +74,13 @@ public class CsvRecordWriter implements IRecordWriter {
     }
 
     @Override @SneakyThrows
-    public void writeRecord(ObjectNode record) {
+    public void _writeRecord(ObjectNode record) {
         getGenerator(record).writeTree(record);
     }
     
     @Override @SneakyThrows
     public void finishOutput() {
-        if ( !config.isSingular() && generator!=null ) {
+        if ( !getConfig().isSingular() && generator!=null ) {
             generator.writeEndArray();
             generator.close();
         }

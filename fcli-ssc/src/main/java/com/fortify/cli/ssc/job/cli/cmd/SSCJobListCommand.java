@@ -26,7 +26,6 @@ package com.fortify.cli.ssc.job.cli.cmd;
 
 import java.util.Date;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
@@ -41,31 +40,31 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCJobListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--name"}) @OutputFilter
     private String jobName;
     
-    @Option(names={"--group"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--group"}) @OutputFilter
     private String jobGroup;
     
-    @Option(names={"--class"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--class"}) @SSCFilterQParam
     private String jobClass;
     
-    @Option(names={"--state"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--state"}) @SSCFilterQParam
     private String state;
     
-    @Option(names={"--cancellable"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--cancellable"}) @OutputFilter
     private Boolean cancellable;
     
-    @Option(names={"--priority"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--priority"}) @SSCFilterQParam
     private Integer priority;
     
-    @Option(names={"--create-time"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--create-time"}) @OutputFilter
     private Date createTime;
     
-    @Option(names={"--start-time"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--start-time"}) @OutputFilter
     private Date startTime;
     
-    @Option(names={"--finish-time"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--finish-time"}) @OutputFilter
     private Date finishTime;
     
     protected GetRequest generateRequest(UnirestInstance unirest) {

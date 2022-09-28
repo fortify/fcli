@@ -24,11 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.role.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -39,10 +39,10 @@ import picocli.CommandLine.Option;
 @Command(name = "list")
 public class SSCRoleListCommand extends AbstractSSCTableOutputCommand {
 
-    @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--id"}) @SSCFilterQParam
     private String id;
 
-    @Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--name"}) @SSCFilterQParam
     private String name;
 
     @Option(names={"--built-in"}) @OutputFilter
@@ -51,7 +51,7 @@ public class SSCRoleListCommand extends AbstractSSCTableOutputCommand {
     @Option(names={"--universal-access"}) @OutputFilter
     private Boolean allApplicationRole;
 
-    @Option(names={"--description"}, hidden = true) @AddAsDefaultColumn
+    @Option(names={"--description"}, hidden = true)
     private String description;
 
     @Override

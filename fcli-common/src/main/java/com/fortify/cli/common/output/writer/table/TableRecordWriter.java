@@ -32,7 +32,7 @@ import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.writer.IRecordWriter;
+import com.fortify.cli.common.output.writer.AbstractFieldsRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
@@ -40,17 +40,19 @@ import com.github.freva.asciitable.HorizontalAlign;
 
 import lombok.SneakyThrows;
 
-public class TableRecordWriter implements IRecordWriter {
-    private final RecordWriterConfig config;
+public class TableRecordWriter extends AbstractFieldsRecordWriter {
+    public static enum TableType { HEADERS, NO_HEADERS }
+    private final TableType tableType;
     private String[] columns;
     private final List<String[]> rows = new ArrayList<>();
-
-    public TableRecordWriter(RecordWriterConfig config) {
-        this.config = config;
+    
+    public TableRecordWriter(TableType tableType, RecordWriterConfig config) {
+        super(config);
+        this.tableType = tableType;
     }
 
     @Override @SneakyThrows
-    public void writeRecord(ObjectNode record) {
+    public void _writeRecord(ObjectNode record) {
         String[] columns = getColumns(record);
         String[] row = getRow(record, columns);
         rows.add(row);
@@ -58,7 +60,7 @@ public class TableRecordWriter implements IRecordWriter {
 
     @Override @SneakyThrows
     public void finishOutput() {
-        config.getPrintWriter().println(getTable(columns, rows.toArray(new String[rows.size()][])));
+        getConfig().getPrintWriter().println(getTable(columns, rows.toArray(new String[rows.size()][])));
     }
 
     private String getTable(String[] columns, String[][] data) {
@@ -69,7 +71,7 @@ public class TableRecordWriter implements IRecordWriter {
                     new Column()
                         .dataAlign(HorizontalAlign.LEFT)
                         .headerAlign(HorizontalAlign.LEFT)
-                        .header(config.isHeadersEnabled()?columnName:null))
+                        .header(TableType.HEADERS==tableType ? columnName : null))
                         .toArray(Column[]::new);
             return AsciiTable.getTable(AsciiTable.NO_BORDERS, columnObjects, data); 
         }

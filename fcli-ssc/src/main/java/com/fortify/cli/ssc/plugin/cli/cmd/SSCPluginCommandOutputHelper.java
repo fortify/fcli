@@ -5,7 +5,7 @@ import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 public class SSCPluginCommandOutputHelper {
     public static final OutputConfig defaultTableOutputConfig() {
-        return SSCOutputConfigHelper.table()
-                .defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
+        return SSCOutputConfigHelper.table();
+                //.defaultColumns("id#pluginId#pluginType#pluginName#pluginVersion#pluginState");
     }
 }

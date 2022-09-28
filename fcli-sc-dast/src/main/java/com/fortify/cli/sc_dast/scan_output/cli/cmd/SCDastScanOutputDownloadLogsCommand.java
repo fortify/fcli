@@ -79,6 +79,7 @@ public class SCDastScanOutputDownloadLogsCommand extends AbstractSCDastUnirestRu
 
         @Override
         public OutputConfig getOutputOptionsWriterConfig() {
-            return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns("path"); // TODO Move to constants?
+            return SCDastOutputHelper.defaultTableOutputConfig();
+            //.defaultColumns("path"); // TODO Move to constants?
         }
 }

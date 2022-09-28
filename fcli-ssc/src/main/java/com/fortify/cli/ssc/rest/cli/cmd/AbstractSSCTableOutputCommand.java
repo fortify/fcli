@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterMixin;
@@ -49,6 +48,6 @@ public abstract class AbstractSSCTableOutputCommand extends AbstractSSCUnirestRu
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table().defaultColumns(outputMixin.getDefaultColumns());
+        return SSCOutputConfigHelper.table();
     }
 }

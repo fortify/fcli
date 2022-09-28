@@ -22,14 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion_auth_entity.cli.cmd;
+package com.fortify.cli.ssc.appversion_user.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
-import com.fortify.cli.ssc.appversion_auth_entity.cli.mixin.SSCAppVersionAuthEntityMixin;
-import com.fortify.cli.ssc.appversion_auth_entity.helper.SSCAppVersionAuthEntitiesUpdateBuilder;
+import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionAuthEntityMixin;
+import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionAuthEntitiesUpdateBuilder;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
@@ -40,10 +40,10 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "add")
-public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+@Command(name = "delete", aliases = "rm")
+public class SSCAppVersionAuthEntityDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @Mixin private SSCAppVersionAuthEntityMixin.RequiredPositionalParameter authEntityMixin;
-    @Mixin private SSCAppVersionResolverMixin.For parentResolver;
+    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
     @Mixin private OutputMixin outputMixin;
     @Option(names="--allowMultiMatch", defaultValue = "false")
     private boolean allowMultiMatch;
@@ -52,8 +52,8 @@ public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCUnirestRunnerC
     protected Void run(UnirestInstance unirest) {
         String applicationVersionId = parentResolver.getAppVersionId(unirest);
         outputMixin.write(
-            new SSCAppVersionAuthEntitiesUpdateBuilder(unirest)
-                .add(allowMultiMatch, authEntityMixin.getAuthEntitySpecs())
+                new SSCAppVersionAuthEntitiesUpdateBuilder(unirest)
+                .remove(allowMultiMatch, authEntityMixin.getAuthEntitySpecs())
                 .buildRequest(applicationVersionId)
         );
         
@@ -62,7 +62,7 @@ public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCUnirestRunnerC
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table()
-            .defaultColumns("id#entityName:Name#displayName#type#email#isLdap");
+        return SSCOutputConfigHelper.table();
+            //.defaultColumns("id#entityName:Name#displayName#type#email#isLdap");
     }
 }

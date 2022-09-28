@@ -81,7 +81,7 @@ public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunn
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table()
-                .defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+        return SSCOutputConfigHelper.table();
+                //.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
     }
 }

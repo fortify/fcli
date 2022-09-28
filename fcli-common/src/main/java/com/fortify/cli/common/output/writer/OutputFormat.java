@@ -24,36 +24,40 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.writer;
 
-import java.util.function.Function;
-
-import com.fortify.cli.common.output.transform.PropertyPathFormatter;
+import com.fortify.cli.common.output.writer.csv.CsvRecordWriter.CsvType;
 import com.fortify.cli.common.output.writer.csv.CsvRecordWriterFactory;
 import com.fortify.cli.common.output.writer.json.JsonRecordWriterFactory;
+import com.fortify.cli.common.output.writer.table.TableRecordWriter.TableType;
 import com.fortify.cli.common.output.writer.table.TableRecordWriterFactory;
 import com.fortify.cli.common.output.writer.tree.TreeRecordWriterFactory;
 import com.fortify.cli.common.output.writer.xml.XmlRecordWriterFactory;
 import com.fortify.cli.common.output.writer.yaml.YamlRecordWriterFactory;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public enum OutputFormat {
-    json (OutputType.TECHNICAL,    new JsonRecordWriterFactory(),  PropertyPathFormatter::camelCase), 
-    yaml (OutputType.TECHNICAL,    new YamlRecordWriterFactory(),  PropertyPathFormatter::snakeCase), 
-    table(OutputType.TEXT_COLUMNS, new TableRecordWriterFactory(), PropertyPathFormatter::humanReadable), 
-    tree (OutputType.TEXT_ROWS,    new TreeRecordWriterFactory(),  PropertyPathFormatter::humanReadable), 
-    xml  (OutputType.TECHNICAL,    new XmlRecordWriterFactory(),   PropertyPathFormatter::camelCase), 
-    csv  (OutputType.TEXT_COLUMNS, new CsvRecordWriterFactory(),   PropertyPathFormatter::humanReadable);
+    json        (OutputType.TECHNICAL,    OutputStructure.TREE, "json",  new JsonRecordWriterFactory()), 
+    json_flat   (OutputType.TECHNICAL,    OutputStructure.FLAT, "json",  new JsonRecordWriterFactory()),
+    yaml        (OutputType.TECHNICAL,    OutputStructure.TREE, "yaml",  new YamlRecordWriterFactory()), 
+    yaml_flat   (OutputType.TECHNICAL,    OutputStructure.FLAT, "yaml",  new YamlRecordWriterFactory()),
+    table       (OutputType.TEXT_COLUMNS, OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.HEADERS)), 
+    table_plain (OutputType.TEXT_COLUMNS, OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.NO_HEADERS)),
+    tree        (OutputType.TEXT_ROWS,    OutputStructure.TREE, "tree",  new TreeRecordWriterFactory()), 
+    tree_flat   (OutputType.TEXT_ROWS,    OutputStructure.FLAT, "tree",  new TreeRecordWriterFactory()),
+    xml         (OutputType.TECHNICAL,    OutputStructure.TREE, "xml",   new XmlRecordWriterFactory()), 
+    xml_flat    (OutputType.TECHNICAL,    OutputStructure.FLAT, "xml",   new XmlRecordWriterFactory()),
+    csv         (OutputType.TEXT_COLUMNS, OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.HEADERS)),
+    csv_plain   (OutputType.TEXT_COLUMNS, OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.NO_HEADERS));
     
-    @Getter private final OutputType               outputType; 
-    @Getter private final IRecordWriterFactory     recordWriterFactory;
-    @Getter private final Function<String, String> defaultFieldNameFormatter;
-    OutputFormat(OutputType outputType, IRecordWriterFactory recordWriterFactory, Function<String, String> defaultFieldNameformatter) {
-        this.outputType = outputType;
-        this.recordWriterFactory = recordWriterFactory;
-        this.defaultFieldNameFormatter = defaultFieldNameformatter;
-    }
+    @Getter private final OutputType           outputType; 
+    @Getter private final OutputStructure      outputStructure;
+    @Getter private final String               messageKey;
+    @Getter private final IRecordWriterFactory recordWriterFactory;
     
     public enum OutputType { TEXT_ROWS, TEXT_COLUMNS, TECHNICAL }
+    public enum OutputStructure { TREE, FLAT }
     
     public static final boolean isText(OutputFormat outputFormat) {
         switch (outputFormat.getOutputType()) {
@@ -66,6 +70,13 @@ public enum OutputFormat {
     public static final boolean isColumns(OutputFormat outputFormat) {
         switch (outputFormat.getOutputType()) {
         case TEXT_COLUMNS: return true;
+        default: return false;
+        }
+    }
+    
+    public static final boolean isFlat(OutputFormat outputFormat) {
+        switch (outputFormat.getOutputStructure()) {
+        case FLAT: return true;
         default: return false;
         }
     }

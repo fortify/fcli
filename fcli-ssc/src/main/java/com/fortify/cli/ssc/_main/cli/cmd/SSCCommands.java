@@ -7,11 +7,10 @@ import com.fortify.cli.ssc.app.cli.cmd.SSCAppCommands;
 import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
 import com.fortify.cli.ssc.appversion_artifact.cli.cmd.SSCAppVersionArtifactCommands;
 import com.fortify.cli.ssc.appversion_attribute.cli.cmd.SSCAppVersionAttributeCommands;
-import com.fortify.cli.ssc.appversion_auth_entity.cli.cmd.SSCAppVersionAuthEntityCommands;
 import com.fortify.cli.ssc.appversion_filterset.cli.cmd.SSCAppVersionFilterSetCommands;
+import com.fortify.cli.ssc.appversion_user.cli.cmd.SSCAppVersionAuthEntityCommands;
 import com.fortify.cli.ssc.appversion_vuln.cli.cmd.SSCAppVersionVulnCommands;
 import com.fortify.cli.ssc.attribute_definition.cli.cmd.SSCAttributeDefinitionCommands;
-import com.fortify.cli.ssc.auth_entity.cli.cmd.SSCAuthEntityCommands;
 import com.fortify.cli.ssc.event.cli.cmd.SSCEventCommands;
 import com.fortify.cli.ssc.issue_template.cli.cmd.SSCIssueTemplateCommands;
 import com.fortify.cli.ssc.job.cli.cmd.SSCJobCommands;
@@ -24,6 +23,7 @@ import com.fortify.cli.ssc.seed_bundle.cli.cmd.SSCSeedBundleCommands;
 import com.fortify.cli.ssc.session.cli.cmd.SSCSessionCommands;
 import com.fortify.cli.ssc.token.cli.cmd.SSCTokenCommands;
 import com.fortify.cli.ssc.token_definition.cli.cmd.SSCTokenDefinitionCommands;
+import com.fortify.cli.ssc.user.cli.cmd.SSCAuthEntityCommands;
 
 import picocli.CommandLine.Command;
 

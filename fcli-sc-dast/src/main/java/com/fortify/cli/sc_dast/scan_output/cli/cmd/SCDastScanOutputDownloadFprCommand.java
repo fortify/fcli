@@ -80,6 +80,7 @@ public class SCDastScanOutputDownloadFprCommand extends AbstractSCDastUnirestRun
 
         @Override
         public OutputConfig getOutputOptionsWriterConfig() {
-            return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns("path");
+            return SCDastOutputHelper.defaultTableOutputConfig();
+                //.defaultColumns("path");
         }
 }

@@ -86,7 +86,7 @@ public class SSCRoleCreateCommand extends AbstractSSCUnirestRunnerCommand implem
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table()
-                .defaultColumns("id#name#permissionIds");
+        return SSCOutputConfigHelper.table();
+                //.defaultColumns("id#name#permissionIds");
     }
 }

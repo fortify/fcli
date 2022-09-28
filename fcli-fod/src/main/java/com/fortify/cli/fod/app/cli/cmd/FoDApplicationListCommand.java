@@ -28,6 +28,7 @@ public class FoDApplicationListCommand extends AbstractFoDUnirestRunnerCommand i
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return FoDOutputHelper.defaultTableOutputConfig().defaultColumns("applicationId#applicationName");
+        return FoDOutputHelper.defaultTableOutputConfig();
+                //.defaultColumns("applicationId#applicationName");
     }
 }

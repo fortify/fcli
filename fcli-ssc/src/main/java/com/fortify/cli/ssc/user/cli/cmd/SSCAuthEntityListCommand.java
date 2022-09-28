@@ -22,40 +22,42 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.auth_entity.helper;
+package com.fortify.cli.ssc.user.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitySpecPredicate.MatchMode;
+import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
+import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
-public final class SSCAuthEntitiesHelper {
-    private final UnirestInstance unirest;
-    private ArrayNode allAuthEntities;
+@ReflectiveAccess
+@Command(name = "list")
+public class SSCAuthEntityListCommand extends AbstractSSCTableOutputCommand {
+    @Option(names={"--id"}) @SSCFilterQParam
+    private Integer id;
     
-    public SSCAuthEntitiesHelper(UnirestInstance unirest) {
-        this.unirest = unirest;
-    }
+    @Option(names={"--name"}) @OutputFilter
+    private String entityName;
     
-    public final ArrayNode getAllAuthEntities() {
-        if ( allAuthEntities==null ) {
-            allAuthEntities = (ArrayNode)unirest.get(SSCUrls.AUTH_ENTITIES)
-                    .queryString("limit","-1").asObject(JsonNode.class).getBody().get("data");
-        }
-        return allAuthEntities;
-    }
+    @Option(names={"--displayName"}) @OutputFilter
+    private String entityDisplayName;
     
-    public final ArrayNode getAuthEntities(boolean allowMultipleMatches, boolean failOnUnmatched, String... authEntitySpecs) {
-        SSCAuthEntitySpecPredicate predicate = new SSCAuthEntitySpecPredicate(authEntitySpecs, MatchMode.INCLUDE, allowMultipleMatches);
-        ArrayNode result = JsonHelper.stream(getAllAuthEntities())
-                    .filter(predicate)
-                    .collect(JsonHelper.arrayNodeCollector());
-        if ( failOnUnmatched ) {
-            predicate.checkUnmatched();
-        }
-        return result;
+    @Option(names={"--type"}) @OutputFilter
+    private String type;
+    
+    @Option(names={"--email"}) @OutputFilter
+    private String email;
+    
+    @Option(names={"--isLdap"}) @SSCFilterQParam
+    private Boolean isLdap;
+    
+    @Override
+    protected GetRequest generateRequest(UnirestInstance unirest) {
+        return unirest.get(SSCUrls.AUTH_ENTITIES).queryString("limit","-1");
     }
 }

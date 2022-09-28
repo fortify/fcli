@@ -27,12 +27,16 @@ package com.fortify.cli.common.output.writer.csv;
 import com.fortify.cli.common.output.writer.IRecordWriter;
 import com.fortify.cli.common.output.writer.IRecordWriterFactory;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
+import com.fortify.cli.common.output.writer.csv.CsvRecordWriter.CsvType;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 public class CsvRecordWriterFactory implements IRecordWriterFactory {
-
+    private final CsvType csvType;
     @Override
     public IRecordWriter createRecordWriter(RecordWriterConfig config) {
-        return new CsvRecordWriter(config);
+        return new CsvRecordWriter(csvType, config);
     }
 
 }

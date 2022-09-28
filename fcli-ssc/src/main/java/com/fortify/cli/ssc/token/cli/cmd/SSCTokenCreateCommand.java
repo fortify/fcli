@@ -81,7 +81,7 @@ public class SSCTokenCreateCommand extends AbstractSSCTokenCommand implements IO
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
         return SSCOutputConfigHelper.table()
-                .recordTransformer(this::transformRecord)
-                .defaultColumns("id#username#type#restToken#applicationToken#terminalDate#description");
+                .recordTransformer(this::transformRecord);
+                //.defaultColumns("id#username#type#restToken#applicationToken#terminalDate#description");
     }
 }

@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.attribute_definition.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.ssc.attribute_definition.domain.SSCAttributeDefinitionCategory;
 import com.fortify.cli.ssc.attribute_definition.domain.SSCAttributeDefinitionType;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
@@ -39,22 +38,22 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCAttributeDefinitionListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--id"}) @SSCFilterQParam
     private Integer id;
     
-    @Option(names={"--category"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--category"}) @SSCFilterQParam
     private SSCAttributeDefinitionCategory category;
     
-    @Option(names={"--guid"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--guid"}) @SSCFilterQParam
     private String guid;
     
-    @Option(names={"--name"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--name"}) @SSCFilterQParam
     private String name;
     
-    @Option(names={"--type"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--type"}) @SSCFilterQParam
     private SSCAttributeDefinitionType type;
     
-    @Option(names={"--required"}, arity = "1") @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--required"}, arity = "1") @SSCFilterQParam
     private Boolean required;
 
     protected GetRequest generateRequest(UnirestInstance unirest) {

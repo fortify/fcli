@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
@@ -39,19 +38,19 @@ import picocli.CommandLine.Option;
 @Command(name = "list")
 public class SSCReportTemplateListCommand extends AbstractSSCTableOutputCommand {
     // TODO Check whether SSC allows for q-based filtering on any of these fields
-    @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--id"}) @OutputFilter
     private String id;
     
-    @Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--name"}) @OutputFilter
     private String name;
     
-    @Option(names={"--type"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--type"}) @OutputFilter
     private String type;
     
-    @Option(names={"--templateDocId"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--templateDocId"}) @OutputFilter
     private String templateDocId;
     
-    @Option(names={"--inUse"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--inUse"}) @OutputFilter
     private String inUse;
     
     

@@ -25,23 +25,14 @@
 package com.fortify.cli.common.output.cli.mixin;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin.IDefaultFieldNameFormatterProvider;
-import com.fortify.cli.common.output.transform.IJsonNodeTransformer;
-import com.fortify.cli.common.output.transform.fields.PredefinedFieldsTransformerFactory;
-import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
-import com.fortify.cli.common.output.transform.identity.IdentityTransformer;
 import com.fortify.cli.common.output.writer.OutputFormat;
-import com.fortify.cli.common.output.writer.OutputFormat.OutputType;
 
-import io.micronaut.core.util.StringUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -50,7 +41,7 @@ import lombok.experimental.Accessors;
 // TODO Add null checks in case any input or record transformation returns null?
 public class OutputConfig {
     @Getter @Setter private OutputFormat defaultFormat;
-    private final LinkedHashMap<Function<OutputFormat, Boolean>, String> defaultFields = new LinkedHashMap<>();
+    @Getter @Setter private boolean singular;
     private final List<BiFunction<OutputFormat,JsonNode,JsonNode>> inputTransformers = new ArrayList<>();
     private final List<BiFunction<OutputFormat,JsonNode,JsonNode>> recordTransformers = new ArrayList<>();
     
@@ -70,52 +61,6 @@ public class OutputConfig {
     
     public final OutputConfig recordTransformer(UnaryOperator<JsonNode> transformer) {
         return recordTransformer(fmt->true, transformer);
-    }
-    
-    public final OutputConfig defaultFields(Function<OutputFormat, Boolean> applyIf, String fields) {
-        defaultFields.put(applyIf, fields);
-        return this;
-    }
-    
-    public final OutputConfig defaultFields(String fields) {
-        defaultFields.put(fmt->true, fields);
-        return this;
-    }
-    
-    public final OutputConfig defaultColumns(String outputColumns) {
-        return defaultFields(OutputFormat::isColumns, outputColumns);
-    }
-    
-    final JsonNode applyFieldsTransformations(OutputFormat outputFormat, String overrideFieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
-        if ( StringUtils.isNotEmpty(overrideFieldsString) ) {
-            return applyDefaultFieldsTransformations(outputFormat, overrideFieldsString, defaultFieldNameFormatterProvider, input);
-        } else {
-            return applyDefaultFieldsTransformations(defaultFields, outputFormat, defaultFieldNameFormatterProvider, input);
-        }
-    }
-    
-    private final JsonNode applyDefaultFieldsTransformations(OutputFormat outputFormat, String fieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
-        LinkedHashMap<Function<OutputFormat, Boolean>, String> fields = new LinkedHashMap<>();
-        fields.put(fmt->true, fieldsString);
-        return applyDefaultFieldsTransformations(fields, outputFormat, defaultFieldNameFormatterProvider, input);
-    }
-    
-    private final JsonNode applyDefaultFieldsTransformations(LinkedHashMap<Function<OutputFormat, Boolean>, String> fields, OutputFormat outputFormat, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider, JsonNode input) {
-        return fields.entrySet().stream()
-            .filter(e->e.getKey().apply(outputFormat))
-            .map(Map.Entry::getValue)
-            .map(fieldsString->getFieldsTransformer(outputFormat, fieldsString, defaultFieldNameFormatterProvider))
-            .reduce(input, (o, t) -> t.transform(o), (m1, m2) -> m2);
-    }
-
-    private IJsonNodeTransformer getFieldsTransformer(OutputFormat outputFormat, String fieldsString, IDefaultFieldNameFormatterProvider defaultFieldNameFormatterProvider) {
-        if ( StringUtils.isNotEmpty(fieldsString) && !"all".equals(fieldsString) ) {
-            return PredefinedFieldsTransformerFactory.createFromString(defaultFieldNameFormatterProvider.getDefaultFieldNameFormatter(outputFormat), fieldsString);
-        } else if ( outputFormat.getOutputType()==OutputType.TEXT_COLUMNS ) {
-            return new FlattenTransformer(defaultFieldNameFormatterProvider.getDefaultFieldNameFormatter(outputFormat), ".", false);
-        } else {
-            return new IdentityTransformer();
-        }
     }
     
     final JsonNode applyInputTransformations(OutputFormat outputFormat, JsonNode input) {

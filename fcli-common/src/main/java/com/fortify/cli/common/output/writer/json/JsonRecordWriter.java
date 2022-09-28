@@ -33,33 +33,32 @@ import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.writer.IRecordWriter;
+import com.fortify.cli.common.output.writer.AbstractFieldsRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
 import lombok.SneakyThrows;
 
-public class JsonRecordWriter implements IRecordWriter {
-    private final RecordWriterConfig config;
+public class JsonRecordWriter extends AbstractFieldsRecordWriter {
     private JsonGenerator generator;
     
     public JsonRecordWriter(RecordWriterConfig config) {
-        this.config = config;
+        super(config);
     }
     
     private PrintWriter getPrintWriter() {
-        return config.getPrintWriter();
+        return getConfig().getPrintWriter();
     }
     
     @SneakyThrows
     private JsonGenerator getGenerator() {
         if ( generator==null ) {
-            PrettyPrinter pp = !config.isPretty() ? null : new DefaultPrettyPrinter(); 
+            PrettyPrinter pp = !getConfig().isPretty() ? null : new DefaultPrettyPrinter(); 
             this.generator = JsonFactory.builder().
                     build().createGenerator(getPrintWriter())
                     .setPrettyPrinter(pp)
                     .setCodec(new ObjectMapper())
                     .disable(Feature.AUTO_CLOSE_TARGET);
-            if ( !config.isSingular() ) {
+            if ( !getConfig().isSingular() ) {
                 generator.writeStartArray();
             }
         }
@@ -67,13 +66,13 @@ public class JsonRecordWriter implements IRecordWriter {
     }
 
     @Override @SneakyThrows
-    public void writeRecord(ObjectNode record) {
+    public void _writeRecord(ObjectNode record) {
         getGenerator().writeTree(record);
     }
 
     @Override @SneakyThrows
     public void finishOutput() {
-        if ( !config.isSingular() ) {
+        if ( !getConfig().isSingular() ) {
             getGenerator().writeEndArray();
             getGenerator().close();
         }

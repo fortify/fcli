@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.token_definition.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
@@ -38,16 +37,16 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCTokenDefinitionListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--type"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--type"}) @SSCFilterQParam
     private String type;
     
-    @Option(names={"--maxDaysToLive"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--maxDaysToLive"}) @SSCFilterQParam
     private String maxDaysToLive;
     
-    @Option(names={"--maxUsages"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--maxUsages"}) @SSCFilterQParam
     private String maxUsages;
     
-    @Option(names={"--capabilityDescription"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--capabilityDescription"}) @SSCFilterQParam
     private String capabilityDescription;
 
     protected GetRequest generateRequest(UnirestInstance unirest) {

@@ -124,7 +124,7 @@ public class SCDastScanSettingsListCommand extends AbstractSCDastUnirestRunnerCo
                     fields = "statusText#message";
                 }
                 output.put("message",e.getLocalizedMessage());
-                outputMixin.overrideOutputFields(fields);
+                //outputMixin.overrideOutputFields(fields);
 
                 outputMixin.write(output);
             }
@@ -133,6 +133,7 @@ public class SCDastScanSettingsListCommand extends AbstractSCDastUnirestRunnerCo
         
         @Override
         public OutputConfig getOutputOptionsWriterConfig() {
-            return SCDastOutputHelper.defaultTableOutputConfig().defaultColumns("id#name#cicdToken:Settings Id#");
+            return SCDastOutputHelper.defaultTableOutputConfig();
+            //.defaultColumns("id#name#cicdToken:Settings Id#");
         }
 }

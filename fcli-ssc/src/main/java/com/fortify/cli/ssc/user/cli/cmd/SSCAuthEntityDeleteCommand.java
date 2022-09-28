@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.auth_entity.cli.cmd;
+package com.fortify.cli.ssc.user.cli.cmd;
 
 import java.util.stream.Collectors;
 
@@ -33,10 +33,10 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitySpecPredicate;
-import com.fortify.cli.ssc.auth_entity.helper.SSCAuthEntitySpecPredicate.MatchMode;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.user.helper.SSCAuthEntitySpecPredicate;
+import com.fortify.cli.ssc.user.helper.SSCAuthEntitySpecPredicate.MatchMode;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -74,8 +74,8 @@ public class SSCAuthEntityDeleteCommand extends AbstractSSCUnirestRunnerCommand 
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return OutputConfig.table()
-            .defaultColumns("id#entityName:Name#displayName#type#email#isLdap#action");
+        return OutputConfig.table();
+            //.defaultColumns("id#entityName:Name#displayName#type#email#isLdap#action");
     }
 
     private JsonNode addAction(JsonNode authEntityNode) {

@@ -30,6 +30,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
@@ -56,6 +57,8 @@ public class SSCAppVersionDeleteCommand extends AbstractSSCUnirestRunnerCommand 
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table().defaultColumns("id#project.name#name#createdBy#action");
+        return SSCOutputConfigHelper.table()
+                .recordTransformer(SSCAppVersionHelper.renameFieldsTransformer());
+                //.defaultColumns("id#project.name#name#createdBy#action");
     }
 }

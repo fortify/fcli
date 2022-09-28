@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.event.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
@@ -38,22 +37,22 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCEventListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--eventDate"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--eventDate"}) @OutputFilter
     private String eventDate;
     
-    @Option(names={"--userName"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--userName"}) @SSCFilterQParam
     private String userName;
     
-    @Option(names={"--eventType"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--eventType"}) @SSCFilterQParam
     private String eventType;
     
-    @Option(names={"--detailedNote"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--detailedNote"}) @SSCFilterQParam
     private String detailedNote;
     
-    @Option(names={"--applicationVersionId"}) @SSCFilterQParam @AddAsDefaultColumn
+    @Option(names={"--applicationVersionId"}) @SSCFilterQParam
     private Integer projectVersionId;
     
-    @Option(names={"--entityId"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--entityId"}) @OutputFilter
     private String entityId; //TODO Check whether SSC allows q-based filtering on this field
     
     protected GetRequest generateRequest(UnirestInstance unirest) {

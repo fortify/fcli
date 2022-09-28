@@ -25,7 +25,6 @@
 package com.fortify.cli.ssc.appversion_attribute.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.filter.AddAsDefaultColumn;
 import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
@@ -42,19 +41,19 @@ import picocli.CommandLine.Option;
 public class SSCAppVersionAttributeListCommand extends AbstractSSCTableOutputCommand {
     @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentResolver;
     
-    @Option(names={"--id"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--id"}) @OutputFilter
     private String id;
     
-    @Option(names={"--category"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--category"}) @OutputFilter
     private String category;
     
-    @Option(names={"--guid"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--guid"}) @OutputFilter
     private String guid;
     
-    @Option(names={"--name"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--name"}) @OutputFilter
     private String name;
     
-    @Option(names={"--value"}) @OutputFilter @AddAsDefaultColumn
+    @Option(names={"--value"}) @OutputFilter
     private String valueString;
     
     // TODO Add the ability to filter on a single value?

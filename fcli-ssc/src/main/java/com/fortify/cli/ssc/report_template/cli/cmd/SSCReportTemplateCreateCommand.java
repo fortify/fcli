@@ -101,7 +101,7 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerComm
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table()
-                .defaultColumns("id#name#type#templateDocId#inUse");
+        return SSCOutputConfigHelper.table();
+                //.defaultColumns("id#name#type#templateDocId#inUse");
     }
 }

@@ -56,8 +56,8 @@ public class SSCRoleDeleteCommand extends AbstractSSCUnirestRunnerCommand implem
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table()
-                .defaultColumns("message#errorCode#responseCode");
+        return SSCOutputConfigHelper.table();
+                //.defaultColumns("message#errorCode#responseCode");
     }
 
 }
