@@ -28,6 +28,7 @@ import com.fortify.cli.common.output.writer.csv.CsvRecordWriter.CsvType;
 import com.fortify.cli.common.output.writer.csv.CsvRecordWriterFactory;
 import com.fortify.cli.common.output.writer.expr.ExprRecordWriterFactory;
 import com.fortify.cli.common.output.writer.json.JsonRecordWriterFactory;
+import com.fortify.cli.common.output.writer.paths.PathsRecordWriterFactory;
 import com.fortify.cli.common.output.writer.table.TableRecordWriter.TableType;
 import com.fortify.cli.common.output.writer.table.TableRecordWriterFactory;
 import com.fortify.cli.common.output.writer.tree.TreeRecordWriterFactory;
@@ -51,7 +52,9 @@ public enum OutputFormat {
     xml_flat    (OutputStructure.FLAT, "xml",   new XmlRecordWriterFactory()),
     csv         (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.HEADERS)),
     csv_plain   (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.NO_HEADERS)),
-    expr        (OutputStructure.TREE, "expr",  new ExprRecordWriterFactory());
+    expr        (OutputStructure.TREE, "expr",  new ExprRecordWriterFactory()),
+    paths       (OutputStructure.TREE, "paths", new PathsRecordWriterFactory()),
+    paths_flat  (OutputStructure.FLAT, "paths", new PathsRecordWriterFactory());
     
     @Getter private final OutputStructure      outputStructure;
     @Getter private final String               messageKey;

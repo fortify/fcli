@@ -17,7 +17,7 @@ public class OutputMixinWithQuery extends OutputMixin {
     private QueryOptionsArgGroup queryOptionsArgGroup;
     
     private static final class QueryOptionsArgGroup {
-        @CommandLine.Option(names = {"-q", "--query"}, order=1, converter = OutputQueryConverter.class, paramLabel = "<prop>=<value>")
+        @CommandLine.Option(names = {"-q", "--query"}, order=1, converter = OutputQueryConverter.class, paramLabel = "<prop><op><value>")
         private List<OutputQuery> outputQueries = Collections.emptyList();
     }
     
