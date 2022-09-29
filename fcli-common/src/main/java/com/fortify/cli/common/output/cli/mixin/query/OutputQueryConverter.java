@@ -14,12 +14,17 @@ public class OutputQueryConverter implements ITypeConverter<OutputQuery> {
         if ( !m.matches()  ) {
             throw new IllegalArgumentException("Query expression '"+value+"' doesn't match pattern "+QUERY_PATTERN.pattern());
         } else {
-            return new OutputQuery(m.group(1), OutputQueryOperator.valueOfOperator(m.group(2)), m.group(3));
+            String propertyPath = m.group(1)!=null ? m.group(1) : m.group(2);
+            OutputQueryOperator operator = OutputQueryOperator.valueOfOperator(m.group(3));
+            String valueToMatch = m.group(4);
+            return new OutputQuery(propertyPath, operator, valueToMatch);
         }
     }
 
     private static final Pattern generateQueryPattern() {
-        String patternString = String.format("^\\{(.+?)\\}(%s){1}+(.+?)$", generateOperatorsPattern());
+        // Match either any (JSON path) expression embedded in curly braces, or a simple (nested) property path,
+        // followed by any of the available operators, followed by the value to be matched.
+        String patternString = String.format("^(?:(?:\\{(.+?)\\})|([a-zA-Z0-9\\.]+?))(%s){1}+(.+?)$", generateOperatorsPattern());
         return Pattern.compile(patternString);
     }
 
