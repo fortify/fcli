@@ -51,7 +51,7 @@ public enum OutputFormat {
     xml_flat    (OutputStructure.FLAT, "xml",   new XmlRecordWriterFactory()),
     csv         (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.HEADERS)),
     csv_plain   (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.NO_HEADERS)),
-    expr        (OutputStructure.FLAT, "expr",  new ExprRecordWriterFactory());
+    expr        (OutputStructure.TREE, "expr",  new ExprRecordWriterFactory());
     
     @Getter private final OutputStructure      outputStructure;
     @Getter private final String               messageKey;

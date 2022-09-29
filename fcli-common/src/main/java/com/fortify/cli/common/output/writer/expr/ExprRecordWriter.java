@@ -28,8 +28,8 @@ import java.io.PrintWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.writer.IRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
@@ -39,7 +39,7 @@ import lombok.SneakyThrows;
 
 @RequiredArgsConstructor
 public class ExprRecordWriter implements IRecordWriter {
-    private static final Pattern exprPattern = Pattern.compile("\\{([A-Za-z0-9_]+)(?::([^\\}]*))?\\}");
+    private static final Pattern exprPattern = Pattern.compile("\\{(.+?)\\}");
     @Getter private final RecordWriterConfig config;
     
     private PrintWriter getPrintWriter() {
@@ -56,10 +56,10 @@ public class ExprRecordWriter implements IRecordWriter {
         StringBuilder sb = new StringBuilder();
         Matcher matcher = exprPattern.matcher(expr);
         while (matcher.find()) {
-            String propertyName = matcher.group(1);
-            JsonNode valueNode = input.get(propertyName);
-            String value = valueNode==null ? matcher.group(2) : valueNode.asText();
-            if (value == null) { value = ""; }
+            String propertyPath = matcher.group(1);
+            String value = JsonHelper.evaluateJsonPath(input, propertyPath, String.class);
+            if ( value==null ) { value = matcher.group(2); }
+            if ( value==null ) { value = ""; }
             matcher.appendReplacement(sb, value);
         }
         matcher.appendTail(sb);
