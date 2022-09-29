@@ -48,8 +48,14 @@ public final class PropertyPathFormatter {
     }
     
     private static final String normalize(String s) {
-        // This is assuming that the input is not using uppercase words
-        return s.replaceAll("[^a-zA-Z0-9. ]", "").replaceAll("([A-Z])", ".$1").toLowerCase();
+        return s
+                .replaceAll("_", ".")             // Underscore to dot
+                .replaceAll("[^a-zA-Z0-9. ]", "") // Remove all special characters
+                .replaceAll("([A-Z]+)", ".$1")    // Insert dot before uppercase words
+                .replaceAll("\\.\\.", ".")        // Remove any duplicate dots
+                .replaceAll("^\\.+", "")          // Remove leading dots
+                .replaceAll("\\.+$", "")          // Remove trailing dots
+                .toLowerCase();
     }
     
     private static final String capitalize(String s) {

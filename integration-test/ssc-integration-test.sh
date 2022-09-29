@@ -60,7 +60,7 @@ runPersistentTestCommands() {
     checkOutput=(fgrep projectversion_add); sscSessionCmd role-permission list
     checkOutput=(fgrep CIToken); sscSessionCmd token-definition list
     
-    checkOutput=(fgrep CIToken); sscCmd token create CIToken -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD} --expire-in 5m --fields "id#type#restToken"
+    checkOutput=(fgrep CIToken); sscCmd token create CIToken -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD} --expire-in 5m -o table-plain=id,type,restToken
     restToken=$(echo $lastOutput | awk '{print $3}')
     sscCmd token revoke $restToken -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD}
 }

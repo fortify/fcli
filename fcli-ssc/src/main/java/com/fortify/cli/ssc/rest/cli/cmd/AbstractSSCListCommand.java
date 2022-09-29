@@ -43,7 +43,7 @@ public abstract class AbstractSSCListCommand extends AbstractSSCUnirestRunnerCom
     
     protected HttpRequest<?> addQParam(HttpRequest<?> request) {
         SSCOutputQueryQParamGenerator qParamGenerator = getQParamGenerator();
-        return qParamGenerator.addQParam(request, outputMixin.getOutputQueries());
+        return qParamGenerator==null ? request : qParamGenerator.addQParam(request, outputMixin.getOutputQueries());
     }
 
     protected SSCOutputQueryQParamGenerator getQParamGenerator() {
