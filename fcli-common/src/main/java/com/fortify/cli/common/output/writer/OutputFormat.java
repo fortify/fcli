@@ -26,6 +26,7 @@ package com.fortify.cli.common.output.writer;
 
 import com.fortify.cli.common.output.writer.csv.CsvRecordWriter.CsvType;
 import com.fortify.cli.common.output.writer.csv.CsvRecordWriterFactory;
+import com.fortify.cli.common.output.writer.expr.ExprRecordWriterFactory;
 import com.fortify.cli.common.output.writer.json.JsonRecordWriterFactory;
 import com.fortify.cli.common.output.writer.table.TableRecordWriter.TableType;
 import com.fortify.cli.common.output.writer.table.TableRecordWriterFactory;
@@ -38,41 +39,25 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum OutputFormat {
-    json        (OutputType.TECHNICAL,    OutputStructure.TREE, "json",  new JsonRecordWriterFactory()), 
-    json_flat   (OutputType.TECHNICAL,    OutputStructure.FLAT, "json",  new JsonRecordWriterFactory()),
-    yaml        (OutputType.TECHNICAL,    OutputStructure.TREE, "yaml",  new YamlRecordWriterFactory()), 
-    yaml_flat   (OutputType.TECHNICAL,    OutputStructure.FLAT, "yaml",  new YamlRecordWriterFactory()),
-    table       (OutputType.TEXT_COLUMNS, OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.HEADERS)), 
-    table_plain (OutputType.TEXT_COLUMNS, OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.NO_HEADERS)),
-    tree        (OutputType.TEXT_ROWS,    OutputStructure.TREE, "tree",  new TreeRecordWriterFactory()), 
-    tree_flat   (OutputType.TEXT_ROWS,    OutputStructure.FLAT, "tree",  new TreeRecordWriterFactory()),
-    xml         (OutputType.TECHNICAL,    OutputStructure.TREE, "xml",   new XmlRecordWriterFactory()), 
-    xml_flat    (OutputType.TECHNICAL,    OutputStructure.FLAT, "xml",   new XmlRecordWriterFactory()),
-    csv         (OutputType.TEXT_COLUMNS, OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.HEADERS)),
-    csv_plain   (OutputType.TEXT_COLUMNS, OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.NO_HEADERS));
+    json        (OutputStructure.TREE, "json",  new JsonRecordWriterFactory()), 
+    json_flat   (OutputStructure.FLAT, "json",  new JsonRecordWriterFactory()),
+    yaml        (OutputStructure.TREE, "yaml",  new YamlRecordWriterFactory()), 
+    yaml_flat   (OutputStructure.FLAT, "yaml",  new YamlRecordWriterFactory()),
+    table       (OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.HEADERS)), 
+    table_plain (OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.NO_HEADERS)),
+    tree        (OutputStructure.TREE, "tree",  new TreeRecordWriterFactory()), 
+    tree_flat   (OutputStructure.FLAT, "tree",  new TreeRecordWriterFactory()),
+    xml         (OutputStructure.TREE, "xml",   new XmlRecordWriterFactory()), 
+    xml_flat    (OutputStructure.FLAT, "xml",   new XmlRecordWriterFactory()),
+    csv         (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.HEADERS)),
+    csv_plain   (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.NO_HEADERS)),
+    expr        (OutputStructure.FLAT, "expr",  new ExprRecordWriterFactory());
     
-    @Getter private final OutputType           outputType; 
     @Getter private final OutputStructure      outputStructure;
     @Getter private final String               messageKey;
     @Getter private final IRecordWriterFactory recordWriterFactory;
     
-    public enum OutputType { TEXT_ROWS, TEXT_COLUMNS, TECHNICAL }
     public enum OutputStructure { TREE, FLAT }
-    
-    public static final boolean isText(OutputFormat outputFormat) {
-        switch (outputFormat.getOutputType()) {
-        case TEXT_COLUMNS:
-        case TEXT_ROWS: return true;
-        default: return false;
-        }
-    }
-    
-    public static final boolean isColumns(OutputFormat outputFormat) {
-        switch (outputFormat.getOutputType()) {
-        case TEXT_COLUMNS: return true;
-        default: return false;
-        }
-    }
     
     public static final boolean isFlat(OutputFormat outputFormat) {
         switch (outputFormat.getOutputStructure()) {
