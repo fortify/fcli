@@ -450,17 +450,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli ssc token list</strong> [<strong>-hV</strong>] <strong>-p</strong>[=<em>&lt;password&gt;</em>] [<strong>-p</strong>[=<em>&lt;password&gt;</em>]]&#8230;&#8203;
-                    [<strong>--creationDate</strong>=<em>&lt;creationDate&gt;</em>]
-                    [<strong>--description</strong>=<em>&lt;description&gt;</em>] [<strong>--id</strong>=<em>&lt;id&gt;</em>]
-                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                    [<strong>--remainingUsages</strong>=<em>&lt;remainingUsages&gt;</em>]
-                    [<strong>--terminalDate</strong>=<em>&lt;terminalDate&gt;</em>] [<strong>--type</strong>=<em>&lt;type&gt;</em>] <strong>-u</strong>=<em>&lt;user&gt;</em>
-                    [<strong>--userName</strong>=<em>&lt;username&gt;</em>] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em> |
-                    [<strong>--url</strong>=<em>&lt;url&gt;</em> [<strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em>]
-                    [<strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em>] [<strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em>]
-                    [<strong>--proxy-password</strong>]&#8230;&#8203; [<strong>-k</strong>]]] [[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>]
-                    [<strong>--fields</strong>=<em>&lt;fields&gt;</em>] [<strong>--flatten</strong>] [<strong>--[no-]headers</strong>]
-                    [<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>] [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]]</p>
+                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] <strong>-u</strong>=<em>&lt;user&gt;</em>
+                    [<strong>--session</strong>=<em>&lt;sessionName&gt;</em> | [<strong>--url</strong>=<em>&lt;url&gt;</em>
+                    [<strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em>] [<strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em>]
+                    [<strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em>] [<strong>--proxy-password</strong>]&#8230;&#8203; [<strong>-k</strong>]]]
+                    <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
+                    [[<strong>-q</strong>=<em>&lt;prop&gt;=&lt;value&gt;</em>]&#8230;&#8203;]</p>
 </div>
 </div>
 </div>
@@ -489,13 +484,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dd>
 <p>Your null password.</p>
 </dd>
-<dt class="hdlist1"><strong>--id</strong>=<em>&lt;id&gt;</em></dt>
-<dt class="hdlist1"><strong>--userName</strong>=<em>&lt;username&gt;</em></dt>
-<dt class="hdlist1"><strong>--type</strong>=<em>&lt;type&gt;</em></dt>
-<dt class="hdlist1"><strong>--creationDate</strong>=<em>&lt;creationDate&gt;</em></dt>
-<dt class="hdlist1"><strong>--terminalDate</strong>=<em>&lt;terminalDate&gt;</em></dt>
-<dt class="hdlist1"><strong>--remainingUsages</strong>=<em>&lt;remainingUsages&gt;</em></dt>
-<dt class="hdlist1"><strong>--description</strong>=<em>&lt;description&gt;</em></dt>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
 <p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
@@ -516,6 +504,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dd>
 <p>The full url to the null server.</p>
 </dd>
+<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;prop&gt;=&lt;value&gt;</em></dt>
 <dt class="hdlist1"><strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em></dt>
 <dd>
 <p>The hostname or IP address of the proxy server.</p>
@@ -545,30 +534,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--fmt, --format</strong>=<em>&lt;outputFormat&gt;</em></dt>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
-<p>Output format. Possible values: json, yaml, table, tree, xml, csv.</p>
+<p>Output format: json, json-flat, yaml, yaml-flat, table, table-plain, tree, tree-flat, xml, xml-flat, csv, csv-plain, expr</p>
 </dd>
-<dt class="hdlist1"><strong>--fields</strong>=<em>&lt;fields&gt;</em></dt>
-<dd>
-<p>Define the fields to be included in the output, together with optional header names</p>
-</dd>
-<dt class="hdlist1"><strong>--flatten</strong></dt>
-<dd>
-<p>For non-column-based outputs, whether to flatten the structure</p>
-</dd>
-<dt class="hdlist1"><strong>--[no-]headers</strong></dt>
-<dd>
-<p>For column-based outputs, whether to output headers</p>
-</dd>
-<dt class="hdlist1"><strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em></dt>
-<dd>
-<p>Transforms output using JSONPath</p>
-</dd>
-<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>&lt;outputFile&gt;</em></dt>
-<dd>
-<p>Output file</p>
-</dd>
+<dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 </dl>
 </div>
 </div>
@@ -577,7 +547,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-09-27 16:49:20 UTC
+Last updated 2022-09-29 14:44:23 UTC
 </div>
 </div>
 </body>

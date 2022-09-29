@@ -450,9 +450,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli ssc role get</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                  [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] [[<strong>--fmt</strong>=<em>&lt;outputFormat&gt;</em>]
-                  [<strong>--fields</strong>=<em>&lt;fields&gt;</em>] [<strong>--flatten</strong>] [<strong>--[no-]headers</strong>]
-                  [<strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em>] [<strong>-o</strong>=<em>&lt;outputFile&gt;</em>]] <em>&lt;roleNameOrId&gt;</em></p>
+                  [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                  [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] <em>&lt;roleNameOrId&gt;</em></p>
 </div>
 </div>
 </div>
@@ -494,39 +493,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--fmt, --format</strong>=<em>&lt;outputFormat&gt;</em></dt>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
-<p>Output format. Possible values: json, yaml, table, tree, xml, csv.</p>
+<p>Output format: json, json-flat, yaml, yaml-flat, table, table-plain, tree, tree-flat, xml, xml-flat, csv, csv-plain, expr</p>
 </dd>
-<dt class="hdlist1"><strong>--fields</strong>=<em>&lt;fields&gt;</em></dt>
+<dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
-<p>Define the fields to be included in the output, together with optional header names</p>
+<p>== Optional session name:</p>
 </dd>
-<dt class="hdlist1"><strong>--flatten</strong></dt>
-<dd>
-<p>For non-column-based outputs, whether to flatten the structure</p>
-</dd>
-<dt class="hdlist1"><strong>--[no-]headers</strong></dt>
-<dd>
-<p>For column-based outputs, whether to output headers</p>
-</dd>
-<dt class="hdlist1"><strong>--json-path</strong>=<em>&lt;jsonPath&gt;</em></dt>
-<dd>
-<p>Transforms output using JSONPath</p>
-</dd>
-<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>&lt;outputFile&gt;</em></dt>
-<dd>
-<p>Output file</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_optional_session_name">Optional session name:</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
 <dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
 <dd>
 <p>A name/alias for your null session.</p>
@@ -549,7 +523,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2022-09-27 16:49:20 UTC
+Last updated 2022-09-29 14:44:23 UTC
 </div>
 </div>
 </body>
