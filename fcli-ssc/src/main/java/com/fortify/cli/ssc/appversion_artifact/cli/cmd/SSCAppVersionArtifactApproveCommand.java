@@ -24,11 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
@@ -63,11 +61,5 @@ public class SSCAppVersionArtifactApproveCommand extends AbstractSSCTableOutputC
         }
 
         return unirest.get(SSCUrls.ARTIFACT(artifactId)).queryString("embed","scans");
-    }
-    
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
-                //.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
     }
 }

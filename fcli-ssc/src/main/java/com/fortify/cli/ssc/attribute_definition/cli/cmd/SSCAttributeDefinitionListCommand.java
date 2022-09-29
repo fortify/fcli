@@ -24,37 +24,28 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.attribute_definition.cli.cmd;
 
-import com.fortify.cli.ssc.attribute_definition.domain.SSCAttributeDefinitionCategory;
-import com.fortify.cli.ssc.attribute_definition.domain.SSCAttributeDefinitionType;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAttributeDefinitionListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam
-    private Integer id;
-    
-    @Option(names={"--category"}) @SSCFilterQParam
-    private SSCAttributeDefinitionCategory category;
-    
-    @Option(names={"--guid"}) @SSCFilterQParam
-    private String guid;
-    
-    @Option(names={"--name"}) @SSCFilterQParam
-    private String name;
-    
-    @Option(names={"--type"}) @SSCFilterQParam
-    private SSCAttributeDefinitionType type;
-    
-    @Option(names={"--required"}, arity = "1") @SSCFilterQParam
-    private Boolean required;
+public class SSCAttributeDefinitionListCommand extends AbstractSSCListCommand {
+    @Override
+    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
+        return new SSCOutputQueryQParamGenerator()
+                .add("id", SSCQParamValueGenerators::plain)
+                .add("category", SSCQParamValueGenerators::wrapInQuotes)
+                .add("guid", SSCQParamValueGenerators::wrapInQuotes)
+                .add("name", SSCQParamValueGenerators::wrapInQuotes)
+                .add("type", SSCQParamValueGenerators::wrapInQuotes)
+                .add("required", SSCQParamValueGenerators::plain);
+    }
 
     protected GetRequest generateRequest(UnirestInstance unirest) {
         return unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name");

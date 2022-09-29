@@ -24,37 +24,29 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.alert_definition.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAlertDefinitionListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam
-    private Integer id;
-    
-    @Option(names={"--name"}) @SSCFilterQParam
-    private String name;
-    
-    @Option(names={"--createdBy"}) @SSCFilterQParam
-    private String createdBy;
-    
-    @Option(names={"--recipientType"}) @SSCFilterQParam
-    private String recipientType;
-    
-    @Option(names={"--entityType"}) @SSCFilterQParam
-    private String monitoredEntityType;
-    
-    @Option(names={"--triggerDescription"}) @OutputFilter
-    private Integer triggerDescriptionName;
+public class SSCAlertDefinitionListCommand extends AbstractSSCListCommand {
+    @Override
+    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
+        return new SSCOutputQueryQParamGenerator()
+                .add("id", SSCQParamValueGenerators::plain)
+                .add("name", SSCQParamValueGenerators::wrapInQuotes)
+                .add("createdBy", SSCQParamValueGenerators::wrapInQuotes)
+                .add("recipientType", SSCQParamValueGenerators::wrapInQuotes)
+                .add("monitoredEntityType", SSCQParamValueGenerators::wrapInQuotes)
+                .add("triggerDescriptionName", SSCQParamValueGenerators::wrapInQuotes);
+    }
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {

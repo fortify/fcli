@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.transform.fields;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,6 +47,10 @@ public class RenameFieldsTransformer extends AbstractJsonNodeTransformer impleme
     public RenameFieldsTransformer(Map<String,String> oldToNewNameMap) {
         super(true);
         this.oldToNewNameMap = oldToNewNameMap;
+    }
+    
+    public RenameFieldsTransformer(String oldName, String newName) {
+        this(Collections.singletonMap(oldName, newName));
     }
     
     public RenameFieldsTransformer(String[] oldToNewNameSpecs) {

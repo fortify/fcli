@@ -24,8 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion.helper;
 
-import java.util.function.UnaryOperator;
-
 import javax.validation.ValidationException;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,8 +35,8 @@ import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 
 public class SSCAppVersionHelper {
-    public static final UnaryOperator<JsonNode> renameFieldsTransformer() {
-        return new RenameFieldsTransformer(new String[] {"project:application"})::transform;
+    public static final JsonNode renameFields(JsonNode record) {
+        return new RenameFieldsTransformer(new String[] {"project:application"}).transform(record);
     }
     
     public static final SSCAppVersionDescriptor getAppVersion(UnirestInstance unirestInstance, String appVersionNameOrId, String delimiter, String... fields) {

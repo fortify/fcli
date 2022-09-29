@@ -27,7 +27,6 @@ package com.fortify.cli.ssc.plugin.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 
@@ -43,7 +42,7 @@ import picocli.CommandLine.Command;
 public class SSCPluginEnableCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
     @CommandLine.Mixin private OutputMixin outputMixin;
 
-    @CommandLine.Option(names = {"--id"}, required = true) @OutputFilter
+    @CommandLine.Option(names = {"--id"}, required = true)
     private int id;
 
     @SneakyThrows

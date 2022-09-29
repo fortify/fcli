@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
@@ -37,7 +37,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAppVersionArtifactListCommand extends AbstractSSCTableOutputCommand {
+public class SSCAppVersionArtifactListCommand extends AbstractSSCListCommand {
     @Mixin private SSCAppVersionResolverMixin.From parentResolver;
     
     // TODO Add filtering/default column options, use default implementation for getOutputOptionsWriterConfig

@@ -24,37 +24,36 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.alert.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAlertListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam
-    private Integer id;
+public class SSCAlertListCommand extends AbstractSSCListCommand {
+    @Override
+    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
+        return new SSCOutputQueryQParamGenerator()
+                .add("id", SSCQParamValueGenerators::plain)
+                .add("alertDefinitionName", SSCQParamValueGenerators::wrapInQuotes)
+                .add("userName", SSCQParamValueGenerators::wrapInQuotes)
+                .add("recipientType", SSCQParamValueGenerators::wrapInQuotes)
+                .add("monitoredEntityType", SSCQParamValueGenerators::wrapInQuotes)
+                .add("triggerDescriptionName", SSCQParamValueGenerators::wrapInQuotes);
+    }
     
-    @Option(names={"--triggeredDate"}) @OutputFilter
-    private String triggeredDate;
-    
-    @Option(names={"--alertDefinitionName"}) @SSCFilterQParam
-    private String alertDefinitionName;
-    
-    @Option(names={"--userName"}) @SSCFilterQParam
-    private String userName;
-    
-    @Option(names={"--alertMessage"}) @OutputFilter
-    private String alertMessage;
-    
-    @Option(names={"--applicationVersion"}) @OutputFilter
-    private String projectAndVersionLabel;
+    @Override
+    protected JsonNode transformRecord(JsonNode record) {
+        return new RenameFieldsTransformer("projectAndVersionLabel", "applicationAndVersionLabel").transform(record);
+    }
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {

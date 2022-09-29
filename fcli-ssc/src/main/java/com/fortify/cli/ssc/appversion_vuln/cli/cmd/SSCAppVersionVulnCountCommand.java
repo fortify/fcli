@@ -24,13 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_vuln.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_filterset.cli.mixin.SSCAppVersionFilterSetResolverMixin;
 import com.fortify.cli.ssc.appversion_filterset.helper.SSCAppVersionFilterSetDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
@@ -60,11 +58,5 @@ public class SSCAppVersionVulnCountCommand extends AbstractSSCTableOutputCommand
             request.queryString("filterset", filterSetDescriptor.getGuid());
         }
         return request;
-    }
-    
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
-                //.defaultColumns("cleanName:Name#totalCount:Total#auditedCount:Audited");
     }
 }

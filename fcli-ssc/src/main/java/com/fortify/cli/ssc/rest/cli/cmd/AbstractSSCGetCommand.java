@@ -40,6 +40,10 @@ public abstract class AbstractSSCGetCommand extends AbstractSSCUnirestRunnerComm
 
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.details().singular(true);
+        return SSCOutputConfigHelper.details().singular(true).recordTransformer(this::transformRecord);
+    }
+    
+    protected JsonNode transformRecord(JsonNode record) {
+        return record;
     }
 }

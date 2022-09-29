@@ -25,7 +25,6 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
@@ -46,7 +45,7 @@ public class SSCAppVersionGetCommand extends AbstractSSCGetCommand {
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return super.getOutputOptionsWriterConfig().recordTransformer(SSCAppVersionHelper.renameFieldsTransformer());
+    protected JsonNode transformRecord(JsonNode record) {
+        return SSCAppVersionHelper.renameFields(record);
     }
 }

@@ -28,7 +28,6 @@ import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
@@ -91,11 +90,5 @@ public class SSCAppVersionArtifactUploadCommand extends AbstractSSCTableOutputCo
         }
 
         return unirest.get(SSCUrls.ARTIFACT(artifactId)).queryString("embed","scans");
-    }
-    
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return super.getOutputOptionsWriterConfig();
-                //.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
     }
 }

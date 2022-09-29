@@ -24,41 +24,22 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_user.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAppVersionAuthEntityListCommand extends AbstractSSCTableOutputCommand {
+public class SSCAppVersionAuthEntityListCommand extends AbstractSSCListCommand {
     @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentResolver;
     
-    @Option(names={"--id"}) @OutputFilter
-    private Integer id;
-    
-    @Option(names={"--name"}) @OutputFilter
-    private String entityName; // TODO perform server-side filtering by adding entityname request parameter
-    
-    @Option(names={"--displayName"}) @OutputFilter
-    private String displayName;
-    
-    @Option(names={"--type"}) @OutputFilter
-    private String type;
-    
-    @Option(names={"--email"}) @OutputFilter
-    private String email;
-    
-    @Option(names={"--isLdap"}) @OutputFilter
-    private Boolean isLdap;
-    
+    // TODO Can we do any server-side filtering? If so, override the #getQParamGenerator() method
     // TODO Add boolean options to set extractusersfromgroups and includeuniversalaccessentities request parameters
     
     @Override

@@ -24,53 +24,24 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.role_permission.cli.cmd;
 
-import static com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper.*;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCRolePermissionListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @OutputFilter
-    private String id;
-
-    @Option(names={"--name"}) @OutputFilter
-    private String name;
-
+public class SSCRolePermissionListCommand extends AbstractSSCListCommand {
+    protected JsonNode transformRecord(JsonNode record) {
+        return SSCRolePermissionHelper.flattenArrayProperty(record, "dependsOnPermission", "id");
+    }
+    
     protected GetRequest generateRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.PERMISSIONS).queryString("limit", "-1");
-    }
-
-    private JsonNode transformRecord(JsonNode recordJsonNode) {
-        ObjectNode record = (ObjectNode)recordJsonNode;
-        String newRecord = "";
-        for (JsonNode e : record.get("dependsOnPermission")) {
-            newRecord += e.get("id").asText() + ",";
-        }
-        if(newRecord.length() > 1){
-            newRecord = newRecord.substring(0,newRecord.length()-1);
-        }
-        record.remove("dependsOnPermission");
-        record.put("dependsOnPermission", newRecord);
-        return record;
-    }
-
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table()
-                .recordTransformer(r -> flattenArrayProperty(r, "dependsOnPermission", "id"));
-                //.defaultColumns("id#name#dependsOnPermission#description");
     }
 }

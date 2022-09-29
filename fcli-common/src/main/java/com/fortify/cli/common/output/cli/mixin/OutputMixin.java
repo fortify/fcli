@@ -6,18 +6,15 @@ import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.OutputFormatConfigConverter.OutputFormatIterable;
-import com.fortify.cli.common.output.cli.mixin.filter.OptionAnnotationHelper;
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
+import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
 import com.fortify.cli.common.output.transform.PropertyPathFormatter;
 import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
-import com.fortify.cli.common.output.transform.jsonpath.JsonPathTransformer;
 import com.fortify.cli.common.output.writer.IRecordWriter;
 import com.fortify.cli.common.output.writer.OutputFormat;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
@@ -27,23 +24,21 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import lombok.Data;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.Messages;
-import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
 public class OutputMixin {
-    private CommandSpec mixee;
-    private OptionAnnotationHelper optionAnnotationHelper;
+    @Getter private CommandSpec mixee;
     
     @Spec(Spec.Target.MIXEE)
     public void setMixee(CommandSpec mixee) {
         this.mixee = mixee;
-        this.optionAnnotationHelper = new OptionAnnotationHelper(mixee);
     }
     
     @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false)
@@ -103,6 +98,18 @@ public class OutputMixin {
             return new OutputConfig();
         }
     }
+    
+    /**
+     * This method allows for applying output filters. The standard {@link OutputMixin}
+     * doesn't apply any filters, but {@link OutputMixinWithQuery} provides an implementation
+     * for this method.
+     * @param outputFormat
+     * @param data
+     * @return
+     */
+    protected JsonNode applyRecordOutputFilters(OutputFormat outputFormat, JsonNode record) {
+        return record;
+    }
 
     public final class OutputOptionsWriter implements AutoCloseable { // TODO Implement interface, make implementation private
         private final OutputMixin optionsHandler = OutputMixin.this;
@@ -150,52 +157,25 @@ public class OutputMixin {
         }
 
         @SneakyThrows
-        private void writeRecord(JsonNode jsonNode) {
+        private void writeRecord(JsonNode record) {
             // TODO Add null checks in case any input or record transformation returns null?
-            jsonNode = config.applyRecordTransformations(outputFormat, jsonNode);
-            jsonNode = applyOutputFilterTransformation(outputFormat, jsonNode);
-            jsonNode = applyFieldRenameTransformation(outputFormat, jsonNode);
-            jsonNode = applyFlattenTransformation(outputFormat, jsonNode);
-            if ( jsonNode!=null ) {
-                if(jsonNode.getNodeType() == JsonNodeType.ARRAY) {
-                    if(jsonNode.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(jsonNode.get(0).toString()));
+            record = record==null ? null : config.applyRecordTransformations(outputFormat, record);
+            record = record==null ? null : applyRecordOutputFilters(outputFormat, record);
+            record = record==null ? null : applyRecordFlattenTransformation(outputFormat, record);
+            if ( record!=null ) {
+                if(record.getNodeType() == JsonNodeType.ARRAY) {
+                    if(record.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(record.get(0).toString()));
                 } else {
-                    recordWriter.writeRecord((ObjectNode) jsonNode);
+                    recordWriter.writeRecord((ObjectNode) record);
                 }
             }
         }
-
-        protected JsonNode applyOutputFilterTransformation(OutputFormat outputFormat, JsonNode data) {
-            // TODO Improve this?
-            for ( OptionSpec optionSpec : optionAnnotationHelper.optionsWithAnnotationStream(OutputFilter.class).collect(Collectors.toList()) ) {
-                data = applyOutputFilterTransformation(outputFormat, data, optionSpec); 
-            }
-            return data;
-        }
         
-        private JsonNode applyOutputFilterTransformation(OutputFormat outputFormat, JsonNode data, OptionSpec optionSpec) {
-            if ( !data.isEmpty() ) {
-                String fieldName = OptionAnnotationHelper.getOptionTargetName(optionSpec, OutputFilter.class);
-                Object value = optionSpec.getValue();
-                if ( value!=null ) {
-                    String format = value instanceof String ? "[?(@.%s == \"%s\")]" : "[?(@.%s == %s)]";
-                    data = new JsonPathTransformer(String.format(format, fieldName, value)).transform(data);
-                }
-            }
-            return data;
-        }
-        
-        protected JsonNode applyFlattenTransformation(OutputFormat outputFormat, JsonNode data) {
+        protected JsonNode applyRecordFlattenTransformation(OutputFormat outputFormat, JsonNode record) {
             if ( OutputFormat.isFlat(outputFormat) ) {
-                data = new FlattenTransformer(PropertyPathFormatter::camelCase, ".", false).transform(data);
+                record = new FlattenTransformer(PropertyPathFormatter::camelCase, ".", false).transform(record);
             }
-            return data;
-        }
-        
-        protected JsonNode applyFieldRenameTransformation(OutputFormat outputFormat, JsonNode jsonNode) {
-            // jsonNode = applyI18nTransformation(outputFormat, jsonNode); // TODO Rename fields based on message resources
-            // jsonNode = applyFieldFormatTransformation(outputFormat, jsonNode); // TODO Rename fields based on outputFormat.getDefaultFieldNameFormatter()
-            return jsonNode;
+            return record;
         }
 
         private OutputFormat getOutputFormat() {
@@ -260,39 +240,6 @@ public class OutputMixin {
             // TODO Close printwriter and/or underlying streams except for System.out
         }
     }
-    
-    public static interface IDefaultFieldNameFormatterProvider {
-        public Function<String, String> getDefaultFieldNameFormatter(OutputFormat outputFormat);
-    }
-    /*
-    private final class I18nDefaultFieldNameFormatterProvider implements IDefaultFieldNameFormatterProvider {
-        private final Messages messages;
-        I18nDefaultFieldNameFormatterProvider() {
-            this.messages = getMessages();
-        }
-        @Override
-        public Function<String, String> getDefaultFieldNameFormatter(OutputFormat outputFormat) {
-            return field -> getDefaultFieldName(outputFormat, field);
-        }
-
-        private String getDefaultFieldName(OutputFormat outputFormat, String field) {
-            String[] keys = {
-                String.format("output.%s.field.%s.name", outputFormat.name(), field),
-                String.format("output.field.%s.name", field),
-            };
-            
-            return Stream.of(keys)
-            .map(this::getMessageString)
-            .filter(Objects::nonNull)
-            .findFirst()
-            .orElse(outputFormat.getDefaultFieldNameFormatter().apply(field));
-        }
-        
-        private String getMessageString(String key) {
-            return messages==null ? null : messages.getString(key, null);
-        }
-    }
-    */
 }
 
 

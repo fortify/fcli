@@ -142,6 +142,6 @@ public class SSCAppVersionCreateCommand extends AbstractSSCUnirestRunnerCommand 
     
     @Override
     public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.details().recordTransformer(SSCAppVersionHelper.renameFieldsTransformer());
+        return SSCOutputConfigHelper.details().recordTransformer(SSCAppVersionHelper::renameFields);
     }
 }

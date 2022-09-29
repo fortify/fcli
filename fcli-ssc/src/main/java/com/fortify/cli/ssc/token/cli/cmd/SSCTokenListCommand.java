@@ -29,47 +29,26 @@ import java.util.Map;
 
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
+import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentials;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterMixin;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IOutputConfigSupplier {
-    @Mixin private OutputMixin outputMixin;
-    @Mixin private SSCFilterMixin filterMixin;
-    
-    // TODO Check whether SSC allows for q-based filtering on any of these fields
-    @Option(names={"--id"}) @OutputFilter
-    private Integer id;
-    
-    @Option(names={"--userName"}) @SSCFilterQParam
-    private String username;
-    
-    @Option(names={"--type"}) @SSCFilterQParam
-    private String type;
-    
-    @Option(names={"--creationDate"}) @OutputFilter
-    private String creationDate;
-    
-    @Option(names={"--terminalDate"}) @OutputFilter
-    private String terminalDate;
-    
-    @Option(names={"--remainingUsages"}) @OutputFilter
-    private Integer remainingUsages;
-    
-    @Option(names={"--description"}) @OutputFilter
-    private String description;
+    @Mixin private OutputMixinWithQuery outputMixin;
+    private final SSCOutputQueryQParamGenerator qParamGenerator = 
+            new SSCOutputQueryQParamGenerator()
+            .add("userName", SSCQParamValueGenerators::wrapInQuotes)
+            .add("type", SSCQParamValueGenerators::wrapInQuotes);
     
     @Override
     protected void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentials userCredentials) {
@@ -79,7 +58,7 @@ public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IOut
     private Map<String, Object> getQueryParams() {
         Map<String, Object> queryParams = new HashMap<String, Object>();
         queryParams.put("limit", "-1");
-        String qParamValue = filterMixin.getQParamValue();
+        String qParamValue = qParamGenerator.getQParamValue(outputMixin.getOutputQueries());
         if ( qParamValue!=null && !qParamValue.isBlank() ) {
             queryParams.put("q", qParamValue);
         }

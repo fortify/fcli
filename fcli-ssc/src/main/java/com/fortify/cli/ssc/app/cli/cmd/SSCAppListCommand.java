@@ -25,23 +25,24 @@
 package com.fortify.cli.ssc.app.cli.cmd;
 
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAppListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam
-    private String id;
-    
-    @Option(names={"--name"}) @SSCFilterQParam
-    private String name;
+public class SSCAppListCommand extends AbstractSSCListCommand {
+    @Override
+    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
+        return new SSCOutputQueryQParamGenerator()
+                .add("id", SSCQParamValueGenerators::plain)
+                .add("name", SSCQParamValueGenerators::wrapInQuotes);
+    }
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {

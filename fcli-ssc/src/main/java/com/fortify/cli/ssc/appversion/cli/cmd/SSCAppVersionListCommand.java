@@ -24,42 +24,35 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAppVersionListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam
-    private Integer id;
-    
-    @Option(names={"--application-name"}) @SSCFilterQParam("project.name")
-    private String applicationName;
-    
-    @Option(names={"--name"}) @SSCFilterQParam
-    private String name;
-    
-    @Option(names={"--issue-template"}) @OutputFilter
-    private String issueTemplateName;
-    
-    @Option(names={"--created-by"}) @OutputFilter
-    private String createdBy;
-
-    protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get("/api/v1/projectVersions?limit=-1");
+public class SSCAppVersionListCommand extends AbstractSSCListCommand {
+    @Override
+    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
+        return new SSCOutputQueryQParamGenerator()
+                .add("id", SSCQParamValueGenerators::plain)
+                .add("application.name", "project.name", SSCQParamValueGenerators::wrapInQuotes)
+                .add("application.id", "project.id", SSCQParamValueGenerators::plain)
+                .add("name", SSCQParamValueGenerators::wrapInQuotes);
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return super.getOutputOptionsWriterConfig().recordTransformer(SSCAppVersionHelper.renameFieldsTransformer());
+    protected JsonNode transformRecord(JsonNode record) {
+        return SSCAppVersionHelper.renameFields(record);
+    }
+    
+    protected GetRequest generateRequest(UnirestInstance unirest) {
+        return unirest.get("/api/v1/projectVersions?limit=-1");
     }
 }

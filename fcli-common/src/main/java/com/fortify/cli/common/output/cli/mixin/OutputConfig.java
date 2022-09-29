@@ -67,8 +67,8 @@ public class OutputConfig {
         return applyTransformations(inputTransformers, outputFormat, input);
     }
     
-    final JsonNode applyRecordTransformations(OutputFormat outputFormat, JsonNode input) {
-        return applyTransformations(recordTransformers, outputFormat, input);
+    final JsonNode applyRecordTransformations(OutputFormat outputFormat, JsonNode record) {
+        return applyTransformations(recordTransformers, outputFormat, record);
     }
     
     private final JsonNode applyTransformations(List<BiFunction<OutputFormat, JsonNode, JsonNode>> transformations, OutputFormat outputFormat, JsonNode input) {

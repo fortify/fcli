@@ -24,35 +24,18 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCReportTemplateListCommand extends AbstractSSCTableOutputCommand {
-    // TODO Check whether SSC allows for q-based filtering on any of these fields
-    @Option(names={"--id"}) @OutputFilter
-    private String id;
-    
-    @Option(names={"--name"}) @OutputFilter
-    private String name;
-    
-    @Option(names={"--type"}) @OutputFilter
-    private String type;
-    
-    @Option(names={"--templateDocId"}) @OutputFilter
-    private String templateDocId;
-    
-    @Option(names={"--inUse"}) @OutputFilter
-    private String inUse;
-    
+public class SSCReportTemplateListCommand extends AbstractSSCListCommand {
+    // TODO Can we do any server-side filtering? If so, override the #getQParamGenerator() method
     
     protected GetRequest generateRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.REPORT_DEFINITIONS).queryString("limit","-1");

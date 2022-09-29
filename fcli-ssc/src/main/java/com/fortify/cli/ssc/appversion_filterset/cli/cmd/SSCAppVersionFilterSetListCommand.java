@@ -24,34 +24,20 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_filterset.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAppVersionFilterSetListCommand extends AbstractSSCTableOutputCommand {
+public class SSCAppVersionFilterSetListCommand extends AbstractSSCListCommand {
     @Mixin private SSCAppVersionResolverMixin.From parentResolver;
-
-    @Option(names="--guid") @OutputFilter
-    private String guid;
-    
-    @Option(names="--title") @OutputFilter
-    private String title;
-    
-    @Option(names="--default-filterset", arity="1") @OutputFilter
-    private Boolean defaultFilterSet;
-    
-    @Option(names="--description", hidden=true) @OutputFilter
-    private String description;
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {

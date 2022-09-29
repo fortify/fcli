@@ -24,41 +24,28 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.issue_template.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCIssueTemplateListCommand extends AbstractSSCTableOutputCommand {
-    // TODO Check whether SSC allows for q-based filtering on any of these fields
-    @Option(names={"--id"}) @SSCFilterQParam
-    private String id;
-    
-    @Option(names={"--name"}) @SSCFilterQParam
-    private String name;
-    
-    @Option(names={"--in-use"}) @OutputFilter
-    private String inUse;
-    
-    @Option(names={"--default-template"}, arity="1") @SSCFilterQParam
-    private Boolean defaultTemplate;
-    
-    @Option(names={"--publish-version"}) @OutputFilter
-    private String publishVersion;
-    
-    @Option(names={"--original-filename"}) @OutputFilter
-    private String originalFileName;
-    
-    @Option(names={"--description"}) @OutputFilter
-    private String description;
+public class SSCIssueTemplateListCommand extends AbstractSSCListCommand {
+    @Override
+    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
+        return new SSCOutputQueryQParamGenerator()
+                .add("id", SSCQParamValueGenerators::plain)
+                .add("name", SSCQParamValueGenerators::wrapInQuotes)
+                .add("defaultTemplate", SSCQParamValueGenerators::plain)
+                .add("applicationVersionId", "projectVersionId", SSCQParamValueGenerators::wrapInQuotes)
+                .add("required", SSCQParamValueGenerators::plain);
+    }
     
     protected GetRequest generateRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.ISSUE_TEMPLATES).queryString("limit","-1");

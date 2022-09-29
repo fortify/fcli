@@ -25,29 +25,26 @@
 package com.fortify.cli.ssc.token_definition.cli.cmd;
 
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCTokenDefinitionListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--type"}) @SSCFilterQParam
-    private String type;
-    
-    @Option(names={"--maxDaysToLive"}) @SSCFilterQParam
-    private String maxDaysToLive;
-    
-    @Option(names={"--maxUsages"}) @SSCFilterQParam
-    private String maxUsages;
-    
-    @Option(names={"--capabilityDescription"}) @SSCFilterQParam
-    private String capabilityDescription;
+public class SSCTokenDefinitionListCommand extends AbstractSSCListCommand {
+    @Override
+    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
+        return new SSCOutputQueryQParamGenerator()
+                .add("type", SSCQParamValueGenerators::wrapInQuotes)
+                .add("maxDaysToLive", SSCQParamValueGenerators::plain)
+                .add("maxUsages", SSCQParamValueGenerators::plain)
+                .add("capabilityDescription", SSCQParamValueGenerators::wrapInQuotes);
+    }
 
     protected GetRequest generateRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.TOKEN_DEFINITIONS).queryString("limit", "-1");

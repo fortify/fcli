@@ -24,37 +24,34 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.activity_feed.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCActivityFeedListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--eventDate"}) @OutputFilter
-    private String eventDate;
+public class SSCActivityFeedListCommand extends AbstractSSCListCommand {
+    @Override
+    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
+        return new SSCOutputQueryQParamGenerator()
+                .add("userName", SSCQParamValueGenerators::wrapInQuotes)
+                .add("eventType", SSCQParamValueGenerators::wrapInQuotes)
+                .add("detailedNote", SSCQParamValueGenerators::wrapInQuotes)
+                .add("applicationVersionId", "projectVersionId", SSCQParamValueGenerators::plain);
+    }
     
-    @Option(names={"--userName"}) @SSCFilterQParam
-    private String userName;
-    
-    @Option(names={"--eventType"}) @SSCFilterQParam
-    private String eventType;
-    
-    @Option(names={"--detailedNote"}) @SSCFilterQParam
-    private String detailedNote;
-    
-    @Option(names={"--applicationVersionId"}) @SSCFilterQParam
-    private Integer projectVersionId;
-    
-    @Option(names={"--entityId"}) @OutputFilter
-    private String entityId; //TODO Check whether SSC allows q-based filtering on this field
+    @Override
+    protected JsonNode transformRecord(JsonNode record) {
+        return new RenameFieldsTransformer("projectVersionId", "applicationVersionId").transform(record);
+    }
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {

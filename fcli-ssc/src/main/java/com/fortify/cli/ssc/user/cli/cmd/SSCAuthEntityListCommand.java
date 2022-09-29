@@ -24,37 +24,25 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.user.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
-import com.fortify.cli.ssc.rest.cli.mixin.filter.SSCFilterQParam;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAuthEntityListCommand extends AbstractSSCTableOutputCommand {
-    @Option(names={"--id"}) @SSCFilterQParam
-    private Integer id;
-    
-    @Option(names={"--name"}) @OutputFilter
-    private String entityName;
-    
-    @Option(names={"--displayName"}) @OutputFilter
-    private String entityDisplayName;
-    
-    @Option(names={"--type"}) @OutputFilter
-    private String type;
-    
-    @Option(names={"--email"}) @OutputFilter
-    private String email;
-    
-    @Option(names={"--isLdap"}) @SSCFilterQParam
-    private Boolean isLdap;
+public class SSCAuthEntityListCommand extends AbstractSSCListCommand {
+    @Override
+    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
+        return new SSCOutputQueryQParamGenerator()
+                .add("id", SSCQParamValueGenerators::plain)
+                .add("isLdap", SSCQParamValueGenerators::plain);
+    }
     
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {

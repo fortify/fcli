@@ -25,38 +25,19 @@
 package com.fortify.cli.ssc.appversion_attribute.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.filter.OutputFilter;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
+import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCAppVersionAttributeListCommand extends AbstractSSCTableOutputCommand {
+public class SSCAppVersionAttributeListCommand extends AbstractSSCListCommand {
     @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentResolver;
-    
-    @Option(names={"--id"}) @OutputFilter
-    private String id;
-    
-    @Option(names={"--category"}) @OutputFilter
-    private String category;
-    
-    @Option(names={"--guid"}) @OutputFilter
-    private String guid;
-    
-    @Option(names={"--name"}) @OutputFilter
-    private String name;
-    
-    @Option(names={"--value"}) @OutputFilter
-    private String valueString;
-    
-    // TODO Add the ability to filter on a single value?
     
     protected JsonNode generateOutput(UnirestInstance unirest) {
         return new SSCAppVersionAttributeListHelper()
