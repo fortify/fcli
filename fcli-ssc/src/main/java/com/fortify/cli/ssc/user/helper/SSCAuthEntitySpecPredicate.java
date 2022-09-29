@@ -44,7 +44,9 @@ public final class SSCAuthEntitySpecPredicate implements Predicate<JsonNode> {
     }
     
     public String[] getUnmatched() {
-        return Stream.of(authEntities).filter(Predicate.not(previousMatchedAuthEntities::contains)).toArray(String[]::new);
+        return authEntities==null 
+                ? new String[] {} 
+                : Stream.of(authEntities).filter(Predicate.not(previousMatchedAuthEntities::contains)).toArray(String[]::new);
     }
     
     public void checkUnmatched() {

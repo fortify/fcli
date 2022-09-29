@@ -60,9 +60,20 @@ runPersistentTestCommands() {
     checkOutput=(fgrep projectversion_add); sscSessionCmd role-permission list
     checkOutput=(fgrep CIToken); sscSessionCmd token-definition list
     
-    checkOutput=(fgrep CIToken); sscCmd token create CIToken -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD} --expire-in 5m -o table-plain=id,type,restToken
+    checkOutput=(fgrep CIToken); sscSessionCmd token create CIToken -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD} --expire-in 5m -o table-plain=id,type,restToken
     restToken=$(echo $lastOutput | awk '{print $3}')
-    sscCmd token revoke $restToken -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD}
+    sscSessionCmd token revoke $restToken -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD}
+
+    appName="fcli-test $(date +%s)" 
+    sscSessionCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs -o expr={id}
+    newAppVersionId=${lastOutput}
+    checkOutput=(fgrep "No data"); sscSessionCmd appversion-artifact list --appversion ${newAppVersionId}
+    sscSessionCmd appversion-attribute set "DevPhase=Active Development" --for ${newAppVersionId}
+    sscSessionCmd appversion-attribute list --from ${newAppVersionId}
+    sscSessionCmd appversion create "${appName}:v2" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs    
+    sscSessionCmd appversion create "${appName}:v3" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs
+    sscSessionCmd app delete "${appName}" --delete-versions
+    checkOutput=(fgrep -v "${appName}"); sscSessionCmd appversion list
 }
 
 run() {
