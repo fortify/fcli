@@ -1,0 +1,12 @@
+{
+  "bundles" : [
+    {"name" : "com.fortify.cli.i18n.FortifyCLIMessages"}
+  ],
+  "resources": {
+    "includes": [
+      {"pattern": "com/fortify/cli/app/fcli-build.properties$"}
+    ],
+    "excludes": [
+     ]
+  }
+}
