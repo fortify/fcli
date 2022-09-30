@@ -19,7 +19,7 @@ public class FortifyCLIVersionProvider implements IVersionProvider {
 
     private static final Properties loadProperties() {
         final Properties p = new Properties();
-        try (final InputStream stream = FortifyCLIVersionProvider.class.getResourceAsStream("fcli-build.properties")) {
+        try (final InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("com/fortify/cli/app/fcli-build.properties")) {
             if ( stream!=null ) { p.load(stream); }
         } catch ( IOException ioe ) {
             System.err.println("Error reading fcli-build.properties from classpath");

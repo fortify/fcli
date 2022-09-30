@@ -1,6 +1,6 @@
 {
   "bundles" : [
-    {"name" : "com.fortify.cli.i18n.FortifyCLIMessages"}
+    {"name" : "com.fortify.cli.app.i18n.FortifyCLIMessages"}
   ],
   "resources": {
     "includes": [

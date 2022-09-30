@@ -135,18 +135,19 @@ apply from: "${gradleHelpersLocation}/readme2html.gradle"
 
 mainClassName = "com.fortify.cli.app.FCLIRootCommands"
 
-task generateBuildProperties {
+ext.buildPropertiesDir = "${buildDir}/generated-build-properties"
+task generateFcliBuildProperties {
     doLast {
-        def buildPropertiesDir = "${sourceSets.main.output.resourcesDir}/com/fortify/cli/app"
-        mkdir "${buildPropertiesDir}"
-        ant.propertyfile(file: "${buildPropertiesDir}/fcli-build.properties") {
+        def outputDir = "${buildPropertiesDir}/com/fortify/cli/app"
+        mkdir "${outputDir}"
+        ant.propertyfile(file: "${outputDir}/fcli-build.properties") {
             entry(key: "projectName", value: project.name)
             entry(key: "projectVersion", value: project.version)
             entry(key: "buildDate", value: buildTime.format('yyyy-MM-dd HH:mm:ss'))
         }
     }
 }
-processResources.dependsOn(generateBuildProperties)
+sourceSets.main.output.dir buildPropertiesDir, builtBy: generateFcliBuildProperties
 
 tasks.register('generateAutoCompleteDir') {
     doLast {
