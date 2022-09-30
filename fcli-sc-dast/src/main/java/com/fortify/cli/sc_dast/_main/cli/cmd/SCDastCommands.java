@@ -11,6 +11,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "sc-dast",
         resourceBundle = "com.fortify.cli.sc_dast.i18n.SCDastMessages",
+        hidden = true,
         subcommands = {
                 SCDastScanCommands.class,
                 SCDastScanOutputCommands.class,
@@ -19,8 +20,4 @@ import picocli.CommandLine.Command;
                 SSCSessionCommands.class
         }
 )
-public class SCDastCommands {
-        public SCDastCommands(){
-                System.setProperty("productName", "ScanCentral DAST");
-        }
-}
+public class SCDastCommands {}

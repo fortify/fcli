@@ -11,6 +11,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "fod",
         resourceBundle = "com.fortify.cli.fod.i18n.FoDMessages",
+        hidden = true,
         subcommands = {
                 FoDApplicationCommands.class,
                 FoDApplicationReleaseCommands.class,
@@ -20,9 +21,4 @@ import picocli.CommandLine.Command;
                 
         }
 )
-public class FoDCommands {
-        public FoDCommands(){
-                System.setProperty("productName", "FoD");
-                System.setProperty("productLongName", "Fortify on Demand");
-        }
-}
+public class FoDCommands {}

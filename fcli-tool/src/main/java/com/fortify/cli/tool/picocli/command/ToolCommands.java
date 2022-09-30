@@ -11,6 +11,7 @@ import picocli.CommandLine.Command;
         name="tool",
         description = "Commands for managing other useful tools and utilities.",
         resourceBundle = "com.fortify.cli.tool.i18n.ToolMessages",
+        hidden = true,
         subcommands = {
                 EightballCommands.class,
                 ScanCentralClientCommands.class,
