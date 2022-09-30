@@ -30,7 +30,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.writer.AbstractFieldsRecordWriter;
+import com.fortify.cli.common.output.writer.AbstractFormattedRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
 import hu.webarticum.treeprinter.SimpleTreeNode;
@@ -38,13 +38,13 @@ import hu.webarticum.treeprinter.SimpleTreeNode;
 import hu.webarticum.treeprinter.printer.listing.ListingTreePrinter;
 
 // TODO Use PrintWriter from RecordWriterConfig, wo allow output to file
-public class TreeRecordWriter extends AbstractFieldsRecordWriter {
+public class TreeRecordWriter extends AbstractFormattedRecordWriter {
     public TreeRecordWriter(RecordWriterConfig config) {
         super(config);
     }
 
     @Override
-    public void _writeRecord(ObjectNode record) {
+    public void writeFormattedRecord(ObjectNode record) {
         SimpleTreeNode rootNode = new SimpleTreeNode("-+-");
         treeBuilder(rootNode, record, null);
         ListingTreePrinter.builder().ascii().build().print(rootNode); // TODO print to actual output, but for some reason line below doesn't work

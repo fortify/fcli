@@ -33,12 +33,12 @@ import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.writer.AbstractFieldsRecordWriter;
+import com.fortify.cli.common.output.writer.AbstractFormattedRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
 import lombok.SneakyThrows;
 
-public class JsonRecordWriter extends AbstractFieldsRecordWriter {
+public class JsonRecordWriter extends AbstractFormattedRecordWriter {
     private JsonGenerator generator;
     
     public JsonRecordWriter(RecordWriterConfig config) {
@@ -66,7 +66,7 @@ public class JsonRecordWriter extends AbstractFieldsRecordWriter {
     }
 
     @Override @SneakyThrows
-    public void _writeRecord(ObjectNode record) {
+    public void writeFormattedRecord(ObjectNode record) {
         getGenerator().writeTree(record);
     }
 

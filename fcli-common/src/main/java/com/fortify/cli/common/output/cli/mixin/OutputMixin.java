@@ -13,8 +13,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.OutputFormatConfigConverter.OutputFormatIterable;
 import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
-import com.fortify.cli.common.output.transform.PropertyPathFormatter;
-import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.output.writer.IRecordWriter;
 import com.fortify.cli.common.output.writer.OutputFormat;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
@@ -161,7 +159,6 @@ public class OutputMixin {
             // TODO Add null checks in case any input or record transformation returns null?
             record = record==null ? null : config.applyRecordTransformations(outputFormat, record);
             record = record==null ? null : applyRecordOutputFilters(outputFormat, record);
-            record = record==null ? null : applyRecordFlattenTransformation(outputFormat, record);
             if ( record!=null ) {
                 if(record.getNodeType() == JsonNodeType.ARRAY) {
                     if(record.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(record.get(0).toString()));
@@ -169,13 +166,6 @@ public class OutputMixin {
                     recordWriter.writeRecord((ObjectNode) record);
                 }
             }
-        }
-        
-        protected JsonNode applyRecordFlattenTransformation(OutputFormat outputFormat, JsonNode record) {
-            if ( OutputFormat.isFlat(outputFormat) ) {
-                record = new FlattenTransformer(PropertyPathFormatter::camelCase, ".", false).transform(record);
-            }
-            return record;
         }
 
         private OutputFormat getOutputFormat() {
@@ -197,6 +187,7 @@ public class OutputMixin {
             return RecordWriterConfig.builder()
                     .printWriter(printWriter)
                     .options(getOutputWriterOptions())
+                    .outputFormat(getOutputFormat())
                     .singular(config.singular())
                     .build();
         }

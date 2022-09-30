@@ -32,12 +32,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.csv.CsvFactory;
 import com.fasterxml.jackson.dataformat.csv.CsvGenerator;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.fortify.cli.common.output.writer.AbstractFieldsRecordWriter;
+import com.fortify.cli.common.output.writer.AbstractFormattedRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
 import lombok.SneakyThrows;
 
-public class CsvRecordWriter extends AbstractFieldsRecordWriter {
+public class CsvRecordWriter extends AbstractFormattedRecordWriter {
     public static enum CsvType { HEADERS, NO_HEADERS }
     private final CsvType csvType;
     private CsvGenerator generator;
@@ -74,7 +74,7 @@ public class CsvRecordWriter extends AbstractFieldsRecordWriter {
     }
 
     @Override @SneakyThrows
-    public void _writeRecord(ObjectNode record) {
+    public void writeFormattedRecord(ObjectNode record) {
         getGenerator(record).writeTree(record);
     }
     

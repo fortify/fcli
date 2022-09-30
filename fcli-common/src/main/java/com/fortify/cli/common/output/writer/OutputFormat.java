@@ -28,7 +28,7 @@ import com.fortify.cli.common.output.writer.csv.CsvRecordWriter.CsvType;
 import com.fortify.cli.common.output.writer.csv.CsvRecordWriterFactory;
 import com.fortify.cli.common.output.writer.expr.ExprRecordWriterFactory;
 import com.fortify.cli.common.output.writer.json.JsonRecordWriterFactory;
-import com.fortify.cli.common.output.writer.paths.PathsRecordWriterFactory;
+import com.fortify.cli.common.output.writer.json_properties.JsonPropertiesRecordWriterFactory;
 import com.fortify.cli.common.output.writer.table.TableRecordWriter.TableType;
 import com.fortify.cli.common.output.writer.table.TableRecordWriterFactory;
 import com.fortify.cli.common.output.writer.tree.TreeRecordWriterFactory;
@@ -40,27 +40,30 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum OutputFormat {
-    json        (OutputStructure.TREE, "json",  new JsonRecordWriterFactory()), 
-    json_flat   (OutputStructure.FLAT, "json",  new JsonRecordWriterFactory()),
-    yaml        (OutputStructure.TREE, "yaml",  new YamlRecordWriterFactory()), 
-    yaml_flat   (OutputStructure.FLAT, "yaml",  new YamlRecordWriterFactory()),
-    table       (OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.HEADERS)), 
-    table_plain (OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.NO_HEADERS)),
-    tree        (OutputStructure.TREE, "tree",  new TreeRecordWriterFactory()), 
-    tree_flat   (OutputStructure.FLAT, "tree",  new TreeRecordWriterFactory()),
-    xml         (OutputStructure.TREE, "xml",   new XmlRecordWriterFactory()), 
-    xml_flat    (OutputStructure.FLAT, "xml",   new XmlRecordWriterFactory()),
-    csv         (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.HEADERS)),
-    csv_plain   (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.NO_HEADERS)),
-    expr        (OutputStructure.TREE, "expr",  new ExprRecordWriterFactory()),
-    paths       (OutputStructure.TREE, "paths", new PathsRecordWriterFactory()),
-    paths_flat  (OutputStructure.FLAT, "paths", new PathsRecordWriterFactory());
+    json            (OutputStructure.TREE, "json",  new JsonRecordWriterFactory()), 
+    json_flat       (OutputStructure.FLAT, "json",  new JsonRecordWriterFactory()),
+    yaml            (OutputStructure.TREE, "yaml",  new YamlRecordWriterFactory()), 
+    yaml_flat       (OutputStructure.FLAT, "yaml",  new YamlRecordWriterFactory()),
+    table           (OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.HEADERS)), 
+    table_plain     (OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.NO_HEADERS)),
+    tree            (OutputStructure.TREE, "tree",  new TreeRecordWriterFactory()), 
+    tree_flat       (OutputStructure.FLAT, "tree",  new TreeRecordWriterFactory()),
+    xml             (OutputStructure.TREE, "xml",   new XmlRecordWriterFactory()), 
+    xml_flat        (OutputStructure.FLAT, "xml",   new XmlRecordWriterFactory()),
+    csv             (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.HEADERS)),
+    csv_plain       (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.NO_HEADERS)),
+    expr            (OutputStructure.TREE, "expr",  new ExprRecordWriterFactory()),
+    json_properties (OutputStructure.TREE, "paths", new JsonPropertiesRecordWriterFactory());
     
     @Getter private final OutputStructure      outputStructure;
     @Getter private final String               messageKey;
     @Getter private final IRecordWriterFactory recordWriterFactory;
     
     public enum OutputStructure { TREE, FLAT }
+    
+    public final boolean isFlat() {
+        return isFlat(this);
+    }
     
     public static final boolean isFlat(OutputFormat outputFormat) {
         switch (outputFormat.getOutputStructure()) {

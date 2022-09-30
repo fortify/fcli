@@ -31,13 +31,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlFactory;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
-import com.fortify.cli.common.output.writer.AbstractFieldsRecordWriter;
+import com.fortify.cli.common.output.writer.AbstractFormattedRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
 import lombok.SneakyThrows;
 
 // TODO Add support for writing a single item if config.singular()==true
-public class XmlRecordWriter extends AbstractFieldsRecordWriter {
+public class XmlRecordWriter extends AbstractFormattedRecordWriter {
     private ToXmlGenerator generator;
 
     public XmlRecordWriter(RecordWriterConfig config) {
@@ -59,7 +59,7 @@ public class XmlRecordWriter extends AbstractFieldsRecordWriter {
     }
 
     @Override @SneakyThrows
-    public void _writeRecord(ObjectNode record) {
+    public void writeFormattedRecord(ObjectNode record) {
         getGenerator().writeFieldName("item");
         getGenerator().writeTree(record);
     }

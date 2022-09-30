@@ -29,12 +29,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import com.fortify.cli.common.output.writer.AbstractFieldsRecordWriter;
+import com.fortify.cli.common.output.writer.AbstractFormattedRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
 import lombok.SneakyThrows;
 
-public class YamlRecordWriter extends AbstractFieldsRecordWriter {
+public class YamlRecordWriter extends AbstractFormattedRecordWriter {
     private YAMLGenerator generator;
 
     public YamlRecordWriter(RecordWriterConfig config) {
@@ -57,7 +57,7 @@ public class YamlRecordWriter extends AbstractFieldsRecordWriter {
     }
 
     @Override @SneakyThrows
-    public void _writeRecord(ObjectNode record) {
+    public void writeFormattedRecord(ObjectNode record) {
         getGenerator().writeTree(record);
     }
     

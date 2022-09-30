@@ -49,7 +49,7 @@ public class FlattenTransformer extends AbstractJsonNodeTransformer {
     }
 
     @Override
-    protected JsonNode transformObjectNode(ObjectNode input) {
+    public ObjectNode transformObjectNode(ObjectNode input) {
         return new ObjectNodeFlattener(input, fieldNameFormatter, separator, flattenNestedArrays).flatten();
     }
 

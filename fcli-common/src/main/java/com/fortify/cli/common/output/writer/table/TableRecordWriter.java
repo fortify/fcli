@@ -32,7 +32,8 @@ import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.writer.AbstractFieldsRecordWriter;
+import com.fortify.cli.common.output.transform.PropertyPathFormatter;
+import com.fortify.cli.common.output.writer.AbstractFormattedRecordWriter;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
@@ -40,7 +41,7 @@ import com.github.freva.asciitable.HorizontalAlign;
 
 import lombok.SneakyThrows;
 
-public class TableRecordWriter extends AbstractFieldsRecordWriter {
+public class TableRecordWriter extends AbstractFormattedRecordWriter {
     public static enum TableType { HEADERS, NO_HEADERS }
     private final TableType tableType;
     private String[] columns;
@@ -52,7 +53,7 @@ public class TableRecordWriter extends AbstractFieldsRecordWriter {
     }
 
     @Override @SneakyThrows
-    public void _writeRecord(ObjectNode record) {
+    public void writeFormattedRecord(ObjectNode record) {
         String[] columns = getColumns(record);
         String[] row = getRow(record, columns);
         rows.add(row);
@@ -71,7 +72,7 @@ public class TableRecordWriter extends AbstractFieldsRecordWriter {
                     new Column()
                         .dataAlign(HorizontalAlign.LEFT)
                         .headerAlign(HorizontalAlign.LEFT)
-                        .header(TableType.HEADERS==tableType ? columnName : null))
+                        .header(TableType.HEADERS==tableType ? PropertyPathFormatter.humanReadable(columnName) : null))
                         .toArray(Column[]::new);
             return AsciiTable.getTable(AsciiTable.NO_BORDERS, columnObjects, data); 
         }

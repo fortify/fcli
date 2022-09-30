@@ -22,15 +22,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.paths;
+package com.fortify.cli.common.output.writer.json_properties;
 
 import com.fortify.cli.common.output.writer.IRecordWriter;
 import com.fortify.cli.common.output.writer.IRecordWriterFactory;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 
-public class PathsRecordWriterFactory implements IRecordWriterFactory {
+public class JsonPropertiesRecordWriterFactory implements IRecordWriterFactory {
     @Override
     public IRecordWriter createRecordWriter(RecordWriterConfig config) {
-        return new PathsRecordWriter(config);
+        return new JsonPropertiesRecordWriter(config);
     }
 }

@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.paths;
+package com.fortify.cli.common.output.writer.json_properties;
 
 import java.io.PrintWriter;
 import java.util.TreeSet;
@@ -44,7 +44,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
 @RequiredArgsConstructor
-public class PathsRecordWriter implements IRecordWriter {
+public class JsonPropertiesRecordWriter implements IRecordWriter {
     @Getter private final RecordWriterConfig config;
     private final TreeSet<String> paths = new TreeSet<>();
     

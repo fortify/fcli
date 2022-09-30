@@ -31,8 +31,15 @@ import lombok.Data;
 
 @Data @Builder
 public class RecordWriterConfig {
+    /** PrintWriter to which to write the output */
     private PrintWriter printWriter;
-    private boolean singular;                          // Write singular output rather than array/list/...
+    /** Write singular output rather than an array/list; 
+     * assumes that only a single record is passed to the {@link IRecordWriter} */ 
+    private boolean singular;
+    /** Free-format {@link IRecordWriter} options */
     private String options;
-    @Builder.Default private boolean pretty = true;    // Pretty-print
+    /** The actual output format that was requested */
+    private OutputFormat outputFormat;
+    /** Whether to pretty-print the output */
+    @Builder.Default private boolean pretty = true;
 }
