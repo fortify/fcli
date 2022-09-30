@@ -59,7 +59,7 @@ jobs:
       
       - name: Build release ${{env.RELEASE_VERSION}}
         if: env.DO_BUILD
-        run: ./gradlew clean build dist distThirdParty -Pversion=%{{
+        run: ./gradlew clean build dist distThirdParty -Pversion=${{env.RELEASE_VERSION}}
         
       - name: Publish build artifacts
         uses: actions/upload-artifact@v2

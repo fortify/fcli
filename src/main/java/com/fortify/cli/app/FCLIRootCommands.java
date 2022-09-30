@@ -57,6 +57,7 @@ import picocli.CommandLine.ScopeType;
     sortOptions = false, 
     showAtFileInUsageHelp = false,
     resourceBundle = "com.fortify.cli.i18n.FortifyCLIMessages",
+    versionProvider = FortifyCLIVersionProvider.class,
     subcommands = {
             ConfigCommands.class,
             SSCCommands.class,

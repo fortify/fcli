@@ -10,8 +10,14 @@ plugins {
     id "org.asciidoctor.jvm.convert" version "3.3.2"
 }
 
-version = "0.1"
 group = "com.fortify.cli"
+
+ext.buildTime = LocalDateTime.now()
+ext.getVersion = {
+    def result = project.findProperty('version');
+    return !result || result=='unspecified' ? buildTime.format('0.yyyyMMdd.HHmmss') : result;
+}
+version = ext.getVersion();
 
 apply plugin: "io.micronaut.application"
 subprojects {
@@ -128,6 +134,19 @@ apply from: "${gradleHelpersLocation}/thirdparty-helper.gradle"
 apply from: "${gradleHelpersLocation}/readme2html.gradle"
 
 mainClassName = "com.fortify.cli.app.FCLIRootCommands"
+
+task generateBuildProperties {
+    doLast {
+        def buildPropertiesDir = "${sourceSets.main.output.resourcesDir}/com/fortify/cli/app"
+        mkdir "${buildPropertiesDir}"
+        ant.propertyfile(file: "${buildPropertiesDir}/fcli-build.properties") {
+            entry(key: "projectName", value: project.name)
+            entry(key: "projectVersion", value: project.version)
+            entry(key: "buildDate", value: buildTime.format('yyyy-MM-dd HH:mm:ss'))
+        }
+    }
+}
+processResources.dependsOn(generateBuildProperties)
 
 tasks.register('generateAutoCompleteDir') {
     doLast {
