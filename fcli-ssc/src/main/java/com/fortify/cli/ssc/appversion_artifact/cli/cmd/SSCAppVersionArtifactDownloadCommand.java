@@ -26,6 +26,7 @@ package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -62,7 +63,7 @@ public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunn
     protected Void run(UnirestInstance unirest) {
         SSCAppVersionDescriptor av = parentResolver.getAppVersionDescriptor(unirest);
         destination = destination != null ? destination : String.format("./%s_%s.fpr", av.getApplicationName(), av.getVersionName());
-        if ( options.artifactId==null || options.artifactId.isBlank() ) {
+        if ( StringUtils.isNotBlank(options.artifactId) ) {
             SSCFileTransferHelper.download(
                     unirest,
                     SSCUrls.DOWNLOAD_CURRENT_FPR(av.getVersionId(), options.includeSources),

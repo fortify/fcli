@@ -123,7 +123,7 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
             SessionSummary.builder()
                 .name(sessionName)
                 .type(getSessionTypeName())
-                .url(sessionData.getUrlConfig().getUrl())
+                .url(sessionData.getUrlDescriptor())
                 .created(sessionData.getCreatedDate())
                 .expires(sessionData.getExpiryDate())
                 .build();

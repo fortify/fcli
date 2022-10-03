@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -58,8 +59,8 @@ public class SSCIssueTemplateUpdateCommand extends AbstractSSCUnirestRunnerComma
     protected Void run(UnirestInstance unirest) {
         SSCIssueTemplateDescriptor descriptor = issueTemplateResolver.getIssueTemplateDescriptor(unirest);
         ObjectNode updateData = (ObjectNode)descriptor.asJsonNode();
-        if ( name!=null && !name.isBlank() ) { updateData.put("name", name); }
-        if ( description!=null && !description.isBlank() ) { updateData.put("description", description); }
+        if ( StringUtils.isNotBlank(name) ) { updateData.put("name", name); }
+        if ( StringUtils.isNotBlank(description) ) { updateData.put("description", description); }
         if ( setAsDefault ) { updateData.put("defaultTemplate", true); }
         outputMixin.write(unirest.put(SSCUrls.ISSUE_TEMPLATE(descriptor.getId()))
                 .body(updateData).asObject(JsonNode.class).getBody());

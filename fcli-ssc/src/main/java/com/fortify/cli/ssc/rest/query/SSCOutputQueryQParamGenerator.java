@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import com.fortify.cli.common.output.cli.mixin.query.OutputQuery;
 import com.fortify.cli.common.output.cli.mixin.query.OutputQueryOperator;
+import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequest;
 
@@ -30,7 +31,7 @@ public final class SSCOutputQueryQParamGenerator {
     
     public HttpRequest<?> addQParam(HttpRequest<?> request, List<OutputQuery> queries) {
         String qParamValue = getQParamValue(queries);
-        if ( qParamValue!=null && !qParamValue.isBlank() ) {
+        if ( StringUtils.isNotBlank(qParamValue) ) {
             request = request.queryString("q", qParamValue);
         }
         return request;

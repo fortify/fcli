@@ -25,6 +25,7 @@
 package com.fortify.cli.common.util;
 
 public final class EnvHelper {
+    private static final String PFX = "FCLI";
     private EnvHelper() {}
     
     public static final void checkSecondaryWithoutPrimary(String secondaryEnvName, String primaryEnvName) {
@@ -44,15 +45,29 @@ public final class EnvHelper {
         }
     }
     
-    public static final String envName(String prefix, String suffix) {
-        return String.format("%s_%s", prefix, suffix);
+    public static final String envNameWithOrWithoutProductEnvId(String productEnvId, String suffix) {
+        String envNameWithProductName = envName(productEnvId, suffix);
+        String envValueWithProductName = env(envNameWithProductName);
+        String envNameWithoutProductName = envName(null, suffix);
+        String envValueWithoutProductName = env(envNameWithoutProductName);
+        boolean hasEnvValueWithProductName = StringUtils.isNotBlank(envValueWithProductName);
+        boolean hasEnvValueWithoutProductName = StringUtils.isNotBlank(envValueWithoutProductName);
+        return hasEnvValueWithProductName || !hasEnvValueWithoutProductName
+                ? envNameWithProductName
+                : envNameWithoutProductName;
+    }
+    
+    public static final String envName(String productEnvId, String suffix) {
+        return StringUtils.isBlank(productEnvId)
+                ? String.format("%s_%s", PFX, suffix)
+                : String.format("%s_%s_%s", PFX, productEnvId, suffix);
     }
     
     public static final String env(String name) {
         return System.getenv(name);
     }
 
-    public static final boolean asBoolean(String s) {
+    public static final Boolean asBoolean(String s) {
         return "true".equalsIgnoreCase(s) || "1".equals(s);
     }
 

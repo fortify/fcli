@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
@@ -107,7 +108,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCUnirestRunnerCommand 
     }
     
     private boolean optionalUpdate(ObjectNode updateData, String name, String value) {
-        if ( value==null || value.isBlank() ) { return false; }
+        if ( StringUtils.isBlank(value) ) { return false; }
         updateData.put(name, value);
         return true;
     }

@@ -17,6 +17,7 @@ import com.fortify.cli.common.output.writer.IRecordWriter;
 import com.fortify.cli.common.output.writer.OutputFormat;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
 import com.fortify.cli.common.rest.runner.IfFailureHandler;
+import com.fortify.cli.common.util.StringUtils;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
@@ -194,7 +195,7 @@ public class OutputMixin {
         
         private String getOutputWriterOptions() {
             OutputFormatConfig config = optionsArgGroup.outputFormatConfig;
-            if ( config!=null && config.getOptions()!=null && !config.getOptions().isBlank() ) {
+            if ( config!=null && StringUtils.isNotBlank(config.getOptions()) ) {
                 return config.getOptions();
             } else {
                 String keySuffix = "output."+getOutputFormat().getMessageKey()+".options";

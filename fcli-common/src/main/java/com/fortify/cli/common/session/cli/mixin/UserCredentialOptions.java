@@ -24,14 +24,14 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.mixin;
 
-import com.fortify.cli.common.rest.runner.config.IUserCredentials;
+import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-public class UserCredentialOptions implements IUserCredentials {
+public class UserCredentialOptions implements IUserCredentialsConfig {
     @Option(names = {"--user", "-u"}, required = true)
     @Getter private String user;
     

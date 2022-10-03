@@ -60,7 +60,7 @@ public class UrlConfigOptions implements IUrlConfig {
     @Getter private char[] proxyPassword;
     
     @Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
-    @Getter private boolean insecureModeEnabled;
+    @Getter private Boolean insecureModeEnabled;
     
     public boolean hasUrlConfig() {
         return url!=null;

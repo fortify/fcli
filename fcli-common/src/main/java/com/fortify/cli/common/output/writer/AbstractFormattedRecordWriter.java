@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.PropertyPathFormatter;
 import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
+import com.fortify.cli.common.util.StringUtils;
 import com.jayway.jsonpath.PathNotFoundException;
 
 import lombok.Getter;
@@ -23,7 +24,7 @@ public abstract class AbstractFormattedRecordWriter implements IRecordWriter {
     public AbstractFormattedRecordWriter(RecordWriterConfig config) {
         this.config = config;
         String options = config.getOptions();
-        this.fieldPaths = options==null || options.isBlank() ? null : getFieldPaths(options);
+        this.fieldPaths = StringUtils.isBlank(options) ? null : getFieldPaths(options);
     }
     
     @Override

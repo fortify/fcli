@@ -1,7 +1,7 @@
 package com.fortify.cli.ssc.token.cli.cmd;
 
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
-import com.fortify.cli.common.rest.runner.config.IUserCredentials;
+import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.ssc.token.cli.mixin.SSCTokenCommandUrlConfigMixin;
@@ -22,5 +22,5 @@ public abstract class AbstractSSCTokenCommand implements Runnable {
         run(tokenHelper, urlConfigMixin.getUrlConfig(), userCredentialOptions);
     }
 
-    protected abstract void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentials userCredentials);
+    protected abstract void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig);
 }
