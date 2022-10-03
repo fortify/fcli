@@ -29,7 +29,7 @@ import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.sc_dast.rest.cli.cmd.AbstractSCDastUnirestRunnerCommand;
-import com.fortify.cli.sc_dast.util.SCDastOutputHelper;
+import com.fortify.cli.sc_dast.util.SCDastOutputConfigHelper;
 import com.fortify.cli.sc_dast.util.SCDastScanActionsHandler;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -97,7 +97,7 @@ public class SCDastScanOutputGetResultsCommand extends AbstractSCDastUnirestRunn
 
         @Override
         public OutputConfig getOutputOptionsWriterConfig() {
-            return SCDastOutputHelper.defaultTableOutputConfig();
+            return SCDastOutputConfigHelper.table();
                 /*.defaultColumns(
                     "criticalCount:Critical#" +
                     "highCount:High#" +

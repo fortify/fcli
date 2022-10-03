@@ -34,7 +34,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
 import com.fortify.cli.sc_dast.rest.cli.cmd.AbstractSCDastUnirestRunnerCommand;
-import com.fortify.cli.sc_dast.util.SCDastOutputHelper;
+import com.fortify.cli.sc_dast.util.SCDastOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -133,7 +133,7 @@ public class SCDastScanSettingsListCommand extends AbstractSCDastUnirestRunnerCo
         
         @Override
         public OutputConfig getOutputOptionsWriterConfig() {
-            return SCDastOutputHelper.defaultTableOutputConfig();
+            return SCDastOutputConfigHelper.table();
             //.defaultColumns("id#name#cicdToken:Settings Id#");
         }
 }
