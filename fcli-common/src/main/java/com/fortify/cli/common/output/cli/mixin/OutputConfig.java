@@ -99,4 +99,9 @@ public class OutputConfig {
     public static final OutputConfig yaml() {
         return new OutputConfig().defaultFormat(OutputFormat.yaml);
     }
+
+    public static final OutputConfig details() {
+        // TODO For now we use yaml output, until #104 has been fixed so we can properly use tree() instead
+        return yaml();
+    }
 }

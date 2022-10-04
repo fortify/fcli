@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,17 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.rest.cli.cmd;
+package com.fortify.cli.sc_dast.sensor.cli.mixin;
 
-import com.fortify.cli.common.rest.cli.cmd.AbstractUnirestRunnerCommand;
-import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastUnirestRunnerMixin;
+import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorDescriptor;
+import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess @FixInjection
-public abstract class AbstractSCDastUnirestRunnerCommand extends AbstractUnirestRunnerCommand {
-    @Getter @Mixin private SCDastUnirestRunnerMixin unirestRunner;
+public class SCDastSensorResolverMixin {
+    
+    @ReflectiveAccess
+    public static abstract class AbstractSSCDastSensorResolverMixin  {
+        public abstract String getSensorNameOrId();
+
+        public SCDastSensorDescriptor getSensorDescriptor(UnirestInstance unirest){
+            return SCDastSensorHelper.getSensorDescriptor(unirest, getSensorNameOrId());
+        }
+        
+        public String getSensorId(UnirestInstance unirest) {
+            return getSensorDescriptor(unirest).getId();
+        }
+    }
+    
+    @ReflectiveAccess
+    public static class RequiredOption extends AbstractSSCDastSensorResolverMixin {
+        @Option(names = {"--sensor"}, required = true)
+        @Getter private String sensorNameOrId;
+    }
+    
+    @ReflectiveAccess
+    public static class PositionalParameter extends AbstractSSCDastSensorResolverMixin {
+        @Parameters(index = "0", arity = "1")
+        @Getter private String sensorNameOrId;
+    }
 }

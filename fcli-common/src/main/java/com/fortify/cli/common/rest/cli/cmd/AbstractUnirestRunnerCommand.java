@@ -22,17 +22,23 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.rest.cli.cmd;
+package com.fortify.cli.common.rest.cli.cmd;
 
-import com.fortify.cli.common.rest.cli.cmd.AbstractUnirestRunnerCommand;
-import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastUnirestRunnerMixin;
+import com.fortify.cli.common.rest.runner.IUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
+import kong.unirest.UnirestInstance;
+import lombok.SneakyThrows;
 
-@ReflectiveAccess @FixInjection
-public abstract class AbstractSCDastUnirestRunnerCommand extends AbstractUnirestRunnerCommand {
-    @Getter @Mixin private SCDastUnirestRunnerMixin unirestRunner;
+@ReflectiveAccess
+public abstract class AbstractUnirestRunnerCommand implements Runnable {
+    @Override @SneakyThrows
+    public final void run() {
+        // TODO Do we want to do anything with the results, like formatting it based on output options?
+        //      Or do we let the actual implementation handle this?
+        getUnirestRunner().run(this::run);
+    }
+    
+    protected abstract IUnirestRunner getUnirestRunner();
+    protected abstract Void run(UnirestInstance unirest);
 }

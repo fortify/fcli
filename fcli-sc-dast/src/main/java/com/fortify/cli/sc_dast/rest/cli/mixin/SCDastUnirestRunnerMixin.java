@@ -2,6 +2,7 @@ package com.fortify.cli.sc_dast.rest.cli.mixin;
 
 import java.util.function.Function;
 
+import com.fortify.cli.common.rest.runner.IUnirestRunner;
 import com.fortify.cli.common.rest.runner.UnirestRunner;
 import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -19,12 +20,13 @@ import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess @FixInjection
-public class SCDastUnirestRunnerMixin {
+public class SCDastUnirestRunnerMixin implements IUnirestRunner {
     @Inject private UnirestRunner unirestRunner;
     @Inject private SCDastSessionDataManager sessionDataManager;
     @Inject private SSCTokenHelper tokenHelper;
     @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
     
+    @Override
     public <R> R run(Function<UnirestInstance, R> f) {
         return unirestRunner.run(unirest->run(unirest, f));
     }

@@ -25,5 +25,6 @@
 package com.fortify.cli.common.output.cli.mixin;
 
 public interface IOutputConfigSupplier {
+    // TODO Rename this method to getOutputConfig(). Can't do that while others are working on fcli, to avoid merge conflicts.
     public OutputConfig getOutputOptionsWriterConfig();
 }

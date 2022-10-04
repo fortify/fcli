@@ -16,6 +16,7 @@ import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
 import com.fortify.cli.common.output.writer.IRecordWriter;
 import com.fortify.cli.common.output.writer.OutputFormat;
 import com.fortify.cli.common.output.writer.RecordWriterConfig;
+import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.runner.IfFailureHandler;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -70,7 +71,11 @@ public class OutputMixin {
     }
     
     public void write(HttpRequest<?> httpRequest, Function<HttpResponse<JsonNode>, String> nextPageUrlProducer) {
-        write(writer->writer::write, httpRequest, nextPageUrlProducer);
+        if ( nextPageUrlProducer==null ) {
+            write(httpRequest);
+        } else {
+            write(writer->writer::write, httpRequest, nextPageUrlProducer);
+        }
     }
     
     public void write(HttpResponse<JsonNode> httpResponse) {
@@ -144,9 +149,8 @@ public class OutputMixin {
                 .ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
         }
         
-        @SuppressWarnings("unchecked") // TODO Can we get rid of this warning in a better way?
         public void write(HttpRequest<?> httpRequest, Function<HttpResponse<JsonNode>, String> nextPageUrlProducer) {
-            httpRequest.asPaged(r->r.asObject(JsonNode.class), nextPageUrlProducer)
+            PagingHelper.pagedRequest(httpRequest, nextPageUrlProducer)
                 .ifSuccess(this::write)
                 .ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
         }

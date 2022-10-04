@@ -22,17 +22,25 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.rest.cli.cmd;
+package com.fortify.cli.sc_dast.sensor.cli.cmd;
 
-import com.fortify.cli.common.rest.cli.cmd.AbstractUnirestRunnerCommand;
-import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastUnirestRunnerMixin;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.sc_dast.rest.cli.cmd.AbstractSCDastJsonDisableCommand;
+import com.fortify.cli.sc_dast.sensor.cli.mixin.SCDastSensorResolverMixin;
+import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
+import kong.unirest.UnirestInstance;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess @FixInjection
-public abstract class AbstractSCDastUnirestRunnerCommand extends AbstractUnirestRunnerCommand {
-    @Getter @Mixin private SCDastUnirestRunnerMixin unirestRunner;
+@ReflectiveAccess
+@Command(name = SCDastSensorDisableCommand.CMD_NAME)
+public class SCDastSensorDisableCommand extends AbstractSCDastJsonDisableCommand {
+    @Mixin private SCDastSensorResolverMixin.PositionalParameter sensorResolver;
+
+    @Override
+    protected JsonNode generateJsonNode(UnirestInstance unirest) {
+        return SCDastSensorHelper.disableSensor(unirest, sensorResolver.getSensorDescriptor(unirest)).asJsonNode();
+    }
 }
