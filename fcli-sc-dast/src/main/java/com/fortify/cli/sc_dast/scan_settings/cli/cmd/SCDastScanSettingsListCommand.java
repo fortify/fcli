@@ -24,116 +24,52 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.scan_settings.cli.cmd;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
-import com.fortify.cli.sc_dast.rest.cli.cmd.AbstractSCDastUnirestRunnerCommand;
-import com.fortify.cli.sc_dast.util.SCDastOutputConfigHelper;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.common.output.helper.OutputQueryHelper;
+import com.fortify.cli.common.output.writer.output.query.OutputQueryOperator;
+import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
+import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
+import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastSearchTextMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "list", description = "List scan settings on ScanCentral DAST")
-public class SCDastScanSettingsListCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-        
-        @ArgGroup(exclusive = false, headingKey = "arggroup.specific-scan-setting-options.heading", order = 1)
-        private SCDastGetScanSettingsOptions scanSettingsOptions;
+@Command(name = SCDastOutputHelperMixins.List.CMD_NAME)
+public class SCDastScanSettingsListCommand extends AbstractSCDastOutputCommand implements IBaseHttpRequestSupplier {
+    @Getter @Mixin private SCDastOutputHelperMixins.List outputHelper;
+    @Mixin SCDastSearchTextMixin searchTextMixin;
+    // TODO Once we support date-based less-than/greater-than operators for -q,
+    //      deprecate these options and update #updateRequest() to get the appropriate
+    //      query values.
+    @Option(names = {"-a", "--modified-after"}) private String modifiedAfter;
+    @Option(names = {"-b", "--modified-before"}) private String modifiedBefore;
+    
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+        return updateRequest(
+             unirest.get("/api/v2/application-version-scan-settings/scan-settings-summary-list")
+        );
+    };
 
-        @ArgGroup(exclusive = false, headingKey = "arggroup.list-scan-settings-options.heading", order = 2)
-        private SCDastGetScanSettingsListOptions scanSettingsListOptions;
-
-
-        @Mixin private OutputMixin outputMixin;
-
-        @ReflectiveAccess
-        public static class SCDastGetScanSettingsOptions {
-            @Option(names = {"-i", "--id", "--scan-settings-id"})
-            @Getter private String scanSettingsId;
-        }
-        
-        @ReflectiveAccess
-        public static class SCDastGetScanSettingsListOptions {
-            @Option(names = {"-t","--text","--search-text"})
-            @Getter private String searchText;
-
-            @Option(names = {"--start","--start-date"})
-            @Getter private String startDate;
-
-            @Option(names = {"--end","--end-date"})
-            @Getter private String endDate;
-
-            private enum ScanTypes {Standard, WorkflowDriven, AMI}
-            @Option(names = {"--type","--scan-type"})
-            @Getter private ScanTypes scanType;
-        }
-        
-        @SneakyThrows
-        protected Void run(UnirestInstance unirest) {
-            String urlPath = "/api/v2/application-version-scan-settings/scan-settings-summary-list?" ;
-
-            if (scanSettingsOptions != null){
-                urlPath = "/api/v2/application-version-scan-settings/" + scanSettingsOptions.getScanSettingsId() + "?";
-            } else {
-                if(scanSettingsListOptions != null){
-                    if (scanSettingsListOptions.getSearchText() != null){
-                        urlPath += String.format("searchText=%s&",scanSettingsListOptions.getSearchText());
-                    }
-                    if(scanSettingsListOptions.getStartDate() != null){
-                        urlPath += String.format("modifiedStartDate=%s&",scanSettingsListOptions.getStartDate());
-                    }
-                    if(scanSettingsListOptions.getEndDate() != null){
-                        urlPath += String.format("modifiedEndDate=%s&",scanSettingsListOptions.getEndDate());
-                    }
-                    if(scanSettingsListOptions.getScanType() != null){
-                        urlPath += String.format("scanType=%s&",scanSettingsListOptions.getScanType());
-                    }
-                }
-            }
-
-            try {
-                outputMixin.write(unirest.get(urlPath)
-                        .accept("application/json")
-                        .header("Content-Type", "application/json"));
-            } catch (UnexpectedHttpResponseException e) {
-                ObjectNode output = new ObjectMapper().createObjectNode();
-                String escapedPath = urlPath
-                        .replace("/","\\/")
-                        .replace("?","\\?");
-                Pattern pattern = Pattern.compile("(?<="+escapedPath+": )(?<code>\\d{3})\\W(?<text>.*)");
-                Matcher matcher = pattern.matcher(e.getMessage());
-                String fields;
-                if(matcher.find()){
-                    output.put("statusCode", matcher.group("code"));
-                    output.put("statusText", matcher.group("text"));
-                    fields = "statusCode#statusText#message";
-                } else {
-                    output.put("statusText", "Error");
-                    fields = "statusText#message";
-                }
-                output.put("message",e.getLocalizedMessage());
-                //outputMixin.overrideOutputFields(fields);
-
-                outputMixin.write(output);
-            }
-            return null;
-        }
-        
-        @Override
-        public OutputConfig getOutputOptionsWriterConfig() {
-            return SCDastOutputConfigHelper.table();
-            //.defaultColumns("id#name#cicdToken:Settings Id#");
-        }
+    private HttpRequest<?> updateRequest(HttpRequest<?> request) {
+        OutputQueryHelper queryHelper = new OutputQueryHelper(outputHelper);
+        request = searchTextMixin.updateRequest(request);
+        request = StringUtils.isBlank(modifiedAfter) 
+                ? request
+                : request.queryString("modifiedStartDate", modifiedAfter);
+        request = StringUtils.isBlank(modifiedBefore) 
+                ? request
+                : request.queryString("modifiedEndDate", modifiedBefore);
+        String scanType = queryHelper.getQueryValue("scanType", OutputQueryOperator.EQUALS);
+        request = StringUtils.isBlank(scanType) 
+                ? request
+                : request.queryString("scanType", scanType);
+        return request;
+    }
 }
