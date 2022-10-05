@@ -45,7 +45,7 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = "download-logs")
-public class SCDastScanOutputDownloadLogsCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
+public class SCDastScanOutputDownloadLogsOldCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
         @ArgGroup(exclusive = false, headingKey = "arggroup.download-logs-options.heading", order = 1)
         @Getter private SCDastTransferScanLogsOptions scanLogsOptions;
 

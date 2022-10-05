@@ -49,7 +49,7 @@ import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
 @Command(name = "start")
-public final class SCDastScanStartCommand extends AbstractSCDastUnirestRunnerCommand {
+public final class SCDastScanStartOldCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
     @ArgGroup(exclusive = false, headingKey = "arggroup.start-scan-options.heading", order = 1)

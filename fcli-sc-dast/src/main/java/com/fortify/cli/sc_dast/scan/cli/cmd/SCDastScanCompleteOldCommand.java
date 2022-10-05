@@ -42,21 +42,22 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "resume")
-public final class SCDastScanResumeCommand extends AbstractSCDastUnirestRunnerCommand {
+@Command(name = "complete")
+public final class SCDastScanCompleteOldCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
-    @ArgGroup(exclusive = false, headingKey = "arggroup.resume-scan-options.heading", order = 1)
-    @Getter private SCDastScanResumeOptions resumeScanOptions;
+
+    @ArgGroup(exclusive = false, headingKey = "arggroup.complete-scan-options.heading", order = 1)
+    @Getter private SCDastScanCompleteOptions completeScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public static class SCDastScanResumeOptions {
-        @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
+    public static class SCDastScanCompleteOptions {
+        @Option(names = {"-i","--id", "--scan-id"}, required = true)
         @Getter private int scanId;
 
-        @Option(names = {"-w", "--wait", "--wait-resumed"}, defaultValue = "false")
-        @Getter private boolean waitResumed;
+        @Option(names = {"-w", "--wait", "--wait-completed"}, defaultValue = "false")
+        @Getter private boolean waitCompleted;
 
         @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         @Getter private int waitInterval;
@@ -64,16 +65,16 @@ public final class SCDastScanResumeCommand extends AbstractSCDastUnirestRunnerCo
 
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
-        if(resumeScanOptions == null){
+        if(completeScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
-                    "Error: No parameter found. Provide the required scan-settings identifier.");
+                    "Error: No parameter found. Provide the required scan id.");
         }
         SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-        JsonNode response = actionsHandler.resumeScan(resumeScanOptions.getScanId());
+        JsonNode response = actionsHandler.completeScan(completeScanOptions.getScanId());
 
         if(response != null) outputMixin.write(response);
 
-        if(resumeScanOptions.isWaitResumed()){ actionsHandler.waitResumed(resumeScanOptions.getScanId(), resumeScanOptions.getWaitInterval()); }
+        if(completeScanOptions.isWaitCompleted()){ actionsHandler.waitCompleted(completeScanOptions.getScanId(), completeScanOptions.getWaitInterval()); }
 
         return null;
     }

@@ -46,7 +46,7 @@ import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
 @Command(name = "status")
-public class SCDastScanStatusCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
+public class SCDastScanStatusOldCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
         @Spec CommandSpec spec;
 
         @ArgGroup(exclusive = false, headingKey = "arggroup.status-scan-options.heading", order = 1)

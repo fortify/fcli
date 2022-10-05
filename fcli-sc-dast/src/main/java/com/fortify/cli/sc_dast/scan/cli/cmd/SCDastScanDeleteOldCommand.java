@@ -43,7 +43,7 @@ import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
 @Command(name = "delete")
-public final class SCDastScanDeleteCommand extends AbstractSCDastUnirestRunnerCommand {
+public final class SCDastScanDeleteOldCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
     @ArgGroup(exclusive = false, headingKey = "arggroup.delete-scan-options.heading", order = 1)

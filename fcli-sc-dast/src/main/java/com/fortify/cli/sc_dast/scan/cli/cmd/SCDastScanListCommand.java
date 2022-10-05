@@ -24,110 +24,53 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.scan.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.sc_dast.rest.cli.cmd.AbstractSCDastUnirestRunnerCommand;
-import com.fortify.cli.sc_dast.util.SCDastOutputConfigHelper;
-import com.fortify.cli.sc_dast.util.SCDastScanStatusTypes;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.IRecordTransformerSupplier;
+import com.fortify.cli.common.output.helper.OutputQueryHelper;
+import com.fortify.cli.common.output.writer.output.query.OutputQueryOperator;
+import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
+import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastSearchTextMixin;
+import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "list", description = "List DAST scans on ScanCentral DAST")
-public class SCDastScanListCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
-    @ArgGroup(exclusive = false, heading = "arggroup.get-specific-scan-options.heading", order = 1)
-    private SCDastGetScanOptions scanOptions;
-
-    @ArgGroup(exclusive = false, headingKey = "arggroup.filter-multiple-scans-options.heading", order = 2)
-    private SCDastGetScanListOptions scanListOptions;
+@Command(name = SCDastOutputHelperMixins.List.CMD_NAME)
+public class SCDastScanListCommand extends AbstractSCDastScanCommand implements IBaseHttpRequestSupplier, IRecordTransformerSupplier {
+    @Getter @Mixin private SCDastOutputHelperMixins.List outputHelper;
+    @Mixin SCDastSearchTextMixin searchTextMixin;
+    // TODO Once we support date-based less-than/greater-than operators for -q,
+    //      deprecate these options and update #updateRequest() to get the appropriate
+    //      query values.
+    @Option(names = {"-a", "--started-after"}) private String startedAfter;
+    @Option(names = {"-b", "--started-before"}) private String startedBefore;
     
-    @ReflectiveAccess
-    public static final class SCDastGetScanListOptions {
-        @Option(names = {"-t", "--text", "--search-text"})
-        @Getter private String searchText;
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+        return updateRequest(
+             unirest.get("/api/v2/scans/scan-summary-list")
+        );
+    };
 
-        @Option(names = { "--start","--start-date"})
-        @Getter private String startDate;
-
-        @Option(names = {"--end","--end-date"})
-        @Getter private String endDate;
-
-        @Option(names = {"-s","--status", "--scan-status"})
-        @Getter private SCDastScanStatusTypes scanStatus;
-
-        @Option(names = {"--order","--order-by"})
-        @Getter private String orderBy;
-
-        private enum Directions {ASC, DESC}
-        @Option(names = {"-d","--direction","--order-by-direction"})
-        @Getter private Directions orderByDirection;
-    }
-    
-    @ReflectiveAccess
-    public static class SCDastGetScanOptions {
-        @Option(names = {"-i", "--id", "--scan-id"})
-        @Getter private String scanId;
-    }
-
-    @Mixin private OutputMixin outputMixin;
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
-        String urlPath = "/api/v2/scans/scan-summary-list";
-        String urlParams = "";
-
-        if (scanOptions != null){
-            urlPath = "/api/v2/scans/"+ scanOptions.getScanId() + "/scan-summary";
-        }
-        else {
-            if(scanListOptions != null) {
-                if (scanListOptions.getSearchText() != null) {
-                    urlParams += String.format("searchText=%s&",scanListOptions.getSearchText());
-                }
-                if(scanListOptions.getStartDate() != null) {
-                    urlParams += String.format("startedOnStartDate=%s&",scanListOptions.getStartDate());
-                }
-                if(scanListOptions.getEndDate() != null) {
-                    urlParams += String.format("startedOnEndDate=%s&",scanListOptions.getEndDate());
-                }
-                if(scanListOptions.getOrderBy() != null) {
-                    urlParams += String.format("orderBy=%s&",scanListOptions.getOrderBy());
-                }
-                if(scanListOptions.getOrderByDirection() != null) {
-                    urlParams += String.format("orderByDirection=%s&",scanListOptions.getOrderByDirection());
-                }
-                if(scanListOptions.getScanStatus() != null) {
-                    urlParams += String.format("scanStatusType=%s&",scanListOptions.getScanStatus());
-                }
-            }
-        }
-
-        outputMixin.write( unirest.get(urlPath + "?" + urlParams)
-                .accept("application/json")
-                .header("Content-Type", "application/json"));
-
-        return null;
-    }
-    
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SCDastOutputConfigHelper.table();
-        /*.defaultColumns("id#" +
-                "name#" +
-                "applicationName:Application#" +
-                "applicationVersionName:Version#" +
-                "scanStatusType:Status#"+
-                "lowCount:Low#" +
-                "mediumCount:Medium#" +
-                "highCount:High#" +
-                "criticalCount:Critical");*/
+    private HttpRequest<?> updateRequest(HttpRequest<?> request) {
+        OutputQueryHelper queryHelper = new OutputQueryHelper(outputHelper);
+        request = searchTextMixin.updateRequest(request);
+        request = StringUtils.isBlank(startedAfter) 
+                ? request
+                : request.queryString("startedOnStartDate", startedAfter);
+        request = StringUtils.isBlank(startedBefore) 
+                ? request
+                : request.queryString("startedOnEndDate", startedBefore);
+        String scanStatus = queryHelper.getQueryValue("scanStatus", OutputQueryOperator.EQUALS);
+        request = StringUtils.isBlank(scanStatus) 
+                ? request
+                : request.queryString("scanStatusType", SCDastScanStatus.valueOf(scanStatus).getScanStatusType());
+        return request;
     }
 }

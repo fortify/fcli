@@ -5,13 +5,14 @@ import picocli.CommandLine.Command;
 @Command(
         name = "scan",
         subcommands = {
-                SCDastScanCompleteCommand.class,
-                SCDastScanDeleteCommand.class,
+                SCDastScanCompleteOldCommand.class,
+                SCDastScanDeleteOldCommand.class,
+                SCDastScanGetCommand.class,
                 SCDastScanListCommand.class,
-                SCDastScanPauseCommand.class,
-                SCDastScanResumeCommand.class,
-                SCDastScanStartCommand.class,
-                SCDastScanStatusCommand.class
+                SCDastScanPauseOldCommand.class,
+                SCDastScanResumeOldCommand.class,
+                SCDastScanStartOldCommand.class,
+                SCDastScanStatusOldCommand.class
         }
 )
 public class SCDastScanCommands {

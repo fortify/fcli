@@ -42,22 +42,21 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "pause")
-public final class SCDastScanPauseCommand extends AbstractSCDastUnirestRunnerCommand {
+@Command(name = "resume")
+public final class SCDastScanResumeOldCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
-
-    @ArgGroup(exclusive = false, headingKey = "arggroup.pause-scan-options.heading", order = 1)
-    @Getter private SCDastScanPauseOptions pauseScanOptions;
+    @ArgGroup(exclusive = false, headingKey = "arggroup.resume-scan-options.heading", order = 1)
+    @Getter private SCDastScanResumeOptions resumeScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public static class SCDastScanPauseOptions {
-        @Option(names = {"-i","--id", "--scan-id"}, required = true)
+    public static class SCDastScanResumeOptions {
+        @Option(names = {"-i","--id", "--scan-id"}, description = "The scan id.", required = true)
         @Getter private int scanId;
 
-        @Option(names = {"-w", "--wait", "--wait-paused"}, defaultValue = "false")
-        @Getter private boolean waitPaused;
+        @Option(names = {"-w", "--wait", "--wait-resumed"}, defaultValue = "false")
+        @Getter private boolean waitResumed;
 
         @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         @Getter private int waitInterval;
@@ -65,16 +64,16 @@ public final class SCDastScanPauseCommand extends AbstractSCDastUnirestRunnerCom
 
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
-        if(pauseScanOptions == null){
+        if(resumeScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
-                    "Error: No parameter found. Provide the required scan id.");
+                    "Error: No parameter found. Provide the required scan-settings identifier.");
         }
         SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-        JsonNode response = actionsHandler.pauseScan(pauseScanOptions.getScanId());
+        JsonNode response = actionsHandler.resumeScan(resumeScanOptions.getScanId());
 
         if(response != null) outputMixin.write(response);
 
-        if(pauseScanOptions.isWaitPaused()){ actionsHandler.waitPaused(pauseScanOptions.getScanId(), pauseScanOptions.getWaitInterval()); }
+        if(resumeScanOptions.isWaitResumed()){ actionsHandler.waitResumed(resumeScanOptions.getScanId(), resumeScanOptions.getWaitInterval()); }
 
         return null;
     }

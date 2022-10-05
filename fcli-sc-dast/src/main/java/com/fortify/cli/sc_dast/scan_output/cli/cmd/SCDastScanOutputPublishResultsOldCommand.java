@@ -43,7 +43,7 @@ import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
 @Command(name = "publish")
-public final class SCDastScanOutputPublishResultsCommand extends AbstractSCDastUnirestRunnerCommand {
+public final class SCDastScanOutputPublishResultsOldCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
     @ArgGroup(exclusive = false, headingKey = "arggroup.publish-options.heading", order = 1)

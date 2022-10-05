@@ -46,7 +46,7 @@ import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
 @Command(name = "get-results", description = "Get scan results from ScanCentral DAST")
-public class SCDastScanOutputGetResultsCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
+public class SCDastScanOutputGetResultsOldCommand extends AbstractSCDastUnirestRunnerCommand implements IOutputConfigSupplier {
         @Spec CommandSpec spec;
         @ArgGroup(exclusive = false, headingKey = "arggroup.download-results-options.heading", order = 1)
         private SCDastScanResultsOptions scanResultsOptions;

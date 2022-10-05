@@ -5,10 +5,10 @@ import picocli.CommandLine.Command;
 @Command(
         name = "scan-output",
         subcommands = {
-                SCDastScanOutputDownloadFprCommand.class,
-                SCDastScanOutputDownloadLogsCommand.class,
-                SCDastScanOutputGetResultsCommand.class,
-                SCDastScanOutputPublishResultsCommand.class
+                SCDastScanOutputDownloadFprOldCommand.class,
+                SCDastScanOutputDownloadLogsOldCommand.class,
+                SCDastScanOutputGetResultsOldCommand.class,
+                SCDastScanOutputPublishResultsOldCommand.class
         }
 )
 public class SCDastScanOutputCommands {

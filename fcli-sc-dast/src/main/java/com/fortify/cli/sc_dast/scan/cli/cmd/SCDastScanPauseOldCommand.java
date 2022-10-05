@@ -42,22 +42,22 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = "complete")
-public final class SCDastScanCompleteCommand extends AbstractSCDastUnirestRunnerCommand {
+@Command(name = "pause")
+public final class SCDastScanPauseOldCommand extends AbstractSCDastUnirestRunnerCommand {
     @Spec CommandSpec spec;
 
-    @ArgGroup(exclusive = false, headingKey = "arggroup.complete-scan-options.heading", order = 1)
-    @Getter private SCDastScanCompleteOptions completeScanOptions;
+    @ArgGroup(exclusive = false, headingKey = "arggroup.pause-scan-options.heading", order = 1)
+    @Getter private SCDastScanPauseOptions pauseScanOptions;
 
     @Mixin private OutputMixin outputMixin;
     
     @ReflectiveAccess
-    public static class SCDastScanCompleteOptions {
+    public static class SCDastScanPauseOptions {
         @Option(names = {"-i","--id", "--scan-id"}, required = true)
         @Getter private int scanId;
 
-        @Option(names = {"-w", "--wait", "--wait-completed"}, defaultValue = "false")
-        @Getter private boolean waitCompleted;
+        @Option(names = {"-w", "--wait", "--wait-paused"}, defaultValue = "false")
+        @Getter private boolean waitPaused;
 
         @Option(names = {"--interval", "--wait-interval"}, defaultValue = "30", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         @Getter private int waitInterval;
@@ -65,16 +65,16 @@ public final class SCDastScanCompleteCommand extends AbstractSCDastUnirestRunner
 
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
-        if(completeScanOptions == null){
+        if(pauseScanOptions == null){
             throw new CommandLine.ParameterException(spec.commandLine(),
                     "Error: No parameter found. Provide the required scan id.");
         }
         SCDastScanActionsHandler actionsHandler = new SCDastScanActionsHandler(unirest);
-        JsonNode response = actionsHandler.completeScan(completeScanOptions.getScanId());
+        JsonNode response = actionsHandler.pauseScan(pauseScanOptions.getScanId());
 
         if(response != null) outputMixin.write(response);
 
-        if(completeScanOptions.isWaitCompleted()){ actionsHandler.waitCompleted(completeScanOptions.getScanId(), completeScanOptions.getWaitInterval()); }
+        if(pauseScanOptions.isWaitPaused()){ actionsHandler.waitPaused(pauseScanOptions.getScanId(), pauseScanOptions.getWaitInterval()); }
 
         return null;
     }
