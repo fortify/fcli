@@ -79,15 +79,15 @@ public abstract class AbstractOutputHelper implements IOutputHelper {
      * @return
      */
     protected OutputConfig getOutputConfig() {
-        CommandSpec mixee = getMixee();
-        OutputConfig basicOutputConfig = mixee instanceof IBasicOutputConfigSupplier
-                ? ((IBasicOutputConfigSupplier)mixee).getBasicOutputConfig()
+        Object cmd = getMixee().userObject();
+        OutputConfig basicOutputConfig = cmd instanceof IBasicOutputConfigSupplier
+                ? ((IBasicOutputConfigSupplier)cmd).getBasicOutputConfig()
                 : getBasicOutputConfig();
-        UnaryOperator<JsonNode> inputTransformer = mixee instanceof IInputTransformerSupplier
-                ? ((IInputTransformerSupplier)mixee).getInputTransformer()
+        UnaryOperator<JsonNode> inputTransformer = cmd instanceof IInputTransformerSupplier
+                ? ((IInputTransformerSupplier)cmd).getInputTransformer()
                 : productHelper.getInputTransformer();
-        UnaryOperator<JsonNode> recordTransformer = mixee instanceof IRecordTransformerSupplier
-                ? ((IRecordTransformerSupplier)mixee).getRecordTransformer()
+        UnaryOperator<JsonNode> recordTransformer = cmd instanceof IRecordTransformerSupplier
+                ? ((IRecordTransformerSupplier)cmd).getRecordTransformer()
                 : productHelper.getRecordTransformer();
         return basicOutputConfig.inputTransformer(inputTransformer).recordTransformer(recordTransformer);
     }
