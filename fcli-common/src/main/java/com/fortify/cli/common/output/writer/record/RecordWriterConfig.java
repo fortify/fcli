@@ -22,29 +22,26 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.sensor.cli.cmd;
+package com.fortify.cli.common.output.writer.record;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeHolderSupplier;
-import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
-import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
-import com.fortify.cli.sc_dast.sensor.cli.mixin.SCDastSensorResolverMixin;
-import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
+import java.io.PrintWriter;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import com.fortify.cli.common.output.writer.OutputFormat;
 
-@ReflectiveAccess
-@Command(name = SCDastOutputHelperMixins.Disable.CMD_NAME)
-public class SCDastSensorDisableCommand extends AbstractSCDastOutputCommand implements IJsonNodeHolderSupplier {
-    @Getter @Mixin private SCDastOutputHelperMixins.Disable outputHelper;
-    @Mixin private SCDastSensorResolverMixin.PositionalParameter sensorResolver;
+import lombok.Builder;
+import lombok.Data;
 
-    @Override
-    public JsonNodeHolder getJsonNodeHolder(UnirestInstance unirest) {
-        return SCDastSensorHelper.disableSensor(unirest, sensorResolver.getSensorDescriptor(unirest));
-    }
+@Data @Builder
+public class RecordWriterConfig {
+    /** PrintWriter to which to write the output */
+    private PrintWriter printWriter;
+    /** Write singular output rather than an array/list; 
+     * assumes that only a single record is passed to the {@link IRecordWriter} */ 
+    private boolean singular;
+    /** Free-format {@link IRecordWriter} options */
+    private String options;
+    /** The actual output format that was requested */
+    private OutputFormat outputFormat;
+    /** Whether to pretty-print the output */
+    @Builder.Default private boolean pretty = true;
 }

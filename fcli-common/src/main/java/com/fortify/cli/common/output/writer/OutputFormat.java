@@ -24,20 +24,26 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.writer;
 
-import com.fortify.cli.common.output.writer.csv.CsvRecordWriter.CsvType;
-import com.fortify.cli.common.output.writer.csv.CsvRecordWriterFactory;
-import com.fortify.cli.common.output.writer.expr.ExprRecordWriterFactory;
-import com.fortify.cli.common.output.writer.json.JsonRecordWriterFactory;
-import com.fortify.cli.common.output.writer.json_properties.JsonPropertiesRecordWriterFactory;
-import com.fortify.cli.common.output.writer.table.TableRecordWriter.TableType;
-import com.fortify.cli.common.output.writer.table.TableRecordWriterFactory;
-import com.fortify.cli.common.output.writer.tree.TreeRecordWriterFactory;
-import com.fortify.cli.common.output.writer.xml.XmlRecordWriterFactory;
-import com.fortify.cli.common.output.writer.yaml.YamlRecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.IRecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.csv.CsvRecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.csv.CsvRecordWriter.CsvType;
+import com.fortify.cli.common.output.writer.record.expr.ExprRecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.json.JsonRecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.json_properties.JsonPropertiesRecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.table.TableRecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.table.TableRecordWriter.TableType;
+import com.fortify.cli.common.output.writer.record.tree.TreeRecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.xml.XmlRecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.yaml.YamlRecordWriterFactory;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * TODO Move this class one package up, to com.fortify.cli.common.output
+ * @author rsenden
+ *
+ */
 @RequiredArgsConstructor
 public enum OutputFormat {
     json            (OutputStructure.TREE, "json",  new JsonRecordWriterFactory()), 

@@ -22,29 +22,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.sensor.cli.cmd;
+package com.fortify.cli.common.output.writer.record.json_properties;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeHolderSupplier;
-import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
-import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
-import com.fortify.cli.sc_dast.sensor.cli.mixin.SCDastSensorResolverMixin;
-import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
+import com.fortify.cli.common.output.writer.record.IRecordWriter;
+import com.fortify.cli.common.output.writer.record.IRecordWriterFactory;
+import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
-
-@ReflectiveAccess
-@Command(name = SCDastOutputHelperMixins.Disable.CMD_NAME)
-public class SCDastSensorDisableCommand extends AbstractSCDastOutputCommand implements IJsonNodeHolderSupplier {
-    @Getter @Mixin private SCDastOutputHelperMixins.Disable outputHelper;
-    @Mixin private SCDastSensorResolverMixin.PositionalParameter sensorResolver;
-
+public class JsonPropertiesRecordWriterFactory implements IRecordWriterFactory {
     @Override
-    public JsonNodeHolder getJsonNodeHolder(UnirestInstance unirest) {
-        return SCDastSensorHelper.disableSensor(unirest, sensorResolver.getSensorDescriptor(unirest));
+    public IRecordWriter createRecordWriter(RecordWriterConfig config) {
+        return new JsonPropertiesRecordWriter(config);
     }
 }

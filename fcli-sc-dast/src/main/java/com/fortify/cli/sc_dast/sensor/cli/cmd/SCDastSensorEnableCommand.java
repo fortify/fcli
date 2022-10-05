@@ -24,23 +24,27 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.sensor.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.sc_dast.rest.cli.cmd.AbstractSCDastJsonEnableCommand;
+import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeHolderSupplier;
+import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
+import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.sensor.cli.mixin.SCDastSensorResolverMixin;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = SCDastSensorEnableCommand.CMD_NAME)
-public class SCDastSensorEnableCommand extends AbstractSCDastJsonEnableCommand {
+@Command(name = SCDastOutputHelperMixins.Enable.CMD_NAME)
+public class SCDastSensorEnableCommand extends AbstractSCDastOutputCommand implements IJsonNodeHolderSupplier {
+    @Getter @Mixin private SCDastOutputHelperMixins.Enable outputHelper;
     @Mixin private SCDastSensorResolverMixin.PositionalParameter sensorResolver;
 
     @Override
-    protected JsonNode generateJsonNode(UnirestInstance unirest) {
-        return SCDastSensorHelper.enableSensor(unirest, sensorResolver.getSensorDescriptor(unirest)).asJsonNode();
+    public JsonNodeHolder getJsonNodeHolder(UnirestInstance unirest) {
+        return SCDastSensorHelper.enableSensor(unirest, sensorResolver.getSensorDescriptor(unirest));
     }
 }

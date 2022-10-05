@@ -37,6 +37,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+/**
+ * TODO Move this class to the writer.output package once all commands have been refactored to use {@link OutputHelperMixins}.
+ * @author rsenden
+ *
+ */
 @Accessors(fluent = true)
 // TODO Add null checks in case any input or record transformation returns null?
 public class OutputConfig {

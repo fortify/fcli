@@ -11,11 +11,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.mixin.OutputFormatConfigConverter.OutputFormatIterable;
 import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
-import com.fortify.cli.common.output.writer.IRecordWriter;
 import com.fortify.cli.common.output.writer.OutputFormat;
-import com.fortify.cli.common.output.writer.RecordWriterConfig;
+import com.fortify.cli.common.output.writer.output.IOutputWriter;
+import com.fortify.cli.common.output.writer.output.OutputOptionsArgGroup;
+import com.fortify.cli.common.output.writer.record.IRecordWriter;
+import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.runner.IfFailureHandler;
 import com.fortify.cli.common.util.StringUtils;
@@ -26,23 +27,47 @@ import kong.unirest.HttpResponse;
 import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.Messages;
 import picocli.CommandLine.Spec;
 
-@ReflectiveAccess
-public class OutputMixin {
+/**
+ * TODO Refactor this class once all commands have been refactored to use CommandOutputWriterMixin;
+ *      all picocli annotatations should be removed, as they will be passed by an IOutputMixinFactory
+ *      through our constructor. As OutputMixin by then will no longer be a mixin, OutputMixin and
+ *      subclasses should be renamed to OutputWriter, and moved to a new writer.output package.
+ * @author rsenden
+ *
+ */
+@ReflectiveAccess 
+public class OutputMixin implements IOutputWriter {
+    @Getter private final OutputConfig defaultOutputConfig;
+    
+    // TODO Make final once all command implementations use an IOutputMixinFactory
     @Getter private CommandSpec mixee;
     
+    // TODO Make final & use interface instead once ArgGroup has been fully moved to factory
+    @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false)
+    private OutputOptionsArgGroup outputOptionsArgGroup;
+    
+    
+    // TODO Remove once all command implementations use an IOutputMixinFactory
+    public OutputMixin() {
+        this.defaultOutputConfig =new OutputConfig();
+    }
+    
+    public OutputMixin(CommandSpec mixee, OutputOptionsArgGroup outputOptionsArgGroup, OutputConfig defaultOutputConfig) {
+        setMixee(mixee);
+        this.outputOptionsArgGroup = outputOptionsArgGroup;
+        this.defaultOutputConfig = defaultOutputConfig;
+    }
+
+    // TODO Remove once all command implementations use an IOutputMixinFactory
     @Spec(Spec.Target.MIXEE)
     public void setMixee(CommandSpec mixee) {
         this.mixee = mixee;
     }
-    
-    @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false)
-    private OutputOptionsArgGroup outputOptionsArgGroup;
     
     @Data
     public static final class OutputFormatConfig {
@@ -50,26 +75,21 @@ public class OutputMixin {
         private final String options;
     }
 
-    private static final class OutputOptionsArgGroup {
-        @CommandLine.Option(names = {"-o", "--output"}, order=1, converter = OutputFormatConfigConverter.class, completionCandidates = OutputFormatIterable.class, paramLabel = "format[=<options>]")
-        private OutputFormatConfig outputFormatConfig;
-        
-        @CommandLine.Option(names = {"--output-to-file"}, order=7)
-        private String outputFile; 
-    }
-    
     public OutputOptionsWriter getWriter() {
         return new OutputOptionsWriter(getOutputOptionsWriterConfig());
     }
     
+    @Override
     public void write(JsonNode jsonNode) {
         write(writer->writer::write, jsonNode);
     }
 
+    @Override
     public void write(HttpRequest<?> httpRequest) {
         write(writer->writer::write, httpRequest);
     }
     
+    @Override
     public void write(HttpRequest<?> httpRequest, Function<HttpResponse<JsonNode>, String> nextPageUrlProducer) {
         if ( nextPageUrlProducer==null ) {
             write(httpRequest);
@@ -78,6 +98,7 @@ public class OutputMixin {
         }
     }
     
+    @Override
     public void write(HttpResponse<JsonNode> httpResponse) {
         write(writer->writer::write, httpResponse);
     }
@@ -99,7 +120,7 @@ public class OutputMixin {
         if ( mixeeObject instanceof IOutputConfigSupplier ) {
             return ((IOutputConfigSupplier)mixeeObject).getOutputOptionsWriterConfig();
         } else {
-            return new OutputConfig();
+            return defaultOutputConfig;
         }
     }
     
@@ -174,9 +195,9 @@ public class OutputMixin {
         }
 
         private OutputFormat getOutputFormat() {
-            OutputFormat result = optionsArgGroup.outputFormatConfig==null 
+            OutputFormat result = optionsArgGroup.getOutputFormatConfig()==null 
                     ? config.defaultFormat() 
-                    : optionsArgGroup.outputFormatConfig.getOutputFormat();
+                    : optionsArgGroup.getOutputFormatConfig().getOutputFormat();
             if ( result == null ) {
                 result = OutputFormat.table;
             }
@@ -198,7 +219,7 @@ public class OutputMixin {
         }
         
         private String getOutputWriterOptions() {
-            OutputFormatConfig config = optionsArgGroup.outputFormatConfig;
+            OutputFormatConfig config = optionsArgGroup.getOutputFormatConfig();
             if ( config!=null && StringUtils.isNotBlank(config.getOptions()) ) {
                 return config.getOptions();
             } else {
@@ -209,7 +230,7 @@ public class OutputMixin {
         }
 
         private String getClosestMatch(Messages messages, String keySuffix) {
-            CommandSpec commandSpec = messages.commandSpec();
+            CommandSpec commandSpec = messages==null ? null : messages.commandSpec();
             String value = null;
             while ( commandSpec!=null && value==null ) {
                 String key = commandSpec.qualifiedName(".")+"."+keySuffix;
@@ -220,12 +241,13 @@ public class OutputMixin {
         }
 
         private final PrintWriter createPrintWriter(OutputConfig config) {
+            String outputFile = optionsArgGroup.getOutputFile();
             try {
-                return optionsArgGroup.outputFile == null || "-".equals(optionsArgGroup.outputFile)
+                return outputFile == null || "-".equals(outputFile)
                         ? new PrintWriter(System.out)
-                        : new PrintWriter(optionsArgGroup.outputFile);
+                        : new PrintWriter(outputFile);
             } catch ( FileNotFoundException e) {
-                throw new IllegalArgumentException("Output file "+optionsArgGroup.outputFile.toString()+" cannot be accessed");
+                throw new IllegalArgumentException("Output file "+outputFile+" cannot be accessed");
             }
         }
 

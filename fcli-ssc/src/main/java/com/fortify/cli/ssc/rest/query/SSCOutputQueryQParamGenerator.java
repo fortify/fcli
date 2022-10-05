@@ -7,8 +7,8 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.fortify.cli.common.output.cli.mixin.query.OutputQuery;
-import com.fortify.cli.common.output.cli.mixin.query.OutputQueryOperator;
+import com.fortify.cli.common.output.writer.output.query.OutputQuery;
+import com.fortify.cli.common.output.writer.output.query.OutputQueryOperator;
 import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequest;

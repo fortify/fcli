@@ -24,22 +24,26 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.sensor.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.sc_dast.rest.cli.cmd.AbstractSCDastJsonGetCommand;
+import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeHolderSupplier;
+import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
+import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.sensor.cli.mixin.SCDastSensorResolverMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = SCDastSensorGetCommand.CMD_NAME)
-public class SCDastSensorGetCommand extends AbstractSCDastJsonGetCommand {
+@Command(name = SCDastOutputHelperMixins.Get.CMD_NAME)
+public class SCDastSensorGetCommand extends AbstractSCDastOutputCommand implements IJsonNodeHolderSupplier {
+    @Getter @Mixin private SCDastOutputHelperMixins.Get outputHelper;
     @Mixin private SCDastSensorResolverMixin.PositionalParameter sensorResolver;
 
     @Override
-    protected JsonNode generateJsonNode(UnirestInstance unirest) {
-        return sensorResolver.getSensorDescriptor(unirest).asJsonNode();
+    public JsonNodeHolder getJsonNodeHolder(UnirestInstance unirest) {
+        return sensorResolver.getSensorDescriptor(unirest);
     }
 }
