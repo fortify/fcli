@@ -1,4 +1,4 @@
-package com.fortify.cli.fod.app.cli.cmd;
+package com.fortify.cli.fod.apprelease.cli.cmd;
 
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDHttpListCommand;
@@ -11,20 +11,22 @@ import picocli.CommandLine;
 
 @ReflectiveAccess
 @CommandLine.Command(name = "list")
-public class FoDApplicationListCommand extends AbstractFoDHttpListCommand {
+public class FoDApplicationReleaseHttpListCommand extends AbstractFoDHttpListCommand {
 
     @Override
     protected FoDOutputQueryFiltersParamGenerator getFiltersParamGenerator() {
         return new FoDOutputQueryFiltersParamGenerator()
+                .add("releaseId", FoDFiltersParamValueGenerators::plain)
+                .add("releaseName", FoDFiltersParamValueGenerators::plain)
+                .add("microserviceId", FoDFiltersParamValueGenerators::plain)
+                .add("microserviceName", FoDFiltersParamValueGenerators::plain)
                 .add("applicationId", FoDFiltersParamValueGenerators::plain)
-                .add("applicationName", FoDFiltersParamValueGenerators::plain)
-                .add("businessCriticalityType", FoDFiltersParamValueGenerators::plain)
-                .add("applicationType", FoDFiltersParamValueGenerators::plain);
+                .add("applicationName", FoDFiltersParamValueGenerators::plain);
     }
 
     @Override
     protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(FoDUrls.APPLICATIONS);
+        return unirest.get(FoDUrls.RELEASES);
     }
 
 }

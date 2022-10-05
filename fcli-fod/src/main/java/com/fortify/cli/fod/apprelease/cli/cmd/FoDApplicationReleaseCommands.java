@@ -7,7 +7,7 @@ import picocli.CommandLine;
         aliases = {"application-release"},
         subcommands = {
                 FoDApplicationReleaseCreateCommand.class,
-                FoDApplicationReleaseListCommand.class,
+                FoDApplicationReleaseHttpListCommand.class,
                 FoDApplicationUpdateCommand.class,
                 FoDApplicationReleaseDeleteCommand.class
         }
