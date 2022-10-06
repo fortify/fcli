@@ -28,26 +28,14 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fortify.cli.common.rest.runner.config.IUrlConfig;
-import com.fortify.cli.common.rest.runner.config.UrlConfig;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
-import lombok.Getter;
 
 @Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractSessionData implements ISessionData {
-    @JsonDeserialize(as = UrlConfig.class) private IUrlConfig urlConfig;
-    @Getter private Date createdDate = new Date();
-    
-    // No-arg constructor required for Jackson deserialization
-    protected AbstractSessionData() {}
-    
-    public AbstractSessionData(IUrlConfig urlConfig) {
-        this.urlConfig = urlConfig;
-    }
+    private Date createdDate = new Date();
     
     /**
      * Subclasses may override this method to provide an actual session expiration date/time if available 

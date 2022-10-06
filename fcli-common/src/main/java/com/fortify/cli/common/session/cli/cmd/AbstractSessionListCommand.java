@@ -24,20 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
-
 import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-public abstract class AbstractSessionListCommand implements Runnable {
-    @Mixin private OutputMixin outputMixin;
-
+public abstract class AbstractSessionListCommand extends AbstractSessionCommand {
     @Override
-    public void run() {
-        getSessionDataManager().writeSessionSummaries(outputMixin);
+    protected void _run() {
+        // Nothing to do, we just have our superclass write session summaries 
     }
-    
-    protected abstract ISessionDataManager<?> getSessionDataManager();
 }

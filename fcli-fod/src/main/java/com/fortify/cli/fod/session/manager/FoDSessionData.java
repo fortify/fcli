@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.manager.api.SessionSummary;
-import com.fortify.cli.common.session.manager.spi.AbstractSessionData;
+import com.fortify.cli.common.session.manager.spi.AbstractSessionDataWithSingleUrlConfig;
 import com.fortify.cli.fod.oauth.helper.FoDTokenCreateResponse;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -38,7 +38,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data @EqualsAndHashCode(callSuper = true) @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
-public class FoDSessionData extends AbstractSessionData {
+public class FoDSessionData extends AbstractSessionDataWithSingleUrlConfig {
     private FoDTokenCreateResponse cachedTokenResponse;
     
     public FoDSessionData() {}

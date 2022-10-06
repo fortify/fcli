@@ -30,5 +30,8 @@ public interface IUrlConfig {
     Integer getProxyPort();
     String  getProxyUser();
     char[]  getProxyPassword();
-    boolean isInsecureModeEnabled();
+    Boolean getInsecureModeEnabled();
+    default boolean isInsecureModeEnabled() {
+        return Boolean.TRUE.equals(getInsecureModeEnabled());
+    }
 }

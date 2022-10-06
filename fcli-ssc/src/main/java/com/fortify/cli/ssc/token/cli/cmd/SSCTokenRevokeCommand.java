@@ -32,7 +32,7 @@ import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
-import com.fortify.cli.common.rest.runner.config.IUserCredentials;
+import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -52,15 +52,15 @@ public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand implements IO
     //      Also, if we don't get any useful output, we could as well support revoking tokens by 
     //      both id and value within a single command invocation, as the only reason why we don't 
     //      allow that is so that we don't need to combine the data from both responses.
-    protected void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentials userCredentials) {
+    protected void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {
         String[] tokenIds = Stream.of(tokens).filter(this::isInteger).toArray(String[]::new);
         String[] tokenValues = Stream.of(tokens).filter(Predicate.not(this::isInteger)).toArray(String[]::new);
         if ( tokenIds.length>0 && tokenValues.length>0 ) {
             throw new IllegalArgumentException("Either token id's or token values need to be specified, not both");
         }
         JsonNode result = tokenIds.length>0 
-                ? tokenHelper.deleteTokensById(urlConfig, userCredentials, tokenIds)
-                : tokenHelper.deleteTokensByValue(urlConfig, userCredentials, tokenValues);
+                ? tokenHelper.deleteTokensById(urlConfig, userCredentialsConfig, tokenIds)
+                : tokenHelper.deleteTokensByValue(urlConfig, userCredentialsConfig, tokenValues);
         outputMixin.write(result);
     }
     

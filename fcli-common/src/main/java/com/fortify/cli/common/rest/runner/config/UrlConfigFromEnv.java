@@ -24,11 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.runner.config;
 
-import lombok.Data;
 import static com.fortify.cli.common.util.EnvHelper.*;
 
+import lombok.Data;
+
 @Data
-public final class UrlConfigFromEnv implements IUrlConfig {
+public class UrlConfigFromEnv implements IUrlConfig {
     private final String urlEnvName;
     private final String proxyHostEnvName;
     private final String proxyPortEnvName;
@@ -40,15 +41,15 @@ public final class UrlConfigFromEnv implements IUrlConfig {
     private final Integer proxyPort;
     private final String  proxyUser;
     private final char[]  proxyPassword;
-    private final boolean insecureModeEnabled;
+    private final Boolean insecureModeEnabled;
     
-    public UrlConfigFromEnv(String prefix) {
-        this.urlEnvName = envName(prefix, "URL");
-        this.proxyHostEnvName = envName(prefix, "PROXY_HOST");
-        this.proxyPortEnvName = envName(prefix, "PROXY_PORT");
-        this.proxyUserEnvName = envName(prefix, "PROXY_USER");
-        this.proxyPasswordEnvName = envName(prefix, "PROXY_PASSWORD");
-        this.insecureModeEnabledEnvName = envName(prefix, "DISABLE_SSL_CHECKS");
+    public UrlConfigFromEnv(String productEnvId) {
+        this.urlEnvName = envName(productEnvId, "URL");
+        this.proxyHostEnvName = envNameWithOrWithoutProductEnvId(productEnvId, "PROXY_HOST");
+        this.proxyPortEnvName = envNameWithOrWithoutProductEnvId(productEnvId, "PROXY_PORT");
+        this.proxyUserEnvName = envNameWithOrWithoutProductEnvId(productEnvId, "PROXY_USER");
+        this.proxyPasswordEnvName = envNameWithOrWithoutProductEnvId(productEnvId, "PROXY_PASSWORD");
+        this.insecureModeEnabledEnvName = envNameWithOrWithoutProductEnvId(productEnvId, "DISABLE_SSL_CHECKS");
         this.url = env(urlEnvName);
         this.proxyHost = env(proxyHostEnvName);
         this.proxyPort = asInteger(env(proxyPortEnvName));

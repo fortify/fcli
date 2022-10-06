@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.session.cli.cmd;
 
-import com.fortify.cli.common.rest.runner.config.IUserCredentials;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
 import com.fortify.cli.ssc.session.cli.mixin.SSCSessionLogoutOptions;
 import com.fortify.cli.ssc.session.manager.SSCSessionData;
@@ -44,11 +43,6 @@ public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand<SSCSes
     
     @Override
     protected void logout(String sessionName, SSCSessionData sessionData) {
-        IUserCredentials uc = logoutOptions.getUserCredentialOptions();
-        if ( uc!=null ) {
-           tokenHelper.deleteTokensById(sessionData.getUrlConfig(), uc, sessionData.getTokenId());
-        }
+        sessionData.logout(tokenHelper, logoutOptions.getUserCredentialOptions());
     }
-
-    
 }

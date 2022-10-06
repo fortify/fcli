@@ -24,6 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.runner.config;
 
+import java.util.function.Consumer;
+
+import com.fortify.cli.common.util.StringUtils;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,16 +41,44 @@ public class UrlConfig implements IUrlConfig {
     private Integer proxyPort;
     private String  proxyUser;
     private char[]  proxyPassword;
-    private boolean insecureModeEnabled;
+    private Boolean insecureModeEnabled;
     
     public static final UrlConfig from(IUrlConfig other) {
-        return UrlConfig.builder()
-            .url(other.getUrl())
-            .proxyHost(other.getProxyHost())
-            .proxyPort(other.getProxyPort())
-            .proxyUser(other.getProxyUser())
-            .proxyPassword(other.getProxyPassword())
-            .insecureModeEnabled(other.isInsecureModeEnabled())
-            .build();
+        return builderFrom(other).build();
+    }
+    
+    public static final UrlConfigBuilder builderFrom(IUrlConfig other) {
+        UrlConfigBuilder builder = UrlConfig.builder();
+        if ( other!=null ) {
+            builder = builder
+                .url(other.getUrl())
+                .proxyHost(other.getProxyHost())
+                .proxyPort(other.getProxyPort())
+                .proxyUser(other.getProxyUser())
+                .proxyPassword(other.getProxyPassword())
+                .insecureModeEnabled(other.isInsecureModeEnabled());
+        }
+        return builder;
+    }
+    
+    public static final UrlConfigBuilder builderFrom(IUrlConfig other, IUrlConfig overrides) {
+        UrlConfigBuilder builder = other==null ? builderFrom(overrides) : builderFrom(other);
+        if ( other!=null && overrides!=null ) {
+            override(overrides.getUrl(), builder::url);
+            override(overrides.getProxyHost(), builder::proxyHost);
+            override(overrides.getProxyPort(), builder::proxyPort);
+            override(overrides.getProxyUser(), builder::proxyUser);
+            override(overrides.getProxyPassword(), builder::proxyPassword);
+            override(overrides.getInsecureModeEnabled(), builder::insecureModeEnabled);
+        }
+        return builder;
+    }
+    
+    private static final void override(String value, Consumer<String> setter) {
+        if ( StringUtils.isNotBlank(value) ) { setter.accept(value); }
+    }
+    
+    private static final <T extends Object> void override(T value, Consumer<T> setter) {
+        if ( value!=null ) { setter.accept(value); }
     }
 }

@@ -26,14 +26,15 @@ package com.fortify.cli.common.session.manager.api;
 
 import java.util.Date;
 
-import com.fortify.cli.common.rest.runner.config.IUrlConfigSupplier;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /** 
  * Interface describing session data
  * 
  * @author Ruud Senden
  */
-public interface ISessionData extends IUrlConfigSupplier {
+public interface ISessionData {
+    @JsonIgnore String getUrlDescriptor();
     Date getCreatedDate();
     Date getExpiryDate();
 }
