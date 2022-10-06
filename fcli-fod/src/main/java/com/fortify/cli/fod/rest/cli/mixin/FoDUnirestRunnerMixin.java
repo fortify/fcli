@@ -2,6 +2,7 @@ package com.fortify.cli.fod.rest.cli.mixin;
 
 import java.util.function.Function;
 
+import com.fortify.cli.common.rest.runner.IUnirestRunner;
 import com.fortify.cli.common.rest.runner.UnirestRunner;
 import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -21,7 +22,7 @@ import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-public class FoDUnirestRunnerMixin {
+public class FoDUnirestRunnerMixin implements IUnirestRunner {
     @Inject private UnirestRunner runner;
     @Inject private FoDSessionDataManager sessionDataManager;
     @Inject private FoDOAuthHelper oauthHelper;
