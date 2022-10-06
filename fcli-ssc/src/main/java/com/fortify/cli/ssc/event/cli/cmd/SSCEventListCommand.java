@@ -44,7 +44,7 @@ public class SSCEventListCommand extends AbstractSSCListCommand {
                 .add("userName", SSCQParamValueGenerators::wrapInQuotes)
                 .add("eventType", SSCQParamValueGenerators::wrapInQuotes)
                 .add("detailedNote", SSCQParamValueGenerators::wrapInQuotes)
-                .add("applicationVersionId", "projectVersionId", SSCQParamValueGenerators::wrapInQuotes)
+                .add("applicationVersionId", "projectVersionId", SSCQParamValueGenerators::plain)
                 .add("required", SSCQParamValueGenerators::plain);
     }
     
