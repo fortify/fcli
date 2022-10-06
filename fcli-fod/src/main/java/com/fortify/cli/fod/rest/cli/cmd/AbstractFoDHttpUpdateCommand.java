@@ -8,9 +8,8 @@ import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
 import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.fod.app_attribute.helper.FoDAppAttributeDescriptor;
-import com.fortify.cli.fod.app_attribute.helper.FoDAppAttributeHelper;
-import com.fortify.cli.fod.rest.query.FoDOutputQueryFiltersParamGenerator;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.util.FoDOutputConfigHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
@@ -76,23 +75,22 @@ public abstract class AbstractFoDHttpUpdateCommand extends AbstractFoDUnirestRun
         ArrayNode userGroupArray = objectMapper.createArrayNode();
         if (userGroups == null || userGroups.isEmpty()) return userGroupArray;
         for (Integer ug : userGroups) {
-            // TODO: look up field name to get id
             userGroupArray.add(ug);
         }
         return userGroupArray;
     }
 
     protected JsonNode mergeAttributesNode(UnirestInstance unirest,
-                                               ArrayList<FoDAppAttributeDescriptor> current,
+                                               ArrayList<FoDAttributeDescriptor> current,
                                                Map<String, String> updates) {
         ArrayNode attrArray = objectMapper.createArrayNode();
         if (updates == null || updates.isEmpty()) return attrArray;
         Map<Integer, String> updatesWithId = new HashMap<>();
         for (Map.Entry<String, String> attr : updates.entrySet()) {
-            FoDAppAttributeDescriptor attributeDescriptor = FoDAppAttributeHelper.getAttribute(unirest, attr.getKey(), true);
+            FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttribute(unirest, attr.getKey(), true);
             updatesWithId.put(Integer.valueOf(attributeDescriptor.getAttributeId()), attr.getValue());
         }
-        for (FoDAppAttributeDescriptor attr : current) {
+        for (FoDAttributeDescriptor attr : current) {
             ObjectNode attrObj = objectMapper.createObjectNode();
             attrObj.put("id", attr.getAttributeId());
             if (updatesWithId.containsKey(Integer.valueOf(attr.getAttributeId()))) {
@@ -105,10 +103,10 @@ public abstract class AbstractFoDHttpUpdateCommand extends AbstractFoDUnirestRun
         return attrArray;
     }
 
-    protected JsonNode getAttributesNode(ArrayList<FoDAppAttributeDescriptor> attributes) {
+    protected JsonNode getAttributesNode(ArrayList<FoDAttributeDescriptor> attributes) {
         ArrayNode attrArray = objectMapper.createArrayNode();
         if (attributes == null || attributes.isEmpty()) return attrArray;
-        for (FoDAppAttributeDescriptor attr : attributes) {
+        for (FoDAttributeDescriptor attr : attributes) {
             ObjectNode attrObj = objectMapper.createObjectNode();
             attrObj.put("id", attr.getAttributeId());
             attrObj.put("value", attr.getValue());

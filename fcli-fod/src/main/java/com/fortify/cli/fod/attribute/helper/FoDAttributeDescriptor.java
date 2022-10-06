@@ -22,46 +22,35 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.helper;
+package com.fortify.cli.fod.attribute.helper;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 @ReflectiveAccess
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class FoDAppDescriptor extends JsonNodeHolder {
-    @JsonProperty("applicationId")
-    private Integer applicationId;
-    @JsonProperty("applicationName")
-    private String applicationName;
-    @JsonProperty("applicationDescription")
-    private String description;
-    @JsonProperty("businessCriticalityType")
-    private String criticality;
-    @JsonProperty("attributes")
-    private ArrayList<FoDAttributeDescriptor> attributes;
-    @JsonProperty("emailList")
-    private String emailList;
-    @JsonProperty("releaseId")
-    private Integer releaseId;
-    @JsonProperty("microserviceId")
-    private Integer microserviceId;
-
-    public  Map<String, String> attributesAsMap() {
-        Map<String, String> attrMap = new HashMap<>();
-        for (FoDAttributeDescriptor attr : attributes) {
-            attrMap.put(attr.getAttributeId(), attr.getValue());
-        }
-        return  attrMap;
-    }
-
+public class FoDAttributeDescriptor extends JsonNodeHolder {
+    @JsonProperty("id")
+    private String attributeId;
+    @JsonProperty("name")
+    private String attributeName;
+    @JsonProperty("attributeTypeId")
+    private Integer attributeTypeId;
+    @JsonProperty("attributeType")
+    private String attributeType;
+    @JsonProperty("attributeDataTypeId")
+    private Integer attributeDataTypeId;
+    @JsonProperty("attributeDataType")
+    private String attributeDataType;
+    @JsonProperty("isRequired")
+    private Boolean isRequired;
+    @JsonProperty("isRestricted")
+    private Boolean isRestricted;
+    // pickListValues ...
+    @JsonProperty("value")
+    private String value;
 }

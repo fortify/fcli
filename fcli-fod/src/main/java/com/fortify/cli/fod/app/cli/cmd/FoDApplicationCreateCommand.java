@@ -7,11 +7,15 @@ import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.fod.app.mixin.FoDAppTypeMixin;
 import com.fortify.cli.fod.app.mixin.FoDCriticalityTypeMixin;
 import com.fortify.cli.fod.app.mixin.FoDSdlcStatusTypeMixin;
-import com.fortify.cli.fod.app_attribute.cli.mixin.FoDAppAttributeUpdateMixin;
-import com.fortify.cli.fod.app_attribute.helper.FoDAppAttributeDescriptor;
-import com.fortify.cli.fod.app_attribute.helper.FoDAppAttributeHelper;
+import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateMixin;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDHttpUpdateCommand;
+import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
+import com.fortify.cli.fod.user.helper.FoDUserHelper;
+import com.fortify.cli.fod.user_group.helper.FoDUserGroupDescriptor;
+import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
@@ -31,19 +35,19 @@ public class FoDApplicationCreateCommand extends AbstractFoDHttpUpdateCommand im
     private String applicationName;
     @Parameters(index = "1", arity = "1", descriptionKey = "relName")
     private String releaseName;
-    @Option(names = {"--description", "-d"}, descriptionKey = "appDesc", required = false)
+    @Option(names = {"--description", "-d"}, descriptionKey = "appDesc")
     private String description;
-    @Option(names = {"--notify", "-nf"}, required = false, arity = "0..*")
+    @Option(names = {"--notify", "-nf"}, required = false, arity = "0..*", descriptionKey = "notify")
     private ArrayList<String> notifications;
-    @Option(names = {"--release-description", "-rd"}, required = false)
+    @Option(names = {"--release-description", "-rd"}, descriptionKey = "relDesc")
     private String releaseDescription;
-    @Option(names = {"--owner", "--owner-id", "-oid"}, required = true)
+    @Option(names = {"--owner", "-own"}, required = true, descriptionKey = "owner")
     private String owner;
-    @Option(names = {"--user-group", "--user-group-id", "--ugid"}, required = false, arity = "0..*")
-    private ArrayList<Integer> userGroups;
-    @Option(names = {"--microservice"}, required = false, arity = "0..*")
+    @Option(names = {"--user-group", "-ug"}, arity = "0..*", descriptionKey = "userGroup")
+    private ArrayList<String> userGroups;
+    @Option(names = {"--microservice", "-ms"}, arity = "0..*", descriptionKey = "microservice")
     private ArrayList<String> microservices;
-    @Option(names = {"--release-microservice"}, required = false)
+    @Option(names = {"--release-microservice", "-rms"}, descriptionKey = "releaseMs")
     private String releaseMicroservice;
 
     @Mixin
@@ -51,7 +55,7 @@ public class FoDApplicationCreateCommand extends AbstractFoDHttpUpdateCommand im
     @Mixin
     private FoDCriticalityTypeMixin.CriticalityTypeOption criticalityMixin;
     @Mixin
-    private FoDAppAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
+    private FoDAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
     @Mixin
     private FoDSdlcStatusTypeMixin.SdlcStatusTypeOption sdlcStatusMixin;
 
@@ -69,8 +73,9 @@ public class FoDApplicationCreateCommand extends AbstractFoDHttpUpdateCommand im
                 .put("releaseDescription", releaseDescription == null ? "" : releaseDescription)
                 .put("sdlcStatusType", String.valueOf(sdlcStatusMixin.getSdlcStatusType()));
 
-        // TODO: look up username to get owner id
-        body.put("ownerId", Integer.valueOf(owner));
+        // look up username if supplied to get owner id
+        FoDUserDescriptor userDescriptor = FoDUserHelper.getUser(unirest, owner, true);
+        body.put("ownerId", userDescriptor.getId());
 
         FoDAppTypeMixin.FoDAppType appType = typeMixin.getAppType();
         switch (appType) {
@@ -90,7 +95,9 @@ public class FoDApplicationCreateCommand extends AbstractFoDHttpUpdateCommand im
             default:
         }
         body.set("attributes", getAttributesNode(unirest));
-        body.set("userGroupIds", getUserGroupsNode(userGroups));
+        body.set("userGroupIds", getUserGroupsNode(unirest, userGroups));
+
+        //System.out.println(body.toPrettyString());
 
         JsonNode postResponse = unirest.post(FoDUrls.APPLICATIONS).body(body).asObject(JsonNode.class).getBody();
         // retrieve the updated application
@@ -114,6 +121,15 @@ public class FoDApplicationCreateCommand extends AbstractFoDHttpUpdateCommand im
         // TODO: check "release microservice" is in "microservices" list
     }
 
+    protected JsonNode getUserGroupsNode(UnirestInstance unirest, ArrayList<String> userGroups) {
+        ArrayNode userGroupArray = getObjectMapper().createArrayNode();
+        if (userGroups == null || userGroups.isEmpty()) return userGroupArray;
+        for (String ug : userGroups) {
+            FoDUserGroupDescriptor userGroupDescriptor = FoDUserGroupHelper.getUserGroup(unirest, ug, true);
+            userGroupArray.add(userGroupDescriptor.getId());
+        }
+        return userGroupArray;
+    }
 
     private final JsonNode getAttributesNode(UnirestInstance unirest) {
         Map<String, String> attributes = attrUpdateMixin.getAttributes();
@@ -121,7 +137,7 @@ public class FoDApplicationCreateCommand extends AbstractFoDHttpUpdateCommand im
         if (attributes == null || attributes.isEmpty()) return attrArray;
         for (Map.Entry<String, String> attr : attributes.entrySet()) {
             ObjectNode attrObj = getObjectMapper().createObjectNode();
-            FoDAppAttributeDescriptor attributeDescriptor = FoDAppAttributeHelper.getAttribute(unirest, attr.getKey(), true);
+            FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttribute(unirest, attr.getKey(), true);
             attrObj.put("id", attributeDescriptor.getAttributeId());
             attrObj.put("value", attr.getValue());
             attrArray.add(attrObj);

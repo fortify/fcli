@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app_attribute.helper;
+package com.fortify.cli.fod.user_group.helper;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fortify.cli.common.json.JsonNodeHolder;
@@ -33,24 +33,13 @@ import lombok.EqualsAndHashCode;
 @ReflectiveAccess
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class FoDAppAttributeDescriptor extends JsonNodeHolder {
+public class FoDUserGroupDescriptor extends JsonNodeHolder {
     @JsonProperty("id")
-    private String attributeId;
+    private String id;
     @JsonProperty("name")
-    private String attributeName;
-    @JsonProperty("attributeTypeId")
-    private Integer attributeTypeId;
-    @JsonProperty("attributeType")
-    private String attributeType;
-    @JsonProperty("attributeDataTypeId")
-    private Integer attributeDataTypeId;
-    @JsonProperty("attributeDataType")
-    private String attributeDataType;
-    @JsonProperty("isRequired")
-    private Boolean isRequired;
-    @JsonProperty("isRestricted")
-    private Boolean isRestricted;
-    // pickListValues ...
-    @JsonProperty("value")
-    private String value;
+    private String name;
+    @JsonProperty("assignedUsersCount")
+    private Integer assignedUsersCount;
+    @JsonProperty("assignedApplicationsCount")
+    private Integer assignedApplicationsCount;
 }
