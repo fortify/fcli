@@ -2,6 +2,7 @@ package com.fortify.cli.ssc.rest.cli.mixin;
 
 import java.util.function.Function;
 
+import com.fortify.cli.common.rest.runner.IUnirestRunner;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.ssc.session.manager.ISSCSessionData;
 import com.fortify.cli.ssc.session.manager.SSCSessionDataFromEnv;
@@ -14,7 +15,7 @@ import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-public class SSCUnirestRunnerMixin {
+public class SSCUnirestRunnerMixin implements IUnirestRunner {
     @Inject private SSCSessionDataManager sessionDataManager;
     @Inject private SSCTokenHelper tokenHelper;
     @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
