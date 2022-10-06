@@ -9,8 +9,8 @@ import com.fortify.cli.common.output.cli.mixin.spi.IOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.IProductHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.ProductHelperClass;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins.SCDastProductHelper;
-import com.fortify.cli.sc_dast.rest.paging.SCDastPagingHelper;
-import com.fortify.cli.sc_dast.util.SCDastInputTransformer;
+import com.fortify.cli.sc_dast.rest.helper.SCDastInputTransformer;
+import com.fortify.cli.sc_dast.rest.helper.SCDastPagingHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;

@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_dast.util;
+package com.fortify.cli.sc_dast.rest.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

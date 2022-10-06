@@ -9,8 +9,8 @@ import com.fortify.cli.common.output.cli.mixin.spi.IOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.IProductHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.ProductHelperClass;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins.FoDProductHelper;
-import com.fortify.cli.fod.rest.paging.FoDPagingHelper;
-import com.fortify.cli.fod.util.FoDInputTransformer;
+import com.fortify.cli.fod.rest.helper.FoDInputTransformer;
+import com.fortify.cli.fod.rest.helper.FoDPagingHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;

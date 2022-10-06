@@ -1,4 +1,4 @@
-package com.fortify.cli.fod.util;
+package com.fortify.cli.fod.rest.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

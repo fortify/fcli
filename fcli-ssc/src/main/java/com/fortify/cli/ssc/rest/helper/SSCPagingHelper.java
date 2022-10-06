@@ -1,4 +1,4 @@
-package com.fortify.cli.ssc.rest.util;
+package com.fortify.cli.ssc.rest.helper;
 
 import java.util.function.Function;
 

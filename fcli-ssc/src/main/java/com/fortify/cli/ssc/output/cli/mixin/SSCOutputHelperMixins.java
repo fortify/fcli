@@ -9,8 +9,8 @@ import com.fortify.cli.common.output.cli.mixin.spi.IOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.IProductHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.ProductHelperClass;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins.SSCProductHelper;
-import com.fortify.cli.ssc.rest.util.SSCInputTransformer;
-import com.fortify.cli.ssc.rest.util.SSCPagingHelper;
+import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
+import com.fortify.cli.ssc.rest.helper.SSCPagingHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;

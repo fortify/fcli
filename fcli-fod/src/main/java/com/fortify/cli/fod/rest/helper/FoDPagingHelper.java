@@ -1,4 +1,4 @@
-package com.fortify.cli.fod.rest.paging;
+package com.fortify.cli.fod.rest.helper;
 
 import java.util.function.Function;
 

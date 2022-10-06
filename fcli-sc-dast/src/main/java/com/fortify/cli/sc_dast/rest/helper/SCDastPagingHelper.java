@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_dast.rest.paging;
+package com.fortify.cli.sc_dast.rest.helper;
 
 import java.net.URI;
 import java.util.function.Function;
