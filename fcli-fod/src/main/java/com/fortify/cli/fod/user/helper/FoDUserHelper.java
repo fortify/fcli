@@ -22,32 +22,33 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app_attribute.helper;
+package com.fortify.cli.fod.user.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 
 import javax.validation.ValidationException;
 
-public class FoDAppAttributeHelper {
-    public static final FoDAppAttributeDescriptor getAttribute(UnirestInstance unirestInstance, String appAttrNameOrId, boolean failIfNotFound) {
-        GetRequest request = unirestInstance.get(FoDUrls.ATTRIBUTES);
+public class FoDUserHelper {
+    public static final FoDUserDescriptor getUser(UnirestInstance unirestInstance, String userNameOrId, boolean failIfNotFound) {
+        GetRequest request = unirestInstance.get(FoDUrls.USERS);
         try {
-            int attrId = Integer.parseInt(appAttrNameOrId);
-            request = request.queryString("filters=", String.format("id:%d", attrId));
+            int attrId = Integer.parseInt(userNameOrId);
+            request = request.queryString("filters", String.format("userId:%d", attrId));
         } catch (NumberFormatException nfe) {
-            request = request.queryString("filters", String.format("name:%s", appAttrNameOrId));
+            request = request.queryString("filters", String.format("userName:%s", userNameOrId));
         }
         JsonNode attr = request.asObject(ObjectNode.class).getBody().get("items");
         if (failIfNotFound && attr.size() == 0) {
-            throw new ValidationException("No attribute found for name or id: " + appAttrNameOrId);
+            throw new ValidationException("No user found for name or id: " + userNameOrId);
         } else if (attr.size() > 1) {
-            throw new ValidationException("Multiple attributes found for name or id: " + appAttrNameOrId);
+            throw new ValidationException("Multiple users found for name or id: " + userNameOrId);
         }
-        return attr.size() == 0 ? null : JsonHelper.treeToValue(attr.get(0), FoDAppAttributeDescriptor.class);
+        return attr.size() == 0 ? null : JsonHelper.treeToValue(attr.get(0), FoDUserDescriptor.class);
     }
 }

@@ -30,4 +30,9 @@ public class FoDUrls {
     public static final String APPLICATION = ApiBase + "/applications/{appId}";
     public static final String RELEASES = ApiBase + "/releases";
     public static final String ATTRIBUTES = ApiBase + "/attributes";
+    public static final String USERS = ApiBase + "/users";
+    public static final String USER = ApiBase + "/users/{userId}";
+    public static final String USER_GROUPS = ApiBase + "/user-management/user-groups";
+    public static final String USER_GROUP = ApiBase + "/user-management/user-groups/{userId}";
+    public static final String USER_GROUP_MEMBERS = ApiBase + "/user-management/user-groups/{userId}/members";
 }

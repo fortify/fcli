@@ -22,46 +22,40 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.helper;
+package com.fortify.cli.fod.user.helper;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 @ReflectiveAccess
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class FoDAppDescriptor extends JsonNodeHolder {
-    @JsonProperty("applicationId")
-    private Integer applicationId;
-    @JsonProperty("applicationName")
-    private String applicationName;
-    @JsonProperty("applicationDescription")
-    private String description;
-    @JsonProperty("businessCriticalityType")
-    private String criticality;
-    @JsonProperty("attributes")
-    private ArrayList<FoDAttributeDescriptor> attributes;
-    @JsonProperty("emailList")
-    private String emailList;
-    @JsonProperty("releaseId")
-    private Integer releaseId;
-    @JsonProperty("microserviceId")
-    private Integer microserviceId;
-
-    public  Map<String, String> attributesAsMap() {
-        Map<String, String> attrMap = new HashMap<>();
-        for (FoDAttributeDescriptor attr : attributes) {
-            attrMap.put(attr.getAttributeId(), attr.getValue());
-        }
-        return  attrMap;
-    }
-
+public class FoDUserDescriptor extends JsonNodeHolder {
+    @JsonProperty("userId")
+    private String id;
+    @JsonProperty("userName")
+    private String name;
+    @JsonProperty("firstName")
+    private String firstName;
+    @JsonProperty("lastName")
+    private String lastName;
+    @JsonProperty("email")
+    private String email;
+    @JsonProperty("phoneNumber")
+    private String phoneNumber;
+    @JsonProperty("isVerified")
+    private Boolean isVerified;
+    @JsonProperty("roleId")
+    private Integer roleId;
+    @JsonProperty("roleName")
+    private String roleName;
+    @JsonProperty("isSuspended")
+    private Boolean isSuspended;
+    @JsonProperty("mustChange")
+    private Boolean mustChange;
+    @JsonProperty("passwordNeverExpires")
+    private Boolean passwordNeverExpires;
 }

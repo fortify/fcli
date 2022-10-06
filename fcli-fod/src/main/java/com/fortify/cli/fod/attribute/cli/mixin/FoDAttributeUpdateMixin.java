@@ -22,46 +22,37 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.helper;
+package com.fortify.cli.fod.attribute.cli.mixin;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
-@ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class FoDAppDescriptor extends JsonNodeHolder {
-    @JsonProperty("applicationId")
-    private Integer applicationId;
-    @JsonProperty("applicationName")
-    private String applicationName;
-    @JsonProperty("applicationDescription")
-    private String description;
-    @JsonProperty("businessCriticalityType")
-    private String criticality;
-    @JsonProperty("attributes")
-    private ArrayList<FoDAttributeDescriptor> attributes;
-    @JsonProperty("emailList")
-    private String emailList;
-    @JsonProperty("releaseId")
-    private Integer releaseId;
-    @JsonProperty("microserviceId")
-    private Integer microserviceId;
+public class FoDAttributeUpdateMixin {
+    private static final String PARAM_LABEL = "[ATTR=VALUE]";
 
-    public  Map<String, String> attributesAsMap() {
-        Map<String, String> attrMap = new HashMap<>();
-        for (FoDAttributeDescriptor attr : attributes) {
-            attrMap.put(attr.getAttributeId(), attr.getValue());
-        }
-        return  attrMap;
+    @ReflectiveAccess
+    public static abstract class AbstractFoDAppAttributeUpdateMixin {
+        public abstract Map<String, String> getAttributes();
+
     }
+
+    @ReflectiveAccess
+    public static class OptionalAttrOption extends AbstractFoDAppAttributeUpdateMixin {
+        @Option(names = {"--attr", "--attribute"}, required = false, arity = "0..", paramLabel = PARAM_LABEL, descriptionKey = "attr")
+        @Getter
+        private Map<String, String> attributes;
+    }
+
+    @ReflectiveAccess
+    public static class RequiredPositionalParameter extends AbstractFoDAppAttributeUpdateMixin {
+        @Parameters(index = "0..*", arity = "1..*", paramLabel = PARAM_LABEL)
+        @Getter
+        private Map<String, String> attributes;
+    }
+
 
 }

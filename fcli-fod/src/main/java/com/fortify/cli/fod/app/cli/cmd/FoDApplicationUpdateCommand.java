@@ -1,16 +1,13 @@
 package com.fortify.cli.fod.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.app.mixin.FoDCriticalityTypeMixin;
-import com.fortify.cli.fod.app_attribute.cli.mixin.FoDAppAttributeUpdateMixin;
-import com.fortify.cli.fod.app_attribute.helper.FoDAppAttributeDescriptor;
-import com.fortify.cli.fod.app_attribute.helper.FoDAppAttributeHelper;
+import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateMixin;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDHttpUpdateCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -23,7 +20,6 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 @ReflectiveAccess
@@ -32,18 +28,18 @@ public class FoDApplicationUpdateCommand extends AbstractFoDHttpUpdateCommand im
 
     @Parameters(index = "0", arity = "1", descriptionKey = "appNameOrId")
     private String appNameOrId;
-    @Option(names = {"--name,", "-n"}, descriptionKey = "appName", required = false)
+    @Option(names = {"--name,", "-n"}, descriptionKey = "appName")
     private String applicationNameUpdate;
-    @Option(names = {"--description", "-d"}, descriptionKey = "appDesc", required = false)
+    @Option(names = {"--description", "-d"}, descriptionKey = "appDesc")
     private String descriptionUpdate;
     // TODO: should we add to existing "emailList", replace or amend? currently if specified "emaliList" is replaced
-    @Option(names = {"--notify", "-nf"}, required = false, arity = "0..*")
+    @Option(names = {"--notify", "-nf"}, arity = "0..*", descriptionKey = "")
     private ArrayList<String> notificationsUpdate;
 
     @Mixin
     private FoDCriticalityTypeMixin.CriticalityTypeOption criticalityUpdateMixin;
     @Mixin
-    private FoDAppAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
+    private FoDAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
 
     @SneakyThrows
     @Override
@@ -52,7 +48,7 @@ public class FoDApplicationUpdateCommand extends AbstractFoDHttpUpdateCommand im
 
         // current values of app being updated
         FoDAppDescriptor appCurrent = FoDAppHelper.getApp(unirest, appNameOrId, true);
-        ArrayList<FoDAppAttributeDescriptor> appAttrsCurrent = appCurrent.getAttributes();
+        ArrayList<FoDAttributeDescriptor> appAttrsCurrent = appCurrent.getAttributes();
 
         // new values to replace
         FoDCriticalityTypeMixin.FoDCriticalityType appCriticalityNew = criticalityUpdateMixin.getCriticalityType();
@@ -75,6 +71,8 @@ public class FoDApplicationUpdateCommand extends AbstractFoDHttpUpdateCommand im
         body.put("emailList",
                 StringUtils.isNotEmpty(appEmailListNew) ? appEmailListNew : appCurrent.getEmailList());
         body.set("attributes", jsonAttrs);
+
+        //System.out.println(body.toPrettyString());
 
         unirest.put(FoDUrls.APPLICATION)
                 .routeParam("appId", String.valueOf(appCurrent.getApplicationId()))

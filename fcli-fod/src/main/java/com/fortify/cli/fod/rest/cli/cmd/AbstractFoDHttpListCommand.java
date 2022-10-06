@@ -28,7 +28,6 @@ public abstract class AbstractFoDHttpListCommand extends AbstractFoDUnirestRunne
     
     @Override
     protected final Void run(UnirestInstance unirest) {
-        System.out.println("in here");
         outputMixin.write(
                 addFiltersParam(generateRequest(unirest)),
                 //generateRequest(unirest),

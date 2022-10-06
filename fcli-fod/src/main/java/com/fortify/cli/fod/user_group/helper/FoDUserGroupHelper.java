@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.helper;
+package com.fortify.cli.fod.user_group.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -33,21 +33,21 @@ import kong.unirest.UnirestInstance;
 
 import javax.validation.ValidationException;
 
-public class FoDAppHelper {
-    public static final FoDAppDescriptor getApp(UnirestInstance unirestInstance, String appNameOrId, boolean failIfNotFound) {
-        GetRequest request = unirestInstance.get(FoDUrls.APPLICATIONS);
+public class FoDUserGroupHelper {
+    public static final FoDUserGroupDescriptor getUserGroup(UnirestInstance unirestInstance, String userGroupNameOrId, boolean failIfNotFound) {
+        GetRequest request = unirestInstance.get(FoDUrls.USER_GROUPS);
         try {
-            int appId = Integer.parseInt(appNameOrId);
-            request = request.queryString("filters=", String.format("applicationId:%d", appId));
+            int attrId = Integer.parseInt(userGroupNameOrId);
+            request = request.queryString("filters", String.format("id:%d", attrId));
         } catch (NumberFormatException nfe) {
-            request = request.queryString("filters", String.format("applicationName:%s", appNameOrId));
+            request = request.queryString("filters", String.format("name:%s", userGroupNameOrId));
         }
-        JsonNode app = request.asObject(ObjectNode.class).getBody().get("items");
-        if (failIfNotFound && app.size() == 0) {
-            throw new ValidationException("No application found for name or id: " + appNameOrId);
-        } else if (app.size() > 1) {
-            throw new ValidationException("Multiple applications found for name or id: " + appNameOrId);
+        JsonNode attr = request.asObject(ObjectNode.class).getBody().get("items");
+        if (failIfNotFound && attr.size() == 0) {
+            throw new ValidationException("No user group found for name or id: " + userGroupNameOrId);
+        } else if (attr.size() > 1) {
+            throw new ValidationException("Multiple user groups found for name or id: " + userGroupNameOrId);
         }
-        return app.size() == 0 ? null : JsonHelper.treeToValue(app.get(0), FoDAppDescriptor.class);
+        return attr.size() == 0 ? null : JsonHelper.treeToValue(attr.get(0), FoDUserGroupDescriptor.class);
     }
 }
