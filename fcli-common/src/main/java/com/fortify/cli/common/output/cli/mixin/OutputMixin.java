@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
+import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.output.writer.OutputFormat;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.OutputOptionsArgGroup;
@@ -45,7 +46,7 @@ public class OutputMixin implements IOutputWriter {
     @Getter private final OutputConfig defaultOutputConfig;
     
     // TODO Make final once all command implementations use an IOutputMixinFactory
-    @Getter private CommandSpec mixee;
+    @Getter private CommandSpec commandSpec;
     
     // TODO Make final & use interface instead once ArgGroup has been fully moved to factory
     @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false)
@@ -66,7 +67,9 @@ public class OutputMixin implements IOutputWriter {
     // TODO Remove once all command implementations use an IOutputMixinFactory
     @Spec(Spec.Target.MIXEE)
     public void setMixee(CommandSpec mixee) {
-        this.mixee = mixee;
+        // Make sure that we get the CommandSpec for the actual command being invoked,
+        // not some intermediate Mixin
+        this.commandSpec = mixee.commandLine()==null ? mixee : mixee.commandLine().getCommandSpec();
     }
     
     @Data
@@ -116,7 +119,7 @@ public class OutputMixin implements IOutputWriter {
     }
     
     private OutputConfig getOutputOptionsWriterConfig() {
-        Object mixeeObject = mixee.userObject();
+        Object mixeeObject = commandSpec.userObject();
         if ( mixeeObject instanceof IOutputConfigSupplier ) {
             return ((IOutputConfigSupplier)mixeeObject).getOutputOptionsWriterConfig();
         } else {
@@ -136,7 +139,7 @@ public class OutputMixin implements IOutputWriter {
         return record;
     }
 
-    public final class OutputOptionsWriter implements AutoCloseable { // TODO Implement interface, make implementation private
+    public final class OutputOptionsWriter implements AutoCloseable, IMessageResolver { // TODO Implement interface, make implementation private
         private final OutputMixin optionsHandler = OutputMixin.this;
         private final OutputOptionsArgGroup optionsArgGroup = optionsHandler.outputOptionsArgGroup!=null ? optionsHandler.outputOptionsArgGroup : new OutputOptionsArgGroup();
         private final OutputConfig config;
@@ -205,8 +208,8 @@ public class OutputMixin implements IOutputWriter {
         }
         
         private Messages getMessages() {
-            ResourceBundle resourceBundle = mixee.resourceBundle();
-            return resourceBundle==null ? null : new Messages(mixee, resourceBundle);
+            ResourceBundle resourceBundle = commandSpec.resourceBundle();
+            return resourceBundle==null ? null : new Messages(commandSpec, resourceBundle);
         }
         
         private RecordWriterConfig createOutputWriterConfig() {
@@ -215,6 +218,7 @@ public class OutputMixin implements IOutputWriter {
                     .options(getOutputWriterOptions())
                     .outputFormat(getOutputFormat())
                     .singular(config.singular())
+                    .messageResolver(this)
                     .build();
         }
         
@@ -224,12 +228,13 @@ public class OutputMixin implements IOutputWriter {
                 return config.getOptions();
             } else {
                 String keySuffix = "output."+getOutputFormat().getMessageKey()+".options";
-                Messages messages = getMessages();
-                return getClosestMatch(messages, keySuffix);
+                return getMessageString(keySuffix);
             }
         }
 
-        private String getClosestMatch(Messages messages, String keySuffix) {
+        @Override
+        public String getMessageString(String keySuffix) {
+            Messages messages = getMessages();
             CommandSpec commandSpec = messages==null ? null : messages.commandSpec();
             String value = null;
             while ( commandSpec!=null && value==null ) {
@@ -237,7 +242,8 @@ public class OutputMixin implements IOutputWriter {
                 value = messages.getString(key, null);
                 commandSpec = commandSpec.parent();
             }
-            return value;
+            // If value is still null, try without any prefix
+            return value!=null ? value : messages.getString(keySuffix, null);
         }
 
         private final PrintWriter createPrintWriter(OutputConfig config) {

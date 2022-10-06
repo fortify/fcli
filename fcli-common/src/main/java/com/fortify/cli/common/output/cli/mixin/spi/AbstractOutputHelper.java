@@ -1,11 +1,12 @@
 package com.fortify.cli.common.output.cli.mixin.spi;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.transform.fields.AddFieldsTransformer;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 
@@ -18,13 +19,27 @@ import picocli.CommandLine.Model.CommandSpec;
 
 @ReflectiveAccess
 public abstract class AbstractOutputHelper implements IOutputHelper {
-    @Getter private IProductHelper productHelper;
+    @Getter private final IProductHelper productHelper;
     
-    public void setProductHelper(IProductHelper productHelper) {
-        this.productHelper = productHelper;
-        productHelper.setOutputHelper(this);
+    public AbstractOutputHelper() {
+        Class<?> clazz = this.getClass();
+        Class<?> enclosingClass = clazz.getEnclosingClass();
+        ProductHelperClass productHelperClassAnnotation = clazz.getAnnotation(ProductHelperClass.class);
+        if ( productHelperClassAnnotation==null && enclosingClass!=null ) {
+            productHelperClassAnnotation = enclosingClass.getAnnotation(ProductHelperClass.class);
+        }
+        if ( productHelperClassAnnotation==null ) {
+            throw new RuntimeException(this.getClass().getName()+" or its enclosing class must have the @ProductHelper annotation");
+        }
+        Class<? extends IProductHelper> productHelperClass = productHelperClassAnnotation.value();
+        try {
+            this.productHelper = productHelperClass.getDeclaredConstructor().newInstance();
+            this.productHelper.setOutputHelper(this);
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+            throw new RuntimeException("Error instantiating product helper class "+productHelperClass.getName(), e);
+        }
     }
-    
+
     @Override
     public void write(UnirestInstance unirest, HttpRequest<?> baseRequest) {
         HttpRequest<?> request = productHelper.updateRequest(unirest, baseRequest);
@@ -44,7 +59,7 @@ public abstract class AbstractOutputHelper implements IOutputHelper {
     
     @Override
     public OutputConfig getBasicOutputConfig() {
-        Object cmd = getMixee().userObject();
+        Object cmd = getCommandSpec().userObject();
         if ( cmd instanceof IBasicOutputConfigSupplier ) {
             return ((IBasicOutputConfigSupplier)cmd).getBasicOutputConfig();
         } else {
@@ -54,7 +69,7 @@ public abstract class AbstractOutputHelper implements IOutputHelper {
     
     @Override
     public IOutputWriterFactory getOutputWriterFactory() {
-        Object cmd = getMixee().userObject();
+        Object cmd = getCommandSpec().userObject();
         if ( cmd instanceof IOutputWriterFactorySupplier ) {
             return ((IOutputWriterFactorySupplier)cmd).getOutputWriterFactory();
         } else {
@@ -63,7 +78,7 @@ public abstract class AbstractOutputHelper implements IOutputHelper {
     }
 
     protected IOutputWriter createOutputWriter() {
-        return getOutputWriterFactory().createOutputWriter(getMixee(), getOutputConfig());
+        return getOutputWriterFactory().createOutputWriter(getOutputConfig());
     }
     
     /** 
@@ -79,17 +94,57 @@ public abstract class AbstractOutputHelper implements IOutputHelper {
      * @return
      */
     protected OutputConfig getOutputConfig() {
-        Object cmd = getMixee().userObject();
-        OutputConfig basicOutputConfig = cmd instanceof IBasicOutputConfigSupplier
-                ? ((IBasicOutputConfigSupplier)cmd).getBasicOutputConfig()
-                : getBasicOutputConfig();
-        UnaryOperator<JsonNode> inputTransformer = cmd instanceof IInputTransformerSupplier
-                ? ((IInputTransformerSupplier)cmd).getInputTransformer()
-                : productHelper.getInputTransformer();
-        UnaryOperator<JsonNode> recordTransformer = cmd instanceof IRecordTransformerSupplier
-                ? ((IRecordTransformerSupplier)cmd).getRecordTransformer()
-                : productHelper.getRecordTransformer();
-        return basicOutputConfig.inputTransformer(inputTransformer).recordTransformer(recordTransformer);
+        Object cmd = getCommandSpec().userObject();
+        OutputConfig outputConfig = getBasicOutputConfig(cmd);
+        addCmdOrProductInputTransformer(outputConfig, cmd);
+        addCmdOrProductRecordTransformer(outputConfig, cmd);
+        addCommandActionResultTransformer(outputConfig, cmd);
+        return outputConfig;
+    }
+
+    private OutputConfig getBasicOutputConfig(Object cmd) {
+        return cmd instanceof IBasicOutputConfigSupplier
+            ? ((IBasicOutputConfigSupplier)cmd).getBasicOutputConfig()
+            : getBasicOutputConfig();
+    }
+
+    private void addCommandActionResultTransformer(OutputConfig outputConfig, Object cmd) {
+        IActionCommandResultSupplier cmdSupplier = getCommandAs(IActionCommandResultSupplier.class);
+        outputConfig.recordTransformer(
+                cmdSupplier!=null
+                    ? new AddFieldsTransformer("__action__", cmdSupplier.getActionCommandResult())::transform
+                    : null);
+    }
+
+    private void addCmdOrProductInputTransformer(OutputConfig outputConfig, Object cmd) {
+        IInputTransformerSupplier cmdSupplier = getCommandAs(IInputTransformerSupplier.class);
+        outputConfig.inputTransformer(
+                cmdSupplier!=null
+                    ? cmdSupplier.getInputTransformer()
+                    : productHelper.getInputTransformer());
+    }
+    
+    private void addCmdOrProductRecordTransformer(OutputConfig outputConfig, Object cmd) {
+        IRecordTransformerSupplier cmdSupplier = getCommandAs(IRecordTransformerSupplier.class);
+        outputConfig.recordTransformer(
+                cmdSupplier!=null
+                    ? cmdSupplier.getRecordTransformer()
+                    : productHelper.getRecordTransformer());
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T getCommandAs(Class<T> asType) {
+        Object cmd = getCommandSpec().userObject();
+        if ( asType.isAssignableFrom(cmd.getClass()) ) {
+            return (T)cmd;
+        }
+        return null;
+    }
+    
+    public CommandSpec getCommandSpec() {
+        CommandSpec mixee = getMixee();
+        return mixee.commandLine()==null ? mixee : mixee.commandLine().getCommandSpec();
     }
     
     protected abstract CommandSpec getMixee();

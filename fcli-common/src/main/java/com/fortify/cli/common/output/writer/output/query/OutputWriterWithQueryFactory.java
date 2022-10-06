@@ -9,11 +9,16 @@ import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.OutputOptionsArgGroup;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
+import lombok.Setter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Spec.Target;
 
 @ReflectiveAccess
 public class OutputWriterWithQueryFactory implements IOutputWriterFactory, IOutputQueriesSupplier {
+    @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
     @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false)
     private OutputOptionsArgGroup outputOptionsArgGroup;
     @ArgGroup(headingKey = "arggroup.query.heading", exclusive = false)
@@ -25,7 +30,7 @@ public class OutputWriterWithQueryFactory implements IOutputWriterFactory, IOutp
     }
     
     @Override
-    public IOutputWriter createOutputWriter(CommandSpec mixee, OutputConfig defaultOutputConfig) {
+    public IOutputWriter createOutputWriter(OutputConfig defaultOutputConfig) {
         return new OutputMixinWithQuery(mixee, outputOptionsArgGroup, queryOptionsArgGroup, defaultOutputConfig);
     }
 }

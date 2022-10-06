@@ -44,7 +44,7 @@ import lombok.SneakyThrows;
 public class TableRecordWriter extends AbstractFormattedRecordWriter {
     public static enum TableType { HEADERS, NO_HEADERS }
     private final TableType tableType;
-    private String[] columns;
+    private String[] fields;
     private final List<String[]> rows = new ArrayList<>();
     
     public TableRecordWriter(TableType tableType, RecordWriterConfig config) {
@@ -54,35 +54,40 @@ public class TableRecordWriter extends AbstractFormattedRecordWriter {
 
     @Override @SneakyThrows
     public void writeFormattedRecord(ObjectNode record) {
-        String[] columns = getColumns(record);
+        String[] columns = getFields(record);
         String[] row = getRow(record, columns);
         rows.add(row);
     }
 
     @Override @SneakyThrows
     public void finishOutput() {
-        getConfig().getPrintWriter().println(getTable(columns, rows.toArray(new String[rows.size()][])));
+        getConfig().getPrintWriter().println(getTable(fields, rows.toArray(new String[rows.size()][])));
     }
 
-    private String getTable(String[] columns, String[][] data) {
-        if ( columns == null ) {
+    private String getTable(String[] fields, String[][] data) {
+        if ( fields == null ) {
             return "No data"; // TODO properly handle this
         } else {
-            Column[] columnObjects = Stream.of(columns).map(columnName->
+            Column[] columnObjects = Stream.of(fields).map(field->
                     new Column()
                         .dataAlign(HorizontalAlign.LEFT)
                         .headerAlign(HorizontalAlign.LEFT)
-                        .header(TableType.HEADERS==tableType ? PropertyPathFormatter.humanReadable(columnName) : null))
+                        .header(TableType.HEADERS==tableType ? getHeader(field) : null))
                         .toArray(Column[]::new);
             return AsciiTable.getTable(AsciiTable.NO_BORDERS, columnObjects, data); 
         }
     }
 
-    private String[] getColumns(ObjectNode firstObjectNode) {
-        if ( columns==null ) { 
-            columns = asStream(firstObjectNode.fieldNames()).toArray(String[]::new);
+    private String getHeader(String fieldName) {
+        String header = getConfig().getMessageResolver().getMessageString("output.header."+fieldName);
+        return header!=null ? header : PropertyPathFormatter.humanReadable(fieldName);
+    }
+
+    private String[] getFields(ObjectNode firstObjectNode) {
+        if ( fields==null ) { 
+            fields = asStream(firstObjectNode.fieldNames()).toArray(String[]::new);
         }
-        return columns;
+        return fields;
     }
 
     // TODO: Some REST APIs will return a varying set of properties for individual records. We should review null processing here.

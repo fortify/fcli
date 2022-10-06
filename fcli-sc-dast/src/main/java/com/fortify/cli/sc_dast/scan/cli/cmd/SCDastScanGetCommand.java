@@ -37,7 +37,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.Get.CMD_NAME)
-public class SCDastScanGetCommand extends AbstractSCDastScanCommand implements IJsonNodeHolderSupplier {
+public class SCDastScanGetCommand extends AbstractSCDastScanOutputCommand implements IJsonNodeHolderSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.Get outputHelper;
     @Mixin private SCDastScanResolverMixin.PositionalParameter scanResolver;
 

@@ -43,7 +43,7 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.List.CMD_NAME)
-public class SCDastScanListCommand extends AbstractSCDastScanCommand implements IBaseHttpRequestSupplier, IRecordTransformerSupplier {
+public class SCDastScanListCommand extends AbstractSCDastScanOutputCommand implements IBaseHttpRequestSupplier, IRecordTransformerSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.List outputHelper;
     @Mixin SCDastSearchTextMixin searchTextMixin;
     // TODO Once we support date-based less-than/greater-than operators for -q,

@@ -26,6 +26,7 @@ package com.fortify.cli.common.output.writer.record;
 
 import java.io.PrintWriter;
 
+import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.output.writer.OutputFormat;
 
 import lombok.Builder;
@@ -44,4 +45,6 @@ public class RecordWriterConfig {
     private OutputFormat outputFormat;
     /** Whether to pretty-print the output */
     @Builder.Default private boolean pretty = true;
+    /** I18n message resolver */
+    private IMessageResolver messageResolver;
 }

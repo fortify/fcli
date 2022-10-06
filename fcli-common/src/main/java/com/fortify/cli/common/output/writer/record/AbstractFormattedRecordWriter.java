@@ -25,7 +25,7 @@ public abstract class AbstractFormattedRecordWriter implements IRecordWriter {
     public AbstractFormattedRecordWriter(RecordWriterConfig config) {
         this.config = config;
         String options = config.getOptions();
-        this.fieldPaths = StringUtils.isBlank(options) ? null : getFieldPaths(options);
+        this.fieldPaths = StringUtils.isBlank(options) ? null : getFieldPaths(options.replaceAll("\\s", ""));
     }
     
     @Override

@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
@@ -36,19 +35,17 @@ import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess @FixInjection
-public abstract class AbstractSessionLoginCommand<D extends ISessionData> implements Runnable {
+public abstract class AbstractSessionLoginCommand<D extends ISessionData> extends AbstractSessionCommand {
     @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
-    @Mixin private OutputMixin outputMixin;
     
     @Override @SneakyThrows
-    public final void run() {
+    public final void _run() {
         String sessionName = sessionNameMixin.getSessionName();
         ISessionDataManager<D> sessionDataManager = getSessionDataManager();
         logoutIfSessionExists(sessionName);
         D authSessionData = login(sessionName);
         sessionDataManager.save(sessionName, authSessionData);
         testAuthenticatedConnection(sessionName);
-        sessionDataManager.writeSessionSummaries(outputMixin);
     }
 
     private void logoutIfSessionExists(String sessionName) {
