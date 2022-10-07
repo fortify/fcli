@@ -37,6 +37,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+/**
+ * TODO Move this class to the writer.output package once all commands have been refactored to use {@link OutputHelperMixins}.
+ * @author rsenden
+ *
+ */
 @Accessors(fluent = true)
 // TODO Add null checks in case any input or record transformation returns null?
 public class OutputConfig {
@@ -46,7 +51,9 @@ public class OutputConfig {
     private final List<BiFunction<OutputFormat,JsonNode,JsonNode>> recordTransformers = new ArrayList<>();
     
     public final OutputConfig inputTransformer(final Function<OutputFormat, Boolean> applyIf, final UnaryOperator<JsonNode> transformer) {
-        inputTransformers.add((fmt,o)->!applyIf.apply(fmt) ? o : transformer.apply(o));
+        if ( transformer!=null ) {
+            inputTransformers.add((fmt,o)->!applyIf.apply(fmt) ? o : transformer.apply(o));
+        }
         return this;
     }
     
@@ -55,7 +62,9 @@ public class OutputConfig {
     }
     
     public final OutputConfig recordTransformer(Function<OutputFormat, Boolean> applyIf, UnaryOperator<JsonNode> transformer) {
-        recordTransformers.add((fmt,o)->!applyIf.apply(fmt) ? o : transformer.apply(o));
+        if ( transformer!=null ) {
+            recordTransformers.add((fmt,o)->!applyIf.apply(fmt) ? o : transformer.apply(o));
+        }
         return this;
     }
     
@@ -98,5 +107,10 @@ public class OutputConfig {
     
     public static final OutputConfig yaml() {
         return new OutputConfig().defaultFormat(OutputFormat.yaml);
+    }
+
+    public static final OutputConfig details() {
+        // TODO For now we use yaml output, until #104 has been fixed so we can properly use tree() instead
+        return yaml();
     }
 }

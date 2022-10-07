@@ -32,6 +32,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper.SSCAppVersionArtifactPurgeByDateRequest;
@@ -65,7 +66,7 @@ public class SSCAppVersionArtifactPurgeCommand extends AbstractSSCUnirestRunnerC
     @Override
     protected Void run(UnirestInstance unirest) {
         JsonNode result;
-        if ( purgeOptions.artifactId!=null && !purgeOptions.artifactId.isBlank() ) {
+        if ( StringUtils.isNotBlank(purgeOptions.artifactId) ) {
             result = SSCAppVersionArtifactHelper.purge(unirest, purgeOptions.artifactId);
         } else {
             String[] versionIds = {purgeOptions.purgeByDateOptions.getAppVersionDescriptor(unirest).getVersionId()};

@@ -39,7 +39,7 @@ import lombok.Getter;
 //which should be OK when running individual commands but less performant when running
 //multiple commands in a composite command or workflow.
 @ReflectiveAccess
-public final class UnirestRunner {
+public final class UnirestRunner implements IUnirestRunner {
     @Getter @Inject private ObjectMapper objectMapper;
     
     private final UnirestInstance createUnirestInstance() {

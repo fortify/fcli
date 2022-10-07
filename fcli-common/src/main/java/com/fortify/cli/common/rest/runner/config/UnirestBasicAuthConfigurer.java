@@ -29,14 +29,14 @@ import kong.unirest.UnirestInstance;
 public final class UnirestBasicAuthConfigurer {
     /**
      * Configure the given {@link UnirestInstance} to use basic authentication based on the 
-     * given {@link IUserCredentials} instance
+     * given {@link IUserCredentialsConfig} instance
      * @param unirestInstance {@link UnirestInstance} to be configured
-     * @param userCredentials used to provide the basic authentication credentials {@link UnirestInstance}
+     * @param userCredentialsConfig used to provide the basic authentication credentials {@link UnirestInstance}
      */
-    public static final void configure(UnirestInstance unirestInstance, IUserCredentials userCredentials) {
+    public static final void configure(UnirestInstance unirestInstance, IUserCredentialsConfig userCredentialsConfig) {
         if ( unirestInstance==null ) { throw new IllegalArgumentException("Unirest instance may not be null"); }
-        if ( userCredentials==null ) { throw new IllegalArgumentException("User credentials may not be null"); }
+        if ( userCredentialsConfig==null ) { throw new IllegalArgumentException("User credentials may not be null"); }
         unirestInstance.config()
-            .setDefaultBasicAuth(userCredentials.getUser(), new String(userCredentials.getPassword()));
+            .setDefaultBasicAuth(userCredentialsConfig.getUser(), new String(userCredentialsConfig.getPassword()));
     }
 }

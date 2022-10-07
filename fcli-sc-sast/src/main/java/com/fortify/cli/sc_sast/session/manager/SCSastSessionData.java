@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.manager.api.SessionSummary;
-import com.fortify.cli.common.session.manager.spi.AbstractSessionData;
+import com.fortify.cli.common.session.manager.spi.AbstractSessionDataWithSingleUrlConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
@@ -38,7 +38,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Data @EqualsAndHashCode(callSuper = true)  @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
-public class SCSastSessionData extends AbstractSessionData {
+public class SCSastSessionData extends AbstractSessionDataWithSingleUrlConfig {
     @Getter private char[] clientAuthToken;
     
     public SCSastSessionData() {}

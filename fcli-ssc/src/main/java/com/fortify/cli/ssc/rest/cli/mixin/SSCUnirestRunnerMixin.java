@@ -2,10 +2,7 @@ package com.fortify.cli.ssc.rest.cli.mixin;
 
 import java.util.function.Function;
 
-import com.fortify.cli.common.rest.runner.UnirestRunner;
-import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
-import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
-import com.fortify.cli.common.rest.runner.config.UnirestUrlConfigConfigurer;
+import com.fortify.cli.common.rest.runner.IUnirestRunner;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.ssc.session.manager.ISSCSessionData;
 import com.fortify.cli.ssc.session.manager.SSCSessionDataFromEnv;
@@ -18,23 +15,17 @@ import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-public class SSCUnirestRunnerMixin {
-    @Inject private UnirestRunner runner;
+public class SSCUnirestRunnerMixin implements IUnirestRunner {
     @Inject private SSCSessionDataManager sessionDataManager;
     @Inject private SSCTokenHelper tokenHelper;
     @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
     
     public <R> R run(Function<UnirestInstance, R> f) {
-        return runner.run(unirest->run(unirest, f));
-    }
-    
-    private <R> R run(UnirestInstance unirest, Function<UnirestInstance, R> f) {
         ISSCSessionData sessionData = getSessionData();
-        configure(unirest, sessionData);
         try {
-            return f.apply(unirest);
+            return tokenHelper.run(sessionData.getUrlConfig(), sessionData.getActiveToken(), f);
         } finally {
-            cleanup(unirest, sessionData);
+            cleanup(sessionData);
         }
     }
 
@@ -51,16 +42,8 @@ public class SSCUnirestRunnerMixin {
                 ? sessionDataFromEnv
                 : sessionDataManager.get(sessionNameMixin.getSessionName(), true);
     }
-
-    private void configure(UnirestInstance unirest, ISSCSessionData sessionData) {
-        UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
-        UnirestJsonHeaderConfigurer.configure(unirest);
-        UnirestUrlConfigConfigurer.configure(unirest, sessionData.getUrlConfig());
-        unirest.config().requestCompression(false); // TODO For some reason, in native binaries, compression may cause issues
-        unirest.config().addDefaultHeader("Authorization", "FortifyToken "+new String(sessionData.getActiveToken()));
-    }
     
-    private void cleanup(UnirestInstance unirest, ISSCSessionData sessionData) {
+    private void cleanup(ISSCSessionData sessionData) {
         if ( sessionData instanceof SSCSessionDataFromEnv ) {
             ((SSCSessionDataFromEnv)sessionData).cleanup();
         }

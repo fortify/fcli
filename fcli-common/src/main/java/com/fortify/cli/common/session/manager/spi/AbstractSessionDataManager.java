@@ -36,7 +36,8 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.api.SessionSummary;
 import com.fortify.cli.common.util.FcliHomeHelper;
@@ -108,13 +109,12 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
                 .collect(Collectors.toList());
     }
     
-    public final void writeSessionSummaries(OutputMixin outputMixin) {
-        try ( var writer = outputMixin.getWriter() ) {
-            sessionSummaries().stream()
+    @Override
+    public final ArrayNode sessionSummariesAsArrayNode() {
+        return sessionSummaries().stream()
                 .map(objectMapper::valueToTree)
                 .map(JsonNode.class::cast) // TODO Not sure why this is necessary
-                .forEach(writer::write);
-        }
+                .collect(JsonHelper.arrayNodeCollector());
     }
     
     private SessionSummary getSessionSummary(String sessionName) {
@@ -123,7 +123,7 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
             SessionSummary.builder()
                 .name(sessionName)
                 .type(getSessionTypeName())
-                .url(sessionData.getUrlConfig().getUrl())
+                .url(sessionData.getUrlDescriptor())
                 .created(sessionData.getCreatedDate())
                 .expires(sessionData.getExpiryDate())
                 .build();
