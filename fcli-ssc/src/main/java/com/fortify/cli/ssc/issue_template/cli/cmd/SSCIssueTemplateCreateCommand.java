@@ -28,25 +28,24 @@ import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "create")
-public class SSCIssueTemplateCreateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
+@Command(name = SSCOutputHelperMixins.Create.CMD_NAME)
+public class SSCIssueTemplateCreateCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Create outputHelper; 
     @Parameters(index = "0", arity = "1", descriptionKey = "issueTemplateName")
     private String issueTemplateName;
     @Option(names={"--issueTemplate","-f"}, required = true)
@@ -55,28 +54,27 @@ public class SSCIssueTemplateCreateCommand extends AbstractSSCUnirestRunnerComma
     private String description;
     @Option(names={"--set-as-default"})
     private boolean setAsDefault;
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         JsonNode body = unirest.post(SSCUrls.ISSUE_TEMPLATES)
-            .queryString("name", issueTemplateName)
-            .queryString("description", description)
-            .queryString("confirmIgnoreCustomTagUpdates", "true")
-            .multiPartContent()
-            .field("file", new File(fileName))
-            .asObject(JsonNode.class).getBody();
+                .queryString("name", issueTemplateName)
+                .queryString("description", description)
+                .queryString("confirmIgnoreCustomTagUpdates", "true")
+                .multiPartContent()
+                .field("file", new File(fileName))
+                .asObject(JsonNode.class).getBody();
         if ( setAsDefault ) {
             ObjectNode data = (ObjectNode)body.get("data").deepCopy();
             data.put("defaultTemplate", true);
             body = unirest.put(SSCUrls.ISSUE_TEMPLATE(data.get("id").asText()))
                     .body(data).asObject(JsonNode.class).getBody();
         }
-        outputMixin.write(body);
-        return null;
+        return body;
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
+    public String getActionCommandResult() {
+        return "CREATED";
     }
 }

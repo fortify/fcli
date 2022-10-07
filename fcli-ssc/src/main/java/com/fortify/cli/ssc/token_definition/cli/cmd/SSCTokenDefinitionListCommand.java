@@ -24,29 +24,33 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.token_definition.cli.cmd;
 
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.ISSCQParamGeneratorSupplier;
 import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCTokenDefinitionListCommand extends AbstractSSCListCommand {
-    @Override
-    protected SSCQParamGenerator getQParamGenerator() {
-        return new SSCQParamGenerator()
+@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
+public class SSCTokenDefinitionListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, ISSCQParamGeneratorSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
+    @Getter private SSCQParamGenerator qParamGenerator = new SSCQParamGenerator()
                 .add("type", SSCQParamValueGenerators::wrapInQuotes)
                 .add("maxDaysToLive", SSCQParamValueGenerators::plain)
                 .add("maxUsages", SSCQParamValueGenerators::plain)
                 .add("capabilityDescription", SSCQParamValueGenerators::wrapInQuotes);
-    }
-
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    
+    @Override
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.TOKEN_DEFINITIONS).queryString("limit", "-1");
     }
 }

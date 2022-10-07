@@ -26,6 +26,7 @@ package com.fortify.cli.ssc.appversion.helper;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
@@ -45,5 +46,10 @@ public class SSCAppVersionDescriptor extends JsonNodeHolder {
     private void unpackProject(Map<String, String> project) {
         applicationId = project.get("id");
         applicationName = project.get("name");
+    }
+    
+    @JsonIgnore
+    public String getAppAndVersionName() {
+        return applicationName+":"+versionName;
     }
 }

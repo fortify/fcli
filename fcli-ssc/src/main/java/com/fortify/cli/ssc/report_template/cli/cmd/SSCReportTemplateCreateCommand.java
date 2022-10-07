@@ -29,48 +29,37 @@ import java.io.File;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.report_template.domain.SSCReportRenderingEngineType;
 import com.fortify.cli.ssc.report_template.domain.SSCReportTemplateDef;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddUploadTokenFunction;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpResponse;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "create")
-public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
-    @CommandLine.Option(names = {"-f", "--file"}, required = true)
+@Command(name = SSCOutputHelperMixins.Create.CMD_NAME)
+public class SSCReportTemplateCreateCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Create outputHelper;
+    @Option(names = {"-f", "--file"}, required = true)
     private String filePath;
 
-    @CommandLine.Option(names = {"-a", "--answer-file"}, defaultValue = "./ReportTemplateDefAnswerTemplate.yml")
+    @Option(names = {"-a", "--answer-file"}, defaultValue = "./ReportTemplateDefAnswerTemplate.yml")
     private String answerFile;
-
-    private int indexVal=0;
-    private int getIndexVal(){return indexVal++;}
-
-    private SSCReportTemplateDef processAnswerFile(SSCReportTemplateDef rtd, String fileName, int templateDocId){
-        rtd.templateDocId = templateDocId;
-        rtd.renderingEngine = SSCReportRenderingEngineType.BIRT;
-        rtd.fileName =  fileName;
-        rtd.parameters.stream().forEach(e -> e.index = getIndexVal());
-        rtd.guid = java.util.UUID.randomUUID().toString();
-        return rtd;
-    }
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    
+    @Override @SneakyThrows
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         ObjectNode uploadResponse = SSCFileTransferHelper.upload(
                 unirest,
                 SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
@@ -93,15 +82,23 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCUnirestRunnerComm
         SSCReportTemplateDef rtd = mapper.readValue(answerFileObj, SSCReportTemplateDef.class);
         rtd = processAnswerFile(rtd, rptFileObj.getName(), uploadedDocId);
 
-        HttpResponse creationResponse = unirest.post(SSCUrls.REPORT_DEFINITIONS)
-                .body((new ObjectMapper()).writeValueAsString(rtd)).asObject(ObjectNode.class);
-        outputMixin.write(creationResponse);
-        return null;
+        return unirest.post(SSCUrls.REPORT_DEFINITIONS).body(rtd);
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
-                //.defaultColumns("id#name#type#templateDocId#inUse");
+    public String getActionCommandResult() {
+        return "CREATED";
+    }
+
+    private int indexVal=0;
+    private int getIndexVal(){return indexVal++;}
+
+    private SSCReportTemplateDef processAnswerFile(SSCReportTemplateDef rtd, String fileName, int templateDocId){
+        rtd.templateDocId = templateDocId;
+        rtd.renderingEngine = SSCReportRenderingEngineType.BIRT;
+        rtd.fileName =  fileName;
+        rtd.parameters.stream().forEach(e -> e.index = getIndexVal());
+        rtd.guid = java.util.UUID.randomUUID().toString();
+        return rtd;
     }
 }

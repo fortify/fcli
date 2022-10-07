@@ -24,20 +24,22 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IMinusVariableUnsupported;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
@@ -45,8 +47,11 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "download")
-public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+@Command(name = SSCOutputHelperMixins.Download.CMD_NAME)
+public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCOutputCommand
+        // We're outputting an appversion, not an artifact, hence IMinusVariableUnsupported
+        implements IJsonNodeSupplier, IActionCommandResultSupplier, IMinusVariableUnsupported {
+    @Getter @Mixin private SSCOutputHelperMixins.Download outputHelper;
     @CommandLine.Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
     private String destination;
     @Mixin private SSCAppVersionResolverMixin.From parentResolver;
@@ -58,9 +63,9 @@ public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunn
         @Option(names = "--no-include-sources", negatable = true) private boolean includeSources = true;
         @Option(names="--id") private String artifactId; //TODO Should this be an option or optional positional parameter?
     }
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCAppVersionDescriptor av = parentResolver.getAppVersionDescriptor(unirest);
         destination = destination != null ? destination : String.format("./%s_%s.fpr", av.getApplicationName(), av.getVersionName());
         if ( StringUtils.isNotBlank(options.artifactId) ) {
@@ -76,13 +81,11 @@ public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCUnirestRunn
                     destination,
                     ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
         }
-
-        return null;
+        return av.asJsonNode();
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
-                //.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+    public String getActionCommandResult() {
+        return "ARTIFACT_DOWNLOADED";
     }
 }

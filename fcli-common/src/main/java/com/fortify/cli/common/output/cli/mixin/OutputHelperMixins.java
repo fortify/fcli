@@ -78,6 +78,14 @@ import picocli.CommandLine.Spec.Target;
  */
 public class OutputHelperMixins {
     @ReflectiveAccess
+    public static class Add extends AbstractUnirestOutputHelper {
+        public static final String CMD_NAME = "add";
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Getter @Mixin private StandardOutputWriterFactory outputWriterFactory;
+        @Getter private OutputConfig basicOutputConfig = OutputConfig.table(); 
+    }
+    
+    @ReflectiveAccess
     public static class Create extends AbstractUnirestOutputHelper {
         public static final String CMD_NAME = "create";
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;

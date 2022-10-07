@@ -25,21 +25,26 @@
 package com.fortify.cli.ssc.appversion_attribute.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCAppVersionAttributeListCommand extends AbstractSSCListCommand {
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentResolver;
+@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
+public class SSCAppVersionAttributeListCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
+    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
     
-    protected JsonNode generateOutput(UnirestInstance unirest) {
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         return new SSCAppVersionAttributeListHelper()
                 .execute(unirest, parentResolver.getAppVersionId(unirest));
     }

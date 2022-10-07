@@ -24,23 +24,28 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "get")
-public class SSCAppVersionArtifactGetCommand extends AbstractSSCGetCommand {
+@Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
+public class SSCAppVersionArtifactGetCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
     @Parameters(arity="1", description = "Id of the artifact to be retrieved")
     private String artifactId;
     
     @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.ARTIFACT(artifactId));
     }
 }

@@ -24,40 +24,36 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.role.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.role.cli.mixin.SSCRoleResolverMixin;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
+import com.fortify.cli.ssc.role.helper.SSCRoleDescriptor;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = "delete")
-public class SSCRoleDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @Mixin
-    private SSCRoleResolverMixin.PositionalParameter roleResolver;
-
-    @Mixin
-    private OutputMixin outputMixin;
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
-        outputMixin.write(
-                unirest.delete(SSCUrls.ROLE(roleResolver.getRoleId(unirest)))
-        );
-        return null;
-    }
+public class SSCRoleDeleteCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper;
+    @Mixin private SSCRoleResolverMixin.PositionalParameter roleResolver;
 
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
-                //.defaultColumns("message#errorCode#responseCode");
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        SSCRoleDescriptor descriptor = roleResolver.getRoleDescriptor(unirest);
+        unirest.delete(SSCUrls.ROLE(descriptor.getRoleId()));
+        return descriptor.asJsonNode();
     }
-
+    
+    @Override
+    public String getActionCommandResult() {
+        return "DELETED";
+    }
 }

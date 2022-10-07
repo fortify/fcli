@@ -25,23 +25,32 @@
 package com.fortify.cli.ssc.role_permission.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
 import com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCRolePermissionListCommand extends AbstractSSCListCommand {
-    protected JsonNode transformRecord(JsonNode record) {
-        return SSCRolePermissionHelper.flattenArrayProperty(record, "dependsOnPermission", "id");
+@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
+public class SSCRolePermissionListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, IRecordTransformer {
+    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
+    
+    @Override
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+        return unirest.get(SSCUrls.PERMISSIONS).queryString("limit", "-1");
     }
     
-    protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.PERMISSIONS).queryString("limit", "-1");
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return SSCRolePermissionHelper.flattenArrayProperty(record, "dependsOnPermission", "id");
     }
 }

@@ -24,20 +24,25 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "approve")
-public class SSCAppVersionArtifactApproveCommand extends AbstractSSCTableOutputCommand {
+@Command(name = SSCOutputHelperMixins.ArtifactApprove.CMD_NAME)
+public class SSCAppVersionArtifactApproveCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.ArtifactApprove outputHelper; 
     private static final int POLL_INTERVAL_SECONDS = SSCAppVersionArtifactHelper.DEFAULT_POLL_INTERVAL_SECONDS;
     
     @Parameters(arity="1", description = "Id of the artifact to be approved")
@@ -53,7 +58,7 @@ public class SSCAppVersionArtifactApproveCommand extends AbstractSSCTableOutputC
     private String message;
     
     @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         if ( wait ) {
             SSCAppVersionArtifactHelper.waitAndApprove(unirest, artifactId, message, POLL_INTERVAL_SECONDS, processingTimeOutSeconds);
         } else {

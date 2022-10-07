@@ -24,22 +24,27 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_vuln.cli.cmd;
 
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_filterset.cli.mixin.SSCAppVersionFilterSetResolverMixin;
 import com.fortify.cli.ssc.appversion_filterset.helper.SSCAppVersionFilterSetDescriptor;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "count")
-public class SSCAppVersionVulnCountCommand extends AbstractSSCTableOutputCommand {
+@Command(name = SSCOutputHelperMixins.VulnCount.CMD_NAME)
+public class SSCAppVersionVulnCountCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.VulnCount outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.From parentResolver;
     @Option(names="--by", defaultValue="FOLDER") private String groupingType; 
     @Mixin private SSCAppVersionFilterSetResolverMixin.FilterSetOption filterSetResolver;
@@ -47,7 +52,7 @@ public class SSCAppVersionVulnCountCommand extends AbstractSSCTableOutputCommand
     // TODO Include options for includeRemoved/Hidden/Suppressed?
     
     @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         String appVersionId = parentResolver.getAppVersionId(unirest);
         SSCAppVersionFilterSetDescriptor filterSetDescriptor = filterSetResolver.getFilterSetDescriptor(unirest, appVersionId);
         GetRequest request = unirest.get(SSCUrls.PROJECT_VERSION_ISSUE_GROUPS(appVersionId))

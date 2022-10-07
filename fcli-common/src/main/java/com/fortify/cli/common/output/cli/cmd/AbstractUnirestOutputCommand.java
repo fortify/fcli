@@ -34,13 +34,11 @@ import kong.unirest.UnirestInstance;
 public abstract class AbstractUnirestOutputCommand extends AbstractUnirestRunnerCommand {
     @Override
     protected final Void run(UnirestInstance unirest) {
-        IUnirestOutputHelper unirestOutputHelper = getOutputHelper();
+        IUnirestOutputHelper outputHelper = getOutputHelper();
         if ( isBaseHttpRequestSupplier() ) {
-            unirestOutputHelper.write(unirest, ((IBaseHttpRequestSupplier)this).getBaseRequest(unirest));
-        } else if ( isJsonNodeHolderSupplier() ) {
-            unirestOutputHelper.write(unirest, ((IJsonNodeHolderSupplier)this).getJsonNodeHolder(unirest));
+            outputHelper.write(unirest, ((IBaseHttpRequestSupplier)this).getBaseRequest(unirest));
         } else if ( isJsonNodeSupplier() ) {
-            unirestOutputHelper.write(unirest, ((IJsonNodeSupplier)this).getJsonNode(unirest));
+            outputHelper.write(unirest, ((IJsonNodeSupplier)this).getJsonNode(unirest));
         } else {
             throw new IllegalStateException(this.getClass().getName()+" must implement exactly one of I[BaseHttpRequest|JsonNodeHolder|JsonNode]Supplier");
         }
@@ -49,19 +47,11 @@ public abstract class AbstractUnirestOutputCommand extends AbstractUnirestRunner
     
     private boolean isBaseHttpRequestSupplier() {
         return (this instanceof IBaseHttpRequestSupplier)
-                && !(this instanceof IJsonNodeHolderSupplier)
-                && !(this instanceof IJsonNodeSupplier);
-    }
-    
-    private boolean isJsonNodeHolderSupplier() {
-        return !(this instanceof IBaseHttpRequestSupplier)
-                && (this instanceof IJsonNodeHolderSupplier)
                 && !(this instanceof IJsonNodeSupplier);
     }
     
     private boolean isJsonNodeSupplier() {
         return !(this instanceof IBaseHttpRequestSupplier)
-                && !(this instanceof IJsonNodeHolderSupplier)
                 && (this instanceof IJsonNodeSupplier);
     }
     protected abstract IUnirestOutputHelper getOutputHelper();

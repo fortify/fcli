@@ -26,36 +26,45 @@ package com.fortify.cli.ssc.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
 import com.fortify.cli.ssc.app.cli.mixin.SSCAppResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "delete")
-public class SSCAppDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @Mixin private OutputMixin outputMixin;
+@Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
+public class SSCAppDeleteCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper; 
     @Mixin private SSCAppResolverMixin.PositionalParameter appResolver;
     @Option(names="--delete-versions") private boolean deleteVersions;
     
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         if (!deleteVersions) { throw new IllegalArgumentException("To confirm deleting all versions for this application, the --delete-versions option is required"); }
         JsonNode versions = getAppVersions(unirest);
         versions.forEach(v->deleteAppVersion(unirest, (ObjectNode)v));
-        outputMixin.write(versions);
-        return null;
+        return versions;
+    }
+    
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return SSCAppVersionHelper.renameFields(record);
+    }
+    
+    @Override
+    public String getActionCommandResult() {
+        return "DELETED";
     }
 
     private JsonNode getAppVersions(UnirestInstance unirest) {
@@ -67,13 +76,5 @@ public class SSCAppDeleteCommand extends AbstractSSCUnirestRunnerCommand impleme
     
     private void deleteAppVersion(UnirestInstance unirest, ObjectNode version) {
         unirest.delete(SSCUrls.PROJECT_VERSION(version.get("id").asText())).asObject(JsonNode.class).getBody();
-        // TODO Should we check the response, or assume SSC will return a proper HTTP response code 
-        //      (resulting in an exception being thrown by the statement above)
-        version.put("action", "DELETED");
-    }
-    
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table().recordTransformer(SSCAppVersionHelper::renameFields);
     }
 }

@@ -24,34 +24,37 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.issue_template.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
+import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "delete")
-public class SSCIssueTemplateDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
+@Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
+public class SSCIssueTemplateDeleteCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper;
     @CommandLine.Mixin private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
 
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
-        outputMixin.write(unirest.delete(
-                SSCUrls.ISSUE_TEMPLATE(issueTemplateResolver.getIssueTemplateDescriptor(unirest).getId())));
-        return null;
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        SSCIssueTemplateDescriptor descriptor = issueTemplateResolver.getIssueTemplateDescriptor(unirest);
+        unirest.delete(SSCUrls.ISSUE_TEMPLATE(descriptor.getId()));
+        return descriptor.asJsonNode();
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return OutputConfig.table();
+    public String getActionCommandResult() {
+        return "DELETED";
     }
 }

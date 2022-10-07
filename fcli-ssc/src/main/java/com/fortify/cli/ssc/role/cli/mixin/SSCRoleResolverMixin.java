@@ -40,12 +40,12 @@ public class SSCRoleResolverMixin {
         public abstract String getRoleNameOrId();
 
         @SneakyThrows
-        public SSCRoleDescriptor getRole(UnirestInstance unirestInstance, String... fields){
-            return SSCRoleHelper.getRole(unirestInstance, getRoleNameOrId(), fields);
+        public SSCRoleDescriptor getRoleDescriptor(UnirestInstance unirestInstance, String... fields){
+            return SSCRoleHelper.getRoleDescriptor(unirestInstance, getRoleNameOrId(), fields);
         }
         
         public String getRoleId(UnirestInstance unirestInstance) {
-            return getRole(unirestInstance, "id").getRoleId();
+            return getRoleDescriptor(unirestInstance, "id").getRoleId();
         }
     }
 

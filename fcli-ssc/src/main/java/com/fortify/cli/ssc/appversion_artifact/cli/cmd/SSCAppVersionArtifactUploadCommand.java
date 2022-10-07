@@ -28,17 +28,20 @@ import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCTableOutputCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -46,8 +49,9 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "upload")
-public class SSCAppVersionArtifactUploadCommand extends AbstractSSCTableOutputCommand {
+@Command(name = SSCOutputHelperMixins.Upload.CMD_NAME)
+public class SSCAppVersionArtifactUploadCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Upload outputHelper; 
     private static final int POLL_INTERVAL_SECONDS = SSCAppVersionArtifactHelper.DEFAULT_POLL_INTERVAL_SECONDS;
     
     @Mixin private SSCAppVersionResolverMixin.To parentResolver;
@@ -72,7 +76,7 @@ public class SSCAppVersionArtifactUploadCommand extends AbstractSSCTableOutputCo
     }
     
     @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         SSCAppVersionDescriptor av = parentResolver.getAppVersionDescriptor(unirest);
         HttpRequestWithBody request = unirest.post(SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()));
         if ( StringUtils.isNotBlank(engineType) ) {

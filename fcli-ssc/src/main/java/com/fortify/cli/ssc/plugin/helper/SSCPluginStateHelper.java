@@ -8,15 +8,15 @@ import kong.unirest.UnirestInstance;
 import lombok.Data;
 
 public final class SSCPluginStateHelper {
-    public static final JsonNode enablePlugin(UnirestInstance unirest, int pluginId) {
+    public static final JsonNode enablePlugin(UnirestInstance unirest, String pluginId) {
         return postPluginId(unirest, SSCUrls.PLUGINS_ACTION_ENABLE, pluginId);
     }
     
-    public static final JsonNode disablePlugin(UnirestInstance unirest, int pluginId) {
+    public static final JsonNode disablePlugin(UnirestInstance unirest, String pluginId) {
         return postPluginId(unirest, SSCUrls.PLUGINS_ACTION_DISABLE, pluginId);
     }
     
-    private static final JsonNode postPluginId(UnirestInstance unirest, String endpoint, int pluginId) {
+    private static final JsonNode postPluginId(UnirestInstance unirest, String endpoint, String pluginId) {
         return new SSCBulkRequestBuilder()
             .request("action", unirest.post(endpoint).body(new PluginIdsData(pluginId)))
             .request("pluginData", unirest.get(SSCUrls.PLUGIN(String.valueOf(pluginId))))
@@ -29,8 +29,8 @@ public final class SSCPluginStateHelper {
         private final int[] pluginIds;
         
         // Even though SSC expects an array of plugin id's, it only accepts a single plugin id
-        private PluginIdsData(int pluginId) {
-            this.pluginIds = new int[] {pluginId};
+        private PluginIdsData(String pluginId) {
+            this.pluginIds = new int[] {Integer.parseInt(pluginId)};
         }
     }
 }

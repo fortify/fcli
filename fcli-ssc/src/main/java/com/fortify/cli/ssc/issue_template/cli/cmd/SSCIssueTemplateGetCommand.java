@@ -25,21 +25,25 @@
 package com.fortify.cli.ssc.issue_template.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "get")
-public class SSCIssueTemplateGetCommand extends AbstractSSCGetCommand {
+@Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
+public class SSCIssueTemplateGetCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
     @Mixin private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
     
     @Override
-    protected JsonNode generateOutput(UnirestInstance unirest) {
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         return issueTemplateResolver.getIssueTemplateDescriptor(unirest).asJsonNode();
     }
 }

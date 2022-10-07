@@ -25,21 +25,25 @@
 package com.fortify.cli.ssc.role.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.role.cli.mixin.SSCRoleResolverMixin;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine.Mixin;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "get")
-public class SSCRoleGetCommand extends AbstractSSCGetCommand {
-    @Mixin
-    private SSCRoleResolverMixin.PositionalParameter roleResolver;
+@Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
+public class SSCRoleGetCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
+    @Mixin private SSCRoleResolverMixin.PositionalParameter roleResolver;
 
     @Override
-    protected JsonNode generateOutput(UnirestInstance unirest) {
-        return roleResolver.getRole(unirest).asJsonNode();
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return roleResolver.getRoleDescriptor(unirest).asJsonNode();
     }
 }

@@ -24,32 +24,35 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.issue_template.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "download")
-public class SSCIssueTemplateDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+@Command(name = SSCOutputHelperMixins.Download.CMD_NAME)
+public class SSCIssueTemplateDownloadCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Download outputHelper;
     @CommandLine.Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
     private String destination;
 
     @CommandLine.Mixin
     private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
 
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCIssueTemplateDescriptor descriptor = issueTemplateResolver.getIssueTemplateDescriptor(unirest);
         String issueTemplateId = descriptor.getId();
         destination = destination != null ? destination : String.format("./%s", descriptor.getOriginalFileName());
@@ -59,13 +62,11 @@ public class SSCIssueTemplateDownloadCommand extends AbstractSSCUnirestRunnerCom
                 destination,
                 ISSCAddDownloadTokenFunction.QUERYSTRING_MAT
         );
-        // TODO Add proper output
-        return null;
+        return descriptor.asJsonNode();
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
-                //.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+    public String getActionCommandResult() {
+        return "DOWNLOADED";
     }
 }

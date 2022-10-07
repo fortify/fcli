@@ -24,28 +24,31 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.role.cli.cmd;
 
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.ISSCQParamGeneratorSupplier;
 import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCRoleListCommand extends AbstractSSCListCommand {
-    @Override
-    protected SSCQParamGenerator getQParamGenerator() {
-        return new SSCQParamGenerator()
+@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
+public class SSCRoleListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, ISSCQParamGeneratorSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
+    @Getter private SSCQParamGenerator qParamGenerator = new SSCQParamGenerator()
                 .add("id", SSCQParamValueGenerators::plain)
                 .add("name", SSCQParamValueGenerators::wrapInQuotes);
-    }
 
     @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.ROLES).queryString("limit", "-1");
     }
 

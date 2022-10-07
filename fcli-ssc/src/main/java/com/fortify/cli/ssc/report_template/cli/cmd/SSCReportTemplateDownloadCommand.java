@@ -24,33 +24,34 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.report_template.cli.mixin.SSCReportTemplateResolverMixin;
 import com.fortify.cli.ssc.report_template.helper.SSCReportTemplateDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "download")
-public class SSCReportTemplateDownloadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
+@Command(name = SSCOutputHelperMixins.Download.CMD_NAME)
+public class SSCReportTemplateDownloadCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Download outputHelper;
+    @Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
+    @Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
     private String destination;
-
-    @CommandLine.Mixin
-    private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCReportTemplateDescriptor descriptor = reportTemplateResolver.getReportTemplateDescriptor(unirest);
         destination = destination != null ? destination : String.format("./%s", descriptor.getFileName());
         SSCFileTransferHelper.download(
@@ -59,12 +60,11 @@ public class SSCReportTemplateDownloadCommand extends AbstractSSCUnirestRunnerCo
                 destination,
                 ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN
         );
-        return null;
+        return descriptor.asJsonNode();
     }
-    
+
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
-                //.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
+    public String getActionCommandResult() {
+        return "DOWNLOADED";
     }
 }

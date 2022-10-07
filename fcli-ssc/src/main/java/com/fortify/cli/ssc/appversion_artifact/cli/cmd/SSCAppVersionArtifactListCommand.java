@@ -24,33 +24,28 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCAppVersionArtifactListCommand extends AbstractSSCListCommand {
+@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
+public class SSCAppVersionArtifactListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.From parentResolver;
     
-    // TODO Add filtering/default column options, use default implementation for getOutputOptionsWriterConfig
-    
     @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentResolver.getAppVersionId(unirest)))
                 .queryString("embed","scans");
-    }
-    
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return super.getOutputOptionsWriterConfig();
-                //.defaultColumns("id#$[*].scans[*].type:type#lastScanDate#uploadDate#status");
     }
 }

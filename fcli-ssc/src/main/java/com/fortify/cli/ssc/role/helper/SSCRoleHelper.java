@@ -36,7 +36,7 @@ import kong.unirest.UnirestInstance;
 import javax.validation.ValidationException;
 
 public class SSCRoleHelper {
-    public static final SSCRoleDescriptor getRole(UnirestInstance unirestInstance, String roleNameOrId, String... fields) {
+    public static final SSCRoleDescriptor getRoleDescriptor(UnirestInstance unirestInstance, String roleNameOrId, String... fields) {
         SSCBulkRequestBuilder bulkRequest = new SSCBulkRequestBuilder();
         SSCBulkResponse response = null;
         GetRequest roleRequest = unirestInstance.get(SSCUrls.ROLE(roleNameOrId));

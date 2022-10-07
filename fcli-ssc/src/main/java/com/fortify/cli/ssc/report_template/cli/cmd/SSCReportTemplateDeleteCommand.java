@@ -24,36 +24,36 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.report_template.cli.mixin.SSCReportTemplateResolverMixin;
 import com.fortify.cli.ssc.report_template.helper.SSCReportTemplateDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "delete")
-public class SSCReportTemplateDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
-    @CommandLine.Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
+@Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
+public class SSCReportTemplateDeleteCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper;
+    @Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
 
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCReportTemplateDescriptor descriptor = reportTemplateResolver.getReportTemplateDescriptor(unirest);
-        outputMixin.write(
-                unirest.delete(SSCUrls.REPORT_DEFINITION(descriptor.getId())));
-        return null;
+        unirest.delete(SSCUrls.REPORT_DEFINITION(descriptor.getId()));
+        return descriptor.asJsonNode();
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return OutputConfig.table();
+    public String getActionCommandResult() {
+        return "DELETED";
     }
 }

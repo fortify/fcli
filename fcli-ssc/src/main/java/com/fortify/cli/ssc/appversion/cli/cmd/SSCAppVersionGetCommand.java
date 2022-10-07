@@ -25,27 +25,33 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "get")
-public class SSCAppVersionGetCommand extends AbstractSSCGetCommand {
+@Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
+public class SSCAppVersionGetCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IRecordTransformer {
+    @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
     @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
 
     @Override
-    protected JsonNode generateOutput(UnirestInstance unirest) {
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         return appVersionResolver.getAppVersionDescriptor(unirest).asJsonNode();
     }
     
     @Override
-    protected JsonNode transformRecord(JsonNode record) {
+    public JsonNode transformRecord(JsonNode record) {
         return SSCAppVersionHelper.renameFields(record);
     }
 }

@@ -26,46 +26,45 @@ package com.fortify.cli.ssc.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.app.cli.mixin.SSCAppResolverMixin;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "update")
-public class SSCAppUpdateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
-    @CommandLine.Mixin private SSCAppResolverMixin.PositionalParameter appResolver;
+@Command(name = SSCOutputHelperMixins.Update.CMD_NAME)
+public class SSCAppUpdateCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Update outputHelper; 
+    @Mixin private SSCAppResolverMixin.PositionalParameter appResolver;
     @Option(names={"--name","-n"}, required = false)
     private String name;
     @Option(names={"--description","-d"}, required = false)
     private String description;
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCAppDescriptor descriptor = appResolver.getAppDescriptor(unirest);
         ObjectNode updateData = (ObjectNode)descriptor.asJsonNode();
         if ( StringUtils.isNotBlank(name) ) { updateData.put("name", name); }
         if ( StringUtils.isNotBlank(description) ) { updateData.put("description", description); }
-        outputMixin.write(unirest.put(SSCUrls.PROJECT(descriptor.getApplicationId()))
-                .body(updateData).asObject(JsonNode.class).getBody());
-        return null;
+        unirest.put(SSCUrls.PROJECT(descriptor.getApplicationId()))
+                .body(updateData).asObject(JsonNode.class).getBody();
+        return appResolver.getAppDescriptor(unirest).asJsonNode();
     }
-    
+
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
+    public String getActionCommandResult() {
+        return "UPDATED";
     }
 }

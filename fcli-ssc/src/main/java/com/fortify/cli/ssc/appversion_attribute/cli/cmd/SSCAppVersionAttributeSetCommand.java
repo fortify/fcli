@@ -24,50 +24,40 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_attribute.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateBuilder;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "set")
-public class SSCAppVersionAttributeSetCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+@Command(name = SSCOutputHelperMixins.Set.CMD_NAME)
+public class SSCAppVersionAttributeSetCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Set outputHelper;
     @Mixin private SSCAppVersionAttributeUpdateMixin.RequiredPositionalParameter attrUpdateMixin;
     @Mixin private SSCAppVersionResolverMixin.For parentResolver;
-    @Mixin private OutputMixin outputMixin;
     
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCAttributeDefinitionHelper attrDefHelper = new SSCAttributeDefinitionHelper(unirest);
         SSCAppVersionAttributeUpdateBuilder attrUpdateHelper = new SSCAppVersionAttributeUpdateBuilder(unirest, attrDefHelper)
                 .add(attrUpdateMixin.getAttributes());
         String applicationVersionId = parentResolver.getAppVersionId(unirest);
         
-        outputMixin.write(
-            new SSCAppVersionAttributeListHelper()
+        return new SSCAppVersionAttributeListHelper()
                 .attributeDefinitionHelper(attrDefHelper)
                 .request("attrUpdate", attrUpdateHelper.buildRequest(applicationVersionId))
                 .attrIdsToInclude(attrUpdateHelper.getAttributeIds())
-                .execute(unirest, applicationVersionId));
-        
-        return null;
-    }
-
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
-            //.defaultColumns("id#category#guid#name#valueString");
+                .execute(unirest, applicationVersionId);
     }
 }

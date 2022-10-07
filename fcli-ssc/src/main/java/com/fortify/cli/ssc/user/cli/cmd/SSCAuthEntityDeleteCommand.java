@@ -28,58 +28,52 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 import com.fortify.cli.ssc.user.helper.SSCAuthEntitySpecPredicate;
 import com.fortify.cli.ssc.user.helper.SSCAuthEntitySpecPredicate.MatchMode;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "delete", aliases = "rm")
-public class SSCAuthEntityDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+@Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
+public class SSCAuthEntityDeleteCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper;
     @Parameters(index = "0..*", arity = "1..*")
     private String[] authEntitySpecs;
-    @Mixin private OutputMixin outputMixin;
     @Option(names="--allowMultiMatch", defaultValue = "false")
     private boolean allowMultiMatch;
     
     @Override
-    protected Void run(UnirestInstance unirest) {
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         ArrayNode allAuthEntities = (ArrayNode)unirest.get(SSCUrls.AUTH_ENTITIES)
                 .queryString("limit", "-1")
                 .asObject(JsonNode.class).getBody().get("data");
         ArrayNode authEntitiesToDelete = JsonHelper.stream(allAuthEntities)
                 .filter(new SSCAuthEntitySpecPredicate(authEntitySpecs, MatchMode.INCLUDE, allowMultiMatch))
-                .map(this::addAction)
                 .collect(JsonHelper.arrayNodeCollector());
         if ( authEntitiesToDelete.size()==0 ) {
             throw new IllegalArgumentException("No matching users found for deletion");
         }
         String authEntityIdsToDelete = JsonHelper.stream(authEntitiesToDelete).map(this::getAuthEntityId).collect(Collectors.joining(","));
         unirest.delete(SSCUrls.AUTH_ENTITIES).queryString("ids", authEntityIdsToDelete).asEmpty().getBody();
-        outputMixin.write(authEntitiesToDelete);
-        return null;
+        return authEntitiesToDelete;
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return OutputConfig.table();
-            //.defaultColumns("id#entityName:Name#displayName#type#email#isLdap#action");
-    }
-
-    private JsonNode addAction(JsonNode authEntityNode) {
-        return ((ObjectNode)authEntityNode).put("action", "DELETED");
+    public String getActionCommandResult() {
+        return "DELETED";
     }
 
     private String getAuthEntityId(JsonNode authEntityNode) {

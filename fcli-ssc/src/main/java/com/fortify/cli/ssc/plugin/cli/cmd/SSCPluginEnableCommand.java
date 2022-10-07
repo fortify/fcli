@@ -24,35 +24,34 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
+import com.fortify.cli.ssc.plugin.cli.mixin.SSCPluginResolverMixin;
 import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "enable")
+@Command(name = SSCOutputHelperMixins.Enable.CMD_NAME)
 //TODO Check whether plugin exists, and isn't enabled already
-public class SSCPluginEnableCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
-
-    @CommandLine.Option(names = {"--id"}, required = true)
-    private int id;
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
-        outputMixin.write(SSCPluginStateHelper.enablePlugin(unirest, id));
-        return null;
-    }
-
+public class SSCPluginEnableCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Enable outputHelper;
+    @Mixin private SSCPluginResolverMixin.PositionalParameter pluginResolver;
+     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCPluginCommandOutputHelper.defaultTableOutputConfig();
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return SSCPluginStateHelper.enablePlugin(unirest, pluginResolver.getNumericPluginId());
+    }
+    
+    @Override
+    public String getActionCommandResult() {
+        return "ENABLED";
     }
 }

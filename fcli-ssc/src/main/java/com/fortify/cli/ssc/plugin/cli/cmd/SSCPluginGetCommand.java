@@ -24,23 +24,27 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
+import com.fortify.cli.ssc.plugin.cli.mixin.SSCPluginResolverMixin;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "get")
-public class SSCPluginGetCommand extends AbstractSSCGetCommand {
-    @CommandLine.Mixin
-    private SSCPluginCommonOptions.SSCPluginSelectSingleRequiredMixin id;
+@Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
+public class SSCPluginGetCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
+    @Mixin private SSCPluginResolverMixin.PositionalParameter pluginResolver;
 
     @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.PLUGIN(id.getNumericPluginId(unirest).toString()));
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+        return unirest.get(SSCUrls.PLUGIN(pluginResolver.getNumericPluginId()));
     }
 }
