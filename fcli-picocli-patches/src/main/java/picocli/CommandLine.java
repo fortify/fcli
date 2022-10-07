@@ -15754,14 +15754,17 @@ public class CommandLine {
                 Text name = colorScheme.optionText(nameString);
                 Text param = parameterLabelRenderer.renderParameterLabel(option, colorScheme.ansi(), colorScheme.optionParamStyles);
                 text = text.concat(prefix);
+
+                // related: Interpreter#getActualTypeConverter special logic for interactive char[] options... (also: #648)
+                boolean treatAsSingleValue = char[].class.equals(option.type()) && option.interactive(); // #1834
                 if (option.required()) { // e.g., -x=VAL
                     text = text.concat(name).concat(param).concat("");
-                    if (option.isMultiValue()) { // e.g., -x=VAL [-x=VAL]...
+                    if (option.isMultiValue() && !treatAsSingleValue) { // e.g., -x=VAL [-x=VAL]...
                         text = text.concat(" [").concat(name).concat(param).concat("]...");
                     }
                 } else {
                     text = text.concat("[").concat(name).concat(param).concat("]");
-                    if (option.isMultiValue()) { // add ellipsis to show option is repeatable
+                    if (option.isMultiValue() && !treatAsSingleValue) { // add ellipsis to show option is repeatable
                         text = text.concat("...");
                     }
                 }
