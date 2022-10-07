@@ -33,7 +33,7 @@ import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
@@ -46,8 +46,8 @@ import picocli.CommandLine.Mixin;
 @Command(name = "list")
 public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IOutputConfigSupplier {
     @Mixin private OutputMixinWithQuery outputMixin;
-    private final SSCOutputQueryQParamGenerator qParamGenerator = 
-            new SSCOutputQueryQParamGenerator()
+    private final SSCQParamGenerator qParamGenerator = 
+            new SSCQParamGenerator()
             .add("userName", SSCQParamValueGenerators::wrapInQuotes)
             .add("type", SSCQParamValueGenerators::wrapInQuotes);
     

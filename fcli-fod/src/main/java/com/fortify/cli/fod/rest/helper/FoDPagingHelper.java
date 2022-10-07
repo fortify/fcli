@@ -1,23 +1,21 @@
 package com.fortify.cli.fod.rest.helper;
 
-import java.util.function.Function;
-
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 
 import io.micronaut.http.uri.UriBuilder;
 import kong.unirest.HttpRequest;
-import kong.unirest.HttpResponse;
 import kong.unirest.PagedList;
 
 public class FoDPagingHelper {
     public static final PagedList<JsonNode> pagedRequest(HttpRequest<?> request) {
         return PagingHelper.pagedRequest(request, nextPageUrlProducer(request));
     }
-    public static final Function<HttpResponse<JsonNode>, String> nextPageUrlProducer(HttpRequest<?> originalRequest) {
+    public static final INextPageUrlProducer nextPageUrlProducer(HttpRequest<?> originalRequest) {
         return nextPageUrlProducer(originalRequest.getUrl());
     }
-    public static final Function<HttpResponse<JsonNode>, String> nextPageUrlProducer(String uri) {
+    public static final INextPageUrlProducer nextPageUrlProducer(String uri) {
         return r -> {
             JsonNode body = r.getBody();
             if ( body.has("offset") && body.has("totalCount") && body.has("limit") ) {

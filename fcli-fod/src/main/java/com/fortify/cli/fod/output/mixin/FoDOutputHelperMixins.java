@@ -1,20 +1,21 @@
 package com.fortify.cli.fod.output.mixin;
 
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.cli.mixin.spi.IOutputHelper;
-import com.fortify.cli.common.output.cli.mixin.spi.IProductHelper;
-import com.fortify.cli.common.output.cli.mixin.spi.ProductHelperClass;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IInputTransformerSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.product.IProductHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.product.ProductHelperClass;
+import com.fortify.cli.common.output.cli.mixin.spi.request.INextPageUrlProducerSupplier;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins.FoDProductHelper;
 import com.fortify.cli.fod.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod.rest.helper.FoDPagingHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
-import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,12 +33,12 @@ import lombok.Setter;
 @ReflectiveAccess
 @ProductHelperClass(FoDProductHelper.class)
 public class FoDOutputHelperMixins {
-    public static class FoDProductHelper implements IProductHelper {
+    public static class FoDProductHelper implements IProductHelper, IInputTransformerSupplier, INextPageUrlProducerSupplier {
         @Getter @Setter private IOutputHelper outputHelper;
         @Getter private UnaryOperator<JsonNode> inputTransformer = FoDInputTransformer::getItems;
         
         @Override
-        public Function<HttpResponse<JsonNode>, String> getNextPageUrlProducer(UnirestInstance unirest, HttpRequest<?> originalRequest) {
+        public INextPageUrlProducer getNextPageUrlProducer(UnirestInstance unirest, HttpRequest<?> originalRequest) {
             return FoDPagingHelper.nextPageUrlProducer(originalRequest);
         }
     }
