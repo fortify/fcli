@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.fod.app.mixin.FoDAppTypeMixin;
-import com.fortify.cli.fod.app.mixin.FoDCriticalityTypeMixin;
-import com.fortify.cli.fod.app.mixin.FoDSdlcStatusTypeMixin;
-import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateMixin;
+import com.fortify.cli.fod.app.mixin.FoDAppTypeOptions;
+import com.fortify.cli.fod.app.mixin.FoDCriticalityTypeOptions;
+import com.fortify.cli.fod.app.mixin.FoDSdlcStatusTypeOptions;
+import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
@@ -27,7 +27,7 @@ import java.util.Map;
 
 @ReflectiveAccess
 @Command(name = "create")
-public class FoDApplicationCreateCommand extends AbstractFoDHttpUpdateCommand implements IOutputConfigSupplier {
+public class FoDAppCreateCommand extends AbstractFoDHttpUpdateCommand implements IOutputConfigSupplier {
     @Spec
     CommandSpec spec;
 
@@ -37,27 +37,27 @@ public class FoDApplicationCreateCommand extends AbstractFoDHttpUpdateCommand im
     private String releaseName;
     @Option(names = {"--description", "-d"}, descriptionKey = "appDesc")
     private String description;
-    @Option(names = {"--notify", "-nf"}, required = false, arity = "0..*", descriptionKey = "notify")
+    @Option(names = {"--notify"}, required = false, arity = "0..*", descriptionKey = "notify")
     private ArrayList<String> notifications;
-    @Option(names = {"--release-description", "-rd"}, descriptionKey = "relDesc")
+    @Option(names = {"--release-description", "--rel-desc"}, descriptionKey = "relDesc")
     private String releaseDescription;
-    @Option(names = {"--owner", "-own"}, required = true, descriptionKey = "owner")
+    @Option(names = {"--owner"}, required = true, descriptionKey = "owner")
     private String owner;
-    @Option(names = {"--user-group", "-ug"}, arity = "0..*", descriptionKey = "userGroup")
+    @Option(names = {"--user-group", "--group"}, arity = "0..*", descriptionKey = "userGroup")
     private ArrayList<String> userGroups;
-    @Option(names = {"--microservice", "-ms"}, arity = "0..*", descriptionKey = "microservice")
+    @Option(names = {"--microservice"}, arity = "0..*", descriptionKey = "microservice")
     private ArrayList<String> microservices;
-    @Option(names = {"--release-microservice", "-rms"}, descriptionKey = "releaseMs")
+    @Option(names = {"--release-microservice"}, descriptionKey = "releaseMs")
     private String releaseMicroservice;
 
     @Mixin
-    private FoDAppTypeMixin.AppTypeOption typeMixin;
+    private FoDAppTypeOptions.RequiredAppTypeOption appType;
     @Mixin
-    private FoDCriticalityTypeMixin.CriticalityTypeOption criticalityMixin;
+    private FoDCriticalityTypeOptions.RequiredCritOption criticalityType;
     @Mixin
-    private FoDAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
+    private FoDAttributeUpdateOptions.OptionalAttrOption appAttrs;
     @Mixin
-    private FoDSdlcStatusTypeMixin.SdlcStatusTypeOption sdlcStatusMixin;
+    private FoDSdlcStatusTypeOptions.RequiredSdlcOption sdlcStatus;
 
     @SneakyThrows
     @Override
@@ -67,32 +67,22 @@ public class FoDApplicationCreateCommand extends AbstractFoDHttpUpdateCommand im
         ObjectNode body = getObjectMapper().createObjectNode();
         body.put("applicationName", applicationName)
                 .put("applicationDescription", description == null ? "" : description)
-                .put("businessCriticalityType", String.valueOf(criticalityMixin.getCriticalityType()))
+                .put("businessCriticalityType", String.valueOf(criticalityType.getCriticalityType()))
                 .put("emailList", getEmailList(notifications))
                 .put("releaseName", releaseName)
                 .put("releaseDescription", releaseDescription == null ? "" : releaseDescription)
-                .put("sdlcStatusType", String.valueOf(sdlcStatusMixin.getSdlcStatusType()));
+                .put("sdlcStatusType", String.valueOf(sdlcStatus.getSdlcStatusType()));
 
         // look up username if supplied to get owner id
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUser(unirest, owner, true);
-        body.put("ownerId", userDescriptor.getId());
+        body.put("ownerId", userDescriptor.getUserId());
 
-        FoDAppTypeMixin.FoDAppType appType = typeMixin.getAppType();
-        switch (appType) {
-            case Web:
-                body.put("applicationType", "Web_Thick_Client");
-                body.put("hasMicroservices", false);
-                break;
-            case Mobile:
-                body.put("applicationType", "Mobile");
-                body.put("hasMicroservices", false);
-                break;
-            case Microservice:
-                body.put("hasMicroservices", true);
-                body.set("microservices", getMicroservicesNode(microservices));
-                body.put("releaseMicroserviceName", releaseMicroservice == null ? "" : releaseMicroservice);
-                break;
-            default:
+        FoDAppTypeOptions.FoDAppType appType = this.appType.getAppType();
+        body.put("applicationType", this.appType.getAppType().name);
+        body.put("hasMicroservices", this.appType.getAppType().isMicroservice());
+        if ( this.appType.getAppType().isMicroservice()) {
+            body.set("microservices", getMicroservicesNode(microservices));
+            body.put("releaseMicroserviceName", releaseMicroservice == null ? "" : releaseMicroservice);
         }
         body.set("attributes", getAttributesNode(unirest));
         body.set("userGroupIds", getUserGroupsNode(unirest, userGroups));
@@ -109,16 +99,18 @@ public class FoDApplicationCreateCommand extends AbstractFoDHttpUpdateCommand im
     }
 
     private void validate() {
-        // TODO: if "Web" or "Mobile" type check no microservice options are supplied
-        if (typeMixin.getAppType().equals(FoDAppTypeMixin.FoDAppType.Microservice)
-                && (missing(microservices) || (releaseMicroservice == null || releaseMicroservice.isEmpty()))) {
-            throw new ParameterException(spec.commandLine(),
-                    "Missing option: if 'Microservice' type is specified then " +
-                            "one or more '-microservice' names need to specified " +
-                            "as well as the microservice to create the release for " +
-                            "using '--release-microservice");
+        if (appType.getAppType().equals(FoDAppTypeOptions.FoDAppType.Microservice)) {
+            if ((missing(microservices) || (releaseMicroservice == null || releaseMicroservice.isEmpty())))
+                throw new ParameterException(spec.commandLine(),
+                        "Missing option: if 'Microservice' type is specified then " +
+                                "one or more '-microservice' names need to specified " +
+                                "as well as the microservice to create the release for " +
+                                "using '--release-microservice");
+            if (!microservices.contains(releaseMicroservice))
+                throw new ParameterException(spec.commandLine(),
+                        "Invalid option: the '--release-microservice' specified was not " +
+                                "included in the 'microservice' options");
         }
-        // TODO: check "release microservice" is in "microservices" list
     }
 
     protected JsonNode getUserGroupsNode(UnirestInstance unirest, ArrayList<String> userGroups) {
@@ -132,13 +124,13 @@ public class FoDApplicationCreateCommand extends AbstractFoDHttpUpdateCommand im
     }
 
     private final JsonNode getAttributesNode(UnirestInstance unirest) {
-        Map<String, String> attributes = attrUpdateMixin.getAttributes();
+        Map<String, String> attributes = appAttrs.getAttributes();
         ArrayNode attrArray = getObjectMapper().createArrayNode();
         if (attributes == null || attributes.isEmpty()) return attrArray;
         for (Map.Entry<String, String> attr : attributes.entrySet()) {
             ObjectNode attrObj = getObjectMapper().createObjectNode();
             FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttribute(unirest, attr.getKey(), true);
-            attrObj.put("id", attributeDescriptor.getAttributeId());
+            attrObj.put("id", attributeDescriptor.getId());
             attrObj.put("value", attr.getValue());
             attrArray.add(attrObj);
         }

@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
-import com.fortify.cli.fod.app.mixin.FoDCriticalityTypeMixin;
-import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateMixin;
+import com.fortify.cli.fod.app.mixin.FoDCriticalityTypeOptions;
+import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDHttpUpdateCommand;
@@ -24,7 +24,7 @@ import java.util.Map;
 
 @ReflectiveAccess
 @Command(name = "update")
-public class FoDApplicationUpdateCommand extends AbstractFoDHttpUpdateCommand implements IOutputConfigSupplier {
+public class FoDAppUpdateCommand extends AbstractFoDHttpUpdateCommand implements IOutputConfigSupplier {
 
     @Parameters(index = "0", arity = "1", descriptionKey = "appNameOrId")
     private String appNameOrId;
@@ -33,13 +33,13 @@ public class FoDApplicationUpdateCommand extends AbstractFoDHttpUpdateCommand im
     @Option(names = {"--description", "-d"}, descriptionKey = "appDesc")
     private String descriptionUpdate;
     // TODO: should we add to existing "emailList", replace or amend? currently if specified "emaliList" is replaced
-    @Option(names = {"--notify", "-nf"}, arity = "0..*", descriptionKey = "")
+    @Option(names = {"--notify"}, arity = "0..*", descriptionKey = "")
     private ArrayList<String> notificationsUpdate;
 
     @Mixin
-    private FoDCriticalityTypeMixin.CriticalityTypeOption criticalityUpdateMixin;
+    private FoDCriticalityTypeOptions.OptionalCritOption criticalityTypeUpdate;
     @Mixin
-    private FoDAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
+    private FoDAttributeUpdateOptions.OptionalAttrOption appAttrsUpdate;
 
     @SneakyThrows
     @Override
@@ -51,8 +51,8 @@ public class FoDApplicationUpdateCommand extends AbstractFoDHttpUpdateCommand im
         ArrayList<FoDAttributeDescriptor> appAttrsCurrent = appCurrent.getAttributes();
 
         // new values to replace
-        FoDCriticalityTypeMixin.FoDCriticalityType appCriticalityNew = criticalityUpdateMixin.getCriticalityType();
-        Map<String, String> attributeUpdates = attrUpdateMixin.getAttributes();
+        FoDCriticalityTypeOptions.FoDCriticalityType appCriticalityNew = criticalityTypeUpdate.getCriticalityType();
+        Map<String, String> attributeUpdates = appAttrsUpdate.getAttributes();
         JsonNode jsonAttrs = getObjectMapper().createArrayNode();
         if (attributeUpdates != null && attributeUpdates.size() > 0) {
             jsonAttrs = mergeAttributesNode(unirest, appAttrsCurrent, attributeUpdates);
@@ -65,9 +65,9 @@ public class FoDApplicationUpdateCommand extends AbstractFoDHttpUpdateCommand im
         body.put("applicationName",
                 StringUtils.isNotEmpty(applicationNameUpdate) ? applicationNameUpdate : appCurrent.getApplicationName());
         body.put("applicationDescription",
-                StringUtils.isNotEmpty(descriptionUpdate) ? descriptionUpdate : appCurrent.getDescription());
+                StringUtils.isNotEmpty(descriptionUpdate) ? descriptionUpdate : appCurrent.getApplicationDescription());
         body.put("businessCriticalityType",
-                appCriticalityNew != null ? String.valueOf(appCriticalityNew) : appCurrent.getCriticality());
+                appCriticalityNew != null ? String.valueOf(appCriticalityNew) : appCurrent.getBusinessCriticalityType());
         body.put("emailList",
                 StringUtils.isNotEmpty(appEmailListNew) ? appEmailListNew : appCurrent.getEmailList());
         body.set("attributes", jsonAttrs);

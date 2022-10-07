@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.fod.app.helper;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -39,27 +38,19 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class FoDAppDescriptor extends JsonNodeHolder {
-    @JsonProperty("applicationId")
     private Integer applicationId;
-    @JsonProperty("applicationName")
     private String applicationName;
-    @JsonProperty("applicationDescription")
-    private String description;
-    @JsonProperty("businessCriticalityType")
-    private String criticality;
-    @JsonProperty("attributes")
+    private String applicationDescription;
+    private String businessCriticalityType;
     private ArrayList<FoDAttributeDescriptor> attributes;
-    @JsonProperty("emailList")
     private String emailList;
-    @JsonProperty("releaseId")
     private Integer releaseId;
-    @JsonProperty("microserviceId")
     private Integer microserviceId;
 
     public  Map<String, String> attributesAsMap() {
         Map<String, String> attrMap = new HashMap<>();
         for (FoDAttributeDescriptor attr : attributes) {
-            attrMap.put(attr.getAttributeId(), attr.getValue());
+            attrMap.put(attr.getId(), attr.getValue());
         }
         return  attrMap;
     }

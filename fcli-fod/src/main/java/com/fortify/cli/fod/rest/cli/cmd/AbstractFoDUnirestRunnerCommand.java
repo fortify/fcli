@@ -33,7 +33,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess @FixInjection
+@ReflectiveAccess
 public abstract class AbstractFoDUnirestRunnerCommand implements Runnable {
     @Getter @Mixin private FoDUnirestRunnerMixin unirestRunnerMixin;
 

@@ -29,7 +29,7 @@ import java.util.Map;
  *
  * @author kadraman
  */
-@ReflectiveAccess @FixInjection
+@ReflectiveAccess
 public abstract class AbstractFoDHttpUpdateCommand extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
     @Getter @Mixin private OutputMixinWithQuery outputMixin;
     @Getter private ObjectMapper objectMapper = new ObjectMapper();
@@ -88,13 +88,13 @@ public abstract class AbstractFoDHttpUpdateCommand extends AbstractFoDUnirestRun
         Map<Integer, String> updatesWithId = new HashMap<>();
         for (Map.Entry<String, String> attr : updates.entrySet()) {
             FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttribute(unirest, attr.getKey(), true);
-            updatesWithId.put(Integer.valueOf(attributeDescriptor.getAttributeId()), attr.getValue());
+            updatesWithId.put(Integer.valueOf(attributeDescriptor.getId()), attr.getValue());
         }
         for (FoDAttributeDescriptor attr : current) {
             ObjectNode attrObj = objectMapper.createObjectNode();
-            attrObj.put("id", attr.getAttributeId());
-            if (updatesWithId.containsKey(Integer.valueOf(attr.getAttributeId()))) {
-                attrObj.put("value", updatesWithId.get(Integer.valueOf(attr.getAttributeId())));
+            attrObj.put("id", attr.getId());
+            if (updatesWithId.containsKey(Integer.valueOf(attr.getId()))) {
+                attrObj.put("value", updatesWithId.get(Integer.valueOf(attr.getId())));
             } else {
                 attrObj.put("value", attr.getValue());
             }
@@ -108,7 +108,7 @@ public abstract class AbstractFoDHttpUpdateCommand extends AbstractFoDUnirestRun
         if (attributes == null || attributes.isEmpty()) return attrArray;
         for (FoDAttributeDescriptor attr : attributes) {
             ObjectNode attrObj = objectMapper.createObjectNode();
-            attrObj.put("id", attr.getAttributeId());
+            attrObj.put("id", attr.getId());
             attrObj.put("value", attr.getValue());
             attrArray.add(attrObj);
         }

@@ -34,23 +34,14 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class FoDAttributeDescriptor extends JsonNodeHolder {
-    @JsonProperty("id")
-    private String attributeId;
-    @JsonProperty("name")
-    private String attributeName;
-    @JsonProperty("attributeTypeId")
+    private String id;
+    private String name;
     private Integer attributeTypeId;
-    @JsonProperty("attributeType")
     private String attributeType;
-    @JsonProperty("attributeDataTypeId")
     private Integer attributeDataTypeId;
-    @JsonProperty("attributeDataType")
     private String attributeDataType;
-    @JsonProperty("isRequired")
     private Boolean isRequired;
-    @JsonProperty("isRestricted")
     private Boolean isRestricted;
     // pickListValues ...
-    @JsonProperty("value")
     private String value;
 }

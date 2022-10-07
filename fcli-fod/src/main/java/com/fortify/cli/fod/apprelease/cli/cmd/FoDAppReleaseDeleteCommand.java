@@ -9,7 +9,7 @@ import picocli.CommandLine;
 
 @ReflectiveAccess
 @CommandLine.Command(name = "delete")
-public class FoDApplicationReleaseDeleteCommand extends AbstractFoDUnirestRunnerCommand {
+public class FoDAppReleaseDeleteCommand extends AbstractFoDUnirestRunnerCommand {
     @SneakyThrows
     protected Void run(UnirestInstance unirest) {
         System.err.println("ERROR: Not yet implemented");

@@ -22,7 +22,7 @@ import picocli.CommandLine.Mixin;
  *   
  * @author kadraman
  */
-@ReflectiveAccess @FixInjection
+@ReflectiveAccess
 public abstract class AbstractFoDHttpListCommand extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
     @Getter @Mixin private OutputMixinWithQuery outputMixin;
     

@@ -31,28 +31,24 @@ import picocli.CommandLine.Parameters;
 
 import java.util.Map;
 
-public class FoDAttributeUpdateMixin {
+public class FoDAttributeUpdateOptions {
     private static final String PARAM_LABEL = "[ATTR=VALUE]";
 
     @ReflectiveAccess
     public static abstract class AbstractFoDAppAttributeUpdateMixin {
         public abstract Map<String, String> getAttributes();
-
     }
 
     @ReflectiveAccess
     public static class OptionalAttrOption extends AbstractFoDAppAttributeUpdateMixin {
         @Option(names = {"--attr", "--attribute"}, required = false, arity = "0..", paramLabel = PARAM_LABEL, descriptionKey = "attr")
-        @Getter
-        private Map<String, String> attributes;
+        @Getter private Map<String, String> attributes;
     }
 
     @ReflectiveAccess
     public static class RequiredPositionalParameter extends AbstractFoDAppAttributeUpdateMixin {
         @Parameters(index = "0..*", arity = "1..*", paramLabel = PARAM_LABEL)
-        @Getter
-        private Map<String, String> attributes;
+        @Getter private Map<String, String> attributes;
     }
-
 
 }

@@ -14,7 +14,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "delete")
-public class FoDApplicationDeleteCommand extends AbstractFoDHttpUpdateCommand implements IOutputConfigSupplier {
+public class FoDAppDeleteCommand extends AbstractFoDHttpUpdateCommand implements IOutputConfigSupplier {
 
     @Parameters(index = "0", arity = "1", descriptionKey = "appNameOrId")
     private String appNameOrId;

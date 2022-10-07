@@ -34,12 +34,8 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class FoDUserGroupDescriptor extends JsonNodeHolder {
-    @JsonProperty("id")
     private String id;
-    @JsonProperty("name")
     private String name;
-    @JsonProperty("assignedUsersCount")
     private Integer assignedUsersCount;
-    @JsonProperty("assignedApplicationsCount")
     private Integer assignedApplicationsCount;
 }

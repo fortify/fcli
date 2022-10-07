@@ -11,7 +11,7 @@ import picocli.CommandLine;
 
 @ReflectiveAccess
 @CommandLine.Command(name = "list")
-public class FoDApplicationListCommand extends AbstractFoDHttpListCommand {
+public class FoDAppListCommand extends AbstractFoDHttpListCommand {
 
     @Override
     protected FoDOutputQueryFiltersParamGenerator getFiltersParamGenerator() {

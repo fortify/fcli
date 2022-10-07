@@ -34,28 +34,16 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class FoDUserDescriptor extends JsonNodeHolder {
-    @JsonProperty("userId")
-    private String id;
-    @JsonProperty("userName")
-    private String name;
-    @JsonProperty("firstName")
+    private String userId;
+    private String userName;
     private String firstName;
-    @JsonProperty("lastName")
     private String lastName;
-    @JsonProperty("email")
     private String email;
-    @JsonProperty("phoneNumber")
     private String phoneNumber;
-    @JsonProperty("isVerified")
     private Boolean isVerified;
-    @JsonProperty("roleId")
     private Integer roleId;
-    @JsonProperty("roleName")
     private String roleName;
-    @JsonProperty("isSuspended")
     private Boolean isSuspended;
-    @JsonProperty("mustChange")
     private Boolean mustChange;
-    @JsonProperty("passwordNeverExpires")
     private Boolean passwordNeverExpires;
 }
