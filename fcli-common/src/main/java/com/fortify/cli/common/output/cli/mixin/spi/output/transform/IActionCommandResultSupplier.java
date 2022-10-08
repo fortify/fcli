@@ -1,4 +1,4 @@
-package com.fortify.cli.common.output.cli.mixin.spi;
+package com.fortify.cli.common.output.cli.mixin.spi.output.transform;
 
 /**
  * This interface can be implemented by commands to return the action

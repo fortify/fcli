@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.event.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
-import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -39,8 +39,8 @@ import picocli.CommandLine.Command;
 @Command(name = "list")
 public class SSCEventListCommand extends AbstractSSCListCommand {
     @Override
-    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
-        return new SSCOutputQueryQParamGenerator()
+    protected SSCQParamGenerator getQParamGenerator() {
+        return new SSCQParamGenerator()
                 .add("userName", SSCQParamValueGenerators::wrapInQuotes)
                 .add("eventType", SSCQParamValueGenerators::wrapInQuotes)
                 .add("detailedNote", SSCQParamValueGenerators::wrapInQuotes)

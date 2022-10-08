@@ -5,7 +5,7 @@ import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
 import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -42,11 +42,11 @@ public abstract class AbstractSSCListCommand extends AbstractSSCUnirestRunnerCom
     }
     
     protected HttpRequest<?> addQParam(HttpRequest<?> request) {
-        SSCOutputQueryQParamGenerator qParamGenerator = getQParamGenerator();
+        SSCQParamGenerator qParamGenerator = getQParamGenerator();
         return qParamGenerator==null ? request : qParamGenerator.addQParam(request, outputMixin.getOutputQueries());
     }
 
-    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
+    protected SSCQParamGenerator getQParamGenerator() {
         return null;
     }
 

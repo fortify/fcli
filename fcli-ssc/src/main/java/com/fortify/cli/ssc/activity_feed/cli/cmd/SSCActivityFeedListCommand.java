@@ -25,36 +25,40 @@
 package com.fortify.cli.ssc.activity_feed.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
-import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.ISSCQParamGeneratorSupplier;
+import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCActivityFeedListCommand extends AbstractSSCListCommand {
-    @Override
-    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
-        return new SSCOutputQueryQParamGenerator()
-                .add("userName", SSCQParamValueGenerators::wrapInQuotes)
-                .add("eventType", SSCQParamValueGenerators::wrapInQuotes)
-                .add("detailedNote", SSCQParamValueGenerators::wrapInQuotes)
-                .add("applicationVersionId", "projectVersionId", SSCQParamValueGenerators::plain);
-    }
+@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
+public class SSCActivityFeedListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, IRecordTransformer, ISSCQParamGeneratorSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
+    @Getter private final SSCQParamGenerator qParamGenerator = new SSCQParamGenerator()
+            .add("userName", SSCQParamValueGenerators::wrapInQuotes)
+            .add("eventType", SSCQParamValueGenerators::wrapInQuotes)
+            .add("detailedNote", SSCQParamValueGenerators::wrapInQuotes)
+            .add("applicationVersionId", "projectVersionId", SSCQParamValueGenerators::plain);
     
     @Override
-    protected JsonNode transformRecord(JsonNode record) {
-        return new RenameFieldsTransformer("projectVersionId", "applicationVersionId").transform(record);
-    }
-    
-    @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.ACTIVITY_FEED_EVENTS).queryString("limit","-1");
+    }
+    
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return new RenameFieldsTransformer("projectVersionId", "applicationVersionId").transform(record);
     }
 }

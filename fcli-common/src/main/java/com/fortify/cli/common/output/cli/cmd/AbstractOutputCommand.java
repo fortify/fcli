@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.spi.IOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
 import com.fortify.cli.common.rest.cli.cmd.AbstractUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

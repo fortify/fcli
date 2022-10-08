@@ -1,20 +1,21 @@
 package com.fortify.cli.sc_dast.output.cli.mixin;
 
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.cli.mixin.spi.IOutputHelper;
-import com.fortify.cli.common.output.cli.mixin.spi.IProductHelper;
-import com.fortify.cli.common.output.cli.mixin.spi.ProductHelperClass;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IInputTransformerSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.product.IProductHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.product.ProductHelperClass;
+import com.fortify.cli.common.output.cli.mixin.spi.request.INextPageUrlProducerSupplier;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins.SCDastProductHelper;
 import com.fortify.cli.sc_dast.rest.helper.SCDastInputTransformer;
 import com.fortify.cli.sc_dast.rest.helper.SCDastPagingHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
-import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,12 +33,12 @@ import lombok.Setter;
 @ReflectiveAccess
 @ProductHelperClass(SCDastProductHelper.class)
 public class SCDastOutputHelperMixins {
-    public static class SCDastProductHelper implements IProductHelper {
+    public static class SCDastProductHelper implements IProductHelper, IInputTransformerSupplier, INextPageUrlProducerSupplier {
         @Getter @Setter private IOutputHelper outputHelper;
         @Getter private UnaryOperator<JsonNode> inputTransformer = SCDastInputTransformer::getItems;
         
         @Override
-        public Function<HttpResponse<JsonNode>, String> getNextPageUrlProducer(UnirestInstance unirest, HttpRequest<?> originalRequest) {
+        public INextPageUrlProducer getNextPageUrlProducer(UnirestInstance unirest, HttpRequest<?> originalRequest) {
             return SCDastPagingHelper.nextPageUrlProducer(originalRequest);
         }
     }

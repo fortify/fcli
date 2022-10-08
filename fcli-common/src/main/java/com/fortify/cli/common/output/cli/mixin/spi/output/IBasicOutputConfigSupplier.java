@@ -1,4 +1,4 @@
-package com.fortify.cli.common.output.cli.mixin.spi;
+package com.fortify.cli.common.output.cli.mixin.spi.output;
 
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 

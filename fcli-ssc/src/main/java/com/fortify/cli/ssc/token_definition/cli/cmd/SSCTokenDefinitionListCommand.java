@@ -26,7 +26,7 @@ package com.fortify.cli.ssc.token_definition.cli.cmd;
 
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
-import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -38,8 +38,8 @@ import picocli.CommandLine.Command;
 @Command(name = "list")
 public class SSCTokenDefinitionListCommand extends AbstractSSCListCommand {
     @Override
-    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
-        return new SSCOutputQueryQParamGenerator()
+    protected SSCQParamGenerator getQParamGenerator() {
+        return new SSCQParamGenerator()
                 .add("type", SSCQParamValueGenerators::wrapInQuotes)
                 .add("maxDaysToLive", SSCQParamValueGenerators::plain)
                 .add("maxUsages", SSCQParamValueGenerators::plain)

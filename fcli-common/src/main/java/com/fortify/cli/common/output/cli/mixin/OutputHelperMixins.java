@@ -1,9 +1,9 @@
 package com.fortify.cli.common.output.cli.mixin;
 
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.spi.AbstractOutputHelper;
-import com.fortify.cli.common.output.cli.mixin.spi.IOutputHelper;
-import com.fortify.cli.common.output.cli.mixin.spi.IProductHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.AbstractOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.product.IProductHelper;
 import com.fortify.cli.common.output.writer.output.StandardOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.query.OutputWriterWithQueryFactory;
 

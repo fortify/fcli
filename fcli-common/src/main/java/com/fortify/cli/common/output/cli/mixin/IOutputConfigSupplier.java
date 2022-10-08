@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.cli.mixin;
 
-import com.fortify.cli.common.output.cli.mixin.spi.AbstractOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.AbstractOutputHelper;
 
 /**
  * TODO Remove this interface once all commands have been updated to use {@link OutputHelperMixins},

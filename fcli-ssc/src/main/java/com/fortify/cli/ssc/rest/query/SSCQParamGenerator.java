@@ -7,26 +7,32 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
+import com.fortify.cli.common.output.helper.OutputQueryHelper;
 import com.fortify.cli.common.output.writer.output.query.OutputQuery;
 import com.fortify.cli.common.output.writer.output.query.OutputQueryOperator;
 import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequest;
 
-public final class SSCOutputQueryQParamGenerator {
+public final class SSCQParamGenerator {
     private final Map<String, String> qNamesByPropertyPaths = new HashMap<>();
     private final Map<String, Function<String,String>> valueGeneratorsByPropertyPaths = new HashMap<>();
     
-    public SSCOutputQueryQParamGenerator add(String propertyPath, String qName, Function<String,String> valueGenerator) {
+    public SSCQParamGenerator add(String propertyPath, String qName, Function<String,String> valueGenerator) {
         qNamesByPropertyPaths.put(propertyPath, qName);
         valueGeneratorsByPropertyPaths.put(propertyPath, valueGenerator);
         return this;
     }
     
-    public SSCOutputQueryQParamGenerator add(String propertyPath, Function<String,String> valueGenerator) {
+    public SSCQParamGenerator add(String propertyPath, Function<String,String> valueGenerator) {
         qNamesByPropertyPaths.put(propertyPath, propertyPath);
         valueGeneratorsByPropertyPaths.put(propertyPath, valueGenerator);
         return this;
+    }
+    
+    public HttpRequest<?> addQParam(IOutputHelper outputHelper, HttpRequest<?> request) {
+        return addQParam(request, new OutputQueryHelper(outputHelper).getOutputQueries());
     }
     
     public HttpRequest<?> addQParam(HttpRequest<?> request, List<OutputQuery> queries) {

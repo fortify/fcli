@@ -18,6 +18,7 @@ import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.OutputOptionsArgGroup;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.runner.IfFailureHandler;
 import com.fortify.cli.common.util.StringUtils;
@@ -93,7 +94,7 @@ public class OutputMixin implements IOutputWriter {
     }
     
     @Override
-    public void write(HttpRequest<?> httpRequest, Function<HttpResponse<JsonNode>, String> nextPageUrlProducer) {
+    public void write(HttpRequest<?> httpRequest, INextPageUrlProducer nextPageUrlProducer) {
         if ( nextPageUrlProducer==null ) {
             write(httpRequest);
         } else {
@@ -173,7 +174,7 @@ public class OutputMixin implements IOutputWriter {
                 .ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
         }
         
-        public void write(HttpRequest<?> httpRequest, Function<HttpResponse<JsonNode>, String> nextPageUrlProducer) {
+        public void write(HttpRequest<?> httpRequest, INextPageUrlProducer nextPageUrlProducer) {
             PagingHelper.pagedRequest(httpRequest, nextPageUrlProducer)
                 .ifSuccess(this::write)
                 .ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request

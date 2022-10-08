@@ -1,20 +1,23 @@
 package com.fortify.cli.ssc.output.cli.mixin;
 
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.cli.mixin.spi.IOutputHelper;
-import com.fortify.cli.common.output.cli.mixin.spi.IProductHelper;
-import com.fortify.cli.common.output.cli.mixin.spi.ProductHelperClass;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IInputTransformerSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.product.IProductHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.product.ProductHelperClass;
+import com.fortify.cli.common.output.cli.mixin.spi.request.IHttpRequestUpdater;
+import com.fortify.cli.common.output.cli.mixin.spi.request.INextPageUrlProducerSupplier;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins.SSCProductHelper;
 import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc.rest.helper.SSCPagingHelper;
+import com.fortify.cli.ssc.rest.query.ISSCQParamGeneratorSupplier;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
-import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,13 +35,22 @@ import lombok.Setter;
 @ReflectiveAccess
 @ProductHelperClass(SSCProductHelper.class)
 public class SSCOutputHelperMixins {
-    public static class SSCProductHelper implements IProductHelper {
+    public static class SSCProductHelper implements IProductHelper, IInputTransformerSupplier, INextPageUrlProducerSupplier, IHttpRequestUpdater {
         @Getter @Setter private IOutputHelper outputHelper;
         @Getter private UnaryOperator<JsonNode> inputTransformer = SSCInputTransformer::getDataOrSelf;
         
         @Override
-        public Function<HttpResponse<JsonNode>, String> getNextPageUrlProducer(UnirestInstance unirest, HttpRequest<?> originalRequest) {
+        public INextPageUrlProducer getNextPageUrlProducer(UnirestInstance unirest, HttpRequest<?> originalRequest) {
             return SSCPagingHelper.nextPageUrlProducer();
+        }
+        
+        @Override
+        public final HttpRequest<?> updateRequest(UnirestInstance unirest, HttpRequest<?> request) {
+            ISSCQParamGeneratorSupplier qParamGeneratorSupplier = outputHelper.getCommandAs(ISSCQParamGeneratorSupplier.class);
+            if ( qParamGeneratorSupplier!=null ) {
+                request = qParamGeneratorSupplier.getQParamGenerator().addQParam(outputHelper, request);
+            }
+            return request;
         }
     }
     

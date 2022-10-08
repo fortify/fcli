@@ -1,7 +1,8 @@
-package com.fortify.cli.common.output.cli.mixin.spi;
+package com.fortify.cli.common.output.cli.mixin.spi.output;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.common.output.cli.mixin.spi.product.IProductHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
