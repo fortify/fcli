@@ -28,7 +28,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionDescriptor;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 
@@ -238,7 +238,7 @@ public final class SSCAppVersionAttributeUpdateBuilder {
 
     private static ArrayNode getOptionValues(SSCAttributeDefinitionHelper helper, SSCAttributeDefinitionDescriptor descriptor, String value) {
         return Stream.of(value.split(","))
-                .filter(Predicate.not(String::isBlank))
+                .filter(StringUtils::isNotBlank)
                 .map(v->helper.getOptionGuid(descriptor.getGuid(), v))
                 .map(SSCAppVersionAttributeUpdateBuilder::createAttrValueNode)
                 .collect(JsonHelper.arrayNodeCollector());

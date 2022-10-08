@@ -30,7 +30,7 @@ import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
-import com.fortify.cli.common.rest.runner.config.IUserCredentials;
+import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
@@ -53,12 +53,12 @@ public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand implements IO
     @Option(names="--description") private String description;    
     
     @Override
-    protected void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentials userCredentials) {
+    protected void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {
         SSCTokenUpdateRequest tokenUpdateRequest = SSCTokenUpdateRequest.builder()
                 .terminalDate(getExpiresAt())
                 .description(description)
                 .build();
-        outputMixin.write(tokenHelper.updateToken(urlConfig, userCredentials, token, tokenUpdateRequest));
+        outputMixin.write(tokenHelper.updateToken(urlConfig, userCredentialsConfig, token, tokenUpdateRequest));
     }
     
     private OffsetDateTime getExpiresAt() {

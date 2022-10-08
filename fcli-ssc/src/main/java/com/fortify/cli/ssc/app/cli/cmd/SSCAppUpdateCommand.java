@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.app.cli.mixin.SSCAppResolverMixin;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -56,8 +57,8 @@ public class SSCAppUpdateCommand extends AbstractSSCUnirestRunnerCommand impleme
     protected Void run(UnirestInstance unirest) {
         SSCAppDescriptor descriptor = appResolver.getAppDescriptor(unirest);
         ObjectNode updateData = (ObjectNode)descriptor.asJsonNode();
-        if ( name!=null && !name.isBlank() ) { updateData.put("name", name); }
-        if ( description!=null && !description.isBlank() ) { updateData.put("description", description); }
+        if ( StringUtils.isNotBlank(name) ) { updateData.put("name", name); }
+        if ( StringUtils.isNotBlank(description) ) { updateData.put("description", description); }
         outputMixin.write(unirest.put(SSCUrls.PROJECT(descriptor.getApplicationId()))
                 .body(updateData).asObject(JsonNode.class).getBody());
         return null;

@@ -24,6 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.cli.mixin;
 
+import com.fortify.cli.common.output.cli.mixin.spi.output.AbstractOutputHelper;
+
+/**
+ * TODO Remove this interface once all commands have been updated to use {@link OutputHelperMixins},
+ *      as {@link AbstractOutputHelper} already handles getting a basic output configuration.
+ */
 public interface IOutputConfigSupplier {
+    // TODO Rename this method to getOutputConfig(). Can't do that while others are working on fcli, to avoid merge conflicts.
     public OutputConfig getOutputOptionsWriterConfig();
 }

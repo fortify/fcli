@@ -27,7 +27,7 @@ package com.fortify.cli.ssc.appversion.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
-import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -39,8 +39,8 @@ import picocli.CommandLine.Command;
 @Command(name = "list")
 public class SSCAppVersionListCommand extends AbstractSSCListCommand {
     @Override
-    protected SSCOutputQueryQParamGenerator getQParamGenerator() {
-        return new SSCOutputQueryQParamGenerator()
+    protected SSCQParamGenerator getQParamGenerator() {
+        return new SSCQParamGenerator()
                 .add("id", SSCQParamValueGenerators::plain)
                 .add("application.name", "project.name", SSCQParamValueGenerators::wrapInQuotes)
                 .add("application.id", "project.id", SSCQParamValueGenerators::plain)

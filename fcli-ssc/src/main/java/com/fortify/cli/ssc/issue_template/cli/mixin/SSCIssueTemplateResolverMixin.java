@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.issue_template.cli.mixin;
 
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
 
@@ -40,7 +41,7 @@ public class SSCIssueTemplateResolverMixin {
         
         public SSCIssueTemplateDescriptor getIssueTemplateDescriptor(UnirestInstance unirest) {
             String issueTemplateNameOrId = getIssueTemplateNameOrId();
-            return issueTemplateNameOrId==null || issueTemplateNameOrId.isBlank() 
+            return StringUtils.isBlank(issueTemplateNameOrId) 
                     ? null 
                     : new SSCIssueTemplateHelper(unirest).getDescriptorByNameOrId(issueTemplateNameOrId, true);
         }

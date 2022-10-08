@@ -5,7 +5,8 @@ import picocli.CommandLine.Command;
 @Command(
         name = "scan-settings",
         subcommands = {
-             SCDastScanSettingsListCommand.class
+            SCDastScanSettingsGetCommand.class,
+            SCDastScanSettingsListCommand.class
         }
 )
 public class SCDastScanSettingsCommands {

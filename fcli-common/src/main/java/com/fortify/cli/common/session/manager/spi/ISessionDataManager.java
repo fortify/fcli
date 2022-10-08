@@ -3,7 +3,7 @@ package com.fortify.cli.common.session.manager.spi;
 import java.util.Collection;
 import java.util.List;
 
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.api.SessionSummary;
 
@@ -15,5 +15,5 @@ public interface ISessionDataManager<T extends ISessionData> {
     List<String> sessionNames();
     Collection<SessionSummary> sessionSummaries();
     String getSessionTypeName();
-    void writeSessionSummaries(OutputMixin outputMixin);
+    ArrayNode sessionSummariesAsArrayNode();
 }

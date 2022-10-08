@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
+import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpResponse;
@@ -132,7 +133,7 @@ public class SCDastScanActionsHandler {
             int scanStatusInt = Integer.parseInt(response.get("scanStatusType").toString());
             ((ObjectNode) response).put(
                     "scanStatusTypeString",
-                    SCDastScanStatusTypes.getStatusString(scanStatusInt).replace("\"",""));
+                    SCDastScanStatus.valueOf(scanStatusInt).name().replace("\"",""));
         }
 
         return response;

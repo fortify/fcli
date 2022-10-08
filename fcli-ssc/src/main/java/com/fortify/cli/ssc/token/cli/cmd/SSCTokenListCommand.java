@@ -31,8 +31,9 @@ import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
-import com.fortify.cli.common.rest.runner.config.IUserCredentials;
-import com.fortify.cli.ssc.rest.query.SSCOutputQueryQParamGenerator;
+import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
+import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
@@ -45,21 +46,21 @@ import picocli.CommandLine.Mixin;
 @Command(name = "list")
 public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IOutputConfigSupplier {
     @Mixin private OutputMixinWithQuery outputMixin;
-    private final SSCOutputQueryQParamGenerator qParamGenerator = 
-            new SSCOutputQueryQParamGenerator()
+    private final SSCQParamGenerator qParamGenerator = 
+            new SSCQParamGenerator()
             .add("userName", SSCQParamValueGenerators::wrapInQuotes)
             .add("type", SSCQParamValueGenerators::wrapInQuotes);
     
     @Override
-    protected void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentials userCredentials) {
-        outputMixin.write(tokenHelper.listTokens(urlConfig, userCredentials, getQueryParams()));
+    protected void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {
+        outputMixin.write(tokenHelper.listTokens(urlConfig, userCredentialsConfig, getQueryParams()));
     }
     
     private Map<String, Object> getQueryParams() {
         Map<String, Object> queryParams = new HashMap<String, Object>();
         queryParams.put("limit", "-1");
         String qParamValue = qParamGenerator.getQParamValue(outputMixin.getOutputQueries());
-        if ( qParamValue!=null && !qParamValue.isBlank() ) {
+        if ( StringUtils.isNotBlank(qParamValue) ) {
             queryParams.put("q", qParamValue);
         }
         return queryParams;

@@ -24,26 +24,15 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.rest.cli.cmd;
 
+import com.fortify.cli.common.rest.cli.cmd.AbstractUnirestRunnerCommand;
 import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastUnirestRunnerMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess @FixInjection
-public abstract class AbstractSCDastUnirestRunnerCommand implements Runnable {
-    @Getter @Mixin private SCDastUnirestRunnerMixin unirestRunnerMixin;
-
-    @Override @SneakyThrows
-    public final void run() {
-        // TODO Do we want to do anything with the results, like formatting it based on output options?
-        //      Or do we let the actual implementation handle this?
-        unirestRunnerMixin.run(this::run);
-    }
-    
-    protected abstract Void run(UnirestInstance unirest);
-    
+public abstract class AbstractSCDastUnirestRunnerCommand extends AbstractUnirestRunnerCommand {
+    @Getter @Mixin private SCDastUnirestRunnerMixin unirestRunner;
 }
