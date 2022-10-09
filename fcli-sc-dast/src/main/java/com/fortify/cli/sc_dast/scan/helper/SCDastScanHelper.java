@@ -40,7 +40,7 @@ public class SCDastScanHelper {
     
     public static final SCDastScanDescriptor getScanDescriptor(UnirestInstance unirest, String scanId) {
         return getDescriptor(
-                unirest.get(String.format("/api/v2/scans/%s/scan-summary", scanId)).asObject(JsonNode.class).getBody());
+                unirest.get(String.format("/api/v2/scans/%s/scan-summary", scanId)).asObject(JsonNode.class).getBody().get("item"));
     }
     
     public static final SCDastScanDescriptor performScanAction(UnirestInstance unirest, SCDastScanDescriptor descriptor, ScanAction action) {
@@ -54,7 +54,7 @@ public class SCDastScanHelper {
         return descriptor;
     }
 
-    private static final SCDastScanDescriptor getDescriptor(JsonNode sensorNode) {
-        return JsonHelper.treeToValue(sensorNode, SCDastScanDescriptor.class);
+    private static final SCDastScanDescriptor getDescriptor(JsonNode scanNode) {
+        return JsonHelper.treeToValue(scanNode, SCDastScanDescriptor.class);
     }
 }

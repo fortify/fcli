@@ -3,12 +3,14 @@ package com.fortify.cli.sc_dast.output.cli.mixin;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.spi.output.IUnirestOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IInputTransformerSupplier;
 import com.fortify.cli.common.output.cli.mixin.spi.product.IProductHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.product.ProductHelperClass;
 import com.fortify.cli.common.output.cli.mixin.spi.request.INextPageUrlProducerSupplier;
+import com.fortify.cli.common.output.writer.output.StandardOutputWriterFactory;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins.SCDastProductHelper;
 import com.fortify.cli.sc_dast.rest.helper.SCDastInputTransformer;
@@ -19,6 +21,7 @@ import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
+import picocli.CommandLine.Mixin;
 
 /**
  * <p>This class provides standard, SC-DAST specific {@link IUnirestOutputHelper} implementations,
@@ -93,4 +96,9 @@ public class SCDastOutputHelperMixins {
     
     @ReflectiveAccess public static class Other 
                extends OutputHelperMixins.Other {}
+    
+    @ReflectiveAccess public static class ScanAction extends OutputHelperMixins.Other {
+        @Getter @Mixin private StandardOutputWriterFactory outputWriterFactory;
+        @Getter private OutputConfig basicOutputConfig = OutputConfig.table(); 
+    }
 }

@@ -227,6 +227,7 @@ public class OutputMixin implements IOutputWriter {
                     .outputFormat(getOutputFormat())
                     .singular(isSingularOutput())
                     .messageResolver(this)
+                    .cmd(commandSpec.userObject())
                     .build();
         }
         

@@ -26,7 +26,6 @@ package com.fortify.cli.common.json;
 
 import java.util.EnumSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -112,16 +111,6 @@ public class JsonHelper {
             }
         }
         throw new IllegalArgumentException("Input must be an ObjectNode or array of ObjectNodes");
-    }
-
-    public static final JsonNode filterJsonNode (JsonNode node, Set<String> outputFields){
-        Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields();
-        while (nodeFields.hasNext()) {
-            Map.Entry<String, JsonNode> nodeField = nodeFields.next();
-            if( !outputFields.contains(nodeField.getKey())) { nodeFields.remove(); }
-        }
-
-        return node;
     }
     
     public static final Iterable<JsonNode> iterable(ArrayNode arrayNode) {
