@@ -43,7 +43,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.List.CMD_NAME)
-public class FoDAppListCommand extends AbstractFoDOutputCommand implements IBaseHttpRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier  {
+public class FoDAppListCommand extends AbstractFoDOutputCommand implements IBaseHttpRequestSupplier  {
     @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
 
     @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
@@ -51,11 +51,6 @@ public class FoDAppListCommand extends AbstractFoDOutputCommand implements IBase
             .add("applicationName", FoDFiltersParamValueGenerators::plain)
             .add("businessCriticalityType", FoDFiltersParamValueGenerators::plain)
             .add("applicationType", FoDFiltersParamValueGenerators::plain);
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
-    }
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {

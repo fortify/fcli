@@ -25,28 +25,29 @@
 package com.fortify.cli.fod.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDGetCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
-public class FoDAppGetCommand extends AbstractFoDGetCommand {
+public class FoDAppGetCommand extends AbstractFoDOutputCommand implements IBaseHttpRequestSupplier {
+    @Getter @Mixin private FoDOutputHelperMixins.Get outputHelper;
     @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
 
     @Override
-    protected JsonNode generateOutput(UnirestInstance unirest) {
-        return appResolver.getAppDescriptor(unirest).asJsonNode();
-    }
-
-    @Override
-    protected JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+        return unirest.get(FoDUrls.APPLICATION).routeParam("appId", appResolver.getAppId(unirest));
     }
 
 }
