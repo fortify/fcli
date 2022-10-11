@@ -1,8 +1,6 @@
 package com.fortify.cli.common.util;
 
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
+import static java.nio.file.StandardOpenOption.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,18 +10,30 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.stream.Stream;
 
-import io.micronaut.core.util.StringUtils;
-
 public class FcliHomeHelper {
-    private static final String FORTIFY_HOME_ENV_VAR_NAME = "FORTIFY_HOME";
-    private static final String SSC_CLI_CONFIG_DIR_NAME = "fcli";
+    private static final String ENVNAME_FORTIFY_HOME     = "FORTIFY_HOME";
+    private static final String ENVNAME_FCLI_HOME        = "FCLI_HOME";
+    private static final String ENVNAME_FCLI_PIPELINE_ID = "FCLI_PIPELINE_ID";
+    private static final String DEFAULT_FORTIFY_DIR_NAME = ".fortify";
+    private static final String DEFAULT_FCLI_DIR_NAME    = "fcli";
+    
+    public static final Path getFortifyHomePath() {
+        String fortifyHome = System.getenv(ENVNAME_FORTIFY_HOME);
+        return StringUtils.isNotBlank(fortifyHome) 
+                ? Path.of(fortifyHome)
+                : Path.of(System.getProperty("user.home"), DEFAULT_FORTIFY_DIR_NAME);
+    }
 
     public static final Path getFcliHomePath() {
-        String fortifyHomeUri = System.getenv(FORTIFY_HOME_ENV_VAR_NAME);
-        if (StringUtils.isEmpty(fortifyHomeUri)) {
-            fortifyHomeUri = Path.of(System.getProperty("user.home"), ".fortify").toString();
+        String fcliHome = System.getenv(ENVNAME_FCLI_HOME);
+        Path fcliHomePath = StringUtils.isNotBlank(fcliHome) 
+                ? Path.of(fcliHome) 
+                : getFortifyHomePath().resolve(DEFAULT_FCLI_DIR_NAME);
+        String pipelineId = System.getenv(ENVNAME_FCLI_PIPELINE_ID);
+        if ( StringUtils.isNotBlank(pipelineId) ) {
+            fcliHomePath = fcliHomePath.resolve(String.format("pipeline_%s", pipelineId.replaceAll("\\W+", "_")));
         }
-        return Path.of(fortifyHomeUri, SSC_CLI_CONFIG_DIR_NAME);
+        return fcliHomePath;
     }
     
     public static final void saveSecuredFile(Path relativePath, String contents) throws IOException {
