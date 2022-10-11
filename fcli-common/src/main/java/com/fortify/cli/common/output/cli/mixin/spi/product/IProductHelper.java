@@ -1,7 +1,7 @@
 package com.fortify.cli.common.output.cli.mixin.spi.product;
 
-import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IUnirestOutputHelper;
 
 public interface IProductHelper {
-    void setOutputHelper(IOutputHelper outputHelper);
+    void setOutputHelper(IUnirestOutputHelper unirestOutputHelper);
 }

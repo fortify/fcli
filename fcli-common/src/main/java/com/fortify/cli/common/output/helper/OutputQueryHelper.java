@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IUnirestOutputHelper;
 import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.query.OutputQuery;
 import com.fortify.cli.common.output.writer.output.query.OutputQueryOperator;
@@ -13,8 +13,8 @@ import com.fortify.cli.common.output.writer.output.query.OutputWriterWithQueryFa
 public class OutputQueryHelper {
     private final List<OutputQuery> outputQueries;
     
-    public OutputQueryHelper(IOutputHelper outputHelper) {
-        this(outputHelper.getOutputWriterFactory());
+    public OutputQueryHelper(IUnirestOutputHelper unirestOutputHelper) {
+        this(unirestOutputHelper.getOutputWriterFactory());
     }
     
     public OutputQueryHelper(IOutputWriterFactory outputWriterFactory) {

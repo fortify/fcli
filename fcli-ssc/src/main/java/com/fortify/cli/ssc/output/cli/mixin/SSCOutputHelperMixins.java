@@ -4,7 +4,7 @@ import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IUnirestOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IInputTransformerSupplier;
 import com.fortify.cli.common.output.cli.mixin.spi.product.IProductHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.product.ProductHelperClass;
@@ -23,11 +23,11 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * <p>This class provides standard, SSC-specific {@link IOutputHelper} implementations,
- * replicating the product-agnostic {@link IOutputHelper} implementations provided in 
+ * <p>This class provides standard, SSC-specific {@link IUnirestOutputHelper} implementations,
+ * replicating the product-agnostic {@link IUnirestOutputHelper} implementations provided in 
  * {@link OutputHelperMixins}, adding product-specific functionality through the
  * {@link ProductHelperClass} annotation on this enclosing class. In addition to the
- * {@link IOutputHelper} implementations provided by the common {@link OutputHelperMixins},
+ * {@link IUnirestOutputHelper} implementations provided by the common {@link OutputHelperMixins},
  * this class may define some additional implementations specific for SSC.</p>
  * 
  * @author rsenden
@@ -36,7 +36,7 @@ import lombok.Setter;
 @ProductHelperClass(SSCProductHelper.class)
 public class SSCOutputHelperMixins {
     public static class SSCProductHelper implements IProductHelper, IInputTransformerSupplier, INextPageUrlProducerSupplier, IHttpRequestUpdater {
-        @Getter @Setter private IOutputHelper outputHelper;
+        @Getter @Setter private IUnirestOutputHelper outputHelper;
         @Getter private UnaryOperator<JsonNode> inputTransformer = SSCInputTransformer::getDataOrSelf;
         
         @Override

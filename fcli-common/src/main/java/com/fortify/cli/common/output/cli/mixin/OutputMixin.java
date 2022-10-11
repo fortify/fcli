@@ -2,7 +2,8 @@ package com.fortify.cli.common.output.cli.mixin;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.ResourceBundle;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -12,26 +13,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IMinusVariableUnsupported;
+import com.fortify.cli.common.output.cli.mixin.spi.output.ISingularSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.MinusVariableDefinition;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.output.writer.OutputFormat;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
+import com.fortify.cli.common.output.writer.output.OutputFormatConfig;
 import com.fortify.cli.common.output.writer.output.OutputOptionsArgGroup;
+import com.fortify.cli.common.output.writer.output.OutputStoreConfig;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.runner.IfFailureHandler;
+import com.fortify.cli.common.util.CommandSpecHelper;
+import com.fortify.cli.common.util.FcliVariableHelper;
+import com.fortify.cli.common.util.FcliVariableHelper.VariableType;
 import com.fortify.cli.common.util.StringUtils;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
-import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Model.Messages;
 import picocli.CommandLine.Spec;
 
 /**
@@ -73,12 +80,6 @@ public class OutputMixin implements IOutputWriter {
         this.commandSpec = mixee.commandLine()==null ? mixee : mixee.commandLine().getCommandSpec();
     }
     
-    @Data
-    public static final class OutputFormatConfig {
-        private final OutputFormat outputFormat;
-        private final String options;
-    }
-
     public OutputOptionsWriter getWriter() {
         return new OutputOptionsWriter(getOutputOptionsWriterConfig());
     }
@@ -146,13 +147,13 @@ public class OutputMixin implements IOutputWriter {
         private final OutputConfig config;
         private final OutputFormat outputFormat;
         private final PrintWriter printWriter;
-        private final IRecordWriter recordWriter;
+        private final IRecordWriter[] recordWriters;
         
         public OutputOptionsWriter(OutputConfig config) {
             this.config = config;
             this.outputFormat = getOutputFormat();
             this.printWriter = createPrintWriter(config);
-            this.recordWriter = outputFormat.getRecordWriterFactory().createRecordWriter(createOutputWriterConfig());
+            this.recordWriters = getRecordWriters(config);
         }
         
         public void write(JsonNode jsonNode) {
@@ -190,12 +191,23 @@ public class OutputMixin implements IOutputWriter {
             record = record==null ? null : config.applyRecordTransformations(outputFormat, record);
             record = record==null ? null : applyRecordOutputFilters(outputFormat, record);
             if ( record!=null ) {
-                if(record.getNodeType() == JsonNodeType.ARRAY) {
-                    if(record.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(record.get(0).toString()));
-                } else {
-                    recordWriter.writeRecord((ObjectNode) record);
+                for ( IRecordWriter recordWriter : recordWriters ) {
+                    if(record.getNodeType() == JsonNodeType.ARRAY) {
+                        if(record.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(record.get(0).toString()));
+                    } else {
+                        recordWriter.writeRecord((ObjectNode) record);
+                    }
                 }
             }
+        }
+        
+        private IRecordWriter[] getRecordWriters(OutputConfig config) {
+            List<IRecordWriter> recordWritersList = new ArrayList<>();
+            recordWritersList.add(outputFormat.getRecordWriterFactory().createRecordWriter(createOutputWriterConfig()));
+            OutputStoreConfig outputStoreConfig = optionsArgGroup.getOutputStoreConfig();
+            if ( outputStoreConfig!=null ) {
+                recordWritersList.add(OutputFormat.json.getRecordWriterFactory().createRecordWriter(createOutputStoreWriterConfig(outputStoreConfig)));           }
+            return recordWritersList.toArray(IRecordWriter[]::new);
         }
 
         private OutputFormat getOutputFormat() {
@@ -208,19 +220,54 @@ public class OutputMixin implements IOutputWriter {
             return result;
         }
         
-        private Messages getMessages() {
-            ResourceBundle resourceBundle = commandSpec.resourceBundle();
-            return resourceBundle==null ? null : new Messages(commandSpec, resourceBundle);
-        }
-        
         private RecordWriterConfig createOutputWriterConfig() {
             return RecordWriterConfig.builder()
                     .printWriter(printWriter)
                     .options(getOutputWriterOptions())
                     .outputFormat(getOutputFormat())
-                    .singular(config.singular())
+                    .singular(isSingularOutput())
                     .messageResolver(this)
                     .build();
+        }
+        
+        // TODO Clean up this code, preferably move some code to some helper class
+        private RecordWriterConfig createOutputStoreWriterConfig(OutputStoreConfig outputStoreConfig) {
+            String variableName = outputStoreConfig.getVariableName();
+            String options = outputStoreConfig.getOptions();
+            VariableType variableType = VariableType.USER_PROVIDED;
+            if ( "-".equals(variableName) ) {
+                CommandSpec cmdSpec = getCommandSpec();
+                Object cmd = cmdSpec.userObject();
+                if ( StringUtils.isNotBlank(options) ) { 
+                    throw new IllegalArgumentException("Option --store doesn't support options for variable alias '-'");
+                }
+                if ( cmd instanceof IMinusVariableUnsupported || !isSingularOutput() ) {
+                    throw new IllegalArgumentException("Option --store doesn't support variable alias '-' on this command");
+                }
+                MinusVariableDefinition minusVariableDefinition = CommandSpecHelper.findAnnotation(cmdSpec, MinusVariableDefinition.class);
+                if ( minusVariableDefinition==null ) {
+                    throw new IllegalArgumentException("Option --store doesn't support variable alias '-' on this command");
+                } else {
+                    variableName = minusVariableDefinition.name();
+                    options = minusVariableDefinition.options();
+                    variableType = VariableType.PREDEFINED;
+                }
+            }
+            return RecordWriterConfig.builder()
+                    .printWriter(FcliVariableHelper.getVariableContentsPrintWriter(variableType, variableName))
+                    .options(options)
+                    .outputFormat(OutputFormat.json)
+                    .singular(isSingularOutput())
+                    .messageResolver(this)
+                    .build();
+        }
+        
+        private boolean isSingularOutput() {
+            CommandSpec cmdSpec = getCommandSpec();
+            Object cmd = cmdSpec.userObject();
+            return cmd instanceof ISingularSupplier
+                    ? ((ISingularSupplier)cmd).isSingular()
+                    : config.singular();
         }
         
         private String getOutputWriterOptions() {
@@ -235,16 +282,7 @@ public class OutputMixin implements IOutputWriter {
 
         @Override
         public String getMessageString(String keySuffix) {
-            Messages messages = getMessages();
-            CommandSpec commandSpec = messages==null ? null : messages.commandSpec();
-            String value = null;
-            while ( commandSpec!=null && value==null ) {
-                String key = commandSpec.qualifiedName(".")+"."+keySuffix;
-                value = messages.getString(key, null);
-                commandSpec = commandSpec.parent();
-            }
-            // If value is still null, try without any prefix
-            return value!=null ? value : messages.getString(keySuffix, null);
+            return CommandSpecHelper.getMessageString(getCommandSpec(), keySuffix);
         }
 
         private final PrintWriter createPrintWriter(OutputConfig config) {
@@ -260,9 +298,11 @@ public class OutputMixin implements IOutputWriter {
 
         @Override
         public void close() {
-            recordWriter.finishOutput();
-            printWriter.flush();
-            // TODO Close printwriter and/or underlying streams except for System.out
+            for ( IRecordWriter recordWriter : recordWriters ) {
+                recordWriter.finishOutput();
+                printWriter.flush();
+                // TODO Close printwriter and/or underlying streams except for System.out
+            }
         }
     }
 }

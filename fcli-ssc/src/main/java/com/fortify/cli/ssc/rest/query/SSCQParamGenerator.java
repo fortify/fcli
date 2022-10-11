@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IUnirestOutputHelper;
 import com.fortify.cli.common.output.helper.OutputQueryHelper;
 import com.fortify.cli.common.output.writer.output.query.OutputQuery;
 import com.fortify.cli.common.output.writer.output.query.OutputQueryOperator;
@@ -31,8 +31,8 @@ public final class SSCQParamGenerator {
         return this;
     }
     
-    public HttpRequest<?> addQParam(IOutputHelper outputHelper, HttpRequest<?> request) {
-        return addQParam(request, new OutputQueryHelper(outputHelper).getOutputQueries());
+    public HttpRequest<?> addQParam(IUnirestOutputHelper unirestOutputHelper, HttpRequest<?> request) {
+        return addQParam(request, new OutputQueryHelper(unirestOutputHelper).getOutputQueries());
     }
     
     public HttpRequest<?> addQParam(HttpRequest<?> request, List<OutputQuery> queries) {
