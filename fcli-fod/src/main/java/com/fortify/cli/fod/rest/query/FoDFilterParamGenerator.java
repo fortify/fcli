@@ -24,6 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.fod.rest.query;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
 import com.fortify.cli.common.output.helper.OutputQueryHelper;
 import com.fortify.cli.common.output.writer.output.query.OutputQuery;
@@ -32,58 +39,51 @@ import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequest;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-public final class FoDOutputQueryFiltersParamGenerator {
-    private final Map<String, String> filtersNamesByPropertyPaths = new HashMap<>();
+public final class FoDFilterParamGenerator {
+    private final Map<String, String> filterNamesByPropertyPaths = new HashMap<>();
     private final Map<String, Function<String,String>> valueGeneratorsByPropertyPaths = new HashMap<>();
-    
-    public FoDOutputQueryFiltersParamGenerator add(String propertyPath, String filtersName, Function<String,String> valueGenerator) {
-        filtersNamesByPropertyPaths.put(propertyPath, filtersName);
-        valueGeneratorsByPropertyPaths.put(propertyPath, valueGenerator);
-        return this;
-    }
-    
-    public FoDOutputQueryFiltersParamGenerator add(String propertyPath, Function<String,String> valueGenerator) {
-        filtersNamesByPropertyPaths.put(propertyPath, propertyPath);
+
+    public FoDFilterParamGenerator add(String propertyPath, String filterName, Function<String,String> valueGenerator) {
+        filterNamesByPropertyPaths.put(propertyPath, filterName);
         valueGeneratorsByPropertyPaths.put(propertyPath, valueGenerator);
         return this;
     }
 
-    public HttpRequest<?> addFiltersParam(IOutputHelper outputHelper, HttpRequest<?> request) {
-        return addFiltersParam(request, new OutputQueryHelper(outputHelper).getOutputQueries());
+    public FoDFilterParamGenerator add(String propertyPath, Function<String,String> valueGenerator) {
+        filterNamesByPropertyPaths.put(propertyPath, propertyPath);
+        valueGeneratorsByPropertyPaths.put(propertyPath, valueGenerator);
+        return this;
     }
 
-    public HttpRequest<?> addFiltersParam(HttpRequest<?> request, List<OutputQuery> queries) {
-        String filtersParamValue = getFiltersParamValue(queries);
-        if ( StringUtils.isNotBlank(filtersParamValue) ) {
-            request = request.queryString("filters", filtersParamValue);
+    public HttpRequest<?> addFilterParam(IOutputHelper outputHelper, HttpRequest<?> request) {
+        return addFilterParam(request, new OutputQueryHelper(outputHelper).getOutputQueries());
+    }
+
+    public HttpRequest<?> addFilterParam(HttpRequest<?> request, List<OutputQuery> queries) {
+        String FilterParamValue = getFilterParamValue(queries);
+        if ( StringUtils.isNotBlank(FilterParamValue) ) {
+            request = request.queryString("filters", FilterParamValue);
         }
         return request;
     }
-    
-    public String getFiltersParamValue(List<OutputQuery> queries) {
+
+    public String getFilterParamValue(List<OutputQuery> queries) {
         return queries==null
-                ? null 
+                ? null
                 : queries.stream()
-                    .map(this::getFiltersParamValueForQuery)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.joining("+and+"));
+                .map(this::getFilterParamValueForQuery)
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining("+and+"));
     }
-    
-    protected String getFiltersParamValueForQuery(OutputQuery query) {
+
+    protected String getFilterParamValueForQuery(OutputQuery query) {
         if ( query.getOperator()==OutputQueryOperator.EQUALS ) {
             String propertyPath = query.getPropertyPath();
             String valueToMatch = query.getValueToMatch();
-            String filtersName = filtersNamesByPropertyPaths.get(propertyPath);
-            if ( filtersName!=null ) {
+            String filterName = filterNamesByPropertyPaths.get(propertyPath);
+            if ( filterName!=null ) {
                 Function<String, String> valueGenerator = valueGeneratorsByPropertyPaths.get(propertyPath);
-                return String.format("%s:%s", filtersName, valueGenerator.apply(valueToMatch));
+                return String.format("%s:%s", filterName, valueGenerator.apply(valueToMatch));
             }
         }
         return null;

@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.fod.rest.cli.cmd;
 
+import com.fortify.cli.common.rest.runner.IUnirestRunner;
 import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
 
@@ -32,6 +33,8 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
+
+import java.util.List;
 
 @ReflectiveAccess
 public abstract class AbstractFoDUnirestRunnerCommand implements Runnable {
@@ -43,6 +46,10 @@ public abstract class AbstractFoDUnirestRunnerCommand implements Runnable {
         //      Or do we let the actual implementation handle this?
         unirestRunnerMixin.run(this::run);
     }
-    
+
     protected abstract Void run(UnirestInstance unirest);
+    protected boolean missing(List<?> list) {
+        return list == null || list.isEmpty();
+    }
+
 }

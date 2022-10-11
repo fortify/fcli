@@ -22,16 +22,49 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.output.cli;
+package com.fortify.cli.fod.app.helper;
 
-import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
-import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import picocli.CommandLine.Mixin;
+import lombok.ToString;
 
 @ReflectiveAccess
-public abstract class AbstractFoDOutputCommand extends AbstractOutputCommand {
-    @Getter @Mixin FoDUnirestRunnerMixin unirestRunner;
+@Getter
+@ToString
+@EqualsAndHashCode(callSuper = true)
+public class FoDAppUpdateRequest extends JsonNodeHolder {
+    private String applicationName;
+    private String applicationDescription;
+    private String businessCriticalityType;
+    private String emailList;
+    private JsonNode attributes;
+
+    public FoDAppUpdateRequest setApplicationName(String name) {
+        this.applicationName = name;
+        return this;
+    }
+
+    public FoDAppUpdateRequest setApplicationDescription(String description) {
+        this.applicationDescription = description;
+        return this;
+    }
+
+    public FoDAppUpdateRequest setBusinessCriticalityType(String type) {
+        this.businessCriticalityType = type;
+        return this;
+    }
+
+    public FoDAppUpdateRequest setEmailList(String list) {
+        this.emailList = list;
+        return this;
+    }
+
+    public FoDAppUpdateRequest setAttributes(JsonNode attributes) {
+        this.attributes = attributes;
+        return this;
+    }
+
 }

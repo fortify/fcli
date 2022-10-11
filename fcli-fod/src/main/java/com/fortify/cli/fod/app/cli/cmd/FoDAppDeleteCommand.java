@@ -1,41 +1,70 @@
+/*******************************************************************************
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including without
+ * limitation the rights to use, copy, modify, merge, publish, distribute,
+ * sublicense, and/or sell copies of the Software, and to permit persons to
+ * whom the Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+ * KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ ******************************************************************************/
 package com.fortify.cli.fod.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
+import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDHttpUpdateCommand;
+import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDUpdateCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "delete")
-public class FoDAppDeleteCommand extends AbstractFoDHttpUpdateCommand implements IOutputConfigSupplier {
+@Command(name = FoDOutputHelperMixins.Delete.CMD_NAME)
+public class FoDAppDeleteCommand extends AbstractFoDUpdateCommand {
 
-    @Parameters(index = "0", arity = "1", descriptionKey = "appNameOrId")
-    private String appNameOrId;
+    @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
 
     @SneakyThrows
     @Override
     protected Void run(UnirestInstance unirest) {
-        validate();
 
-        // current app being updated
-        FoDAppDescriptor appCurrent = FoDAppHelper.getApp(unirest, appNameOrId, true);
+        // current values of app being deleted
+        FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
 
         JsonNode response = unirest.delete(FoDUrls.APPLICATION)
-                .routeParam("appId", String.valueOf(appCurrent.getApplicationId()))
+                .routeParam("appId", appResolver.getAppId(unirest))
                 .asObject(JsonNode.class).getBody();
-        // TODO: return appropriate response as no data returned
-        getOutputMixin().write(response);
+        getOutputMixin().write(appDescriptor.asObjectNode().put("action", "DELETED"));
         return null;
     }
 
-    private void validate() {
-        // TODO
+    @Override
+    protected JsonNode generateOutput(UnirestInstance unirest) {
+        return appResolver.getAppDescriptor(unirest).asJsonNode();
     }
+
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDAppHelper.renameFields(record);
+    }
+
 }

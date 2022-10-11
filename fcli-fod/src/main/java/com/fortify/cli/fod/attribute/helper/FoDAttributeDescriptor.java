@@ -34,7 +34,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class FoDAttributeDescriptor extends JsonNodeHolder {
-    private String id;
+    private Integer id;
     private String name;
     private Integer attributeTypeId;
     private String attributeType;

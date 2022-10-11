@@ -34,7 +34,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class FoDUserDescriptor extends JsonNodeHolder {
-    private String userId;
+    private Integer userId;
     private String userName;
     private String firstName;
     private String lastName;

@@ -22,16 +22,31 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.output.cli;
+package com.fortify.cli.fod.app.cli.cmd;
 
-import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
-import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
+import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDGetCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
+import kong.unirest.UnirestInstance;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-public abstract class AbstractFoDOutputCommand extends AbstractOutputCommand {
-    @Getter @Mixin FoDUnirestRunnerMixin unirestRunner;
+@Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
+public class FoDAppGetCommand extends AbstractFoDGetCommand {
+    @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
+
+    @Override
+    protected JsonNode generateOutput(UnirestInstance unirest) {
+        return appResolver.getAppDescriptor(unirest).asJsonNode();
+    }
+
+    @Override
+    protected JsonNode transformRecord(JsonNode record) {
+        return FoDAppHelper.renameFields(record);
+    }
+
 }

@@ -22,16 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.output.cli;
+package com.fortify.cli.fod.rest.query;
 
-import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
-import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
-
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
-
-@ReflectiveAccess
-public abstract class AbstractFoDOutputCommand extends AbstractOutputCommand {
-    @Getter @Mixin FoDUnirestRunnerMixin unirestRunner;
+public interface IFoDFilterParamGeneratorSupplier {
+    FoDFilterParamGenerator getFilterParamGenerator();
 }

@@ -1,21 +1,41 @@
+/*******************************************************************************
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including without
+ * limitation the rights to use, copy, modify, merge, publish, distribute,
+ * sublicense, and/or sell copies of the Software, and to permit persons to
+ * whom the Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+ * KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ ******************************************************************************/
 package com.fortify.cli.fod.app.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
+import com.fortify.cli.fod.app.helper.FoDAppCreateRequest;
+import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
+import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.app.mixin.FoDAppTypeOptions;
 import com.fortify.cli.fod.app.mixin.FoDCriticalityTypeOptions;
 import com.fortify.cli.fod.app.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
-import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDHttpUpdateCommand;
+import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDUpdateCommand;
 import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
-import com.fortify.cli.fod.user_group.helper.FoDUserGroupDescriptor;
-import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
@@ -23,13 +43,11 @@ import picocli.CommandLine.*;
 import picocli.CommandLine.Model.CommandSpec;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 @ReflectiveAccess
-@Command(name = "create")
-public class FoDAppCreateCommand extends AbstractFoDHttpUpdateCommand implements IOutputConfigSupplier {
-    @Spec
-    CommandSpec spec;
+@Command(name = FoDOutputHelperMixins.Create.CMD_NAME)
+public class FoDAppCreateCommand extends AbstractFoDUpdateCommand {
+    @Spec CommandSpec spec;
 
     @Parameters(index = "0", arity = "1", descriptionKey = "appName")
     private String applicationName;
@@ -64,37 +82,27 @@ public class FoDAppCreateCommand extends AbstractFoDHttpUpdateCommand implements
     protected Void run(UnirestInstance unirest) {
         validate();
 
-        ObjectNode body = getObjectMapper().createObjectNode();
-        body.put("applicationName", applicationName)
-                .put("applicationDescription", description == null ? "" : description)
-                .put("businessCriticalityType", String.valueOf(criticalityType.getCriticalityType()))
-                .put("emailList", getEmailList(notifications))
-                .put("releaseName", releaseName)
-                .put("releaseDescription", releaseDescription == null ? "" : releaseDescription)
-                .put("sdlcStatusType", String.valueOf(sdlcStatus.getSdlcStatusType()));
-
-        // look up username if supplied to get owner id
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUser(unirest, owner, true);
-        body.put("ownerId", userDescriptor.getUserId());
-
         FoDAppTypeOptions.FoDAppType appType = this.appType.getAppType();
-        body.put("applicationType", this.appType.getAppType().name);
-        body.put("hasMicroservices", this.appType.getAppType().isMicroservice());
-        if ( this.appType.getAppType().isMicroservice()) {
-            body.set("microservices", getMicroservicesNode(microservices));
-            body.put("releaseMicroserviceName", releaseMicroservice == null ? "" : releaseMicroservice);
-        }
-        body.set("attributes", getAttributesNode(unirest));
-        body.set("userGroupIds", getUserGroupsNode(unirest, userGroups));
 
-        //System.out.println(body.toPrettyString());
+        FoDAppCreateRequest appCreateRequest = new FoDAppCreateRequest()
+                .setApplicationName(applicationName)
+                .setApplicationDescription(description)
+                .setBusinessCriticalityType(String.valueOf(criticalityType.getCriticalityType()))
+                .setEmailList(FoDAppHelper.getEmailList(notifications))
+                .setReleaseName(releaseName)
+                .setReleaseDescription(releaseDescription)
+                .setSdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
+                .setOwnerId(userDescriptor.getUserId())
+                .setApplicationType(appType.getName())
+                .setHasMicroservices(appType.isMicroservice())
+                .setMicroservices(FoDAppHelper.getMicroservicesNode(microservices))
+                .setReleaseMicroserviceName(releaseMicroservice)
+                .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes()))
+                .setUserGroupIds(FoDAppHelper.getUserGroupsNode(unirest, userGroups));
 
-        JsonNode postResponse = unirest.post(FoDUrls.APPLICATIONS).body(body).asObject(JsonNode.class).getBody();
-        // retrieve the updated application
-        JsonNode getResponse = unirest.get(FoDUrls.APPLICATION)
-                .routeParam("appId", postResponse.get("applicationId").asText())
-                .asObject(JsonNode.class).getBody();
-        getOutputMixin().write(getResponse);
+        FoDAppDescriptor result = FoDAppHelper.createApp(unirest, appCreateRequest);
+        getOutputMixin().write(result.asObjectNode());
         return null;
     }
 
@@ -113,27 +121,4 @@ public class FoDAppCreateCommand extends AbstractFoDHttpUpdateCommand implements
         }
     }
 
-    protected JsonNode getUserGroupsNode(UnirestInstance unirest, ArrayList<String> userGroups) {
-        ArrayNode userGroupArray = getObjectMapper().createArrayNode();
-        if (userGroups == null || userGroups.isEmpty()) return userGroupArray;
-        for (String ug : userGroups) {
-            FoDUserGroupDescriptor userGroupDescriptor = FoDUserGroupHelper.getUserGroup(unirest, ug, true);
-            userGroupArray.add(userGroupDescriptor.getId());
-        }
-        return userGroupArray;
-    }
-
-    private final JsonNode getAttributesNode(UnirestInstance unirest) {
-        Map<String, String> attributes = appAttrs.getAttributes();
-        ArrayNode attrArray = getObjectMapper().createArrayNode();
-        if (attributes == null || attributes.isEmpty()) return attrArray;
-        for (Map.Entry<String, String> attr : attributes.entrySet()) {
-            ObjectNode attrObj = getObjectMapper().createObjectNode();
-            FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttribute(unirest, attr.getKey(), true);
-            attrObj.put("id", attributeDescriptor.getId());
-            attrObj.put("value", attr.getValue());
-            attrArray.add(attrObj);
-        }
-        return attrArray;
-    }
 }

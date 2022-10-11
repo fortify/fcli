@@ -22,18 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.cmd;
+package com.fortify.cli.fod.rest.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
-import com.fortify.cli.fod.app.helper.FoDAppHelper;
-import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
-import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.rest.query.FoDFilterParamGenerator;
-import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
-import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
+import com.fortify.cli.fod.util.FoDOutputConfigHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -41,24 +37,37 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
+/**
+ * This base class for FoD update {@link Command} implementations provides capabilities for running
+ * FoD UPDATED requests and outputting the result in table format.
+ *
+ * @author kadraman
+ */
 @ReflectiveAccess
-@Command(name = FoDOutputHelperMixins.List.CMD_NAME)
-public class FoDAppListCommand extends AbstractFoDOutputCommand implements IBaseHttpRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier  {
-    @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
-
-    @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
-            .add("applicationId", FoDFiltersParamValueGenerators::plain)
-            .add("applicationName", FoDFiltersParamValueGenerators::plain)
-            .add("businessCriticalityType", FoDFiltersParamValueGenerators::plain)
-            .add("applicationType", FoDFiltersParamValueGenerators::plain);
+public abstract class AbstractFoDUpdateCommand extends AbstractFoDUnirestRunnerCommand implements IOutputConfigSupplier {
+    @Getter @Mixin private OutputMixinWithQuery outputMixin;
+    @Getter private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
+    protected Void run(UnirestInstance unirest) {
+        throw new IllegalStateException("run method must be implemented by subclass");
+    }
+
+    protected JsonNode generateOutput(UnirestInstance unirest) {
+        throw new IllegalStateException("Either generateRequest or generateOutput method must be implemented by subclass");
+    }
+
+    protected HttpRequest<?> generateRequest(UnirestInstance unirest) {
+        throw new IllegalStateException("Either generateRequest or generateOutput method must be implemented by subclass");
     }
 
     @Override
-    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(FoDUrls.APPLICATIONS);
+    public OutputConfig getOutputOptionsWriterConfig() {
+        return FoDOutputConfigHelper.table().recordTransformer(this::transformRecord);
     }
+
+    protected JsonNode transformRecord(JsonNode record) {
+        return record;
+    }
+
 }

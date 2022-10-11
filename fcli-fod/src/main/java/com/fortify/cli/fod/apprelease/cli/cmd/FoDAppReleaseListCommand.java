@@ -1,7 +1,7 @@
 package com.fortify.cli.fod.apprelease.cli.cmd;
 
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDHttpListCommand;
+import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDListCommand;
 import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
 import com.fortify.cli.fod.rest.query.FoDOutputQueryFiltersParamGenerator;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -11,7 +11,7 @@ import picocli.CommandLine;
 
 @ReflectiveAccess
 @CommandLine.Command(name = "list")
-public class FoDAppReleaseHttpListCommand extends AbstractFoDHttpListCommand {
+public class FoDAppReleaseListCommand extends AbstractFoDListCommand {
 
     @Override
     protected FoDOutputQueryFiltersParamGenerator getFiltersParamGenerator() {
