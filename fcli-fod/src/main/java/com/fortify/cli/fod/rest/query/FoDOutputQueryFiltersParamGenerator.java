@@ -24,20 +24,20 @@
  ******************************************************************************/
 package com.fortify.cli.fod.rest.query;
 
-import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
-import com.fortify.cli.common.output.helper.OutputQueryHelper;
-import com.fortify.cli.common.output.writer.output.query.OutputQuery;
-import com.fortify.cli.common.output.writer.output.query.OutputQueryOperator;
-import com.fortify.cli.common.util.StringUtils;
-
-import kong.unirest.HttpRequest;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.fortify.cli.common.output.cli.mixin.spi.output.IUnirestOutputHelper;
+import com.fortify.cli.common.output.helper.OutputQueryHelper;
+import com.fortify.cli.common.output.writer.output.query.OutputQuery;
+import com.fortify.cli.common.output.writer.output.query.OutputQueryOperator;
+import com.fortify.cli.common.util.StringUtils;
+
+import kong.unirest.HttpRequest;
 
 public final class FoDOutputQueryFiltersParamGenerator {
     private final Map<String, String> filtersNamesByPropertyPaths = new HashMap<>();
@@ -55,7 +55,7 @@ public final class FoDOutputQueryFiltersParamGenerator {
         return this;
     }
 
-    public HttpRequest<?> addFiltersParam(IOutputHelper outputHelper, HttpRequest<?> request) {
+    public HttpRequest<?> addFiltersParam(IUnirestOutputHelper outputHelper, HttpRequest<?> request) {
         return addFiltersParam(request, new OutputQueryHelper(outputHelper).getOutputQueries());
     }
 
