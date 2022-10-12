@@ -25,14 +25,15 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformerSupplier;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.SSCAppVersionDelimiterMixin;
@@ -45,26 +46,26 @@ import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionAuthEntityMixi
 import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionAuthEntitiesUpdateBuilder;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder;
 import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "create")
-public class SSCAppVersionCreateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+@Command(name = SSCOutputHelperMixins.Create.CMD_NAME)
+public class SSCAppVersionCreateCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IRecordTransformerSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Create outputHelper; 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    @Mixin private OutputMixin outputMixin;
     @Parameters(index = "0", arity = "1", descriptionKey = "appVersionName") private String appAndVersionName;
     @Mixin private SSCAppVersionDelimiterMixin delimiterMixin;
     @Mixin private SSCIssueTemplateResolverMixin.OptionalFilterSetOption issueTemplateResolver;
@@ -78,8 +79,8 @@ public class SSCAppVersionCreateCommand extends AbstractSSCUnirestRunnerCommand 
     private boolean autoRequiredAttrs = false;
     
 
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCAppVersionAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
         SSCAppVersionAuthEntitiesUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);
         
@@ -90,9 +91,17 @@ public class SSCAppVersionCreateCommand extends AbstractSSCUnirestRunnerCommand 
             .request("commit", getCommitRequest(unirest, descriptor))
             .request("updatedVersion", unirest.get(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())))
             .execute(unirest);
-        // TODO We probably also want to add attribute and user data to the detailed output
-        outputMixin.write(bulkResponse.body("updatedVersion"));
-        return null;
+        return bulkResponse.body("updatedVersion");
+    }
+    
+    @Override
+    public UnaryOperator<JsonNode> getRecordTransformer() {
+        return SSCAppVersionHelper::renameFields;
+    }
+    
+    @Override
+    public String getActionCommandResult() {
+        return "CREATED";
     }
     
     private final SSCAppVersionAuthEntitiesUpdateBuilder getAuthUpdateBuilder(UnirestInstance unirest) {
@@ -138,10 +147,5 @@ public class SSCAppVersionCreateCommand extends AbstractSSCUnirestRunnerCommand 
     private final HttpRequest<?> getCommitRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
         ObjectNode body = objectMapper.createObjectNode().put("committed", true);
         return unirest.put(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())).body(body);
-    }
-    
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.details().recordTransformer(SSCAppVersionHelper::renameFields);
     }
 }

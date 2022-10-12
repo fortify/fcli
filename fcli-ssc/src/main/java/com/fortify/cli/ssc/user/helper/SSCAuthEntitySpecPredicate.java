@@ -46,7 +46,7 @@ public final class SSCAuthEntitySpecPredicate implements Predicate<JsonNode> {
     public String[] getUnmatched() {
         return authEntities==null 
                 ? new String[] {} 
-                : Stream.of(authEntities).filter(Predicate.not(previousMatchedAuthEntities::contains)).toArray(String[]::new);
+                : Stream.of(authEntities).map(String::toLowerCase).filter(Predicate.not(previousMatchedAuthEntities::contains)).toArray(String[]::new);
     }
     
     public void checkUnmatched() {
@@ -70,10 +70,8 @@ public final class SSCAuthEntitySpecPredicate implements Predicate<JsonNode> {
     }
     
     private boolean hasPreviousMatch(String authEntity) {
-        if ( !allowMultipleMatches ) {
-            if ( !previousMatchedAuthEntities.add(authEntity) ) {
-                throw new IllegalArgumentException(String.format("Multiple records match '%s'; please use a unique identifier or enable multiple matches", authEntity));
-            }
+        if ( !previousMatchedAuthEntities.add(authEntity) && !allowMultipleMatches ) {
+            throw new IllegalArgumentException(String.format("Multiple records match '%s'; please use a unique identifier or enable multiple matches", authEntity));
         }
         return true;
     }

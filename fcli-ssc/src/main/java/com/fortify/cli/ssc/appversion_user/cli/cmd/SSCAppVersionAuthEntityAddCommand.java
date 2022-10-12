@@ -24,45 +24,44 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_user.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionAuthEntityMixin;
 import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionAuthEntitiesUpdateBuilder;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
+import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionAuthEntitiesUpdateBuilder.SSCAppVersionAuthEntitiesUpdater;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "add")
-public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
+@Command(name = SSCOutputHelperMixins.Add.CMD_NAME)
+public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Add outputHelper;
     @Mixin private SSCAppVersionAuthEntityMixin.RequiredPositionalParameter authEntityMixin;
     @Mixin private SSCAppVersionResolverMixin.For parentResolver;
-    @Mixin private OutputMixin outputMixin;
     @Option(names="--allowMultiMatch", defaultValue = "false")
     private boolean allowMultiMatch;
     
     @Override
-    protected Void run(UnirestInstance unirest) {
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         String applicationVersionId = parentResolver.getAppVersionId(unirest);
-        outputMixin.write(
-            new SSCAppVersionAuthEntitiesUpdateBuilder(unirest)
+        SSCAppVersionAuthEntitiesUpdater updater = new SSCAppVersionAuthEntitiesUpdateBuilder(unirest)
                 .add(allowMultiMatch, authEntityMixin.getAuthEntitySpecs())
-                .buildRequest(applicationVersionId)
-        );
-        
-        return null;
+                .build(applicationVersionId);
+        updater.getUpdateRequest().asObject(JsonNode.class).getBody();
+        return updater.getAuthEntitiesToAdd();
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
-            //.defaultColumns("id#entityName:Name#displayName#type#email#isLdap");
+    public String getActionCommandResult() {
+        return "ADDED";
     }
 }

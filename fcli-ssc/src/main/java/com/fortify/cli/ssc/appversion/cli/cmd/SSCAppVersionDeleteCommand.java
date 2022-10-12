@@ -24,41 +24,46 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
+import java.util.function.UnaryOperator;
+
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformerSupplier;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "delete")
-public class SSCAppVersionDeleteCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
+@Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
+public class SSCAppVersionDeleteCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier, IRecordTransformerSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper;
     @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
 
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCAppVersionDescriptor descriptor = appVersionResolver.getAppVersionDescriptor(unirest, "id,name,project,createdBy");
         unirest.delete(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())).asObject(JsonNode.class).getBody();
-        outputMixin.write(descriptor.asObjectNode().put("action", "DELETED"));
-        return null;
+        return descriptor.asObjectNode();
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table()
-                .recordTransformer(SSCAppVersionHelper::renameFields);
-                //.defaultColumns("id#project.name#name#createdBy#action");
+    public String getActionCommandResult() {
+        return "DELETED";
+    }
+    
+    @Override
+    public UnaryOperator<JsonNode> getRecordTransformer() {
+        return SSCAppVersionHelper::renameFields;
     }
 }

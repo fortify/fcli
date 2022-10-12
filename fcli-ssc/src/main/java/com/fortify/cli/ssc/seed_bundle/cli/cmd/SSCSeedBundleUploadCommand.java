@@ -27,38 +27,40 @@ package com.fortify.cli.ssc.seed_bundle.cli.cmd;
 import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "upload")
-public class SSCSeedBundleUploadCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
+@Command(name = SSCOutputHelperMixins.Upload.CMD_NAME)
+public class SSCSeedBundleUploadCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Upload outputHelper;
     @Parameters(index = "0", arity = "1", descriptionKey = "seedBundle")
     private String seedBundle;
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
-        outputMixin.write(unirest.post(SSCUrls.SEED_BUNDLES)
+    
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        unirest.post(SSCUrls.SEED_BUNDLES)
             .multiPartContent()
             .field("file", new File(seedBundle))
-            .asObject(JsonNode.class).getBody());
-        return null;
+            .asObject(JsonNode.class).getBody();
+        return new ObjectMapper().createObjectNode()
+                .put("type", "SeedBundle")
+                .put("file", seedBundle);
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
+    public String getActionCommandResult() {
+        return "UPLOADED";
     }
 }

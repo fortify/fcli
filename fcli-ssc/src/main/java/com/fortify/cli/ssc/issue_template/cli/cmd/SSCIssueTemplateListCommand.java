@@ -24,30 +24,34 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.issue_template.cli.cmd;
 
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.ISSCQParamGeneratorSupplier;
 import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCIssueTemplateListCommand extends AbstractSSCListCommand {
-    @Override
-    protected SSCQParamGenerator getQParamGenerator() {
-        return new SSCQParamGenerator()
+@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
+public class SSCIssueTemplateListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, ISSCQParamGeneratorSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
+    @Getter private SSCQParamGenerator qParamGenerator = new SSCQParamGenerator()
                 .add("id", SSCQParamValueGenerators::plain)
                 .add("name", SSCQParamValueGenerators::wrapInQuotes)
                 .add("defaultTemplate", SSCQParamValueGenerators::plain)
                 .add("applicationVersionId", "projectVersionId", SSCQParamValueGenerators::wrapInQuotes)
                 .add("required", SSCQParamValueGenerators::plain);
-    }
     
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    @Override
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.ISSUE_TEMPLATES).queryString("limit","-1");
     }
 }

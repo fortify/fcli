@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,36 +22,40 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
+package com.fortify.cli.ssc.job.cli.mixin;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
-import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
-import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
+import com.fortify.cli.ssc.job.helper.SSCJobDescriptor;
+import com.fortify.cli.ssc.job.helper.SSCJobHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
-@Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
-public class SSCAppVersionArtifactDeleteCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper; 
-    @Parameters(arity="1", description = "Id of the artifact to be deleted")
-    private String artifactId;
-    
-    @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        return SSCAppVersionArtifactHelper.delete(unirest, artifactId);
+public class SSCJobResolverMixin {
+    @ReflectiveAccess
+    private static abstract class AbstractSSCJobResolverMixin {
+        public abstract String getJobName();
+        
+        public SSCJobDescriptor getJobDescriptor(UnirestInstance unirest, String... fields) {
+            return SSCJobHelper.getJobDescriptor(unirest, getJobName(), fields);
+        }
+        
+        public String getJobName(UnirestInstance unirest) {
+            return getJobDescriptor(unirest, "jobName").getJobName();
+        }
     }
     
-    @Override
-    public String getActionCommandResult() {
-        return "DELETED";
+    @ReflectiveAccess
+    public static class RequiredOption extends AbstractSSCJobResolverMixin {
+        @Option(names="--job", required = true)
+        @Getter private String jobName;
+    }
+    
+    @ReflectiveAccess
+    public static class PositionalParameter extends AbstractSSCJobResolverMixin {
+        @Parameters(index = "0", arity = "1")
+        @Getter private String jobName;
     }
 }

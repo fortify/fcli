@@ -24,30 +24,34 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.job.cli.cmd;
 
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.ssc.rest.query.ISSCQParamGeneratorSupplier;
 import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCJobListCommand extends AbstractSSCListCommand {
-    @Override
-    protected SSCQParamGenerator getQParamGenerator() {
-        return new SSCQParamGenerator()
+@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
+public class SSCJobListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, ISSCQParamGeneratorSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
+    @Getter private SSCQParamGenerator qParamGenerator = new SSCQParamGenerator()
                 .add("jobClass", SSCQParamValueGenerators::wrapInQuotes)
                 .add("state", SSCQParamValueGenerators::wrapInQuotes)
                 .add("priority", SSCQParamValueGenerators::plain)
                 .add("applicationVersionId", "projectVersionId", SSCQParamValueGenerators::wrapInQuotes)
                 .add("required", SSCQParamValueGenerators::plain);
-    }
     
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    @Override
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.JOBS).queryString("limit","-1");
     }
 }

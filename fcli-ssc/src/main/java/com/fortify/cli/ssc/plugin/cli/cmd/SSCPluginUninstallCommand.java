@@ -25,65 +25,54 @@
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.ssc.plugin.cli.cmd.SSCPluginCommonOptions.SSCPluginSelectSingleRequiredOptions;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
+import com.fortify.cli.ssc.plugin.cli.mixin.SSCPluginResolverMixin;
 import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine.ArgGroup;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "uninstall", aliases = {"rm"})
-public class SSCPluginUninstallCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @Mixin private OutputMixin outputMixin;
-    @ArgGroup(headingKey = "fcli.ssc.plugin.uninstall.options.heading", exclusive = false)
-    private SSCPluginDeleteOptions deleteOptions;
+@Command(name = SSCOutputHelperMixins.Uninstall.CMD_NAME)
+public class SSCPluginUninstallCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Uninstall outputHelper;
+    @Mixin private SSCPluginResolverMixin.PositionalParameter pluginResolver;
+    @Option(names="--no-auto-disable", negatable=true)
+    private boolean autoDisable = true;
     
-    private static class SSCPluginDeleteOptions {
-        @ArgGroup(exclusive=false) SSCPluginSelectSingleRequiredOptions pluginSelectOptions;
-        @Option(names="--no-auto-disable", negatable=true)
-        private boolean autoDisable = true;
-        
-        public Integer getNumericPluginId(UnirestInstance unirest) {
-            return pluginSelectOptions==null ? null : pluginSelectOptions.getNumericPluginId();
-        }
-    }
-    
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
-        int numericPluginId = deleteOptions.getNumericPluginId(unirest);
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        String numericPluginId = pluginResolver.getNumericPluginId();
         // TODO Check whether plugin id exists
-        disablePluginIfNecessary(unirest, numericPluginId);
-        outputMixin.write(
-                unirest.delete("/api/v1/plugins/{id}")
-                    .routeParam("id", ""+numericPluginId));
-        return null;
+        JsonNode pluginData = disablePluginIfNecessary(unirest, numericPluginId);
+        unirest.delete("/api/v1/plugins/{id}")
+                    .routeParam("id", ""+numericPluginId)
+                    .asObject(JsonNode.class).getBody();
+        return pluginData;
     }
     
-    private void disablePluginIfNecessary(UnirestInstance unirest, int numericPluginId) {
-        JsonNode pluginData = unirest.get("/api/v1/plugins/{id}?fields=pluginState")
+    @Override
+    public String getActionCommandResult() {
+        return "UNINSTALLED";
+    }
+    
+    private JsonNode disablePluginIfNecessary(UnirestInstance unirest, String numericPluginId) {
+        JsonNode pluginData = unirest.get("/api/v1/plugins/{id}")
                 .routeParam("id", ""+numericPluginId)
                 .asObject(JsonNode.class).getBody();
         if ("STARTED".equals(pluginData.get("data").get("pluginState").asText()) ) {
-            if ( !deleteOptions.autoDisable ) {
+            if ( !autoDisable ) {
                 throw new IllegalStateException("Plugin cannot be deleted, as it is currently enabled, and --no-auto-disable has been specified");
             }
             SSCPluginStateHelper.disablePlugin(unirest, numericPluginId);
         }
-    }
-
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
-                //.defaultColumns("message#errorCode#responseCode");
+        return pluginData;
     }
 }

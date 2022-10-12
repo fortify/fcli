@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.scan_settings.cli.cmd;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeHolderSupplier;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.scan_settings.cli.mixin.SCDastScanSettingsResolverMixin;
@@ -38,12 +38,12 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.Get.CMD_NAME)
-public class SCDastScanSettingsGetCommand extends AbstractSCDastOutputCommand implements IJsonNodeHolderSupplier {
+public class SCDastScanSettingsGetCommand extends AbstractSCDastOutputCommand implements IJsonNodeSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.Get outputHelper;
     @Mixin private SCDastScanSettingsResolverMixin.PositionalParameter scanSettingsResolver;
 
     @Override
-    public JsonNodeHolder getJsonNodeHolder(UnirestInstance unirest) {
-        return scanSettingsResolver.getScanSettingsDescriptor(unirest);
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return scanSettingsResolver.getScanSettingsDescriptor(unirest).asJsonNode();
     }
 }

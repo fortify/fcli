@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.sensor.cli.cmd;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeHolderSupplier;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.sensor.cli.mixin.SCDastSensorResolverMixin;
@@ -39,12 +39,12 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.Disable.CMD_NAME)
-public class SCDastSensorDisableCommand extends AbstractSCDastOutputCommand implements IJsonNodeHolderSupplier {
+public class SCDastSensorDisableCommand extends AbstractSCDastOutputCommand implements IJsonNodeSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.Disable outputHelper;
     @Mixin private SCDastSensorResolverMixin.PositionalParameter sensorResolver;
 
     @Override
-    public JsonNodeHolder getJsonNodeHolder(UnirestInstance unirest) {
-        return SCDastSensorHelper.disableSensor(unirest, sensorResolver.getSensorDescriptor(unirest));
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return SCDastSensorHelper.disableSensor(unirest, sensorResolver.getSensorDescriptor(unirest)).asJsonNode();
     }
 }

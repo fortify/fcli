@@ -24,32 +24,35 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.role_permission.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
 import com.fortify.cli.ssc.role_permission.cli.mixin.SSCRolePermissionResolverMixin;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
+import com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import static com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper.flattenArrayProperty;
 
 @ReflectiveAccess
-@Command(name = "get")
-public class SSCRolePermissionGetCommand extends AbstractSSCGetCommand {
-    @Mixin
-    private SSCRolePermissionResolverMixin.PositionalParameter rolePermissionResolver;
-
-    protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.PERMISSION(rolePermissionResolver.getRolePermissionId(unirest)));
-    }
+@Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
+public class SSCRolePermissionGetCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, IRecordTransformer {
+    @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
+    @Mixin private SSCRolePermissionResolverMixin.PositionalParameter rolePermissionResolver;
 
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table()
-                .recordTransformer(r -> flattenArrayProperty(r, "dependsOnPermission", "id"));
-                //.defaultColumns("id#name#dependsOnPermission#description");
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+        return unirest.get(SSCUrls.PERMISSION(rolePermissionResolver.getRolePermissionId(unirest)));
+    }
+    
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return SSCRolePermissionHelper.flattenArrayProperty(record, "dependsOnPermission", "id");
     }
 }

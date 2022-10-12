@@ -39,6 +39,7 @@ import com.fortify.cli.ssc.user.helper.SSCAuthEntitySpecPredicate.MatchMode;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Data;
 
 public final class SSCAppVersionAuthEntitiesUpdateBuilder {
     private final UnirestInstance unirest;
@@ -47,6 +48,13 @@ public final class SSCAppVersionAuthEntitiesUpdateBuilder {
     private Set<String> authEntitySpecsToRemove = new LinkedHashSet<String>();
     private boolean allowMultipleMatchesForRemove;
     
+    @Data
+    public static final class SSCAppVersionAuthEntitiesUpdater {
+        private final ArrayNode authEntitiesToAdd;
+        private final ArrayNode authEntitiesToRemove;
+        private final HttpRequest<?> updateRequest;
+    }
+    
     public SSCAppVersionAuthEntitiesUpdateBuilder(UnirestInstance unirest) {
         this(unirest, new SSCAuthEntitiesHelper(unirest));
     }
@@ -54,6 +62,19 @@ public final class SSCAppVersionAuthEntitiesUpdateBuilder {
     public SSCAppVersionAuthEntitiesUpdateBuilder(UnirestInstance unirest, SSCAuthEntitiesHelper authEntitiesHelper) {
         this.unirest = unirest;
         this.authEntitiesHelper = authEntitiesHelper;
+    }
+    
+    public final SSCAppVersionAuthEntitiesUpdater build(String appVersionId) {
+        ArrayNode currentAuthEntities = (ArrayNode)unirest.get(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(appVersionId))
+                .queryString("limit","-1").asObject(JsonNode.class).getBody().get("data");
+        HttpRequest<?> updateRequest = unirest
+                .put(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(appVersionId))
+                .body(addAuthEntities(removeAuthEntities(currentAuthEntities)));
+        SSCAuthEntitySpecPredicate predicate = new SSCAuthEntitySpecPredicate(authEntitySpecsToRemove.toArray(String[]::new), MatchMode.INCLUDE, allowMultipleMatchesForRemove);
+        ArrayNode authEntitiesToRemove = JsonHelper.stream(currentAuthEntities)
+                .filter(predicate)
+                .collect(JsonHelper.arrayNodeCollector());
+        return new SSCAppVersionAuthEntitiesUpdater(authEntitiesToAdd, authEntitiesToRemove, updateRequest);
     }
     
     public final HttpRequest<?> buildRequest(String appVersionId) {

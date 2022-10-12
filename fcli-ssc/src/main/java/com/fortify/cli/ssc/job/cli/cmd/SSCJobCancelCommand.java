@@ -24,38 +24,40 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.job.cli.cmd;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.job.cli.mixin.SSCJobResolverMixin;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
-import picocli.CommandLine;
+import lombok.Getter;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "cancel")
-public class SSCJobCancelCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @CommandLine.Mixin private OutputMixin outputMixin;
-    @Parameters(arity="1") String jobName;
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
-        ObjectNode cancelRequestData = new ObjectMapper().createObjectNode();
-        cancelRequestData.set("jobIds", JsonHelper.toArrayNode(new String[] {jobName}));
-        outputMixin.write(unirest.post(SSCUrls.JOBS_ACTION_CANCEL).body(cancelRequestData));
-        return null;
+@Command(name = SSCOutputHelperMixins.Cancel.CMD_NAME)
+public class SSCJobCancelCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Cancel outputHelper; 
+    @Mixin private SSCJobResolverMixin.PositionalParameter jobResolver;
+    
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        String jobName = jobResolver.getJobName(unirest);
+        ObjectNode cancelRequestData = new ObjectMapper().createObjectNode()
+                .set("jobIds", JsonHelper.toArrayNode(new String[] {jobName}));
+        unirest.post(SSCUrls.JOBS_ACTION_CANCEL).body(cancelRequestData).asObject(JsonNode.class).getBody();
+        return jobResolver.getJobDescriptor(unirest).asJsonNode();
     }
     
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return OutputConfig.table();
+    public String getActionCommandResult() {
+        return "CANCEL_REQUESTED";
     }
 }

@@ -26,38 +26,37 @@ package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateBuilder;
 import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionAuthEntityMixin;
 import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionAuthEntitiesUpdateBuilder;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder;
 import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "update")
-public class SSCAppVersionUpdateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @Mixin private OutputMixin outputMixin;
+@Command(name = SSCOutputHelperMixins.Update.CMD_NAME)
+public class SSCAppVersionUpdateCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Update outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
     @Mixin private SSCIssueTemplateResolverMixin.OptionalFilterSetOption issueTemplateResolver;
     @Mixin private SSCAppVersionAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
@@ -68,9 +67,8 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCUnirestRunnerCommand 
     @Option(names={"--description","-d"}, required = false)
     private String description;
     
-
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCAppVersionDescriptor descriptor = appVersionResolver.getAppVersionDescriptor(unirest);
         SSCBulkResponse bulkResponse = new SSCBulkRequestBuilder()
             .request("versionUpdate", getAppVersionUpdateRequest(unirest, descriptor))
@@ -78,9 +76,12 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCUnirestRunnerCommand 
             .request("userUpdate", getUserUpdateRequest(unirest, descriptor))
             .request("updatedVersion", unirest.get(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())))
             .execute(unirest);
-        // TODO We probably also want to add attribute and user data to the detailed output
-        outputMixin.write(bulkResponse.body("updatedVersion"));
-        return null;
+        return bulkResponse.body("updatedVersion");
+    }
+    
+    @Override
+    public String getActionCommandResult() {
+        return "UPDATED";
     }
     
     private final HttpRequest<?> getUserUpdateRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
@@ -118,10 +119,5 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCUnirestRunnerCommand 
         updateData.put("issueTemplateId", descriptor.getId());
         updateData.put("issueTemplateName", descriptor.getName());
         return true;
-    }
-    
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.details().recordTransformer(SSCAppVersionHelper::renameFields);
     }
 }

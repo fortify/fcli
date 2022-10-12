@@ -24,19 +24,25 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCPluginListCommand extends AbstractSSCListCommand {
-    // TODO Can we do any server-side filtering? If so, override the #getQParamGenerator() method
+@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
+public class SSCPluginListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
+    // TODO Can we do any server-side filtering?
 
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    @Override
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get("/api/v1/plugins?orderBy=pluginType,pluginName,pluginVersion&limit=-1");
     }
 }

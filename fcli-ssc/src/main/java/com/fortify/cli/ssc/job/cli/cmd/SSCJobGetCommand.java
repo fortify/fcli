@@ -24,23 +24,26 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.job.cli.cmd;
 
-import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.ssc.job.cli.mixin.SSCJobResolverMixin;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "get")
-public class SSCJobGetCommand extends AbstractSSCGetCommand {
-    @Parameters(arity="1", description = "Name of the job to be retrieved")
-    private String jobName;
+@Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
+public class SSCJobGetCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
+    @Mixin private SSCJobResolverMixin.PositionalParameter jobResolver;
     
     @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.JOB(jobName));
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return jobResolver.getJobDescriptor(unirest).asJsonNode();
     }
 }

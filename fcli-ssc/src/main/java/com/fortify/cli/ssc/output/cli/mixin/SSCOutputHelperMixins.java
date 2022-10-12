@@ -3,6 +3,7 @@ package com.fortify.cli.ssc.output.cli.mixin;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.mixin.OutputConfig;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.spi.output.IUnirestOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IInputTransformerSupplier;
@@ -10,6 +11,7 @@ import com.fortify.cli.common.output.cli.mixin.spi.product.IProductHelper;
 import com.fortify.cli.common.output.cli.mixin.spi.product.ProductHelperClass;
 import com.fortify.cli.common.output.cli.mixin.spi.request.IHttpRequestUpdater;
 import com.fortify.cli.common.output.cli.mixin.spi.request.INextPageUrlProducerSupplier;
+import com.fortify.cli.common.output.writer.output.StandardOutputWriterFactory;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins.SSCProductHelper;
 import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
@@ -21,6 +23,7 @@ import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
+import picocli.CommandLine.Mixin;
 
 /**
  * <p>This class provides standard, SSC-specific {@link IUnirestOutputHelper} implementations,
@@ -53,6 +56,9 @@ public class SSCOutputHelperMixins {
             return request;
         }
     }
+    
+    @ReflectiveAccess public static class Add 
+               extends OutputHelperMixins.Add {}
     
     @ReflectiveAccess public static class Create 
                extends OutputHelperMixins.Create {}
@@ -104,4 +110,22 @@ public class SSCOutputHelperMixins {
     
     @ReflectiveAccess public static class Other 
                extends OutputHelperMixins.Other {}
+    
+    @ReflectiveAccess public static class ArtifactApprove extends OutputHelperMixins.Other {
+        public static final String CMD_NAME = "approve";
+        @Getter @Mixin private StandardOutputWriterFactory outputWriterFactory;
+        @Getter private OutputConfig basicOutputConfig = OutputConfig.table(); 
+    }
+    
+    @ReflectiveAccess public static class ArtifactPurge extends OutputHelperMixins.Other {
+        public static final String CMD_NAME = "purge";
+        @Getter @Mixin private StandardOutputWriterFactory outputWriterFactory;
+        @Getter private OutputConfig basicOutputConfig = OutputConfig.table(); 
+    }
+    
+    @ReflectiveAccess public static class VulnCount extends OutputHelperMixins.Other {
+        public static final String CMD_NAME = "count";
+        @Getter @Mixin private StandardOutputWriterFactory outputWriterFactory;
+        @Getter private OutputConfig basicOutputConfig = OutputConfig.table(); 
+    }
 }

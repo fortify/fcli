@@ -24,26 +24,30 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_user.cli.cmd;
 
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCAppVersionAuthEntityListCommand extends AbstractSSCListCommand {
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.From parentResolver;
+@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
+public class SSCAppVersionAuthEntityListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
+    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
     
-    // TODO Can we do any server-side filtering? If so, override the #getQParamGenerator() method
+    // TODO Can we do any server-side filtering?
     // TODO Add boolean options to set extractusersfromgroups and includeuniversalaccessentities request parameters
     
     @Override
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(parentResolver.getAppVersionId(unirest)))
                 .queryString("limit","-1");
     }

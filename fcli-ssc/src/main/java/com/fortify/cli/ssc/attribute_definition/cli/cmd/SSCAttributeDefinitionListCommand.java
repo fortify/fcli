@@ -24,30 +24,34 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.attribute_definition.cli.cmd;
 
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCListCommand;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
+import com.fortify.cli.ssc.rest.query.ISSCQParamGeneratorSupplier;
 import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
-public class SSCAttributeDefinitionListCommand extends AbstractSSCListCommand {
-    @Override
-    protected SSCQParamGenerator getQParamGenerator() {
-        return new SSCQParamGenerator()
+@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
+public class SSCAttributeDefinitionListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, ISSCQParamGeneratorSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
+    @Getter private SSCQParamGenerator qParamGenerator = new SSCQParamGenerator()
                 .add("id", SSCQParamValueGenerators::plain)
                 .add("category", SSCQParamValueGenerators::wrapInQuotes)
                 .add("guid", SSCQParamValueGenerators::wrapInQuotes)
                 .add("name", SSCQParamValueGenerators::wrapInQuotes)
                 .add("type", SSCQParamValueGenerators::wrapInQuotes)
                 .add("required", SSCQParamValueGenerators::plain);
-    }
 
-    protected GetRequest generateRequest(UnirestInstance unirest) {
+    @Override
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name");
     }
 }

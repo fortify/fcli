@@ -27,27 +27,25 @@ package com.fortify.cli.ssc.role.cli.cmd;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCUnirestRunnerCommand;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "create")
-public class SSCRoleCreateCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-
-    @Mixin
-    private OutputMixin outputMixin;
+@Command(name = SSCOutputHelperMixins.Create.CMD_NAME)
+public class SSCRoleCreateCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Create outputHelper;
 
 /*
     # NOTE: There are some permissions that have a dependency on another permission.
@@ -70,23 +68,19 @@ public class SSCRoleCreateCommand extends AbstractSSCUnirestRunnerCommand implem
     @Option(names = {"-p", "--permission-id"})
     private String[] permissionIds;
 
-    @SneakyThrows
-    protected Void run(UnirestInstance unirest) {
+    @Override
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         ObjectNode newRole = (new ObjectMapper()).createObjectNode();
         newRole.put("name",name);
         newRole.put("description", description);
         newRole.put("allApplicationRole", allApplicationRole);
         newRole.set("permissionIds", JsonHelper.toArrayNode(permissionIds));
 
-        outputMixin.write(
-                unirest.post(SSCUrls.ROLES).body(newRole)
-        );
-        return null;
+        return unirest.post(SSCUrls.ROLES).body(newRole);
     }
-
+    
     @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return SSCOutputConfigHelper.table();
-                //.defaultColumns("id#name#permissionIds");
+    public String getActionCommandResult() {
+        return "CREATED";
     }
 }

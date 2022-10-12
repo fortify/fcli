@@ -25,21 +25,25 @@
 package com.fortify.cli.ssc.attribute_definition.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.ssc.attribute_definition.cli.mixin.SSCAttributeDefinitionResolverMixin;
-import com.fortify.cli.ssc.rest.cli.cmd.AbstractSSCGetCommand;
+import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "get")
-public class SSCAttributeDefinitionGetCommand extends AbstractSSCGetCommand {
+@Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
+public class SSCAttributeDefinitionGetCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
     @Mixin private SSCAttributeDefinitionResolverMixin.PositionalParameterSingle attributeDefinitionResolver;
     
     @Override
-    protected JsonNode generateOutput(UnirestInstance unirest) {
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         return attributeDefinitionResolver.getAttributeDefinitionDescriptor(unirest).asJsonNode();
     }
 }
