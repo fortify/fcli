@@ -22,16 +22,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.output.cli;
+package com.fortify.cli.fod.rest;
 
-import com.fortify.cli.common.output.cli.cmd.AbstractUnirestOutputCommand;
-import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
-
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
-
-@ReflectiveAccess
-public abstract class AbstractFoDOutputCommand extends AbstractUnirestOutputCommand {
-    @Getter @Mixin FoDUnirestRunnerMixin unirestRunner;
+public class FoDUrls {
+    private static final String ApiBase = "/api/v3";
+    public static final String APPLICATIONS = ApiBase + "/applications";
+    public static final String APPLICATION = ApiBase + "/applications/{appId}";
+    public static final String RELEASES = ApiBase + "/releases";
+    public static final String ATTRIBUTES = ApiBase + "/attributes";
+    public static final String USERS = ApiBase + "/users";
+    public static final String USER = ApiBase + "/users/{userId}";
+    public static final String USER_GROUPS = ApiBase + "/user-management/user-groups";
+    public static final String USER_GROUP = ApiBase + "/user-management/user-groups/{userId}";
+    public static final String USER_GROUP_MEMBERS = ApiBase + "/user-management/user-groups/{userId}/members";
 }

@@ -22,16 +22,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.output.cli;
+package com.fortify.cli.fod.app.cli.cmd;
 
-import com.fortify.cli.common.output.cli.cmd.AbstractUnirestOutputCommand;
-import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
+import picocli.CommandLine;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
-
-@ReflectiveAccess
-public abstract class AbstractFoDOutputCommand extends AbstractUnirestOutputCommand {
-    @Getter @Mixin FoDUnirestRunnerMixin unirestRunner;
+@CommandLine.Command(name = "app",
+        aliases = {"application"},
+        subcommands = {
+                FoDAppCreateCommand.class,
+                FoDAppListCommand.class,
+                FoDAppGetCommand.class,
+                FoDAppUpdateCommand.class,
+                FoDAppDeleteCommand.class
+        }
+)
+public class FoDAppCommands {
 }

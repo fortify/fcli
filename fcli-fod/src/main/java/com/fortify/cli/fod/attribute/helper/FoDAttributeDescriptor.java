@@ -22,16 +22,26 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.output.cli;
+package com.fortify.cli.fod.attribute.helper;
 
-import com.fortify.cli.common.output.cli.cmd.AbstractUnirestOutputCommand;
-import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @ReflectiveAccess
-public abstract class AbstractFoDOutputCommand extends AbstractUnirestOutputCommand {
-    @Getter @Mixin FoDUnirestRunnerMixin unirestRunner;
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class FoDAttributeDescriptor extends JsonNodeHolder {
+    private Integer id;
+    private String name;
+    private Integer attributeTypeId;
+    private String attributeType;
+    private Integer attributeDataTypeId;
+    private String attributeDataType;
+    private Boolean isRequired;
+    private Boolean isRestricted;
+    // pickListValues ...
+    private String value;
 }

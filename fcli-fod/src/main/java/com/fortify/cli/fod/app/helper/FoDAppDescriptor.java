@@ -22,16 +22,37 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.output.cli;
+package com.fortify.cli.fod.app.helper;
 
-import com.fortify.cli.common.output.cli.cmd.AbstractUnirestOutputCommand;
-import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
-
+import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 @ReflectiveAccess
-public abstract class AbstractFoDOutputCommand extends AbstractUnirestOutputCommand {
-    @Getter @Mixin FoDUnirestRunnerMixin unirestRunner;
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class FoDAppDescriptor extends JsonNodeHolder {
+    private Integer applicationId;
+    private String applicationName;
+    private String applicationDescription;
+    private String businessCriticalityType;
+    private ArrayList<FoDAttributeDescriptor> attributes;
+    private String emailList;
+    private Integer releaseId;
+    private Integer microserviceId;
+
+    public Map<Integer, String> attributesAsMap() {
+        Map<Integer, String> attrMap = new HashMap<>();
+        for (FoDAttributeDescriptor attr : attributes) {
+            attrMap.put(attr.getId(), attr.getValue());
+        }
+        return  attrMap;
+    }
+
 }
