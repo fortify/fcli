@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<title>fcli-ssc-appversion-artifact-upload(1)</title>
+<title>fcli-config-variable-definition-get(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -438,10 +438,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="manpage">
 <div id="header">
-<h1>fcli-ssc-appversion-artifact-upload(1) Manual Page</h1>
+<h1>fcli-config-variable-definition-get(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-appversion-artifact-upload - Command-line interface for working with various Fortify products</p>
+<p>fcli-config-variable-definition-get - Command-line interface for working with various Fortify products</p>
 </div>
 </div>
 <div id="content">
@@ -449,16 +449,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion-artifact upload</strong> [<strong>-hVw</strong>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                                    [<strong>-e</strong>=<em>&lt;engineType&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                                    [<strong>-t</strong>=<em>&lt;processingTimeOutSeconds&gt;</em>]
-                                    <strong>--to</strong>=<em>&lt;appVersionNameOrId&gt;</em>
-                                    [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
+<p><strong>fcli config variable definition get</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] <em class="[<strong>-o</strong>=_format_
                               _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
                         _            <em class="=&lt;propertyNames&gt;">]
-                                    [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] [[<strong>-a</strong>]
-                                    [<strong>-m</strong>=<em>&lt;message&gt;</em>]] <em>&lt;filePath&gt;</em></p>
+                                    [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                    <em>&lt;variableName&gt;</em></p>
 </div>
 </div>
 </div>
@@ -475,28 +471,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
-<dd>
-<p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
-</dd>
-<dt class="hdlist1"><strong>--to, --appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
-<dd>
-<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
-</dd>
-<dt class="hdlist1"><strong>-a</strong>, <strong>--auto-approve</strong></dt>
-<dd>
-<p>Auto approves any uploaded artifact that needs approval.</p>
-</dd>
-<dt class="hdlist1"><strong>-m</strong>, <strong>--message</strong>=<em>&lt;message&gt;</em></dt>
-<dt class="hdlist1"><strong>-w</strong>, <strong>--wait</strong></dt>
-<dd>
-<p>Will wait for the artifact to finish processing and auto approve if needed.</p>
-</dd>
-<dt class="hdlist1"><strong>-e</strong>, <strong>--engine-type</strong>=<em>&lt;engineType&gt;</em></dt>
-<dd>
-<p>Engine type for the artifact being uploaded</p>
-</dd>
-<dt class="hdlist1"><strong>-t</strong>, <strong>--time-out</strong>=<em>&lt;processingTimeOutSeconds&gt;</em></dt>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
 <p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
@@ -528,13 +502,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </dd>
 <dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
 <dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
-<dd>
-<p>== Optional session name:</p>
-</dd>
-<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
-<dd>
-<p>A name/alias for your null session.</p>
-</dd>
 </dl>
 </div>
 </div>
@@ -544,7 +511,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><em>&lt;filePath&gt;</em></dt>
+<dt class="hdlist1"><em>&lt;variableName&gt;</em></dt>
 </dl>
 </div>
 </div>

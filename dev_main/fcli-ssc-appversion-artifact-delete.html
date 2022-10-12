@@ -452,7 +452,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><strong>fcli ssc appversion-artifact delete</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
                                     [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
-                              _      [=&lt;options&gt;">]
+                              _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                        _            <em class="=&lt;propertyNames&gt;">]
                                     [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
                                     <em>&lt;artifactId&gt;</em></p>
 </div>
@@ -500,6 +501,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dd>
 <p>Output format: json, json-flat, yaml, yaml-flat, table, table-plain, tree, tree-flat, xml, xml-flat, csv, csv-plain, expr, json-properties. The 'paths' and 'paths-flat' format ignore any options. The 'expr' output format takes a string containing '{&lt;prop&gt;}' variables; use '-o paths' on the current command to see available '&lt;prop&gt;' values. Other output formats take a comma-separated list of property names; use '-o paths' (for tree formats) or '-o paths_flat' (for flat, table &amp; csv formats) to see available property names.</p>
 </dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
 <dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
 <p>== Optional session name:</p>
@@ -528,8 +530,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221011.114642-dev_main, built on 2022-10-11 11 47 14<br>
-Last updated 2022-10-11 11:48:03 UTC
+Version fcli version 0.20221012.130652-dev_main, built on 2022-10-12 13 07 21<br>
+Last updated 2022-10-12 13:08:21 UTC
 </div>
 </div>
 </body>
