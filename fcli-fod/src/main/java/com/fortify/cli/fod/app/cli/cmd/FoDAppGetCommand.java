@@ -46,13 +46,13 @@ public class FoDAppGetCommand extends AbstractFoDOutputCommand implements IBaseH
     @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
 
     @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+        return unirest.get(FoDUrls.APPLICATION).routeParam("appId", appResolver.getAppId(unirest));
     }
 
     @Override
-    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(FoDUrls.APPLICATION).routeParam("appId", appResolver.getAppId(unirest));
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDAppHelper.renameFields(record);
     }
 
 }

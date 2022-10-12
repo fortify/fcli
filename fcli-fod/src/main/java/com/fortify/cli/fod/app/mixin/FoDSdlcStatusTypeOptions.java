@@ -49,14 +49,14 @@ public class FoDSdlcStatusTypeOptions {
 
     @ReflectiveAccess
     public static class RequiredSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "sdlcStatus")
-        @Getter private FoDSdlcStatusType SdlcStatusType;
+        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
+        @Getter private FoDSdlcStatusType sdlcStatusType;
     }
 
     @ReflectiveAccess
     public static class OptionalSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "sdlcStatus")
-        @Getter private FoDSdlcStatusType SdlcStatusType;
+        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
+        @Getter private FoDSdlcStatusType sdlcStatusType;
     }
 
 }

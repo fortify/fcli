@@ -46,30 +46,32 @@ import picocli.CommandLine.*;
 import picocli.CommandLine.Model.CommandSpec;
 
 import java.util.ArrayList;
+import java.util.ResourceBundle;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Create.CMD_NAME)
 public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
+    ResourceBundle bundle = ResourceBundle.getBundle("com.fortify.cli.fod.i18n.FoDMessages");
 
-    @Parameters(index = "0", arity = "1", descriptionKey = "appName")
+    @Parameters(index = "0", arity = "1", descriptionKey = "application-name")
     private String applicationName;
-    @Parameters(index = "1", arity = "1", descriptionKey = "relName")
+    @Parameters(index = "1", arity = "1", descriptionKey = "release-name")
     private String releaseName;
-    @Option(names = {"--description", "-d"}, descriptionKey = "appDesc")
+    @Option(names = {"--description", "-d"})
     private String description;
-    @Option(names = {"--notify"}, required = false, arity = "0..*", descriptionKey = "notify")
+    @Option(names = {"--notify"}, required = false, arity = "0..*")
     private ArrayList<String> notifications;
-    @Option(names = {"--release-description", "--rel-desc"}, descriptionKey = "relDesc")
+    @Option(names = {"--release-description", "--rel-desc"})
     private String releaseDescription;
-    @Option(names = {"--owner"}, required = true, descriptionKey = "owner")
+    @Option(names = {"--owner"}, required = true)
     private String owner;
-    @Option(names = {"--user-group", "--group"}, arity = "0..*", descriptionKey = "userGroup")
+    @Option(names = {"--user-group", "--group"}, arity = "0..*")
     private ArrayList<String> userGroups;
-    @Option(names = {"--microservice"}, arity = "0..*", descriptionKey = "microservice")
+    @Option(names = {"--microservice"}, arity = "0..*")
     private ArrayList<String> microservices;
-    @Option(names = {"--release-microservice"}, descriptionKey = "releaseMs")
+    @Option(names = {"--release-microservice"})
     private String releaseMicroservice;
 
     @Mixin
@@ -80,11 +82,6 @@ public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IJs
     private FoDAttributeUpdateOptions.OptionalAttrOption appAttrs;
     @Mixin
     private FoDSdlcStatusTypeOptions.RequiredSdlcOption sdlcStatus;
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
-    }
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -116,15 +113,16 @@ public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IJs
         if (appType.getAppType().equals(FoDAppTypeOptions.FoDAppType.Microservice)) {
             if ((FoDAppHelper.missing(microservices) || (releaseMicroservice == null || releaseMicroservice.isEmpty())))
                 throw new ParameterException(spec.commandLine(),
-                        "Missing option: if 'Microservice' type is specified then " +
-                                "one or more '-microservice' names need to specified " +
-                                "as well as the microservice to create the release for " +
-                                "using '--release-microservice");
+                        bundle.getString("fcli.fod.app.create.missing-microservice"));
             if (!microservices.contains(releaseMicroservice))
                 throw new ParameterException(spec.commandLine(),
-                        "Invalid option: the '--release-microservice' specified was not " +
-                                "included in the 'microservice' options");
+                        bundle.getString("fcli.fod.app.create.invalid-microservice"));
         }
+    }
+
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDAppHelper.renameFields(record);
     }
 
     @Override

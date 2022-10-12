@@ -41,7 +41,7 @@ public class FoDAttributeUpdateOptions {
 
     @ReflectiveAccess
     public static class OptionalAttrOption extends AbstractFoDAppAttributeUpdateMixin {
-        @Option(names = {"--attr", "--attribute"}, required = false, arity = "0..", paramLabel = PARAM_LABEL, descriptionKey = "attr")
+        @Option(names = {"--attr", "--attribute"}, required = false, arity = "0..", paramLabel = PARAM_LABEL)
         @Getter private Map<String, String> attributes;
     }
 

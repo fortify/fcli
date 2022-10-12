@@ -50,13 +50,13 @@ public class FoDCriticalityTypeOptions {
 
     @ReflectiveAccess
     public static class RequiredCritOption extends AbstractFoDCriticalityType {
-        @Option(names = {"--criticality", "--business-criticality"}, required = true, arity = "1", completionCandidates = FoDCriticalityTypeIterable.class, descriptionKey = "critType")
+        @Option(names = {"--criticality", "--business-criticality"}, required = true, arity = "1", completionCandidates = FoDCriticalityTypeIterable.class)
         @Getter private FoDCriticalityType criticalityType;
     }
 
     @ReflectiveAccess
     public static class OptionalCritOption extends AbstractFoDCriticalityType {
-        @Option(names = {"--criticality", "--business-criticality"}, required = false, arity = "1", completionCandidates = FoDCriticalityTypeIterable.class, descriptionKey = "critType")
+        @Option(names = {"--criticality", "--business-criticality"}, required = false, arity = "1", completionCandidates = FoDCriticalityTypeIterable.class)
         @Getter private FoDCriticalityType criticalityType;
     }
 

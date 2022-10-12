@@ -53,12 +53,12 @@ public class FoDAppListCommand extends AbstractFoDOutputCommand implements IBase
             .add("type", "applicationType", FoDFiltersParamValueGenerators::plain);
 
     @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+        return unirest.get(FoDUrls.APPLICATIONS);
     }
 
     @Override
-    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(FoDUrls.APPLICATIONS);
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDAppHelper.renameFields(record);
     }
 }

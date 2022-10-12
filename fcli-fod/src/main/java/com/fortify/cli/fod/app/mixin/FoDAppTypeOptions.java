@@ -68,13 +68,13 @@ public class FoDAppTypeOptions {
 
     @ReflectiveAccess
     public static class RequiredAppTypeOption extends AbstractFoDAppType {
-        @Option(names = {"--type", "--app-type"}, required = true, arity = "1", completionCandidates = FoDAppTypeIterable.class, descriptionKey = "appType")
+        @Option(names = {"--type", "--app-type"}, required = true, arity = "1", completionCandidates = FoDAppTypeIterable.class)
         @Getter private FoDAppType appType;
     }
 
     @ReflectiveAccess
     public static class OptionalAppTypeOption extends AbstractFoDAppType {
-        @Option(names = {"--type", "--app-type"}, required = false, arity = "1", completionCandidates = FoDAppTypeIterable.class, descriptionKey = "appType")
+        @Option(names = {"--type", "--app-type"}, required = false, arity = "1", completionCandidates = FoDAppTypeIterable.class)
         @Getter private FoDAppType appType;
     }
 

@@ -53,28 +53,28 @@ public class FoDAppResolverMixin {
     // get/retrieve/delete/download app <entity> --from <app>
     @ReflectiveAccess
     public static class From extends AbstractFoDAppResolverMixin {
-        @Option(names = {"--from", ALIAS}, required = true, descriptionKey = "ApplicationMixin")
+        @Option(names = {"--from", ALIAS}, required = true)
         @Getter private String appNameOrId;
     }
 
     // create/update app <entity> --for <app>
     @ReflectiveAccess
     public static class For extends AbstractFoDAppResolverMixin {
-        @Option(names = {"--for", ALIAS}, required = true, descriptionKey = "ApplicationMixin")
+        @Option(names = {"--for", ALIAS}, required = true)
         @Getter private String appNameOrId;
     }
 
     // upload app <entity> --to <app>
     @ReflectiveAccess
     public static class To extends AbstractFoDAppResolverMixin {
-        @Option(names = {"--to", ALIAS}, required = true, descriptionKey = "ApplicationMixin")
+        @Option(names = {"--to", ALIAS}, required = true)
         @Getter private String appNameOrId;
     }
 
     // delete|update <app>
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDAppResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMixin")
+        @Parameters(index = "0", arity = "1", descriptionKey = "app")
         @Getter private String appNameOrId;
     }
 }

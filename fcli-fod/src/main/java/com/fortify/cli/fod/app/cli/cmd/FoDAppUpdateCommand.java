@@ -57,22 +57,17 @@ public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IJs
     @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Option(names = {"--name,", "-n"}, descriptionKey = "appName")
+    @Option(names = {"--name", "-n"})
     private String applicationNameUpdate;
-    @Option(names = {"--description", "-d"}, descriptionKey = "appDesc")
+    @Option(names = {"--description", "-d"})
     private String descriptionUpdate;
-    @Option(names = {"--notify"}, arity = "0..*", descriptionKey = "")
+    @Option(names = {"--notify"}, arity = "0..*")
     private ArrayList<String> notificationsUpdate;
 
     @Mixin
     private FoDCriticalityTypeOptions.OptionalCritOption criticalityTypeUpdate;
     @Mixin
     private FoDAttributeUpdateOptions.OptionalAttrOption appAttrsUpdate;
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
-    }
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -100,6 +95,11 @@ public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IJs
                 .setAttributes(jsonAttrs);
 
         return FoDAppHelper.updateApp(unirest, appDescriptor.getApplicationId(), appUpdateRequest).asJsonNode();
+    }
+
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDAppHelper.renameFields(record);
     }
 
     @Override

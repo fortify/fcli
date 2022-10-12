@@ -47,17 +47,17 @@ public class FoDAppDeleteCommand extends AbstractFoDOutputCommand implements IJs
     @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
 
     @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
-    }
-
-    @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
         unirest.delete(FoDUrls.APPLICATION)
                 .routeParam("appId", appResolver.getAppId(unirest))
                 .asObject(JsonNode.class).getBody();
         return appDescriptor.asObjectNode();
+    }
+
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDAppHelper.renameFields(record);
     }
 
     @Override
