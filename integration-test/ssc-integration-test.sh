@@ -65,8 +65,9 @@ runPersistentTestCommands() {
     sscSessionCmd token revoke $restToken -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD}
 
     appName="fcli-test $(date +%s)" 
-    sscSessionCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs -o expr={id}
-    newAppVersionId=${lastOutput}
+    sscSessionCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store currentAppVersion=id
+    # TODO Current commands don't properly produce singular output; once this is fixed, we can simply use {?currentAppVersion:id} 
+    newAppVersionId="{?currentAppVersion:$.[0].id}"
     checkOutput=(fgrep "No data"); sscSessionCmd appversion-artifact list --appversion ${newAppVersionId}
     sscSessionCmd appversion-attribute set "DevPhase=Active Development" --for ${newAppVersionId}
     sscSessionCmd appversion-attribute list --from ${newAppVersionId}

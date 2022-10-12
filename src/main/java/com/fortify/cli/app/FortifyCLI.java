@@ -32,6 +32,7 @@ import org.graalvm.nativeimage.hosted.RuntimeReflection;
 import org.jasypt.normalization.Normalizer;
 
 import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
+import com.fortify.cli.common.util.FcliVariableHelper;
 import com.fortify.cli.config.language.manager.LanguageConfigManager;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 import io.micronaut.configuration.picocli.MicronautFactory;
@@ -67,16 +68,19 @@ public class FortifyCLI {
      * @return exit code
      */
     private static int execute(String[] args) {
+        String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
         try (ApplicationContext applicationContext = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
             try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {
-                applicationContext.getBeansOfType(IFortifyCLIInitializer.class).forEach(b -> b.initializeFortifyCLI(args));
+                applicationContext.getBeansOfType(IFortifyCLIInitializer.class).forEach(b -> b.initializeFortifyCLI(resolvedArgs));
                 CommandLine commandLine = new CommandLine(FCLIRootCommands.class, micronautFactory);
-                return commandLine.setParameterExceptionHandler(
-                        new I18nParameterExceptionHandler(
-                                commandLine.getParameterExceptionHandler(),
-                                applicationContext.getBean(LanguageConfigManager.class)
-                        )
-                ).execute(args);
+                return commandLine
+                        .setDefaultValueProvider(new FortifyCLIDefaultValueProvider())
+                        .setParameterExceptionHandler(
+                            new I18nParameterExceptionHandler(
+                                    commandLine.getParameterExceptionHandler(),
+                                    applicationContext.getBean(LanguageConfigManager.class)
+                            )
+                ).execute(resolvedArgs);
             }
         }
     }

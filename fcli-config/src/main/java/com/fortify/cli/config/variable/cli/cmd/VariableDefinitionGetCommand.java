@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,15 +22,26 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.cli.mixin;
+package com.fortify.cli.config.variable.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.spi.output.AbstractUnirestOutputHelper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.AbstractJsonNodeOutputCommand;
+import com.fortify.cli.common.output.cli.mixin.JsonNodeOutputHelperMixins;
+import com.fortify.cli.config.variable.cli.mixin.VariableResolverMixin;
 
-/**
- * TODO Remove this interface once all commands have been updated to use {@link OutputHelperMixins},
- *      as {@link AbstractUnirestOutputHelper} already handles getting a basic output configuration.
- */
-public interface IOutputConfigSupplier {
-    // TODO Rename this method to getOutputConfig(). Can't do that while others are working on fcli, to avoid merge conflicts.
-    public OutputConfig getOutputOptionsWriterConfig();
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+
+@ReflectiveAccess
+@Command(name = JsonNodeOutputHelperMixins.Get.CMD_NAME)
+public class VariableDefinitionGetCommand extends AbstractJsonNodeOutputCommand {
+    @Getter @Mixin private JsonNodeOutputHelperMixins.Get outputHelper;
+    @Mixin private VariableResolverMixin.PositionalParameter variableResolver;
+
+    @Override
+    public JsonNode getJsonNode() {
+        return variableResolver.getVariableDescriptor().asJsonNode();
+    }
 }

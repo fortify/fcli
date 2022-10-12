@@ -88,9 +88,23 @@ public class FcliHomeHelper {
         return stream.filter(Files::isRegularFile);
     }
     
+    public static final Stream<Path> listDirsInDir(Path relativePath, boolean recursive) throws IOException {
+        final Path dirPath = getFcliHomePath().resolve(relativePath);
+        Stream<Path> stream = recursive ? Files.walk(dirPath) : Files.list(dirPath);
+        return stream.filter(Files::isDirectory);
+    }
+    
     public static final void deleteFile(Path relativePath) throws IOException {
         final Path filePath = getFcliHomePath().resolve(relativePath);
         Files.deleteIfExists(filePath);
+    }
+    
+    public static final void deleteDir(Path relativePath) throws IOException {
+        final Path filePath = getFcliHomePath().resolve(relativePath);
+        if ( Files.exists(filePath) ) {
+            deleteFilesInDir(relativePath, true);
+            Files.delete(filePath);
+        }
     }
     
     public static final void deleteFilesInDir(Path relativePath, boolean recursive) throws IOException {

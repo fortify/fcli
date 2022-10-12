@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,15 +22,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.cli.mixin;
+package com.fortify.cli.common.output.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.spi.output.AbstractUnirestOutputHelper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IJsonNodeOutputHelper;
 
-/**
- * TODO Remove this interface once all commands have been updated to use {@link OutputHelperMixins},
- *      as {@link AbstractUnirestOutputHelper} already handles getting a basic output configuration.
- */
-public interface IOutputConfigSupplier {
-    // TODO Rename this method to getOutputConfig(). Can't do that while others are working on fcli, to avoid merge conflicts.
-    public OutputConfig getOutputOptionsWriterConfig();
+import io.micronaut.core.annotation.ReflectiveAccess;
+
+@ReflectiveAccess
+public abstract class AbstractJsonNodeOutputCommand implements Runnable {
+    @Override
+    public final void run() {
+        IJsonNodeOutputHelper outputHelper = getOutputHelper();
+        outputHelper.write(getJsonNode());
+    }
+    
+    protected abstract JsonNode getJsonNode();
+    protected abstract IJsonNodeOutputHelper getOutputHelper();
 }

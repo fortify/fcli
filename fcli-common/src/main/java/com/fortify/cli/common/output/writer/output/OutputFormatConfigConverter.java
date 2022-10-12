@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import com.fortify.cli.common.output.cli.mixin.OutputMixin.OutputFormatConfig;
 import com.fortify.cli.common.output.writer.OutputFormat;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

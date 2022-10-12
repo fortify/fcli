@@ -24,23 +24,23 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.spi.output.IOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.IUnirestOutputHelper;
 import com.fortify.cli.common.rest.cli.cmd.AbstractUnirestRunnerCommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 
 @ReflectiveAccess
-public abstract class AbstractOutputCommand extends AbstractUnirestRunnerCommand {
+public abstract class AbstractUnirestOutputCommand extends AbstractUnirestRunnerCommand {
     @Override
     protected final Void run(UnirestInstance unirest) {
-        IOutputHelper outputHelper = getOutputHelper();
+        IUnirestOutputHelper unirestOutputHelper = getOutputHelper();
         if ( isBaseHttpRequestSupplier() ) {
-            outputHelper.write(unirest, ((IBaseHttpRequestSupplier)this).getBaseRequest(unirest));
+            unirestOutputHelper.write(unirest, ((IBaseHttpRequestSupplier)this).getBaseRequest(unirest));
         } else if ( isJsonNodeHolderSupplier() ) {
-            outputHelper.write(unirest, ((IJsonNodeHolderSupplier)this).getJsonNodeHolder(unirest));
+            unirestOutputHelper.write(unirest, ((IJsonNodeHolderSupplier)this).getJsonNodeHolder(unirest));
         } else if ( isJsonNodeSupplier() ) {
-            outputHelper.write(unirest, ((IJsonNodeSupplier)this).getJsonNode(unirest));
+            unirestOutputHelper.write(unirest, ((IJsonNodeSupplier)this).getJsonNode(unirest));
         } else {
             throw new IllegalStateException(this.getClass().getName()+" must implement exactly one of I[BaseHttpRequest|JsonNodeHolder|JsonNode]Supplier");
         }
@@ -64,5 +64,5 @@ public abstract class AbstractOutputCommand extends AbstractUnirestRunnerCommand
                 && !(this instanceof IJsonNodeHolderSupplier)
                 && (this instanceof IJsonNodeSupplier);
     }
-    protected abstract IOutputHelper getOutputHelper();
+    protected abstract IUnirestOutputHelper getOutputHelper();
 }
