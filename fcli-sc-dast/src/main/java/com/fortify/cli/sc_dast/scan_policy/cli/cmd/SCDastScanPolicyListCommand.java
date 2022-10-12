@@ -22,31 +22,27 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.output.writer.record;
+package com.fortify.cli.sc_dast.scan_policy.cli.cmd;
 
-import java.io.PrintWriter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
+import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
+import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyHelper;
 
-import com.fortify.cli.common.output.writer.IMessageResolver;
-import com.fortify.cli.common.output.writer.OutputFormat;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
-import lombok.Builder;
-import lombok.Data;
-
-@Data @Builder
-public class RecordWriterConfig {
-    /** PrintWriter to which to write the output */
-    private PrintWriter printWriter;
-    /** Write singular output rather than an array/list; 
-     * assumes that only a single record is passed to the {@link IRecordWriter} */ 
-    private boolean singular;
-    /** Free-format {@link IRecordWriter} options */
-    private String options;
-    /** The actual output format that was requested */
-    private OutputFormat outputFormat;
-    /** Whether to pretty-print the output */
-    @Builder.Default private boolean pretty = true;
-    /** I18n message resolver */
-    private IMessageResolver messageResolver;
-    /** Command that is outputting the data */
-    private Object cmd;
+@ReflectiveAccess
+@Command(name = SCDastOutputHelperMixins.List.CMD_NAME)
+public class SCDastScanPolicyListCommand extends AbstractSCDastOutputCommand implements IJsonNodeSupplier {
+    @Getter @Mixin private SCDastOutputHelperMixins.List outputHelper;
+    
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return SCDastScanPolicyHelper.getScanPolicies(unirest);
+    }
 }

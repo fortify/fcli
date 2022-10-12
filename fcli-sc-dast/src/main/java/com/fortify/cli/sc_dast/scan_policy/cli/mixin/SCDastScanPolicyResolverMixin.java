@@ -22,10 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.scan_settings.cli.mixin;
+package com.fortify.cli.sc_dast.scan_policy.cli.mixin;
 
-import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsDescriptor;
-import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsHelper;
+import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyDescriptor;
+import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -33,34 +34,40 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-public class SCDastScanSettingsResolverMixin {
+public class SCDastScanPolicyResolverMixin {
     
     @ReflectiveAccess
-    public static abstract class AbstractSSCDastScanSettingsResolverMixin  {
-        public abstract String getScanSettingsCicdTokenOrId();
+    public static abstract class AbstractSSCDastScanPolicyResolverMixin  {
+        public abstract String getScanPolicyNameOrId();
 
-        public SCDastScanSettingsDescriptor getScanSettingsDescriptor(UnirestInstance unirest){
-            return SCDastScanSettingsHelper.getScanSettingsDescriptor(unirest, getScanSettingsCicdTokenOrId());
+        public SCDastScanPolicyDescriptor getScanPolicyDescriptor(UnirestInstance unirest){
+            String scanPolicyNameOrId = getScanPolicyNameOrId();
+            return StringUtils.isBlank(scanPolicyNameOrId) 
+                    ? null
+                    : SCDastScanPolicyHelper.getScanPolicyDescriptor(unirest, scanPolicyNameOrId);
         }
         
-        public String getScanSettingsId(UnirestInstance unirest) {
-            return getScanSettingsDescriptor(unirest).getId();
-        }
-        
-        public String getScanSettingsCicdToken(UnirestInstance unirest) {
-            return getScanSettingsDescriptor(unirest).getCicdToken();
+        public String getScanPolicyId(UnirestInstance unirest) {
+            SCDastScanPolicyDescriptor descriptor = getScanPolicyDescriptor(unirest);
+            return descriptor==null ? null : descriptor.getId();
         }
     }
     
     @ReflectiveAccess
-    public static class RequiredOption extends AbstractSSCDastScanSettingsResolverMixin {
-        @Option(names = {"-S", "--settings"}, required = true)
-        @Getter private String scanSettingsCicdTokenOrId;
+    public static class RequiredOption extends AbstractSSCDastScanPolicyResolverMixin {
+        @Option(names = {"-P", "--policy"}, required = true)
+        @Getter private String scanPolicyNameOrId;
     }
     
     @ReflectiveAccess
-    public static class PositionalParameter extends AbstractSSCDastScanSettingsResolverMixin {
+    public static class OptionalOption extends AbstractSSCDastScanPolicyResolverMixin {
+        @Option(names = {"-P", "--policy"}, required = false)
+        @Getter private String scanPolicyNameOrId;
+    }
+    
+    @ReflectiveAccess
+    public static class PositionalParameter extends AbstractSSCDastScanPolicyResolverMixin {
         @Parameters(index = "0", arity = "1")
-        @Getter private String scanSettingsCicdTokenOrId;
+        @Getter private String scanPolicyNameOrId;
     }
 }

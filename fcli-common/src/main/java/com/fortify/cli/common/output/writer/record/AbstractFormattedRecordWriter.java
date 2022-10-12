@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.PropertyPathFormatter;
 import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.output.writer.OutputFormat;
@@ -25,6 +26,11 @@ public abstract class AbstractFormattedRecordWriter implements IRecordWriter {
     public AbstractFormattedRecordWriter(RecordWriterConfig config) {
         this.config = config;
         String options = config.getOptions();
+        Object cmd = config.getCmd();
+        if ( cmd!=null && cmd instanceof IActionCommandResultSupplier 
+                && !StringUtils.isBlank(options) && !options.contains("__action__") ) {
+            options += ",__action__";
+        }
         this.fieldPaths = StringUtils.isBlank(options) ? null : getFieldPaths(options.replaceAll("\\s", ""));
     }
     

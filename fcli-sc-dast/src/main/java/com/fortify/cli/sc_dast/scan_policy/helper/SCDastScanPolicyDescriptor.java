@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.scan_settings.helper;
+package com.fortify.cli.sc_dast.scan_policy.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
 
@@ -32,8 +32,7 @@ import lombok.EqualsAndHashCode;
 
 @ReflectiveAccess
 @Data @EqualsAndHashCode(callSuper=true)
-public class SCDastScanSettingsDescriptor extends JsonNodeHolder {
+public class SCDastScanPolicyDescriptor extends JsonNodeHolder {
     private String id;
     private String name;
-    private String cicdToken;
 }
