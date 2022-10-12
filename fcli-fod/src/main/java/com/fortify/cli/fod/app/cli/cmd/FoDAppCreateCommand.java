@@ -24,21 +24,24 @@
  ******************************************************************************/
 package com.fortify.cli.fod.app.cli.cmd;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
 import com.fortify.cli.fod.app.helper.FoDAppCreateRequest;
-import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.app.mixin.FoDAppTypeOptions;
 import com.fortify.cli.fod.app.mixin.FoDCriticalityTypeOptions;
 import com.fortify.cli.fod.app.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDUpdateCommand;
 import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine.*;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -46,7 +49,8 @@ import java.util.ArrayList;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Create.CMD_NAME)
-public class FoDAppCreateCommand extends AbstractFoDUpdateCommand {
+public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+    @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
 
     @Parameters(index = "0", arity = "1", descriptionKey = "appName")
@@ -77,9 +81,13 @@ public class FoDAppCreateCommand extends AbstractFoDUpdateCommand {
     @Mixin
     private FoDSdlcStatusTypeOptions.RequiredSdlcOption sdlcStatus;
 
-    @SneakyThrows
     @Override
-    protected Void run(UnirestInstance unirest) {
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDAppHelper.renameFields(record);
+    }
+
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
         validate();
 
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUser(unirest, owner, true);
@@ -101,14 +109,12 @@ public class FoDAppCreateCommand extends AbstractFoDUpdateCommand {
                 .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes()))
                 .setUserGroupIds(FoDAppHelper.getUserGroupsNode(unirest, userGroups));
 
-        FoDAppDescriptor result = FoDAppHelper.createApp(unirest, appCreateRequest);
-        getOutputMixin().write(result.asObjectNode());
-        return null;
+        return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();
     }
 
     private void validate() {
         if (appType.getAppType().equals(FoDAppTypeOptions.FoDAppType.Microservice)) {
-            if ((missing(microservices) || (releaseMicroservice == null || releaseMicroservice.isEmpty())))
+            if ((FoDAppHelper.missing(microservices) || (releaseMicroservice == null || releaseMicroservice.isEmpty())))
                 throw new ParameterException(spec.commandLine(),
                         "Missing option: if 'Microservice' type is specified then " +
                                 "one or more '-microservice' names need to specified " +
@@ -119,6 +125,11 @@ public class FoDAppCreateCommand extends AbstractFoDUpdateCommand {
                         "Invalid option: the '--release-microservice' specified was not " +
                                 "included in the 'microservice' options");
         }
+    }
+
+    @Override
+    public String getActionCommandResult() {
+        return "CREATED";
     }
 
 }

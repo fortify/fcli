@@ -25,6 +25,10 @@
 package com.fortify.cli.fod.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
@@ -33,12 +37,12 @@ import com.fortify.cli.fod.app.mixin.FoDCriticalityTypeOptions;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDUpdateCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -48,9 +52,10 @@ import java.util.Map;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Update.CMD_NAME)
-public class FoDAppUpdateCommand extends AbstractFoDUpdateCommand  {
-
+public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+    @Getter @Mixin private FoDOutputHelperMixins.Update outputHelper;
     @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Option(names = {"--name,", "-n"}, descriptionKey = "appName")
     private String applicationNameUpdate;
@@ -64,9 +69,13 @@ public class FoDAppUpdateCommand extends AbstractFoDUpdateCommand  {
     @Mixin
     private FoDAttributeUpdateOptions.OptionalAttrOption appAttrsUpdate;
 
-    @SneakyThrows
     @Override
-    protected Void run(UnirestInstance unirest) {
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDAppHelper.renameFields(record);
+    }
+
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
 
         // current values of app being updated
         FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
@@ -75,7 +84,7 @@ public class FoDAppUpdateCommand extends AbstractFoDUpdateCommand  {
         // new values to replace
         FoDCriticalityTypeOptions.FoDCriticalityType appCriticalityNew = criticalityTypeUpdate.getCriticalityType();
         Map<String, String> attributeUpdates = appAttrsUpdate.getAttributes();
-        JsonNode jsonAttrs = getObjectMapper().createArrayNode();
+        JsonNode jsonAttrs = objectMapper.createArrayNode();
         if (attributeUpdates != null && attributeUpdates.size() > 0) {
             jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, appAttrsCurrent, attributeUpdates);
         } else {
@@ -90,19 +99,12 @@ public class FoDAppUpdateCommand extends AbstractFoDUpdateCommand  {
                 .setEmailList(StringUtils.isNotEmpty(appEmailListNew) ? appEmailListNew : appDescriptor.getEmailList())
                 .setAttributes(jsonAttrs);
 
-        FoDAppDescriptor result = FoDAppHelper.updateApp(unirest, appDescriptor.getApplicationId(), appUpdateRequest);
-        getOutputMixin().write(result.asObjectNode());
-        return null;
+        return FoDAppHelper.updateApp(unirest, appDescriptor.getApplicationId(), appUpdateRequest).asJsonNode();
     }
 
     @Override
-    protected JsonNode generateOutput(UnirestInstance unirest) {
-        return appResolver.getAppDescriptor(unirest).asJsonNode();
-    }
-
-    @Override
-    protected JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
+    public String getActionCommandResult() {
+        return "UPDATED";
     }
 
 }

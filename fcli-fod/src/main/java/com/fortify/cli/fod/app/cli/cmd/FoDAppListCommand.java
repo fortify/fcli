@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.fod.app.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
 import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
@@ -34,6 +33,7 @@ import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.query.FoDFilterParamGenerator;
 import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
 import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -43,14 +43,19 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.List.CMD_NAME)
-public class FoDAppListCommand extends AbstractFoDOutputCommand implements IBaseHttpRequestSupplier  {
+public class FoDAppListCommand extends AbstractFoDOutputCommand implements IBaseHttpRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
 
     @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
-            .add("applicationId", FoDFiltersParamValueGenerators::plain)
-            .add("applicationName", FoDFiltersParamValueGenerators::plain)
-            .add("businessCriticalityType", FoDFiltersParamValueGenerators::plain)
-            .add("applicationType", FoDFiltersParamValueGenerators::plain);
+            .add("id","applicationId", FoDFiltersParamValueGenerators::plain)
+            .add("name","applicationName", FoDFiltersParamValueGenerators::plain)
+            .add("criticality", "businessCriticalityType", FoDFiltersParamValueGenerators::plain)
+            .add("type", "applicationType", FoDFiltersParamValueGenerators::plain);
+
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDAppHelper.renameFields(record);
+    }
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {

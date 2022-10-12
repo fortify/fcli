@@ -25,46 +25,43 @@
 package com.fortify.cli.fod.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.rest.cli.cmd.AbstractFoDUpdateCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Delete.CMD_NAME)
-public class FoDAppDeleteCommand extends AbstractFoDUpdateCommand {
-
+public class FoDAppDeleteCommand extends AbstractFoDOutputCommand implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+    @Getter @Mixin private FoDOutputHelperMixins.Delete outputHelper;
     @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
-
-    @SneakyThrows
-    @Override
-    protected Void run(UnirestInstance unirest) {
-
-        // current values of app being deleted
-        FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
-
-        JsonNode response = unirest.delete(FoDUrls.APPLICATION)
-                .routeParam("appId", appResolver.getAppId(unirest))
-                .asObject(JsonNode.class).getBody();
-        getOutputMixin().write(appDescriptor.asObjectNode().put("action", "DELETED"));
-        return null;
-    }
-
-    @Override
-    protected JsonNode generateOutput(UnirestInstance unirest) {
-        return appResolver.getAppDescriptor(unirest).asJsonNode();
-    }
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
         return FoDAppHelper.renameFields(record);
     }
 
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
+        unirest.delete(FoDUrls.APPLICATION)
+                .routeParam("appId", appResolver.getAppId(unirest))
+                .asObject(JsonNode.class).getBody();
+        return appDescriptor.asObjectNode();
+    }
+
+    @Override
+    public String getActionCommandResult() {
+        return "DELETED";
+    }
 }

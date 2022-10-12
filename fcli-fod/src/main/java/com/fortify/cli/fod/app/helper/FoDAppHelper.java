@@ -40,12 +40,16 @@ import lombok.Getter;
 
 import javax.validation.ValidationException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class FoDAppHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
     public static final JsonNode renameFields(JsonNode record) {
-        return new RenameFieldsTransformer(new String[] {"project:application"}).transform(record);
+        return new RenameFieldsTransformer(new String[] {
+                "applicationId:id", "applicationName:name", "applicationDescription:description",
+                "businessCriticalityType:criticality", "applicationType:type"
+        }).transform(record);
     }
 
     public static final FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String appNameOrId, boolean failIfNotFound) {
@@ -78,8 +82,7 @@ public class FoDAppHelper {
         FoDAppDescriptor descriptor = JsonHelper.treeToValue(response, FoDAppDescriptor.class);
         descriptor.asObjectNode()
                 .put("applicationName", appCreateRequest.getApplicationName())
-                .put("releaseName", appCreateRequest.getReleaseName())
-                .put("action", "CREATED");
+                .put("releaseName", appCreateRequest.getReleaseName());
         return descriptor;
     }
 
@@ -89,9 +92,7 @@ public class FoDAppHelper {
         unirest.put(FoDUrls.APPLICATION)
                 .routeParam("appId", String.valueOf(appId))
                 .body(body).asObject(JsonNode.class).getBody();
-        FoDAppDescriptor descriptor =  getAppDescriptor(unirest, String.valueOf(appId), true);
-        descriptor.asObjectNode().put("action", "UPDATED");
-        return descriptor;
+        return getAppDescriptor(unirest, String.valueOf(appId), true);
     }
 
     public static String getEmailList(ArrayList<String> notifications) {
@@ -130,7 +131,13 @@ public class FoDAppHelper {
         return userGroupArray;
     }
 
+    public static boolean missing(List<?> list) {
+        return list == null || list.isEmpty();
+    }
+
     private static final FoDAppDescriptor getDescriptor(JsonNode node) {
         return  JsonHelper.treeToValue(node, FoDAppDescriptor.class);
     }
+
+
 }
