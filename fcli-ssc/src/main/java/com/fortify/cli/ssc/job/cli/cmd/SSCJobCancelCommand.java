@@ -28,8 +28,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.job.cli.mixin.SSCJobResolverMixin;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
@@ -43,7 +43,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Cancel.CMD_NAME)
-public class SSCJobCancelCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+public class SSCJobCancelCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Cancel outputHelper; 
     @Mixin private SSCJobResolverMixin.PositionalParameter jobResolver;
     

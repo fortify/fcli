@@ -7,8 +7,8 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
@@ -26,7 +26,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.Download.CMD_NAME)
-public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Parameters(index = "0", converter = DownloadTypeConverter.class, completionCandidates = DownloadTypeIterable.class)
     @Getter private DownloadType type;
     @Getter @Mixin private SCDastOutputHelperMixins.Download outputHelper;

@@ -3,8 +3,8 @@ package com.fortify.cli.sc_dast.scan.cli.cmd.action;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.sc_dast.scan.cli.cmd.AbstractSCDastScanOutputCommand;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;
@@ -25,7 +25,7 @@ import picocli.CommandLine.Mixin;
  *
  */
 @ReflectiveAccess
-public abstract class AbstractSCDastScanActionCommand extends AbstractSCDastScanOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+public abstract class AbstractSCDastScanActionCommand extends AbstractSCDastScanOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Mixin private SCDastScanResolverMixin.PositionalParameter scanResolver;
     
     @Override

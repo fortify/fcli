@@ -27,8 +27,8 @@ package com.fortify.cli.ssc.role.cli.cmd;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -44,7 +44,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Create.CMD_NAME)
-public class SSCRoleCreateCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, IActionCommandResultSupplier {
+public class SSCRoleCreateCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Create outputHelper;
 
 /*

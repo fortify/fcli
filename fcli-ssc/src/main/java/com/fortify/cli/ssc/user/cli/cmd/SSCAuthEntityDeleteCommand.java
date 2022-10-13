@@ -29,9 +29,9 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -48,7 +48,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
-public class SSCAuthEntityDeleteCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+public class SSCAuthEntityDeleteCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper;
     @Parameters(index = "0..*", arity = "1..*")
     private String[] authEntitySpecs;

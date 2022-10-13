@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
-import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.plugin.cli.mixin.SSCPluginResolverMixin;
@@ -39,7 +39,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
-public class SSCPluginGetCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier {
+public class SSCPluginGetCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
     @Mixin private SSCPluginResolverMixin.PositionalParameter pluginResolver;
 

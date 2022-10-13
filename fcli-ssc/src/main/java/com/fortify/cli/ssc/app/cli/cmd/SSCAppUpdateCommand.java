@@ -26,8 +26,8 @@ package com.fortify.cli.ssc.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.app.cli.mixin.SSCAppResolverMixin;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
@@ -44,7 +44,7 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Update.CMD_NAME)
-public class SSCAppUpdateCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+public class SSCAppUpdateCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Update outputHelper; 
     @Mixin private SSCAppResolverMixin.PositionalParameter appResolver;
     @Option(names={"--name","-n"}, required = false)

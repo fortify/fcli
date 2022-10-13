@@ -1,7 +1,8 @@
 package com.fortify.cli.fod.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
+
 import io.micronaut.http.uri.UriBuilder;
 import kong.unirest.HttpResponse;
 
@@ -11,19 +12,19 @@ import java.util.function.Function;
 public class FoDOutputConfigHelper {
     /**
      * Provide default table output configuration for results optionally embedded in an items object
-     * @return {@link OutputConfig}
+     * @return {@link StandardOutputConfig}
      */
-    public static final OutputConfig table() {
-        return OutputConfig.table().inputTransformer(FoDOutputConfigHelper::getItemsOrSelf);
+    public static final StandardOutputConfig table() {
+        return StandardOutputConfig.table().inputTransformer(FoDOutputConfigHelper::getItemsOrSelf);
     }
 
     /**
      * Provide default details output configuration for results optionally embedded in a data object
-     * @return {@link OutputConfig}
+     * @return {@link StandardOutputConfig}
      */
-    public static final OutputConfig details() {
+    public static final StandardOutputConfig details() {
         // TODO For now we use yaml output, until #104 has been fixed
-        return OutputConfig.yaml().inputTransformer(FoDOutputConfigHelper::getItemsOrSelf);
+        return StandardOutputConfig.yaml().inputTransformer(FoDOutputConfigHelper::getItemsOrSelf);
     }
 
     public static final Function<HttpResponse<JsonNode>, String> pagingHandler(final String uri) {

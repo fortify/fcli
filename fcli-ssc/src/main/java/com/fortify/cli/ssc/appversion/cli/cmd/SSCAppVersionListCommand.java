@@ -25,8 +25,8 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
@@ -43,7 +43,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.List.CMD_NAME)
-public class SSCAppVersionListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, IRecordTransformer, ISSCQParamGeneratorSupplier {
+public class SSCAppVersionListCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, ISSCQParamGeneratorSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
     @Getter private SSCQParamGenerator qParamGenerator = new SSCQParamGenerator()
                 .add("id", SSCQParamValueGenerators::plain)

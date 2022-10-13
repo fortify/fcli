@@ -25,9 +25,9 @@
 package com.fortify.cli.fod.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.fod.app.helper.FoDAppCreateRequest;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.app.mixin.FoDAppTypeOptions;
@@ -50,7 +50,7 @@ import java.util.ResourceBundle;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Create.CMD_NAME)
-public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
     ResourceBundle bundle = ResourceBundle.getBundle("com.fortify.cli.fod.i18n.FoDMessages");

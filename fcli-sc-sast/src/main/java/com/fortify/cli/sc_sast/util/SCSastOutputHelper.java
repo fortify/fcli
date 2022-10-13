@@ -1,11 +1,11 @@
 package com.fortify.cli.sc_sast.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 
 public class SCSastOutputHelper {
-    public static final OutputConfig defaultTableOutputConfig() {
-        return OutputConfig.table().inputTransformer(SCSastOutputHelper::getItems);
+    public static final StandardOutputConfig defaultTableOutputConfig() {
+        return StandardOutputConfig.table().inputTransformer(SCSastOutputHelper::getItems);
     }
     
     private static final JsonNode getItems(JsonNode input) {

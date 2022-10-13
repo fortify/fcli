@@ -27,9 +27,9 @@ package com.fortify.cli.ssc.appversion.cli.cmd;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformerSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
@@ -46,7 +46,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
-public class SSCAppVersionDeleteCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier, IRecordTransformerSupplier {
+public class SSCAppVersionDeleteCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier, IRecordTransformerSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper;
     @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
 

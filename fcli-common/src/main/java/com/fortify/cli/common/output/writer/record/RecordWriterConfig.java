@@ -26,8 +26,8 @@ package com.fortify.cli.common.output.writer.record;
 
 import java.io.PrintWriter;
 
+import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.writer.IMessageResolver;
-import com.fortify.cli.common.output.writer.OutputFormat;
 
 import lombok.Builder;
 import lombok.Data;

@@ -25,7 +25,7 @@
 package com.fortify.cli.sc_dast.sensor.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.sensor.cli.mixin.SCDastSensorResolverMixin;
@@ -39,7 +39,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.Disable.CMD_NAME)
-public class SCDastSensorDisableCommand extends AbstractSCDastOutputCommand implements IJsonNodeSupplier {
+public class SCDastSensorDisableCommand extends AbstractSCDastOutputCommand implements IUnirestJsonNodeSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.Disable outputHelper;
     @Mixin private SCDastSensorResolverMixin.PositionalParameter sensorResolver;
 

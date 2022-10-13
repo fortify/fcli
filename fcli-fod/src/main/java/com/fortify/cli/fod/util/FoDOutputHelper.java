@@ -1,14 +1,14 @@
 package com.fortify.cli.fod.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 
 import io.micronaut.http.uri.UriBuilder;
 
 public class FoDOutputHelper {
-    public static final OutputConfig defaultTableOutputConfig() {
-        return OutputConfig.table().inputTransformer(json -> json.get("items"));
+    public static final StandardOutputConfig defaultTableOutputConfig() {
+        return StandardOutputConfig.table().inputTransformer(json -> json.get("items"));
     }
 
     public static final INextPageUrlProducer pagingHandler(final String uri) {

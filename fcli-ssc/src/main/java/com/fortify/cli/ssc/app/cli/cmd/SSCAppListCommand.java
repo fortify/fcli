@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.app.cli.cmd;
 
-import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -41,7 +41,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.List.CMD_NAME)
-public class SSCAppListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, ISSCQParamGeneratorSupplier {
+public class SSCAppListCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier, ISSCQParamGeneratorSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
     @Getter private SSCQParamGenerator qParamGenerator = new SSCQParamGenerator()
                 .add("id", SSCQParamValueGenerators::plain)

@@ -25,7 +25,7 @@
 package com.fortify.cli.ssc.appversion_attribute.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeListHelper;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
@@ -39,7 +39,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.List.CMD_NAME)
-public class SSCAppVersionAttributeListCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier {
+public class SSCAppVersionAttributeListCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.From parentResolver;
     

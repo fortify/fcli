@@ -26,9 +26,9 @@ package com.fortify.cli.fod.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
@@ -52,7 +52,7 @@ import java.util.Map;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Update.CMD_NAME)
-public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Update outputHelper;
     @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
     private final ObjectMapper objectMapper = new ObjectMapper();

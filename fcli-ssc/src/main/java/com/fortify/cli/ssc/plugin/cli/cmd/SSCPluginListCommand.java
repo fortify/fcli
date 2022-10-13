@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
-import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
@@ -37,7 +37,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.List.CMD_NAME)
-public class SSCPluginListCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier {
+public class SSCPluginListCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
     // TODO Can we do any server-side filtering?
 

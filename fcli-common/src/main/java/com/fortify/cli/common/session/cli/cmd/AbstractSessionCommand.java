@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.writer.output.StandardOutputWriterFactory;
+import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
+import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -33,7 +33,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 public abstract class AbstractSessionCommand implements Runnable {
-    @Mixin private StandardOutputWriterFactory outputWriterFactory;
+    @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
 
     @Override
     public final void run() {
@@ -44,8 +44,8 @@ public abstract class AbstractSessionCommand implements Runnable {
 
     protected abstract void _run();
 
-    private OutputConfig getOutputConfig() {
-        return OutputConfig.table();
+    private StandardOutputConfig getOutputConfig() {
+        return StandardOutputConfig.table();
     }
     
     protected abstract ISessionDataManager<?> getSessionDataManager();

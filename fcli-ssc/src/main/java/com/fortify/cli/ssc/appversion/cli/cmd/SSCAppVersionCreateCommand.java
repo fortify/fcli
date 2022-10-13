@@ -31,9 +31,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformerSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.SSCAppVersionDelimiterMixin;
@@ -63,7 +63,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Create.CMD_NAME)
-public class SSCAppVersionCreateCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IRecordTransformerSupplier, IActionCommandResultSupplier {
+public class SSCAppVersionCreateCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformerSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Create outputHelper; 
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Parameters(index = "0", arity = "1", descriptionKey = "appVersionName") private String appAndVersionName;

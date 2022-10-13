@@ -25,8 +25,8 @@
 package com.fortify.cli.ssc.role_permission.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -42,7 +42,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
-public class SSCRolePermissionGetCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, IRecordTransformer {
+public class SSCRolePermissionGetCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer {
     @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
     @Mixin private SSCRolePermissionResolverMixin.PositionalParameter rolePermissionResolver;
 

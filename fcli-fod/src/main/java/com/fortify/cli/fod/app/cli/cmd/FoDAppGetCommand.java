@@ -25,8 +25,8 @@
 package com.fortify.cli.fod.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IRecordTransformer;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
@@ -41,7 +41,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
-public class FoDAppGetCommand extends AbstractFoDOutputCommand implements IBaseHttpRequestSupplier, IRecordTransformer {
+public class FoDAppGetCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer {
     @Getter @Mixin private FoDOutputHelperMixins.Get outputHelper;
     @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
 

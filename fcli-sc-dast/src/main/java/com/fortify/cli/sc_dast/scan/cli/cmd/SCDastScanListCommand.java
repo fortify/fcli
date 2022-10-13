@@ -24,9 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.scan.cli.cmd;
 
-import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
-import com.fortify.cli.common.output.helper.OutputQueryHelper;
-import com.fortify.cli.common.output.writer.output.query.OutputQueryOperator;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
+import com.fortify.cli.common.output.query.OutputQueryHelper;
+import com.fortify.cli.common.output.query.OutputQueryOperator;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastSearchTextMixin;
@@ -42,7 +42,7 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.List.CMD_NAME)
-public class SCDastScanListCommand extends AbstractSCDastScanOutputCommand implements IBaseHttpRequestSupplier {
+public class SCDastScanListCommand extends AbstractSCDastScanOutputCommand implements IUnirestBaseRequestSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.List outputHelper;
     @Mixin SCDastSearchTextMixin searchTextMixin;
     // TODO Once we support date-based less-than/greater-than operators for -q,

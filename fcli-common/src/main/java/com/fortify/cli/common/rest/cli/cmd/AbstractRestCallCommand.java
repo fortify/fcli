@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.writer.output.StandardOutputWriterFactory;
+import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
+import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
@@ -39,7 +39,7 @@ import picocli.CommandLine.Parameters;
 @ReflectiveAccess
 public abstract class AbstractRestCallCommand extends AbstractUnirestRunnerCommand {
     public static final String CMD_NAME = "call"; 
-    @Mixin private StandardOutputWriterFactory outputWriterFactory;
+    @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
     @Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
     
     @Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
@@ -52,7 +52,7 @@ public abstract class AbstractRestCallCommand extends AbstractUnirestRunnerComma
     
     @Override
     protected final Void run(UnirestInstance unirest) {
-        outputWriterFactory.createOutputWriter(OutputConfig.json())
+        outputWriterFactory.createOutputWriter(StandardOutputConfig.json())
             .write(prepareRequest(unirest));
         return null;
     }

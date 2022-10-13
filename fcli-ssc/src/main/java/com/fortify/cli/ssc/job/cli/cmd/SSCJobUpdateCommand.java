@@ -26,8 +26,8 @@ package com.fortify.cli.ssc.job.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.job.cli.mixin.SSCJobResolverMixin;
 import com.fortify.cli.ssc.job.helper.SSCJobDescriptor;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
@@ -43,7 +43,7 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Update.CMD_NAME)
-public class SSCJobUpdateCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+public class SSCJobUpdateCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Update outputHelper;
     @Mixin private SSCJobResolverMixin.PositionalParameter jobResolver;
     @Option(names="--priority", required = true) Integer priority;

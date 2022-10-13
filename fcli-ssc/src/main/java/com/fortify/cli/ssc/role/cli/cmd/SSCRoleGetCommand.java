@@ -25,7 +25,7 @@
 package com.fortify.cli.ssc.role.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.role.cli.mixin.SSCRoleResolverMixin;
@@ -38,7 +38,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
-public class SSCRoleGetCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier {
+public class SSCRoleGetCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
     @Mixin private SSCRoleResolverMixin.PositionalParameter roleResolver;
 

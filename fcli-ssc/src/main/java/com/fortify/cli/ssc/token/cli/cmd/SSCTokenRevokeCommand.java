@@ -28,8 +28,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.writer.output.StandardOutputWriterFactory;
+import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
+import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
@@ -42,7 +42,7 @@ import picocli.CommandLine.Parameters;
 @ReflectiveAccess
 @Command(name = "revoke")
 public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand {
-    @Mixin private StandardOutputWriterFactory outputWriterFactory;
+    @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
     @Parameters(arity="1..") private String[] tokens;
     
     @Override
@@ -67,7 +67,7 @@ public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand {
         return s.matches("[0-9]+");
     }
 
-    public OutputConfig getOutputConfig() {
-        return OutputConfig.table();
+    public StandardOutputConfig getOutputConfig() {
+        return StandardOutputConfig.table();
     }
 }

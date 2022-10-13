@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.user.cli.cmd;
 
-import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -39,7 +39,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
-public class SSCAuthEntityGetCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier {
+public class SSCAuthEntityGetCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
     // TODO Add support for resolving auth entities by name using a ResolverMixin
     @Parameters(arity="1", description = "Id of auth entity to be retrieved")

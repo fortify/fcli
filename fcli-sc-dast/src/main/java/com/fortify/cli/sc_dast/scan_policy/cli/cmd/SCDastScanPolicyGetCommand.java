@@ -25,7 +25,7 @@
 package com.fortify.cli.sc_dast.scan_policy.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.scan_policy.cli.mixin.SCDastScanPolicyResolverMixin;
@@ -38,7 +38,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.Get.CMD_NAME)
-public class SCDastScanPolicyGetCommand extends AbstractSCDastOutputCommand implements IJsonNodeSupplier {
+public class SCDastScanPolicyGetCommand extends AbstractSCDastOutputCommand implements IUnirestJsonNodeSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.Get outputHelper;
     @Mixin private SCDastScanPolicyResolverMixin.PositionalParameter scanPolicyResolver;
 

@@ -27,8 +27,8 @@ package com.fortify.cli.ssc.token.cli.cmd;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.writer.output.query.OutputWriterWithQueryFactory;
+import com.fortify.cli.common.output.cli.mixin.writer.OutputWriterWithQueryFactoryMixin;
+import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.util.StringUtils;
@@ -44,7 +44,7 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 @Command(name = "list")
 public class SSCTokenListCommand extends AbstractSSCTokenCommand {
-    @Mixin private OutputWriterWithQueryFactory outputWriterFactory;
+    @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
     private final SSCQParamGenerator qParamGenerator = 
             new SSCQParamGenerator()
             .add("userName", SSCQParamValueGenerators::wrapInQuotes)
@@ -66,7 +66,7 @@ public class SSCTokenListCommand extends AbstractSSCTokenCommand {
         return queryParams;
     }
 
-    public OutputConfig getOutputConfig() {
+    public StandardOutputConfig getOutputConfig() {
         return SSCOutputConfigHelper.table();
     }
 }

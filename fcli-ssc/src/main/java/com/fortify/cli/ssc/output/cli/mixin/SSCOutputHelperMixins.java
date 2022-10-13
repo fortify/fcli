@@ -3,15 +3,15 @@ package com.fortify.cli.ssc.output.cli.mixin;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.cli.mixin.spi.output.IUnirestOutputHelper;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IInputTransformerSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.product.IProductHelper;
-import com.fortify.cli.common.output.cli.mixin.spi.product.ProductHelperClass;
-import com.fortify.cli.common.output.cli.mixin.spi.request.IHttpRequestUpdater;
-import com.fortify.cli.common.output.cli.mixin.spi.request.INextPageUrlProducerSupplier;
-import com.fortify.cli.common.output.writer.output.StandardOutputWriterFactory;
+import com.fortify.cli.common.output.cli.mixin.UnirestOutputHelperMixins;
+import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
+import com.fortify.cli.common.output.spi.product.IProductHelper;
+import com.fortify.cli.common.output.spi.product.ProductHelperClass;
+import com.fortify.cli.common.output.spi.request.IHttpRequestUpdater;
+import com.fortify.cli.common.output.spi.request.INextPageUrlProducerSupplier;
+import com.fortify.cli.common.output.spi.transform.IInputTransformerSupplier;
+import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins.SSCProductHelper;
 import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
@@ -28,9 +28,9 @@ import picocli.CommandLine.Mixin;
 /**
  * <p>This class provides standard, SSC-specific {@link IUnirestOutputHelper} implementations,
  * replicating the product-agnostic {@link IUnirestOutputHelper} implementations provided in 
- * {@link OutputHelperMixins}, adding product-specific functionality through the
+ * {@link UnirestOutputHelperMixins}, adding product-specific functionality through the
  * {@link ProductHelperClass} annotation on this enclosing class. In addition to the
- * {@link IUnirestOutputHelper} implementations provided by the common {@link OutputHelperMixins},
+ * {@link IUnirestOutputHelper} implementations provided by the common {@link UnirestOutputHelperMixins},
  * this class may define some additional implementations specific for SSC.</p>
  * 
  * @author rsenden
@@ -58,74 +58,74 @@ public class SSCOutputHelperMixins {
     }
     
     @ReflectiveAccess public static class Add 
-               extends OutputHelperMixins.Add {}
+               extends UnirestOutputHelperMixins.Add {}
     
     @ReflectiveAccess public static class Create 
-               extends OutputHelperMixins.Create {}
+               extends UnirestOutputHelperMixins.Create {}
     
     @ReflectiveAccess public static class Delete 
-               extends OutputHelperMixins.Delete {}
+               extends UnirestOutputHelperMixins.Delete {}
     
     @ReflectiveAccess public static class List 
-               extends OutputHelperMixins.List {}
+               extends UnirestOutputHelperMixins.List {}
     
     @ReflectiveAccess public static class Get 
-               extends OutputHelperMixins.Get {}
+               extends UnirestOutputHelperMixins.Get {}
     
     @ReflectiveAccess public static class Set 
-               extends OutputHelperMixins.Set {}
+               extends UnirestOutputHelperMixins.Set {}
     
     @ReflectiveAccess public static class Update 
-               extends OutputHelperMixins.Update {}
+               extends UnirestOutputHelperMixins.Update {}
     
     @ReflectiveAccess public static class Enable 
-               extends OutputHelperMixins.Enable {}
+               extends UnirestOutputHelperMixins.Enable {}
     
     @ReflectiveAccess public static class Disable 
-               extends OutputHelperMixins.Disable {}
+               extends UnirestOutputHelperMixins.Disable {}
     
     @ReflectiveAccess public static class Start 
-               extends OutputHelperMixins.Start {}
+               extends UnirestOutputHelperMixins.Start {}
     
     @ReflectiveAccess public static class Pause 
-               extends OutputHelperMixins.Pause {}
+               extends UnirestOutputHelperMixins.Pause {}
     
     @ReflectiveAccess public static class Resume 
-               extends OutputHelperMixins.Resume {}
+               extends UnirestOutputHelperMixins.Resume {}
     
     @ReflectiveAccess public static class Cancel 
-               extends OutputHelperMixins.Cancel {}
+               extends UnirestOutputHelperMixins.Cancel {}
     
     @ReflectiveAccess public static class Upload 
-               extends OutputHelperMixins.Upload {}
+               extends UnirestOutputHelperMixins.Upload {}
     
     @ReflectiveAccess public static class Download 
-               extends OutputHelperMixins.Download {}
+               extends UnirestOutputHelperMixins.Download {}
     
     @ReflectiveAccess public static class Install 
-               extends OutputHelperMixins.Install {}
+               extends UnirestOutputHelperMixins.Install {}
     
     @ReflectiveAccess public static class Uninstall 
-               extends OutputHelperMixins.Uninstall {}
+               extends UnirestOutputHelperMixins.Uninstall {}
     
     @ReflectiveAccess public static class Other 
-               extends OutputHelperMixins.Other {}
+               extends UnirestOutputHelperMixins.Other {}
     
-    @ReflectiveAccess public static class ArtifactApprove extends OutputHelperMixins.Other {
+    @ReflectiveAccess public static class ArtifactApprove extends UnirestOutputHelperMixins.Other {
         public static final String CMD_NAME = "approve";
-        @Getter @Mixin private StandardOutputWriterFactory outputWriterFactory;
-        @Getter private OutputConfig basicOutputConfig = OutputConfig.table(); 
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
-    @ReflectiveAccess public static class ArtifactPurge extends OutputHelperMixins.Other {
+    @ReflectiveAccess public static class ArtifactPurge extends UnirestOutputHelperMixins.Other {
         public static final String CMD_NAME = "purge";
-        @Getter @Mixin private StandardOutputWriterFactory outputWriterFactory;
-        @Getter private OutputConfig basicOutputConfig = OutputConfig.table(); 
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
-    @ReflectiveAccess public static class VulnCount extends OutputHelperMixins.Other {
+    @ReflectiveAccess public static class VulnCount extends UnirestOutputHelperMixins.Other {
         public static final String CMD_NAME = "count";
-        @Getter @Mixin private StandardOutputWriterFactory outputWriterFactory;
-        @Getter private OutputConfig basicOutputConfig = OutputConfig.table(); 
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
 }

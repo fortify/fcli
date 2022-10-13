@@ -25,9 +25,9 @@
 package com.fortify.cli.config.variable.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.AbstractJsonNodeOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.JsonNodeOutputHelperMixins;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.FcliVariableHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -36,9 +36,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = JsonNodeOutputHelperMixins.DeleteAll.CMD_NAME)
-public class VariableDefinitionClearCommand extends AbstractJsonNodeOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private JsonNodeOutputHelperMixins.DeleteAll outputHelper;
+@Command(name = BasicOutputHelperMixins.DeleteAll.CMD_NAME)
+public class VariableDefinitionClearCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
+    @Getter @Mixin private BasicOutputHelperMixins.DeleteAll outputHelper;
 
     @Override
     public JsonNode getJsonNode() {

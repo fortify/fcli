@@ -1,7 +1,7 @@
 package com.fortify.cli.common.output.writer.output;
 
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
+import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 
 public interface IOutputWriterFactory {
-    IOutputWriter createOutputWriter(OutputConfig outputConfig);
+    IOutputWriter createOutputWriter(StandardOutputConfig standardOutputConfig);
 }

@@ -29,8 +29,8 @@ import java.io.File;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fortify.cli.common.output.cli.cmd.IBaseHttpRequestSupplier;
-import com.fortify.cli.common.output.cli.mixin.spi.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.report_template.domain.SSCReportRenderingEngineType;
@@ -50,7 +50,7 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Create.CMD_NAME)
-public class SSCReportTemplateCreateCommand extends AbstractSSCOutputCommand implements IBaseHttpRequestSupplier, IActionCommandResultSupplier {
+public class SSCReportTemplateCreateCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Create outputHelper;
     @Option(names = {"-f", "--file"}, required = true)
     private String filePath;

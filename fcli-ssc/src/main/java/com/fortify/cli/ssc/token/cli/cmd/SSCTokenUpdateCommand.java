@@ -26,8 +26,8 @@ package com.fortify.cli.ssc.token.cli.cmd;
 
 import java.time.OffsetDateTime;
 
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.writer.output.StandardOutputWriterFactory;
+import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
+import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
@@ -46,7 +46,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = "update")
 public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
-    @Mixin private StandardOutputWriterFactory outputWriterFactory;
+    @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
     @Parameters(arity="1") private String token;
     @Option(names="--expire-in") private String expireIn;
     @Option(names="--description") private String description;    
@@ -65,7 +65,7 @@ public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand {
         return expireIn==null ? null : PERIOD_HELPER.getCurrentOffsetDateTimePlusPeriod(expireIn);
     }
 
-    public OutputConfig getOutputConfig() {
+    public StandardOutputConfig getOutputConfig() {
         return SSCOutputConfigHelper.table();
     }
 }

@@ -25,8 +25,8 @@
 package com.fortify.cli.config.variable.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.AbstractJsonNodeOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.JsonNodeOutputHelperMixins;
+import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.util.FcliVariableHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -35,9 +35,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = JsonNodeOutputHelperMixins.List.CMD_NAME)
-public class VariableDefinitionListCommand extends AbstractJsonNodeOutputCommand {
-    @Getter @Mixin private JsonNodeOutputHelperMixins.List outputHelper;
+@Command(name = BasicOutputHelperMixins.List.CMD_NAME)
+public class VariableDefinitionListCommand extends AbstractBasicOutputCommand {
+    @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
 
     @Override
     public JsonNode getJsonNode() {
