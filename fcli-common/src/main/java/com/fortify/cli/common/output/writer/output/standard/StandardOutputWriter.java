@@ -13,9 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.output.spi.IMinusVariableUnsupported;
 import com.fortify.cli.common.output.spi.ISingularSupplier;
-import com.fortify.cli.common.output.spi.MinusVariableDefinition;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.query.OutputWriterWithQuery;
@@ -27,8 +25,9 @@ import com.fortify.cli.common.rest.runner.IfFailureHandler;
 import com.fortify.cli.common.util.CommandSpecHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.common.variable.FcliVariableHelper;
-import com.fortify.cli.common.variable.IMinusVariableNamePrefixSupplier;
 import com.fortify.cli.common.variable.FcliVariableHelper.VariableType;
+import com.fortify.cli.common.variable.IMinusVariableUnsupported;
+import com.fortify.cli.common.variable.MinusVariableDefinition;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
@@ -219,17 +218,9 @@ public class StandardOutputWriter implements IOutputWriter {
                 if ( minusVariableDefinition==null ) {
                     throw new IllegalArgumentException("Option --store doesn't support variable alias '-' on this command tree");
                 } else {
-                    variableName = minusVariableDefinition.name();
-                    options = minusVariableDefinition.options();
+                    variableName = FcliVariableHelper.resolveVariableName(cmd, minusVariableDefinition.name());
+                    options = minusVariableDefinition.field();
                     variableType = VariableType.PREDEFINED;
-                    if ( cmd instanceof IMinusVariableNamePrefixSupplier ) {
-                        // Note that we can only add a prefix for predefined 
-                        String prefix = ((IMinusVariableNamePrefixSupplier)cmd).getMinusVariableNamePrefix();
-                        if ( StringUtils.isNotBlank(prefix) ) {
-                            prefix = prefix.replaceAll("[^a-zA-Z0-9_]", "").toLowerCase();
-                            variableName = String.format("%s_%s", prefix, variableName);
-                        }
-                    }
                 }
             }
             return RecordWriterConfig.builder()

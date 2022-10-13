@@ -24,23 +24,29 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.scan.cli.mixin;
 
+import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.sc_dast.scan.cli.cmd.SCDastScanCommands;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.Setter;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Spec.Target;
 
 public class SCDastScanResolverMixin {
-    
     @ReflectiveAccess
-    public static abstract class AbstractSSCDastScanResolverMixin  {
+    public static abstract class AbstractSSCDastScanResolverMixin extends AbstractMinusVariableResolverMixin {
+        @Getter private Class<?> MVDClass = SCDastScanCommands.class;
         public abstract String getScanId();
 
         public SCDastScanDescriptor getScanDescriptor(UnirestInstance unirest){
-            return SCDastScanHelper.getScanDescriptor(unirest, getScanId());
+            return SCDastScanHelper.getScanDescriptor(unirest, resolveMinusVariable(getScanId()));
         }
         
         public String getScanId(UnirestInstance unirest) {
@@ -50,12 +56,14 @@ public class SCDastScanResolverMixin {
     
     @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastScanResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"--scan"}, required = true)
         @Getter private String scanId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastScanResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1")
         @Getter private String scanId;
     }

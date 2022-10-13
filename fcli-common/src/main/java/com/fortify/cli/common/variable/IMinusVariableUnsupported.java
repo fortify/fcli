@@ -1,4 +1,4 @@
-package com.fortify.cli.common.output.spi;
+package com.fortify.cli.common.variable;
 
 /**
  * Marker interface for commands that don't support storing their

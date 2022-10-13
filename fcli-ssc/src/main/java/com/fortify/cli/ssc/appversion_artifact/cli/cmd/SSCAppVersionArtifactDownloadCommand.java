@@ -26,9 +26,9 @@ package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
-import com.fortify.cli.common.output.spi.IMinusVariableUnsupported;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.variable.IMinusVariableUnsupported;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;

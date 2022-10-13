@@ -24,38 +24,51 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.sensor.cli.mixin;
 
+import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.sc_dast.sensor.cli.cmd.SCDastSensorCommands;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorDescriptor;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.Setter;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Spec.Target;
 
 public class SCDastSensorResolverMixin {
     
     @ReflectiveAccess
-    public static abstract class AbstractSSCDastSensorResolverMixin  {
+    public static abstract class AbstractSSCDastSensorResolverMixin extends AbstractMinusVariableResolverMixin {
         public abstract String getSensorNameOrId();
 
         public SCDastSensorDescriptor getSensorDescriptor(UnirestInstance unirest){
-            return SCDastSensorHelper.getSensorDescriptor(unirest, getSensorNameOrId());
+            return SCDastSensorHelper.getSensorDescriptor(unirest, resolveMinusVariable(getSensorNameOrId()));
         }
         
         public String getSensorId(UnirestInstance unirest) {
             return getSensorDescriptor(unirest).getId();
         }
+        
+        @Override
+        protected Class<?> getMVDClass() {
+            return SCDastSensorCommands.class;        
+        }
     }
     
     @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastSensorResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"--sensor"}, required = true)
         @Getter private String sensorNameOrId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastSensorResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1")
         @Getter private String sensorNameOrId;
     }

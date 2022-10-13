@@ -25,23 +25,29 @@
 package com.fortify.cli.sc_dast.scan_policy.cli.mixin;
 
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.sc_dast.scan_policy.cli.cmd.SCDastScanPolicyCommands;
 import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyDescriptor;
 import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.Setter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Spec.Target;
 
 public class SCDastScanPolicyResolverMixin {
     
     @ReflectiveAccess
-    public static abstract class AbstractSSCDastScanPolicyResolverMixin  {
+    public static abstract class AbstractSSCDastScanPolicyResolverMixin extends AbstractMinusVariableResolverMixin {
         public abstract String getScanPolicyNameOrId();
 
         public SCDastScanPolicyDescriptor getScanPolicyDescriptor(UnirestInstance unirest){
-            String scanPolicyNameOrId = getScanPolicyNameOrId();
+            String scanPolicyNameOrId = resolveMinusVariable(getScanPolicyNameOrId());
             return StringUtils.isBlank(scanPolicyNameOrId) 
                     ? null
                     : SCDastScanPolicyHelper.getScanPolicyDescriptor(unirest, scanPolicyNameOrId);
@@ -51,22 +57,30 @@ public class SCDastScanPolicyResolverMixin {
             SCDastScanPolicyDescriptor descriptor = getScanPolicyDescriptor(unirest);
             return descriptor==null ? null : descriptor.getId();
         }
+        
+        @Override
+        protected Class<?> getMVDClass() {
+            return SCDastScanPolicyCommands.class;
+        }
     }
     
     @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastScanPolicyResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"-P", "--policy"}, required = true)
         @Getter private String scanPolicyNameOrId;
     }
     
     @ReflectiveAccess
     public static class OptionalOption extends AbstractSSCDastScanPolicyResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"-P", "--policy"}, required = false)
         @Getter private String scanPolicyNameOrId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastScanPolicyResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1")
         @Getter private String scanPolicyNameOrId;
     }

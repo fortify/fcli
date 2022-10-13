@@ -1,4 +1,4 @@
-package com.fortify.cli.common.output.spi;
+package com.fortify.cli.common.variable;
 
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.*;
@@ -10,5 +10,5 @@ import java.lang.annotation.Target;
 @Target(TYPE)
 public @interface MinusVariableDefinition {
     String name();
-    String options();
+    String field();
 }

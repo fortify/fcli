@@ -24,23 +24,29 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.scan_settings.cli.mixin;
 
+import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.sc_dast.scan_settings.cli.cmd.SCDastScanSettingsCommands;
 import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsDescriptor;
 import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.Setter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Spec.Target;
 
 public class SCDastScanSettingsResolverMixin {
     
     @ReflectiveAccess
-    public static abstract class AbstractSSCDastScanSettingsResolverMixin  {
+    public static abstract class AbstractSSCDastScanSettingsResolverMixin extends AbstractMinusVariableResolverMixin {
         public abstract String getScanSettingsCicdTokenOrId();
 
         public SCDastScanSettingsDescriptor getScanSettingsDescriptor(UnirestInstance unirest){
-            return SCDastScanSettingsHelper.getScanSettingsDescriptor(unirest, getScanSettingsCicdTokenOrId());
+            return SCDastScanSettingsHelper.getScanSettingsDescriptor(unirest, resolveMinusVariable(getScanSettingsCicdTokenOrId()));
         }
         
         public String getScanSettingsId(UnirestInstance unirest) {
@@ -50,16 +56,23 @@ public class SCDastScanSettingsResolverMixin {
         public String getScanSettingsCicdToken(UnirestInstance unirest) {
             return getScanSettingsDescriptor(unirest).getCicdToken();
         }
+        
+        @Override
+        protected Class<?> getMVDClass() {
+            return SCDastScanSettingsCommands.class;        
+        }
     }
     
     @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastScanSettingsResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"-S", "--settings"}, required = true)
         @Getter private String scanSettingsCicdTokenOrId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastScanSettingsResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1")
         @Getter private String scanSettingsCicdTokenOrId;
     }
