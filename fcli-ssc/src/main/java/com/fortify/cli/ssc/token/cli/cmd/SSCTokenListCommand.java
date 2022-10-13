@@ -27,9 +27,8 @@ package com.fortify.cli.ssc.token.cli.cmd;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.query.OutputMixinWithQuery;
+import com.fortify.cli.common.output.writer.output.query.OutputWriterWithQueryFactory;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.util.StringUtils;
@@ -44,8 +43,8 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = "list")
-public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IOutputConfigSupplier {
-    @Mixin private OutputMixinWithQuery outputMixin;
+public class SSCTokenListCommand extends AbstractSSCTokenCommand {
+    @Mixin private OutputWriterWithQueryFactory outputWriterFactory;
     private final SSCQParamGenerator qParamGenerator = 
             new SSCQParamGenerator()
             .add("userName", SSCQParamValueGenerators::wrapInQuotes)
@@ -53,21 +52,21 @@ public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IOut
     
     @Override
     protected void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {
-        outputMixin.write(tokenHelper.listTokens(urlConfig, userCredentialsConfig, getQueryParams()));
+        outputWriterFactory.createOutputWriter(getOutputConfig())
+            .write(tokenHelper.listTokens(urlConfig, userCredentialsConfig, getQueryParams()));
     }
     
     private Map<String, Object> getQueryParams() {
         Map<String, Object> queryParams = new HashMap<String, Object>();
         queryParams.put("limit", "-1");
-        String qParamValue = qParamGenerator.getQParamValue(outputMixin.getOutputQueries());
+        String qParamValue = qParamGenerator.getQParamValue(outputWriterFactory.getOutputQueries());
         if ( StringUtils.isNotBlank(qParamValue) ) {
             queryParams.put("q", qParamValue);
         }
         return queryParams;
     }
 
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
+    public OutputConfig getOutputConfig() {
         return SSCOutputConfigHelper.table();
     }
 }

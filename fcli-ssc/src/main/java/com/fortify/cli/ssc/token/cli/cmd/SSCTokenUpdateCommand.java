@@ -26,9 +26,8 @@ package com.fortify.cli.ssc.token.cli.cmd;
 
 import java.time.OffsetDateTime;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.writer.output.StandardOutputWriterFactory;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
@@ -45,9 +44,9 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "update")
-public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand implements IOutputConfigSupplier {
+public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
-    @Mixin private OutputMixin outputMixin;
+    @Mixin private StandardOutputWriterFactory outputWriterFactory;
     @Parameters(arity="1") private String token;
     @Option(names="--expire-in") private String expireIn;
     @Option(names="--description") private String description;    
@@ -58,16 +57,15 @@ public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand implements IO
                 .terminalDate(getExpiresAt())
                 .description(description)
                 .build();
-        outputMixin.write(tokenHelper.updateToken(urlConfig, userCredentialsConfig, token, tokenUpdateRequest));
+        outputWriterFactory.createOutputWriter(getOutputConfig())
+            .write(tokenHelper.updateToken(urlConfig, userCredentialsConfig, token, tokenUpdateRequest));
     }
     
     private OffsetDateTime getExpiresAt() {
         return expireIn==null ? null : PERIOD_HELPER.getCurrentOffsetDateTimePlusPeriod(expireIn);
     }
 
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
+    public OutputConfig getOutputConfig() {
         return SSCOutputConfigHelper.table();
-                //.defaultColumns("id#username#type#creationDate#terminalDate#description");
     }
 }

@@ -123,7 +123,7 @@ public class OutputMixin implements IOutputWriter {
     private OutputConfig getOutputOptionsWriterConfig() {
         Object mixeeObject = commandSpec.userObject();
         if ( mixeeObject instanceof IOutputConfigSupplier ) {
-            return ((IOutputConfigSupplier)mixeeObject).getOutputOptionsWriterConfig();
+            return ((IOutputConfigSupplier)mixeeObject).getOutputConfig();
         } else {
             return defaultOutputConfig;
         }

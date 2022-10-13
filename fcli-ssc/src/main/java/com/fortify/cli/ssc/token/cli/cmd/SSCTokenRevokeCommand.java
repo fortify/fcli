@@ -28,9 +28,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
+import com.fortify.cli.common.output.writer.output.StandardOutputWriterFactory;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
@@ -42,8 +41,8 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = "revoke")
-public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand implements IOutputConfigSupplier {
-    @Mixin private OutputMixin outputMixin;
+public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand {
+    @Mixin private StandardOutputWriterFactory outputWriterFactory;
     @Parameters(arity="1..") private String[] tokens;
     
     @Override
@@ -61,15 +60,14 @@ public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand implements IO
         JsonNode result = tokenIds.length>0 
                 ? tokenHelper.deleteTokensById(urlConfig, userCredentialsConfig, tokenIds)
                 : tokenHelper.deleteTokensByValue(urlConfig, userCredentialsConfig, tokenValues);
-        outputMixin.write(result);
+        outputWriterFactory.createOutputWriter(getOutputConfig()).write(result);
     }
     
     private boolean isInteger(String s) {
         return s.matches("[0-9]+");
     }
 
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
+    public OutputConfig getOutputConfig() {
         return OutputConfig.table();
     }
 }
