@@ -54,7 +54,7 @@ public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCOutputComma
     @Getter @Mixin private SSCOutputHelperMixins.Download outputHelper;
     @CommandLine.Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
     private String destination;
-    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
+    @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     
     @ArgGroup(exclusive=true) private SSCAppVersionArtifactDownloadOptions options = new SSCAppVersionArtifactDownloadOptions();
     

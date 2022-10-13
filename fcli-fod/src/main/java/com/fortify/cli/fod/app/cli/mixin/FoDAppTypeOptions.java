@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.mixin;
+package com.fortify.cli.fod.app.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -32,32 +32,50 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FoDCriticalityTypeOptions {
-    public enum FoDCriticalityType {High, Medium, Low}
+public class FoDAppTypeOptions {
+    public enum FoDAppType {
+        Web("Web_Thick_Client"),
+        Mobile("Mobile"),
+        Microservice("Microservice");
 
-    @ReflectiveAccess
-    public static final class FoDCriticalityTypeIterable extends ArrayList<String> {
-        private static final long serialVersionUID = 1L;
-        public FoDCriticalityTypeIterable() {
-            super(Stream.of(FoDCriticalityType.values()).map(FoDCriticalityType::name).collect(Collectors.toList()));
+        public final String name;
+
+        FoDAppType(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public boolean isMicroservice() {
+            return (name.equals("Microservice"));
         }
     }
 
     @ReflectiveAccess
-    public static abstract class AbstractFoDCriticalityType {
-        public abstract FoDCriticalityType getCriticalityType();
+    public static final class FoDAppTypeIterable extends ArrayList<String> {
+        private static final long serialVersionUID = 1L;
+        public FoDAppTypeIterable() {
+            super(Stream.of(FoDAppType.values()).map(FoDAppType::name).collect(Collectors.toList()));
+        }
     }
 
     @ReflectiveAccess
-    public static class RequiredCritOption extends AbstractFoDCriticalityType {
-        @Option(names = {"--criticality", "--business-criticality"}, required = true, arity = "1", completionCandidates = FoDCriticalityTypeIterable.class)
-        @Getter private FoDCriticalityType criticalityType;
+    public static abstract class AbstractFoDAppType {
+        public abstract FoDAppType getAppType();
     }
 
     @ReflectiveAccess
-    public static class OptionalCritOption extends AbstractFoDCriticalityType {
-        @Option(names = {"--criticality", "--business-criticality"}, required = false, arity = "1", completionCandidates = FoDCriticalityTypeIterable.class)
-        @Getter private FoDCriticalityType criticalityType;
+    public static class RequiredAppTypeOption extends AbstractFoDAppType {
+        @Option(names = {"--type", "--app-type"}, required = true, arity = "1", completionCandidates = FoDAppTypeIterable.class)
+        @Getter private FoDAppType appType;
+    }
+
+    @ReflectiveAccess
+    public static class OptionalAppTypeOption extends AbstractFoDAppType {
+        @Option(names = {"--type", "--app-type"}, required = false, arity = "1", completionCandidates = FoDAppTypeIterable.class)
+        @Getter private FoDAppType appType;
     }
 
 }

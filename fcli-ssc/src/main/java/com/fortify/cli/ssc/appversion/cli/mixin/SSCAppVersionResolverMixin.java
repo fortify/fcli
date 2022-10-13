@@ -26,6 +26,8 @@ package com.fortify.cli.ssc.appversion.cli.mixin;
 
 import javax.validation.ValidationException;
 
+import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
@@ -33,21 +35,30 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Spec.Target;
 
 public class SSCAppVersionResolverMixin {
-    private static final String ALIAS = "--appversion";
-    
     @ReflectiveAccess
-    public static class SSCAppVersionDelimiterMixin {
+    public static final class SSCDelimiterMixin {
         @Option(names = {"--delim"},
                 description = "Change the default delimiter character when using options that accepts " +
                 "\"application:version\" as an argument or parameter.", defaultValue = ":")
         @Getter private String delimiter;
+    }
+    
+    @ReflectiveAccess
+    public static final class SSCAppAndVersionNameResolverMixin {
+        @Mixin private SSCDelimiterMixin delimiterMixin;
         
         public final SSCAppAndVersionNameDescriptor getAppAndVersionNameDescriptor(String appAndVersionName) {
             if ( appAndVersionName==null ) { return null; }
+            String delimiter = delimiterMixin.getDelimiter();
             String[] appAndVersionNameArray = appAndVersionName.split(delimiter);
             if ( appAndVersionNameArray.length != 2 ) { 
                 throw new ValidationException("Application and version name must be specified in the format <application name>"+delimiter+"<version name>"); 
@@ -62,42 +73,34 @@ public class SSCAppVersionResolverMixin {
     }
     
     @ReflectiveAccess
-    public static abstract class AbstractSSCAppVersionResolverMixin extends SSCAppVersionDelimiterMixin {
+    public static abstract class AbstractSSCAppVersionResolverMixin extends AbstractMinusVariableResolverMixin {
+        @Mixin private SSCDelimiterMixin delimiterMixin;
         public abstract String getAppVersionNameOrId();
 
         public SSCAppVersionDescriptor getAppVersionDescriptor(UnirestInstance unirest, String... fields){
-            return SSCAppVersionHelper.getAppVersion(unirest, getAppVersionNameOrId(), getDelimiter(), fields);
+            return SSCAppVersionHelper.getAppVersion(unirest, resolveMinusVariable(getAppVersionNameOrId()), delimiterMixin.getDelimiter(), fields);
         }
         
         public String getAppVersionId(UnirestInstance unirest) {
             return getAppVersionDescriptor(unirest, "id").getVersionId();
         }
+        
+        @Override
+        protected Class<?> getMVDClass() {
+            return SSCAppVersionCommands.class;
+        }
     }
     
-    // get/retrieve/delete/download version <entity> --from
     @ReflectiveAccess
-    public static class From extends AbstractSSCAppVersionResolverMixin {
-        @Option(names = {"--from", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
+    public static class RequiredOption extends AbstractSSCAppVersionResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Option(names = {"--appversion"}, required = true, descriptionKey = "ApplicationVersionMixin")
         @Getter private String appVersionNameOrId;
     }
     
-    // create/update version <entity> --for <version>
-    @ReflectiveAccess
-    public static class For extends AbstractSSCAppVersionResolverMixin {
-        @Option(names = {"--for", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
-        @Getter private String appVersionNameOrId;
-    }
-    
-    // upload version <entity> --to <version>
-    @ReflectiveAccess
-    public static class To extends AbstractSSCAppVersionResolverMixin {
-        @Option(names = {"--to", ALIAS}, required = true, descriptionKey = "ApplicationVersionMixin")
-        @Getter private String appVersionNameOrId;
-    }
-    
-    // delete|update <versionNameOrId>
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCAppVersionResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationVersionMixin")
         @Getter private String appVersionNameOrId;
     }

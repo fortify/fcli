@@ -46,7 +46,7 @@ import picocli.CommandLine.Option;
 public class SSCAppVersionAuthEntityDeleteCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper; 
     @Mixin private SSCAppVersionAuthEntityMixin.RequiredPositionalParameter authEntityMixin;
-    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
+    @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @Option(names="--allowMultiMatch", defaultValue = "false")
     private boolean allowMultiMatch;
 

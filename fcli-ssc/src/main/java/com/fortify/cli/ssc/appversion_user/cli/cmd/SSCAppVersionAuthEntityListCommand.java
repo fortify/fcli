@@ -41,7 +41,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = SSCOutputHelperMixins.List.CMD_NAME)
 public class SSCAppVersionAuthEntityListCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
-    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
+    @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     
     // TODO Can we do any server-side filtering?
     // TODO Add boolean options to set extractusersfromgroups and includeuniversalaccessentities request parameters

@@ -1,5 +1,7 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
+import com.fortify.cli.common.variable.MinusVariableDefinition;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -12,5 +14,6 @@ import picocli.CommandLine.Command;
             SSCAppVersionUpdateCommand.class
         }
 )
+@MinusVariableDefinition(name = "currentAppVersion", field = "id")
 public class SSCAppVersionCommands {
 }

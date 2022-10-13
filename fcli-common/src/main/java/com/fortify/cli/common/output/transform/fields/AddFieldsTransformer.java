@@ -43,6 +43,7 @@ import com.fortify.cli.common.output.transform.IJsonNodeTransformer;
  */
 public class AddFieldsTransformer extends AbstractJsonNodeTransformer implements IJsonNodeTransformer {
     private final Map<String, Supplier<String>> nameToValueSupplierMap;
+    private boolean overwriteExisting = false;
 
     public AddFieldsTransformer(Map<String, Supplier<String>> nameToValueSupplierMap) {
         super(false);
@@ -61,12 +62,23 @@ public class AddFieldsTransformer extends AbstractJsonNodeTransformer implements
         this(Stream.of(nameToValueSpecs).map(s->s.split(":")).collect(Collectors.toMap(a->a[0], a->()->a[1])));
     }
     
+    public AddFieldsTransformer overwiteExisting(boolean overwriteExisting) {
+        this.overwriteExisting = overwriteExisting;
+        return this;
+    }
+    
     @Override
     protected final ObjectNode transformObjectNode(ObjectNode input) {
         nameToValueSupplierMap.entrySet().forEach( 
-            e->input.put(e.getKey(), e.getValue().get())
+            e->put(input, e)
         );
             
         return input;
+    }
+    
+    private final void put(ObjectNode input, Map.Entry<String, Supplier<String>> e) {
+        if ( overwriteExisting || !input.has(e.getKey()) ) {
+            input.put(e.getKey(), e.getValue().get());
+        }
     }
 }

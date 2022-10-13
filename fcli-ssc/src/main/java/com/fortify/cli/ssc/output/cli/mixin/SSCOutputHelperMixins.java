@@ -117,8 +117,14 @@ public class SSCOutputHelperMixins {
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
-    @ReflectiveAccess public static class ArtifactPurge extends UnirestOutputHelperMixins.Other {
-        public static final String CMD_NAME = "purge";
+    @ReflectiveAccess public static class ArtifactPurgeByDate extends UnirestOutputHelperMixins.Other {
+        public static final String CMD_NAME = "by-date";
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+    
+    @ReflectiveAccess public static class ArtifactPurgeById extends UnirestOutputHelperMixins.Other {
+        public static final String CMD_NAME = "by-id";
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }

@@ -22,20 +22,22 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
+package com.fortify.cli.ssc.appversion_artifact.cli.cmd.purge;
 
 import java.time.OffsetDateTime;
+import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
 import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.common.variable.IMinusVariableUnsupported;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper.SSCAppVersionArtifactPurgeByDateRequest;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
@@ -44,38 +46,35 @@ import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = SSCOutputHelperMixins.ArtifactPurge.CMD_NAME)
-public class SSCAppVersionArtifactPurgeCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IMinusVariableUnsupported {
-    @Getter @Mixin private SSCOutputHelperMixins.ArtifactPurge outputHelper;
+@Command(name = SSCOutputHelperMixins.ArtifactPurgeByDate.CMD_NAME)
+public class SSCAppVersionArtifactPurgeByDateCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformerSupplier, IActionCommandResultSupplier, IMinusVariableUnsupported {
+    @Getter @Mixin private SSCOutputHelperMixins.ArtifactPurgeByDate outputHelper;
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.DAYS, Period.YEARS);
-    @ArgGroup(exclusive=true, multiplicity="1") private SSCAppVersionArtifactPurgeOptions purgeOptions = new SSCAppVersionArtifactPurgeOptions();
-    
-    private static final class SSCAppVersionArtifactPurgeOptions {
-        @Parameters(arity="1", description = "Id of the artifact to be purged")
-        private String artifactId;
-        @ArgGroup(exclusive=false) private SSCAppVersionArtifactPurgeByDateOptions purgeByDateOptions;
-        
-        private static final class SSCAppVersionArtifactPurgeByDateOptions extends SSCAppVersionResolverMixin.From {
-            @Option(names = {"--older-than"}, required=true) private String olderThan;            
-        }
-    }
+    @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
+    @Option(names = {"--older-than"}, required=true) private String olderThan;            
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        if ( StringUtils.isNotBlank(purgeOptions.artifactId) ) {
-            return purgeSingleArtifact(unirest, purgeOptions.artifactId);
-        } else {
-            SSCAppVersionDescriptor appVersionDescriptor = purgeOptions.purgeByDateOptions.getAppVersionDescriptor(unirest);
-            OffsetDateTime purgeBefore = PERIOD_HELPER.getCurrentOffsetDateTimeMinusPeriod(purgeOptions.purgeByDateOptions.olderThan);
-            return purgeByDate(unirest, appVersionDescriptor, purgeBefore);
-        }
+        SSCAppVersionDescriptor appVersionDescriptor = appVersionResolver.getAppVersionDescriptor(unirest);
+        OffsetDateTime purgeBefore = PERIOD_HELPER.getCurrentOffsetDateTimeMinusPeriod(olderThan);
+        String action = purgeByDate(unirest, appVersionDescriptor, purgeBefore);
+        return appVersionDescriptor.asObjectNode()
+                .put("__action__", action);
+    }
+    
+    @Override
+    public UnaryOperator<JsonNode> getRecordTransformer() {
+        return SSCAppVersionHelper::renameFields;
+    }
+    
+    @Override
+    public String getActionCommandResult() {
+        return "PURGE_REQUESTED";
     }
     
     @Override
@@ -83,12 +82,7 @@ public class SSCAppVersionArtifactPurgeCommand extends AbstractSSCOutputCommand 
         return true;
     }
     
-    private static final JsonNode purgeSingleArtifact(UnirestInstance unirest, String artifactId) {
-        SSCAppVersionArtifactHelper.purge(unirest, artifactId);
-        return generateResult("ARTIFACT", artifactId, "PURGE_REQUESTED");
-    }
-    
-    private static final JsonNode purgeByDate(UnirestInstance unirest, SSCAppVersionDescriptor appVersionDescriptor, OffsetDateTime purgeBefore) {
+    private static final String purgeByDate(UnirestInstance unirest, SSCAppVersionDescriptor appVersionDescriptor, OffsetDateTime purgeBefore) {
         String[] versionIds = {appVersionDescriptor.getVersionId()};
         SSCAppVersionArtifactPurgeByDateRequest request = SSCAppVersionArtifactPurgeByDateRequest.builder()
                 .projectVersionIds(versionIds)
@@ -100,13 +94,6 @@ public class SSCAppVersionArtifactPurgeCommand extends AbstractSSCOutputCommand 
             if ( !e.getMessage().contains("No artifacts available for purge") ) { throw e; }
             action = "NO_ARTIFACTS_TO_PURGE";
         }
-        return generateResult("APPVERSION", appVersionDescriptor.getAppAndVersionName(), action);
-    }
-
-    private static final JsonNode generateResult(String type, String nameOrId, String action) {
-        return new ObjectMapper().createObjectNode()
-                .put("type", type)
-                .put("nameOrId", nameOrId)
-                .put("__action__", action);
+        return action;
     }
 }

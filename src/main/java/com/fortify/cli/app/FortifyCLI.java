@@ -74,7 +74,8 @@ public class FortifyCLI {
                 applicationContext.getBeansOfType(IFortifyCLIInitializer.class).forEach(b -> b.initializeFortifyCLI(resolvedArgs));
                 CommandLine commandLine = new CommandLine(FCLIRootCommands.class, micronautFactory);
                 return commandLine
-                        .setDefaultValueProvider(new FortifyCLIDefaultValueProvider())
+                        // TODO Setting the default value provider results in weird issues, so we disable it for now
+                        //.setDefaultValueProvider(new FortifyCLIDefaultValueProvider())
                         .setParameterExceptionHandler(
                             new I18nParameterExceptionHandler(
                                     commandLine.getParameterExceptionHandler(),

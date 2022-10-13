@@ -54,7 +54,7 @@ public class SSCAppVersionArtifactUploadCommand extends AbstractSSCOutputCommand
     @Getter @Mixin private SSCOutputHelperMixins.Upload outputHelper; 
     private static final int POLL_INTERVAL_SECONDS = SSCAppVersionArtifactHelper.DEFAULT_POLL_INTERVAL_SECONDS;
     
-    @Mixin private SSCAppVersionResolverMixin.To parentResolver;
+    @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @Parameters(arity="1") private String filePath;
     @ArgGroup(exclusive=false) private SSCAppVersionArtifactAutoApproveOptions autoApproveOptions = new SSCAppVersionArtifactAutoApproveOptions();
 

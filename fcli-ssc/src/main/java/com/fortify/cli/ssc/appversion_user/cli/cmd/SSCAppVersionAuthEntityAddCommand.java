@@ -46,7 +46,7 @@ import picocli.CommandLine.Option;
 public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Add outputHelper;
     @Mixin private SSCAppVersionAuthEntityMixin.RequiredPositionalParameter authEntityMixin;
-    @Mixin private SSCAppVersionResolverMixin.For parentResolver;
+    @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @Option(names="--allowMultiMatch", defaultValue = "false")
     private boolean allowMultiMatch;
     

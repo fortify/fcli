@@ -41,7 +41,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = SSCOutputHelperMixins.List.CMD_NAME)
 public class SSCAppVersionAttributeListCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
-    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
+    @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {

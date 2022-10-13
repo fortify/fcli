@@ -24,55 +24,51 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.app.cli.mixin;
 
+import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.ssc.app.cli.cmd.SSCAppCommands;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.Setter;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Spec.Target;
 
-// TODO Review whether we need all the from/for/to mixins
 public class SSCAppResolverMixin {
-    private static final String ALIAS = "--app";
     @ReflectiveAccess
-    public static abstract class AbstractSSCAppResolverMixin {
+    public static abstract class AbstractSSCAppResolverMixin extends AbstractMinusVariableResolverMixin {
         public abstract String getAppNameOrId();
 
         public SSCAppDescriptor getAppDescriptor(UnirestInstance unirest, String... fields){
-            return SSCAppHelper.getApp(unirest, getAppNameOrId(), true, fields);
+            return SSCAppHelper.getApp(unirest, resolveMinusVariable(getAppNameOrId()), true, fields);
         }
         
         public String getAppId(UnirestInstance unirest) {
             return getAppDescriptor(unirest, "id").getApplicationId();
         }
+        
+        @Override
+        protected Class<?> getMVDClass() {
+            return SSCAppCommands.class;
+        }
     }
     
-    // get/retrieve/delete/download app <entity> --from <app>
     @ReflectiveAccess
-    public static class From extends AbstractSSCAppResolverMixin {
-        @Option(names = {"--from", ALIAS}, required = true, descriptionKey = "ApplicationMixin")
-        @Getter private String appNameOrId;
-    }
-    
-    // create/update app <entity> --for <app>
-    @ReflectiveAccess
-    public static class For extends AbstractSSCAppResolverMixin {
-        @Option(names = {"--for", ALIAS}, required = true, descriptionKey = "ApplicationMixin")
-        @Getter private String appNameOrId;
-    }
-    
-    // upload app <entity> --to <app>
-    @ReflectiveAccess
-    public static class To extends AbstractSSCAppResolverMixin {
-        @Option(names = {"--to", ALIAS}, required = true, descriptionKey = "ApplicationMixin")
+    public static class RequiredOption extends AbstractSSCAppResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Option(names = {"--app"}, required = true, descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }
     
     // delete|update <app>
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCAppResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }

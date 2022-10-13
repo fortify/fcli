@@ -25,55 +25,50 @@
 
 package com.fortify.cli.fod.app.cli.mixin;
 
+import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.Setter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Spec.Target;
 
-// TODO Review whether we need all the from/for/to mixins
-public class FoDAppResolverMixin {
-    private static final String ALIAS = "--app";
+public class FoDAppResolverMixin {    
     @ReflectiveAccess
-    public static abstract class AbstractFoDAppResolverMixin {
+    public static abstract class AbstractFoDAppResolverMixin extends AbstractMinusVariableResolverMixin {
         public abstract String getAppNameOrId();
 
         public FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String... fields){
             //return FoDAppHelper.getApp(unirest, getAppNameOrId(), true, fields);
-            return FoDAppHelper.getAppDescriptor(unirest, getAppNameOrId(), true);
+            return FoDAppHelper.getAppDescriptor(unirest, resolveMinusVariable(getAppNameOrId()), true);
         }
 
         public String getAppId(UnirestInstance unirest) {
             return getAppDescriptor(unirest, "applicationId").getApplicationId().toString();
         }
+        
+        @Override
+        protected Class<?> getMVDClass() {
+            return FoDAppCommands.class;
+        }
     }
 
-    // get/retrieve/delete/download app <entity> --from <app>
     @ReflectiveAccess
-    public static class From extends AbstractFoDAppResolverMixin {
-        @Option(names = {"--from", ALIAS}, required = true)
+    public static class RequiredOption extends AbstractFoDAppResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Option(names = {"--app"}, required = true)
         @Getter private String appNameOrId;
     }
 
-    // create/update app <entity> --for <app>
-    @ReflectiveAccess
-    public static class For extends AbstractFoDAppResolverMixin {
-        @Option(names = {"--for", ALIAS}, required = true)
-        @Getter private String appNameOrId;
-    }
-
-    // upload app <entity> --to <app>
-    @ReflectiveAccess
-    public static class To extends AbstractFoDAppResolverMixin {
-        @Option(names = {"--to", ALIAS}, required = true)
-        @Getter private String appNameOrId;
-    }
-
-    // delete|update <app>
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDAppResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1", descriptionKey = "app")
         @Getter private String appNameOrId;
     }

@@ -259,7 +259,7 @@ public abstract class AbstractOutputHelper implements IOutputHelperBase {
     }
     
     private static final UnaryOperator<JsonNode> createCommandActionResultRecordTransformer(IActionCommandResultSupplier supplier) {
-        return new AddFieldsTransformer("__action__", supplier.getActionCommandResult())::transform;
+        return new AddFieldsTransformer("__action__", supplier.getActionCommandResult()).overwiteExisting(false)::transform;
     }
     
 }

@@ -34,6 +34,7 @@ public class FortifyCLIDefaultValueProvider implements CommandLine.IDefaultValue
     private List<String> getQualifiedOptionNames(CommandSpec command, String optionName) {
         final var qualifiedOptionNames = new LinkedList<String>();
         qualifiedOptionNames.add(optionName);
+        qualifiedOptionNames.add(getTopLevelCommand(command).name()+"-"+optionName);
         addQualifiedOptionNames(qualifiedOptionNames, command, optionName);
         return qualifiedOptionNames;
     }
@@ -71,6 +72,12 @@ public class FortifyCLIDefaultValueProvider implements CommandLine.IDefaultValue
         } else {
             return null;
         }
+    }
+    
+    private CommandSpec getTopLevelCommand(CommandSpec commandSpec) {
+        return commandSpec.root().equals(commandSpec.parent())
+                ? commandSpec
+                : getTopLevelCommand(commandSpec.parent());
     }
 
 }

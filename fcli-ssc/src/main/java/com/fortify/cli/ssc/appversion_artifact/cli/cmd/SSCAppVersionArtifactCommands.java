@@ -1,5 +1,7 @@
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
+import com.fortify.cli.ssc.appversion_artifact.cli.cmd.purge.SSCAppVersionArtifactPurgeCommands;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -10,7 +12,7 @@ import picocli.CommandLine.Command;
             SSCAppVersionArtifactDownloadCommand.class,
             SSCAppVersionArtifactGetCommand.class,
             SSCAppVersionArtifactListCommand.class,
-            SSCAppVersionArtifactPurgeCommand.class,
+            SSCAppVersionArtifactPurgeCommands.class,
             SSCAppVersionArtifactUploadCommand.class
         }
 )

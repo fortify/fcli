@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.mixin;
+package com.fortify.cli.fod.app.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -32,50 +32,31 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FoDAppTypeOptions {
-    public enum FoDAppType {
-        Web("Web_Thick_Client"),
-        Mobile("Mobile"),
-        Microservice("Microservice");
-
-        public final String name;
-
-        FoDAppType(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return this.name;
-        }
-
-        public boolean isMicroservice() {
-            return (name.equals("Microservice"));
-        }
-    }
+public class FoDSdlcStatusTypeOptions {
+    public enum FoDSdlcStatusType {Development, QA, Production}
 
     @ReflectiveAccess
-    public static final class FoDAppTypeIterable extends ArrayList<String> {
+    public static final class FoDSdlcStatusTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
-        public FoDAppTypeIterable() {
-            super(Stream.of(FoDAppType.values()).map(FoDAppType::name).collect(Collectors.toList()));
+        public FoDSdlcStatusTypeIterable() {
+            super(Stream.of(FoDSdlcStatusType.values()).map(FoDSdlcStatusType::name).collect(Collectors.toList()));
         }
     }
-
     @ReflectiveAccess
-    public static abstract class AbstractFoDAppType {
-        public abstract FoDAppType getAppType();
+    public static abstract class AbstractFoDSdlcStatusType {
+        public abstract FoDSdlcStatusType getSdlcStatusType();
     }
 
     @ReflectiveAccess
-    public static class RequiredAppTypeOption extends AbstractFoDAppType {
-        @Option(names = {"--type", "--app-type"}, required = true, arity = "1", completionCandidates = FoDAppTypeIterable.class)
-        @Getter private FoDAppType appType;
+    public static class RequiredSdlcOption extends AbstractFoDSdlcStatusType {
+        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
+        @Getter private FoDSdlcStatusType sdlcStatusType;
     }
 
     @ReflectiveAccess
-    public static class OptionalAppTypeOption extends AbstractFoDAppType {
-        @Option(names = {"--type", "--app-type"}, required = false, arity = "1", completionCandidates = FoDAppTypeIterable.class)
-        @Getter private FoDAppType appType;
+    public static class OptionalSdlcOption extends AbstractFoDSdlcStatusType {
+        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
+        @Getter private FoDSdlcStatusType sdlcStatusType;
     }
 
 }

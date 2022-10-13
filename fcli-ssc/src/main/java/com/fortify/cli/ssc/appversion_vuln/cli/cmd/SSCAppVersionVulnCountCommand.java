@@ -45,7 +45,7 @@ import picocli.CommandLine.Option;
 @Command(name = SSCOutputHelperMixins.VulnCount.CMD_NAME)
 public class SSCAppVersionVulnCountCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.VulnCount outputHelper; 
-    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
+    @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @Option(names="--by", defaultValue="FOLDER") private String groupingType; 
     @Mixin private SSCAppVersionFilterSetResolverMixin.FilterSetOption filterSetResolver;
 

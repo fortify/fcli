@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.fod.app.cli.cmd;
 
+import com.fortify.cli.common.variable.MinusVariableDefinition;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "app",
@@ -36,5 +38,6 @@ import picocli.CommandLine;
                 FoDAppDeleteCommand.class
         }
 )
+@MinusVariableDefinition(name = "currentApp", field = "id")
 public class FoDAppCommands {
 }
