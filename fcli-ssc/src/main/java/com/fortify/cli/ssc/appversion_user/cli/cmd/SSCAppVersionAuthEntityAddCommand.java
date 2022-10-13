@@ -64,4 +64,9 @@ public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCOutputCommand 
     public String getActionCommandResult() {
         return "ADDED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

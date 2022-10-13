@@ -60,4 +60,9 @@ public class SSCAppVersionAttributeSetCommand extends AbstractSSCOutputCommand i
                 .attrIdsToInclude(attrUpdateHelper.getAttributeIds())
                 .execute(unirest, applicationVersionId);
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

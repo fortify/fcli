@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.util.FcliVariableHelper;
+import com.fortify.cli.common.variable.FcliVariableHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;

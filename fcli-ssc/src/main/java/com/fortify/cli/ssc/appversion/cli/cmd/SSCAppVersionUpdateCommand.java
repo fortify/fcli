@@ -84,6 +84,11 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCOutputCommand impleme
         return "UPDATED";
     }
     
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
+    
     private final HttpRequest<?> getUserUpdateRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
         return new SSCAppVersionAuthEntitiesUpdateBuilder(unirest)
                 .add(false, userAddMixin.getAuthEntitySpecs())

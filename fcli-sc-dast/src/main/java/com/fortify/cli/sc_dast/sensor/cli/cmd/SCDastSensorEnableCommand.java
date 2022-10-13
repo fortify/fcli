@@ -47,4 +47,9 @@ public class SCDastSensorEnableCommand extends AbstractSCDastOutputCommand imple
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return SCDastSensorHelper.enableSensor(unirest, sensorResolver.getSensorDescriptor(unirest)).asJsonNode();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

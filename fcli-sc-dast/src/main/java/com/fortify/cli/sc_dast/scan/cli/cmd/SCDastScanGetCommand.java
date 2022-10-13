@@ -45,4 +45,9 @@ public class SCDastScanGetCommand extends AbstractSCDastScanOutputCommand implem
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return scanResolver.getScanDescriptor(unirest).asJsonNode();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

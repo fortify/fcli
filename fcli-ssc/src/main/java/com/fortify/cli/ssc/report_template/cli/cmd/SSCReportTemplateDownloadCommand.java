@@ -67,4 +67,9 @@ public class SSCReportTemplateDownloadCommand extends AbstractSSCOutputCommand i
     public String getActionCommandResult() {
         return "DOWNLOADED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

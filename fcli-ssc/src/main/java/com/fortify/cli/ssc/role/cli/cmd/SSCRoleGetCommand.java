@@ -46,4 +46,9 @@ public class SSCRoleGetCommand extends AbstractSSCOutputCommand implements IUnir
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return roleResolver.getRoleDescriptor(unirest).asJsonNode();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

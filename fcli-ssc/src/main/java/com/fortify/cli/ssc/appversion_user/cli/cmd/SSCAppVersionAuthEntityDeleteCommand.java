@@ -64,4 +64,9 @@ public class SSCAppVersionAuthEntityDeleteCommand extends AbstractSSCOutputComma
     public String getActionCommandResult() {
         return "DELETED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

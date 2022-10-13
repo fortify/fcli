@@ -49,4 +49,9 @@ public class SSCAlertDefinitionGetCommand extends AbstractSSCOutputCommand imple
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.ALERT_DEFINITION(alertDefinitionId));
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

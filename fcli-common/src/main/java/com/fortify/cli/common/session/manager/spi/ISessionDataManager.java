@@ -16,4 +16,5 @@ public interface ISessionDataManager<T extends ISessionData> {
     Collection<SessionSummary> sessionSummaries();
     String getSessionTypeName();
     ArrayNode sessionSummariesAsArrayNode();
+    String getMinusVariableNamePrefix(String sessionName);
 }

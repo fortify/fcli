@@ -47,4 +47,9 @@ public class SSCReportTemplateGetCommand extends AbstractSSCOutputCommand implem
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return reportTemplateResolver.getReportTemplateDescriptor(unirest).asJsonNode();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

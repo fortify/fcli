@@ -54,4 +54,9 @@ public class SSCAppVersionArtifactDeleteCommand extends AbstractSSCOutputCommand
     public String getActionCommandResult() {
         return "DELETED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

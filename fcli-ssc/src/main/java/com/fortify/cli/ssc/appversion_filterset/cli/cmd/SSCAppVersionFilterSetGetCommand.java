@@ -48,4 +48,9 @@ public class SSCAppVersionFilterSetGetCommand extends AbstractSSCOutputCommand i
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return filterSetResolver.getFilterSetDescriptor(unirest, parentResolver.getAppVersionId(unirest)).asJsonNode();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

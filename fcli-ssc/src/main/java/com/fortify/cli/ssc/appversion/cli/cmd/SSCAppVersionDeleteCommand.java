@@ -66,4 +66,9 @@ public class SSCAppVersionDeleteCommand extends AbstractSSCOutputCommand impleme
     public UnaryOperator<JsonNode> getRecordTransformer() {
         return SSCAppVersionHelper::renameFields;
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

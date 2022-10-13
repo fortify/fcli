@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,35 +22,36 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion_filterset.cli.cmd;
+package com.fortify.cli.ssc.user.cli.mixin;
 
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
-import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
-import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
-import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.ssc.user.helper.SSCAuthEntitiesHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
-@Command(name = SSCOutputHelperMixins.List.CMD_NAME)
-public class SSCAppVersionFilterSetListCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
-    @Mixin private SSCAppVersionResolverMixin.From parentResolver;
-    
-    @Override
-    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.PROJECT_VERSION_FILTER_SETS(parentResolver.getAppVersionId(unirest)))
-            .queryString("limit","-1");
+public class SSCAuthEntityResolverMixin {
+    @ReflectiveAccess
+    private static abstract class AbstractSSCAuthEntityResolverMixin {
+        public abstract String getAuthEntitySpec();
+        
+        public JsonNode getAuthEntityJsonNode(UnirestInstance unirest) {
+            return new SSCAuthEntitiesHelper(unirest).getAuthEntities(false, true, getAuthEntitySpec());
+        }
     }
     
-    @Override
-    public boolean isSingular() {
-        return false;
+    @ReflectiveAccess
+    public static class RequiredOption extends AbstractSSCAuthEntityResolverMixin {
+        @Option(names="--user", required = true)
+        @Getter private String authEntitySpec;
+    }
+    
+    @ReflectiveAccess
+    public static class PositionalParameterSingle extends AbstractSSCAuthEntityResolverMixin {
+        @Parameters(index = "0", arity = "1")
+        @Getter private String authEntitySpec;
     }
 }

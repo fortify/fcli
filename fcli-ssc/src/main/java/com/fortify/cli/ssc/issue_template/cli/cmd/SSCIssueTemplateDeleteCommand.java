@@ -57,4 +57,9 @@ public class SSCIssueTemplateDeleteCommand extends AbstractSSCOutputCommand impl
     public String getActionCommandResult() {
         return "DELETED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

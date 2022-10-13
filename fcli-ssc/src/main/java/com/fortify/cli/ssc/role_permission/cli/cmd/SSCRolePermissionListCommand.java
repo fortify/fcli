@@ -53,4 +53,9 @@ public class SSCRolePermissionListCommand extends AbstractSSCOutputCommand imple
     public JsonNode transformRecord(JsonNode record) {
         return SSCRolePermissionHelper.flattenArrayProperty(record, "dependsOnPermission", "id");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

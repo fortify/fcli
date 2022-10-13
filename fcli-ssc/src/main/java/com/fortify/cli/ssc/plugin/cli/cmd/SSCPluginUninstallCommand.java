@@ -63,6 +63,11 @@ public class SSCPluginUninstallCommand extends AbstractSSCOutputCommand implemen
         return "UNINSTALLED";
     }
     
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
+    
     private JsonNode disablePluginIfNecessary(UnirestInstance unirest, String numericPluginId) {
         JsonNode pluginData = unirest.get("/api/v1/plugins/{id}")
                 .routeParam("id", ""+numericPluginId)

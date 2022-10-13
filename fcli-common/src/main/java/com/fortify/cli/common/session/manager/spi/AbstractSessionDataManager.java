@@ -117,6 +117,11 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
                 .collect(JsonHelper.arrayNodeCollector());
     }
     
+    @Override
+    public String getMinusVariableNamePrefix(String sessionName) {
+        return String.format("%s_%s", getSessionTypeName(), sessionName);
+    }
+    
     private SessionSummary getSessionSummary(String sessionName) {
         T sessionData = get(sessionName, false);
         return sessionData==null ? null : 

@@ -48,4 +48,9 @@ public class SSCAppVersionArtifactListCommand extends AbstractSSCOutputCommand i
         return unirest.get(SSCUrls.PROJECT_VERSION_ARTIFACTS(parentResolver.getAppVersionId(unirest)))
                 .queryString("embed","scans");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

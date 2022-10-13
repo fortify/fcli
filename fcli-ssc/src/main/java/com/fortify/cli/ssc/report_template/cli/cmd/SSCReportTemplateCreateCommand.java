@@ -89,6 +89,11 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCOutputCommand imp
     public String getActionCommandResult() {
         return "CREATED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 
     private int indexVal=0;
     private int getIndexVal(){return indexVal++;}

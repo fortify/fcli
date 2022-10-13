@@ -46,4 +46,9 @@ public class SSCAttributeDefinitionGetCommand extends AbstractSSCOutputCommand i
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return attributeDefinitionResolver.getAttributeDefinitionDescriptor(unirest).asJsonNode();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

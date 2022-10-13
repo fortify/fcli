@@ -45,6 +45,11 @@ public abstract class AbstractSCDastScanActionCommand extends AbstractSCDastScan
         return getAction().getActionResult();
     }
     
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
+    
     protected abstract SCDastScanAction getAction();
     
     @RequiredArgsConstructor

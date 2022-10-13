@@ -104,7 +104,7 @@ public class SSCTokenHelper {
         UnirestJsonHeaderConfigurer.configure(unirest);
     }
     
-    private static final void configureUnirest(UnirestInstance unirest, IUrlConfig urlConfig, char[] activeToken) {
+    public static final void configureUnirest(UnirestInstance unirest, IUrlConfig urlConfig, char[] activeToken) {
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);

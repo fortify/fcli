@@ -16,4 +16,9 @@ public class SCDastSensorListCommand extends AbstractSCDastOutputCommand impleme
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get("/api/v2/scanners");
     };
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

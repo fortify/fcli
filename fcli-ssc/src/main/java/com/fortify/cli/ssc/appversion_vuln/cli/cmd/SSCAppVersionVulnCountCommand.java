@@ -64,4 +64,9 @@ public class SSCAppVersionVulnCountCommand extends AbstractSSCOutputCommand impl
         }
         return request;
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

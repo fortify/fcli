@@ -47,4 +47,9 @@ public class SSCPluginGetCommand extends AbstractSSCOutputCommand implements IUn
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.PLUGIN(pluginResolver.getNumericPluginId()));
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

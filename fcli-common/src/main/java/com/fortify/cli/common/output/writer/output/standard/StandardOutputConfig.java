@@ -47,7 +47,6 @@ import lombok.experimental.Accessors;
 // TODO Add null checks in case any input or record transformation returns null?
 public class StandardOutputConfig {
     @Getter @Setter private OutputFormat defaultFormat;
-    @Getter @Setter private boolean singular;
     private final List<BiFunction<OutputFormat,JsonNode,JsonNode>> inputTransformers = new ArrayList<>();
     private final List<BiFunction<OutputFormat,JsonNode,JsonNode>> recordTransformers = new ArrayList<>();
     

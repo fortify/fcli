@@ -22,13 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.util;
+package com.fortify.cli.common.variable;
 
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Supplier;
@@ -43,6 +42,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.common.util.FcliHomeHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
@@ -182,20 +182,29 @@ public final class FcliVariableHelper {
         delete(variableDescriptor.get("name").asText());
     }
     
+    public static void deleteAllWithPrefix(String prefix) {
+        variableNamesStream()
+            .filter(s->s.startsWith(prefix))
+            .forEach(FcliVariableHelper::delete);
+    }
+    
     public static final boolean exists(String variableName) {
         return FcliHomeHelper.isReadable(getVariablePath(variableName));
     }
     
-    @SneakyThrows // TODO Do we want to use SneakyThrows?
     public static final List<String> variableNames() {
+        return variableNamesStream().collect(Collectors.toList());
+    }
+    
+    @SneakyThrows // TODO Do we want to use SneakyThrows?
+    public static final Stream<String> variableNamesStream() {
         Path path = getVariablesPath();
         if ( !FcliHomeHelper.exists(path) ) {
-            return Collections.emptyList();
+            return Stream.empty();
         }
         return FcliHomeHelper.listDirsInDir(path, false)
                 .map(Path::getFileName)
-                .map(Path::toString)
-                .collect(Collectors.toList());
+                .map(Path::toString);
     }
     
     public static final ArrayNode listDescriptors() {

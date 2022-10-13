@@ -106,5 +106,10 @@ public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IUn
     public String getActionCommandResult() {
         return "UPDATED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 
 }

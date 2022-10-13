@@ -80,6 +80,11 @@ public class SSCRoleCreateCommand extends AbstractSSCOutputCommand implements IU
     }
     
     @Override
+    public boolean isSingular() {
+        return true;
+    }
+    
+    @Override
     public String getActionCommandResult() {
         return "CREATED";
     }

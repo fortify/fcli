@@ -54,4 +54,9 @@ public class SSCJobListCommand extends AbstractSSCOutputCommand implements IUnir
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.JOBS).queryString("limit","-1");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

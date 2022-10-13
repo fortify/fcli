@@ -59,6 +59,11 @@ public class SSCEventListCommand extends AbstractSSCOutputCommand implements IUn
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get("/api/v1/events?limit=-1");
+        return unirest.get("/api/v1/events?limit=100");
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
     }
 }

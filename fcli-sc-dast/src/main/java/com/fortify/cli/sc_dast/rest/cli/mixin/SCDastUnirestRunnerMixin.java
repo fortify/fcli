@@ -1,13 +1,9 @@
 package com.fortify.cli.sc_dast.rest.cli.mixin;
 
-import java.util.function.Function;
-
-import com.fortify.cli.common.rest.runner.IUnirestRunner;
-import com.fortify.cli.common.rest.runner.UnirestRunner;
+import com.fortify.cli.common.rest.cli.mixin.AbstractUnirestRunnerMixin;
 import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUrlConfigConfigurer;
-import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.sc_dast.session.manager.ISCDastSessionData;
 import com.fortify.cli.sc_dast.session.manager.SCDastSessionDataFromEnv;
@@ -17,31 +13,15 @@ import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine.Mixin;
+import lombok.Getter;
 
 @ReflectiveAccess @FixInjection
-public class SCDastUnirestRunnerMixin implements IUnirestRunner {
-    @Inject private UnirestRunner unirestRunner;
-    @Inject private SCDastSessionDataManager sessionDataManager;
+public class SCDastUnirestRunnerMixin extends AbstractUnirestRunnerMixin<ISCDastSessionData, SCDastSessionDataManager> {
+    @Getter @Inject private SCDastSessionDataManager sessionDataManager;
     @Inject private SSCTokenHelper tokenHelper;
-    @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
     
     @Override
-    public <R> R run(Function<UnirestInstance, R> f) {
-        return unirestRunner.run(unirest->run(unirest, f));
-    }
-    
-    private <R> R run(UnirestInstance unirest, Function<UnirestInstance, R> f) {
-        ISCDastSessionData sessionData = getSessionData();
-        configureSCDast(unirest, sessionData);
-        try {
-            return f.apply(unirest);
-        } finally {
-            cleanup(sessionData);
-        }
-    }
-    
-    private void configureSCDast(UnirestInstance unirest, ISCDastSessionData sessionData) {
+    protected final void configure(UnirestInstance unirest, ISCDastSessionData sessionData) {
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, sessionData.getScDastUrlConfig());
@@ -56,14 +36,16 @@ public class SCDastUnirestRunnerMixin implements IUnirestRunner {
      * will be used to retrieve a previously persisted session.
      * @return
      */
-    private ISCDastSessionData getSessionData() {
+    @Override
+    protected final ISCDastSessionData getSessionData() {
         SCDastSessionDataFromEnv sessionDataFromEnv = new SCDastSessionDataFromEnv(tokenHelper);
-        return !sessionNameMixin.hasSessionName() && sessionDataFromEnv.hasConfigFromEnv()
+        return !getSessionNameMixin().hasSessionName() && sessionDataFromEnv.hasConfigFromEnv()
                 ? sessionDataFromEnv
-                : sessionDataManager.get(sessionNameMixin.getSessionName(), true);
+                : sessionDataManager.get(getSessionNameMixin().getSessionName(), true);
     }
     
-    private void cleanup(ISCDastSessionData sessionData) {
+    @Override
+    protected final void cleanup(UnirestInstance unirest, ISCDastSessionData sessionData) {
         if ( sessionData instanceof SCDastSessionDataFromEnv ) {
             ((SCDastSessionDataFromEnv)sessionData).cleanup();
         }

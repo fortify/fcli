@@ -83,8 +83,13 @@ public final class SCDastScanStartCommand extends AbstractSCDastOutputCommand im
     public String getActionCommandResult() {
         return "START_REQUESTED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
         
-    public ObjectNode getBody(UnirestInstance unirest) {
+    private ObjectNode getBody(UnirestInstance unirest) {
         ObjectNode body = objectMapper.createObjectNode();
         body.put("name", scanName); 
         body.put("cicdToken", scanSettingsResolver.getScanSettingsCicdToken(unirest));

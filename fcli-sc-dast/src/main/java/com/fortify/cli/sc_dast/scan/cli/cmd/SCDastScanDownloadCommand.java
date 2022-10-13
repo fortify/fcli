@@ -57,6 +57,11 @@ public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand imple
         return type.name().toUpperCase()+"_DOWNLOADED";
     }
     
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
+    
     @RequiredArgsConstructor @Getter
     public static enum DownloadType {
         fpr("download-fpr", "fpr"), 

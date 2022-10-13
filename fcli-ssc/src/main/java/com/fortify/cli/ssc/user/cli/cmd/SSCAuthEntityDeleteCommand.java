@@ -31,7 +31,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -74,6 +73,11 @@ public class SSCAuthEntityDeleteCommand extends AbstractSSCOutputCommand impleme
     @Override
     public String getActionCommandResult() {
         return "DELETED";
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
     }
 
     private String getAuthEntityId(JsonNode authEntityNode) {

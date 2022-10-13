@@ -46,4 +46,9 @@ public class SSCAppGetCommand extends AbstractSSCOutputCommand implements IUnire
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return appResolver.getAppDescriptor(unirest).asJsonNode();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

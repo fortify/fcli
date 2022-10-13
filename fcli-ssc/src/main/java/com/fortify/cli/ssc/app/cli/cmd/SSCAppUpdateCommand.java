@@ -67,4 +67,9 @@ public class SSCAppUpdateCommand extends AbstractSSCOutputCommand implements IUn
     public String getActionCommandResult() {
         return "UPDATED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

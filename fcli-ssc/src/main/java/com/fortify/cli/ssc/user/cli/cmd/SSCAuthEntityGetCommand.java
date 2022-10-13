@@ -24,29 +24,31 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.user.cli.cmd;
 
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
-import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.user.cli.mixin.SSCAuthEntityResolverMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Get.CMD_NAME)
-public class SSCAuthEntityGetCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier {
+public class SSCAuthEntityGetCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Get outputHelper; 
-    // TODO Add support for resolving auth entities by name using a ResolverMixin
-    @Parameters(arity="1", description = "Id of auth entity to be retrieved")
-    private String authEntityId;
+    @Mixin private SSCAuthEntityResolverMixin.PositionalParameterSingle authEntityResolver;
     
     @Override
-    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.AUTH_ENTITY(authEntityId));
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return authEntityResolver.getAuthEntityJsonNode(unirest);
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
     }
 }

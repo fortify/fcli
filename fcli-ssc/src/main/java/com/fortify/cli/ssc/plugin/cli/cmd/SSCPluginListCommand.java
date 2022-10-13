@@ -45,4 +45,9 @@ public class SSCPluginListCommand extends AbstractSSCOutputCommand implements IU
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get("/api/v1/plugins?orderBy=pluginType,pluginName,pluginVersion&limit=-1");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

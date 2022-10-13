@@ -77,4 +77,9 @@ public class SSCIssueTemplateCreateCommand extends AbstractSSCOutputCommand impl
     public String getActionCommandResult() {
         return "CREATED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

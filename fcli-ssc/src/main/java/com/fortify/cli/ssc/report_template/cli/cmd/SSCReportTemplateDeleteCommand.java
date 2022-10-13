@@ -56,4 +56,9 @@ public class SSCReportTemplateDeleteCommand extends AbstractSSCOutputCommand imp
     public String getActionCommandResult() {
         return "DELETED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

@@ -64,4 +64,9 @@ public class FoDAppReleaseListCommand extends AbstractFoDOutputCommand implement
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(FoDUrls.RELEASES);
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

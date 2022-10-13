@@ -54,4 +54,9 @@ public class SSCIssueTemplateListCommand extends AbstractSSCOutputCommand implem
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.ISSUE_TEMPLATES).queryString("limit","-1");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

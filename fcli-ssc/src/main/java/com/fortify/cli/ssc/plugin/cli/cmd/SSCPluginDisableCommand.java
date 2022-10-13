@@ -54,4 +54,9 @@ public class SSCPluginDisableCommand extends AbstractSSCOutputCommand implements
     public String getActionCommandResult() {
         return "DISABLED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

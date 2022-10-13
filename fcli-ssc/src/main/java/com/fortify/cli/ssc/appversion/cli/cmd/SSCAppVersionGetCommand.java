@@ -54,4 +54,9 @@ public class SSCAppVersionGetCommand extends AbstractSSCOutputCommand implements
     public JsonNode transformRecord(JsonNode record) {
         return SSCAppVersionHelper.renameFields(record);
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

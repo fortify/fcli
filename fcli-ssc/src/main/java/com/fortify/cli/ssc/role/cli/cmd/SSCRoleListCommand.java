@@ -51,5 +51,10 @@ public class SSCRoleListCommand extends AbstractSSCOutputCommand implements IUni
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.ROLES).queryString("limit", "-1");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 
 }

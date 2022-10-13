@@ -63,4 +63,8 @@ public class SSCSeedBundleUploadCommand extends AbstractSSCOutputCommand impleme
     public String getActionCommandResult() {
         return "UPLOADED";
     }
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

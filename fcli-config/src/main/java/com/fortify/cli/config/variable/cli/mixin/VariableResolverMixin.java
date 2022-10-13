@@ -25,8 +25,8 @@
 package com.fortify.cli.config.variable.cli.mixin;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.util.FcliVariableHelper;
-import com.fortify.cli.common.util.FcliVariableHelper.VariableDescriptor;
+import com.fortify.cli.common.variable.FcliVariableHelper;
+import com.fortify.cli.common.variable.FcliVariableHelper.VariableDescriptor;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;

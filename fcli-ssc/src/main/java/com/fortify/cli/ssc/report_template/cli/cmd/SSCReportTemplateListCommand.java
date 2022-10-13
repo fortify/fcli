@@ -46,4 +46,9 @@ public class SSCReportTemplateListCommand extends AbstractSSCOutputCommand imple
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.REPORT_DEFINITIONS).queryString("limit","-1");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

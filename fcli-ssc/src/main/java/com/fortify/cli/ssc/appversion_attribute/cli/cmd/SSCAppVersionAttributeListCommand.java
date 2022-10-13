@@ -48,4 +48,9 @@ public class SSCAppVersionAttributeListCommand extends AbstractSSCOutputCommand 
         return new SSCAppVersionAttributeListHelper()
                 .execute(unirest, parentResolver.getAppVersionId(unirest));
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

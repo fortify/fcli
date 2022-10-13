@@ -72,4 +72,9 @@ public class SCDastScanSettingsListCommand extends AbstractSCDastOutputCommand i
                 : request.queryString("scanType", scanType);
         return request;
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

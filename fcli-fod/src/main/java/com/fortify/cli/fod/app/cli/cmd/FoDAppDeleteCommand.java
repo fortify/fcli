@@ -64,4 +64,9 @@ public class FoDAppDeleteCommand extends AbstractFoDOutputCommand implements IUn
     public String getActionCommandResult() {
         return "DELETED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

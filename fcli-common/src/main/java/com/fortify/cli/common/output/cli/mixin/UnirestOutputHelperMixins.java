@@ -123,7 +123,7 @@ public class UnirestOutputHelperMixins {
         public static final String CMD_NAME = "get";
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details().singular(true); 
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details(); 
     }
     
     @ReflectiveAccess

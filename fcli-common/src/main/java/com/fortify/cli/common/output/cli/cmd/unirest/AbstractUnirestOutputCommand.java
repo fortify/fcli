@@ -25,13 +25,16 @@
 package com.fortify.cli.common.output.cli.cmd.unirest;
 
 import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
+import com.fortify.cli.common.output.spi.ISingularSupplier;
 import com.fortify.cli.common.rest.cli.cmd.AbstractUnirestRunnerCommand;
+import com.fortify.cli.common.rest.runner.IUnirestRunner;
+import com.fortify.cli.common.variable.IMinusVariableNamePrefixSupplier;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 
 @ReflectiveAccess
-public abstract class AbstractUnirestOutputCommand extends AbstractUnirestRunnerCommand {
+public abstract class AbstractUnirestOutputCommand extends AbstractUnirestRunnerCommand implements IMinusVariableNamePrefixSupplier, ISingularSupplier {
     @Override
     protected final Void run(UnirestInstance unirest) {
         IUnirestOutputHelper outputHelper = getOutputHelper();
@@ -43,6 +46,14 @@ public abstract class AbstractUnirestOutputCommand extends AbstractUnirestRunner
             throw new IllegalStateException(this.getClass().getName()+" must implement exactly one of I[BaseHttpRequest|JsonNodeHolder|JsonNode]Supplier");
         }
         return null;
+    }
+    
+    @Override
+    public String getMinusVariableNamePrefix() {
+        IUnirestRunner runner = getUnirestRunner();
+        return runner instanceof IMinusVariableNamePrefixSupplier
+                ? ((IMinusVariableNamePrefixSupplier)runner).getMinusVariableNamePrefix()
+                : null;
     }
     
     private boolean isBaseHttpRequestSupplier() {

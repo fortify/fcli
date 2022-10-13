@@ -51,4 +51,9 @@ public class SSCAuthEntityListCommand extends AbstractSSCOutputCommand implement
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.AUTH_ENTITIES).queryString("limit","-1");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

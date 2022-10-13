@@ -69,4 +69,9 @@ public class SSCIssueTemplateDownloadCommand extends AbstractSSCOutputCommand im
     public String getActionCommandResult() {
         return "DOWNLOADED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

@@ -53,4 +53,9 @@ public class SSCTokenDefinitionListCommand extends AbstractSSCOutputCommand impl
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.TOKEN_DEFINITIONS).queryString("limit", "-1");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

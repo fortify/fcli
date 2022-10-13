@@ -56,4 +56,9 @@ public class SSCRoleDeleteCommand extends AbstractSSCOutputCommand implements IU
     public String getActionCommandResult() {
         return "DELETED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

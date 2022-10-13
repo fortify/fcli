@@ -48,4 +48,9 @@ public class SSCAppVersionArtifactGetCommand extends AbstractSSCOutputCommand im
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.ARTIFACT(artifactId));
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

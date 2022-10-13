@@ -46,4 +46,9 @@ public class SSCIssueTemplateGetCommand extends AbstractSSCOutputCommand impleme
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return issueTemplateResolver.getIssueTemplateDescriptor(unirest).asJsonNode();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

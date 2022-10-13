@@ -29,6 +29,7 @@ import java.time.OffsetDateTime;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.IMinusVariableUnsupported;
 import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
@@ -51,7 +52,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.ArtifactPurge.CMD_NAME)
-public class SSCAppVersionArtifactPurgeCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier {
+public class SSCAppVersionArtifactPurgeCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IMinusVariableUnsupported {
     @Getter @Mixin private SSCOutputHelperMixins.ArtifactPurge outputHelper;
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.DAYS, Period.YEARS);
     @ArgGroup(exclusive=true, multiplicity="1") private SSCAppVersionArtifactPurgeOptions purgeOptions = new SSCAppVersionArtifactPurgeOptions();
@@ -75,6 +76,11 @@ public class SSCAppVersionArtifactPurgeCommand extends AbstractSSCOutputCommand 
             OffsetDateTime purgeBefore = PERIOD_HELPER.getCurrentOffsetDateTimeMinusPeriod(purgeOptions.purgeByDateOptions.olderThan);
             return purgeByDate(unirest, appVersionDescriptor, purgeBefore);
         }
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
     }
     
     private static final JsonNode purgeSingleArtifact(UnirestInstance unirest, String artifactId) {

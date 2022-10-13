@@ -56,6 +56,11 @@ public class SCDastScanListCommand extends AbstractSCDastScanOutputCommand imple
              unirest.get("/api/v2/scans/scan-summary-list")
         );
     };
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 
     private HttpRequest<?> updateRequest(HttpRequest<?> request) {
         OutputQueryHelper queryHelper = new OutputQueryHelper(outputHelper);

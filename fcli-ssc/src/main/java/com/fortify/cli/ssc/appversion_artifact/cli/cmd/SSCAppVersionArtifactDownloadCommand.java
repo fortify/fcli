@@ -88,4 +88,9 @@ public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCOutputComma
     public String getActionCommandResult() {
         return "ARTIFACT_DOWNLOADED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

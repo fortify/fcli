@@ -76,4 +76,9 @@ public class SSCPluginInstallCommand extends AbstractSSCOutputCommand implements
     public String getActionCommandResult() {
         return "INSTALLED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

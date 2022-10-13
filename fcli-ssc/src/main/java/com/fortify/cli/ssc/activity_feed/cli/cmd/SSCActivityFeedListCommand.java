@@ -54,11 +54,16 @@ public class SSCActivityFeedListCommand extends AbstractSSCOutputCommand impleme
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.ACTIVITY_FEED_EVENTS).queryString("limit","-1");
+        return unirest.get(SSCUrls.ACTIVITY_FEED_EVENTS).queryString("limit","100");
     }
     
     @Override
     public JsonNode transformRecord(JsonNode record) {
         return new RenameFieldsTransformer("projectVersionId", "applicationVersionId").transform(record);
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
     }
 }

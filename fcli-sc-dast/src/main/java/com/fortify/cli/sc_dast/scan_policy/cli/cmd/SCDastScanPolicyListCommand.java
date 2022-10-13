@@ -45,4 +45,9 @@ public class SCDastScanPolicyListCommand extends AbstractSCDastOutputCommand imp
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return SCDastScanPolicyHelper.getScanPolicies(unirest);
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

@@ -104,6 +104,11 @@ public class SSCAppVersionCreateCommand extends AbstractSSCOutputCommand impleme
         return "CREATED";
     }
     
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
+    
     private final SSCAppVersionAuthEntitiesUpdateBuilder getAuthUpdateBuilder(UnirestInstance unirest) {
         return new SSCAppVersionAuthEntitiesUpdateBuilder(unirest)
                 .add(false, userAddMixin.getAuthEntitySpecs());

@@ -51,4 +51,9 @@ public class SSCAppVersionAuthEntityListCommand extends AbstractSSCOutputCommand
         return unirest.get(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(parentResolver.getAppVersionId(unirest)))
                 .queryString("limit","-1");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

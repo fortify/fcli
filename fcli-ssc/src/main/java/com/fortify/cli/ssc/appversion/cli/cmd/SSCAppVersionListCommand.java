@@ -58,6 +58,11 @@ public class SSCAppVersionListCommand extends AbstractSSCOutputCommand implement
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get("/api/v1/projectVersions?limit=-1");
+        return unirest.get("/api/v1/projectVersions?limit=100");
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
     }
 }

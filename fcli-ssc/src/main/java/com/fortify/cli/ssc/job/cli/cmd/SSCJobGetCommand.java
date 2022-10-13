@@ -46,4 +46,9 @@ public class SSCJobGetCommand extends AbstractSSCOutputCommand implements IUnire
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return jobResolver.getJobDescriptor(unirest).asJsonNode();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

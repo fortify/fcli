@@ -55,4 +55,9 @@ public class SSCAlertDefinitionListCommand extends AbstractSSCOutputCommand impl
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(SSCUrls.ALERT_DEFINITIONS).queryString("limit","-1");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

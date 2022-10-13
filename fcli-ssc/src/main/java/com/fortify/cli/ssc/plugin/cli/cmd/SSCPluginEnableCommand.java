@@ -54,4 +54,9 @@ public class SSCPluginEnableCommand extends AbstractSSCOutputCommand implements 
     public String getActionCommandResult() {
         return "ENABLED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

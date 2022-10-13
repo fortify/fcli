@@ -60,4 +60,9 @@ public class SSCJobCancelCommand extends AbstractSSCOutputCommand implements IUn
     public String getActionCommandResult() {
         return "CANCEL_REQUESTED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

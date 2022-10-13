@@ -77,4 +77,9 @@ public class SSCAppDeleteCommand extends AbstractSSCOutputCommand implements IUn
     private void deleteAppVersion(UnirestInstance unirest, ObjectNode version) {
         unirest.delete(SSCUrls.PROJECT_VERSION(version.get("id").asText())).asObject(JsonNode.class).getBody();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

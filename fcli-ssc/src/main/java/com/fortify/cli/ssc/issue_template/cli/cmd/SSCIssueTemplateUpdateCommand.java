@@ -70,4 +70,9 @@ public class SSCIssueTemplateUpdateCommand extends AbstractSSCOutputCommand impl
     public String getActionCommandResult() {
         return "UPDATED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

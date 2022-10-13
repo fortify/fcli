@@ -25,9 +25,10 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.runner.IfFailureHandler;
 import com.fortify.cli.common.util.CommandSpecHelper;
-import com.fortify.cli.common.util.FcliVariableHelper;
-import com.fortify.cli.common.util.FcliVariableHelper.VariableType;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.variable.FcliVariableHelper;
+import com.fortify.cli.common.variable.IMinusVariableNamePrefixSupplier;
+import com.fortify.cli.common.variable.FcliVariableHelper.VariableType;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
@@ -173,9 +174,10 @@ public class StandardOutputWriter implements IOutputWriter {
         private IRecordWriter[] getRecordWriters(StandardOutputConfig config) {
             List<IRecordWriter> recordWritersList = new ArrayList<>();
             recordWritersList.add(outputFormat.getRecordWriterFactory().createRecordWriter(createOutputWriterConfig()));
-            OutputStoreConfig outputStoreConfig = outputOptions.getOutputStoreConfig();
-            if ( outputStoreConfig!=null ) {
-                recordWritersList.add(OutputFormat.json.getRecordWriterFactory().createRecordWriter(createOutputStoreWriterConfig(outputStoreConfig)));           }
+            VariableStoreConfig variableStoreConfig = outputOptions.getVariableStoreConfig();
+            if ( variableStoreConfig!=null ) {
+                recordWritersList.add(OutputFormat.json.getRecordWriterFactory().createRecordWriter(createOutputStoreWriterConfig(variableStoreConfig)));           
+            }
             return recordWritersList.toArray(IRecordWriter[]::new);
         }
 
@@ -201,12 +203,12 @@ public class StandardOutputWriter implements IOutputWriter {
         }
         
         // TODO Clean up this code, preferably move some code to some helper class
-        private RecordWriterConfig createOutputStoreWriterConfig(OutputStoreConfig outputStoreConfig) {
-            String variableName = outputStoreConfig.getVariableName();
-            String options = outputStoreConfig.getOptions();
+        private RecordWriterConfig createOutputStoreWriterConfig(VariableStoreConfig variableStoreConfig) {
+            Object cmd = commandSpec.userObject();
+            String variableName = variableStoreConfig.getVariableName();
+            String options = variableStoreConfig.getOptions();
             VariableType variableType = VariableType.USER_PROVIDED;
             if ( "-".equals(variableName) ) {
-                Object cmd = commandSpec.userObject();
                 if ( StringUtils.isNotBlank(options) ) { 
                     throw new IllegalArgumentException("Option --store doesn't support options for variable alias '-'");
                 }
@@ -220,6 +222,14 @@ public class StandardOutputWriter implements IOutputWriter {
                     variableName = minusVariableDefinition.name();
                     options = minusVariableDefinition.options();
                     variableType = VariableType.PREDEFINED;
+                    if ( cmd instanceof IMinusVariableNamePrefixSupplier ) {
+                        // Note that we can only add a prefix for predefined 
+                        String prefix = ((IMinusVariableNamePrefixSupplier)cmd).getMinusVariableNamePrefix();
+                        if ( StringUtils.isNotBlank(prefix) ) {
+                            prefix = prefix.replaceAll("[^a-zA-Z0-9_]", "").toLowerCase();
+                            variableName = String.format("%s_%s", prefix, variableName);
+                        }
+                    }
                 }
             }
             return RecordWriterConfig.builder()
@@ -235,7 +245,7 @@ public class StandardOutputWriter implements IOutputWriter {
             Object cmd = commandSpec.userObject();
             return cmd instanceof ISingularSupplier
                     ? ((ISingularSupplier)cmd).isSingular()
-                    : config.singular();
+                    : false;
         }
         
         private String getOutputWriterOptions() {

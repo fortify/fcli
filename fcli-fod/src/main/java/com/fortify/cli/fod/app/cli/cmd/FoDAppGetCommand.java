@@ -54,5 +54,10 @@ public class FoDAppGetCommand extends AbstractFoDOutputCommand implements IUnire
     public JsonNode transformRecord(JsonNode record) {
         return FoDAppHelper.renameFields(record);
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 
 }

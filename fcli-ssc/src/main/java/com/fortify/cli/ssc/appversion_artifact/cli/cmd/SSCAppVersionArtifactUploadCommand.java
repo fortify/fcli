@@ -96,4 +96,9 @@ public class SSCAppVersionArtifactUploadCommand extends AbstractSSCOutputCommand
 
         return unirest.get(SSCUrls.ARTIFACT(artifactId)).queryString("embed","scans");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

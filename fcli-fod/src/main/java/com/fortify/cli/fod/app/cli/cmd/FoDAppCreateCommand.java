@@ -129,5 +129,10 @@ public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IUn
     public String getActionCommandResult() {
         return "CREATED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 
 }

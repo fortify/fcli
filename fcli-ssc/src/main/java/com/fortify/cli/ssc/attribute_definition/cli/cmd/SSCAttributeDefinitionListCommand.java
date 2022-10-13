@@ -54,4 +54,9 @@ public class SSCAttributeDefinitionListCommand extends AbstractSSCOutputCommand 
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name");
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

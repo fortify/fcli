@@ -49,6 +49,11 @@ public class SSCAppListCommand extends AbstractSSCOutputCommand implements IUnir
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.PROJECTS).queryString("limit","-1");
+        return unirest.get(SSCUrls.PROJECTS).queryString("limit","100");
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
     }
 }
