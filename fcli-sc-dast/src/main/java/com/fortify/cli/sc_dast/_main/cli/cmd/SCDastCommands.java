@@ -1,5 +1,6 @@
 package com.fortify.cli.sc_dast._main.cli.cmd;
 
+import com.fortify.cli.sc_dast.rest.cli.cmd.SCDastRestCommands;
 import com.fortify.cli.sc_dast.scan.cli.cmd.SCDastScanCommands;
 import com.fortify.cli.sc_dast.scan_policy.cli.cmd.SCDastScanPolicyCommands;
 import com.fortify.cli.sc_dast.scan_settings.cli.cmd.SCDastScanSettingsCommands;
@@ -13,7 +14,10 @@ import picocli.CommandLine.Command;
         resourceBundle = "com.fortify.cli.sc_dast.i18n.SCDastMessages",
         hidden = true,
         subcommands = {
+                // This list of subcommands starts with generic session and rest commands,
+                // followed by all entity commands in alphabetical order
                 SCDastSessionCommands.class,
+                SCDastRestCommands.class,
                 SCDastScanCommands.class,
                 SCDastScanPolicyCommands.class,
                 SCDastScanSettingsCommands.class,

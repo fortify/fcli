@@ -24,31 +24,16 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.rest.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.IOutputConfigSupplier;
-import com.fortify.cli.common.output.cli.mixin.OutputConfig;
-import com.fortify.cli.common.output.cli.mixin.OutputMixin;
-import com.fortify.cli.common.output.writer.OutputFormat;
-import com.fortify.cli.common.rest.cli.mixin.RestMixin;
+import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
+import com.fortify.cli.ssc.rest.cli.mixin.SSCUnirestRunnerMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "rest")
-public final class SSCRestCommand extends AbstractSSCUnirestRunnerCommand implements IOutputConfigSupplier {
-    @Mixin private OutputMixin outputMixin;
-    @Mixin private RestMixin restMixin;
-    
-    @Override
-    protected Void run(UnirestInstance unirest) {
-        outputMixin.write(restMixin.prepareRequest(unirest));
-        return null;
-    }
-    
-    @Override
-    public OutputConfig getOutputOptionsWriterConfig() {
-        return new OutputConfig().defaultFormat(OutputFormat.json);
-    }
+@Command(name = AbstractRestCallCommand.CMD_NAME)
+public final class SSCRestCallCommand extends AbstractRestCallCommand {
+    @Getter @Mixin private SSCUnirestRunnerMixin unirestRunner;
 }

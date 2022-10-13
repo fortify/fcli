@@ -2,6 +2,7 @@ package com.fortify.cli.sc_sast.rest.cli.mixin;
 
 import java.util.function.Function;
 
+import com.fortify.cli.common.rest.runner.IUnirestRunner;
 import com.fortify.cli.common.rest.runner.UnirestRunner;
 import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -16,7 +17,7 @@ import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-public class SCSastUnirestRunnerMixin {
+public class SCSastUnirestRunnerMixin implements IUnirestRunner {
     @Inject private UnirestRunner runner;
     @Inject private SCSastSessionDataManager sessionDataManager;
     @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;

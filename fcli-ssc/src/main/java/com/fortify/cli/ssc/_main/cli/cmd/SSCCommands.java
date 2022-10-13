@@ -16,7 +16,7 @@ import com.fortify.cli.ssc.issue_template.cli.cmd.SSCIssueTemplateCommands;
 import com.fortify.cli.ssc.job.cli.cmd.SSCJobCommands;
 import com.fortify.cli.ssc.plugin.cli.cmd.SSCPluginCommands;
 import com.fortify.cli.ssc.report_template.cli.cmd.SSCReportTemplateCommands;
-import com.fortify.cli.ssc.rest.cli.cmd.SSCRestCommand;
+import com.fortify.cli.ssc.rest.cli.cmd.SSCRestCommands;
 import com.fortify.cli.ssc.role.cli.cmd.SSCRoleCommands;
 import com.fortify.cli.ssc.role_permission.cli.cmd.SSCRolePermissionCommands;
 import com.fortify.cli.ssc.seed_bundle.cli.cmd.SSCSeedBundleCommands;
@@ -31,8 +31,10 @@ import picocli.CommandLine.Command;
         name = "ssc",
         resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages",
         subcommands = {
+                // This list of subcommands starts with generic session and rest commands,
+                // followed by all entity commands in alphabetical order
                 SSCSessionCommands.class,
-                SSCRestCommand.class,
+                SSCRestCommands.class,
                 SSCActivityFeedCommands.class,
                 SSCAlertDefinitionCommands.class,
                 SSCAlertCommands.class,

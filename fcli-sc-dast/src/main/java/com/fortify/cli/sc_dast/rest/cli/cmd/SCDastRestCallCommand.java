@@ -22,35 +22,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.common.rest.cli.mixin;
+package com.fortify.cli.sc_dast.rest.cli.cmd;
+
+import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
+import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastUnirestRunnerMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import io.micronaut.core.util.StringUtils;
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-public class RestMixin {
-    @Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
-    
-    @Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
-    @Getter private String httpMethod;
-    
-    @Option(names = {"--data", "-d"}, required = false)
-    @Getter private String data; // TODO Add ability to read data from file
-    
-    // TODO Add options for content-type, arbitrary headers, ...?
-    
-    public final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
-        if ( StringUtils.isEmpty(uri) ) {
-            throw new IllegalArgumentException("Uri must be specified");
-        }
-        var request = unirest.request(httpMethod, uri);
-        // TODO Add Content-Type & accept headers
-        return data==null ? request : request.body(data);
-    }
-    
+@Command(name = AbstractRestCallCommand.CMD_NAME)
+public final class SCDastRestCallCommand extends AbstractRestCallCommand {
+    @Getter @Mixin private SCDastUnirestRunnerMixin unirestRunner;
 }
