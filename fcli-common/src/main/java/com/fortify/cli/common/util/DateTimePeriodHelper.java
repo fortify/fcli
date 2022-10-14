@@ -94,6 +94,10 @@ public class DateTimePeriodHelper {
         return instant.toEpochMilli();
     }
     
+    public long parsePeriodToMillis(String periodString) {
+        return parsePeriodToEpochMillis(periodString)-Instant.EPOCH.toEpochMilli();
+    }
+    
     public final Date getCurrentDatePlusPeriod(String period) {
         return new Date(System.currentTimeMillis() + parsePeriodToEpochMillis(period));
     }
