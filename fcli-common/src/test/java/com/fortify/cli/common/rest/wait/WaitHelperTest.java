@@ -15,7 +15,7 @@ public class WaitHelperTest {
     public void testNoRequests() {
         try {
             WaitHelper.builder().build().waitUntilAll(null, "SomeState");
-            fail("WaitHelper didn't throw exception when no requests configured");
+            fail("WaitHelper didn't throw exception when no record suppliers configured");
         } catch (RuntimeException expected) {}
     }
     
@@ -23,7 +23,7 @@ public class WaitHelperTest {
     public void testTimeoutWithException() {
         try {
             WaitHelper.builder()
-                .request(u->objectMapper.createObjectNode().put("state", "state1"))
+                .recordSupplier(u->objectMapper.createObjectNode().put("state", "state1"))
                 .currentStateProperty("state")
                 .timeoutPeriod("1s")
                 .build()
@@ -36,7 +36,7 @@ public class WaitHelperTest {
     @Test
     public void testTimeoutWithoutException() {
         ArrayNode result = WaitHelper.builder()
-            .request(u->objectMapper.createObjectNode().put("state", "state1"))
+            .recordSupplier(u->objectMapper.createObjectNode().put("state", "state1"))
             .currentStateProperty("state")
             .timeoutPeriod("1s")
             .failOnTimeout(false)
@@ -50,7 +50,7 @@ public class WaitHelperTest {
     public void testMultiWait() {
         try {
             WaitHelper.builder()
-                .request(u->objectMapper.createObjectNode().put("state", "state1"))
+                .recordSupplier(u->objectMapper.createObjectNode().put("state", "state1"))
                 .currentStateProperty("state")
                 .timeoutPeriod("1s")
                 .build()
@@ -65,7 +65,7 @@ public class WaitHelperTest {
     public void testFailOnFailureState() {
         try {
             WaitHelper.builder()
-                .request(u->objectMapper.createObjectNode().put("state", "failureState"))
+                .recordSupplier(u->objectMapper.createObjectNode().put("state", "failureState"))
                 .currentStateProperty("state")
                 .timeoutPeriod("1s")
                 .failureStates("failureState")
@@ -80,7 +80,7 @@ public class WaitHelperTest {
     public void testFailOnUnknownState() {
         try {
             WaitHelper.builder()
-                .request(u->objectMapper.createObjectNode().put("state", "unknownState"))
+                .recordSupplier(u->objectMapper.createObjectNode().put("state", "unknownState"))
                 .currentStateProperty("state")
                 .timeoutPeriod("1s")
                 .knownStates("knownState")

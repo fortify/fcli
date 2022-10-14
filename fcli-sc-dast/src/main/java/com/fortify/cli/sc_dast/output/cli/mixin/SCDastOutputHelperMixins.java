@@ -82,6 +82,9 @@ public class SCDastOutputHelperMixins {
     @ReflectiveAccess public static class Cancel 
                extends UnirestOutputHelperMixins.Cancel {}
     
+    @ReflectiveAccess public static class WaitFor 
+               extends UnirestOutputHelperMixins.WaitFor {}
+    
     @ReflectiveAccess public static class Upload 
                extends UnirestOutputHelperMixins.Upload {}
     

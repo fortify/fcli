@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -30,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 @Builder()
 public class WaitHelper {
     private static final DateTimePeriodHelper periodHelper = DateTimePeriodHelper.byRange(Period.SECONDS, Period.DAYS);
-    private final List<Function<UnirestInstance, JsonNode>> requests;
+    private final Function<UnirestInstance, Collection<JsonNode>> recordsSupplier;
     private final Function<JsonNode, String> currentState;
     private final Function<JsonNode, JsonNode> recordTransformer;
     private final String[] knownStates;
@@ -95,16 +94,15 @@ public class WaitHelper {
     }
     
     private final Map<ObjectNode, String> getRecordsWithCurrentState(UnirestInstance unirest) {
-        if ( requests==null || requests.size()==0 ) {
-            throw new RuntimeException("No requests have been configured");
+        if ( recordsSupplier==null ) {
+            throw new RuntimeException("No records supplier has been configured");
         }
         Map<ObjectNode, String> nodesWithStatus = new LinkedHashMap<>();
-        for ( Function<UnirestInstance, JsonNode> request: requests ) {
-            JsonNode requestResult = request.apply(unirest);
-            if ( requestResult instanceof ArrayNode ) {
-                addNodesWithStatus(nodesWithStatus, (ArrayNode)requestResult);
+        for ( JsonNode record : recordsSupplier.apply(unirest) ) {
+            if ( record instanceof ArrayNode ) {
+                addNodesWithStatus(nodesWithStatus, (ArrayNode)record);
             } else {
-                addNodeWithStatus(nodesWithStatus, requestResult);
+                addNodeWithStatus(nodesWithStatus, record);
             }
         }
         return nodesWithStatus;
@@ -214,12 +212,8 @@ public class WaitHelper {
             return this;
         }
         
-        public WaitHelperBuilder request(Function<UnirestInstance, JsonNode> request) {
-            if ( this.requests==null ) {
-                this.requests = new ArrayList<>();
-            }
-            this.requests.add(request);
-            return this;
+        public WaitHelperBuilder recordSupplier(Function<UnirestInstance, JsonNode> recordSupplier) {
+            return recordsSupplier(u->Collections.singletonList(recordSupplier.apply(u)));
         }
         
         public WaitHelperBuilder failureStates(String... failureStates) {

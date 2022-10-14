@@ -20,7 +20,8 @@ import picocli.CommandLine.Command;
                 SCDastScanPauseCommand.class,
                 SCDastScanResumeCommand.class,
                 SCDastScanRetryCommands.class,
-                SCDastScanStartCommand.class
+                SCDastScanStartCommand.class,
+                SCDastScanWaitForCommand.class
         }
 )
 @MinusVariableDefinition(name = "currentScan", field = "id")
