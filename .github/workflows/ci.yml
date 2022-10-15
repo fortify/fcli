@@ -94,10 +94,10 @@ jobs:
 
       - name: Install zlib
         run: |
-          wget https://zlib.net/zlib-1.2.12.tar.gz; 
+          wget https://zlib.net/zlib-1.2.13.tar.gz; 
           mkdir zlib; 
-          tar -zxvf zlib-1.2.12.tar.gz; 
-          cd zlib-1.2.12; 
+          tar -zxvf zlib-1.2.13.tar.gz; 
+          cd zlib-1.2.13; 
           sudo ./configure --prefix=$TOOLCHAIN_DIR --static; 
           make; 
           sudo make install
