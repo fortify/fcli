@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
+import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
@@ -37,6 +38,7 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess @FixInjection
 public abstract class AbstractSessionLoginCommand<D extends ISessionData> extends AbstractSessionCommand {
     @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
+    @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
     
     @Override @SneakyThrows
     public final void _run() {

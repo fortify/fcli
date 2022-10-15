@@ -26,7 +26,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-@Builder()
+@Builder
 public class WaitHelper {
     private static final DateTimePeriodHelper periodHelper = DateTimePeriodHelper.byRange(Period.SECONDS, Period.DAYS);
     private final Function<UnirestInstance, Collection<JsonNode>> recordsSupplier;
@@ -34,14 +34,24 @@ public class WaitHelper {
     private final Function<JsonNode, JsonNode> recordTransformer;
     private final String[] knownStates;
     private final String[] failureStates;
-    @Builder.Default private final boolean terminateOnFailureState = true;
-    @Builder.Default private final boolean terminateOnUnknownState = true;
-    @Builder.Default private final boolean failOnFailureState = true;
-    @Builder.Default private final boolean failOnUnknownState = true;
-    @Builder.Default private final boolean failOnTimeout = true;
+    @Builder.Default private final WaitUnknownStateRequestedAction onUnknownStateRequested = WaitUnknownStateRequestedAction.fail;
+    @Builder.Default private final WaitUnknownOrFailureStateAction onFailureState = WaitUnknownOrFailureStateAction.fail;
+    @Builder.Default private final WaitUnknownOrFailureStateAction onUnknownState = WaitUnknownOrFailureStateAction.fail;
+    @Builder.Default private final WaitTimeoutAction onTimeout = WaitTimeoutAction.fail;
     private final String intervalPeriod;
     private final String timeoutPeriod;
     @Getter private final ArrayNode result = new ObjectMapper().createArrayNode(); 
+    
+    public final WaitHelper wait(UnirestInstance unirest, IWaitHelperWaitDefinitionSupplier waitDefinitionSupplier) {
+        return wait(unirest, waitDefinitionSupplier.getWaitDefinition());
+    }
+    
+    public final WaitHelper wait(UnirestInstance unirest, IWaitHelperWaitDefinition waitDefinition) {
+        return waitUntilAll(unirest, waitDefinition.getUntilAll())
+                .waitUntilAny(unirest, waitDefinition.getUntilAny())
+                .waitWhileAll(unirest, waitDefinition.getWhileAll())
+                .waitWhileAny(unirest, waitDefinition.getWhileAny());
+    }
     
     public final WaitHelper waitUntilAll(UnirestInstance unirest, String untilStates) {
         if ( StringUtils.isNotBlank(untilStates) ) {
@@ -72,25 +82,31 @@ public class WaitHelper {
     }
 
     private final void wait(UnirestInstance unirest, StateEvaluator evaluator) {
+        if ( currentState==null ) {
+            throw new RuntimeException("No currentState function or currentStateProperty set");
+        }
         if ( result.size()>0 ) {
             throw new RuntimeException("Only one of the public wait methods may be invoked with a non-empty set of states");
         }
         long intervalMillis = periodHelper.parsePeriodToMillis(intervalPeriod);
         OffsetDateTime timeout = periodHelper.getCurrentOffsetDateTimePlusPeriod(timeoutPeriod);
         Map<ObjectNode, String> recordsWithCurrentState = getRecordsWithCurrentState(unirest);
-        boolean _continue = true;
-        while ( timeout.isAfter(OffsetDateTime.now()) && (_continue = evaluator._continue(recordsWithCurrentState)) ) {
-            try {
-                Thread.sleep(intervalMillis);
-            } catch (InterruptedException e) {
-                throw new RuntimeException("Wait operation interrupted", e);
+        try {
+            boolean continueWait = true;
+            while ( timeout.isAfter(OffsetDateTime.now()) && (continueWait = evaluator.continueWait(recordsWithCurrentState)) ) {
+                try {
+                    Thread.sleep(intervalMillis);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException("Wait operation interrupted", e);
+                }
+                recordsWithCurrentState = getRecordsWithCurrentState(unirest);
             }
-            recordsWithCurrentState = getRecordsWithCurrentState(unirest);
+            if ( continueWait && onTimeout==WaitTimeoutAction.fail ) {
+                throw new IllegalStateException("Time-out exceeded");
+            }
+        } finally {
+            recordsWithCurrentState.keySet().forEach(result::add);
         }
-        if ( _continue && failOnTimeout ) {
-            throw new IllegalStateException("Time-out exceeded");
-        }
-        recordsWithCurrentState.keySet().forEach(result::add);
     }
     
     private final Map<ObjectNode, String> getRecordsWithCurrentState(UnirestInstance unirest) {
@@ -142,7 +158,7 @@ public class WaitHelper {
         }
         
         private static boolean allMatch(Set<String> statesToMatch, Collection<String> currentStates) {
-            return currentStates.containsAll(statesToMatch);
+            return statesToMatch.containsAll(currentStates);
         }
     }
     
@@ -155,36 +171,49 @@ public class WaitHelper {
         public StateEvaluator(String statesString, EvaluatorType evaluatorType) {
             this.statesSet = Set.of(statesString.split("\\|"));
             this.evaluatorType = evaluatorType;
-            this.knownStatesSet = knownStates==null ? null : Set.of(knownStates);
+            this.knownStatesSet = knownStates==null ? null : new HashSet<>(Set.of(knownStates));
+            if ( this.knownStatesSet!=null ) {
+                // In addition to the provided known states, we consider all supplied states as known as well
+                this.knownStatesSet.addAll(statesSet);
+            }
             this.failureStatesSet = failureStates==null ? null : new HashSet<>(Set.of(failureStates));
             if ( this.failureStatesSet!=null ) {
-                this.failureStatesSet.removeAll(statesSet); // When explicitly requesting failure states, we don't want to fail on those states
+                // When explicitly requesting failure states, we don't want to fail on those states
+                this.failureStatesSet.removeAll(statesSet);
             }
+            checkRequestedStates();
         }
-        
-        public boolean _continue(Map<ObjectNode, String> nodesWithStatus) {
+
+        public boolean continueWait(Map<ObjectNode, String> nodesWithStatus) {
             Collection<String> currentStates = nodesWithStatus.values();
             return !failUnknownStateCheck(currentStates)
                     && !failFailureStateCheck(currentStates)
                     && evaluatorType._continue(statesSet, currentStates);
         }
+        
+        private void checkRequestedStates() {
+            if ( onUnknownStateRequested!=WaitUnknownStateRequestedAction.ignore || isEmpty(knownStatesSet) ) {
+            } else if ( !knownStatesSet.containsAll(statesSet) ) {
+                throw new IllegalArgumentException("Unknown states specified in one of the --until* or --while* options: "+removeAll(statesSet, knownStatesSet));
+            }
+        }
 
         private boolean failFailureStateCheck(Collection<String> currentStates) {
-            boolean failFailureStateCheck =
-                    (terminateOnFailureState || failOnFailureState)
-                    && failureStatesSet!=null && !failureStatesSet.isEmpty()
-                    && !Collections.disjoint(currentStates, failureStatesSet);
-            throwOptionalError(failOnFailureState && failFailureStateCheck, ()->"Failure state(s) found: "+retainAll(currentStates, failureStatesSet));
+            if ( onFailureState==WaitUnknownOrFailureStateAction.wait || isEmpty(failureStatesSet) ) { return false; }
+            boolean failFailureStateCheck = !Collections.disjoint(currentStates, failureStatesSet);
+            throwOptionalError(onFailureState, failFailureStateCheck, ()->"Failure state(s) found: "+retainAll(currentStates, failureStatesSet));
             return failFailureStateCheck;
         }
 
         private boolean failUnknownStateCheck(Collection<String> currentStates) {
-            boolean failUnknownStateCheck =
-                    (terminateOnUnknownState || failOnUnknownState)
-                    && knownStatesSet!=null && !knownStatesSet.isEmpty()
-                    && !knownStatesSet.containsAll(currentStates);
-            throwOptionalError(failOnUnknownState && failUnknownStateCheck, ()->"Unknown state(s) found: "+removeAll(currentStates, knownStatesSet));
+            if ( onUnknownState==WaitUnknownOrFailureStateAction.wait || isEmpty(knownStatesSet) ) { return false; }
+            boolean failUnknownStateCheck = !knownStatesSet.containsAll(currentStates);
+            throwOptionalError(onUnknownState, failUnknownStateCheck, ()->"Unknown state(s) found: "+removeAll(currentStates, knownStatesSet));
             return failUnknownStateCheck;
+        }
+
+        private final boolean isEmpty(Collection<?> collection) {
+            return collection==null || collection.isEmpty();
         }
         
         private final <T> Collection<T> removeAll(Collection<T> originalCollection, Collection<T> itemsToRemove) {
@@ -199,8 +228,8 @@ public class WaitHelper {
             return result;
         }
         
-        private void throwOptionalError(boolean throwError, Supplier<String> messageSupplier) {
-            if ( throwError ) {
+        private void throwOptionalError(WaitUnknownOrFailureStateAction action, boolean failStateCheck, Supplier<String> messageSupplier) {
+            if ( action==WaitUnknownOrFailureStateAction.fail && failStateCheck ) {
                 throw new IllegalStateException(messageSupplier.get());
             }
         }
@@ -224,6 +253,20 @@ public class WaitHelper {
         public WaitHelperBuilder knownStates(String... knownStates) {
             this.knownStates = knownStates;
             return this;
+        }
+        
+        /**
+         * Allow for setting interval, timeout and failure actions with a single method call
+         * @param controlProperties
+         * @return
+         */
+        public WaitHelperBuilder controlProperties(IWaitHelperControlProperties controlProperties) {
+            return intervalPeriod(controlProperties.getIntervalPeriod())
+                    .onFailureState(controlProperties.getOnFailureState())
+                    .onTimeout(controlProperties.getOnTimeout())
+                    .onUnknownState(controlProperties.getOnUnknownState())
+                    .onUnknownStateRequested(controlProperties.getOnUnknownStateRequested())
+                    .timeoutPeriod(controlProperties.getTimeoutPeriod());
         }
     }
 }

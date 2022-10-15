@@ -51,7 +51,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = SCDastOutputHelperMixins.Start.CMD_NAME)
 public final class SCDastScanStartCommand extends AbstractSCDastOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.Start outputHelper;
-    @Parameters(index = "0", arity = "1") private String scanName;
+    @Parameters(index = "0", arity = "1", paramLabel = "name") private String scanName;
     @Mixin private SCDastScanSettingsResolverMixin.RequiredOption scanSettingsResolver;
     @Mixin private SCDastScanPolicyResolverMixin.OptionalOption scanPolicyResolver;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -59,13 +59,13 @@ public final class SCDastScanStartCommand extends AbstractSCDastOutputCommand im
     @Option(names = "--overrides-file") private File overridesFile;
 
     private enum ScanModes {CrawlOnly, CrawlAndAudit, AuditOnly}
-    @Option(names= {"-M", "--mode"})
+    @Option(names= {"--mode", "-M"})
     private ScanModes scanMode;
 
-    @Option(names = {"-U", "--start-url"})
+    @Option(names = {"--start-url", "-U"})
     private String[] startUrls;
 
-    @Option(names = {"-L","--login-macro"})
+    @Option(names = {"--login-macro", "-L"})
     private Integer loginMacroBinaryFileId;
     
     @Override

@@ -7,7 +7,7 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 
 public class SCDastSearchTextMixin {
-    @Option(names = {"-t","--search-text"})
+    @Option(names = {"--search-text", "-t"})
     @Getter private String searchText;
     
     public HttpRequest<?> updateRequest(HttpRequest<?> request) {

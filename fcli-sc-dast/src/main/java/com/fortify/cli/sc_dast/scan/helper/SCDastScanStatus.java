@@ -1,6 +1,8 @@
 
 package com.fortify.cli.sc_dast.scan.helper;
 
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -28,6 +30,24 @@ public enum SCDastScanStatus {
             return record.put("scanStatus", SCDastScanStatus.valueOf(scanStatusType).toString());
         }
         return scanRecord;
+    }
+    
+    public static final SCDastScanStatus[] getFailureStates() {
+        return new SCDastScanStatus[]{
+            Interrupted, Unknown, ImportScanResultsFailed, FailedToStart, FailedToResume, LicenseUnavailable
+        };
+    }
+    
+    public static final SCDastScanStatus[] getKnownStates() {
+        return SCDastScanStatus.values();
+    }
+    
+    public static final String[] getFailureStateNames() {
+        return Stream.of(getFailureStates()).map(SCDastScanStatus::name).toArray(String[]::new);
+    }
+    
+    public static final String[] getKnownStateNames() {
+        return Stream.of(getKnownStates()).map(SCDastScanStatus::name).toArray(String[]::new);
     }
 
 }

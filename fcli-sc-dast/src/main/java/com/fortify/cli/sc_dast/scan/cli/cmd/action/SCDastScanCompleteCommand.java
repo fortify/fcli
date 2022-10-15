@@ -38,6 +38,6 @@ public class SCDastScanCompleteCommand extends AbstractSCDastScanActionCommand {
     
     @Override
     protected SCDastScanAction getAction() {
-        return SCDastScanAction.PauseScan;
+        return SCDastScanAction.CompleteScan;
     }
 }

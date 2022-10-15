@@ -24,10 +24,16 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
+import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 public abstract class AbstractSessionListCommand extends AbstractSessionCommand {
+    @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+    
     @Override
     protected void _run() {
         // Nothing to do, we just have our superclass write session summaries 

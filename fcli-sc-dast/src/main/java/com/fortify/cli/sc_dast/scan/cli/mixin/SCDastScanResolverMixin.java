@@ -87,14 +87,14 @@ public class SCDastScanResolverMixin {
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastScanResolverMixin {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Parameters(index = "0", arity = "1")
+        @Parameters(index = "0", arity = "1", paramLabel="scan-id")
         @Getter private String scanId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameterMulti extends AbstractSSCDastMultiScanResolverMixin {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Parameters(index = "0", arity = "1..")
+        @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's")
         @Getter private String[] scanIds;
     }
 }

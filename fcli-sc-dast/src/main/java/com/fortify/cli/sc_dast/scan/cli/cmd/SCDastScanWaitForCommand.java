@@ -26,9 +26,12 @@ package com.fortify.cli.sc_dast.scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.rest.cli.mixin.WaitHelperControlOptions;
+import com.fortify.cli.common.rest.cli.mixin.WaitHelperWaitOptions;
 import com.fortify.cli.common.rest.wait.WaitHelper;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
+import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -41,21 +44,31 @@ import picocli.CommandLine.Mixin;
 public class SCDastScanWaitForCommand extends AbstractSCDastScanOutputCommand implements IUnirestJsonNodeSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.WaitFor outputHelper;
     @Mixin private SCDastScanResolverMixin.PositionalParameterMulti scansResolver;
-
+    @Mixin private WaitHelperControlOptions controlOptions;
+    @Mixin private WaitHelperWaitOptions waitOptions;
+    
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        return WaitHelper.builder()
+        WaitHelper waitHelper = WaitHelper.builder()
                 .recordsSupplier(scansResolver::getScanDescriptorJsonNodes)
-                .recordTransformer(null)
-                // TODO Add timeout, interval, ... based on generic mixin
-                // TODO Add known states, failure states
-                .build()
-                // TODO invoke wait*() methods based on --while-all, --while-any|--while, --until-all|--until, until-any options
-                .getResult();
+                .recordTransformer(SCDastScanStatus::addScanStatus)
+                .currentStateProperty("scanStatus")
+                .knownStates(SCDastScanStatus.getKnownStateNames())
+                .failureStates(SCDastScanStatus.getFailureStateNames())
+                .controlProperties(controlOptions)
+                .build();
+        try {
+            waitHelper.wait(unirest, waitOptions);
+        } catch ( RuntimeException e ) {
+            // Write the current scan records before rethrowing the exception
+            outputHelper.write(unirest, waitHelper.getResult());
+            throw e;
+        }
+        return waitHelper.getResult();
     }
     
     @Override
     public boolean isSingular() {
-        return true;
+        return false;
     }
 }
