@@ -25,7 +25,7 @@
 package com.fortify.cli.sc_dast.scan_policy.cli.mixin;
 
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
 import com.fortify.cli.sc_dast.scan_policy.cli.cmd.SCDastScanPolicyCommands;
 import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyDescriptor;
 import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyHelper;
@@ -43,11 +43,11 @@ import picocli.CommandLine.Spec.Target;
 public class SCDastScanPolicyResolverMixin {
     
     @ReflectiveAccess
-    public static abstract class AbstractSSCDastScanPolicyResolverMixin extends AbstractMinusVariableResolverMixin {
+    public static abstract class AbstractSSCDastScanPolicyResolverMixin extends AbstractPredefinedVariableResolverMixin {
         public abstract String getScanPolicyNameOrId();
 
         public SCDastScanPolicyDescriptor getScanPolicyDescriptor(UnirestInstance unirest){
-            String scanPolicyNameOrId = resolveMinusVariable(getScanPolicyNameOrId());
+            String scanPolicyNameOrId = resolvePredefinedVariable(getScanPolicyNameOrId());
             return StringUtils.isBlank(scanPolicyNameOrId) 
                     ? null
                     : SCDastScanPolicyHelper.getScanPolicyDescriptor(unirest, scanPolicyNameOrId);
@@ -59,7 +59,7 @@ public class SCDastScanPolicyResolverMixin {
         }
         
         @Override
-        protected Class<?> getMVDClass() {
+        protected Class<?> getPredefinedVariableClass() {
             return SCDastScanPolicyCommands.class;
         }
     }

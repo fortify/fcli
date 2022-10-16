@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.app.cli.mixin;
 
-import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
 import com.fortify.cli.ssc.app.cli.cmd.SSCAppCommands;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
@@ -41,11 +41,11 @@ import picocli.CommandLine.Spec.Target;
 
 public class SSCAppResolverMixin {
     @ReflectiveAccess
-    public static abstract class AbstractSSCAppResolverMixin extends AbstractMinusVariableResolverMixin {
+    public static abstract class AbstractSSCAppResolverMixin extends AbstractPredefinedVariableResolverMixin {
         public abstract String getAppNameOrId();
 
         public SSCAppDescriptor getAppDescriptor(UnirestInstance unirest, String... fields){
-            return SSCAppHelper.getApp(unirest, resolveMinusVariable(getAppNameOrId()), true, fields);
+            return SSCAppHelper.getApp(unirest, resolvePredefinedVariable(getAppNameOrId()), true, fields);
         }
         
         public String getAppId(UnirestInstance unirest) {
@@ -53,7 +53,7 @@ public class SSCAppResolverMixin {
         }
         
         @Override
-        protected Class<?> getMVDClass() {
+        protected Class<?> getPredefinedVariableClass() {
             return SSCAppCommands.class;
         }
     }

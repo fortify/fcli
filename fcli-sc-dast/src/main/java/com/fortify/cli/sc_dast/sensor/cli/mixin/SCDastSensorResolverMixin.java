@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.sensor.cli.mixin;
 
-import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
 import com.fortify.cli.sc_dast.sensor.cli.cmd.SCDastSensorCommands;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorDescriptor;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
@@ -42,11 +42,11 @@ import picocli.CommandLine.Spec.Target;
 public class SCDastSensorResolverMixin {
     
     @ReflectiveAccess
-    public static abstract class AbstractSSCDastSensorResolverMixin extends AbstractMinusVariableResolverMixin {
+    public static abstract class AbstractSSCDastSensorResolverMixin extends AbstractPredefinedVariableResolverMixin {
         public abstract String getSensorNameOrId();
 
         public SCDastSensorDescriptor getSensorDescriptor(UnirestInstance unirest){
-            return SCDastSensorHelper.getSensorDescriptor(unirest, resolveMinusVariable(getSensorNameOrId()));
+            return SCDastSensorHelper.getSensorDescriptor(unirest, resolvePredefinedVariable(getSensorNameOrId()));
         }
         
         public String getSensorId(UnirestInstance unirest) {
@@ -54,7 +54,7 @@ public class SCDastSensorResolverMixin {
         }
         
         @Override
-        protected Class<?> getMVDClass() {
+        protected Class<?> getPredefinedVariableClass() {
             return SCDastSensorCommands.class;        
         }
     }

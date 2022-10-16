@@ -1,6 +1,6 @@
 package com.fortify.cli.ssc.app.cli.cmd;
 
-import com.fortify.cli.common.variable.MinusVariableDefinition;
+import com.fortify.cli.common.variable.PredefinedVariable;
 
 import picocli.CommandLine.Command;
 
@@ -13,6 +13,6 @@ import picocli.CommandLine.Command;
                 SSCAppUpdateCommand.class
         }
 )
-@MinusVariableDefinition(name = "currentApp", field = "id")
+@PredefinedVariable(name = "currentApp", field = "id")
 public class SSCAppCommands {
 }

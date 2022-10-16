@@ -1,6 +1,6 @@
 package com.fortify.cli.sc_dast.scan_settings.cli.cmd;
 
-import com.fortify.cli.common.variable.MinusVariableDefinition;
+import com.fortify.cli.common.variable.PredefinedVariable;
 
 import picocli.CommandLine.Command;
 
@@ -11,6 +11,6 @@ import picocli.CommandLine.Command;
             SCDastScanSettingsListCommand.class
         }
 )
-@MinusVariableDefinition(name = "currentScanSettings", field = "id")
+@PredefinedVariable(name = "currentScanSettings", field = "id")
 public class SCDastScanSettingsCommands {
 }

@@ -46,7 +46,7 @@ public abstract class AbstractSessionLogoutCommand<D extends ISessionData> exten
         ISessionDataManager<D> sessionDataManager = getSessionDataManager();
         if ( sessionDataManager.exists(sessionName) ) {
             logout(sessionName, sessionDataManager.get(sessionName, true));
-            FcliVariableHelper.deleteAllWithPrefix(sessionDataManager.getMinusVariableNamePrefix(sessionName));
+            FcliVariableHelper.deleteAllWithPrefix(sessionDataManager.getPredefinedVariableNamePrefix(sessionName));
             getSessionDataManager().destroy(sessionName);
         }
     }

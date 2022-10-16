@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.common.variable.IMinusVariableUnsupported;
+import com.fortify.cli.common.variable.IPredefinedVariableUnsupported;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
@@ -49,8 +49,8 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Download.CMD_NAME)
 public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCOutputCommand
-        // We're outputting an appversion, not an artifact, hence IMinusVariableUnsupported
-        implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier, IMinusVariableUnsupported {
+        // We're outputting an appversion, not an artifact, hence IPredefinedVariableUnsupported
+        implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier, IPredefinedVariableUnsupported {
     @Getter @Mixin private SSCOutputHelperMixins.Download outputHelper;
     @CommandLine.Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
     private String destination;

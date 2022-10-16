@@ -1,6 +1,6 @@
 package com.fortify.cli.sc_dast.scan.cli.cmd;
 
-import com.fortify.cli.common.variable.MinusVariableDefinition;
+import com.fortify.cli.common.variable.PredefinedVariable;
 import com.fortify.cli.sc_dast.scan.cli.cmd.action.SCDastScanCompleteCommand;
 import com.fortify.cli.sc_dast.scan.cli.cmd.action.SCDastScanDeleteCommand;
 import com.fortify.cli.sc_dast.scan.cli.cmd.action.SCDastScanPauseCommand;
@@ -24,6 +24,6 @@ import picocli.CommandLine.Command;
                 SCDastScanWaitForCommand.class
         }
 )
-@MinusVariableDefinition(name = "currentScan", field = "id")
+@PredefinedVariable(name = "currentScan", field = "id")
 public class SCDastScanCommands {
 }

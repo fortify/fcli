@@ -118,7 +118,7 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
     }
     
     @Override
-    public String getMinusVariableNamePrefix(String sessionName) {
+    public String getPredefinedVariableNamePrefix(String sessionName) {
         return String.format("%s_%s", getSessionTypeName(), sessionName);
     }
     
