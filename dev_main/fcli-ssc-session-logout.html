@@ -441,7 +441,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>fcli-ssc-session-logout(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-session-logout - Logout of SSC. This will simply delete a session.</p>
+<p>fcli-ssc-session-logout - Terminate Fortify SSC session</p>
 </div>
 </div>
 <div id="content">
@@ -452,7 +452,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><strong>fcli ssc session logout</strong> [<strong>-hV</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
                         [[<em>session-name</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                         [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                        [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] <strong>--no-revoke-token</strong> |                         (<strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>] [<strong>-p</strong>[=<em>&lt;password&gt;</em>]]&#8230;&#8203;)</p>
+                        [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] <strong>--no-revoke-token</strong> |                         (<strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>])</p>
 </div>
 </div>
 </div>
@@ -460,7 +460,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Logout of SSC. This will simply delete a session.</p>
+<p>Terminate Fortify SSC session</p>
 </div>
 </div>
 </div>
@@ -486,11 +486,26 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>File where logging data will be written. If not specified, no logging data will be written.</p>
 </dd>
 <dt class="hdlist1"><strong>--no-revoke-token</strong></dt>
+<dd>
+<p>Don&#8217;t revoke the UnifiedLoginToken that was generated when logging in with username and password</p>
+</dd>
 <dt class="hdlist1"><strong>-u</strong>, <strong>--user</strong>=<em>&lt;user&gt;</em></dt>
+<dd>
+<p>SSC user name</p>
+</dd>
 <dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;password&gt;</em>]</dt>
 <dd>
-<p>== Output options:</p>
+<p>SSC password</p>
 </dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options">Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
 <p>Output format: json, json-flat, yaml, yaml-flat, table, table-plain, tree, tree-flat, xml, xml-flat, csv, csv-plain, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
@@ -523,8 +538,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221017.081439-dev_main, built on 2022-10-17 08 15 04<br>
-Last updated 2022-10-17 08:15:58 UTC
+Version fcli version 0.20221017.161453-dev_main, built on 2022-10-17 16 15 24<br>
+Last updated 2022-10-17 16:16:19 UTC
 </div>
 </div>
 </body>

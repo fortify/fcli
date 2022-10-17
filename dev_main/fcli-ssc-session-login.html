@@ -441,7 +441,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>fcli-ssc-session-login(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-session-login - Login to SSC and create a new session.</p>
+<p>fcli-ssc-session-login - Create a session for interacting with Fortify SSC</p>
 </div>
 </div>
 <div id="content">
@@ -454,8 +454,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
                        [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] (<strong>--url</strong>=<em>&lt;url&gt;</em>
                        [<strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em>] [<strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em>]
-                       [<strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em>] [<strong>--proxy-password</strong>]&#8230;&#8203; [<strong>-k</strong>])
-                       (<strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>] [<strong>-p</strong>[=<em>&lt;password&gt;</em>]]&#8230;&#8203;                        [<strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em>]) | <strong>-t</strong> [<strong>-t</strong>]&#8230;&#8203;</p>
+                       [<strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em>] [<strong>--proxy-password</strong>] [<strong>-k</strong>])
+                       (<strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>] [<strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em>]) |                        <strong>-t</strong></p>
 </div>
 </div>
 </div>
@@ -463,7 +463,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Login to SSC and create a new session.</p>
+<p>Create a session for interacting with Fortify SSC</p>
 </div>
 </div>
 </div>
@@ -489,10 +489,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>File where logging data will be written. If not specified, no logging data will be written.</p>
 </dd>
 <dt class="hdlist1"><strong>-u</strong>, <strong>--user</strong>=<em>&lt;user&gt;</em></dt>
+<dd>
+<p>SSC user name</p>
+</dd>
 <dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;password&gt;</em>]</dt>
+<dd>
+<p>SSC password</p>
+</dd>
 <dt class="hdlist1"><strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em></dt>
 <dd>
-<p>How long your login should be valid for.</p>
+<p>Specify for how long the session should remain active, for example 1d (1 day), 2M (2 months), 1y (1 year)</p>
 <div class="literalblock">
 <div class="content">
 <pre>Default: 1d</pre>
@@ -501,11 +507,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </dd>
 <dt class="hdlist1"><strong>-t</strong>, <strong>--token</strong></dt>
 <dd>
-<p>As an alternative to a username/password, you can instead provide a SSC API token.</p>
+<p>SSC token in either encoded or decoded format</p>
 </dd>
 <dt class="hdlist1"><strong>--url</strong>=<em>&lt;url&gt;</em></dt>
 <dd>
-<p>Full url to the remote system</p>
+<p>SSC URL</p>
 </dd>
 <dt class="hdlist1"><strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em></dt>
 <dd>
@@ -568,8 +574,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221017.081439-dev_main, built on 2022-10-17 08 15 04<br>
-Last updated 2022-10-17 08:15:58 UTC
+Version fcli version 0.20221017.161453-dev_main, built on 2022-10-17 16 15 24<br>
+Last updated 2022-10-17 16:16:19 UTC
 </div>
 </div>
 </body>
