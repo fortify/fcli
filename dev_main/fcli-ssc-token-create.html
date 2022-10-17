@@ -474,28 +474,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
-<dd>
-<p>A name/alias for your null session.</p>
-</dd>
-<dt class="hdlist1"><strong>-u</strong>, <strong>--user</strong>=<em>&lt;user&gt;</em></dt>
-<dd>
-<p>Your null username.</p>
-</dd>
-<dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;password&gt;</em>]</dt>
-<dd>
-<p>Your null password.</p>
-</dd>
-<dt class="hdlist1"><strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em></dt>
-<dt class="hdlist1"><strong>--description</strong>=<em>&lt;description&gt;</em></dt>
-<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
-<dd>
-<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
-</dd>
-<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
-<dd>
-<p>File where logging data will be written. If not specified, no logging data will be written.</p>
-</dd>
 <dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
 <dd>
 <p>Show this help message and exit</p>
@@ -504,25 +482,41 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dd>
 <p>Print version information and exit</p>
 </dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+</dd>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Session name to use</p>
+</dd>
+<dt class="hdlist1"><strong>-u</strong>, <strong>--user</strong>=<em>&lt;user&gt;</em></dt>
+<dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;password&gt;</em>]</dt>
+<dt class="hdlist1"><strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em></dt>
+<dt class="hdlist1"><strong>--description</strong>=<em>&lt;description&gt;</em></dt>
 <dt class="hdlist1"><strong>--url</strong>=<em>&lt;url&gt;</em></dt>
 <dd>
-<p>The full url to the null server.</p>
+<p>Full url to the remote system</p>
 </dd>
 <dt class="hdlist1"><strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em></dt>
 <dd>
-<p>The hostname or IP address of the proxy server.</p>
+<p>Hostname or IP address of the proxy server</p>
 </dd>
 <dt class="hdlist1"><strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em></dt>
 <dd>
-<p>Port number used to connect to the proxy server.</p>
+<p>Port number used to connect to the proxy server</p>
 </dd>
 <dt class="hdlist1"><strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em></dt>
 <dd>
-<p>The username used to authenticate with the proxy server.</p>
+<p>Username used to authenticate with the proxy server</p>
 </dd>
 <dt class="hdlist1"><strong>--proxy-password</strong></dt>
 <dd>
-<p>The password used to authenticate with the proxy server.</p>
+<p>Password used to authenticate with the proxy server</p>
 </dd>
 <dt class="hdlist1"><strong>-k</strong>, <strong>--insecure</strong></dt>
 <dd>
@@ -539,10 +533,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dl>
 <dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
-<p>Output format: json, json-flat, yaml, yaml-flat, table, table-plain, tree, tree-flat, xml, xml-flat, csv, csv-plain, expr, json-properties. The 'paths' and 'paths-flat' format ignore any options. The 'expr' output format takes a string containing '{&lt;prop&gt;}' variables; use '-o paths' on the current command to see available '&lt;prop&gt;' values. Other output formats take a comma-separated list of property names; use '-o paths' (for tree formats) or '-o paths_flat' (for flat, table &amp; csv formats) to see available property names.</p>
+<p>Output format: json, json-flat, yaml, yaml-flat, table, table-plain, tree, tree-flat, xml, xml-flat, csv, csv-plain, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
 </dd>
 <dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using {?variableName:property} on any subsequent command. Most commands that return a single record (get, start, create, &#8230;&#8203;) also support '?' to store the record identifier in a predefined variable, which can later be referenced using '?' on options/parameters that take the id of such records as input.</p>
+</dd>
 <dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write results to the specified files in the given output format. By default, results will be written to stdout</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -560,8 +560,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221013.151113-dev_main, built on 2022-10-13 15 11 37<br>
-Last updated 2022-10-13 15:12:30 UTC
+Version fcli version 0.20221017.081439-dev_main, built on 2022-10-17 08 15 04<br>
+Last updated 2022-10-17 08:15:59 UTC
 </div>
 </div>
 </body>
