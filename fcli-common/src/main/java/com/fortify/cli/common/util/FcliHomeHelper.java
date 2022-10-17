@@ -13,7 +13,6 @@ import java.util.stream.Stream;
 public class FcliHomeHelper {
     private static final String ENVNAME_FORTIFY_HOME     = "FORTIFY_HOME";
     private static final String ENVNAME_FCLI_HOME        = "FCLI_HOME";
-    private static final String ENVNAME_FCLI_PIPELINE_ID = "FCLI_PIPELINE_ID";
     private static final String DEFAULT_FORTIFY_DIR_NAME = ".fortify";
     private static final String DEFAULT_FCLI_DIR_NAME    = "fcli";
     
@@ -26,14 +25,9 @@ public class FcliHomeHelper {
 
     public static final Path getFcliHomePath() {
         String fcliHome = System.getenv(ENVNAME_FCLI_HOME);
-        Path fcliHomePath = StringUtils.isNotBlank(fcliHome) 
+        return StringUtils.isNotBlank(fcliHome) 
                 ? Path.of(fcliHome) 
                 : getFortifyHomePath().resolve(DEFAULT_FCLI_DIR_NAME);
-        String pipelineId = System.getenv(ENVNAME_FCLI_PIPELINE_ID);
-        if ( StringUtils.isNotBlank(pipelineId) ) {
-            fcliHomePath = fcliHomePath.resolve(String.format("pipeline_%s", pipelineId.replaceAll("\\W+", "_")));
-        }
-        return fcliHomePath;
     }
     
     public static final void saveSecuredFile(Path relativePath, String contents) throws IOException {
