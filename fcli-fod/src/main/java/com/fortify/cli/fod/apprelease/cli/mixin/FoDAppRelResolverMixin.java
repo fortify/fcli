@@ -23,34 +23,67 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.app.cli.mixin;
+package com.fortify.cli.fod.apprelease.cli.mixin;
 
 import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
 import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
-import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
-import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.apprelease.FoDAppRelHelper;
+import com.fortify.cli.fod.apprelease.helper.FoDAppRelDescriptor;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Spec;
 import picocli.CommandLine.Spec.Target;
 
-public class FoDAppResolverMixin {    
-    @ReflectiveAccess
-    public static abstract class AbstractFoDAppResolverMixin extends AbstractMinusVariableResolverMixin {
-        public abstract String getAppNameOrId();
+import javax.validation.ValidationException;
 
-        public FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String... fields){
-            //return FoDAppHelper.getApp(unirest, getAppNameOrId(), true, fields);
-            return FoDAppHelper.getApp(unirest, resolveMinusVariable(getAppNameOrId()), true);
+public class FoDAppRelResolverMixin {
+    @ReflectiveAccess
+    public static final class FoDDelimiterMixin {
+        @Option(names = {"--delim"},
+                description = "Change the default delimiter character when using options that accepts " +
+                        "\"application:release\" as an argument or parameter.", defaultValue = ":")
+        @Getter private String delimiter;
+    }
+
+    @ReflectiveAccess
+    public static final class FoDAppAndRelNameResolverMixin {
+        @Mixin private FoDDelimiterMixin delimiterMixin;
+
+        public final FoDAppAndRelNameDescriptor getAppAndRelNameDescriptor(String appAndRelName) {
+            if (appAndRelName == null) { return null; }
+            String delimiter = delimiterMixin.getDelimiter();
+            String[] appAndRelNameArray = appAndRelName.split(delimiter);
+            if (appAndRelNameArray.length != 2) {
+                throw new ValidationException("Application and release name must be specified in the format <application name>"+delimiter+"<release name>");
+            }
+            return new FoDAppAndRelNameDescriptor(appAndRelNameArray[0], appAndRelNameArray[1]);
         }
 
-        public String getAppId(UnirestInstance unirest) {
-            return getAppDescriptor(unirest, "applicationId").getApplicationId().toString();
+        @Data
+        @ReflectiveAccess
+        public static final class FoDAppAndRelNameDescriptor {
+            private final String appName, relName;
+        }
+    }
+
+    @ReflectiveAccess
+    public static abstract class AbstractFoDAppResolverMixin extends AbstractMinusVariableResolverMixin {
+        @Mixin private FoDDelimiterMixin delimiterMixin;
+        public abstract String getAppRelNameOrId();
+
+        public FoDAppRelDescriptor getAppRelDescriptor(UnirestInstance unirest, String... fields){
+            return FoDAppRelHelper.getAppRel(unirest, resolveMinusVariable(getAppRelNameOrId()), delimiterMixin.getDelimiter(), true);
+        }
+
+        public String getAppRelId(UnirestInstance unirest) {
+            return getAppRelDescriptor(unirest, "releaseId").getReleaseId().toString();
         }
         
         @Override
@@ -62,14 +95,14 @@ public class FoDAppResolverMixin {
     @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDAppResolverMixin {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Option(names = {"--app"}, required = true)
-        @Getter private String appNameOrId;
+        @Option(names = {"--rel"}, required = true, descriptionKey = "ApplicationReleaseMixin")
+        @Getter private String appRelNameOrId;
     }
 
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDAppResolverMixin {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Parameters(index = "0", arity = "1", descriptionKey = "app")
-        @Getter private String appNameOrId;
+        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationReleaseMixin")
+        @Getter private String appRelNameOrId;
     }
 }
