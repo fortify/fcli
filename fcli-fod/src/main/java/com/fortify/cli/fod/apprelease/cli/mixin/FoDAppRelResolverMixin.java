@@ -25,9 +25,9 @@
 
 package com.fortify.cli.fod.apprelease.cli.mixin;
 
-import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
-import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
+import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
 import com.fortify.cli.fod.apprelease.FoDAppRelHelper;
+import com.fortify.cli.fod.apprelease.cli.cmd.FoDAppRelCommands;
 import com.fortify.cli.fod.apprelease.helper.FoDAppRelDescriptor;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -74,21 +74,21 @@ public class FoDAppRelResolverMixin {
     }
 
     @ReflectiveAccess
-    public static abstract class AbstractFoDAppResolverMixin extends AbstractMinusVariableResolverMixin {
+    public static abstract class AbstractFoDAppResolverMixin extends AbstractPredefinedVariableResolverMixin {
         @Mixin private FoDDelimiterMixin delimiterMixin;
         public abstract String getAppRelNameOrId();
 
         public FoDAppRelDescriptor getAppRelDescriptor(UnirestInstance unirest, String... fields){
-            return FoDAppRelHelper.getAppRel(unirest, resolveMinusVariable(getAppRelNameOrId()), delimiterMixin.getDelimiter(), true);
+            return FoDAppRelHelper.getAppRel(unirest, resolvePredefinedVariable(getAppRelNameOrId()), delimiterMixin.getDelimiter(), true);
         }
 
         public String getAppRelId(UnirestInstance unirest) {
             return getAppRelDescriptor(unirest, "releaseId").getReleaseId().toString();
         }
-        
+
         @Override
-        protected Class<?> getMVDClass() {
-            return FoDAppCommands.class;
+        protected Class<?> getPredefinedVariableClass() {
+            return FoDAppRelCommands.class;
         }
     }
 

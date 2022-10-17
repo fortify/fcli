@@ -1,7 +1,6 @@
 package com.fortify.cli.fod.apprelease.cli.cmd;
 
-
-import com.fortify.cli.common.variable.MinusVariableDefinition;
+import com.fortify.cli.common.variable.PredefinedVariable;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "release",
@@ -14,6 +13,6 @@ import picocli.CommandLine;
                 FoDAppRelDeleteCommand.class
         }
 )
-@MinusVariableDefinition(name = "currentRel", field = "id")
+@PredefinedVariable(name = "currentRel", field = "id")
 public class FoDAppRelCommands {
 }
