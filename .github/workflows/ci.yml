@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check-out source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: PROD - Prepare GitHub release
         id: create_prod_release
@@ -62,7 +62,7 @@ jobs:
         run: ./gradlew clean build dist distThirdParty -Pversion=${{env.RELEASE_VERSION}}
         
       - name: Publish build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: build/dist/*
           
@@ -81,7 +81,7 @@ jobs:
       CC: /opt/musl_cc/x86_64-linux-musl-native/bin/gcc
     steps:
       - name: Check-out source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Next two actions are prerequisites for creating a statically linked binary of fcli.
       - name: Install musl toolchain
@@ -102,14 +102,14 @@ jobs:
           make; 
           sudo make install
 
-      - uses: DeLaGuardo/setup-graalvm@3
+      - uses: DeLaGuardo/setup-graalvm@5.0
         with:
           graalvm-version: '21.2.0.java11'
 
       - name: Install GraalVM's native-image extension
         run: gu install native-image
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           path: ./
 
@@ -127,7 +127,7 @@ jobs:
       - name: Package native fcli
         run: tar -zcvf fcli-linux.tgz fcli -C ./artifact fcli_completion
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           path: ./fcli-linux.tgz
 
@@ -137,16 +137,16 @@ jobs:
     runs-on: macos-12
     steps:
       - name: Check-out source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - uses: DeLaGuardo/setup-graalvm@3
+      - uses: DeLaGuardo/setup-graalvm@5.0
         with:
           graalvm-version: '21.2.0.java11'
 
       - name: Install GraalVM's native-image extension
         run: gu install native-image
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           path: ./
 
@@ -164,7 +164,7 @@ jobs:
 #      - name: Package native fcli
 #        run: tar -zcvf fcli-mac.tgz fcli -C ./artifact fcli_completion
 #
-#      - uses: actions/upload-artifact@v2
+#      - uses: actions/upload-artifact@v3
 #        with:
 #          path: ./fcli-mac.tgz
 
@@ -173,14 +173,14 @@ jobs:
     needs: build
     runs-on: windows-2022
     steps:
-    - uses: DeLaGuardo/setup-graalvm@3
+    - uses: DeLaGuardo/setup-graalvm@5.0
       with:
         graalvm-version: '21.2.0.java11'
 
     - name: Install GraalVM's native-image extension
       run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
 
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         path: ./
     
@@ -203,7 +203,7 @@ jobs:
     - name: Package native fcli
       run: 7z a fcli-windows.zip fcli*.exe
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         path: ./fcli-windows.zip
         
@@ -214,10 +214,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check-out source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: ./
           
@@ -263,13 +263,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check-out existing docs from gh-pages branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: gh-pages
           path: docs
         
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: ./
           
