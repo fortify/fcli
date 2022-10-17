@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
+import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
@@ -37,6 +38,7 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess @FixInjection
 public abstract class AbstractSessionLogoutCommand<D extends ISessionData> extends AbstractSessionCommand {
     @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
+    @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
 
     @Override
     public final void _run() {
@@ -44,7 +46,7 @@ public abstract class AbstractSessionLogoutCommand<D extends ISessionData> exten
         ISessionDataManager<D> sessionDataManager = getSessionDataManager();
         if ( sessionDataManager.exists(sessionName) ) {
             logout(sessionName, sessionDataManager.get(sessionName, true));
-            FcliVariableHelper.deleteAllWithPrefix(sessionDataManager.getMinusVariableNamePrefix(sessionName));
+            FcliVariableHelper.deleteAllWithPrefix(sessionDataManager.getPredefinedVariableNamePrefix(sessionName));
             getSessionDataManager().destroy(sessionName);
         }
     }

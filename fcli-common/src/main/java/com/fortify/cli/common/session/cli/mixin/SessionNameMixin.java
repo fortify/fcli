@@ -65,7 +65,7 @@ public class SessionNameMixin {
         private SessionNameArgGroup nameOptions;
     
         static class SessionNameArgGroup {
-            @Parameters(arity="0..1")
+            @Parameters(arity="0..1", index="0", paramLabel="session-name")
             private String sessionName;
         }
         @Override

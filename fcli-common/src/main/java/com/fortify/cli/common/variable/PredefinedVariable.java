@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 @Retention(RUNTIME)
 @Target(TYPE)
-public @interface MinusVariableDefinition {
+public @interface PredefinedVariable {
     String name();
     String field();
 }

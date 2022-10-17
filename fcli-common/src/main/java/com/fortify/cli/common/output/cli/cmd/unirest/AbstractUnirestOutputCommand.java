@@ -28,13 +28,13 @@ import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
 import com.fortify.cli.common.output.spi.ISingularSupplier;
 import com.fortify.cli.common.rest.cli.cmd.AbstractUnirestRunnerCommand;
 import com.fortify.cli.common.rest.runner.IUnirestRunner;
-import com.fortify.cli.common.variable.IMinusVariableNamePrefixSupplier;
+import com.fortify.cli.common.variable.IPredefinedVariableNamePrefixSupplier;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 
 @ReflectiveAccess
-public abstract class AbstractUnirestOutputCommand extends AbstractUnirestRunnerCommand implements IMinusVariableNamePrefixSupplier, ISingularSupplier {
+public abstract class AbstractUnirestOutputCommand extends AbstractUnirestRunnerCommand implements IPredefinedVariableNamePrefixSupplier, ISingularSupplier {
     @Override
     protected final Void run(UnirestInstance unirest) {
         IUnirestOutputHelper outputHelper = getOutputHelper();
@@ -49,10 +49,10 @@ public abstract class AbstractUnirestOutputCommand extends AbstractUnirestRunner
     }
     
     @Override
-    public String getMinusVariableNamePrefix() {
+    public String getPredefinedVariableNamePrefix() {
         IUnirestRunner runner = getUnirestRunner();
-        return runner instanceof IMinusVariableNamePrefixSupplier
-                ? ((IMinusVariableNamePrefixSupplier)runner).getMinusVariableNamePrefix()
+        return runner instanceof IPredefinedVariableNamePrefixSupplier
+                ? ((IPredefinedVariableNamePrefixSupplier)runner).getPredefinedVariableNamePrefix()
                 : null;
     }
     

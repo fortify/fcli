@@ -26,8 +26,8 @@ import com.fortify.cli.common.util.CommandSpecHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 import com.fortify.cli.common.variable.FcliVariableHelper.VariableType;
-import com.fortify.cli.common.variable.IMinusVariableUnsupported;
-import com.fortify.cli.common.variable.MinusVariableDefinition;
+import com.fortify.cli.common.variable.IPredefinedVariableUnsupported;
+import com.fortify.cli.common.variable.PredefinedVariable;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
@@ -207,19 +207,19 @@ public class StandardOutputWriter implements IOutputWriter {
             String variableName = variableStoreConfig.getVariableName();
             String options = variableStoreConfig.getOptions();
             VariableType variableType = VariableType.USER_PROVIDED;
-            if ( "-".equals(variableName) ) {
+            if ( FcliVariableHelper.PREDEFINED_VARIABLE_PLACEHOLDER.equals(variableName) ) {
                 if ( StringUtils.isNotBlank(options) ) { 
-                    throw new IllegalArgumentException("Option --store doesn't support options for variable alias '-'");
+                    throw new IllegalArgumentException(String.format("Option --store doesn't support options for variable placeholder '%s'", FcliVariableHelper.PREDEFINED_VARIABLE_PLACEHOLDER));
                 }
-                if ( cmd instanceof IMinusVariableUnsupported || !isSingularOutput() ) {
-                    throw new IllegalArgumentException("Option --store doesn't support variable alias '-' on this command");
+                if ( cmd instanceof IPredefinedVariableUnsupported || !isSingularOutput() ) {
+                    throw new IllegalArgumentException(String.format("Option --store doesn't support variable placeholder '%s' on this command", FcliVariableHelper.PREDEFINED_VARIABLE_PLACEHOLDER));
                 }
-                MinusVariableDefinition minusVariableDefinition = CommandSpecHelper.findAnnotation(commandSpec, MinusVariableDefinition.class);
-                if ( minusVariableDefinition==null ) {
-                    throw new IllegalArgumentException("Option --store doesn't support variable alias '-' on this command tree");
+                PredefinedVariable predefinedVariable = CommandSpecHelper.findAnnotation(commandSpec, PredefinedVariable.class);
+                if ( predefinedVariable==null ) {
+                    throw new IllegalArgumentException(String.format("Option --store doesn't support variable placeholder '%s' on this command tree", FcliVariableHelper.PREDEFINED_VARIABLE_PLACEHOLDER));
                 } else {
-                    variableName = FcliVariableHelper.resolveVariableName(cmd, minusVariableDefinition.name());
-                    options = minusVariableDefinition.field();
+                    variableName = FcliVariableHelper.resolveVariableName(cmd, predefinedVariable.name());
+                    options = predefinedVariable.field();
                     variableType = VariableType.PREDEFINED;
                 }
             }

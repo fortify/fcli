@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.scan_settings.cli.mixin;
 
-import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
 import com.fortify.cli.sc_dast.scan_settings.cli.cmd.SCDastScanSettingsCommands;
 import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsDescriptor;
 import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsHelper;
@@ -42,11 +42,11 @@ import picocli.CommandLine.Spec.Target;
 public class SCDastScanSettingsResolverMixin {
     
     @ReflectiveAccess
-    public static abstract class AbstractSSCDastScanSettingsResolverMixin extends AbstractMinusVariableResolverMixin {
+    public static abstract class AbstractSSCDastScanSettingsResolverMixin extends AbstractPredefinedVariableResolverMixin {
         public abstract String getScanSettingsCicdTokenOrId();
 
         public SCDastScanSettingsDescriptor getScanSettingsDescriptor(UnirestInstance unirest){
-            return SCDastScanSettingsHelper.getScanSettingsDescriptor(unirest, resolveMinusVariable(getScanSettingsCicdTokenOrId()));
+            return SCDastScanSettingsHelper.getScanSettingsDescriptor(unirest, resolvePredefinedVariable(getScanSettingsCicdTokenOrId()));
         }
         
         public String getScanSettingsId(UnirestInstance unirest) {
@@ -58,7 +58,7 @@ public class SCDastScanSettingsResolverMixin {
         }
         
         @Override
-        protected Class<?> getMVDClass() {
+        protected Class<?> getPredefinedVariableClass() {
             return SCDastScanSettingsCommands.class;        
         }
     }

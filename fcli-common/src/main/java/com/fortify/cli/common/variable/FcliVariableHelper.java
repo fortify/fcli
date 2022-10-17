@@ -55,6 +55,7 @@ import lombok.SneakyThrows;
 
 // TODO This class could probably use some cleanup
 public final class FcliVariableHelper {
+    public static final String PREDEFINED_VARIABLE_PLACEHOLDER = "?";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final Pattern variableNamePattern = Pattern.compile("^[a-zA-Z0-9_]+$");
     private static final Pattern variableReferencePattern = Pattern.compile("\\{\\?([a-zA-Z0-9_]+):(.+?)\\}");
@@ -159,13 +160,13 @@ public final class FcliVariableHelper {
     }
     
     public static final String resolveVariableName(Object potentialPrefixSupplier, String variableName) {
-        return potentialPrefixSupplier instanceof IMinusVariableNamePrefixSupplier
-                ? resolveVariableName((IMinusVariableNamePrefixSupplier)potentialPrefixSupplier, variableName)
+        return potentialPrefixSupplier instanceof IPredefinedVariableNamePrefixSupplier
+                ? resolveVariableName((IPredefinedVariableNamePrefixSupplier)potentialPrefixSupplier, variableName)
                 : variableName;
     }
     
-    public static final String resolveVariableName(IMinusVariableNamePrefixSupplier prefixSupplier, String variableName) {
-        String prefix = prefixSupplier.getMinusVariableNamePrefix();
+    public static final String resolveVariableName(IPredefinedVariableNamePrefixSupplier prefixSupplier, String variableName) {
+        String prefix = prefixSupplier.getPredefinedVariableNamePrefix();
         if ( StringUtils.isNotBlank(prefix) ) {
             prefix = normalizeVariablePrefix(prefix);
             variableName = String.format("%s_%s", prefix, variableName);

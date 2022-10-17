@@ -26,7 +26,7 @@ package com.fortify.cli.ssc.appversion.cli.mixin;
 
 import javax.validation.ValidationException;
 
-import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
 import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
@@ -73,12 +73,12 @@ public class SSCAppVersionResolverMixin {
     }
     
     @ReflectiveAccess
-    public static abstract class AbstractSSCAppVersionResolverMixin extends AbstractMinusVariableResolverMixin {
+    public static abstract class AbstractSSCAppVersionResolverMixin extends AbstractPredefinedVariableResolverMixin {
         @Mixin private SSCDelimiterMixin delimiterMixin;
         public abstract String getAppVersionNameOrId();
 
         public SSCAppVersionDescriptor getAppVersionDescriptor(UnirestInstance unirest, String... fields){
-            return SSCAppVersionHelper.getAppVersion(unirest, resolveMinusVariable(getAppVersionNameOrId()), delimiterMixin.getDelimiter(), fields);
+            return SSCAppVersionHelper.getAppVersion(unirest, resolvePredefinedVariable(getAppVersionNameOrId()), delimiterMixin.getDelimiter(), fields);
         }
         
         public String getAppVersionId(UnirestInstance unirest) {
@@ -86,7 +86,7 @@ public class SSCAppVersionResolverMixin {
         }
         
         @Override
-        protected Class<?> getMVDClass() {
+        protected Class<?> getPredefinedVariableClass() {
             return SSCAppVersionCommands.class;
         }
     }

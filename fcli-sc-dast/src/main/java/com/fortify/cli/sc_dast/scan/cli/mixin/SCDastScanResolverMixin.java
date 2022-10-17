@@ -24,7 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.scan.cli.mixin;
 
-import com.fortify.cli.common.variable.AbstractMinusVariableResolverMixin;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
 import com.fortify.cli.sc_dast.scan.cli.cmd.SCDastScanCommands;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanHelper;
@@ -41,16 +46,34 @@ import picocli.CommandLine.Spec.Target;
 
 public class SCDastScanResolverMixin {
     @ReflectiveAccess
-    public static abstract class AbstractSSCDastScanResolverMixin extends AbstractMinusVariableResolverMixin {
-        @Getter private Class<?> MVDClass = SCDastScanCommands.class;
+    public static abstract class AbstractSSCDastScanResolverMixin extends AbstractPredefinedVariableResolverMixin {
+        @Getter private Class<?> predefinedVariableClass = SCDastScanCommands.class;
         public abstract String getScanId();
 
         public SCDastScanDescriptor getScanDescriptor(UnirestInstance unirest){
-            return SCDastScanHelper.getScanDescriptor(unirest, resolveMinusVariable(getScanId()));
+            return SCDastScanHelper.getScanDescriptor(unirest, resolvePredefinedVariable(getScanId()));
         }
         
         public String getScanId(UnirestInstance unirest) {
             return getScanDescriptor(unirest).getId();
+        }
+    }
+    
+    @ReflectiveAccess
+    public static abstract class AbstractSSCDastMultiScanResolverMixin extends AbstractPredefinedVariableResolverMixin {
+        @Getter private Class<?> predefinedVariableClass = SCDastScanCommands.class;
+        public abstract String[] getScanIds();
+
+        public SCDastScanDescriptor[] getScanDescriptors(UnirestInstance unirest){
+            return Stream.of(getScanIds()).map(id->SCDastScanHelper.getScanDescriptor(unirest, resolvePredefinedVariable(id))).toArray(SCDastScanDescriptor[]::new);
+        }
+        
+        public Collection<JsonNode> getScanDescriptorJsonNodes(UnirestInstance unirest){
+            return Stream.of(getScanDescriptors(unirest)).map(SCDastScanDescriptor::asJsonNode).collect(Collectors.toList());
+        }
+        
+        public String[] getScanIds(UnirestInstance unirest) {
+            return Stream.of(getScanDescriptors(unirest)).map(SCDastScanDescriptor::getId).toArray(String[]::new);
         }
     }
     
@@ -64,7 +87,14 @@ public class SCDastScanResolverMixin {
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastScanResolverMixin {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Parameters(index = "0", arity = "1")
+        @Parameters(index = "0", arity = "1", paramLabel="scan-id")
         @Getter private String scanId;
+    }
+    
+    @ReflectiveAccess
+    public static class PositionalParameterMulti extends AbstractSSCDastMultiScanResolverMixin {
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's")
+        @Getter private String[] scanIds;
     }
 }

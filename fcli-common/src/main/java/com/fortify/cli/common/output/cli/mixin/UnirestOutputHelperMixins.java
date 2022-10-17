@@ -191,6 +191,14 @@ public class UnirestOutputHelperMixins {
     }
     
     @ReflectiveAccess
+    public static class WaitFor extends AbstractUnirestOutputHelper {
+        public static final String CMD_NAME = "wait-for";
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Getter @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+    
+    @ReflectiveAccess
     public static class Upload extends AbstractUnirestOutputHelper {
         public static final String CMD_NAME = "upload";
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;

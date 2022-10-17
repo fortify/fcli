@@ -34,7 +34,7 @@ import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
 import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
-import com.fortify.cli.common.variable.IMinusVariableUnsupported;
+import com.fortify.cli.common.variable.IPredefinedVariableUnsupported;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
@@ -52,7 +52,7 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.ArtifactPurgeByDate.CMD_NAME)
-public class SSCAppVersionArtifactPurgeByDateCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformerSupplier, IActionCommandResultSupplier, IMinusVariableUnsupported {
+public class SSCAppVersionArtifactPurgeByDateCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformerSupplier, IActionCommandResultSupplier, IPredefinedVariableUnsupported {
     @Getter @Mixin private SSCOutputHelperMixins.ArtifactPurgeByDate outputHelper;
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.DAYS, Period.YEARS);
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;

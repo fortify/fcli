@@ -12,7 +12,6 @@ import picocli.CommandLine.Command;
 @Command(
         name = "sc-dast",
         resourceBundle = "com.fortify.cli.sc_dast.i18n.SCDastMessages",
-        hidden = true,
         subcommands = {
                 // This list of subcommands starts with generic session and rest commands,
                 // followed by all entity commands in alphabetical order

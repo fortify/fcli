@@ -27,7 +27,7 @@ import picocli.CommandLine.Parameters;
 @ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.Download.CMD_NAME)
 public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
-    @Parameters(index = "0", converter = DownloadTypeConverter.class, completionCandidates = DownloadTypeIterable.class)
+    @Parameters(index = "0", converter = DownloadTypeConverter.class, completionCandidates = DownloadTypeIterable.class, paramLabel="type")
     @Getter private DownloadType type;
     @Getter @Mixin private SCDastOutputHelperMixins.Download outputHelper;
     @Mixin private SCDastScanResolverMixin.RequiredOption scanResolver;

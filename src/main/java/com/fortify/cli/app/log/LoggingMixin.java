@@ -46,10 +46,10 @@ import picocli.CommandLine.ScopeType;
  */
 @ReflectiveAccess
 public class LoggingMixin {
-    @Option(names = "--log-level", scope = ScopeType.INHERIT)
+    @Option(names = "--log-level", scope = ScopeType.INHERIT, order = -1001)
     private LogLevel logLevel;
 
-    @Option(names = "--log-file", scope = ScopeType.INHERIT)
+    @Option(names = "--log-file", scope = ScopeType.INHERIT, order = -1000)
     private String logFile;
     
     private static enum LogLevel {

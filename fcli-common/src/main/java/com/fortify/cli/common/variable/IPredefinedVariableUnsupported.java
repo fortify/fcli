@@ -6,4 +6,4 @@ package com.fortify.cli.common.variable;
  * @author rsenden
  *
  */
-public interface IMinusVariableUnsupported {}
+public interface IPredefinedVariableUnsupported {}

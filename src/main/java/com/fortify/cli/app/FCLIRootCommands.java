@@ -34,8 +34,9 @@ import com.fortify.cli.tool.picocli.command.ToolCommands;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.ScopeType;
 
 /**
@@ -52,7 +53,6 @@ import picocli.CommandLine.ScopeType;
 @ReflectiveAccess
 @Command(name = "fcli", 
     scope = ScopeType.INHERIT, 
-    mixinStandardHelpOptions = true,
     usageHelpAutoWidth = true,
     sortOptions = false, 
     showAtFileInUsageHelp = false,
@@ -68,10 +68,16 @@ import picocli.CommandLine.ScopeType;
     }
 )
 public class FCLIRootCommands {
-    // Setting up logging is handled in the main class by a separate Picocli instance, to allow
-    // for setting up logging early in the process. In order to have our main command structure
-    // not complain about any logging options, we define them here even though we don't actually
-    // do anything with these options here.
-    @Mixin LoggingMixin loggingMixin;
-
+    // TODO Once https://github.com/remkop/picocli/issues/1847 is fixed, we need to inherit the ArgGroup rather than individual options
+    @ArgGroup(exclusive = false, headingKey = "arggroup.loggingAndHelp.heading") 
+    private LoggingAndHelpOptionsArgGroup loggingAndHelpOptionsArgGroup = new LoggingAndHelpOptionsArgGroup();
+    
+    @ReflectiveAccess
+    private static final class LoggingAndHelpOptionsArgGroup extends LoggingMixin {
+        @Option(names = {"-h", "--help"}, usageHelp = true, description = "display this help message", scope = ScopeType.INHERIT, order = -1003)
+        boolean usageHelpRequested;
+        
+        @Option(names = {"-V", "--version"}, versionHelp = true, description = "display version info", scope = ScopeType.INHERIT, order = -1002)
+        boolean versionInfoRequested;
+    }
 }

@@ -24,23 +24,23 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
+import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 public abstract class AbstractSessionCommand implements Runnable {
-    @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-
     @Override
     public final void run() {
         _run();
-        outputWriterFactory.createOutputWriter(getOutputConfig())
+        getOutputWriterFactory().createOutputWriter(getOutputConfig())
             .write(getSessionDataManager().sessionSummariesAsArrayNode());
     }
+
+    // To have picocli generate usage synopsis in the correct order, we let subcommands define the output writer factory
+    protected abstract IOutputWriterFactory getOutputWriterFactory();
 
     protected abstract void _run();
 
