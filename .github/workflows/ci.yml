@@ -150,23 +150,23 @@ jobs:
         with:
           path: ./
 
-#      - name: Create native fcli
-#        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
-#
-#      - name: Compress native fcli
-#        uses: svenstaro/upx-action@v2
-#        with:
-#          file: fcli
-#
-#      - name: Basic test of native fcli
-#        run: ./fcli --help && ./fcli get --help
-#
-#      - name: Package native fcli
-#        run: tar -zcvf fcli-mac.tgz fcli -C ./artifact fcli_completion
-#
-#      - uses: actions/upload-artifact@v3
-#        with:
-#          path: ./fcli-mac.tgz
+      - name: Create native fcli
+        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
+
+      - name: Compress native fcli
+        uses: svenstaro/upx-action@v2
+        with:
+          file: fcli
+
+      - name: Basic test of native fcli
+        run: ./fcli --help && ./fcli get --help
+
+      - name: Package native fcli
+        run: tar -zcvf fcli-mac.tgz fcli -C ./artifact fcli_completion
+
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ./fcli-mac.tgz
 
   native_win:
     name: native-image-win
