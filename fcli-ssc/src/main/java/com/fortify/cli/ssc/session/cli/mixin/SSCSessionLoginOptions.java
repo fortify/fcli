@@ -19,10 +19,10 @@ public class SSCSessionLoginOptions {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
     
     @ArgGroup(exclusive = false, multiplicity = "1", order = 1)
-    @Getter private UrlConfigOptions urlConfigOptions;
+    @Getter private UrlConfigOptions urlConfigOptions = new UrlConfigOptions();
     
     @ArgGroup(exclusive = false, multiplicity = "1", order = 2)
-    @Getter private SSCAuthOptions authOptions;
+    @Getter private SSCAuthOptions authOptions = new SSCAuthOptions();
     
     public ISSCCredentialsConfig getCredentialsConfig() {
         return authOptions==null ? null : authOptions.getCredentialOptions();
@@ -34,7 +34,7 @@ public class SSCSessionLoginOptions {
     
     public static class SSCAuthOptions {
         @ArgGroup(exclusive = true, multiplicity = "1", order = 3)
-        @Getter private SSCCredentialOptions credentialOptions;
+        @Getter private SSCCredentialOptions credentialOptions = new SSCCredentialOptions();
     }
     
     public static class SSCCredentialOptions implements ISSCCredentialsConfig {
