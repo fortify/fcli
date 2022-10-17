@@ -2,7 +2,6 @@ package com.fortify.cli.ssc.rest.cli.mixin;
 
 import com.fortify.cli.common.rest.cli.mixin.AbstractUnirestRunnerMixin;
 import com.fortify.cli.ssc.session.manager.ISSCSessionData;
-import com.fortify.cli.ssc.session.manager.SSCSessionDataFromEnv;
 import com.fortify.cli.ssc.session.manager.SSCSessionDataManager;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
@@ -25,10 +24,7 @@ public class SSCUnirestRunnerMixin extends AbstractUnirestRunnerMixin<ISSCSessio
      */
     @Override
     protected final ISSCSessionData getSessionData() {
-        SSCSessionDataFromEnv sessionDataFromEnv = new SSCSessionDataFromEnv(tokenHelper);
-        return !getSessionNameMixin().hasSessionName() && sessionDataFromEnv.hasConfigFromEnv()
-                ? sessionDataFromEnv
-                : sessionDataManager.get(getSessionNameMixin().getSessionName(), true);
+        return sessionDataManager.get(getSessionNameMixin().getSessionName(), true);
     }
     
     @Override
@@ -37,9 +33,5 @@ public class SSCUnirestRunnerMixin extends AbstractUnirestRunnerMixin<ISSCSessio
     }
     
     @Override
-    protected final void cleanup(UnirestInstance unirest, ISSCSessionData sessionData) {
-        if ( sessionData instanceof SSCSessionDataFromEnv ) {
-            ((SSCSessionDataFromEnv)sessionData).cleanup();
-        }
-    }
+    protected final void cleanup(UnirestInstance unirest, ISSCSessionData sessionData) {}
 }

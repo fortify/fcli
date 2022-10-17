@@ -6,7 +6,6 @@ import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseCo
 import com.fortify.cli.common.rest.runner.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.sc_dast.session.manager.ISCDastSessionData;
-import com.fortify.cli.sc_dast.session.manager.SCDastSessionDataFromEnv;
 import com.fortify.cli.sc_dast.session.manager.SCDastSessionDataManager;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
@@ -38,16 +37,9 @@ public class SCDastUnirestRunnerMixin extends AbstractUnirestRunnerMixin<ISCDast
      */
     @Override
     protected final ISCDastSessionData getSessionData() {
-        SCDastSessionDataFromEnv sessionDataFromEnv = new SCDastSessionDataFromEnv(tokenHelper);
-        return !getSessionNameMixin().hasSessionName() && sessionDataFromEnv.hasConfigFromEnv()
-                ? sessionDataFromEnv
-                : sessionDataManager.get(getSessionNameMixin().getSessionName(), true);
+        return sessionDataManager.get(getSessionNameMixin().getSessionName(), true);
     }
     
     @Override
-    protected final void cleanup(UnirestInstance unirest, ISCDastSessionData sessionData) {
-        if ( sessionData instanceof SCDastSessionDataFromEnv ) {
-            ((SCDastSessionDataFromEnv)sessionData).cleanup();
-        }
-    }
+    protected final void cleanup(UnirestInstance unirest, ISCDastSessionData sessionData) {}
 }

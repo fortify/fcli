@@ -4,9 +4,9 @@ SSC_SESSION_NAME=integration-test
 
 checkVars() {
     [[ -z "${FCLI_CMD}" ]] && echo "FCLI_CMD must be set to either 'java -jar path/to/fcli.jar' or path/to/fcli native binary" && exit 1
-    [[ -z "${DEMO_SSC_URL}" ]] && echo "DEMO_SSC_URL must be set to SSC demo container URL" && exit 1
-    [[ -z "${DEMO_SSC_USER}" ]] && echo "DEMO_SSC_USER must be set to SSC demo container user" && exit 1
-    [[ -z "${DEMO_SSC_PWD}" ]] && echo "DEMO_SSC_PWD must be set to SSC demo container user password" && exit 1
+    [[ -z "${FCLI_SSC_URL}" ]] && echo "FCLI_SSC_URL must be set to SSC demo container URL" && exit 1
+    [[ -z "${FCLI_SSC_USER}" ]] && echo "FCLI_SSC_USER must be set to SSC demo container user" && exit 1
+    [[ -z "${FCLI_SSC_PASSWORD}" ]] && echo "FCLI_SSC_PASSWORD must be set to SSC demo container user password" && exit 1
 }
 
 sscSessionCmd() {
@@ -26,24 +26,13 @@ runCmd() {
     fi
 }
 
-runPersistentSessionChecks() {
-    checkOutput=(fgrep ${SSC_SESSION_NAME}); sscCmd session login ${SSC_SESSION_NAME} --url ${DEMO_SSC_URL} -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD}
-    
-    runPersistentTestCommands
-    sscCmd session logout ${SSC_SESSION_NAME} -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD}
+runTestCommandsInSession() {
+    checkOutput=(fgrep ${SSC_SESSION_NAME}); sscCmd session login ${SSC_SESSION_NAME}
+    runTestCommands
+    sscCmd session logout ${SSC_SESSION_NAME}
 }
 
-runTransientSessionChecks() {
-    FCLI_SSC_URL=${DEMO_SSC_URL} FCLI_SSC_USER=${DEMO_SSC_USER} FCLI_SSC_PASSWORD=${DEMO_SSC_PWD} runTransientTestCommands
-}
-
-runTransientTestCommands() {
-    # We just run a single command to test transient session management
-    # No need to repeat all commands from persistent session test
-    sscCmd app list
-}
-
-runPersistentTestCommands() {
+runTestCommands() {
     sscSessionCmd activity-feed list
     sscSessionCmd alert-definition list
     sscSessionCmd alert list
@@ -60,9 +49,10 @@ runPersistentTestCommands() {
     checkOutput=(fgrep projectversion_add); sscSessionCmd role-permission list
     checkOutput=(fgrep CIToken); sscSessionCmd token-definition list
     
-    checkOutput=(fgrep CIToken); sscSessionCmd token create CIToken -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD} --expire-in 5m -o table-plain=id,type,restToken
-    restToken=$(echo $lastOutput | awk '{print $3}')
-    sscSessionCmd token revoke $restToken -u${DEMO_SSC_USER} -p${DEMO_SSC_PWD}
+    # TODO Fix token create command to return/ store only a single entity
+    checkOutput=(fgrep CIToken); sscSessionCmd token create CIToken --expire-in 5m --store ciToken=restToken
+    sscSessionCmd token revoke {?ciToken:$.[0].restToken}
+    runCmd ${FCLI_CMD} config var def delete ciToken
 
     appName="fcli-test $(date +%s)" 
     sscSessionCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store currentAppVersion=id
@@ -80,8 +70,7 @@ runPersistentTestCommands() {
 
 run() {
     checkVars
-    runTransientSessionChecks
-    runPersistentSessionChecks
+    runTestCommandsInSession
 }
 
 run
