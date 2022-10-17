@@ -43,4 +43,9 @@ public class VariableDefinitionListCommand extends AbstractBasicOutputCommand {
     public JsonNode getJsonNode() {
         return FcliVariableHelper.listDescriptors();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

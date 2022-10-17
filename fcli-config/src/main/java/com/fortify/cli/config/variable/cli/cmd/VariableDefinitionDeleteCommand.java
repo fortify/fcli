@@ -53,4 +53,9 @@ public class VariableDefinitionDeleteCommand extends AbstractBasicOutputCommand 
     public String getActionCommandResult() {
         return "DELETED";
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

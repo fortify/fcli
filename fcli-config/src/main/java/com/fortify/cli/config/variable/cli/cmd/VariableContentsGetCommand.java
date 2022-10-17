@@ -44,4 +44,9 @@ public class VariableContentsGetCommand extends AbstractBasicOutputCommand {
     public JsonNode getJsonNode() {
         return variableResolver.getVariableContents(); // TODO Check that variable represents an ObjectNode?
     }
+    
+    @Override
+    public boolean isSingular() {
+        return !variableResolver.getVariableContents().isArray();
+    }
 }

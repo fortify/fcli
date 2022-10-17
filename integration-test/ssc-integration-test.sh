@@ -49,9 +49,8 @@ runTestCommands() {
     checkOutput=(fgrep projectversion_add); sscSessionCmd role-permission list
     checkOutput=(fgrep CIToken); sscSessionCmd token-definition list
     
-    # TODO Fix token create command to return/ store only a single entity
     checkOutput=(fgrep CIToken); sscSessionCmd token create CIToken --expire-in 5m --store ciToken=restToken
-    sscSessionCmd token revoke {?ciToken:$.[0].restToken}
+    sscSessionCmd token revoke {?ciToken:restToken}
     runCmd ${FCLI_CMD} config var def delete ciToken
 
     appName="fcli-test $(date +%s)" 

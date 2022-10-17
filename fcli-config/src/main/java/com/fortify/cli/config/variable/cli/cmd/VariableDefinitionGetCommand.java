@@ -44,4 +44,9 @@ public class VariableDefinitionGetCommand extends AbstractBasicOutputCommand {
     public JsonNode getJsonNode() {
         return variableResolver.getVariableDescriptor().asJsonNode();
     }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

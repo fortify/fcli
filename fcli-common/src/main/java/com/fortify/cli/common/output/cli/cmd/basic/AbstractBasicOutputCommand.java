@@ -26,11 +26,12 @@ package com.fortify.cli.common.output.cli.cmd.basic;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.spi.basic.IBasicOutputHelper;
+import com.fortify.cli.common.output.spi.ISingularSupplier;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public abstract class AbstractBasicOutputCommand implements Runnable {
+public abstract class AbstractBasicOutputCommand implements Runnable, ISingularSupplier {
     @Override
     public final void run() {
         IBasicOutputHelper outputHelper = getOutputHelper();
