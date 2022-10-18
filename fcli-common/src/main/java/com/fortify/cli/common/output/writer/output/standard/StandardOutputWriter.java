@@ -465,6 +465,7 @@ public class StandardOutputWriter implements IOutputWriter {
         @Override
         protected void closeOutput() {
             try {
+                writer.write("\n");
                 writer.flush();
                 writer.close();
             } catch (IOException e) {
