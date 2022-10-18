@@ -361,6 +361,7 @@ public class StandardOutputWriter implements IOutputWriter {
         @Override
         protected void closeOutput() {
             try {
+                writer.write("\n\n");
                 writer.flush();
                 // Close output when writing to file; we don't want to close System.out
                 if ( writer instanceof BufferedWriter ) {
@@ -465,7 +466,6 @@ public class StandardOutputWriter implements IOutputWriter {
         @Override
         protected void closeOutput() {
             try {
-                writer.write("\n");
                 writer.flush();
                 writer.close();
             } catch (IOException e) {
