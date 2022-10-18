@@ -24,8 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.writer.record.csv;
 
-import java.io.PrintWriter;
-
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -47,10 +45,6 @@ public class CsvRecordWriter extends AbstractFormattedRecordWriter {
         this.csvType = csvType;
     }
     
-    private PrintWriter getPrintWriter() {
-        return getConfig().getPrintWriter();
-    }
-    
     @SneakyThrows
     private CsvGenerator getGenerator(ObjectNode record) {
         if ( generator==null ) {
@@ -60,7 +54,7 @@ public class CsvRecordWriter extends AbstractFormattedRecordWriter {
                 CsvSchema schema = schemaBuilder.build()
                         .withUseHeader(CsvType.HEADERS==csvType);
                 this.generator = (CsvGenerator)CsvFactory.builder().
-                        build().createGenerator(getPrintWriter())
+                        build().createGenerator(getWriter())
                         .setCodec(new ObjectMapper())
                         .enable(Feature.IGNORE_UNKNOWN)
                         .disable(Feature.AUTO_CLOSE_TARGET);
@@ -79,7 +73,7 @@ public class CsvRecordWriter extends AbstractFormattedRecordWriter {
     }
     
     @Override @SneakyThrows
-    public void finishOutput() {
+    public void close() {
         if ( !getConfig().isSingular() && generator!=null ) {
             generator.writeEndArray();
             generator.close();

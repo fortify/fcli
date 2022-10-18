@@ -48,7 +48,7 @@ public class XmlRecordWriter extends AbstractFormattedRecordWriter {
     private ToXmlGenerator getGenerator() {
         if ( generator==null ) {
             XmlFactory factory = new XmlFactory();
-            this.generator = (ToXmlGenerator)factory.createGenerator(getConfig().getPrintWriter())
+            this.generator = (ToXmlGenerator)factory.createGenerator(getWriter())
                     .setCodec(new ObjectMapper())
                     .disable(Feature.AUTO_CLOSE_TARGET);
             if ( getConfig().isPretty() ) generator = (ToXmlGenerator)generator.useDefaultPrettyPrinter();
@@ -65,7 +65,7 @@ public class XmlRecordWriter extends AbstractFormattedRecordWriter {
     }
     
     @Override @SneakyThrows
-    public void finishOutput() {
+    public void close() {
         getGenerator().writeEndObject();
         getGenerator().close();
     }

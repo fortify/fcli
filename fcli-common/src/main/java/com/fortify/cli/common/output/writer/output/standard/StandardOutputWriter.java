@@ -1,15 +1,14 @@
 package com.fortify.cli.common.output.writer.output.standard;
 
-import java.io.FileNotFoundException;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.io.Writer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.OutputFormat;
@@ -18,7 +17,9 @@ import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.query.OutputWriterWithQuery;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
+import com.fortify.cli.common.output.writer.record.IRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
+import com.fortify.cli.common.output.writer.record.RecordWriterConfig.RecordWriterConfigBuilder;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.runner.IfFailureHandler;
@@ -32,70 +33,186 @@ import com.fortify.cli.common.variable.PredefinedVariable;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
+import lombok.Data;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Model.CommandSpec;
 
 @ReflectiveAccess 
 public class StandardOutputWriter implements IOutputWriter {
-    private final StandardOutputConfig defaultOutputConfig;
+    private final StandardOutputConfig outputConfig;
+    private final OutputFormat outputFormat;
     private final CommandSpec commandSpec;
     private final IOutputOptions outputOptions;
     
     public StandardOutputWriter(CommandSpec commandSpec, IOutputOptions outputOptions, StandardOutputConfig defaultOutputConfig) {
-     // Make sure that we get the CommandSpec for the actual command being invoked,
+        // Make sure that we get the CommandSpec for the actual command being invoked,
         // not some intermediate Mixin
         this.commandSpec = commandSpec.commandLine()==null ? commandSpec : commandSpec.commandLine().getCommandSpec();
         this.outputOptions = outputOptions;
-        this.defaultOutputConfig = defaultOutputConfig;
+        this.outputConfig = getOutputConfigOrDefault(commandSpec, defaultOutputConfig);
+        this.outputFormat = getOutputFormatOrDefault(outputConfig, outputOptions);
     }
     
-    public OutputOptionsWriter getWriter() {
-        return new OutputOptionsWriter(getOutputOptionsWriterConfig());
-    }
-    
+    /**
+     * Write the given {@link JsonNode} to the configured output(s)
+     */
     @Override
     public void write(JsonNode jsonNode) {
-        write(writer->writer::write, jsonNode);
+        try ( IRecordWriter recordWriter = new OutputAndVariableRecordWriter() ) {
+            writeRecords(recordWriter, jsonNode);
+        }
     }
 
+    /**
+     * Write the output of the given {@link HttpRequest} to the configured output(s)
+     */
     @Override
     public void write(HttpRequest<?> httpRequest) {
-        write(writer->writer::write, httpRequest);
+        write(httpRequest, null);
     }
     
+    /**
+     * Write the output of the given, potentially paged {@link HttpRequest}, to the 
+     * configured output(s), invoking the given {@link INextPageUrlProducer} to retrieve 
+     * all pages
+     */
     @Override
     public void write(HttpRequest<?> httpRequest, INextPageUrlProducer nextPageUrlProducer) {
-        if ( nextPageUrlProducer==null ) {
-            write(httpRequest);
-        } else {
-            write(writer->writer::write, httpRequest, nextPageUrlProducer);
+        try ( IRecordWriter recordWriter = new OutputAndVariableRecordWriter() ) {
+            if ( nextPageUrlProducer==null ) {
+                writeRecords(recordWriter, httpRequest);
+            } else {
+                writeRecords(recordWriter, httpRequest, nextPageUrlProducer);
+            }
         }
     }
     
+    /** 
+     * Write the given {@link HttpResponse} to the configured output(s)
+     */
     @Override
     public void write(HttpResponse<JsonNode> httpResponse) {
-        write(writer->writer::write, httpResponse);
-    }
-    
-    private <T> void write(Function<OutputOptionsWriter, Consumer<T>> consumer, T input) {
-        try ( var writer = getWriter() ) {
-            consumer.apply(writer).accept(input);
+        try ( IRecordWriter recordWriter = new OutputAndVariableRecordWriter() ) {
+            writeRecords(recordWriter, httpResponse);
         }
     }
     
-    private <T1, T2> void write(Function<OutputOptionsWriter, BiConsumer<T1, T2>> consumer, T1 input1, T2 input2) {
-        try ( var writer = getWriter() ) {
-            consumer.apply(writer).accept(input1, input2);
+    /**
+     * Write records returned by the given {@link HttpRequest} to the given
+     * {@link IRecordWriter}.
+     * @param recordWriter
+     * @param httpRequest
+     */
+    private final void writeRecords(IRecordWriter recordWriter, HttpRequest<?> httpRequest) {
+        httpRequest.asObject(JsonNode.class)
+            .ifSuccess(r->writeRecords(recordWriter, r))
+            .ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
+    }
+    
+    /**
+     * Write records returned by the given, potentially paged {@link HttpRequest}
+     * to the given {@link IRecordWriter}, invoking the given {@link INextPageUrlProducer} 
+     * to retrieve all pages
+     * @param recordWriter
+     * @param httpRequest
+     * @param nextPageUrlProducer
+     */
+    private final void writeRecords(IRecordWriter recordWriter, HttpRequest<?> httpRequest, INextPageUrlProducer nextPageUrlProducer) {
+        PagingHelper.pagedRequest(httpRequest, nextPageUrlProducer)
+            .ifSuccess(r->writeRecords(recordWriter, r))
+            .ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
+    }
+
+    /**
+     * Write records provided by the given {@link HttpResponse} to the given
+     * {@link IRecordWriter}
+     * @param recordWriter
+     * @param httpResponse
+     */
+    private final void writeRecords(IRecordWriter recordWriter, HttpResponse<JsonNode> httpResponse) {
+        writeRecords(recordWriter, httpResponse.getBody());
+    }
+    
+    /**
+     * Transform the given {@link JsonNode} using the configured input transformations,
+     * then write the transformed input to the given {@link IRecordWriter}. If the 
+     * transformed input is null, nothing will be written. If the transformed input 
+     * represents a JSON array, each of its entries will be written. If the transformed 
+     * input represents a JSON object, the individual object will be written. For other
+     * node types, an exception will be thrown.  
+     * @param recordWriter
+     * @param jsonNode
+     */
+    private final void writeRecords(IRecordWriter recordWriter, JsonNode jsonNode) {
+        jsonNode = outputConfig.applyInputTransformations(outputFormat, jsonNode);
+        if ( jsonNode!=null ) {
+            if ( jsonNode.isArray() ) {
+                jsonNode.elements().forEachRemaining(record->writeRecord(recordWriter, record));
+            } else if ( jsonNode.isObject() ) {
+                writeRecord(recordWriter, jsonNode);
+            } else {
+                throw new IllegalStateException("Unsupported node type: "+jsonNode.getNodeType());
+            }
+        }
+    }
+
+    /**
+     * Transform the given {@link JsonNode} using the configured record transformers and filters, 
+     * then write the transformed record to the given {@link IRecordWriter}. If the transformed 
+     * record is null or an empty array, nothing will be written. If the transformed record is a 
+     * non-empty array, the first array entry will be written. Otherwise, the transformed record
+     * will be written as-is.
+     * @param recordWriter
+     * @param record
+     */
+    @SneakyThrows // TODO Do we want to use SneakyThrows?
+    private final void writeRecord(IRecordWriter recordWriter, JsonNode record) {
+        // TODO Add null checks in case any input or record transformation returns null?
+        record = record==null ? null : outputConfig.applyRecordTransformations(outputFormat, record);
+        record = record==null ? null : applyRecordOutputFilters(outputFormat, record);
+        if ( record!=null ) {
+            if(record.getNodeType() == JsonNodeType.ARRAY) {
+                if(record.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(record.get(0).toString()));
+            } else {
+                recordWriter.writeRecord((ObjectNode) record);
+            }
         }
     }
     
-    private StandardOutputConfig getOutputOptionsWriterConfig() {
-        Object mixeeObject = commandSpec.userObject();
-        if ( mixeeObject instanceof IOutputConfigSupplier ) {
-            return ((IOutputConfigSupplier)mixeeObject).getOutputConfig();
+    /**
+     * Return the {@link StandardOutputConfig} from the current command if the command
+     * implements {@link IOutputConfigSupplier}, otherwise return the provided default
+     * output configuration.
+     * @param commandSpec
+     * @param defaultOutputConfig
+     * @return
+     */
+    private static final StandardOutputConfig getOutputConfigOrDefault(CommandSpec commandSpec, StandardOutputConfig defaultOutputConfig) {
+        Object cmd = commandSpec.userObject();
+        if ( cmd instanceof IOutputConfigSupplier ) {
+            return ((IOutputConfigSupplier)cmd).getOutputConfig();
         } else {
             return defaultOutputConfig;
         }
+    }
+    
+    /**
+     * Return the {@link OutputFormat} from the given {@link IOutputOptions} if available,
+     * otherwise return the {@link OutputFormat} from the given {@link StandardOutputConfig}
+     * if available, otherwise return {@link OutputFormat#table} 
+     * @param outputConfig
+     * @param outputOptions
+     * @return
+     */
+    private static final OutputFormat getOutputFormatOrDefault(StandardOutputConfig outputConfig, IOutputOptions outputOptions) {
+        OutputFormat result = outputOptions==null || outputOptions.getOutputFormatConfig()==null 
+                ? outputConfig.defaultFormat() 
+                : outputOptions.getOutputFormatConfig().getOutputFormat();
+        if ( result == null ) {
+            result = OutputFormat.table;
+        }
+        return result;
     }
     
     /**
@@ -109,100 +226,294 @@ public class StandardOutputWriter implements IOutputWriter {
     protected JsonNode applyRecordOutputFilters(OutputFormat outputFormat, JsonNode record) {
         return record;
     }
-
-    public final class OutputOptionsWriter implements AutoCloseable, IMessageResolver { // TODO Implement interface, make implementation private
-        private final StandardOutputWriter parent = StandardOutputWriter.this;
-        private final IOutputOptions outputOptions = parent.outputOptions;
-        private final StandardOutputConfig config;
-        private final OutputFormat outputFormat;
-        private final PrintWriter printWriter;
-        private final IRecordWriter[] recordWriters;
+    
+    /**
+     * {@link IRecordWriter} implementation that combines {@link OutputRecordWriter} and
+     * {@link VariableRecordWriter}, allowing records to be simultaneously written to both
+     * the configured output and a variable (if enabled)
+     * @author rsenden
+     *
+     */
+    private final class OutputAndVariableRecordWriter implements IRecordWriter {
+        private final OutputRecordWriter ouputRecordWriter = new OutputRecordWriter();
+        private final VariableRecordWriter variableRecordWriter = new VariableRecordWriter();
         
-        public OutputOptionsWriter(StandardOutputConfig config) {
-            this.config = config;
-            this.outputFormat = getOutputFormat();
-            this.printWriter = createPrintWriter(config);
-            this.recordWriters = getRecordWriters(config);
-        }
-        
-        public void write(JsonNode jsonNode) {
-            jsonNode = config.applyInputTransformations(outputFormat, jsonNode);
-            if ( jsonNode!=null ) {
-                if ( jsonNode.isArray() ) {
-                    jsonNode.elements().forEachRemaining(this::writeRecord);
-                } else if ( jsonNode.isObject() ) {
-                    writeRecord(jsonNode);
-                } else {
-                    throw new RuntimeException("Not sure what to do here");
-                }
+        /**
+         * Write the given record to our {@link OutputRecordWriter} instance, and
+         * to our {@link VariableRecordWriter} instance if it is enabled
+         */
+        @Override
+        public void writeRecord(ObjectNode record) {
+            ouputRecordWriter.writeRecord(record);
+            if ( variableRecordWriter.isEnabled() ) {
+                variableRecordWriter.writeRecord(record);
             }
         }
         
-        public void write(HttpRequest<?> httpRequest) {
-            httpRequest.asObject(JsonNode.class)
-                .ifSuccess(this::write)
-                .ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
-        }
-        
-        public void write(HttpRequest<?> httpRequest, INextPageUrlProducer nextPageUrlProducer) {
-            PagingHelper.pagedRequest(httpRequest, nextPageUrlProducer)
-                .ifSuccess(this::write)
-                .ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
-        }
-
-        public void write(HttpResponse<JsonNode> httpResponse) {
-            write(httpResponse.getBody());
-        }
-
-        @SneakyThrows
-        private void writeRecord(JsonNode record) {
-            // TODO Add null checks in case any input or record transformation returns null?
-            record = record==null ? null : config.applyRecordTransformations(outputFormat, record);
-            record = record==null ? null : applyRecordOutputFilters(outputFormat, record);
-            if ( record!=null ) {
-                for ( IRecordWriter recordWriter : recordWriters ) {
-                    if(record.getNodeType() == JsonNodeType.ARRAY) {
-                        if(record.size()>0) recordWriter.writeRecord((ObjectNode) new ObjectMapper().readTree(record.get(0).toString()));
-                    } else {
-                        recordWriter.writeRecord((ObjectNode) record);
-                    }
-                }
+        /**
+         * Close our {@link OutputRecordWriter} instance, and our {@link VariableRecordWriter}
+         * instance if it is enabled
+         */
+        @Override
+        public void close() {
+            ouputRecordWriter.close();
+            if ( variableRecordWriter.isEnabled() ) {
+                variableRecordWriter.close();
             }
         }
+    }
+    
+    /**
+     * Abstract base class for {@link OutputRecordWriter} and {@link VariableRecordWriter},
+     * providing common functionality.
+     * @author rsenden
+     *
+     */
+    private abstract class AbstractRecordWriterWrapper implements IRecordWriter, IMessageResolver {
+        /**
+         * Get the wrapped {@link IRecordWriter} instance from our subclass,
+         * and write the given record to it.
+         */
+        @Override
+        public final void writeRecord(ObjectNode record) {
+            getWrappedRecordWriter().writeRecord(record);
+        }
         
-        private IRecordWriter[] getRecordWriters(StandardOutputConfig config) {
-            List<IRecordWriter> recordWritersList = new ArrayList<>();
-            recordWritersList.add(outputFormat.getRecordWriterFactory().createRecordWriter(createOutputWriterConfig()));
-            VariableStoreConfig variableStoreConfig = outputOptions.getVariableStoreConfig();
-            if ( variableStoreConfig!=null ) {
-                recordWritersList.add(OutputFormat.json.getRecordWriterFactory().createRecordWriter(createOutputStoreWriterConfig(variableStoreConfig)));           
-            }
-            return recordWritersList.toArray(IRecordWriter[]::new);
+        /**
+         * Get the wrapped {@link IRecordWriter} and close it, then call the
+         * {@link #closeOutput()} method to allow any underlying resources to
+         * be closed.
+         */
+        @Override
+        public final void close() {
+            getWrappedRecordWriter().close();
+            closeOutput();
         }
 
-        private OutputFormat getOutputFormat() {
-            OutputFormat result = outputOptions.getOutputFormatConfig()==null 
-                    ? config.defaultFormat() 
-                    : outputOptions.getOutputFormatConfig().getOutputFormat();
-            if ( result == null ) {
-                result = OutputFormat.table;
-            }
-            return result;
+        /**
+         * Implementation for {@link IMessageResolver#getMessageString(String)}.
+         */
+        @Override
+        public final String getMessageString(String keySuffix) {
+            return CommandSpecHelper.getMessageString(commandSpec, keySuffix);
         }
         
-        private RecordWriterConfig createOutputWriterConfig() {
+        /**
+         * Create a {@link RecordWriterConfigBuilder} instance with some
+         * properties pre-configured.
+         * @return
+         */
+        protected final RecordWriterConfigBuilder createRecordWriterConfigBuilder() {
             return RecordWriterConfig.builder()
-                    .printWriter(printWriter)
-                    .options(getOutputWriterOptions())
-                    .outputFormat(getOutputFormat())
                     .singular(isSingularOutput())
                     .messageResolver(this)
-                    .cmd(commandSpec.userObject())
+                    .cmd(commandSpec.userObject());
+        }
+        
+        /**
+         * Method to be implemented by subclasses to return the wrapped {@link IRecordWriter}
+         * instance.
+         * @return
+         */
+        protected abstract IRecordWriter getWrappedRecordWriter();
+        
+        /**
+         * Method to be implemented by subclasses to close any underlying resources.
+         */
+        protected abstract void closeOutput();
+        
+        /**
+         * If the command being invoked implements the {@link ISingularSupplier} interface,
+         * return the value returned by the {@link ISingularSupplier#isSingular()} method,
+         * otherwise return false.
+         * @return
+         */
+        protected boolean isSingularOutput() {
+            Object cmd = commandSpec.userObject();
+            return cmd instanceof ISingularSupplier
+                    ? ((ISingularSupplier)cmd).isSingular()
+                    : false;
+        }
+    }
+    
+    /**
+     * This {@link AbstractRecordWriterWrapper} implementation handles writing records
+     * to the configured output.
+     * @author rsenden
+     *
+     */
+    private final class OutputRecordWriter extends AbstractRecordWriterWrapper {
+        private final Writer writer;
+        @Getter private final IRecordWriter wrappedRecordWriter;
+        
+        /**
+         * This constructor creates the wrapped {@link IRecordWriter} and its 
+         * underlying {@link Writer}.
+         */
+        public OutputRecordWriter() {
+            this.writer = createWriter();
+            this.wrappedRecordWriter = getRecordWriterFactory().createRecordWriter(createRecordWriterConfig());
+        }
+        
+        /**
+         * Flush the underlying writer, and close it if it doesn't represent System.out 
+         */
+        @Override
+        protected void closeOutput() {
+            try {
+                writer.flush();
+                // Close output when writing to file; we don't want to close System.out
+                if ( writer instanceof BufferedWriter ) {
+                    writer.close();
+                }
+            } catch (IOException e) {
+                System.err.println("WARN: Error closing output");
+            }   
+        }
+        
+        /**
+         * Create a {@link RecordWriterConfig} instance based on output configuration
+         * @return
+         */
+        private RecordWriterConfig createRecordWriterConfig() {
+            return createRecordWriterConfigBuilder()
+                    .writer(writer)
+                    .options(getOutputWriterOptions())
+                    .outputFormat(outputFormat)
                     .build();
         }
         
-        // TODO Clean up this code, preferably move some code to some helper class
-        private RecordWriterConfig createOutputStoreWriterConfig(VariableStoreConfig variableStoreConfig) {
+        /**
+         * Get the {@link IRecordWriterFactory} instance from the configured
+         * {@link OutputFormat}
+         * @return
+         */
+        private IRecordWriterFactory getRecordWriterFactory() {
+            return outputFormat.getRecordWriterFactory();
+        }
+        
+        /**
+         * Create the underlying writer; either a {@link PrintWriter} instance
+         * that wraps {@link System#out}, or a {@link BufferedWriter} when file
+         * output is enabled
+         * @return
+         */
+        private Writer createWriter() {
+            String outputFile = outputOptions.getOutputFile();
+            try {
+                return outputFile == null || "-".equals(outputFile)
+                        ? new PrintWriter(System.out)
+                        : new BufferedWriter(new FileWriter(outputFile, false));
+            } catch ( IOException e) {
+                throw new IllegalArgumentException("Output file "+outputFile+" cannot be accessed");
+            }
+        }
+        
+        /**
+         * Return the output writer options configured in our {@link OutputFormatConfig}
+         * instance (representing user-supplied options) if available, otherwise return
+         * the default options configured in the resource bundle, otherwise return null.
+         * @return
+         */
+        private String getOutputWriterOptions() {
+            OutputFormatConfig config = outputOptions.getOutputFormatConfig();
+            if ( config!=null && StringUtils.isNotBlank(config.getOptions()) ) {
+                return config.getOptions();
+            } else {
+                String keySuffix = "output."+outputFormat.getMessageKey()+".options";
+                return getMessageString(keySuffix);
+            }
+        }
+    }
+    
+    /**
+     * This {@link AbstractRecordWriterWrapper} implementation handles writing records
+     * to a variable, if enabled.
+     * 
+     * @author rsenden
+     *
+     */
+    private final class VariableRecordWriter extends AbstractRecordWriterWrapper {
+        private final VariableDefinition variableDefinition;
+        private final Writer writer;
+        @Getter private final IRecordWriter wrappedRecordWriter;
+        
+        /**
+         * This constructor gets the {@link VariableStoreConfig} from our {@link IOutputOptions}
+         * instance; if this configuration is not null, our {@link VariableDefinition},
+         * {@link Writer} and wrapped {@link IRecordWriter} will be initialized accordingly. 
+         */
+        public VariableRecordWriter() {
+            VariableStoreConfig variableStoreConfig = outputOptions.getVariableStoreConfig();
+            this.variableDefinition = variableStoreConfig==null ? null : createVariableDefinition(variableStoreConfig);
+            this.writer = variableStoreConfig==null ? null : createWriter(this.variableDefinition);
+            this.wrappedRecordWriter = variableStoreConfig==null ? null : getRecordWriterFactory().createRecordWriter(createRecordWriterConfig());
+        }
+        
+        /**
+         * Return whether storing data in a variable is enabled
+         * @return
+         */
+        public final boolean isEnabled() {
+            return variableDefinition!=null;
+        }
+        
+        /**
+         * Close the underlying writer. This method should only be called 
+         * if {@link #isEnabled()} returns true.
+         */
+        @Override
+        protected void closeOutput() {
+            try {
+                writer.flush();
+                writer.close();
+            } catch (IOException e) {
+                System.err.println("WARN: Error closing output file");
+            }   
+        }
+        
+        /**
+         * Create a {@link RecordWriterConfig} instance based on variable configuration.
+         * This method should not be called if our {@link VariableDefinition} is null.
+         * @return
+         */
+        private RecordWriterConfig createRecordWriterConfig() {
+            return createRecordWriterConfigBuilder()
+                    .writer(writer)
+                    .options(variableDefinition.getVariableOptions())
+                    .outputFormat(OutputFormat.json)
+                    .build();
+        }
+        
+        /**
+         * Return the {@link IRecordWriterFactory} instance provided by
+         * {@link OutputFormat#json}.
+         * @return
+         */
+        private IRecordWriterFactory getRecordWriterFactory() {
+            return OutputFormat.json.getRecordWriterFactory();
+        }
+        
+        /**
+         * Create the underlying writer based on the given {@link VariableDefinition}.
+         * This method should not be called if a null parameter. 
+         * @param variableDefinition
+         * @return
+         */
+        private Writer createWriter(VariableDefinition variableDefinition) {
+            return FcliVariableHelper.getVariableContentsPrintWriter(variableDefinition.getVariableType(), variableDefinition.getVariableName());
+        }
+        
+        /**
+         * Create a {@link VariableDefinition} instance based on the given {@link VariableStoreConfig}.
+         * If the variable name equals '{@value FcliVariableHelper#PREDEFINED_VARIABLE_PLACEHOLDER}',
+         * the variable name and options will be retrieved from the {@link PredefinedVariable} annotation
+         * provided by the command being invoked or any of its parent commands. This method will perform
+         * various validations, throwing an exception if criteria are not met. 
+         * @param variableStoreConfig
+         * @return
+         */
+        private VariableDefinition createVariableDefinition(VariableStoreConfig variableStoreConfig) {
             Object cmd = commandSpec.userObject();
             String variableName = variableStoreConfig.getVariableName();
             String options = variableStoreConfig.getOptions();
@@ -223,55 +534,17 @@ public class StandardOutputWriter implements IOutputWriter {
                     variableType = VariableType.PREDEFINED;
                 }
             }
-            return RecordWriterConfig.builder()
-                    .printWriter(FcliVariableHelper.getVariableContentsPrintWriter(variableType, variableName))
-                    .options(options)
-                    .outputFormat(OutputFormat.json)
-                    .singular(isSingularOutput())
-                    .messageResolver(this)
-                    .build();
+            return new VariableDefinition(variableName, options, variableType);
         }
         
-        private boolean isSingularOutput() {
-            Object cmd = commandSpec.userObject();
-            return cmd instanceof ISingularSupplier
-                    ? ((ISingularSupplier)cmd).isSingular()
-                    : false;
-        }
-        
-        private String getOutputWriterOptions() {
-            OutputFormatConfig config = outputOptions.getOutputFormatConfig();
-            if ( config!=null && StringUtils.isNotBlank(config.getOptions()) ) {
-                return config.getOptions();
-            } else {
-                String keySuffix = "output."+getOutputFormat().getMessageKey()+".options";
-                return getMessageString(keySuffix);
-            }
-        }
-
-        @Override
-        public String getMessageString(String keySuffix) {
-            return CommandSpecHelper.getMessageString(commandSpec, keySuffix);
-        }
-
-        private final PrintWriter createPrintWriter(StandardOutputConfig config) {
-            String outputFile = outputOptions.getOutputFile();
-            try {
-                return outputFile == null || "-".equals(outputFile)
-                        ? new PrintWriter(System.out)
-                        : new PrintWriter(outputFile);
-            } catch ( FileNotFoundException e) {
-                throw new IllegalArgumentException("Output file "+outputFile+" cannot be accessed");
-            }
-        }
-
-        @Override
-        public void close() {
-            for ( IRecordWriter recordWriter : recordWriters ) {
-                recordWriter.finishOutput();
-                printWriter.flush();
-                // TODO Close printwriter and/or underlying streams except for System.out
-            }
+        /**
+         * This class holds variable name, options, and type.
+         */
+        @Data
+        private final class VariableDefinition {
+            private final String variableName;
+            private final String variableOptions;
+            private final VariableType variableType;
         }
     }
 }
