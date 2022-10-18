@@ -24,8 +24,14 @@
  ******************************************************************************/
 package com.fortify.cli.common.util;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.jasypt.iv.RandomIvGenerator;
+
+import lombok.RequiredArgsConstructor;
 
 public class EncryptionHelper {
     private static final StandardPBEStringEncryptor encryptor = createAES256TextEncryptor();
@@ -45,5 +51,18 @@ public class EncryptionHelper {
         encryptor.setIvGenerator(new RandomIvGenerator());
         encryptor.setPassword("ds$%YTjdwaf#$47672dfdsGVFDa");
         return encryptor;
+    }
+    
+    @RequiredArgsConstructor
+    // TODO Can we optimize this to not buffer the full contents before encrypting and writing the output?
+    public static final class EncryptWriter extends StringWriter {
+        private final Writer originalWriter;
+        
+        @Override
+        public void close() throws IOException {
+            originalWriter.write(encrypt(getBuffer().toString()));
+            originalWriter.flush();
+            originalWriter.close();
+        }
     }
 }

@@ -35,6 +35,7 @@ import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
+import com.fortify.cli.common.variable.EncryptVariable;
 import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 import com.fortify.cli.ssc.token.helper.SSCTokenCreateRequest;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
@@ -48,6 +49,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.Create.CMD_NAME)
+@EncryptVariable
 public class SSCTokenCreateCommand extends AbstractSSCTokenCommand implements IRecordTransformerSupplier {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
     @Getter @Mixin private BasicOutputHelperMixins.Create outputHelper;

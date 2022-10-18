@@ -8,7 +8,6 @@ import java.io.Writer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.OutputFormat;
@@ -25,6 +24,7 @@ import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.runner.IfFailureHandler;
 import com.fortify.cli.common.util.CommandSpecHelper;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.variable.EncryptVariable;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 import com.fortify.cli.common.variable.FcliVariableHelper.VariableType;
 import com.fortify.cli.common.variable.IPredefinedVariableUnsupported;
@@ -501,7 +501,7 @@ public class StandardOutputWriter implements IOutputWriter {
          * @return
          */
         private Writer createWriter(VariableDefinition variableDefinition) {
-            return FcliVariableHelper.getVariableContentsPrintWriter(variableDefinition.getVariableType(), variableDefinition.getVariableName());
+            return FcliVariableHelper.getVariableContentsWriter(variableDefinition.getVariableType(), variableDefinition.getVariableName(), variableDefinition.encrypt);
         }
         
         /**
@@ -534,7 +534,8 @@ public class StandardOutputWriter implements IOutputWriter {
                     variableType = VariableType.PREDEFINED;
                 }
             }
-            return new VariableDefinition(variableName, options, variableType);
+            boolean encrypt = CommandSpecHelper.findAnnotation(commandSpec, EncryptVariable.class)!=null;
+            return new VariableDefinition(variableName, options, variableType, encrypt);
         }
         
         /**
@@ -545,6 +546,7 @@ public class StandardOutputWriter implements IOutputWriter {
             private final String variableName;
             private final String variableOptions;
             private final VariableType variableType;
+            private final boolean encrypt;
         }
     }
 }
