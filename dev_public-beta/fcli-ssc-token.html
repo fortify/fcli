@@ -441,7 +441,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>fcli-ssc-token(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-token - Command-line interface for working with various Fortify products</p>
+<p>fcli-ssc-token - Commands for interacting with user tokens</p>
 </div>
 </div>
 <div id="content">
@@ -457,7 +457,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Command-line interface for working with various Fortify products</p>
+<p>Commands for interacting with user tokens</p>
 </div>
 </div>
 </div>
@@ -466,14 +466,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
-<dd>
-<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
-</dd>
-<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
-<dd>
-<p>File where logging data will be written. If not specified, no logging data will be written.</p>
-</dd>
 <dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
 <dd>
 <p>Show this help message and exit</p>
@@ -481,6 +473,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dt class="hdlist1"><strong>-V</strong>, <strong>--version</strong></dt>
 <dd>
 <p>Print version information and exit</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. If not specified, no logging data will be written.</p>
 </dd>
 </dl>
 </div>
@@ -493,19 +493,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dl>
 <dt class="hdlist1"><a href="fcli-ssc-token-create.html"><strong>create</strong></a></dt>
 <dd>
-<p>Command-line interface for working with various Fortify products</p>
+<p>Create a token</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-ssc-token-list.html"><strong>list</strong></a></dt>
 <dd>
-<p>Command-line interface for working with various Fortify products</p>
+<p>List tokens</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-ssc-token-revoke.html"><strong>revoke</strong></a></dt>
 <dd>
-<p>Command-line interface for working with various Fortify products</p>
+<p>Revoke a token</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-ssc-token-update.html"><strong>update</strong></a></dt>
 <dd>
-<p>Command-line interface for working with various Fortify products</p>
+<p>Update a token</p>
 </dd>
 </dl>
 </div>
@@ -514,8 +514,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20220930.160822-dev_public-beta, built on 2022-09-30 16 08 58<br>
-Last updated 2022-09-30 16:09:58 UTC
+Version fcli version 0.20221018.141115-dev_public-beta, built on 2022-10-18 14 11 45<br>
+Last updated 2022-10-18 14:12:47 UTC
 </div>
 </div>
 </body>

@@ -441,7 +441,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>fcli-ssc-appversion-create(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-appversion-create - Command-line interface for working with various Fortify products</p>
+<p>fcli-ssc-appversion-create - Create an application version</p>
 </div>
 </div>
 <div id="content">
@@ -449,14 +449,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion create</strong> [<strong>-hV</strong>] [<strong>--auto-required-attrs</strong>] [<strong>--active</strong>=<em>&lt;active&gt;</em>]
-                           [<strong>-d</strong>=<em>&lt;description&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+<p><strong>fcli ssc appversion create</strong> [<strong>-hV</strong>] [<strong>--auto-required-attrs</strong>] [<strong>--skip-if-exists</strong>]
+                           [<strong>--active</strong>=<em>&lt;active&gt;</em>] [<strong>-d</strong>=<em>&lt;description&gt;</em>]
+                           [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                            [<strong>--issue-template</strong>=<em>&lt;issueTemplateNameOrId&gt;</em>]
                            [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
                            [<strong>--attr</strong>[=<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>&#8230;&#8203;]]&#8230;&#8203;
                            [<strong>--useradd</strong>[=<em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
                            [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                           [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] <em>&lt;appAndVersionName&gt;</em></p>
+                           [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                           [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] <em>&lt;appAndVersionName&gt;</em></p>
 </div>
 </div>
 </div>
@@ -464,7 +466,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Command-line interface for working with various Fortify products</p>
+<p>Create an application version</p>
 </div>
 </div>
 </div>
@@ -473,6 +475,22 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit</p>
+</dd>
+<dt class="hdlist1"><strong>-V</strong>, <strong>--version</strong></dt>
+<dd>
+<p>Print version information and exit</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+</dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
@@ -483,42 +501,34 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
 <dt class="hdlist1"><strong>--active</strong>=<em>&lt;active&gt;</em></dt>
 <dt class="hdlist1"><strong>--auto-required-attrs</strong></dt>
-<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dt class="hdlist1"><strong>--skip-if-exists</strong></dt>
 <dd>
-<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+<p>== Output options:</p>
 </dd>
-<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
-<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+<p>Output format: json, json-flat, yaml, yaml-flat, table, table-plain, tree, tree-flat, xml, xml-flat, csv, csv-plain, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
 </dd>
-<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
 <dd>
-<p>Show this help message and exit</p>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using {?variableName:property} on any subsequent command. Most commands that return a single record (get, start, create, &#8230;&#8203;) also support '?' to store the record identifier in a predefined variable, which can later be referenced using '?' on options/parameters that take the id of such records as input.</p>
 </dd>
-<dt class="hdlist1"><strong>-V</strong>, <strong>--version</strong></dt>
+<dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
-<p>Print version information and exit</p>
+<p>Write results to the specified files in the given output format. By default, results will be written to stdout</p>
 </dd>
 </dl>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_output_options">Output options:</h2>
+<h2 id="_session_options">Session options:</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
-<dd>
-<p>Output format: json, json-flat, yaml, yaml-flat, table, table-plain, tree, tree-flat, xml, xml-flat, csv, csv-plain, expr, json-properties. The 'paths' and 'paths-flat' format ignore any options. The 'expr' output format takes a string containing '{&lt;prop&gt;}' variables; use '-o paths' on the current command to see available '&lt;prop&gt;' values. Other output formats take a comma-separated list of property names; use '-o paths' (for tree formats) or '-o paths_flat' (for flat, table &amp; csv formats) to see available property names.</p>
-</dd>
-<dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
-<dd>
-<p>== Optional session name:</p>
-</dd>
 <dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
 <dd>
-<p>A name/alias for your null session.</p>
+<p>Session name to use</p>
 </dd>
 </dl>
 </div>
@@ -530,6 +540,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><em>&lt;appAndVersionName&gt;</em></dt>
+<dd>
+<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -537,8 +550,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20220930.160822-dev_public-beta, built on 2022-09-30 16 08 58<br>
-Last updated 2022-09-30 16:09:57 UTC
+Version fcli version 0.20221018.141115-dev_public-beta, built on 2022-10-18 14 11 45<br>
+Last updated 2022-10-18 14:12:46 UTC
 </div>
 </div>
 </body>
