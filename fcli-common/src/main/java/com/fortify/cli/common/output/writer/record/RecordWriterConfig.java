@@ -27,6 +27,7 @@ package com.fortify.cli.common.output.writer.record;
 import java.io.Writer;
 
 import com.fortify.cli.common.output.OutputFormat;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 
 import lombok.Builder;
@@ -47,6 +48,6 @@ public class RecordWriterConfig {
     @Builder.Default private boolean pretty = true;
     /** I18n message resolver */
     private IMessageResolver messageResolver;
-    /** Command that is outputting the data */
-    private Object cmd;
+    /** Whether to add an {@value IActionCommandResultSupplier#actionFieldName} column */
+    private boolean addActionColumn;
 }

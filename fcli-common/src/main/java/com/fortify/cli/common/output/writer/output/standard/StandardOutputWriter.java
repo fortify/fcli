@@ -12,6 +12,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.spi.ISingularSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.query.OutputWriterWithQuery;
@@ -44,6 +46,7 @@ public class StandardOutputWriter implements IOutputWriter {
     private final OutputFormat outputFormat;
     private final CommandSpec commandSpec;
     private final IOutputOptions outputOptions;
+    private final IMessageResolver messageResolver;
     
     public StandardOutputWriter(CommandSpec commandSpec, IOutputOptions outputOptions, StandardOutputConfig defaultOutputConfig) {
         // Make sure that we get the CommandSpec for the actual command being invoked,
@@ -52,6 +55,7 @@ public class StandardOutputWriter implements IOutputWriter {
         this.outputOptions = outputOptions;
         this.outputConfig = getOutputConfigOrDefault(commandSpec, defaultOutputConfig);
         this.outputFormat = getOutputFormatOrDefault(outputConfig, outputOptions);
+        this.messageResolver = new CommandSpecMessageResolver(this.commandSpec);
     }
     
     /**
@@ -269,7 +273,7 @@ public class StandardOutputWriter implements IOutputWriter {
      * @author rsenden
      *
      */
-    private abstract class AbstractRecordWriterWrapper implements IRecordWriter, IMessageResolver {
+    private abstract class AbstractRecordWriterWrapper implements IRecordWriter {
         /**
          * Get the wrapped {@link IRecordWriter} instance from our subclass,
          * and write the given record to it.
@@ -289,14 +293,6 @@ public class StandardOutputWriter implements IOutputWriter {
             getWrappedRecordWriter().close();
             closeOutput();
         }
-
-        /**
-         * Implementation for {@link IMessageResolver#getMessageString(String)}.
-         */
-        @Override
-        public final String getMessageString(String keySuffix) {
-            return CommandSpecHelper.getMessageString(commandSpec, keySuffix);
-        }
         
         /**
          * Create a {@link RecordWriterConfigBuilder} instance with some
@@ -304,10 +300,11 @@ public class StandardOutputWriter implements IOutputWriter {
          * @return
          */
         protected final RecordWriterConfigBuilder createRecordWriterConfigBuilder() {
+            Object cmd = commandSpec.userObject();
             return RecordWriterConfig.builder()
                     .singular(isSingularOutput())
-                    .messageResolver(this)
-                    .cmd(commandSpec.userObject());
+                    .messageResolver(messageResolver)
+                    .addActionColumn(cmd!=null && cmd instanceof IActionCommandResultSupplier);
         }
         
         /**
@@ -377,9 +374,12 @@ public class StandardOutputWriter implements IOutputWriter {
          * @return
          */
         private RecordWriterConfig createRecordWriterConfig() {
+            String options = outputOptions==null || outputOptions.getOutputFormatConfig()==null
+                    ? null 
+                    : outputOptions.getOutputFormatConfig().getOptions();
             return createRecordWriterConfigBuilder()
                     .writer(writer)
-                    .options(getOutputWriterOptions())
+                    .options(options)
                     .outputFormat(outputFormat)
                     .build();
         }
@@ -407,22 +407,6 @@ public class StandardOutputWriter implements IOutputWriter {
                         : new BufferedWriter(new FileWriter(outputFile, false));
             } catch ( IOException e) {
                 throw new IllegalArgumentException("Output file "+outputFile+" cannot be accessed");
-            }
-        }
-        
-        /**
-         * Return the output writer options configured in our {@link OutputFormatConfig}
-         * instance (representing user-supplied options) if available, otherwise return
-         * the default options configured in the resource bundle, otherwise return null.
-         * @return
-         */
-        private String getOutputWriterOptions() {
-            OutputFormatConfig config = outputOptions.getOutputFormatConfig();
-            if ( config!=null && StringUtils.isNotBlank(config.getOptions()) ) {
-                return config.getOptions();
-            } else {
-                String keySuffix = "output."+outputFormat.getMessageKey()+".options";
-                return getMessageString(keySuffix);
             }
         }
     }

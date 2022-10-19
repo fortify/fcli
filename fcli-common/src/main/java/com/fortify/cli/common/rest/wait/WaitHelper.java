@@ -8,15 +8,13 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.common.util.StringUtils;
@@ -40,7 +38,18 @@ public class WaitHelper {
     @Builder.Default private final WaitTimeoutAction onTimeout = WaitTimeoutAction.fail;
     private final String intervalPeriod;
     private final String timeoutPeriod;
-    @Getter private final ArrayNode result = new ObjectMapper().createArrayNode(); 
+    private final IWaitHelperProgressMonitor progressMonitor;
+    @Getter private final Map<ObjectNode, WaitStatus> result = new LinkedHashMap<>(); 
+    
+    public static final ArrayNode plainRecordsAsArrayNode(Map<ObjectNode, WaitStatus> recordsWithWaitStatus) {
+        return recordsWithWaitStatus.keySet().stream().collect(JsonHelper.arrayNodeCollector());
+    }
+    
+    public static final ArrayNode recordsWithActionAsArrayNode(Map<ObjectNode, WaitStatus> recordsWithWaitStatus) {
+        return recordsWithWaitStatus.keySet().stream()
+                .map(n->n.put(IActionCommandResultSupplier.actionFieldName, recordsWithWaitStatus.get(n).name()))
+                .collect(JsonHelper.arrayNodeCollector());
+    }
     
     public final WaitHelper wait(UnirestInstance unirest, IWaitHelperWaitDefinitionSupplier waitDefinitionSupplier) {
         return wait(unirest, waitDefinitionSupplier.getWaitDefinition());
@@ -55,33 +64,33 @@ public class WaitHelper {
     
     public final WaitHelper waitUntilAll(UnirestInstance unirest, String untilStates) {
         if ( StringUtils.isNotBlank(untilStates) ) {
-            wait(unirest, new StateEvaluator(untilStates, EvaluatorType.UntilAll));
+            wait(unirest, new StateEvaluator(untilStates, EvaluatorType.Until), AnyOrAll.ALL);
         }
         return this;
     }
     
     public final WaitHelper waitUntilAny(UnirestInstance unirest, String untilStates) {
         if ( StringUtils.isNotBlank(untilStates) ) {
-            wait(unirest, new StateEvaluator(untilStates, EvaluatorType.UntilAny));
+            wait(unirest, new StateEvaluator(untilStates, EvaluatorType.Until), AnyOrAll.ANY);
         }
         return this;
     }
     
     public final WaitHelper waitWhileAll(UnirestInstance unirest, String whileStates) {
         if ( StringUtils.isNotBlank(whileStates) ) {
-            wait(unirest, new StateEvaluator(whileStates, EvaluatorType.WhileAll));
+            wait(unirest, new StateEvaluator(whileStates, EvaluatorType.While), AnyOrAll.ALL);
         }
         return this;
     }
     
     public final WaitHelper waitWhileAny(UnirestInstance unirest, String whileStates) {
         if ( StringUtils.isNotBlank(whileStates) ) {
-            wait(unirest, new StateEvaluator(whileStates, EvaluatorType.WhileAny));
+            wait(unirest, new StateEvaluator(whileStates, EvaluatorType.While), AnyOrAll.ALL);
         }
         return this;
     }
 
-    private final void wait(UnirestInstance unirest, StateEvaluator evaluator) {
+    private final void wait(UnirestInstance unirest, StateEvaluator evaluator, AnyOrAll anyOrAll) {
         if ( currentState==null ) {
             throw new RuntimeException("No currentState function or currentStateProperty set");
         }
@@ -91,21 +100,51 @@ public class WaitHelper {
         long intervalMillis = periodHelper.parsePeriodToMillis(intervalPeriod);
         OffsetDateTime timeout = periodHelper.getCurrentOffsetDateTimePlusPeriod(timeoutPeriod);
         Map<ObjectNode, String> recordsWithCurrentState = getRecordsWithCurrentState(unirest);
+        Map<ObjectNode, WaitStatus> recordsWithWaitStatus = evaluator.getWaitStatuses(recordsWithCurrentState);
+        updateProgress(recordsWithWaitStatus);
         try {
             boolean continueWait = true;
-            while ( timeout.isAfter(OffsetDateTime.now()) && (continueWait = evaluator.continueWait(recordsWithCurrentState)) ) {
+            while ( timeout.isAfter(OffsetDateTime.now()) && (continueWait = continueWait(recordsWithWaitStatus, anyOrAll)) ) {
                 try {
                     Thread.sleep(intervalMillis);
                 } catch (InterruptedException e) {
                     throw new RuntimeException("Wait operation interrupted", e);
                 }
                 recordsWithCurrentState = getRecordsWithCurrentState(unirest);
+                recordsWithWaitStatus = evaluator.getWaitStatuses(recordsWithCurrentState);
+                updateProgress(recordsWithWaitStatus);
             }
             if ( continueWait && onTimeout==WaitTimeoutAction.fail ) {
+                recordsWithWaitStatus.replaceAll((k,v)->v!=WaitStatus.WAITING ? v : WaitStatus.TIMEOUT);
                 throw new IllegalStateException("Time-out exceeded");
             }
         } finally {
-            recordsWithCurrentState.keySet().forEach(result::add);
+            result.putAll(recordsWithWaitStatus);
+            finishProgressMonitoring(recordsWithWaitStatus);
+        }
+    }
+    
+    public <T> T getResult(Function<Map<ObjectNode, WaitStatus>, T> f) {
+        return f.apply(result);
+    }
+    
+    private final boolean continueWait(Map<ObjectNode, WaitStatus> waitStatuses, AnyOrAll anyOrAll) {
+        boolean containsFailureState = waitStatuses.containsValue(WaitStatus.FAILURE_STATE_DETECTED);
+        if ( onFailureState==WaitUnknownOrFailureStateAction.fail && containsFailureState ) {
+            throw new IllegalStateException("Failure state detected for one or more records");
+        } else if ( onFailureState==WaitUnknownOrFailureStateAction.terminate && containsFailureState ) {
+            return false;
+        }
+        boolean containsUnknownState = waitStatuses.containsValue(WaitStatus.UNKNOWN_STATE_DETECTED);
+        if ( onUnknownState==WaitUnknownOrFailureStateAction.fail && containsUnknownState ) {
+            throw new IllegalStateException("Failure state detected for one or more records");
+        } else if ( onUnknownState==WaitUnknownOrFailureStateAction.terminate && containsUnknownState ) {
+            return false;
+        }
+        switch (anyOrAll) {
+        case ANY: return !waitStatuses.containsValue(WaitStatus.WAIT_COMPLETE);
+        case ALL: return !waitStatuses.values().stream().allMatch(WaitStatus.WAIT_COMPLETE::equals);
+        default: throw new RuntimeException("This exception shouldn't occur; please submit a bug"); 
         }
     }
     
@@ -139,26 +178,39 @@ public class WaitHelper {
         nodesWithStatus.put((ObjectNode)node, status);
     }
     
+    private final void updateProgress(Map<ObjectNode, WaitStatus> recordsWithWaitStatus) {
+        if ( progressMonitor!=null ) {
+            progressMonitor.updateProgress(recordsWithWaitStatus);
+        }
+    }
+    
+    private final void finishProgressMonitoring(Map<ObjectNode, WaitStatus> recordsWithWaitStatus) {
+        if ( progressMonitor!=null ) {
+            progressMonitor.finish(recordsWithWaitStatus);
+        }
+    }
+    
+    public static enum WaitStatus {
+        WAITING, WAIT_COMPLETE, UNKNOWN_STATE_DETECTED, FAILURE_STATE_DETECTED, TIMEOUT 
+    }
+    
+    private static enum AnyOrAll {
+        ANY, ALL
+    }
+    
     @RequiredArgsConstructor
-    private enum EvaluatorType {
-        UntilAll(false, EvaluatorType::allMatch),
-        UntilAny(false, EvaluatorType::someMatch),
-        WhileAll(true, EvaluatorType::allMatch),
-        WhileAny(true, EvaluatorType::someMatch);
+    private static enum EvaluatorType {
+        Until(false),
+        While(true);
         
-        private final boolean continueIfMatching;
-        private final BiFunction<Set<String>, Collection<String>, Boolean> matcher;
+        private final boolean waitIfMatching;
         
-        public boolean _continue(Set<String> statesToMatch, Collection<String> currentStates) {
-            return continueIfMatching == matcher.apply(statesToMatch, currentStates);
+        public boolean isWaiting(Set<String> statesToMatch, String currentState) {
+            return waitIfMatching == matches(statesToMatch, currentState);
         }
         
-        private static boolean someMatch(Set<String> statesToMatch, Collection<String> currentStates) {
-            return !Collections.disjoint(statesToMatch, currentStates);
-        }
-        
-        private static boolean allMatch(Set<String> statesToMatch, Collection<String> currentStates) {
-            return statesToMatch.containsAll(currentStates);
+        private static boolean matches(Set<String> statesToMatch, String currentState) {
+            return statesToMatch.contains(currentState);
         }
     }
     
@@ -184,11 +236,20 @@ public class WaitHelper {
             checkRequestedStates();
         }
 
-        public boolean continueWait(Map<ObjectNode, String> nodesWithStatus) {
-            Collection<String> currentStates = nodesWithStatus.values();
-            return !failUnknownStateCheck(currentStates)
-                    && !failFailureStateCheck(currentStates)
-                    && evaluatorType._continue(statesSet, currentStates);
+        public Map<ObjectNode, WaitStatus> getWaitStatuses(Map<ObjectNode, String> nodesWithStatus) {
+            Map<ObjectNode, WaitStatus> result = new LinkedHashMap<ObjectNode, WaitHelper.WaitStatus>(nodesWithStatus.size());
+            for ( Map.Entry<ObjectNode, String> entry : nodesWithStatus.entrySet() ) {
+                ObjectNode node = entry.getKey(); 
+                String currentState = entry.getValue();
+                if ( failUnknownStateCheck(currentState) ) {
+                    result.put(node, WaitStatus.UNKNOWN_STATE_DETECTED);
+                } else if ( failFailureStateCheck(currentState) ) {
+                    result.put(node, WaitStatus.FAILURE_STATE_DETECTED);
+                } else {
+                    result.put(node, evaluatorType.isWaiting(statesSet, currentState) ? WaitStatus.WAITING : WaitStatus.WAIT_COMPLETE);
+                }
+            }
+            return result;
         }
         
         private void checkRequestedStates() {
@@ -198,18 +259,12 @@ public class WaitHelper {
             }
         }
 
-        private boolean failFailureStateCheck(Collection<String> currentStates) {
-            if ( onFailureState==WaitUnknownOrFailureStateAction.wait || isEmpty(failureStatesSet) ) { return false; }
-            boolean failFailureStateCheck = !Collections.disjoint(currentStates, failureStatesSet);
-            throwOptionalError(onFailureState, failFailureStateCheck, ()->"Failure state(s) found: "+retainAll(currentStates, failureStatesSet));
-            return failFailureStateCheck;
+        private boolean failFailureStateCheck(String currentState) {
+            return failureStatesSet==null ? false : failureStatesSet.contains(currentState);
         }
 
-        private boolean failUnknownStateCheck(Collection<String> currentStates) {
-            if ( onUnknownState==WaitUnknownOrFailureStateAction.wait || isEmpty(knownStatesSet) ) { return false; }
-            boolean failUnknownStateCheck = !knownStatesSet.containsAll(currentStates);
-            throwOptionalError(onUnknownState, failUnknownStateCheck, ()->"Unknown state(s) found: "+removeAll(currentStates, knownStatesSet));
-            return failUnknownStateCheck;
+        private boolean failUnknownStateCheck(String currentState) {
+            return knownStatesSet==null ? false : !knownStatesSet.contains(currentState);
         }
 
         private final boolean isEmpty(Collection<?> collection) {
@@ -220,18 +275,6 @@ public class WaitHelper {
             Collection<T> result = new ArrayList<>(originalCollection);
             result.removeAll(itemsToRemove);
             return result;
-        }
-        
-        private final <T> Collection<T> retainAll(Collection<T> originalCollection, Collection<T> itemsToRemove) {
-            Collection<T> result = new ArrayList<>(originalCollection);
-            result.retainAll(itemsToRemove);
-            return result;
-        }
-        
-        private void throwOptionalError(WaitUnknownOrFailureStateAction action, boolean failStateCheck, Supplier<String> messageSupplier) {
-            if ( action==WaitUnknownOrFailureStateAction.fail && failStateCheck ) {
-                throw new IllegalStateException(messageSupplier.get());
-            }
         }
     }
     

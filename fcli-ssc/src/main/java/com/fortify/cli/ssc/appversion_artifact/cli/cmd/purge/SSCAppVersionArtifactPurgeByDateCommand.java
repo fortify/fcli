@@ -64,7 +64,7 @@ public class SSCAppVersionArtifactPurgeByDateCommand extends AbstractSSCOutputCo
         OffsetDateTime purgeBefore = PERIOD_HELPER.getCurrentOffsetDateTimeMinusPeriod(olderThan);
         String action = purgeByDate(unirest, appVersionDescriptor, purgeBefore);
         return appVersionDescriptor.asObjectNode()
-                .put("__action__", action);
+                .put(IActionCommandResultSupplier.actionFieldName, action);
     }
     
     @Override

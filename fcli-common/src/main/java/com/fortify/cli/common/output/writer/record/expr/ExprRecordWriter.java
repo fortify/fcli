@@ -29,21 +29,21 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.writer.record.IRecordWriter;
+import com.fortify.cli.common.output.writer.record.AbstractRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
-@RequiredArgsConstructor
-public class ExprRecordWriter implements IRecordWriter {
+public class ExprRecordWriter extends AbstractRecordWriter {
     private static final Pattern exprPattern = Pattern.compile("\\{(.+?)\\}");
-    @Getter private final RecordWriterConfig config;
+    
+    public ExprRecordWriter(RecordWriterConfig config) {
+        super(config);
+    }
 
     @Override @SneakyThrows
     public void writeRecord(ObjectNode record) {
-        config.getWriter().write(evaluateExpression(config.getOptions(), record));
+        getConfig().getWriter().write(evaluateExpression(getConfig().getOptions(), record));
     }
 
     private static final String evaluateExpression(String expr, ObjectNode input) {

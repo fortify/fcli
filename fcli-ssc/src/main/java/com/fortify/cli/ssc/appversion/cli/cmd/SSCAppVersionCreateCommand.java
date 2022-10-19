@@ -83,7 +83,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCOutputCommand impleme
     public JsonNode getJsonNode(UnirestInstance unirest) {
         if ( skipIfExists ) {
             SSCAppVersionDescriptor descriptor = SSCAppVersionHelper.getOptionalAppVersionFromAppAndVersionName(unirest, sscAppAndVersionNameResolver.getAppAndVersionNameDescriptor());
-            if ( descriptor!=null ) { return descriptor.asObjectNode().put("__action__", "SKIPPED_EXISTING"); }
+            if ( descriptor!=null ) { return descriptor.asObjectNode().put(IActionCommandResultSupplier.actionFieldName, "SKIPPED_EXISTING"); }
         }
         SSCAppVersionAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
         SSCAppVersionAuthEntitiesUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);

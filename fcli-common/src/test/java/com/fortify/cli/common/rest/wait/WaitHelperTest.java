@@ -46,7 +46,7 @@ public class WaitHelperTest {
             .onTimeout(WaitTimeoutAction.terminate)
             .build()
             .waitUntilAll(null, "state2")
-            .getResult();
+            .getResult(WaitHelper::recordsWithActionAsArrayNode);
         assertTrue(result.size()==1, "Result after timeout doesn't match expected number of records");
     }
     

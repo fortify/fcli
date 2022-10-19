@@ -16,23 +16,25 @@ import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.jayway.jsonpath.PathNotFoundException;
 
-import lombok.Getter;
-
-public abstract class AbstractFormattedRecordWriter implements IRecordWriter {
+public abstract class AbstractFormattedRecordWriter extends AbstractRecordWriter {
     private static final JsonNode NA_NODE = new TextNode("N/A");
     
-    @Getter private final RecordWriterConfig config;
     private final List<String> fieldPaths;
     
     public AbstractFormattedRecordWriter(RecordWriterConfig config) {
-        this.config = config;
+        super(config);
         String options = config.getOptions();
-        Object cmd = config.getCmd();
-        if ( cmd!=null && cmd instanceof IActionCommandResultSupplier 
-                && !StringUtils.isBlank(options) && !options.contains("__action__") ) {
-            options += ",__action__";
-        }
         this.fieldPaths = StringUtils.isBlank(options) ? null : getFieldPaths(options.replaceAll("\\s", ""));
+    }
+    
+    @Override
+    protected RecordWriterConfig updateConfig(RecordWriterConfig config) {
+        config = super.updateConfig(config);
+        String options = config.getOptions();
+        if ( config.isAddActionColumn() && !StringUtils.isBlank(options) && !options.contains(IActionCommandResultSupplier.actionFieldName) ) {
+            config.setOptions(options+","+IActionCommandResultSupplier.actionFieldName);
+        }
+        return config;
     }
     
     @Override
@@ -41,7 +43,7 @@ public abstract class AbstractFormattedRecordWriter implements IRecordWriter {
     }
     
     protected Writer getWriter() {
-        return config.getWriter();
+        return getConfig().getWriter();
     }
     
     protected abstract void writeFormattedRecord(ObjectNode record);
@@ -57,7 +59,7 @@ public abstract class AbstractFormattedRecordWriter implements IRecordWriter {
      * @return Formatted record after applying optional field and flatten transformations
      */
     protected ObjectNode getFormattedRecord(ObjectNode record) {
-        return applyOptionalRecordFlattenTransformation(config.getOutputFormat(),
+        return applyOptionalRecordFlattenTransformation(getConfig().getOutputFormat(),
                 applyOptionalFieldPathsTransformation(fieldPaths, record));
     }
     

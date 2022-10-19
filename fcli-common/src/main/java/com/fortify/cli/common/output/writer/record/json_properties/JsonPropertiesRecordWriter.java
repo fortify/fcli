@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.writer.record.IRecordWriter;
+import com.fortify.cli.common.output.writer.record.AbstractRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -38,14 +38,14 @@ import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
-@RequiredArgsConstructor
-public class JsonPropertiesRecordWriter implements IRecordWriter {
-    @Getter private final RecordWriterConfig config;
+public class JsonPropertiesRecordWriter extends AbstractRecordWriter {
     private final TreeSet<String> paths = new TreeSet<>();
+    
+    public JsonPropertiesRecordWriter(RecordWriterConfig config) {
+        super(config);
+    }
 
     @Override @SneakyThrows
     public void writeRecord(ObjectNode record) {
@@ -63,6 +63,6 @@ public class JsonPropertiesRecordWriter implements IRecordWriter {
 
     @Override @SneakyThrows
     public void close() {
-        config.getWriter().write(paths.stream().collect(Collectors.joining("\n")));
+        getConfig().getWriter().write(paths.stream().collect(Collectors.joining("\n")));
     }
 }

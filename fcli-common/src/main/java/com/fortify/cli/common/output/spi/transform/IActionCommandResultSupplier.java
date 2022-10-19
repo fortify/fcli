@@ -1,5 +1,8 @@
 package com.fortify.cli.common.output.spi.transform;
 
+import com.fortify.cli.common.output.writer.record.AbstractFormattedRecordWriter;
+import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
+
 /**
  * This interface can be implemented by commands to return the action
  * that was performed. If provided, this will result in an {@code __action__}
@@ -14,12 +17,14 @@ package com.fortify.cli.common.output.spi.transform;
  *      actions in the background, in which case the actions may not have 
  *      been completed yet by the time we output the results.</li>
  * </ul>
- * As most commands will be using table output with a predefined set of 
- * default columns, the {@code __action__} property should be added to
- * the set of default columns for those action commands.
+ * {@link AbstractFormattedRecordWriter} automatically adds __action__ as
+ * a field to the output format options if {@link RecordWriterConfig#isAddActionColumn()}
+ * is set to true, so no need to manually add this column to (default)
+ * output options.  
  * @author rsenden
  *
  */
 public interface IActionCommandResultSupplier {
+    public static final String actionFieldName = "__action__";
     public String getActionCommandResult();
 }

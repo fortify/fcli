@@ -26,6 +26,8 @@ package com.fortify.cli.sc_dast.scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.cli.mixin.StandardWaitHelperProgressMonitorMixin;
 import com.fortify.cli.common.rest.cli.mixin.WaitHelperControlOptions;
 import com.fortify.cli.common.rest.cli.mixin.WaitHelperWaitOptions;
 import com.fortify.cli.common.rest.wait.WaitHelper;
@@ -41,11 +43,12 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.WaitFor.CMD_NAME)
-public class SCDastScanWaitForCommand extends AbstractSCDastScanOutputCommand implements IUnirestJsonNodeSupplier {
+public class SCDastScanWaitForCommand extends AbstractSCDastScanOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.WaitFor outputHelper;
     @Mixin private SCDastScanResolverMixin.PositionalParameterMulti scansResolver;
     @Mixin private WaitHelperControlOptions controlOptions;
     @Mixin private WaitHelperWaitOptions waitOptions;
+    @Mixin StandardWaitHelperProgressMonitorMixin progressMonitorMixin;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -56,15 +59,21 @@ public class SCDastScanWaitForCommand extends AbstractSCDastScanOutputCommand im
                 .knownStates(SCDastScanStatus.getKnownStateNames())
                 .failureStates(SCDastScanStatus.getFailureStateNames())
                 .controlProperties(controlOptions)
+                .progressMonitor(progressMonitorMixin.createProgressMonitor(false))
                 .build();
         try {
             waitHelper.wait(unirest, waitOptions);
         } catch ( RuntimeException e ) {
             // Write the current scan records before rethrowing the exception
-            outputHelper.write(unirest, waitHelper.getResult());
+            outputHelper.write(unirest, waitHelper.getResult(WaitHelper::recordsWithActionAsArrayNode));
             throw e;
         }
-        return waitHelper.getResult();
+        return waitHelper.getResult(WaitHelper::recordsWithActionAsArrayNode);
+    }
+    
+    @Override
+    public String getActionCommandResult() {
+        return "N/A"; // Action result will be provided by WaitHelper
     }
     
     @Override
