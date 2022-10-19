@@ -1,8 +1,10 @@
 package com.fortify.cli.fod._main.cli.cmd;
 
 import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
+import com.fortify.cli.fod.appmicroservice.cli.cmd.FoDAppMicroserviceCommands;
 import com.fortify.cli.fod.apprelease.cli.cmd.FoDAppRelCommands;
 import com.fortify.cli.fod.dast_scan.cli.cmd.FoDDastScanCommands;
+import com.fortify.cli.fod.lookup.cli.cmd.FoDLookupCommands;
 import com.fortify.cli.fod.rest.cli.cmd.FoDRestCommands;
 import com.fortify.cli.fod.sast_scan.cli.cmd.FoDSastScanCommands;
 import com.fortify.cli.fod.session.cli.cmd.FoDSessionCommands;
@@ -19,8 +21,10 @@ import picocli.CommandLine.Command;
                 FoDRestCommands.class,
                 FoDAppCommands.class,
                 FoDAppRelCommands.class,
+                FoDAppMicroserviceCommands.class,
                 FoDDastScanCommands.class,
                 FoDSastScanCommands.class,
+                FoDLookupCommands.class
         }
 )
 public class FoDCommands {}

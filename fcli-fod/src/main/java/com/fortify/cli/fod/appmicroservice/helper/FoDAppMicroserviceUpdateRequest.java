@@ -22,41 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.mixin;
+package com.fortify.cli.fod.appmicroservice.helper;
 
+import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import picocli.CommandLine.Option;
+import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+@ReflectiveAccess
+@Getter
+@ToString
+@EqualsAndHashCode(callSuper = true)
+public class FoDAppMicroserviceUpdateRequest extends JsonNodeHolder {
+    private String microserviceName;
 
-public class FoDSdlcStatusTypeOptions {
-    public enum FoDSdlcStatusType {Development, QA, Production}
-
-    @ReflectiveAccess
-    public static final class FoDSdlcStatusTypeIterable extends ArrayList<String> {
-        private static final long serialVersionUID = 1L;
-        public FoDSdlcStatusTypeIterable() {
-            super(Stream.of(FoDSdlcStatusType.values()).map(FoDSdlcStatusType::name).collect(Collectors.toList()));
-        }
-    }
-    @ReflectiveAccess
-    public static abstract class AbstractFoDSdlcStatusType {
-        public abstract FoDSdlcStatusType getSdlcStatusType();
-    }
-
-    @ReflectiveAccess
-    public static class RequiredSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
-        @Getter private FoDSdlcStatusType sdlcStatusType;
-    }
-
-    @ReflectiveAccess
-    public static class OptionalSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = false, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    public FoDAppMicroserviceUpdateRequest setMicroserviceName(String name) {
+        this.microserviceName = name;
+        return this;
     }
 
 }

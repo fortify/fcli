@@ -61,14 +61,14 @@ public class FoDAppResolverMixin {
     @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDAppResolverMixin {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Option(names = {"--app"}, required = true)
+        @Option(names = {"--app"}, required = true, descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }
 
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDAppResolverMixin {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Parameters(index = "0", arity = "1", descriptionKey = "app")
+        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }
 }

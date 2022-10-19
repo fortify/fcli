@@ -27,7 +27,7 @@ package com.fortify.cli.fod.apprelease.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
-import com.fortify.cli.fod.apprelease.FoDAppRelHelper;
+import com.fortify.cli.fod.apprelease.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.apprelease.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;

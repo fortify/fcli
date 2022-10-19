@@ -54,7 +54,7 @@ import java.util.Map;
 @Command(name = FoDOutputHelperMixins.Update.CMD_NAME)
 public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Update outputHelper;
-    @Mixin private FoDAppResolverMixin.PositionalParameter appRelResolver;
+    @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Option(names = {"--name", "-n"})
@@ -73,7 +73,7 @@ public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IUn
     public JsonNode getJsonNode(UnirestInstance unirest) {
 
         // current values of app being updated
-        FoDAppDescriptor appDescriptor = FoDAppHelper.getApp(unirest, appRelResolver.getAppNameOrId(), true);
+        FoDAppDescriptor appDescriptor = FoDAppHelper.getApp(unirest, appResolver.getAppNameOrId(), true);
         ArrayList<FoDAttributeDescriptor> appAttrsCurrent = appDescriptor.getAttributes();
 
         // new values to replace

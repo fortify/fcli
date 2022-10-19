@@ -22,12 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.apprelease.cli.cmd;
+package com.fortify.cli.fod.lookup.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
-import com.fortify.cli.fod.apprelease.helper.FoDAppRelHelper;
+import com.fortify.cli.fod.lookup.cli.mixin.FoDLookupTypeOptions;
+import com.fortify.cli.fod.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.rest.FoDUrls;
@@ -43,25 +44,24 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.List.CMD_NAME)
-public class FoDAppRelListCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
+public class FoDLookupListCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
 
-    @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
-            .add("id", "releaseId", FoDFiltersParamValueGenerators::plain)
-            .add("name", "releaseName", FoDFiltersParamValueGenerators::plain)
-            .add("microserviceId", "microservice.id", FoDFiltersParamValueGenerators::plain)
-            .add("microserviceName", "microservice.name", FoDFiltersParamValueGenerators::plain)
-            .add("applicationId", "application.id", FoDFiltersParamValueGenerators::plain)
-            .add("applicationName", "application.name", FoDFiltersParamValueGenerators::plain);
+    @Mixin
+    private FoDLookupTypeOptions.OptionalLookupOption lookupType;
 
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDAppRelHelper.renameFields(record);
-    }
+    @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
+            .add("type", "type", FoDFiltersParamValueGenerators::plain);
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(FoDUrls.RELEASES);
+        return unirest.get(FoDUrls.LOOKUP_ITEMS).queryString("type",
+                lookupType.getLookupType().name());
+    }
+
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDLookupHelper.renameFields(record);
     }
     
     @Override

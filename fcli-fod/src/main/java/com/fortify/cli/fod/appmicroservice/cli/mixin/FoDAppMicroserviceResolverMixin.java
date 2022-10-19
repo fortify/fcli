@@ -23,17 +23,21 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.apprelease.cli.mixin;
+package com.fortify.cli.fod.appmicroservice.cli.mixin;
 
 import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
-import com.fortify.cli.fod.apprelease.helper.FoDAppRelHelper;
+import com.fortify.cli.fod.appmicroservice.cli.cmd.FoDAppMicroserviceCommands;
+import com.fortify.cli.fod.appmicroservice.helper.FoDAppMicroserviceDescriptor;
+import com.fortify.cli.fod.appmicroservice.helper.FoDAppMicroserviceHelper;
 import com.fortify.cli.fod.apprelease.cli.cmd.FoDAppRelCommands;
 import com.fortify.cli.fod.apprelease.helper.FoDAppRelDescriptor;
+import com.fortify.cli.fod.apprelease.helper.FoDAppRelHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -43,7 +47,7 @@ import picocli.CommandLine.Spec.Target;
 
 import javax.validation.ValidationException;
 
-public class FoDAppRelResolverMixin {
+public class FoDAppMicroserviceResolverMixin {
     @ReflectiveAccess
     public static final class FoDDelimiterMixin {
         @Option(names = {"--delim"},
@@ -53,56 +57,57 @@ public class FoDAppRelResolverMixin {
     }
 
     @ReflectiveAccess
-    public static final class FoDAppAndRelNameResolverMixin {
+    public static final class FoDAppAndMicroserviceNameResolverMixin {
         @Mixin private FoDDelimiterMixin delimiterMixin;
 
-        public final FoDAppAndRelNameDescriptor getAppAndRelNameDescriptor(String appAndRelName) {
-            if (appAndRelName == null) { return null; }
+        public final FoDAppAndMicroserviceNameDescriptor getAppAndMicroserviceNameDescriptor(String appAndMicroserviceName) {
+            if (appAndMicroserviceName == null) { return null; }
             String delimiter = delimiterMixin.getDelimiter();
-            String[] appAndRelNameArray = appAndRelName.split(delimiter);
-            if (appAndRelNameArray.length != 2) {
-                throw new ValidationException("Application and release name must be specified in the format <application name>"+delimiter+"<release name>");
+            String[] appAndMicroserviceNameArray = appAndMicroserviceName.split(delimiter);
+            if (appAndMicroserviceNameArray.length != 2) {
+                throw new ValidationException("Application and microservice name must be specified in the format <application name>"+delimiter+"<microservice name>");
             }
-            return new FoDAppAndRelNameDescriptor(appAndRelNameArray[0], appAndRelNameArray[1]);
+            return new FoDAppAndMicroserviceNameDescriptor(appAndMicroserviceNameArray[0], appAndMicroserviceNameArray[1]);
         }
 
         @Data
         @ReflectiveAccess
-        public static final class FoDAppAndRelNameDescriptor {
-            private final String appName, relName;
+        public static final class FoDAppAndMicroserviceNameDescriptor {
+            private final String appName, microserviceName;
         }
     }
 
     @ReflectiveAccess
-    public static abstract class AbstractFoDAppRelResolverMixin extends AbstractPredefinedVariableResolverMixin {
+    public static abstract class AbstractFoDAppMicroserviceResolverMixin extends AbstractPredefinedVariableResolverMixin {
         @Mixin private FoDDelimiterMixin delimiterMixin;
-        public abstract String getAppRelNameOrId();
+        public abstract String getAppAndMicroserviceNameOrId();
 
-        public FoDAppRelDescriptor getAppRelDescriptor(UnirestInstance unirest, String... fields){
-            return FoDAppRelHelper.getAppRel(unirest, resolvePredefinedVariable(getAppRelNameOrId()), delimiterMixin.getDelimiter(), true);
+        @SneakyThrows
+        public FoDAppMicroserviceDescriptor getAppMicroserviceDescriptor(UnirestInstance unirest, String... fields){
+            return FoDAppMicroserviceHelper.getAppMicroservice(unirest, resolvePredefinedVariable(getAppAndMicroserviceNameOrId()), delimiterMixin.getDelimiter(), true);
         }
 
-        public String getAppRelId(UnirestInstance unirest) {
-            return getAppRelDescriptor(unirest, "releaseId").getReleaseId().toString();
+        public String getAppMicroserviceId(UnirestInstance unirest) {
+            return getAppMicroserviceDescriptor(unirest, "microserviceId").getMicroserviceId().toString();
         }
 
         @Override
         protected Class<?> getPredefinedVariableClass() {
-            return FoDAppRelCommands.class;
+            return FoDAppMicroserviceCommands.class;
         }
     }
 
     @ReflectiveAccess
-    public static class RequiredOption extends AbstractFoDAppRelResolverMixin {
+    public static class RequiredOption extends AbstractFoDAppMicroserviceResolverMixin {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Option(names = {"--rel"}, required = true, descriptionKey = "ApplicationReleaseMixin")
-        @Getter private String appRelNameOrId;
+        @Option(names = {"--microservice"}, required = true, descriptionKey = "ApplicationMicroserviceMixin")
+        @Getter private String appAndMicroserviceNameOrId;
     }
 
     @ReflectiveAccess
-    public static class PositionalParameter extends AbstractFoDAppRelResolverMixin {
+    public static class PositionalParameter extends AbstractFoDAppMicroserviceResolverMixin {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationReleaseMixin")
-        @Getter private String appRelNameOrId;
+        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMicroserviceMixin")
+        @Getter private String appAndMicroserviceNameOrId;
     }
 }

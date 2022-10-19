@@ -22,21 +22,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.rest;
+package com.fortify.cli.fod.lookup.cli.cmd;
 
-public class FoDUrls {
-    private static final String ApiBase = "/api/v3";
-    public static final String APPLICATIONS = ApiBase + "/applications";
-    public static final String APPLICATION = ApiBase + "/applications/{appId}";
-    public static final String MICROSERVICES = ApiBase + "/applications/{appId}/microservices";
-    public static final String MICROSERVICES_UPDATE = ApiBase + "/applications/{appId}/microservices/{microserviceId}";
-    public static final String RELEASES = ApiBase + "/releases";
-    public static final String RELEASE = ApiBase + "/releases/{relId}";
-    public static final String ATTRIBUTES = ApiBase + "/attributes";
-    public static final String USERS = ApiBase + "/users";
-    public static final String USER = ApiBase + "/users/{userId}";
-    public static final String USER_GROUPS = ApiBase + "/user-management/user-groups";
-    public static final String USER_GROUP = ApiBase + "/user-management/user-groups/{userId}";
-    public static final String USER_GROUP_MEMBERS = ApiBase + "/user-management/user-groups/{userId}/members";
-    public static final String LOOKUP_ITEMS = ApiBase + "/lookup-items";
+import picocli.CommandLine;
+
+@CommandLine.Command(name = "lookup",
+        aliases = {"lookup-items"},
+        subcommands = {
+                FoDLookupListCommand.class
+        }
+)
+public class FoDLookupCommands {
 }
