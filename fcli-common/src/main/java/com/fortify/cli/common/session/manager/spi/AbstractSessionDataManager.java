@@ -139,7 +139,8 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
     }
 
     private void checkNonExpiredSessionAvailable(String sessionName, boolean failIfUnavailable, T authSessionData) {
-        if ( failIfUnavailable && (authSessionData==null || authSessionData.getExpiryDate().before(new Date())) ) {
+        if ( failIfUnavailable && isExpiredOrUnavailable(authSessionData) )
+        {
             throw new IllegalStateException(getSessionTypeName()+" session '"+sessionName+"' cannot be retrieved or has expired, please login again");
         }
     }
@@ -148,6 +149,12 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
         if ( failIfUnavailable && !exists(sessionName) ) {
             throw new IllegalStateException(getSessionTypeName()+" session '"+sessionName+"' not found, please login first");
         }
+    }
+    
+    private boolean isExpiredOrUnavailable(T authSessionData) {
+        return authSessionData==null ||
+                (authSessionData.getExpiryDate()!=null // We don't know whether session is expired if expiryDate is null
+                && authSessionData.getExpiryDate().before(new Date()));
     }
     
     @Override
