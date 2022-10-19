@@ -35,6 +35,7 @@ import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 import com.fortify.cli.config.language.manager.LanguageConfigManager;
 import com.oracle.svm.core.annotate.AutomaticFeature;
+
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -73,10 +74,7 @@ public class FortifyCLI {
             try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {
                 applicationContext.getBeansOfType(IFortifyCLIInitializer.class).forEach(b -> b.initializeFortifyCLI(resolvedArgs));
                 CommandLine commandLine = new CommandLine(FCLIRootCommands.class, micronautFactory);
-                return commandLine
-                        // TODO Setting the default value provider results in weird issues, so we disable it for now
-                        //.setDefaultValueProvider(new FortifyCLIDefaultValueProvider())
-                        .setParameterExceptionHandler(
+                return commandLine.setParameterExceptionHandler(
                             new I18nParameterExceptionHandler(
                                     commandLine.getParameterExceptionHandler(),
                                     applicationContext.getBean(LanguageConfigManager.class)

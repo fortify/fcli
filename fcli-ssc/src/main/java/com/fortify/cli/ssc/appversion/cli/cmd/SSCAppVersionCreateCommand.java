@@ -36,8 +36,8 @@ import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.SSCAppAndVersionNameResolverMixin;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.SSCAppAndVersionNameResolverMixin.SSCAppAndVersionNameDescriptor;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppAndVersionNameResolverMixin;
+import com.fortify.cli.ssc.appversion.helper.SSCAppAndVersionNameDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
@@ -59,15 +59,13 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Create.CMD_NAME)
 public class SSCAppVersionCreateCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformerSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Create outputHelper; 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    @Parameters(index = "0", arity = "1", descriptionKey = "appVersionName") private String appAndVersionName;
-    @Mixin private SSCAppAndVersionNameResolverMixin delimiterMixin;
+    @Mixin private SSCAppAndVersionNameResolverMixin.PositionalParameter sscAppAndVersionNameResolver;
     @Mixin private SSCIssueTemplateResolverMixin.OptionalFilterSetOption issueTemplateResolver;
     @Mixin private SSCAppVersionAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
     @Mixin private SSCAppVersionAuthEntityMixin.OptionalUserAddOption userAddMixin;
@@ -77,10 +75,16 @@ public class SSCAppVersionCreateCommand extends AbstractSSCOutputCommand impleme
     private boolean active;
     @Option(names={"--auto-required-attrs"}, required = false)
     private boolean autoRequiredAttrs = false;
+    @Option(names={"--skip-if-exists"}, required = false)
+    private boolean skipIfExists = false;
     
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
+        if ( skipIfExists ) {
+            SSCAppVersionDescriptor descriptor = SSCAppVersionHelper.getOptionalAppVersionFromAppAndVersionName(unirest, sscAppAndVersionNameResolver.getAppAndVersionNameDescriptor());
+            if ( descriptor!=null ) { return descriptor.asObjectNode().put("__action__", "SKIPPED_EXISTING"); }
+        }
         SSCAppVersionAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
         SSCAppVersionAuthEntitiesUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);
         
@@ -125,7 +129,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCOutputCommand impleme
 
     private SSCAppVersionDescriptor createUncommittedAppVersion(UnirestInstance unirest) {
         SSCIssueTemplateDescriptor issueTemplateDescriptor = issueTemplateResolver.getIssueTemplateDescriptorOrDefault(unirest);
-        SSCAppAndVersionNameDescriptor appAndVersionNameDescriptor = delimiterMixin.getAppAndVersionNameDescriptor(appAndVersionName);
+        SSCAppAndVersionNameDescriptor appAndVersionNameDescriptor = sscAppAndVersionNameResolver.getAppAndVersionNameDescriptor();
         ObjectNode body = objectMapper.createObjectNode();
         body.put("name", appAndVersionNameDescriptor.getVersionName())
             .put("description", description==null ? "" : description)

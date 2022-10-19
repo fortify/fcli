@@ -24,9 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.writer.record;
 
+import java.io.Closeable;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public interface IRecordWriter {
+public interface IRecordWriter extends Closeable, AutoCloseable {
     public void writeRecord(ObjectNode record);
-    default void finishOutput() {}
+    default void close() {}
 }

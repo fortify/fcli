@@ -14,10 +14,10 @@ import picocli.CommandLine.Option;
 
 public class FoDSessionLoginOptions {
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-connection-options.heading", order = 1)
-    @Getter private UrlConfigOptions urlConfigOptions;
+    @Getter private UrlConfigOptions urlConfigOptions = new UrlConfigOptions();
     
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-authentication-options.heading", order = 2)
-    @Getter private FoDAuthOptions authOptions;
+    @Getter private FoDAuthOptions authOptions = new FoDAuthOptions();
     
     public String[] getScopes() {
         return new String[]{"api-tenant"}; // TODO make scopes configurable
@@ -25,7 +25,7 @@ public class FoDSessionLoginOptions {
     
     public static class FoDAuthOptions {
         @ArgGroup(exclusive = true, multiplicity = "1", order = 3)
-        @Getter private FoDCredentialOptions credentialOptions;
+        @Getter private FoDCredentialOptions credentialOptions = new FoDCredentialOptions();
     }
     
     public static class FoDCredentialOptions {

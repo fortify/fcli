@@ -26,46 +26,46 @@ package com.fortify.cli.ssc.token.cli.cmd;
 
 import java.time.OffsetDateTime;
 
-import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 import com.fortify.cli.ssc.token.helper.SSCTokenUpdateRequest;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "update")
+@Command(name = BasicOutputHelperMixins.Update.CMD_NAME)
 public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
-    @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+    @Getter @Mixin private BasicOutputHelperMixins.Update outputHelper;
     @Parameters(arity="1") private String token;
     @Option(names="--expire-in") private String expireIn;
     @Option(names="--description") private String description;    
     
     @Override
-    protected void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {
+    protected JsonNode getJsonNode(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {
         SSCTokenUpdateRequest tokenUpdateRequest = SSCTokenUpdateRequest.builder()
                 .terminalDate(getExpiresAt())
                 .description(description)
                 .build();
-        outputWriterFactory.createOutputWriter(getOutputConfig())
-            .write(tokenHelper.updateToken(urlConfig, userCredentialsConfig, token, tokenUpdateRequest));
+        return tokenHelper.updateToken(urlConfig, userCredentialsConfig, token, tokenUpdateRequest);
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
     }
     
     private OffsetDateTime getExpiresAt() {
         return expireIn==null ? null : PERIOD_HELPER.getCurrentOffsetDateTimePlusPeriod(expireIn);
-    }
-
-    public StandardOutputConfig getOutputConfig() {
-        return SSCOutputConfigHelper.table();
     }
 }

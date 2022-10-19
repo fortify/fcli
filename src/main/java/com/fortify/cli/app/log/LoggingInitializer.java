@@ -61,7 +61,6 @@ public class LoggingInitializer implements IFortifyCLIInitializer {
                 .setErr(DUMMY_WRITER)
                 .setUnmatchedArgumentsAllowed(true)
                 .setUnmatchedOptionsArePositionalParams(true)
-                .setDefaultValueProvider(new FortifyCLIDefaultValueProvider())
                 .setExpandAtFiles(true);
         commandLine.execute(args);
     }
@@ -77,7 +76,9 @@ public class LoggingInitializer implements IFortifyCLIInitializer {
      * 
      * @author Ruud Senden
      */
-    @Command()
+    @Command(
+            defaultValueProvider = FortifyCLIDefaultValueProvider.class
+    )
     public static final class SetupLoggingCommand implements Runnable {
         @Mixin LoggingMixin loggingMixin;
         

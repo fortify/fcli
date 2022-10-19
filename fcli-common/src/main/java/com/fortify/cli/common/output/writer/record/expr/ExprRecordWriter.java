@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.writer.record.expr;
 
-import java.io.PrintWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,14 +40,10 @@ import lombok.SneakyThrows;
 public class ExprRecordWriter implements IRecordWriter {
     private static final Pattern exprPattern = Pattern.compile("\\{(.+?)\\}");
     @Getter private final RecordWriterConfig config;
-    
-    private PrintWriter getPrintWriter() {
-        return getConfig().getPrintWriter();
-    }
 
     @Override @SneakyThrows
     public void writeRecord(ObjectNode record) {
-        getPrintWriter().print(evaluateExpression(config.getOptions(), record));
+        config.getWriter().write(evaluateExpression(config.getOptions(), record));
     }
 
     private static final String evaluateExpression(String expr, ObjectNode input) {

@@ -24,53 +24,40 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.mixin;
 
-import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
-import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
+import com.fortify.cli.ssc.appversion.helper.SSCAppAndVersionNameDescriptor;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Spec;
-import picocli.CommandLine.Spec.Target;
 
-public class SSCAppVersionResolverMixin {
+public class SSCAppAndVersionNameResolverMixin {
+    
     @ReflectiveAccess
-    public static abstract class AbstractSSCAppVersionResolverMixin extends AbstractPredefinedVariableResolverMixin {
+    public static abstract class AbstractSSCAppAndVersionNameResolverMixin {
         @Mixin private SSCDelimiterMixin delimiterMixin;
-        public abstract String getAppVersionNameOrId();
-
-        public SSCAppVersionDescriptor getAppVersionDescriptor(UnirestInstance unirest, String... fields){
-            return SSCAppVersionHelper.getRequiredAppVersion(unirest, resolvePredefinedVariable(getAppVersionNameOrId()), delimiterMixin.getDelimiter(), fields);
+        public abstract String getAppAndVersionName();
+        
+        public final SSCAppAndVersionNameDescriptor getAppAndVersionNameDescriptor() {
+            if ( getAppAndVersionName()==null ) { return null; }
+            return SSCAppAndVersionNameDescriptor.fromCombinedAppAndVersionName(getAppAndVersionName(), getDelimiter());
         }
         
-        public String getAppVersionId(UnirestInstance unirest) {
-            return getAppVersionDescriptor(unirest, "id").getVersionId();
-        }
-        
-        @Override
-        protected Class<?> getPredefinedVariableClass() {
-            return SSCAppVersionCommands.class;
+        public final String getDelimiter() {
+            return delimiterMixin.getDelimiter();
         }
     }
     
     @ReflectiveAccess
-    public static class RequiredOption extends AbstractSSCAppVersionResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+    public static class RequiredOption extends AbstractSSCAppAndVersionNameResolverMixin {
         @Option(names = {"--appversion"}, required = true, descriptionKey = "ApplicationVersionMixin")
-        @Getter private String appVersionNameOrId;
+        @Getter private String appAndVersionName;
     }
     
     @ReflectiveAccess
-    public static class PositionalParameter extends AbstractSSCAppVersionResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+    public static class PositionalParameter extends AbstractSSCAppAndVersionNameResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationVersionMixin")
-        @Getter private String appVersionNameOrId;
+        @Getter private String appAndVersionName;
     }
 }

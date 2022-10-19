@@ -1,5 +1,6 @@
 package com.fortify.cli.common.output.writer.record;
 
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,6 +38,10 @@ public abstract class AbstractFormattedRecordWriter implements IRecordWriter {
     @Override
     public final void writeRecord(ObjectNode record) {
         writeFormattedRecord(getFormattedRecord(record));
+    }
+    
+    protected Writer getWriter() {
+        return config.getWriter();
     }
     
     protected abstract void writeFormattedRecord(ObjectNode record);

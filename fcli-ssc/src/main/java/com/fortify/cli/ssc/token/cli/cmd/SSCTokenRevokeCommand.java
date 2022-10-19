@@ -28,46 +28,41 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = "revoke")
+@Command(name = BasicOutputHelperMixins.Revoke.CMD_NAME)
 public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand {
-    @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+    @Getter @Mixin private BasicOutputHelperMixins.Revoke outputHelper;
     @Parameters(arity="1..") private String[] tokens;
     
     @Override
-    // TODO SSC doesn't seem to provide any useful output on the token delete/revoke endpoints,
-    //      and returns 'success' even if the tokens don't exist. So, what should we output then? 
-    //      Also, if we don't get any useful output, we could as well support revoking tokens by 
-    //      both id and value within a single command invocation, as the only reason why we don't 
-    //      allow that is so that we don't need to combine the data from both responses.
-    protected void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {
+    protected JsonNode getJsonNode(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {
         String[] tokenIds = Stream.of(tokens).filter(this::isInteger).toArray(String[]::new);
         String[] tokenValues = Stream.of(tokens).filter(Predicate.not(this::isInteger)).toArray(String[]::new);
         if ( tokenIds.length>0 && tokenValues.length>0 ) {
             throw new IllegalArgumentException("Either token id's or token values need to be specified, not both");
         }
-        JsonNode result = tokenIds.length>0 
+        return tokenIds.length>0 
                 ? tokenHelper.deleteTokensById(urlConfig, userCredentialsConfig, tokenIds)
                 : tokenHelper.deleteTokensByValue(urlConfig, userCredentialsConfig, tokenValues);
-        outputWriterFactory.createOutputWriter(getOutputConfig()).write(result);
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
     }
     
     private boolean isInteger(String s) {
         return s.matches("[0-9]+");
-    }
-
-    public StandardOutputConfig getOutputConfig() {
-        return StandardOutputConfig.table();
     }
 }

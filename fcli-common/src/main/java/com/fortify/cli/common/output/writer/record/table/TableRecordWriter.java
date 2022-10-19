@@ -60,8 +60,8 @@ public class TableRecordWriter extends AbstractFormattedRecordWriter {
     }
 
     @Override @SneakyThrows
-    public void finishOutput() {
-        getConfig().getPrintWriter().println(getTable(fields, rows.toArray(new String[rows.size()][])));
+    public void close() {
+        getWriter().write(getTable(fields, rows.toArray(new String[rows.size()][])));
     }
 
     private String getTable(String[] fields, String[][] data) {

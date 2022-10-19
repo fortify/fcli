@@ -25,6 +25,7 @@
 package com.fortify.cli.common.variable;
 
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -42,6 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.common.util.EncryptionHelper;
 import com.fortify.cli.common.util.FcliHomeHelper;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -70,6 +72,7 @@ public final class FcliVariableHelper {
         private transient Date accessed;
         private VariableType type;
         private String name;
+        private boolean encrypted;
     }
     
     public static final Path getVariablesPath() {
@@ -99,6 +102,9 @@ public final class FcliVariableHelper {
         Path variablePath = getVariableContentsPathIfExists(variableName, failIfUnavailable);
         try {
             String variableContents = FcliHomeHelper.readFile(variablePath, failIfUnavailable);
+            if ( descriptor.encrypted ) {
+                variableContents = EncryptionHelper.decrypt(variableContents);
+            }
             saveVariableDescriptor(descriptor);
             return variableContents==null ? null : objectMapper.readValue(variableContents, JsonNode.class);
         } catch ( Exception e ) {
@@ -109,19 +115,20 @@ public final class FcliVariableHelper {
         }
     }
     
-    public static final VariableDescriptor save(VariableType variableType, String variableName, JsonNode variableContents) {
+    public static final VariableDescriptor save(VariableType variableType, String variableName, JsonNode variableContents, boolean encrypt) {
         checkVariableName(variableName);
-        VariableDescriptor descriptor = createVariableDescriptor(variableType, variableName);
+        VariableDescriptor descriptor = createVariableDescriptor(variableType, variableName, encrypt);
         saveVariableContents(descriptor, variableContents);
         return saveVariableDescriptor(descriptor);
     }
     
     @SneakyThrows // TODO Do we want to use SneakyThrows?
-    public static final PrintWriter getVariableContentsPrintWriter(VariableType variableType, String variableName) {
+    public static final Writer getVariableContentsWriter(VariableType variableType, String variableName, boolean encrypt) {
         checkVariableName(variableName);
-        VariableDescriptor descriptor = createVariableDescriptor(variableType, variableName);
+        VariableDescriptor descriptor = createVariableDescriptor(variableType, variableName, encrypt);
         saveVariableDescriptor(descriptor);
-        return new PrintWriter(Files.newOutputStream(getVariableContentsAbsolutePath(variableName), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING));
+        PrintWriter pw = new PrintWriter(Files.newOutputStream(getVariableContentsAbsolutePath(variableName), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING));
+        return encrypt ? new EncryptionHelper.EncryptWriter(pw) : pw;
     }
     
     public static final String[] resolveVariables(String[] args) {
@@ -151,11 +158,12 @@ public final class FcliVariableHelper {
         }
     }
     
-    private static final VariableDescriptor createVariableDescriptor(VariableType variableType, String variableName) {
+    private static final VariableDescriptor createVariableDescriptor(VariableType variableType, String variableName, boolean encrypt) {
         return VariableDescriptor.builder()
                 .created(new Date())
                 .type(variableType)
                 .name(variableName)
+                .encrypted(encrypt)
                 .build();
     }
     
@@ -184,6 +192,9 @@ public final class FcliVariableHelper {
     @SneakyThrows // TODO Do we want to use SneakyThrows?
     private static void saveVariableContents(VariableDescriptor descriptor, JsonNode variableContents) {
         String variableContentsString = objectMapper.writeValueAsString(variableContents);
+        if ( descriptor.encrypted ) {
+            variableContentsString = EncryptionHelper.encrypt(variableContentsString);
+        }
         FcliHomeHelper.saveFile(getVariableContentsRelativePath(descriptor.getName()), variableContentsString);
     }
 

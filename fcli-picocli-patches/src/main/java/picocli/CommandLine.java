@@ -3629,7 +3629,7 @@ public class CommandLine {
     private static boolean isBoolean(Class<?>[] types) { return isBoolean(types[0]) || (isOptional(types[0]) && isBoolean(types[1])); }
     private static boolean isBoolean(Class<?> type) { return type == Boolean.class || type == Boolean.TYPE; }
     private static CommandLine toCommandLine(Object obj, IFactory factory) { return obj instanceof CommandLine ? (CommandLine) obj : new CommandLine(obj, factory, false);}
-    private static boolean isMultiValue(Class<?> cls) { return cls.isArray() || Collection.class.isAssignableFrom(cls) || Map.class.isAssignableFrom(cls); }
+    private static boolean isMultiValue(Class<?> cls) { return (cls.isArray() && cls != char[].class) || Collection.class.isAssignableFrom(cls) || Map.class.isAssignableFrom(cls); }
     private static boolean isOptional(Class<?> cls) { return cls != null && "java.util.Optional".equals(cls.getName()); } // #1108
     private static Object getOptionalEmpty() throws Exception {
         return Class.forName("java.util.Optional").getMethod("empty").invoke(null);
@@ -5995,13 +5995,13 @@ public class CommandLine {
          * @since 4.0
          */
         public interface IScope extends IGetter, ISetter {}
-        
-        /** This interface provides access to an {@link IScope} instance. 
+
+        /** This interface provides access to an {@link IScope} instance.
          * @since 4.7
          */
         public interface IScoped {
             /** Get the {@link IScope} instance.
-             * 
+             *
              *  @return {@link IScope} instance */
             IScope getScope();
         }
@@ -9176,8 +9176,8 @@ public class CommandLine {
              * @return whether this argument applies to all descendent subcommands of the command where it is defined
              * @since 4.3 */
             public ScopeType scopeType() { return scopeType; }
-            
-            /** Check whether the {@link #getValue()} method is able to get an actual value from the current {@link #getter()}. 
+
+            /** Check whether the {@link #getValue()} method is able to get an actual value from the current {@link #getter()}.
              * @since 4.7 */
             public boolean isValueGettable() {
                 if (getter instanceof IScoped) {
@@ -11112,12 +11112,15 @@ public class CommandLine {
         public interface ITypeInfo {
             /** Returns {@code true} if {@link #getType()} is {@code boolean} or {@code java.lang.Boolean}. */
             boolean isBoolean();
-            /** Returns {@code true} if {@link #getType()} is an array, map or collection. */
+            /** Returns {@code true} if {@link #getType()} is an array, map or collection.
+             * Note that from picocli 4.7, {@code char[]} arrays are considered single values (similar to String) and are not treated as arrays.*/
             boolean isMultiValue();
 
             /** Returns {@code true} if {@link #getType()} is {@code java.util.Optional}
              * @since 4.6 */
             boolean isOptional();
+            /** Returns {@code true} if this type is an array multi-value type.
+             * Note that from picocli 4.7, {@code char[]} arrays are considered single values (similar to String) and are not treated as arrays.*/
             boolean isArray();
             boolean isCollection();
             boolean isMap();
@@ -11191,8 +11194,8 @@ public class CommandLine {
                 }
                 if (auxiliaryTypes == null || auxiliaryTypes.length == 0) {
                     if (type.isArray()) {
-                        if (interactive && type.equals(char[].class)) {
-                            auxiliaryTypes = new Class<?>[]{char[].class};
+                        if (type.equals(char[].class)) {
+                            auxiliaryTypes = new Class<?>[]{char[].class}; // TODO is this still needed?
                         } else {
                             auxiliaryTypes = new Class<?>[]{type.getComponentType()};
                         }
@@ -11279,7 +11282,7 @@ public class CommandLine {
 
             public boolean isBoolean()            { return auxiliaryTypes[0] == boolean.class || auxiliaryTypes[0] == Boolean.class; }
             public boolean isMultiValue()         { return CommandLine.isMultiValue(type); }
-            public boolean isArray()              { return type.isArray(); }
+            public boolean isArray()              { return type.isArray() && type != char[].class; }
             public boolean isCollection()         { return Collection.class.isAssignableFrom(type); }
             public boolean isMap()                { return Map.class.isAssignableFrom(type); }
             public boolean isOptional()           { return CommandLine.isOptional(type); }
@@ -11624,19 +11627,19 @@ public class CommandLine {
                 } catch (Exception ignored) { return "?"; }
             }
             public Messages parent() {
-            	CommandSpec parentSpec = this.spec.parent();
-            	if (parent == null || parent.spec != parentSpec) {
-            		parent = null; // Refresh if parentSpec doesn't match
-            		while (parent == null && parentSpec != null) {
-		            	String parentResourceBundleBaseName = parentSpec.resourceBundleBaseName();
-		            	if (parentResourceBundleBaseName != null && !parentResourceBundleBaseName.equals(this.bundleBaseName)) {
-		            		parent = new Messages(parentSpec, parentResourceBundleBaseName);
-		            	} else {
-		            		parentSpec = parentSpec.parent();
-		            	}
-            		}
-            	}
-	            return parent;
+                CommandSpec parentSpec = this.spec.parent();
+                if (parent == null || parent.spec != parentSpec) {
+                    parent = null; // Refresh if parentSpec doesn't match
+                    while (parent == null && parentSpec != null) {
+                        String parentResourceBundleBaseName = parentSpec.resourceBundleBaseName();
+                        if (parentResourceBundleBaseName != null && !parentResourceBundleBaseName.equals(this.bundleBaseName)) {
+                            parent = new Messages(parentSpec, parentResourceBundleBaseName);
+                        } else {
+                            parentSpec = parentSpec.parent();
+                        }
+                    }
+                }
+                return parent;
             }
             private static Set<String> keys(ResourceBundle rb) {
                 if (rb == null) { return Collections.emptySet(); }
@@ -11672,9 +11675,9 @@ public class CommandLine {
             }
 
             private String getStringForExactKey(String key) {
-            	if (keys.contains(key)) { return rb.getString(key); }
-            	else if (parent() != null) { return parent().getStringForExactKey(key); }
-            	else { return null; }
+                if (keys.contains(key)) { return rb.getString(key); }
+                else if (parent() != null) { return parent().getStringForExactKey(key); }
+                else { return null; }
             }
 
             boolean isEmpty() { return (rb == null || keys.isEmpty()) && (parent() == null || parent().isEmpty()); }
@@ -11695,9 +11698,9 @@ public class CommandLine {
                 return result != null ? result : defaultValues;
             }
             private String[] getStringArrayForExactKey(String key) {
-            	List<String> result = addAllWithPrefix(rb, key, keys, new ArrayList<String>());
-            	if (!result.isEmpty()) { return result.toArray(new String[0]); }
-            	return parent() == null ? null : parent().getStringArrayForExactKey(key);
+                List<String> result = addAllWithPrefix(rb, key, keys, new ArrayList<String>());
+                if (!result.isEmpty()) { return result.toArray(new String[0]); }
+                return parent() == null ? null : parent().getStringArrayForExactKey(key);
             }
             private static List<String> addAllWithPrefix(ResourceBundle rb, String key, Set<String> keys, List<String> result) {
                 if (keys.contains(key)) { result.add(rb.getString(key)); }
@@ -12957,7 +12960,7 @@ public class CommandLine {
 
                 validationResult = matches.isEmpty() ? GroupValidationResult.SUCCESS_ABSENT : GroupValidationResult.SUCCESS_PRESENT;
                 for (ArgGroupSpec missing : unmatchedSubgroups) {
-                    if (missing.validate() && missing.multiplicity().min > 0) {
+                    if (missing.validate() && missing.multiplicity().min > 0 && containsRequiredOptionsOrSubgroups(missing)) {
                         int presentCount = 0;
                         boolean haveMissing = true;
                         boolean someButNotAllSpecified = false;
@@ -12985,6 +12988,33 @@ public class CommandLine {
                         commandLine.interpreter.maybeThrow(validationResult.exception);
                     }
                 }
+            }
+            
+            private boolean containsRequiredOptionsOrSubgroups(ArgGroupSpec argGroupSpec) {
+                return containsRequiredOptions(argGroupSpec) || containsRequiredSubgroups(argGroupSpec);
+            }
+                
+            private boolean containsRequiredOptions(ArgGroupSpec argGroupSpec) {
+                for ( OptionSpec option : argGroupSpec.options() ) {
+                    if ( option.required() ) { return true; }
+                }
+                return false;
+            }
+            
+            private boolean containsRequiredSubgroups(ArgGroupSpec argGroupSpec) {
+                for ( ArgGroupSpec subgroup : argGroupSpec.subgroups() ) {
+                    if ( subgroup.exclusive() ) {
+                        // Only return true if all of the subgroups contain required options or subgroups
+                        boolean result = true;
+                        for ( ArgGroupSpec subsubgroup : subgroup.subgroups() ) {
+                            result &= containsRequiredOptionsOrSubgroups(subsubgroup);
+                        }
+                        return result && containsRequiredOptions(subgroup);
+                    } else {
+                        return containsRequiredOptionsOrSubgroups(subgroup);
+                    }
+                }
+                return false;
             }
 
             private void failGroupMultiplicityExceeded(List<ParseResult.GroupMatch> groupMatches, CommandLine commandLine) {
@@ -14065,11 +14095,11 @@ public class CommandLine {
             }
 
             int result;
-            if (argSpec.type().isArray() && !(argSpec.interactive() && argSpec.type() == char[].class)) {
+            if (argSpec.typeInfo().isArray()) {
                 result = applyValuesToArrayField(argSpec, negated, lookBehind, alreadyUnquoted, arity, workingStack, initialized, argDescription);
-            } else if (Collection.class.isAssignableFrom(argSpec.type())) {
+            } else if (argSpec.typeInfo().isCollection()) {
                 result = applyValuesToCollectionField(argSpec, negated, lookBehind, alreadyUnquoted, arity, workingStack, initialized, argDescription);
-            } else if (Map.class.isAssignableFrom(argSpec.type())) {
+            } else if (argSpec.typeInfo().isMap()) {
                 result = applyValuesToMapField(argSpec, lookBehind, alreadyUnquoted, arity, workingStack, initialized, argDescription);
             } else {
                 result = applyValueToSingleValuedField(argSpec, negated, lookBehind, alreadyUnquoted, arity, workingStack, initialized, argDescription);
@@ -15754,6 +15784,7 @@ public class CommandLine {
                 Text name = colorScheme.optionText(nameString);
                 Text param = parameterLabelRenderer.renderParameterLabel(option, colorScheme.ansi(), colorScheme.optionParamStyles);
                 text = text.concat(prefix);
+
                 if (option.required()) { // e.g., -x=VAL
                     text = text.concat(name).concat(param).concat("");
                     if (option.isMultiValue()) { // e.g., -x=VAL [-x=VAL]...

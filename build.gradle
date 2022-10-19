@@ -67,7 +67,9 @@ allprojects {
 
         // Micronaut dependencies
         implementation("io.micronaut:micronaut-runtime:3.4.2")
-        implementation("io.micronaut.picocli:micronaut-picocli:4.1.0")
+        implementation("io.micronaut.picocli:micronaut-picocli:4.1.0") {
+            exclude group: 'info.picocli'
+        }
         implementation("javax.annotation:javax.annotation-api")
 
         // Logback dependency to allow us to configure logging programmatically

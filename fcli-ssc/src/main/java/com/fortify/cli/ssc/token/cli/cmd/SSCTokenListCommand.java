@@ -27,46 +27,46 @@ package com.fortify.cli.ssc.token.cli.cmd;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fortify.cli.common.output.cli.mixin.writer.OutputWriterWithQueryFactoryMixin;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
-import com.fortify.cli.ssc.util.SSCOutputConfigHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "list")
+@Command(name = BasicOutputHelperMixins.List.CMD_NAME)
 public class SSCTokenListCommand extends AbstractSSCTokenCommand {
-    @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
+    @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
     private final SSCQParamGenerator qParamGenerator = 
             new SSCQParamGenerator()
             .add("userName", SSCQParamValueGenerators::wrapInQuotes)
             .add("type", SSCQParamValueGenerators::wrapInQuotes);
     
     @Override
-    protected void run(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {
-        outputWriterFactory.createOutputWriter(getOutputConfig())
-            .write(tokenHelper.listTokens(urlConfig, userCredentialsConfig, getQueryParams()));
+    protected JsonNode getJsonNode(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {
+        return tokenHelper.listTokens(urlConfig, userCredentialsConfig, getQueryParams());
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
     }
     
     private Map<String, Object> getQueryParams() {
         Map<String, Object> queryParams = new HashMap<String, Object>();
         queryParams.put("limit", "-1");
-        String qParamValue = qParamGenerator.getQParamValue(outputWriterFactory.getOutputQueries());
+        String qParamValue = qParamGenerator.getQParamValue(outputHelper.getOutputWriterFactory().getOutputQueries());
         if ( StringUtils.isNotBlank(qParamValue) ) {
             queryParams.put("q", qParamValue);
         }
         return queryParams;
-    }
-
-    public StandardOutputConfig getOutputConfig() {
-        return SSCOutputConfigHelper.table();
     }
 }

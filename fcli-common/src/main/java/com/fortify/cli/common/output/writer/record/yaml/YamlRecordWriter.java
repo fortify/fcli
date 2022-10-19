@@ -45,7 +45,7 @@ public class YamlRecordWriter extends AbstractFormattedRecordWriter {
     private YAMLGenerator getGenerator() {
         if ( generator==null ) {
             YAMLFactory factory = new YAMLFactory();
-            this.generator = (YAMLGenerator)factory.createGenerator(getConfig().getPrintWriter())
+            this.generator = (YAMLGenerator)factory.createGenerator(getWriter())
                     .setCodec(new ObjectMapper())
                     .disable(Feature.AUTO_CLOSE_TARGET);
             if ( getConfig().isPretty() ) generator = (YAMLGenerator)generator.useDefaultPrettyPrinter();
@@ -62,7 +62,7 @@ public class YamlRecordWriter extends AbstractFormattedRecordWriter {
     }
     
     @Override @SneakyThrows
-    public void finishOutput() {
+    public void close() {
         if ( !getConfig().isSingular() ) {
             getGenerator().writeEndArray();
         }

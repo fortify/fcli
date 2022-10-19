@@ -75,7 +75,7 @@ public class FortifyCLIDefaultValueProvider implements CommandLine.IDefaultValue
     }
     
     private CommandSpec getTopLevelCommand(CommandSpec commandSpec) {
-        return commandSpec.root().equals(commandSpec.parent())
+        return commandSpec.root().equals(commandSpec.parent()) || commandSpec.parent()==null
                 ? commandSpec
                 : getTopLevelCommand(commandSpec.parent());
     }

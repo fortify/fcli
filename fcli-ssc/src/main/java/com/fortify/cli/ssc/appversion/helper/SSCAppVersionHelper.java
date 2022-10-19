@@ -39,28 +39,47 @@ public class SSCAppVersionHelper {
         return new RenameFieldsTransformer(new String[] {"project:application"}).transform(record);
     }
     
-    public static final SSCAppVersionDescriptor getAppVersion(UnirestInstance unirestInstance, String appVersionNameOrId, String delimiter, String... fields) {
-        GetRequest request = unirestInstance.get("/api/v1/projectVersions?limit=2");
+    public static final SSCAppVersionDescriptor getRequiredAppVersion(UnirestInstance unirest, String appVersionNameOrId, String delimiter, String... fields) {
+        SSCAppVersionDescriptor descriptor = getOptionalAppVersion(unirest, appVersionNameOrId, delimiter, fields);
+        if ( descriptor==null ) {
+            throw new ValidationException("No application version found for application version name or id: "+appVersionNameOrId);
+        }
+        return descriptor;
+    }
+    
+    public static final SSCAppVersionDescriptor getOptionalAppVersion(UnirestInstance unirest, String appVersionNameOrId, String delimiter, String... fields) {
+        try {
+            int versionId = Integer.parseInt(appVersionNameOrId);
+            return getOptionalAppVersionFromId(unirest, versionId, fields);
+        } catch (NumberFormatException nfe) {
+            return getOptionalAppVersionFromAppAndVersionName(unirest, SSCAppAndVersionNameDescriptor.fromCombinedAppAndVersionName(appVersionNameOrId, delimiter), fields);
+        }
+    }
+    
+    public static final SSCAppVersionDescriptor getOptionalAppVersionFromId(UnirestInstance unirest, int versionId, String... fields) {
+        GetRequest request = getBaseRequest(unirest, fields).queryString("q", String.format("id:%d", versionId));
+        return getOptionalDescriptor(request);
+    }
+    
+    public static final SSCAppVersionDescriptor getOptionalAppVersionFromAppAndVersionName(UnirestInstance unirest, SSCAppAndVersionNameDescriptor appAndVersionNameDescriptor, String... fields) {
+        GetRequest request = getBaseRequest(unirest, fields);
+        request = request.queryString("q", String.format("project.name:\"%s\",name:\"%s\"", appAndVersionNameDescriptor.getAppName(), appAndVersionNameDescriptor.getVersionName()));
+        return getOptionalDescriptor(request);
+    }
+
+    private static GetRequest getBaseRequest(UnirestInstance unirest, String... fields) {
+        GetRequest request = unirest.get("/api/v1/projectVersions?limit=2");
         if ( fields!=null && fields.length>0 ) {
             request.queryString("fields", String.join(",", fields));
         }
-            
-        try {
-            int versionId = Integer.parseInt(appVersionNameOrId);
-            request = request.queryString("q", String.format("id:%d", versionId));
-        } catch (NumberFormatException nfe) {
-            String[] appAndVersionName = appVersionNameOrId.split(delimiter);
-            if ( appAndVersionName.length != 2 ) { 
-                throw new ValidationException("Application version must be specified as either numeric version id, or in the format <application name>"+delimiter+"<version name>"); 
-            }
-            request = request.queryString("q", String.format("project.name:\"%s\",name:\"%s\"", appAndVersionName[0], appAndVersionName[1]));
-        }
+        return request;
+    }
+
+    private static final SSCAppVersionDescriptor getOptionalDescriptor(GetRequest request) {
         JsonNode versions = request.asObject(ObjectNode.class).getBody().get("data");
-        if ( versions.size()==0 ) {
-            throw new ValidationException("No application version found for application version name or id: "+appVersionNameOrId);
-        } else if ( versions.size()>1 ) {
-            throw new ValidationException("Multiple application versions found for application version name or id: "+appVersionNameOrId);
+        if ( versions.size()>1 ) {
+            throw new ValidationException("Multiple application versions found");
         }
-        return JsonHelper.treeToValue(versions.get(0), SSCAppVersionDescriptor.class);
+        return versions.size()==0 ? null : JsonHelper.treeToValue(versions.get(0), SSCAppVersionDescriptor.class);
     }
 }

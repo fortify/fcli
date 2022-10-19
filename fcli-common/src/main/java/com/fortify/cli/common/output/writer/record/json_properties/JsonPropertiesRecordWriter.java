@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.writer.record.json_properties;
 
-import java.io.PrintWriter;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -47,10 +46,6 @@ import lombok.SneakyThrows;
 public class JsonPropertiesRecordWriter implements IRecordWriter {
     @Getter private final RecordWriterConfig config;
     private final TreeSet<String> paths = new TreeSet<>();
-    
-    private PrintWriter getPrintWriter() {
-        return getConfig().getPrintWriter();
-    }
 
     @Override @SneakyThrows
     public void writeRecord(ObjectNode record) {
@@ -66,8 +61,8 @@ public class JsonPropertiesRecordWriter implements IRecordWriter {
         return s.replaceAll("\\['(.+?)'\\]", ".$1").replaceFirst("\\$\\.", "");
     }
 
-    @Override
-    public void finishOutput() {
-        getPrintWriter().println(paths.stream().collect(Collectors.joining("\n")));
+    @Override @SneakyThrows
+    public void close() {
+        config.getWriter().write(paths.stream().collect(Collectors.joining("\n")));
     }
 }

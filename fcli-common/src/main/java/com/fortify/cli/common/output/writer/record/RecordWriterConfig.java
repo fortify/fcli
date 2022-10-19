@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.writer.record;
 
-import java.io.PrintWriter;
+import java.io.Writer;
 
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.writer.IMessageResolver;
@@ -34,8 +34,8 @@ import lombok.Data;
 
 @Data @Builder
 public class RecordWriterConfig {
-    /** PrintWriter to which to write the output */
-    private PrintWriter printWriter;
+    /** Writer to which to write the output */
+    private Writer writer;
     /** Write singular output rather than an array/list; 
      * assumes that only a single record is passed to the {@link IRecordWriter} */ 
     private boolean singular;
