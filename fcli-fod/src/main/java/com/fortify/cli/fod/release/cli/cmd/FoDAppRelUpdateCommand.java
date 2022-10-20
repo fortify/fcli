@@ -59,7 +59,7 @@ public class FoDAppRelUpdateCommand extends AbstractFoDOutputCommand implements 
     @Getter @Mixin private FoDOutputHelperMixins.Update outputHelper;
     @Mixin private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
     @Spec CommandSpec spec;
-    ResourceBundle bundle = ResourceBundle.getBundle("com.fortify.cli.fod.i18n.FoDMessages");
+    //ResourceBundle bundle = ResourceBundle.getBundle("com.fortify.cli.fod.i18n.FoDMessages");
     @Option(names = {"--name", "-n"})
     private String releaseName;
 
@@ -82,12 +82,12 @@ public class FoDAppRelUpdateCommand extends AbstractFoDOutputCommand implements 
         FoDAppRelDescriptor appRelDescriptor = appRelResolver.getAppRelDescriptor(unirest);
         if (microserviceNameOrId != null && !microserviceNameOrId.isEmpty()) {
             try {
-                FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getAppMicroservice(unirest,
+                FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getAppMicroserviceDescriptor(unirest,
                         appRelDescriptor.getApplicationName()+":"+microserviceNameOrId, ":", true);
                 microServiceId = descriptor.getMicroserviceId();
             } catch (JsonProcessingException e) {
                 throw new CommandLine.ParameterException(spec.commandLine(),
-                        bundle.getString("fcli.fod.microservice.update.invalid-parameter"));
+                        "Unable to resolve application name and microservice name.");
             }
         }
 

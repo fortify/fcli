@@ -73,7 +73,7 @@ public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IUn
     public JsonNode getJsonNode(UnirestInstance unirest) {
 
         // current values of app being updated
-        FoDAppDescriptor appDescriptor = FoDAppHelper.getApp(unirest, appResolver.getAppNameOrId(), true);
+        FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
         ArrayList<FoDAttributeDescriptor> appAttrsCurrent = appDescriptor.getAttributes();
 
         // new values to replace

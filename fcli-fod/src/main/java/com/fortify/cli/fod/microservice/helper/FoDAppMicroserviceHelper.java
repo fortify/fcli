@@ -43,7 +43,7 @@ import javax.validation.ValidationException;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.fortify.cli.fod.app.helper.FoDAppHelper.getApp;
+import static com.fortify.cli.fod.app.helper.FoDAppHelper.getAppDescriptor;
 
 public class FoDAppMicroserviceHelper {
     @Getter
@@ -80,20 +80,20 @@ public class FoDAppMicroserviceHelper {
 
     public static final FoDAppMicroserviceDescriptor getOptionalAppMicroserviceFromAppAndMicroserviceName(UnirestInstance unirest, FoDAppAndMicroserviceNameDescriptor appAndMicroserviceNameDescriptor, String... fields) {
        try {
-            return getAppMicroservice(unirest, appAndMicroserviceNameDescriptor.getAppName(), appAndMicroserviceNameDescriptor.getMicroserviceName(), true);
+            return getAppMicroserviceDescriptor(unirest, appAndMicroserviceNameDescriptor.getAppName(), appAndMicroserviceNameDescriptor.getMicroserviceName(), true);
         } catch (JsonProcessingException e) {
             throw new ValidationException("No application microservice found for application microservice name or id: " + appAndMicroserviceNameDescriptor.getMicroserviceName());
         }
     }
     
-    public static final FoDAppMicroserviceDescriptor getAppMicroservice(UnirestInstance unirest, String appName, String microserviceName, boolean failIfNotFound) throws JsonProcessingException {
+    public static final FoDAppMicroserviceDescriptor getAppMicroserviceDescriptor(UnirestInstance unirest, String appName, String microserviceName, boolean failIfNotFound) throws JsonProcessingException {
         GetRequest request = unirest.get(FoDUrls.MICROSERVICES);
         int appId = 0;
         boolean isMicroserviceId = false; int microserviceId = 0;
         try {
             appId = Integer.parseInt(appName);
         } catch (NumberFormatException nfe) {
-            appId = getApp(unirest, appName, true).getApplicationId();
+            appId = getAppDescriptor(unirest, appName, true).getApplicationId();
         }
         try {
             microserviceId = Integer.parseInt(microserviceName); isMicroserviceId = true;
@@ -127,7 +127,7 @@ public class FoDAppMicroserviceHelper {
         FoDAppMicroserviceDescriptor descriptor = getDescriptor(response);
         ObjectNode node = getObjectMapper().createObjectNode();
         node.put("applicationId", appId);
-        node.put("applicationName", getApp(unirest, String.valueOf(appId), true).getApplicationName());
+        node.put("applicationName", getAppDescriptor(unirest, String.valueOf(appId), true).getApplicationName());
         node.put("microserviceId", descriptor.getMicroserviceId());
         node.put("microserviceName", msRequest.getMicroserviceName());
         return node;
@@ -142,14 +142,14 @@ public class FoDAppMicroserviceHelper {
         FoDAppMicroserviceDescriptor descriptor = getDescriptor(response);
         ObjectNode node = getObjectMapper().createObjectNode();
         node.put("applicationId", currentMs.getApplicationId());
-        node.put("applicationName", getApp(unirest, String.valueOf(currentMs.getApplicationId()), true).getApplicationName());
+        node.put("applicationName", getAppDescriptor(unirest, String.valueOf(currentMs.getApplicationId()), true).getApplicationName());
         node.put("microserviceId", descriptor.getMicroserviceId());
         node.put("microserviceName", msRequest.getMicroserviceName());
         return node;
     }
 
     public static final JsonNode deleteAppMicroservice(UnirestInstance unirest, FoDAppMicroserviceDescriptor currentMs) {
-        FoDAppDescriptor appDescriptor = getApp(unirest, String.valueOf(currentMs.getApplicationId()), true);
+        FoDAppDescriptor appDescriptor = getAppDescriptor(unirest, String.valueOf(currentMs.getApplicationId()), true);
         JsonNode response = unirest.delete(FoDUrls.MICROSERVICES_UPDATE)
                 .routeParam("appId", String.valueOf(currentMs.getApplicationId()))
                 .routeParam("microserviceId", String.valueOf(currentMs.getMicroserviceId()))

@@ -55,14 +55,12 @@ import java.util.ResourceBundle;
 public class FoDAppRelCreateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
-    ResourceBundle bundle = ResourceBundle.getBundle("com.fortify.cli.fod.i18n.FoDMessages");
+    //ResourceBundle bundle = ResourceBundle.getBundle("com.fortify.cli.fod.i18n.FoDMessages");
     @Mixin private FoDAppAndRelNameResolverMixin.PositionalParameter appAndRelNameResolver;
 
     @Option(names = {"--description", "-d"})
     private String description;
-    @Option(names = {"--copy-state"})
-    private Boolean copyState;
-    @Option(names = {"--copy-release"})
+    @Option(names = {"--copy-from"})
     private String copyReleaseNameOrId;
     @Option(names = {"--microservice"})
     private String microserviceNameOrId;
@@ -83,20 +81,21 @@ public class FoDAppRelCreateCommand extends AbstractFoDOutputCommand implements 
 
         int copyReleaseId = 0;
         int microServiceId = 0;
-        if (copyState != null && copyState) {
-            copyReleaseId = FoDAppRelHelper.getAppRel(unirest,appAndRelNameDescriptor.getAppName()+":"+copyReleaseNameOrId,
+        boolean copyState = (copyReleaseNameOrId != null && !copyReleaseNameOrId.isEmpty());
+        if (copyState) {
+            copyReleaseId = FoDAppRelHelper.getAppRelDescriptor(unirest,appAndRelNameDescriptor.getAppName()+":"+copyReleaseNameOrId,
                     ":", true).getReleaseId();
         }
         if (microserviceNameOrId != null && !microserviceNameOrId.isEmpty()) {
             try {
-                FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getAppMicroservice(unirest, appAndRelNameDescriptor.getAppName()+":"+ microserviceNameOrId, ":", true);
+                FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getAppMicroserviceDescriptor(unirest, appAndRelNameDescriptor.getAppName()+":"+ microserviceNameOrId, ":", true);
                 microServiceId = descriptor.getMicroserviceId();
             } catch (JsonProcessingException e) {
                 throw new CommandLine.ParameterException(spec.commandLine(),
-                        bundle.getString("fcli.fod.microservice.update.invalid-parameter"));
+                        "Unable to resolve application name and microservice name.");
             }
         }
-        int appId = FoDAppHelper.getApp(unirest, appAndRelNameDescriptor.getAppName(), true).getApplicationId();
+        int appId = FoDAppHelper.getAppDescriptor(unirest, appAndRelNameDescriptor.getAppName(), true).getApplicationId();
 
         FoDAppRelCreateRequest relCreateRequest = new FoDAppRelCreateRequest()
                 .setApplicationId(appId)

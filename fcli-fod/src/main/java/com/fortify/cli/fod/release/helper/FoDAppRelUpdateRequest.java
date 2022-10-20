@@ -24,17 +24,14 @@
  ******************************************************************************/
 package com.fortify.cli.fod.release.helper;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
 @ReflectiveAccess
 @Getter
 @ToString
-@EqualsAndHashCode(callSuper = true)
-public class FoDAppRelUpdateRequest extends JsonNodeHolder {
+public class FoDAppRelUpdateRequest {
     private String releaseName;
     private String releaseDescription;
     private String sdlcStatusType;

@@ -67,7 +67,7 @@ public class FoDAppMicroserviceListCommand extends AbstractFoDOutputCommand impl
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        FoDAppDescriptor appDescriptor = FoDAppHelper.getApp(unirest, appResolver.getAppNameOrId(), true);
+        FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
         return unirest.get(FoDUrls.MICROSERVICES)
                 .routeParam("appId", String.valueOf(appDescriptor.getApplicationId()))
                 .queryString("includeReleases", (includeReleases != null && includeReleases ? "true" : "false"));

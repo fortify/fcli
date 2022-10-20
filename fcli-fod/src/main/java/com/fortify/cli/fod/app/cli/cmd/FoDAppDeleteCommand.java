@@ -48,7 +48,7 @@ public class FoDAppDeleteCommand extends AbstractFoDOutputCommand implements IUn
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        FoDAppDescriptor appDescriptor = FoDAppHelper.getApp(unirest, appResolver.getAppNameOrId(), true);
+        FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
         unirest.delete(FoDUrls.APPLICATION)
                 .routeParam("appId", appResolver.getAppId(unirest))
                 .asObject(JsonNode.class).getBody();

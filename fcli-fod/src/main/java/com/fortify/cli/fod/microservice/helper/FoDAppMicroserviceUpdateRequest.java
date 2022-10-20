@@ -25,17 +25,14 @@
 
 package com.fortify.cli.fod.microservice.helper;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
 @ReflectiveAccess
 @Getter
 @ToString
-@EqualsAndHashCode(callSuper = true)
-public class FoDAppMicroserviceUpdateRequest extends JsonNodeHolder {
+public class FoDAppMicroserviceUpdateRequest {
     private String microserviceName;
 
     public FoDAppMicroserviceUpdateRequest setMicroserviceName(String name) {

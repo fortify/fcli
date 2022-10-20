@@ -78,7 +78,7 @@ public class FoDAppRelHelper {
 
     }
 
-    public static final FoDAppRelDescriptor getAppRel(UnirestInstance unirest, String appAndRelNameOrId, String delimiter, boolean failIfNotFound) {
+    public static final FoDAppRelDescriptor getAppRelDescriptor(UnirestInstance unirest, String appAndRelNameOrId, String delimiter, boolean failIfNotFound) {
         String[] appAndRelName = appAndRelNameOrId.split(delimiter);
         GetRequest request = unirest.get(FoDUrls.RELEASES);
         boolean isAppId = false; int appId = 0;
@@ -126,7 +126,7 @@ public class FoDAppRelHelper {
         return rel.size() == 0 ? null : getDescriptor(rel.get(0));
     }
 
-    public static final FoDAppRelDescriptor getAppRelById(UnirestInstance unirest, String relId, boolean failIfNotFound) {
+    public static final FoDAppRelDescriptor getAppRelDescriptorById(UnirestInstance unirest, String relId, boolean failIfNotFound) {
         GetRequest request = unirest.get(FoDUrls.RELEASE).routeParam("relId", relId);
         JsonNode rel = request.asObject(ObjectNode.class).getBody();
         if (failIfNotFound && rel.get("releaseName").asText().isEmpty()) {
@@ -140,7 +140,7 @@ public class FoDAppRelHelper {
         JsonNode response = unirest.post(FoDUrls.RELEASES)
                 .body(body).asObject(JsonNode.class).getBody();
         FoDAppRelDescriptor descriptor = JsonHelper.treeToValue(response, FoDAppRelDescriptor.class);
-        return getAppRelById(unirest, String.valueOf(descriptor.getReleaseId()), true);
+        return getAppRelDescriptorById(unirest, String.valueOf(descriptor.getReleaseId()), true);
     }
 
     public static final FoDAppRelDescriptor updateAppRel(UnirestInstance unirest, Integer relId,
@@ -149,7 +149,7 @@ public class FoDAppRelHelper {
         unirest.put(FoDUrls.RELEASE)
                 .routeParam("relId", String.valueOf(relId))
                 .body(body).asObject(JsonNode.class).getBody();
-        return getAppRelById(unirest, String.valueOf(relId), true);
+        return getAppRelDescriptorById(unirest, String.valueOf(relId), true);
     }
 
     public static boolean missing(List<?> list) {

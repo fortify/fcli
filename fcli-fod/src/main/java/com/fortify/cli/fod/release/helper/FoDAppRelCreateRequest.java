@@ -25,17 +25,14 @@
 
 package com.fortify.cli.fod.release.helper;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
 @ReflectiveAccess
 @Getter
 @ToString
-@EqualsAndHashCode(callSuper = true)
-public class FoDAppRelCreateRequest extends JsonNodeHolder {
+public class FoDAppRelCreateRequest {
     private Integer applicationId;
     private String releaseName;
     private String releaseDescription;

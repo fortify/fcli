@@ -53,7 +53,7 @@ import java.util.ResourceBundle;
 public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
-    ResourceBundle bundle = ResourceBundle.getBundle("com.fortify.cli.fod.i18n.FoDMessages");
+    //ResourceBundle bundle = ResourceBundle.getBundle("com.fortify.cli.fod.i18n.FoDMessages");
 
     @Parameters(index = "0", arity = "1", descriptionKey = "application-name")
     private String applicationName;
@@ -113,10 +113,10 @@ public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IUn
         if (appType.getAppType().equals(FoDAppTypeOptions.FoDAppType.Microservice)) {
             if ((FoDAppHelper.missing(microservices) || (releaseMicroservice == null || releaseMicroservice.isEmpty())))
                 throw new ParameterException(spec.commandLine(),
-                        bundle.getString("fcli.fod.app.create.missing-microservice"));
+                        "Missing option: if 'Microservice' type is specified then one or more 'microservice' options need to specified.");
             if (!microservices.contains(releaseMicroservice))
                 throw new ParameterException(spec.commandLine(),
-                        bundle.getString("fcli.fod.app.create.invalid-microservice"));
+                        "Invalid option: the 'release-microservice' option specified was not found in the 'microservice' options.");
         }
     }
 

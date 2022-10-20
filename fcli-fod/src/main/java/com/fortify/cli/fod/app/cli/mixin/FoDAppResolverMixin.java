@@ -45,7 +45,7 @@ public class FoDAppResolverMixin {
         public abstract String getAppNameOrId();
 
         public FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String... fields){
-            return FoDAppHelper.getApp(unirest, resolvePredefinedVariable(getAppNameOrId()), true);
+            return FoDAppHelper.getAppDescriptor(unirest, resolvePredefinedVariable(getAppNameOrId()), true);
         }
 
         public String getAppId(UnirestInstance unirest) {

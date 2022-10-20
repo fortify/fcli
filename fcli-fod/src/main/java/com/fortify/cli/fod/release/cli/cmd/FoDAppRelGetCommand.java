@@ -41,7 +41,7 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
 public class FoDAppRelGetCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer {
-    @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
+    @Getter @Mixin private FoDOutputHelperMixins.Get outputHelper;
     @Mixin private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
 
     @Override
@@ -56,6 +56,6 @@ public class FoDAppRelGetCommand extends AbstractFoDOutputCommand implements IUn
 
     @Override
     public boolean isSingular() {
-        return false;
+        return true;
     }
 }

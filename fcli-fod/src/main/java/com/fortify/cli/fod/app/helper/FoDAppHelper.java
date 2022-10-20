@@ -52,7 +52,7 @@ public class FoDAppHelper {
         }).transform(record);
     }
 
-    public static final FoDAppDescriptor getApp(UnirestInstance unirest, String appNameOrId, boolean failIfNotFound) {
+    public static final FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String appNameOrId, boolean failIfNotFound) {
         GetRequest request = unirest.get(FoDUrls.APPLICATIONS);
         try {
             int appId = Integer.parseInt(appNameOrId);
@@ -92,7 +92,7 @@ public class FoDAppHelper {
         unirest.put(FoDUrls.APPLICATION)
                 .routeParam("appId", String.valueOf(appId))
                 .body(body).asObject(JsonNode.class).getBody();
-        return getApp(unirest, String.valueOf(appId), true);
+        return getAppDescriptor(unirest, String.valueOf(appId), true);
     }
 
     public static String getEmailList(ArrayList<String> notifications) {

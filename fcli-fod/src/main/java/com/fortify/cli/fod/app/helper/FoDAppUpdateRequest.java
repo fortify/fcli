@@ -25,17 +25,14 @@
 package com.fortify.cli.fod.app.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
 @ReflectiveAccess
 @Getter
 @ToString
-@EqualsAndHashCode(callSuper = true)
-public class FoDAppUpdateRequest extends JsonNodeHolder {
+public class FoDAppUpdateRequest {
     private String applicationName;
     private String applicationDescription;
     private String businessCriticalityType;

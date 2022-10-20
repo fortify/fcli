@@ -42,7 +42,7 @@ import java.util.Map;
 public class FoDAttributeHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
-    public static final FoDAttributeDescriptor getAttribute(UnirestInstance unirestInstance, String attrNameOrId, boolean failIfNotFound) {
+    public static final FoDAttributeDescriptor getAttributeDescriptor(UnirestInstance unirestInstance, String attrNameOrId, boolean failIfNotFound) {
         GetRequest request = unirestInstance.get(FoDUrls.ATTRIBUTES);
         try {
             int attrId = Integer.parseInt(attrNameOrId);
@@ -66,7 +66,7 @@ public class FoDAttributeHelper {
         if (updates == null || updates.isEmpty()) return attrArray;
         Map<Integer, String> updatesWithId = new HashMap<>();
         for (Map.Entry<String, String> attr : updates.entrySet()) {
-            FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttribute(unirest, attr.getKey(), true);
+            FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttributeDescriptor(unirest, attr.getKey(), true);
             updatesWithId.put(Integer.valueOf(attributeDescriptor.getId()), attr.getValue());
         }
         for (FoDAttributeDescriptor attr : current) {
@@ -100,7 +100,7 @@ public class FoDAttributeHelper {
         if (attributesMap == null || attributesMap.isEmpty()) return attrArray;
         for (Map.Entry<String, String> attr : attributesMap.entrySet()) {
             ObjectNode attrObj = getObjectMapper().createObjectNode();
-            FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttribute(unirest, attr.getKey(), true);
+            FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttributeDescriptor(unirest, attr.getKey(), true);
             attrObj.put("id", attributeDescriptor.getId());
             attrObj.put("value", attr.getValue());
             attrArray.add(attrObj);

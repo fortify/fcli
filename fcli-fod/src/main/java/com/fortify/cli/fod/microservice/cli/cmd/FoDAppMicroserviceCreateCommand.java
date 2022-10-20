@@ -63,7 +63,7 @@ public class FoDAppMicroserviceCreateCommand extends AbstractFoDOutputCommand im
         FoDAppAndMicroserviceNameDescriptor appAndMicroserviceNameDescriptor = FoDAppAndMicroserviceNameDescriptor.fromCombinedAppAndMicroserviceName(
                 appAndMicroserviceNameResolver.getAppAndMicroserviceName(), appAndMicroserviceNameResolver.getDelimiter());
 
-        FoDAppDescriptor appDescriptor = FoDAppHelper.getApp(unirest, appAndMicroserviceNameDescriptor.getAppName(), true);
+        FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appAndMicroserviceNameDescriptor.getAppName(), true);
         FoDAppMicroserviceUpdateRequest msCreateRequest = new FoDAppMicroserviceUpdateRequest()
                 .setMicroserviceName(appAndMicroserviceNameDescriptor.getMicroserviceName());
         return FoDAppMicroserviceHelper.createAppMicroservice(unirest, appDescriptor.getApplicationId(), msCreateRequest);
