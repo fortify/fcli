@@ -22,46 +22,23 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.helper;
 
-import com.fasterxml.jackson.databind.JsonNode;
+package com.fortify.cli.fod.microservice.cli.mixin;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 
-@ReflectiveAccess
-@Getter
-@ToString
-public class FoDAppUpdateRequest {
-    private String applicationName;
-    private String applicationDescription;
-    private String businessCriticalityType;
-    private String emailList;
-    private JsonNode attributes;
+import javax.validation.ValidationException;
 
-    public FoDAppUpdateRequest setApplicationName(String name) {
-        this.applicationName = name;
-        return this;
+@Data @ReflectiveAccess
+public final class FoDAppAndMicroserviceNameDescriptor {
+    private final String appName, microserviceName;
+    
+    public static final FoDAppAndMicroserviceNameDescriptor fromCombinedAppAndMicroserviceName(String appAndMicroserviceName, String delimiter) {
+        String[] appAndMicroserviceNameArray = appAndMicroserviceName.split(delimiter);
+        if (appAndMicroserviceNameArray.length != 2) {
+            throw new ValidationException("Application and microservice name must be specified in the format <application name>"+delimiter+"<microservice name>");
+        }
+        return new FoDAppAndMicroserviceNameDescriptor(appAndMicroserviceNameArray[0], appAndMicroserviceNameArray[1]);
     }
-
-    public FoDAppUpdateRequest setApplicationDescription(String description) {
-        this.applicationDescription = description;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setBusinessCriticalityType(String type) {
-        this.businessCriticalityType = type;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setEmailList(String list) {
-        this.emailList = list;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setAttributes(JsonNode attributes) {
-        this.attributes = attributes;
-        return this;
-    }
-
 }

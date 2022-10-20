@@ -22,46 +22,22 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.helper;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import lombok.ToString;
+package com.fortify.cli.fod.microservice.cli.cmd;
 
-@ReflectiveAccess
-@Getter
-@ToString
-public class FoDAppUpdateRequest {
-    private String applicationName;
-    private String applicationDescription;
-    private String businessCriticalityType;
-    private String emailList;
-    private JsonNode attributes;
+import com.fortify.cli.common.variable.PredefinedVariable;
+import picocli.CommandLine;
 
-    public FoDAppUpdateRequest setApplicationName(String name) {
-        this.applicationName = name;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setApplicationDescription(String description) {
-        this.applicationDescription = description;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setBusinessCriticalityType(String type) {
-        this.businessCriticalityType = type;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setEmailList(String list) {
-        this.emailList = list;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setAttributes(JsonNode attributes) {
-        this.attributes = attributes;
-        return this;
-    }
-
+@CommandLine.Command(name = "microservice",
+        aliases = {"application-microservice", "app-ms"},
+        subcommands = {
+                FoDAppMicroserviceCreateCommand.class,
+                FoDAppMicroserviceListCommand.class,
+                //FoDAppMicroserviceGetCommand.class,
+                FoDAppMicroserviceUpdateCommand.class,
+                FoDAppMicroserviceDeleteCommand.class
+        }
+)
+@PredefinedVariable(name = "currentMicroservice", field = "id")
+public class FoDAppMicroserviceCommands {
 }

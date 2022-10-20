@@ -22,41 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.mixin;
+
+package com.fortify.cli.fod.release.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-import java.util.ArrayList;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-public class FoDSdlcStatusTypeOptions {
-    public enum FoDSdlcStatusType {Development, QA, Production}
+public class FoDAppAndRelNameResolverMixin {
 
     @ReflectiveAccess
-    public static final class FoDSdlcStatusTypeIterable extends ArrayList<String> {
-        private static final long serialVersionUID = 1L;
-        public FoDSdlcStatusTypeIterable() {
-            super(Stream.of(FoDSdlcStatusType.values()).map(FoDSdlcStatusType::name).collect(Collectors.toList()));
+    public static abstract class AbstractFoDAppAndRelNameResolverMixin {
+        @Mixin private FoDDelimiterMixin delimiterMixin;
+        public abstract String getAppAndRelName();
+
+        public final FoDAppAndRelNameDescriptor getAppAndRelNameDescriptor() {
+            if (getAppAndRelName() == null) { return null; }
+            return FoDAppAndRelNameDescriptor.fromCombinedAppAndRelName(getAppAndRelName(), getDelimiter());
+        }
+
+        public final String getDelimiter() {
+            return delimiterMixin.getDelimiter();
         }
     }
+
     @ReflectiveAccess
-    public static abstract class AbstractFoDSdlcStatusType {
-        public abstract FoDSdlcStatusType getSdlcStatusType();
+    public static class RequiredOption extends AbstractFoDAppAndRelNameResolverMixin {
+        @Option(names = {"--rel", "--release"}, required = true, descriptionKey = "ApplicationReleaseMixin")
+        @Getter private String appAndRelName;
     }
 
     @ReflectiveAccess
-    public static class RequiredSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    public static class PositionalParameter extends AbstractFoDAppAndRelNameResolverMixin {
+        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationReleaseMixin")
+        @Getter private String appAndRelName;
     }
-
-    @ReflectiveAccess
-    public static class OptionalSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = false, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
-        @Getter private FoDSdlcStatusType sdlcStatusType;
-    }
-
 }

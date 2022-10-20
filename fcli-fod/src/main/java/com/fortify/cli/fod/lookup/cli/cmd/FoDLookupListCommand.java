@@ -22,17 +22,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.cmd;
+package com.fortify.cli.fod.lookup.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
-import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
-import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.lookup.cli.mixin.FoDLookupTypeOptions;
+import com.fortify.cli.fod.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.rest.FoDUrls;
+import com.fortify.cli.fod.rest.query.FoDFilterParamGenerator;
+import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
+import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -41,24 +43,29 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
-public class FoDAppGetCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer {
-    @Getter @Mixin private FoDOutputHelperMixins.Get outputHelper;
-    @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
+@Command(name = FoDOutputHelperMixins.List.CMD_NAME)
+public class FoDLookupListCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
+    @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
+
+    @Mixin
+    private FoDLookupTypeOptions.OptionalLookupOption lookupType;
+
+    @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
+            .add("type", "type", FoDFiltersParamValueGenerators::plain);
 
     @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        return appResolver.getAppDescriptor(unirest).asJsonNode();
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+        return unirest.get(FoDUrls.LOOKUP_ITEMS).queryString("type",
+                lookupType.getLookupType().name());
     }
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
+        return FoDLookupHelper.renameFields(record);
     }
     
     @Override
     public boolean isSingular() {
-        return true;
+        return false;
     }
-
 }

@@ -22,41 +22,42 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.mixin;
 
+package com.fortify.cli.fod.microservice.cli.mixin;
+
+import com.fortify.cli.fod.release.cli.mixin.FoDDelimiterMixin;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-import java.util.ArrayList;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-public class FoDSdlcStatusTypeOptions {
-    public enum FoDSdlcStatusType {Development, QA, Production}
+public class FoDAppAndMicroserviceNameResolverMixin {
 
     @ReflectiveAccess
-    public static final class FoDSdlcStatusTypeIterable extends ArrayList<String> {
-        private static final long serialVersionUID = 1L;
-        public FoDSdlcStatusTypeIterable() {
-            super(Stream.of(FoDSdlcStatusType.values()).map(FoDSdlcStatusType::name).collect(Collectors.toList()));
+    public static abstract class AbstractFoDAppAndMicroserviceNameResolverMixin {
+        @Mixin private FoDDelimiterMixin delimiterMixin;
+        public abstract String getAppAndMicroserviceName();
+
+        public final FoDAppAndMicroserviceNameDescriptor getAppAndMicroserviceNameDescriptor() {
+            if (getAppAndMicroserviceName() == null) { return null; }
+            return FoDAppAndMicroserviceNameDescriptor.fromCombinedAppAndMicroserviceName(getAppAndMicroserviceName(), getDelimiter());
+        }
+
+        public final String getDelimiter() {
+            return delimiterMixin.getDelimiter();
         }
     }
+
     @ReflectiveAccess
-    public static abstract class AbstractFoDSdlcStatusType {
-        public abstract FoDSdlcStatusType getSdlcStatusType();
+    public static class RequiredOption extends AbstractFoDAppAndMicroserviceNameResolverMixin {
+        @Option(names = {"--microservice"}, required = true, descriptionKey = "ApplicationMicroserviceMixin")
+        @Getter private String appAndMicroserviceName;
     }
 
     @ReflectiveAccess
-    public static class RequiredSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    public static class PositionalParameter extends AbstractFoDAppAndMicroserviceNameResolverMixin {
+        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMicroserviceMixin")
+        @Getter private String appAndMicroserviceName;
     }
-
-    @ReflectiveAccess
-    public static class OptionalSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = false, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
-        @Getter private FoDSdlcStatusType sdlcStatusType;
-    }
-
 }

@@ -8,10 +8,10 @@
  * sublicense, and/or sell copies of the Software, and to permit persons to 
  * whom the Software is furnished to do so, subject to the following 
  * conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included 
  * in all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY 
  * KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE 
  * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
@@ -23,52 +23,54 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.app.cli.mixin;
+package com.fortify.cli.fod.release.cli.mixin;
 
 import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
-import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
-import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
-import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.release.cli.cmd.FoDAppRelCommands;
+import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
+import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Spec;
 import picocli.CommandLine.Spec.Target;
 
-public class FoDAppResolverMixin {    
+public class FoDAppRelResolverMixin {
     @ReflectiveAccess
-    public static abstract class AbstractFoDAppResolverMixin extends AbstractPredefinedVariableResolverMixin {
-        public abstract String getAppNameOrId();
+    public static abstract class AbstractFoDAppRelResolverMixin extends AbstractPredefinedVariableResolverMixin {
+        @Mixin private FoDDelimiterMixin delimiterMixin;
+        public abstract String getAppRelNameOrId();
 
-        public FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String... fields){
-            return FoDAppHelper.getAppDescriptor(unirest, resolvePredefinedVariable(getAppNameOrId()), true);
+        public FoDAppRelDescriptor getAppRelDescriptor(UnirestInstance unirest, String... fields){
+            return FoDAppRelHelper.getRequiredAppRel(unirest, resolvePredefinedVariable(getAppRelNameOrId()), delimiterMixin.getDelimiter(), fields);
         }
-
-        public String getAppId(UnirestInstance unirest) {
-            return getAppDescriptor(unirest, "applicationId").getApplicationId().toString();
+        
+        public String getAppRelId(UnirestInstance unirest) {
+            return String.valueOf(getAppRelDescriptor(unirest, "id").getReleaseId());
         }
         
         @Override
         protected Class<?> getPredefinedVariableClass() {
-            return FoDAppCommands.class;
+            return FoDAppRelCommands.class;
         }
     }
-
+    
     @ReflectiveAccess
-    public static class RequiredOption extends AbstractFoDAppResolverMixin {
+    public static class RequiredOption extends AbstractFoDAppRelResolverMixin {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Option(names = {"--app"}, required = true, descriptionKey = "ApplicationMixin")
-        @Getter private String appNameOrId;
+        @Option(names = {"--rel", "--release"}, required = true, descriptionKey = "ApplicationReleaseMixin")
+        @Getter private String appRelNameOrId;
     }
-
+    
     @ReflectiveAccess
-    public static class PositionalParameter extends AbstractFoDAppResolverMixin {
+    public static class PositionalParameter extends AbstractFoDAppRelResolverMixin {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMixin")
-        @Getter private String appNameOrId;
+        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationReleaseMixin")
+        @Getter private String appRelNameOrId;
     }
 }

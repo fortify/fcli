@@ -22,46 +22,34 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.helper;
 
-import com.fasterxml.jackson.databind.JsonNode;
+package com.fortify.cli.fod.release.helper;
+
+import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @ReflectiveAccess
-@Getter
-@ToString
-public class FoDAppUpdateRequest {
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class FoDAppRelDescriptor extends JsonNodeHolder {
+    private Integer releaseId;
+    private String releaseName;
+    private String releaseDescription;
+    private Boolean suspended;
+    private String microserviceName;
+    private Integer microserviceId;
+    private Integer applicationId;
     private String applicationName;
-    private String applicationDescription;
-    private String businessCriticalityType;
-    private String emailList;
-    private JsonNode attributes;
-
-    public FoDAppUpdateRequest setApplicationName(String name) {
-        this.applicationName = name;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setApplicationDescription(String description) {
-        this.applicationDescription = description;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setBusinessCriticalityType(String type) {
-        this.businessCriticalityType = type;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setEmailList(String list) {
-        this.emailList = list;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setAttributes(JsonNode attributes) {
-        this.attributes = attributes;
-        return this;
-    }
-
+    private Integer rating;
+    private Integer critical;
+    private Integer high;
+    private Integer medium;
+    private Integer low;
+    private Integer issueCount;
+    private Boolean isPassed;
+    private String passFailReasonType;
+    private String sdlcStatusType;
+    private Integer ownerId;
 }

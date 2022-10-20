@@ -22,12 +22,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.apprelease.cli.cmd;
+
+package com.fortify.cli.fod.microservice.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
+import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
+import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.rest.FoDUrls;
@@ -38,31 +42,35 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.List.CMD_NAME)
-public class FoDAppReleaseListCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
+public class FoDAppMicroserviceListCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
+    @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
+
+    @CommandLine.Option(names = {"--include-releases"})
+    private Boolean includeReleases;
 
     @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
-            .add("id", "releaseId", FoDFiltersParamValueGenerators::plain)
-            .add("name", "releaseName", FoDFiltersParamValueGenerators::plain)
-            .add("microserviceId", "microservice.id", FoDFiltersParamValueGenerators::plain)
-            .add("microserviceName", "microservice.name", FoDFiltersParamValueGenerators::plain)
-            .add("applicationId", "application.id", FoDFiltersParamValueGenerators::plain)
-            .add("applicationName", "application.name", FoDFiltersParamValueGenerators::plain);
+            .add("id", "microserviceId", FoDFiltersParamValueGenerators::plain)
+            .add("name", "microserviceName", FoDFiltersParamValueGenerators::plain)
+            .add("releaseId", "release.id", FoDFiltersParamValueGenerators::plain);
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        // TODO: change to FoDReleaseHelper when implemented
-        return FoDAppHelper.renameFields(record);
+        return FoDAppMicroserviceHelper.renameFields(record);
     }
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(FoDUrls.RELEASES);
+        FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
+        return unirest.get(FoDUrls.MICROSERVICES)
+                .routeParam("appId", String.valueOf(appDescriptor.getApplicationId()))
+                .queryString("includeReleases", (includeReleases != null && includeReleases ? "true" : "false"));
     }
     
     @Override

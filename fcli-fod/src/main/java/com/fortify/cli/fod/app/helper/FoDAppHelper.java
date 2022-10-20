@@ -89,7 +89,6 @@ public class FoDAppHelper {
     public static final FoDAppDescriptor updateApp(UnirestInstance unirest, Integer appId,
                                                    FoDAppUpdateRequest appUpdateRequest) {
         ObjectNode body = objectMapper.valueToTree(appUpdateRequest);
-        System.out.println(body.toPrettyString());
         unirest.put(FoDUrls.APPLICATION)
                 .routeParam("appId", String.valueOf(appId))
                 .body(body).asObject(JsonNode.class).getBody();

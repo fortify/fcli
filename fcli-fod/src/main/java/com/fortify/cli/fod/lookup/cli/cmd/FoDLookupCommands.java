@@ -22,46 +22,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.helper;
+package com.fortify.cli.fod.lookup.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import lombok.ToString;
+import picocli.CommandLine;
 
-@ReflectiveAccess
-@Getter
-@ToString
-public class FoDAppUpdateRequest {
-    private String applicationName;
-    private String applicationDescription;
-    private String businessCriticalityType;
-    private String emailList;
-    private JsonNode attributes;
-
-    public FoDAppUpdateRequest setApplicationName(String name) {
-        this.applicationName = name;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setApplicationDescription(String description) {
-        this.applicationDescription = description;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setBusinessCriticalityType(String type) {
-        this.businessCriticalityType = type;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setEmailList(String list) {
-        this.emailList = list;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setAttributes(JsonNode attributes) {
-        this.attributes = attributes;
-        return this;
-    }
-
+@CommandLine.Command(name = "lookup",
+        aliases = {"lookup-items"},
+        subcommands = {
+                FoDLookupListCommand.class
+        }
+)
+public class FoDLookupCommands {
 }

@@ -22,43 +22,52 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.cmd;
+
+package com.fortify.cli.fod.microservice.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
-import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
-import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.microservice.cli.mixin.FoDAppMicroserviceResolverMixin;
+import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
+import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.rest.FoDUrls;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
-@Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
-public class FoDAppGetCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer {
-    @Getter @Mixin private FoDOutputHelperMixins.Get outputHelper;
-    @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
+@Command(name = FoDOutputHelperMixins.Delete.CMD_NAME)
+public class FoDAppMicroserviceDeleteCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+    @Getter @Mixin private FoDOutputHelperMixins.Delete outputHelper;
+    @Spec CommandSpec spec;
+
+    @Mixin private FoDAppMicroserviceResolverMixin.PositionalParameter appMicroserviceResolver;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        return appResolver.getAppDescriptor(unirest).asJsonNode();
+        FoDAppMicroserviceDescriptor appMicroserviceDescriptor = appMicroserviceResolver.getAppMicroserviceDescriptor(unirest);
+        return FoDAppMicroserviceHelper.deleteAppMicroservice(unirest, appMicroserviceDescriptor);
     }
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
+        return FoDAppMicroserviceHelper.renameFields(record);
+    }
+
+    @Override
+    public String getActionCommandResult() {
+        return "DELETED";
     }
     
     @Override
     public boolean isSingular() {
         return true;
     }
-
 }

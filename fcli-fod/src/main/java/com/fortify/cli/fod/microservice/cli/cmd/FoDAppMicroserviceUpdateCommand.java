@@ -22,43 +22,55 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.cmd;
+
+package com.fortify.cli.fod.microservice.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
-import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
-import com.fortify.cli.fod.app.helper.FoDAppHelper;
+import com.fortify.cli.fod.microservice.cli.mixin.FoDAppMicroserviceResolverMixin;
+import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
+import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
+import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceUpdateRequest;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.rest.FoDUrls;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
-public class FoDAppGetCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer {
-    @Getter @Mixin private FoDOutputHelperMixins.Get outputHelper;
-    @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
+@Command(name = FoDOutputHelperMixins.Update.CMD_NAME)
+public class FoDAppMicroserviceUpdateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+    @Getter @Mixin private FoDOutputHelperMixins.Update outputHelper;
+    @Mixin private FoDAppMicroserviceResolverMixin.PositionalParameter appMicroserviceResolver;
+
+    @Option(names = {"--name", "-n"}, required = true)
+    private String microserviceName;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        return appResolver.getAppDescriptor(unirest).asJsonNode();
+        FoDAppMicroserviceDescriptor appMicroserviceDescriptor = appMicroserviceResolver.getAppMicroserviceDescriptor(unirest);
+        FoDAppMicroserviceUpdateRequest msUpdateRequest = new FoDAppMicroserviceUpdateRequest()
+                .setMicroserviceName(microserviceName);
+        return FoDAppMicroserviceHelper.updateteAppMicroservice(unirest, appMicroserviceDescriptor, msUpdateRequest);
     }
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
+        return FoDAppMicroserviceHelper.renameFields(record);
     }
-    
+
+    @Override
+    public String getActionCommandResult() {
+        return "UPDATED";
+    }
+
     @Override
     public boolean isSingular() {
         return true;
     }
-
 }

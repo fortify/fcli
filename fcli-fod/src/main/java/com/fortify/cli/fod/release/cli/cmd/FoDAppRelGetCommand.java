@@ -22,41 +22,40 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.mixin;
 
+package com.fortify.cli.fod.release.cli.cmd;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
+import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
+import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
+import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
-import java.util.ArrayList;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+@ReflectiveAccess
+@Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
+public class FoDAppRelGetCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer {
+    @Getter @Mixin private FoDOutputHelperMixins.Get outputHelper;
+    @Mixin private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
 
-public class FoDSdlcStatusTypeOptions {
-    public enum FoDSdlcStatusType {Development, QA, Production}
-
-    @ReflectiveAccess
-    public static final class FoDSdlcStatusTypeIterable extends ArrayList<String> {
-        private static final long serialVersionUID = 1L;
-        public FoDSdlcStatusTypeIterable() {
-            super(Stream.of(FoDSdlcStatusType.values()).map(FoDSdlcStatusType::name).collect(Collectors.toList()));
-        }
-    }
-    @ReflectiveAccess
-    public static abstract class AbstractFoDSdlcStatusType {
-        public abstract FoDSdlcStatusType getSdlcStatusType();
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return appRelResolver.getAppRelDescriptor(unirest).asJsonNode();
     }
 
-    @ReflectiveAccess
-    public static class RequiredSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDAppRelHelper.renameFields(record);
     }
 
-    @ReflectiveAccess
-    public static class OptionalSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = false, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    @Override
+    public boolean isSingular() {
+        return true;
     }
-
 }

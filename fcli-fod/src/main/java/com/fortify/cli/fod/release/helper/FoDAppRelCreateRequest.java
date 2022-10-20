@@ -22,41 +22,58 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.mixin;
+
+package com.fortify.cli.fod.release.helper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
-import picocli.CommandLine.Option;
+import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+@ReflectiveAccess
+@Getter
+@ToString
+public class FoDAppRelCreateRequest {
+    private Integer applicationId;
+    private String releaseName;
+    private String releaseDescription;
+    private boolean copyState = false;
+    private Integer copyStateReleaseId;
+    private String sdlcStatusType;
+    private Integer microserviceId;
 
-public class FoDSdlcStatusTypeOptions {
-    public enum FoDSdlcStatusType {Development, QA, Production}
-
-    @ReflectiveAccess
-    public static final class FoDSdlcStatusTypeIterable extends ArrayList<String> {
-        private static final long serialVersionUID = 1L;
-        public FoDSdlcStatusTypeIterable() {
-            super(Stream.of(FoDSdlcStatusType.values()).map(FoDSdlcStatusType::name).collect(Collectors.toList()));
-        }
-    }
-    @ReflectiveAccess
-    public static abstract class AbstractFoDSdlcStatusType {
-        public abstract FoDSdlcStatusType getSdlcStatusType();
+    public FoDAppRelCreateRequest setApplicationId(Integer id) {
+        this.applicationId = id;
+        return this;
     }
 
-    @ReflectiveAccess
-    public static class RequiredSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    public FoDAppRelCreateRequest setReleaseName(String name) {
+        this.releaseName = name;
+        return this;
     }
 
-    @ReflectiveAccess
-    public static class OptionalSdlcOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = false, arity = "1", completionCandidates = FoDSdlcStatusTypeIterable.class)
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    public FoDAppRelCreateRequest setReleaseDescription(String description) {
+        this.releaseDescription = (description == null ? "" : description);
+        return this;
+    }
+
+    public FoDAppRelCreateRequest setCopyState(Boolean copyState) {
+        this.copyState = (copyState != null ? copyState : false);
+        return this;
+    }
+
+    public FoDAppRelCreateRequest setCopyStateReleaseId(Integer id) {
+        this.copyStateReleaseId = id;
+        return this;
+    }
+
+    public FoDAppRelCreateRequest setSdlcStatusType(String statusType) {
+        this.sdlcStatusType = statusType;
+        return this;
+    }
+
+    public FoDAppRelCreateRequest setMicroserviceId(Integer id) {
+        this.microserviceId = id;
+        return this;
     }
 
 }

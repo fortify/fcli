@@ -22,46 +22,23 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.helper;
 
-import com.fasterxml.jackson.databind.JsonNode;
+package com.fortify.cli.fod.release.cli.mixin;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 
-@ReflectiveAccess
-@Getter
-@ToString
-public class FoDAppUpdateRequest {
-    private String applicationName;
-    private String applicationDescription;
-    private String businessCriticalityType;
-    private String emailList;
-    private JsonNode attributes;
+import javax.validation.ValidationException;
 
-    public FoDAppUpdateRequest setApplicationName(String name) {
-        this.applicationName = name;
-        return this;
+@Data @ReflectiveAccess
+public final class FoDAppAndRelNameDescriptor {
+    private final String appName, relName;
+    
+    public static final FoDAppAndRelNameDescriptor fromCombinedAppAndRelName(String appAndRelName, String delimiter) {
+        String[] appAndRelNameArray = appAndRelName.split(delimiter);
+        if (appAndRelNameArray.length != 2) {
+            throw new ValidationException("Application and release name must be specified in the format <application name>"+delimiter+"<release name>");
+        }
+        return new FoDAppAndRelNameDescriptor(appAndRelNameArray[0], appAndRelNameArray[1]);
     }
-
-    public FoDAppUpdateRequest setApplicationDescription(String description) {
-        this.applicationDescription = description;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setBusinessCriticalityType(String type) {
-        this.businessCriticalityType = type;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setEmailList(String list) {
-        this.emailList = list;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setAttributes(JsonNode attributes) {
-        this.attributes = attributes;
-        return this;
-    }
-
 }
