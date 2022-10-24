@@ -24,37 +24,33 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
+import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
 import com.fortify.cli.ssc.appversion_artifact.cli.mixin.SSCAppVersionArtifactResolverMixin;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
-import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
+import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactStatus;
+import com.fortify.cli.ssc.rest.cli.mixin.SSCUnirestRunnerMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
-public class SSCAppVersionArtifactDeleteCommand extends AbstractSSCAppVersionArtifactOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper; 
-    @Mixin private SSCAppVersionArtifactResolverMixin.PositionalParameter artifactResolver;
+@Command(name = BasicOutputHelperMixins.WaitFor.CMD_NAME)
+public class SSCAppVersionArtifactWaitForCommand extends AbstractWaitForCommand {
+    @Getter @Mixin SSCUnirestRunnerMixin unirestRunner;
+    @Mixin private SSCAppVersionArtifactResolverMixin.PositionalParameterMulti artifactsResolver;
     
     @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        return SSCAppVersionArtifactHelper.delete(unirest, artifactResolver.getArtifactDescriptor(unirest)).asJsonNode();
-    }
-    
-    @Override
-    public String getActionCommandResult() {
-        return "DELETED";
-    }
-    
-    @Override
-    public boolean isSingular() {
-        return true;
+    protected WaitHelperBuilder configure(WaitHelperBuilder builder) {
+        return builder
+                .recordsSupplier(artifactsResolver::getArtifactDescriptorJsonNodes)
+                .recordTransformer(SSCAppVersionArtifactHelper::addScanTypes)
+                .currentStateProperty("status")
+                .knownStates(SSCAppVersionArtifactStatus.getKnownStateNames())
+                .failureStates(SSCAppVersionArtifactStatus.getFailureStateNames())
+                .defaultCompleteStates(SSCAppVersionArtifactStatus.getDefaultCompleteStateNames());
     }
 }
