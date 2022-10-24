@@ -25,7 +25,7 @@
 package com.fortify.cli.sc_sast.rest.cli.cmd;
 
 import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
-import com.fortify.cli.sc_sast.rest.cli.mixin.SCSastUnirestRunnerMixin;
+import com.fortify.cli.sc_sast.rest.cli.mixin.SCSastControllerUnirestRunnerMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -35,5 +35,5 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 @Command(name = AbstractRestCallCommand.CMD_NAME)
 public final class SCSastRestCallCommand extends AbstractRestCallCommand {
-    @Getter @Mixin private SCSastUnirestRunnerMixin unirestRunner;
+    @Getter @Mixin private SCSastControllerUnirestRunnerMixin unirestRunner;
 }

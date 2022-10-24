@@ -5,9 +5,8 @@ import picocli.CommandLine.Command;
 @Command(
         name = "scan",
         subcommands = {
-                SCSastScanCancelCommand.class,
-                SCSastScanStartCommand.class,
-                SCSastScanStatusCommand.class
+                SCSastControllerScanCancelCommand.class,
+                SCSastControllerScanStatusCommand.class
         }
 )
 public class SCSastScanCommands {
