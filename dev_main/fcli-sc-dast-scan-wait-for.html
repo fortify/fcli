@@ -455,13 +455,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
                            [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
                            [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
                            [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequeste</em>
-    _                       d&gt;_] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
-                           <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-               _            <em class="=&lt;propertyNames&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
-                           [[<strong>-q</strong>=<em>&lt;prop&gt;&lt;op&gt;&lt;value&gt;</em>]&#8230;&#8203;] (<strong>--while-all</strong>=<em>&lt;state1&gt;</em>
-                   _        [|&lt;state2&gt;]&#8230;&#8203;_ | <strong>-w</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> |
-                           <strong>-u</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> | <strong>--until-any</strong>=<em>&lt;state1&gt;</em>
-                   _        [|&lt;state2&gt;]&#8230;&#8203;<em>) _scan-id&#8217;s</em>&#8230;&#8203;</p>
+    _                       d&gt;_] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                           [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                           [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]]
+                           [<strong>--while-all</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> | <strong>-w</strong>=<em>&lt;state1&gt;</em>
+                   _        [|&lt;state2&gt;]&#8230;&#8203;_ | <strong>-u</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> |
+                           <strong>--until-any</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em>]
+                           [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em>scan-id&#8217;s</em>&#8230;&#8203;</p>
 </div>
 </div>
 </div>
@@ -560,19 +560,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_query_options">Query options:</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;prop&gt;&lt;op&gt;&lt;value&gt;</em></dt>
-<dd>
-<p>Return records that match the given query. &lt;prop&gt; specifies the property path against which the given value should be matched; use the '-o json-properties' option on the current command to see available properties. &lt;op&gt; specifies the operator; currently only '=' is supported.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="_session_options">Session options:</h2>
 <div class="sectionbody">
 <div class="dlist">
@@ -601,8 +588,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221020.092713-dev_main, built on 2022-10-20 09 28 05<br>
-Last updated 2022-10-20 09:29:14 UTC
+Version fcli version 0.20221024.120526-dev_main, built on 2022-10-24 12 05 57<br>
+Last updated 2022-10-24 12:06:57 UTC
 </div>
 </div>
 </body>
