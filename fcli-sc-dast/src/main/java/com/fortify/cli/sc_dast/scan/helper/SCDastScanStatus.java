@@ -42,12 +42,20 @@ public enum SCDastScanStatus {
         return SCDastScanStatus.values();
     }
     
+    public static final SCDastScanStatus[] getDefaultCompleteStates() {
+        return new SCDastScanStatus[]{ Complete };
+    }
+    
     public static final String[] getFailureStateNames() {
         return Stream.of(getFailureStates()).map(SCDastScanStatus::name).toArray(String[]::new);
     }
     
     public static final String[] getKnownStateNames() {
         return Stream.of(getKnownStates()).map(SCDastScanStatus::name).toArray(String[]::new);
+    }
+    
+    public static final String[] getDefaultCompleteStateNames() {
+        return Stream.of(getDefaultCompleteStates()).map(SCDastScanStatus::name).toArray(String[]::new);
     }
 
 }

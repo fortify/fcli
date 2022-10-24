@@ -22,34 +22,49 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_dast.scan.cli.cmd;
+package com.fortify.cli.common.rest.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
+import com.fortify.cli.common.output.spi.ISingularSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.cli.mixin.StandardWaitHelperProgressMonitorMixin;
+import com.fortify.cli.common.rest.cli.mixin.WaitHelperControlOptions;
+import com.fortify.cli.common.rest.cli.mixin.WaitHelperWaitOptions;
+import com.fortify.cli.common.rest.wait.WaitHelper;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastUnirestRunnerMixin;
-import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
-import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = BasicOutputHelperMixins.WaitFor.CMD_NAME)
-public class SCDastScanWaitForCommand extends AbstractWaitForCommand {
-    @Getter @Mixin SCDastUnirestRunnerMixin unirestRunner;
-    @Mixin private SCDastScanResolverMixin.PositionalParameterMulti scansResolver;
+public abstract class AbstractWaitForCommand extends AbstractUnirestRunnerCommand implements IActionCommandResultSupplier, ISingularSupplier {
+    @Getter @Mixin private BasicOutputHelperMixins.WaitFor outputHelper;
+    @Mixin private WaitHelperControlOptions controlOptions;
+    @Mixin private WaitHelperWaitOptions waitOptions;
+    @Mixin StandardWaitHelperProgressMonitorMixin progressMonitorMixin;
     
     @Override
-    protected WaitHelperBuilder configure(WaitHelperBuilder builder) {
-        return builder
-                .recordsSupplier(scansResolver::getScanDescriptorJsonNodes)
-                .recordTransformer(SCDastScanStatus::addScanStatus)
-                .currentStateProperty("scanStatus")
-                .knownStates(SCDastScanStatus.getKnownStateNames())
-                .failureStates(SCDastScanStatus.getFailureStateNames())
-                .defaultCompleteStates(SCDastScanStatus.getDefaultCompleteStateNames());
+    protected Void run(UnirestInstance unirest) {
+        configure(
+            WaitHelper.builder()
+                .controlProperties(controlOptions)
+                .progressMonitor(progressMonitorMixin.createProgressMonitor(false))
+                .onFinish(WaitHelper::recordsWithActionAsArrayNode, outputHelper::write)
+        ).build().wait(unirest, waitOptions);
+        return null;
+    }
+    
+    protected abstract WaitHelperBuilder configure(WaitHelperBuilder builder);
+
+    @Override
+    public String getActionCommandResult() {
+        return "N/A"; // Action result will be provided by WaitHelper
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
     }
 }

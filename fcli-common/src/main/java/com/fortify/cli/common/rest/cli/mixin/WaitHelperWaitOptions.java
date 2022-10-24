@@ -8,7 +8,7 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 public final class WaitHelperWaitOptions implements IWaitHelperWaitDefinitionSupplier {
-    @Getter @ArgGroup(exclusive = true, multiplicity = "1") 
+    @Getter @ArgGroup(exclusive = true, multiplicity = "0..1") 
     private WaitHelperWaitOptionsArgGroup waitDefinition = new WaitHelperWaitOptionsArgGroup();
     
     private static final class WaitHelperWaitOptionsArgGroup implements IWaitHelperWaitDefinition {
