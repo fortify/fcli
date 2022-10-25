@@ -6,7 +6,10 @@ import picocli.CommandLine.Command;
         name = "scan",
         subcommands = {
                 SCSastControllerScanCancelCommand.class,
-                SCSastControllerScanStatusCommand.class
+                SCSastControllerScanStatusCommand.class,
+                SCSastControllerScanWaitForArtifactCommand.class,
+                SCSastControllerScanWaitForScanCommand.class,
+                SCSastControllerScanWaitForUploadCommand.class,
         }
 )
 public class SCSastScanCommands {

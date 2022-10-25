@@ -24,8 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.scan.cli.mixin;
 
+import java.util.Collection;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
 import com.fortify.cli.sc_sast.scan.cli.cmd.SCSastScanCommands;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobDescriptor;
@@ -46,9 +49,13 @@ public class SCSastScanJobResolverMixin {
     public static abstract class AbstractSCSastScanJobResolverMixin extends AbstractPredefinedVariableResolverMixin {
         @Getter private Class<?> predefinedVariableClass = SCSastScanCommands.class;
         protected abstract String getNonResolvedScanJobToken();
+        
+        public SCSastControllerScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest, Integer minStatusEndpointVersion) {
+            return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, resolvePredefinedVariable(getNonResolvedScanJobToken()), minStatusEndpointVersion);
+        }
 
         public SCSastControllerScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest) {
-            return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, resolvePredefinedVariable(getNonResolvedScanJobToken()));
+            return getScanJobDescriptor(unirest, null);
         }
     }
     
@@ -56,9 +63,21 @@ public class SCSastScanJobResolverMixin {
     public static abstract class AbstractSCSastMultiScanJobResolverMixin extends AbstractPredefinedVariableResolverMixin {
         @Getter private Class<?> predefinedVariableClass = SCSastScanCommands.class;
         protected abstract String[] getNonResolvedScanJobTokens();
+        
+        public SCSastControllerScanJobDescriptor[] getScanJobDescriptors(UnirestInstance unirest, Integer minStatusEndpointVersion) {
+            return Stream.of(getNonResolvedScanJobTokens()).map(id->SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, resolvePredefinedVariable(id), minStatusEndpointVersion)).toArray(SCSastControllerScanJobDescriptor[]::new);
+        }
 
-        public SCSastControllerScanJobDescriptor[] getScanJobTokens(UnirestInstance unirest) {
-            return Stream.of(getNonResolvedScanJobTokens()).map(id->SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, resolvePredefinedVariable(id))).toArray(SCSastControllerScanJobDescriptor[]::new);
+        public SCSastControllerScanJobDescriptor[] getScanJobDescriptors(UnirestInstance unirest) {
+            return getScanJobDescriptors(unirest, null);
+        }
+        
+        public Collection<JsonNode> getScanJobDescriptorJsonNodes(UnirestInstance unirest, Integer minStatusEndpointVersion){
+            return Stream.of(getScanJobDescriptors(unirest, minStatusEndpointVersion)).map(SCSastControllerScanJobDescriptor::asJsonNode).collect(Collectors.toList());
+        }
+        
+        public Collection<JsonNode> getScanJobDescriptorJsonNodes(UnirestInstance unirest){
+            return getScanJobDescriptorJsonNodes(unirest, null);
         }
     }
     
