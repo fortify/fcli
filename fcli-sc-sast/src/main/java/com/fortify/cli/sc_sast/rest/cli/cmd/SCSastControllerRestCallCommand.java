@@ -34,6 +34,6 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = AbstractRestCallCommand.CMD_NAME)
-public final class SCSastRestCallCommand extends AbstractRestCallCommand {
+public final class SCSastControllerRestCallCommand extends AbstractRestCallCommand {
     @Getter @Mixin private SCSastControllerUnirestRunnerMixin unirestRunner;
 }

@@ -1,26 +1,24 @@
 package com.fortify.cli.sc_sast.scan.cli.cmd;
 
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.sc_sast.output.cli.cmd.AbstractSCSastControllerOutputCommand;
 import com.fortify.cli.sc_sast.output.cli.mixin.SCSastControllerOutputHelperMixins;
-import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanTokenMixin;
+import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanJobResolverMixin;
 
-import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = "status")
-public class SCSastControllerScanStatusCommand extends AbstractSCSastControllerOutputCommand implements IUnirestBaseRequestSupplier {
+public class SCSastControllerScanStatusCommand extends AbstractSCSastControllerOutputCommand implements IUnirestJsonNodeSupplier {
     @Getter @Mixin private SCSastControllerOutputHelperMixins.Cancel outputHelper;
-    @Mixin private SCSastScanTokenMixin scanStatusOptions;
+    @Mixin SCSastScanJobResolverMixin.PositionalParameter scanJobResolver;
     
     @Override
-    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        // TODO Auto-generated method stub
-        return unirest.get("/rest/v2/job/{token}/status")
-                .routeParam("token", scanStatusOptions.getToken());
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return scanJobResolver.getScanJobDescriptor(unirest).asJsonNode();
     }
     
     @Override
