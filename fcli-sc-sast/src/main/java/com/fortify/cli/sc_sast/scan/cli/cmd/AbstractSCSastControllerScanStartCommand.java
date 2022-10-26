@@ -30,13 +30,15 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
         String sensorVersion = normalizeSensorVersion(getSensorVersion());
-        MultipartBody body = unirest.post("/rest/v2/job").multiPartContent()
-            .field("zipFile", createZipFile())
-            .field("username", userName)
-            .field("scaVersion", sensorVersion)
-            .field("clientVersion", sensorVersion);
+        MultipartBody body = unirest.post("http://localhost:8888/scancentral-ctrl/rest/v2/job")
+            .multiPartContent()
+            .field("zipFile", createZipFile(), "application/zip")
+            .field("username", userName, "text/plain")
+            .field("scaVersion", sensorVersion, "text/plain")
+            .field("clientVersion", sensorVersion, "text/plain")
+            .field("scaRuntimeArgs", getScaRuntimeArgs(), "text/plain")
+            .field("jobType", getJobType().name(), "text/plain");
         body = updateBody(body, "email", email);
-        body = updateBody(body, "scaRuntimeArgs", getScaRuntimeArgs());
         body = updateBody(body, "dotNetRequired", String.valueOf(isDotNetRequired()));
         body = updateBody(body, "dotNetFrameworkRequiredVersion", getDotNetVersion());
         JsonNode response = body.asObject(JsonNode.class).getBody();
@@ -68,7 +70,7 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
     }
     
     private final MultipartBody updateBody(MultipartBody body, String field, String value) {
-        return StringUtils.isBlank(value) ? body : body.field(field, value);
+        return StringUtils.isBlank(value) ? body : body.field(field, value, "text/plain");
     }
     
     private File createZipFile() {
