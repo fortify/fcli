@@ -92,4 +92,17 @@ public class SCSastControllerOutputHelperMixins {
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details(); 
     }
+    
+    @ReflectiveAccess public static class StartPackageScan extends UnirestOutputHelperMixins.Other {
+        public static final String CMD_NAME = "package";
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+    
+    @ReflectiveAccess public static class StartMbsScan extends UnirestOutputHelperMixins.Other {
+        public static final String CMD_NAME = "mbs";
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+
 }
