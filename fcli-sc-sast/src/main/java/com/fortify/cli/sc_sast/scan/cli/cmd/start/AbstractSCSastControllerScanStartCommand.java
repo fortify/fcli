@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_sast.scan.cli.cmd;
+package com.fortify.cli.sc_sast.scan.cli.cmd.start;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,6 +44,7 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
             .field("scaRuntimeArgs", getScaRuntimeArgs(), "text/plain")
             .field("jobType", getJobType().name(), "text/plain");
         body = updateBody(body, "email", email);
+        body = updateBody(body, "buildId", getBuildId());
         body = updateBody(body, "pvId", uploadArgGroup.appVersionId);
         body = updateBody(body, "uploadToken", uploadArgGroup.ciToken);
         body = updateBody(body, "dotNetRequired", String.valueOf(isDotNetRequired()));
@@ -66,6 +67,7 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
         return true;
     }
     
+    protected abstract String getBuildId();
     protected abstract String getScaRuntimeArgs();
     protected abstract boolean isDotNetRequired();
     protected abstract String getDotNetVersion();
