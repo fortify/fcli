@@ -15,16 +15,19 @@ import com.fortify.cli.sc_sast.output.cli.cmd.AbstractSCSastControllerOutputComm
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.MultipartBody;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
+@ReflectiveAccess
 public abstract class AbstractSCSastControllerScanStartCommand extends AbstractSCSastControllerOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     private String userName = System.getProperty("user.name", "unknown"); // TODO Do we want to give an option to override this?
     @Option(names = "--notify") private String email; // TODO Add email address validation
     @ArgGroup(exclusive = false, multiplicity = "0..1") private UploadArgGroup uploadArgGroup = new UploadArgGroup();
     
+    @ReflectiveAccess
     private static final class UploadArgGroup {
         @Option(names = "--appversion", required = true) private String appVersionId; // TODO Allow either id or <app>:<version> through resolverMixin
         @Option(names = "--ci-token", required = true) private String ciToken; // TODO Optionally get this from session?
@@ -35,7 +38,7 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
         String sensorVersion = normalizeSensorVersion(getSensorVersion());
-        MultipartBody body = unirest.post("http://localhost:8888/scancentral-ctrl/rest/v2/job")
+        MultipartBody body = unirest.post("/rest/v2/job")
             .multiPartContent()
             .field("zipFile", createZipFile(), "application/zip")
             .field("username", userName, "text/plain")
