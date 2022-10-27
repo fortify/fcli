@@ -3,6 +3,7 @@ package com.fortify.cli.sc_sast.scan.helper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactStatus;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -46,6 +47,12 @@ public class SCSastControllerScanJobHelper {
     }
 
     private static SCSastControllerScanJobDescriptor getScanJobDescriptor(ObjectNode node) {
-        return JsonHelper.treeToValue(new RenameFieldsTransformer("state", "scanState").transform(node), SCSastControllerScanJobDescriptor.class);
+        node = (ObjectNode)new RenameFieldsTransformer("state", "scanState").transform(node);
+        if ( !node.get("sscUploadState").isNull() && node.get("sscArtifactState").isNull() ) {
+            // Add non-null artifact state if upload was requested
+            node = node.put("sscArtifactState", SSCAppVersionArtifactStatus.SCHED_PROCESSING.name());
+        }
+        
+        return JsonHelper.treeToValue(node, SCSastControllerScanJobDescriptor.class);
     }
 }
