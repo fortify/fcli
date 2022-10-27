@@ -22,27 +22,34 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.session.cli.cmd;
+package com.fortify.cli.sc_sast.session.cli.mixin;
 
-import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
-import com.fortify.cli.sc_sast.session.cli.mixin.SCSastSessionLogoutOptions;
-import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
-import com.fortify.cli.sc_sast.session.manager.SCSastSessionDataManager;
-import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
+import java.time.OffsetDateTime;
 
-import jakarta.inject.Inject;
+import com.fortify.cli.common.util.DateTimePeriodHelper;
+import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
+import com.fortify.cli.ssc.session.manager.ISSCUserCredentialsConfig;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Help.Visibility;
+import picocli.CommandLine.Option;
 
-@Command(name = "logout", sortOptions = false)
-public class SCSastSessionLogoutCommand extends AbstractSessionLogoutCommand<SCSastSessionData> {
-    @Getter @Inject private SCSastSessionDataManager sessionDataManager;
-    @Inject private SSCTokenHelper tokenHelper;
-    @Mixin private SCSastSessionLogoutOptions logoutOptions;
+@ReflectiveAccess
+public class SCSastUserCredentialOptions implements ISSCUserCredentialsConfig {
+    private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
+    
+    @Option(names = {"--ssc-user", "-u"}, required = true)
+    @Getter private String user;
+    
+    @Option(names = {"--ssc-password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
+    @Getter private char[] password;
+    
+    @Option(names = {"--expire-in"}, descriptionKey = "fcli.ssc.session.expire-in", required = false, defaultValue = "1d", showDefaultValue = Visibility.ALWAYS)
+    @Getter private String expireIn;
     
     @Override
-    protected void logout(String sessionName, SCSastSessionData sessionData) {
-        sessionData.logout(tokenHelper, logoutOptions.getUserCredentialOptions());
+    public OffsetDateTime getExpiresAt() {
+        return PERIOD_HELPER.getCurrentOffsetDateTimePlusPeriod(expireIn);
     }
 }

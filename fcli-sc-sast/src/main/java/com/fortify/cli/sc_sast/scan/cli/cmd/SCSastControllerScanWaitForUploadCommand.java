@@ -22,10 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.rest.cli.cmd;
+package com.fortify.cli.sc_sast.scan.cli.cmd;
 
-import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
-import com.fortify.cli.sc_sast.rest.cli.mixin.SCSastUnirestRunnerMixin;
+import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
+import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
+import com.fortify.cli.sc_sast.output.cli.mixin.SCSastControllerBasicOutputHelperMixins;
+import com.fortify.cli.sc_sast.rest.cli.mixin.SCSastControllerUnirestRunnerMixin;
+import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanJobResolverMixin;
+import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobState;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -33,7 +37,18 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = AbstractRestCallCommand.CMD_NAME)
-public final class SCSastRestCallCommand extends AbstractRestCallCommand {
-    @Getter @Mixin private SCSastUnirestRunnerMixin unirestRunner;
+@Command(name = SCSastControllerBasicOutputHelperMixins.ScanWaitForUpload.CMD_NAME)
+public class SCSastControllerScanWaitForUploadCommand extends AbstractWaitForCommand {
+    @Getter @Mixin SCSastControllerUnirestRunnerMixin unirestRunner;
+    @Mixin private SCSastScanJobResolverMixin.PositionalParameterMulti scanJobsResolver;
+    
+    @Override
+    protected WaitHelperBuilder configure(WaitHelperBuilder builder) {
+        return builder
+                .recordsSupplier(scanJobsResolver::getScanJobDescriptorJsonNodes)
+                .currentStateProperty("sscUploadState")
+                .knownStates(SCSastControllerScanJobState.getKnownStateNames())
+                .failureStates(SCSastControllerScanJobState.getFailureStateNames())
+                .defaultCompleteStates(SCSastControllerScanJobState.getDefaultCompleteStateNames());
+    }
 }

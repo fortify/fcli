@@ -7,7 +7,6 @@ import com.fortify.cli.common.rest.runner.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.sc_dast.session.manager.ISCDastSessionData;
 import com.fortify.cli.sc_dast.session.manager.SCDastSessionDataManager;
-import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -17,7 +16,6 @@ import lombok.Getter;
 @ReflectiveAccess @FixInjection
 public class SCDastUnirestRunnerMixin extends AbstractUnirestRunnerMixin<ISCDastSessionData, SCDastSessionDataManager> {
     @Getter @Inject private SCDastSessionDataManager sessionDataManager;
-    @Inject private SSCTokenHelper tokenHelper;
     
     @Override
     protected final void configure(UnirestInstance unirest, ISCDastSessionData sessionData) {
