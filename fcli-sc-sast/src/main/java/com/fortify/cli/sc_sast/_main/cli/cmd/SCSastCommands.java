@@ -13,7 +13,6 @@ import picocli.CommandLine.Command;
 @Command(
         name = "sc-sast",
         resourceBundle = "com.fortify.cli.sc_sast.i18n.SCSastMessages",
-        hidden = true,
         subcommands = {
                 // This list of subcommands starts with generic session and rest commands,
                 // followed by all entity commands in alphabetical order

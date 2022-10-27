@@ -17,13 +17,18 @@ import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
 
 import kong.unirest.MultipartBody;
 import kong.unirest.UnirestInstance;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 public abstract class AbstractSCSastControllerScanStartCommand extends AbstractSCSastControllerOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     private String userName = System.getProperty("user.name", "unknown"); // TODO Do we want to give an option to override this?
     @Option(names = "--notify") private String email; // TODO Add email address validation
-    @Option(names = "--appversion") private String appVersionId; // TODO Allow either id or <app>:<version> through resolverMixin
-    @Option(names = "--ci-token") private String ciToken; // TODO Optionally get this from session?
+    @ArgGroup(exclusive = false, multiplicity = "0..1") private UploadArgGroup uploadArgGroup = new UploadArgGroup();
+    
+    private static final class UploadArgGroup {
+        @Option(names = "--appversion", required = true) private String appVersionId; // TODO Allow either id or <app>:<version> through resolverMixin
+        @Option(names = "--ci-token", required = true) private String ciToken; // TODO Optionally get this from session?
+    }
     // TODO Add options for specifying (custom) rules file(s), filter file(s) and project template
     // TODO Add options for pool selection
     
@@ -39,9 +44,14 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
             .field("scaRuntimeArgs", getScaRuntimeArgs(), "text/plain")
             .field("jobType", getJobType().name(), "text/plain");
         body = updateBody(body, "email", email);
+        body = updateBody(body, "pvId", uploadArgGroup.appVersionId);
+        body = updateBody(body, "uploadToken", uploadArgGroup.ciToken);
         body = updateBody(body, "dotNetRequired", String.valueOf(isDotNetRequired()));
         body = updateBody(body, "dotNetFrameworkRequiredVersion", getDotNetVersion());
         JsonNode response = body.asObject(JsonNode.class).getBody();
+        if ( !response.has("token") ) {
+            throw new IllegalStateException("Unexpected response when submitting scan job: "+response);
+        }
         String scanJobToken = response.get("token").asText();
         return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, scanJobToken, 0).asJsonNode();
     }
