@@ -29,7 +29,7 @@ import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
 import com.fortify.cli.sc_sast.output.cli.mixin.SCSastControllerBasicOutputHelperMixins;
 import com.fortify.cli.sc_sast.rest.cli.mixin.SCSastControllerUnirestRunnerMixin;
 import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanJobResolverMixin;
-import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactStatus;
+import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobArtifactState;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -47,8 +47,8 @@ public class SCSastControllerScanWaitForArtifactCommand extends AbstractWaitForC
         return builder
                 .recordsSupplier(u->scanJobsResolver.getScanJobDescriptorJsonNodes(u, 3))
                 .currentStateProperty("sscArtifactState")
-                .knownStates(SSCAppVersionArtifactStatus.getKnownStateNames())
-                .failureStates(SSCAppVersionArtifactStatus.getFailureStateNames())
-                .defaultCompleteStates(SSCAppVersionArtifactStatus.getDefaultCompleteStateNames());
+                .knownStates(SCSastControllerScanJobArtifactState.getKnownStateNames())
+                .failureStates(SCSastControllerScanJobArtifactState.getFailureStateNames())
+                .defaultCompleteStates(SCSastControllerScanJobArtifactState.getDefaultCompleteStateNames());
     }
 }

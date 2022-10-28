@@ -3,34 +3,25 @@ package com.fortify.cli.sc_sast.scan.helper;
 
 import java.util.stream.Stream;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 /**
  * Enum entries were copied from com.fortify.cloud.shared.JobState in cloud-shared-[version].jar.
- * We keep the _isTerminal property to allow for easy copying of updated enum entries from future
- * product versions, but won't use it. 
  *
  */
-@RequiredArgsConstructor
 public enum SCSastControllerScanJobState {
-    UNKNOWN(false), 
-    PENDING(false), 
-    QUEUED(false), 
-    RUNNING(false), 
-    CANCELING(false), 
-    CANCELED(true), 
-    COMPLETED(true), 
-    FAILED(true), 
-    FAULTED(true), 
-    TIMEOUT(true);
-    
-    @Getter(AccessLevel.PRIVATE) private final boolean _isTerminal;
+    UNKNOWN, 
+    PENDING, 
+    QUEUED, 
+    RUNNING, 
+    CANCELING, 
+    CANCELED, 
+    COMPLETED, 
+    FAILED, 
+    FAULTED, 
+    TIMEOUT;
     
     public static final SCSastControllerScanJobState[] getFailureStates() {
         return new SCSastControllerScanJobState[]{
-            FAILED, FAULTED, TIMEOUT, UNKNOWN // TODO Should we consider UNKNOWN as failure state?
+            FAILED, FAULTED, TIMEOUT, CANCELING, CANCELED, UNKNOWN // TODO Should we consider UNKNOWN as failure state?
         };
     }
     
