@@ -16,10 +16,10 @@ public class SSCTokenCommandUrlConfigMixin implements IUrlConfigSupplier {
     @Inject private SSCSessionDataManager sessionDataManager;
     
     @ArgGroup(exclusive=true)
-    private SSCUrlConfigOrSessionName options;
+    private SSCUrlConfigOrSessionName options = new SSCUrlConfigOrSessionName();
     @ReflectiveAccess
     private static final class SSCUrlConfigOrSessionName {
-        @ArgGroup(exclusive=false) private UrlConfigOptions urlConfig;
+        @ArgGroup(exclusive=false) private UrlConfigOptions urlConfig = new UrlConfigOptions();
         @Option(names="--session") private String sessionName;
     } 
     

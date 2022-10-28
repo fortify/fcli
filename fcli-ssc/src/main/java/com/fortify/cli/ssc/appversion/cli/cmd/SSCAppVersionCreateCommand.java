@@ -34,6 +34,7 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppAndVersionNameResolverMixin;
@@ -135,8 +136,10 @@ public class SSCAppVersionCreateCommand extends AbstractSSCOutputCommand impleme
             .put("description", description==null ? "" : description)
             .put("active", active)
             .put("committed", false)
-            .put("issueTemplateId", issueTemplateDescriptor.getId())
             .set("project", getProjectNode(unirest, appAndVersionNameDescriptor.getAppName(), issueTemplateDescriptor));
+        if ( issueTemplateDescriptor!=null && StringUtils.isNotBlank(issueTemplateDescriptor.getId()) ) {
+            body = body.put("issueTemplateId", issueTemplateDescriptor.getId());
+        }
         JsonNode response = unirest.post(SSCUrls.PROJECT_VERSIONS).body(body).asObject(JsonNode.class).getBody().get("data");
         return JsonHelper.treeToValue(response, SSCAppVersionDescriptor.class);
     }
@@ -148,7 +151,9 @@ public class SSCAppVersionCreateCommand extends AbstractSSCOutputCommand impleme
         } else {
             ObjectNode appNode = new ObjectMapper().createObjectNode();
             appNode.put("name", appName);
-            appNode.put("issueTemplateId", issueTemplateDescriptor.getId());
+            if ( issueTemplateDescriptor!=null && StringUtils.isNotBlank(issueTemplateDescriptor.getId()) ) {
+                appNode.put("issueTemplateId", issueTemplateDescriptor.getId());
+            }
             return appNode;
         }
     }
