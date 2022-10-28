@@ -43,12 +43,12 @@ runTestCommands() {
     checkOutput=(fgrep projectversion_add); sscCmd role-permission list
     checkOutput=(fgrep CIToken); sscCmd token-definition list
     
-    checkOutput=(fgrep CIToken); sscCmd token create CIToken --expire-in 5m --store ciToken=restToken
+    checkOutput=(fgrep CIToken); sscCmd token create CIToken --expire-in 5m --store ciToken:restToken
     sscCmd token revoke {?ciToken:restToken}
     runCmd ${FCLI_CMD} config var def delete ciToken
 
     appName="fcli-test $(date +%s)" 
-    sscCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store currentAppVersion=id
+    sscCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store currentAppVersion:id
     # TODO Current commands don't properly produce singular output; once this is fixed, we can simply use {?currentAppVersion:id} 
     newAppVersionId="{?currentAppVersion:id}"
     checkOutput=(fgrep "No data"); sscCmd appversion-artifact list --appversion ${newAppVersionId}
