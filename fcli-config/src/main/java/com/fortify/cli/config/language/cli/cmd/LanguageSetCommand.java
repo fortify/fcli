@@ -12,7 +12,6 @@ public class LanguageSetCommand extends AbstractLanguageCommand {
     @Parameters(index = "0", descriptionKey = "fcli.config.language.set.language")
     private String language;
 
-    @PostConstruct
     @Override
     public void run() {
         languageConfigManager.setLanguage(language);

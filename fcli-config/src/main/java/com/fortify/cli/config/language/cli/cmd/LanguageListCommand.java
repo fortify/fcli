@@ -13,7 +13,6 @@ import picocli.CommandLine;
         name = "list"
 )
 public class LanguageListCommand extends AbstractLanguageCommand {
-    @PostConstruct
     @Override
     public void run() {
         System.out.println("Below is a list of supported languages with fcli:");
