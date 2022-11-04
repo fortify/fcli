@@ -22,8 +22,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.mixin;
 
+package com.fortify.cli.fod.scan.cli.mixin;
+
+import com.fortify.cli.fod.util.FoDEnums;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -32,33 +34,31 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FoDSdlcStatusTypeOptions {
-    public enum FoDSdlcStatusType {Development, QA, Production}
-
+public class FoDEntitlementTypeOptions {
     @ReflectiveAccess
-    public static final class FoDSdlcStatusTypeIterable extends ArrayList<String> {
+    public static final class FoDEntitlementTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
-        public FoDSdlcStatusTypeIterable() {
-            super(Stream.of(FoDSdlcStatusType.values()).map(FoDSdlcStatusType::name).collect(Collectors.toList()));
+        public FoDEntitlementTypeIterable() {
+            super(Stream.of(FoDEnums.EntitlementFrequencyTypes.values()).map(FoDEnums.EntitlementFrequencyTypes::name).collect(Collectors.toList()));
         }
     }
     @ReflectiveAccess
-    public static abstract class AbstractFoDSdlcStatusType {
-        public abstract FoDSdlcStatusType getSdlcStatusType();
+    public static abstract class AbstractFoDEntitlementType {
+        public abstract FoDEnums.EntitlementFrequencyTypes getEntitlementType();
     }
 
     @ReflectiveAccess
-    public static class RequiredOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1",
-                completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "SdlcStatusMixin")
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    public static class RequiredOption extends AbstractFoDEntitlementType {
+        @Option(names = {"--entitlement", "--entitlement-type"}, required = true, arity = "1",
+                completionCandidates = FoDEntitlementTypeIterable.class, descriptionKey = "EntitlementTypeMixin")
+        @Getter private FoDEnums.EntitlementFrequencyTypes entitlementType;
     }
 
     @ReflectiveAccess
-    public static class OptionalOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = false, arity = "1",
-                completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "SdlcStatusMixin")
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    public static class OptionalOption extends AbstractFoDEntitlementType {
+        @Option(names = {"--entitlement", "--entitlement-type"}, required = false, arity = "1",
+                completionCandidates = FoDEntitlementTypeIterable.class, descriptionKey = "EntitlementTypeMixin")
+        @Getter private FoDEnums.EntitlementFrequencyTypes entitlementType;
     }
 
 }

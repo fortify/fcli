@@ -65,7 +65,7 @@ public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IUn
     private ArrayList<String> notificationsUpdate;
 
     @Mixin
-    private FoDCriticalityTypeOptions.OptionalCritOption criticalityTypeUpdate;
+    private FoDCriticalityTypeOptions.OptionalOption criticalityTypeUpdate;
     @Mixin
     private FoDAttributeUpdateOptions.OptionalAttrOption appAttrsUpdate;
 

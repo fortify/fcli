@@ -23,39 +23,32 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.release.helper;
+package com.fortify.cli.fod.scan.cli.mixin;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.fod.dast_scan.helper.FoDDastScanSetupDescriptor;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @ReflectiveAccess
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class FoDAppRelDescriptor extends JsonNodeHolder {
-    private Integer releaseId;
-    private String releaseName;
-    private String releaseDescription;
-    private Boolean suspended;
-    private String microserviceName;
-    private Integer microserviceId;
-    private Integer applicationId;
-    private String applicationName;
-    private Integer rating;
-    private Integer critical;
-    private Integer high;
-    private Integer medium;
-    private Integer low;
-    private Integer issueCount;
-    private Boolean isPassed;
-    private String passFailReasonType;
-    private String sdlcStatusType;
-    private Integer ownerId;
-    private Integer currentStaticScanId;
-    private Integer currentDynamicScanId;
-    private Integer currentMobileScanId;
-    private String staticAnalysisStatusType;
-    private String dynamicAnalysisStatusType;
-    private String mobileAnalysisStatusType;
+@ToString
+public class FoDAssessmentTypeDescriptor {
+    private Integer assessmentTypeId;
+    private String name;
+    private String scanType;
+    private Integer scanTypeId;
+    private Integer entitlementId;
+    private String entitlementDescription;
+    private Integer frequencyTypeId;
+    private String frequencyType;
+
+    public FoDAssessmentTypeDescriptor copyFromCurrentSetup(FoDDastScanSetupDescriptor curSetup) {
+        this.assessmentTypeId = curSetup.getAssessmentTypeId();
+        this.entitlementId = curSetup.getEntitlementId();
+        this.entitlementDescription = curSetup.getEntitlementDescription();
+        this.frequencyTypeId = curSetup.getEntitlementFrequencyTypeId();
+        this.frequencyType = curSetup.getEntitlementFrequencyType();
+        return this;
+    }
 }

@@ -33,29 +33,23 @@ import lombok.EqualsAndHashCode;
 @ReflectiveAccess
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class FoDAppRelDescriptor extends JsonNodeHolder {
-    private Integer releaseId;
-    private String releaseName;
-    private String releaseDescription;
-    private Boolean suspended;
-    private String microserviceName;
-    private Integer microserviceId;
-    private Integer applicationId;
-    private String applicationName;
-    private Integer rating;
-    private Integer critical;
-    private Integer high;
-    private Integer medium;
-    private Integer low;
-    private Integer issueCount;
-    private Boolean isPassed;
-    private String passFailReasonType;
-    private String sdlcStatusType;
-    private Integer ownerId;
-    private Integer currentStaticScanId;
-    private Integer currentDynamicScanId;
-    private Integer currentMobileScanId;
-    private String staticAnalysisStatusType;
-    private String dynamicAnalysisStatusType;
-    private String mobileAnalysisStatusType;
+public class FoDAppRelAssessmentTypeDescriptor extends JsonNodeHolder {
+    private Integer assessmentTypeId;
+    private String name;
+    private String scanType;
+    private Integer scanTypeId;
+    private Integer entitlementId;
+    private String frequencyType;
+    private Integer frequencyTypeId;
+    private Integer units;
+    private Integer unitsAvailable;
+    private String subscriptionEndDate;
+    private Boolean isRemediation;
+    private Integer remediationScansAvailable;
+    private Boolean isBundledAssessment;
+    private Integer parentAssessmentTypeId;
+    private String parentAssessmentTypeName;
+    private Integer parentAssessmentTypeScanTypeId;
+    private String parentAssessmentTypeScanType;
+    private String entitlementDescription;
 }

@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.release.helper;
+package com.fortify.cli.fod.scan.cli.mixin;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -33,29 +33,9 @@ import lombok.EqualsAndHashCode;
 @ReflectiveAccess
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class FoDAppRelDescriptor extends JsonNodeHolder {
+public class FoDScanDescriptor extends JsonNodeHolder {
+    private Integer scanId;
+    private String scanType;
     private Integer releaseId;
-    private String releaseName;
-    private String releaseDescription;
-    private Boolean suspended;
-    private String microserviceName;
-    private Integer microserviceId;
     private Integer applicationId;
-    private String applicationName;
-    private Integer rating;
-    private Integer critical;
-    private Integer high;
-    private Integer medium;
-    private Integer low;
-    private Integer issueCount;
-    private Boolean isPassed;
-    private String passFailReasonType;
-    private String sdlcStatusType;
-    private Integer ownerId;
-    private Integer currentStaticScanId;
-    private Integer currentDynamicScanId;
-    private Integer currentMobileScanId;
-    private String staticAnalysisStatusType;
-    private String dynamicAnalysisStatusType;
-    private String mobileAnalysisStatusType;
 }

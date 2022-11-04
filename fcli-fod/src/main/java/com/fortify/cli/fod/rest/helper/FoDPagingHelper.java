@@ -4,9 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 
+import com.fortify.cli.fod.util.FoDQueryHelper;
 import io.micronaut.http.uri.UriBuilder;
 import kong.unirest.HttpRequest;
 import kong.unirest.PagedList;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class FoDPagingHelper {
     public static final PagedList<JsonNode> pagedRequest(HttpRequest<?> request) {
@@ -24,9 +28,13 @@ public class FoDPagingHelper {
                 int limit = body.get("limit").asInt();
                 int newOffset = offset + limit;
                 if (newOffset < totalCount) {
-                    // UriBuilder supports parsing a String directly but doesn't properly recognize existing request parameters,
-                    // so we use an URI instance instead.
-                    return UriBuilder.of(uri).replaceQueryParam("offset", newOffset).build().toString();
+                    // UriBuilder was only appending parameters with ? not &
+                    // return UriBuilder.of(uri).replaceQueryParam("offset", newOffset).build().toString();
+                    try {
+                        return FoDQueryHelper.appendUri(uri, "offset=" + newOffset).toString();
+                    } catch (URISyntaxException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
                 return null;
             }

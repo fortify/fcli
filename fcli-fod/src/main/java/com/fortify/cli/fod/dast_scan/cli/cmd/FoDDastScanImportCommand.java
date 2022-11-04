@@ -26,64 +26,59 @@
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.rest.helper.FoDFilterResultsTransformer;
-import com.fortify.cli.fod.rest.query.FoDFilterParamGenerator;
-import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
-import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
-import com.fortify.cli.fod.scan.cli.mixin.FoDAnalysisStatusTypeOptions;
+import com.fortify.cli.fod.rest.helper.FoDFileTransferHelper;
+import com.fortify.cli.fod.scan.helper.FoDImportScanResponse;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
+
+import java.io.File;
 
 @ReflectiveAccess
-@Command(name = FoDOutputHelperMixins.List.CMD_NAME)
-public class FoDDastScanListCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
+@Command(name = FoDOutputHelperMixins.Import.CMD_NAME)
+public class FoDDastScanImportCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
-
-    @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
-            .add("id","scanId", FoDFiltersParamValueGenerators::plain)
-            .add("type", "scanType", FoDFiltersParamValueGenerators::plain);
 
     @Mixin private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
 
-    @Option(names = {"--latest-first"})
-    private Boolean latestFirst;
-
-    @Mixin private FoDAnalysisStatusTypeOptions.OptionalOption analysisStatus;
+    @CommandLine.Option(names = {"-f", "--file"}, required = true)
+    private File scanFile;
 
     @Override
-    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return updateRequest(
-                unirest.get(FoDUrls.RELEASE + "/scans")
-                        .routeParam("relId", appRelResolver.getAppRelId(unirest))
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        String relId = appRelResolver.getAppRelId(unirest);
+        FoDImportScanResponse response = FoDFileTransferHelper.importScan(
+                unirest, relId,
+                FoDUrls.DYNAMIC_SCANS_IMPORT,
+                scanFile.getPath().toString()
         );
+        return appRelResolver.getAppRelDescriptor(unirest).asObjectNode()
+                .put("scanMethod", "FPRImport")
+                .put("importReferenceId", response.getReferenceId());
     }
 
-    private HttpRequest<?> updateRequest(HttpRequest<?> request) {
-        request.queryString("orderByDirection", (latestFirst != null && latestFirst ? "DESC" : "ASC"));
-        return request;
-    }
-    @Override
     public JsonNode transformRecord(JsonNode record) {
-        String aStatusStr = (analysisStatus != null && analysisStatus.getAnalysisStatusType() != null? String.valueOf(analysisStatus.getAnalysisStatusType()) : "*");
-        return new FoDFilterResultsTransformer(new String[] {
-                "type:Dynamic", "status:"+aStatusStr
-        }).transform(FoDScanHelper.renameFields(record));
+        return FoDScanHelper.renameFields(record);
+    }
+
+    @Override
+    public String getActionCommandResult() {
+        return "IMPORTED";
     }
 
     @Override
     public boolean isSingular() {
-        return false;
+        return true;
     }
 }

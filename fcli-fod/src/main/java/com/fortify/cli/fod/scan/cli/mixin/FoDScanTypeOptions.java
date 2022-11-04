@@ -22,7 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.mixin;
+
+package com.fortify.cli.fod.scan.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -32,33 +33,33 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FoDSdlcStatusTypeOptions {
-    public enum FoDSdlcStatusType {Development, QA, Production}
+public class FoDScanTypeOptions {
+    public enum FoDScanType {Static, Dynamic, Mobile, Monitoring, Network, OpenSource, Container}
 
     @ReflectiveAccess
-    public static final class FoDSdlcStatusTypeIterable extends ArrayList<String> {
+    public static final class FoDScanTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
-        public FoDSdlcStatusTypeIterable() {
-            super(Stream.of(FoDSdlcStatusType.values()).map(FoDSdlcStatusType::name).collect(Collectors.toList()));
+        public FoDScanTypeIterable() {
+            super(Stream.of(FoDScanType.values()).map(FoDScanType::name).collect(Collectors.toList()));
         }
     }
     @ReflectiveAccess
-    public static abstract class AbstractFoDSdlcStatusType {
-        public abstract FoDSdlcStatusType getSdlcStatusType();
+    public static abstract class AbstractFoDScanType {
+        public abstract FoDScanType getScanType();
     }
 
     @ReflectiveAccess
-    public static class RequiredOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1",
-                completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "SdlcStatusMixin")
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    public static class RequiredOption extends AbstractFoDScanType {
+        @Option(names = {"--type", "--scan-type"}, required = true, arity = "1",
+                completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")
+        @Getter private FoDScanType scanType;
     }
 
     @ReflectiveAccess
-    public static class OptionalOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = false, arity = "1",
-                completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "SdlcStatusMixin")
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    public static class OptionalOption extends AbstractFoDScanType {
+        @Option(names = {"--type", "--scan-type"}, required = false, arity = "1",
+                completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")
+        @Getter private FoDScanType scanType;
     }
 
 }

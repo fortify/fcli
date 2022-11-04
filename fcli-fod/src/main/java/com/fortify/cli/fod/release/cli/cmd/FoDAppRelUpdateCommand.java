@@ -50,8 +50,6 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
-import java.util.ResourceBundle;
-
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Update.CMD_NAME)
@@ -73,7 +71,7 @@ public class FoDAppRelUpdateCommand extends AbstractFoDOutputCommand implements 
     private String microserviceNameOrId;
 
     @Mixin
-    private FoDSdlcStatusTypeOptions.RequiredSdlcOption sdlcStatus;
+    private FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {

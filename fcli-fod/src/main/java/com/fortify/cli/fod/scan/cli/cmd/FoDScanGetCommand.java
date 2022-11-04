@@ -23,39 +23,40 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.release.helper;
+package com.fortify.cli.fod.scan.cli.cmd;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
+import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
+import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanResolverMixin;
+import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class FoDAppRelDescriptor extends JsonNodeHolder {
-    private Integer releaseId;
-    private String releaseName;
-    private String releaseDescription;
-    private Boolean suspended;
-    private String microserviceName;
-    private Integer microserviceId;
-    private Integer applicationId;
-    private String applicationName;
-    private Integer rating;
-    private Integer critical;
-    private Integer high;
-    private Integer medium;
-    private Integer low;
-    private Integer issueCount;
-    private Boolean isPassed;
-    private String passFailReasonType;
-    private String sdlcStatusType;
-    private Integer ownerId;
-    private Integer currentStaticScanId;
-    private Integer currentDynamicScanId;
-    private Integer currentMobileScanId;
-    private String staticAnalysisStatusType;
-    private String dynamicAnalysisStatusType;
-    private String mobileAnalysisStatusType;
+@Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
+public class FoDScanGetCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer {
+    @Getter @Mixin private FoDOutputHelperMixins.Get outputHelper;
+
+    @Mixin private FoDScanResolverMixin.PositionalParameter scanResolver;
+
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return scanResolver.getScanDescriptor(unirest).asJsonNode();
+    }
+
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDScanHelper.renameFields(record);
+    }
+
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

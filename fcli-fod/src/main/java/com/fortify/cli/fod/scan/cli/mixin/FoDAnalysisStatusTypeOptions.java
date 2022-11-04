@@ -22,7 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.app.cli.mixin;
+
+package com.fortify.cli.fod.scan.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -32,33 +33,33 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FoDSdlcStatusTypeOptions {
-    public enum FoDSdlcStatusType {Development, QA, Production}
+public class FoDAnalysisStatusTypeOptions {
+    public enum FoDAnalysisStatusType {Not_Started, In_Progress, Completed, Canceled, Waiting, Scheduled, Queued}
 
     @ReflectiveAccess
-    public static final class FoDSdlcStatusTypeIterable extends ArrayList<String> {
+    public static final class FoDAnalysisStatusTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
-        public FoDSdlcStatusTypeIterable() {
-            super(Stream.of(FoDSdlcStatusType.values()).map(FoDSdlcStatusType::name).collect(Collectors.toList()));
+        public FoDAnalysisStatusTypeIterable() {
+            super(Stream.of(FoDAnalysisStatusType.values()).map(FoDAnalysisStatusType::name).collect(Collectors.toList()));
         }
     }
     @ReflectiveAccess
-    public static abstract class AbstractFoDSdlcStatusType {
-        public abstract FoDSdlcStatusType getSdlcStatusType();
+    public static abstract class AbstractFoDAnalysisStatusType {
+        public abstract FoDAnalysisStatusType getAnalysisStatusType();
     }
 
     @ReflectiveAccess
-    public static class RequiredOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1",
-                completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "SdlcStatusMixin")
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    public static class RequiredOption extends AbstractFoDAnalysisStatusType {
+        @Option(names = {"--status", "--analysis-status"}, required = true, arity = "1",
+                completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "ScanStatusMixin")
+        @Getter private FoDAnalysisStatusType analysisStatusType;
     }
 
     @ReflectiveAccess
-    public static class OptionalOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = false, arity = "1",
-                completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "SdlcStatusMixin")
-        @Getter private FoDSdlcStatusType sdlcStatusType;
+    public static class OptionalOption extends AbstractFoDAnalysisStatusType {
+        @Option(names = {"--status", "--analysis-status"}, required = false, arity = "1",
+                completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "ScanStatusMixin")
+        @Getter private FoDAnalysisStatusType analysisStatusType;
     }
 
 }
