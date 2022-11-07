@@ -26,7 +26,6 @@ package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
-import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
 
@@ -39,7 +38,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.List.CMD_NAME)
-public class SSCAppVersionArtifactListCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier {
+public class SSCAppVersionArtifactListCommand extends AbstractSSCAppVersionArtifactOutputCommand implements IUnirestBaseRequestSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     

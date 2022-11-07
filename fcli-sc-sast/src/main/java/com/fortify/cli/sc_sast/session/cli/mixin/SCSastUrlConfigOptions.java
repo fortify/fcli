@@ -22,27 +22,35 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.rest.cli.cmd;
+package com.fortify.cli.sc_sast.session.cli.mixin;
 
-import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.sc_sast.rest.cli.mixin.SCSastUnirestRunnerMixin;
+import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
-@ReflectiveAccess @FixInjection
-public abstract class AbstractSCSastUnirestRunnerCommand implements Runnable {
-    @Getter @Mixin private SCSastUnirestRunnerMixin unirestRunnerMixin;
-
-    @Override @SneakyThrows
-    public final void run() {
-        // TODO Do we want to do anything with the results, like formatting it based on output options?
-        //      Or do we let the actual implementation handle this?
-        unirestRunnerMixin.run(this::run);
-    }
+@ReflectiveAccess
+public class SCSastUrlConfigOptions implements IUrlConfig {
+    @Option(names = {"--ssc-url"}, required = true, order=1)
+    @Getter private String url;
     
-    protected abstract Void run(UnirestInstance unirest);
+    @Option(names = {"--proxy-host"}, required = false, order=2)
+    @Getter private String proxyHost;
+    
+    @Option(names = {"--proxy-port"}, required = false, order=3)
+    @Getter private Integer proxyPort;
+    
+    @Option(names = {"--proxy-user"}, required = false, order=4)
+    @Getter private String proxyUser;
+    
+    @Option(names = {"--proxy-password"}, required = false, interactive = true, echo = false, order=5)
+    @Getter private char[] proxyPassword;
+    
+    @Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
+    @Getter private Boolean insecureModeEnabled;
+    
+    public boolean hasUrlConfig() {
+        return url!=null;
+    }
 }

@@ -130,6 +130,11 @@ public class SSCAppVersionCreateCommand extends AbstractSSCOutputCommand impleme
     private SSCAppVersionDescriptor createUncommittedAppVersion(UnirestInstance unirest) {
         SSCIssueTemplateDescriptor issueTemplateDescriptor = issueTemplateResolver.getIssueTemplateDescriptorOrDefault(unirest);
         SSCAppAndVersionNameDescriptor appAndVersionNameDescriptor = sscAppAndVersionNameResolver.getAppAndVersionNameDescriptor();
+        
+        if ( issueTemplateDescriptor==null ) {
+            throw new IllegalArgumentException("--issue-template is required, as no default template is configured on SSC");
+        }
+        
         ObjectNode body = objectMapper.createObjectNode();
         body.put("name", appAndVersionNameDescriptor.getVersionName())
             .put("description", description==null ? "" : description)

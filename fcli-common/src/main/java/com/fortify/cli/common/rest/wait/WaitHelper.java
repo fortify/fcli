@@ -7,7 +7,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,6 +34,7 @@ public class WaitHelper {
     private final Function<JsonNode, JsonNode> recordTransformer;
     private final String[] knownStates;
     private final String[] failureStates;
+    private final String[] defaultCompleteStates;
     @Builder.Default private final WaitUnknownStateRequestedAction onUnknownStateRequested = WaitUnknownStateRequestedAction.fail;
     @Builder.Default private final WaitUnknownOrFailureStateAction onFailureState = WaitUnknownOrFailureStateAction.fail;
     @Builder.Default private final WaitUnknownOrFailureStateAction onUnknownState = WaitUnknownOrFailureStateAction.fail;
@@ -39,6 +42,7 @@ public class WaitHelper {
     private final String intervalPeriod;
     private final String timeoutPeriod;
     private final IWaitHelperProgressMonitor progressMonitor;
+    private final Consumer<Map<ObjectNode, WaitStatus>> onFinish; 
     @Getter private final Map<ObjectNode, WaitStatus> result = new LinkedHashMap<>(); 
     
     public static final ArrayNode plainRecordsAsArrayNode(Map<ObjectNode, WaitStatus> recordsWithWaitStatus) {
@@ -59,7 +63,8 @@ public class WaitHelper {
         return waitUntilAll(unirest, waitDefinition.getUntilAll())
                 .waitUntilAny(unirest, waitDefinition.getUntilAny())
                 .waitWhileAll(unirest, waitDefinition.getWhileAll())
-                .waitWhileAny(unirest, waitDefinition.getWhileAny());
+                .waitWhileAny(unirest, waitDefinition.getWhileAny())
+                .waitComplete(unirest);
     }
     
     public final WaitHelper waitUntilAll(UnirestInstance unirest, String untilStates) {
@@ -87,6 +92,14 @@ public class WaitHelper {
         if ( StringUtils.isNotBlank(whileStates) ) {
             wait(unirest, new StateEvaluator(whileStates, EvaluatorType.While), AnyOrAll.ALL);
         }
+        return this;
+    }
+    
+    public final WaitHelper waitComplete(UnirestInstance unirest) {
+        if ( result.isEmpty() && defaultCompleteStates==null || defaultCompleteStates.length==0 ) {
+            throw new IllegalArgumentException("One of --until* or --while* must be provided");
+        }
+        wait(unirest, new StateEvaluator(String.join("|", defaultCompleteStates), EvaluatorType.Until), AnyOrAll.ALL);
         return this;
     }
 
@@ -121,6 +134,9 @@ public class WaitHelper {
         } finally {
             result.putAll(recordsWithWaitStatus);
             finishProgressMonitoring(recordsWithWaitStatus);
+            if ( onFinish!=null ) {
+                onFinish.accept(result);
+            }
         }
     }
     
@@ -298,6 +314,16 @@ public class WaitHelper {
             return this;
         }
         
+        public WaitHelperBuilder defaultCompleteStates(String... defaultCompleteStates) {
+            this.defaultCompleteStates = defaultCompleteStates;
+            return this;
+        }
+        
+        public <T> WaitHelperBuilder onFinish(FunctionAndThenConsumer<Map<ObjectNode, WaitStatus>, T> converter, Consumer<T> consumer) {
+            this.onFinish = converter.andThen(consumer);
+            return this;
+        }
+        
         /**
          * Allow for setting interval, timeout and failure actions with a single method call
          * @param controlProperties
@@ -310,6 +336,14 @@ public class WaitHelper {
                     .onUnknownState(controlProperties.getOnUnknownState())
                     .onUnknownStateRequested(controlProperties.getOnUnknownStateRequested())
                     .timeoutPeriod(controlProperties.getTimeoutPeriod());
+        }
+    }
+    
+    @FunctionalInterface
+    public interface FunctionAndThenConsumer<T, R> extends Function<T, R> {
+        default Consumer<T> andThen(Consumer<R> after) {
+            Objects.requireNonNull(after);
+            return (T t) -> {after.accept(apply(t));};
         }
     }
 }

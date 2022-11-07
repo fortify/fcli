@@ -25,19 +25,24 @@
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
+import com.fortify.cli.sc_sast.session.cli.mixin.SCSastSessionLogoutOptions;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionDataManager;
+import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
 import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @Command(name = "logout", sortOptions = false)
 public class SCSastSessionLogoutCommand extends AbstractSessionLogoutCommand<SCSastSessionData> {
     @Getter @Inject private SCSastSessionDataManager sessionDataManager;
+    @Inject private SSCTokenHelper tokenHelper;
+    @Mixin private SCSastSessionLogoutOptions logoutOptions;
     
     @Override
     protected void logout(String sessionName, SCSastSessionData sessionData) {
-        // TODO Nothing to do for now
+        sessionData.logout(tokenHelper, logoutOptions.getUserCredentialOptions());
     }
 }

@@ -25,18 +25,27 @@
 package com.fortify.cli.common.rest.cli.cmd;
 
 import com.fortify.cli.common.rest.runner.IUnirestRunner;
+import com.fortify.cli.common.variable.IPredefinedVariableNamePrefixSupplier;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 
 @ReflectiveAccess
-public abstract class AbstractUnirestRunnerCommand implements Runnable {
+public abstract class AbstractUnirestRunnerCommand implements Runnable, IPredefinedVariableNamePrefixSupplier {
     @Override @SneakyThrows
     public final void run() {
         // TODO Do we want to do anything with the results, like formatting it based on output options?
         //      Or do we let the actual implementation handle this?
         getUnirestRunner().run(this::run);
+    }
+    
+    @Override
+    public String getPredefinedVariableNamePrefix() {
+        IUnirestRunner runner = getUnirestRunner();
+        return runner instanceof IPredefinedVariableNamePrefixSupplier
+                ? ((IPredefinedVariableNamePrefixSupplier)runner).getPredefinedVariableNamePrefix()
+                : null;
     }
     
     protected abstract IUnirestRunner getUnirestRunner();

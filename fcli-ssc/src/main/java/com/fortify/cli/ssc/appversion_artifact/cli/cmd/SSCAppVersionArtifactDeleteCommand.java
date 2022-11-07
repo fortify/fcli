@@ -27,8 +27,8 @@ package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.appversion_artifact.cli.mixin.SSCAppVersionArtifactResolverMixin;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
-import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -36,18 +36,16 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
-public class SSCAppVersionArtifactDeleteCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
+public class SSCAppVersionArtifactDeleteCommand extends AbstractSSCAppVersionArtifactOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper; 
-    @Parameters(arity="1", description = "Id of the artifact to be deleted")
-    private String artifactId;
+    @Mixin private SSCAppVersionArtifactResolverMixin.PositionalParameter artifactResolver;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        return SSCAppVersionArtifactHelper.delete(unirest, artifactId);
+        return SSCAppVersionArtifactHelper.delete(unirest, artifactResolver.getArtifactDescriptor(unirest)).asJsonNode();
     }
     
     @Override

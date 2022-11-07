@@ -6,9 +6,9 @@ import picocli.CommandLine.Command;
         name = "rest",
         aliases = {},
         subcommands = {
-                SCSastRestCallCommand.class
+                SCSastControllerRestCallCommand.class
         }
 
 )
-public class SCSastRestCommands {
+public class SCSastControllerRestCommands {
 }
