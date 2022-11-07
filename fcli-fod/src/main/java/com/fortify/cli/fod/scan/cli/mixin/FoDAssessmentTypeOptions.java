@@ -65,10 +65,12 @@ public class FoDAssessmentTypeOptions {
     @ReflectiveAccess
     public static final class FoDAssessmentTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
+
         public FoDAssessmentTypeIterable() {
             super(Stream.of(FoDAssessmentType.values()).map(FoDAssessmentType::name).collect(Collectors.toList()));
         }
     }
+
     @ReflectiveAccess
     public static abstract class AbstractFoDAssessmentType {
         public abstract FoDAssessmentType getAssessmentType();
@@ -76,16 +78,18 @@ public class FoDAssessmentTypeOptions {
 
     @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDAssessmentType {
-        @Option(names = {"--assessment-type"}, required = true, arity = "1",
+        @Option(names = {"--assessment", "--assessment-type"}, required = true, arity = "1",
                 completionCandidates = FoDAssessmentTypeIterable.class, descriptionKey = "AssessmentTypeMixin")
-        @Getter private FoDAssessmentType assessmentType;
+        @Getter
+        private FoDAssessmentType assessmentType;
     }
 
     @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDAssessmentType {
-        @Option(names = {"--assessment-type"}, required = false, arity = "1",
+        @Option(names = {"--assessment", "--assessment-type"}, required = false, arity = "1",
                 completionCandidates = FoDAssessmentTypeIterable.class, descriptionKey = "AssessmentTypeMixin")
-        @Getter private FoDAssessmentType assessmentType;
+        @Getter
+        private FoDAssessmentType assessmentType;
     }
 
 }

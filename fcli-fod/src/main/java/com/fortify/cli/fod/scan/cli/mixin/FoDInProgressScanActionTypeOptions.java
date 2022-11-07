@@ -25,6 +25,7 @@
 
 package com.fortify.cli.fod.scan.cli.mixin;
 
+import com.fortify.cli.fod.util.FoDEnums;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -33,37 +34,35 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FoDAnalysisStatusTypeOptions {
-    public enum FoDAnalysisStatusType {Not_Started, In_Progress, Completed, Canceled, Waiting, Scheduled, Queued}
-
+public class FoDInProgressScanActionTypeOptions {
     @ReflectiveAccess
-    public static final class FoDAnalysisStatusTypeIterable extends ArrayList<String> {
+    public static final class FoDInProgressScanActionTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
 
-        public FoDAnalysisStatusTypeIterable() {
-            super(Stream.of(FoDAnalysisStatusType.values()).map(FoDAnalysisStatusType::name).collect(Collectors.toList()));
+        public FoDInProgressScanActionTypeIterable() {
+            super(Stream.of(FoDEnums.InProgressScanActionType.values()).map(FoDEnums.InProgressScanActionType::name).collect(Collectors.toList()));
         }
     }
 
     @ReflectiveAccess
-    public static abstract class AbstractFoDAnalysisStatusType {
-        public abstract FoDAnalysisStatusType getAnalysisStatusType();
+    public static abstract class AbstractFoDEntitlementType {
+        public abstract FoDEnums.InProgressScanActionType getInProgressScanActionType();
     }
 
     @ReflectiveAccess
-    public static class RequiredOption extends AbstractFoDAnalysisStatusType {
-        @Option(names = {"--status", "--analysis-status"}, required = true, arity = "1",
-                completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "AnalysisStatusMixin")
+    public static class RequiredOption extends AbstractFoDEntitlementType {
+        @Option(names = {"--in-progress", "--in-progress-action"}, required = true, arity = "1",
+                completionCandidates = FoDInProgressScanActionTypeIterable.class, descriptionKey = "InProgressActionTypeMixin")
         @Getter
-        private FoDAnalysisStatusType analysisStatusType;
+        private FoDEnums.InProgressScanActionType inProgressScanActionType;
     }
 
     @ReflectiveAccess
-    public static class OptionalOption extends AbstractFoDAnalysisStatusType {
-        @Option(names = {"--status", "--analysis-status"}, required = false, arity = "1",
-                completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "AnalysisStatusMixin")
+    public static class OptionalOption extends AbstractFoDEntitlementType {
+        @Option(names = {"--in-progress", "--in-progress-action"}, required = false, arity = "1",
+                completionCandidates = FoDInProgressScanActionTypeIterable.class, descriptionKey = "InProgressActionTypeMixin")
         @Getter
-        private FoDAnalysisStatusType analysisStatusType;
+        private FoDEnums.InProgressScanActionType inProgressScanActionType;
     }
 
 }

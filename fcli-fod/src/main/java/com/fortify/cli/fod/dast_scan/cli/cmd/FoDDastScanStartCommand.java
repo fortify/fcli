@@ -37,16 +37,15 @@ import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
-import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanDescriptor;
+import com.fortify.cli.fod.scan.cli.mixin.*;
+import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
+import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.util.FoDEnums;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -65,16 +64,22 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
 
     @Mixin private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
 
+    @Option(names = {"--entitlement-id"})
+    private Integer entitlementId;
+
     @Option(names = {"--start-date"})
     private String startDate;
 
-    @Option(names = {"--remediation"})
-    private Boolean remediation = false;
+    @Option(names = {"--notes"})
+    private String notes;
 
-    @Option(names = {"--skip-if-running"})
-    private Boolean skipIfRunning = false;
+    @Mixin
+    private FoDRemediationScanPreferenceTypeOptions.OptionalOption remediationScanType;
 
-    @Mixin private FoDEntitlementTypeOptions.OptionalOption entitlementType;
+    @Mixin
+    private FoDInProgressScanActionTypeOptions.OptionalOption inProgressScanActionType;
+
+    @Mixin private FoDEntitlementPreferenceTypeOptions.OptionalOption entitlementType;
     @Mixin private FoDAssessmentTypeOptions.OptionalOption assessmentType;
 
     @Override
@@ -84,15 +89,18 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
         FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
 
         String relId = appRelResolver.getAppRelId(unirest);
-        System.out.println(relId);
 
         // check if scan is already running
         FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptorById(unirest, relId, true);
-        System.out.println(appRelDescriptor);
-        if (appRelDescriptor.getDynamicAnalysisStatusType() != null && appRelDescriptor.getDynamicAnalysisStatusType().equals("In_Progress")) {
+        if (appRelDescriptor.getDynamicAnalysisStatusType() != null && (appRelDescriptor.getDynamicAnalysisStatusType().equals("In_Progress")
+                || appRelDescriptor.getDynamicAnalysisStatusType().equals("Scheduled"))) {
             FoDScanDescriptor scanDescriptor = FoDScanHelper.getScanDescriptor(unirest, String.valueOf(appRelDescriptor.getCurrentDynamicScanId()));
-            if (skipIfRunning) {
-                return scanDescriptor.asObjectNode().put("__action__", "SKIPPED_RUNNING");
+            if (inProgressScanActionType.getInProgressScanActionType() != null) {
+                if (inProgressScanActionType.getInProgressScanActionType().equals(FoDEnums.InProgressScanActionType.DoNotStartScan)) {
+                    return scanDescriptor.asObjectNode().put("__action__", "SKIPPED_RUNNING");
+                } else if (inProgressScanActionType.getInProgressScanActionType().equals(FoDEnums.InProgressScanActionType.CancelScanInProgress)) {
+                    System.out.println("Cancelling scans automatically is not currently supported.");
+                }
             } else {
                 throw new ValidationException("A dynamic scan with id '" + "" + String.valueOf(appRelDescriptor.getCurrentDynamicScanId()) +
                         "' is already in progress for release: " + appRelDescriptor.getReleaseName());
@@ -106,13 +114,18 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
                     "' has not been setup correctly - 'Dynamic Site URL' is missing or empty.");
         }
 
-        if (remediation != null && remediation) {
-            // if requesting a remediation scan make sure there are
-            entitlementToUse = FoDDastScanHelper.validateRemediationEntitlement(unirest, relId, currentSetup.getEntitlementId());
-        } else if (assessmentType.getAssessmentType() != null && entitlementType.getEntitlementType() != null) {
+        if (entitlementId != null && entitlementId > 0) {
+            entitlementToUse.copyFromCurrentSetup(currentSetup);
+            entitlementToUse.setEntitlementId(entitlementId);
+        } else if (remediationScanType.getRemediationScanPreferenceType() != null && (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
+            // if requesting a remediation scan make we have one available
+            entitlementToUse = FoDDastScanHelper.validateRemediationEntitlement(unirest, relId,
+                    currentSetup.getEntitlementId(), FoDScanTypeOptions.FoDScanType.Dynamic);
+        } else if (assessmentType.getAssessmentType() != null && entitlementType.getEntitlementPreferenceType() != null) {
             // if assessment and entitlement type are both specified, find entitlement to use
             entitlementToUse = FoDDastScanHelper.getEntitlementToUse(unirest, relId,
-                    assessmentType.getAssessmentType(), entitlementType.getEntitlementType());
+                    assessmentType.getAssessmentType(), entitlementType.getEntitlementPreferenceType(),
+                    FoDScanTypeOptions.FoDScanType.Dynamic);
         } else {
             // use the current scan setup
             entitlementToUse.copyFromCurrentSetup(currentSetup);
@@ -129,7 +142,7 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
                 .setAssessmentTypeId(entitlementToUse.getAssessmentTypeId())
                 .setEntitlementId(entitlementToUse.getEntitlementId())
                 .setEntitlementFrequencyType(entitlementToUse.getFrequencyType())
-                .setRemediationScan(remediation)
+                .setRemediationScan(remediationScanType.getRemediationScanPreferenceType() != null && !remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.NonRemediationScanOnly))
                 .setApplyPreviousScanSettings(true)
                 .setScanMethodType("Other")
                 .setScanTool(fcliProperties.getProperty("projectName", "fcli"))

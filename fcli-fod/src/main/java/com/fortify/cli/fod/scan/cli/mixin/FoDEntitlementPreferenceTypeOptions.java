@@ -34,31 +34,35 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FoDEntitlementTypeOptions {
+public class FoDEntitlementPreferenceTypeOptions {
     @ReflectiveAccess
-    public static final class FoDEntitlementTypeIterable extends ArrayList<String> {
+    public static final class FoDEntitlementPreferenceTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
-        public FoDEntitlementTypeIterable() {
-            super(Stream.of(FoDEnums.EntitlementFrequencyTypes.values()).map(FoDEnums.EntitlementFrequencyTypes::name).collect(Collectors.toList()));
+
+        public FoDEntitlementPreferenceTypeIterable() {
+            super(Stream.of(FoDEnums.EntitlementPreferenceType.values()).map(FoDEnums.EntitlementPreferenceType::name).collect(Collectors.toList()));
         }
     }
+
     @ReflectiveAccess
-    public static abstract class AbstractFoDEntitlementType {
-        public abstract FoDEnums.EntitlementFrequencyTypes getEntitlementType();
+    public static abstract class AbstractFoDEntitlementPreferenceType {
+        public abstract FoDEnums.EntitlementPreferenceType getEntitlementPreferenceType();
     }
 
     @ReflectiveAccess
-    public static class RequiredOption extends AbstractFoDEntitlementType {
-        @Option(names = {"--entitlement", "--entitlement-type"}, required = true, arity = "1",
-                completionCandidates = FoDEntitlementTypeIterable.class, descriptionKey = "EntitlementTypeMixin")
-        @Getter private FoDEnums.EntitlementFrequencyTypes entitlementType;
+    public static class RequiredOption extends AbstractFoDEntitlementPreferenceType {
+        @Option(names = {"--entitlement", "--entitlement-preference"}, required = true, arity = "1",
+                completionCandidates = FoDEntitlementPreferenceTypeIterable.class, descriptionKey = "EntitlementPreferenceTypeMixin")
+        @Getter
+        private FoDEnums.EntitlementPreferenceType entitlementPreferenceType;
     }
 
     @ReflectiveAccess
-    public static class OptionalOption extends AbstractFoDEntitlementType {
-        @Option(names = {"--entitlement", "--entitlement-type"}, required = false, arity = "1",
-                completionCandidates = FoDEntitlementTypeIterable.class, descriptionKey = "EntitlementTypeMixin")
-        @Getter private FoDEnums.EntitlementFrequencyTypes entitlementType;
+    public static class OptionalOption extends AbstractFoDEntitlementPreferenceType {
+        @Option(names = {"--entitlement", "--entitlement-preference"}, required = false, arity = "1",
+                completionCandidates = FoDEntitlementPreferenceTypeIterable.class, descriptionKey = "EntitlementPreferenceTypeMixin")
+        @Getter
+        private FoDEnums.EntitlementPreferenceType entitlementPreferenceType;
     }
 
 }

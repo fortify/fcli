@@ -23,48 +23,81 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.scan.helper;
+package com.fortify.cli.fod.sast_scan.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod.release.helper.FoDAppRelAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
+import com.fortify.cli.fod.rest.helper.FoDFileTransferHelper;
+import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
+import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions.FoDAssessmentType;
+import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan.helper.FoDStartScanResponse;
 import com.fortify.cli.fod.util.FoDEnums;
 import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 import javax.validation.ValidationException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Optional;
-import java.util.Properties;
+import java.io.File;
 
-import static java.util.function.Predicate.not;
-
-public class FoDScanHelper {
+public class FoDSastScanHelper extends FoDScanHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
-    public static final JsonNode renameFields(JsonNode record) {
-        JsonNode transform = new RenameFieldsTransformer(new String[] {
-                "scanId:id", "scanType:type", "analysisStatusType:status", "startedDateTime:started",
-                "completedDateTime:completed", "scanMethodTypeName:scanMethod"
-        }).transform(record);
-        return transform;
+    /*public static final FoDDastScanSetupDescriptor setupScan(UnirestInstance unirest, Integer relId, FoDSetupDastScanRequest setupDastScanRequest) {
+        ObjectNode body = objectMapper.valueToTree(setupDastScanRequest);
+        FoDQueryHelper.stripNulls(body);
+        System.out.println(body.toPrettyString());
+        JsonNode response = unirest.put(FoDUrls.DYNAMIC_SCANS + "/scan-setup")
+                .routeParam("relId", String.valueOf(relId))
+                .body(body).asObject(JsonNode.class).getBody();
+        return JsonHelper.treeToValue(response, FoDDastScanSetupDescriptor.class);
+    }*/
+
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartSastScanRequest req, File scanFile) {
+        HttpRequest request = unirest.post(FoDUrls.STATIC_SCAN_START).routeParam("relId", relId)
+                .queryString("entitlementPreferenceType", (req.getEntitlementPreferenceType() != null ?
+                        FoDEnums.EntitlementPreferenceType.valueOf(req.getEntitlementPreferenceType()) : FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan))
+                .queryString("purchaseEntitlement", Boolean.toString(req.getPurchaseEntitlement()))
+                .queryString("remdiationScanPreferenceType", (req.getRemdiationScanPreferenceType() != null ?
+                        FoDEnums.RemediationScanPreferenceType.valueOf(req.getRemdiationScanPreferenceType()) : FoDEnums.RemediationScanPreferenceType.NonRemediationScanOnly))
+                .queryString("inProgressScanActionType", (req.getInProgressScanActionType() != null ?
+                        FoDEnums.InProgressScanActionType.valueOf(req.getInProgressScanActionType()) : FoDEnums.InProgressScanActionType.DoNotStartScan))
+                .queryString("scanTool", "fcli")
+                .queryString("scanToolVersion", "Unknown")
+                .queryString("scanMethodType", "Other");
+        if (req.getEntitlementId() != null && req.getEntitlementId() > 0) {
+            request = request.queryString("entitlementId", req.getEntitlementId());
+        }
+        if (req.getNotes() != null && !req.getNotes().isEmpty()) {
+            // TODO: abbreviate notes
+            request = request.queryString("notes", req.getNotes());
+        }
+        FoDStartScanResponse descriptor = FoDFileTransferHelper.startScan(unirest, request.getUrl(), scanFile.getPath());
+        //System.out.println(descriptor);
+        // TODO: wait until scan is being "executed" otherwise a 404?
+        return getScanDescriptor(unirest, String.valueOf(descriptor.getScanId()));
     }
 
-    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, String relId,
-                                                                                   Integer entitlementId, FoDScanTypeOptions.FoDScanType scanType) {
+    public static final FoDSastScanSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
+        GetRequest request = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
+                .routeParam("relId", relId);
+        JsonNode setup = request.asObject(ObjectNode.class).getBody();
+        return JsonHelper.treeToValue(setup, FoDSastScanSetupDescriptor.class);
+    }
+
+    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, String relId, Integer entitlementId) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
-                relId, scanType, true);
+                relId, FoDScanTypeOptions.FoDScanType.Dynamic, true);
+        // TODO: simplify by checking isRemediationScan?
         if (assessmentTypeDescriptors.length > 0) {
             System.out.println("Validating remediation entitlement...");
             // check we have an appropriate remediation scan available
@@ -88,12 +121,11 @@ public class FoDScanHelper {
     }
 
     public static final FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, String relId,
-                                                                        FoDAssessmentTypeOptions.FoDAssessmentType assessmentType,
-                                                                        FoDEnums.EntitlementPreferenceType entitlementType,
-                                                                        FoDScanTypeOptions.FoDScanType scanType) {
+                                                                       FoDAssessmentType assessmentType,
+                                                                       FoDEnums.EntitlementFrequencyTypes entitlementType) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
-                relId, scanType, true);
+                relId, FoDScanTypeOptions.FoDScanType.Dynamic, true);
         if (assessmentTypeDescriptors.length > 0) {
             System.out.println("Validating entitlements...");
             // check for an entitlement with sufficient units available
@@ -115,60 +147,13 @@ public class FoDScanHelper {
         return entitlement;
     }
 
-    private final static Integer unitsRequired(FoDAssessmentTypeOptions.FoDAssessmentType assessmentType,
-                                               FoDEnums.EntitlementPreferenceType entitlementType) {
-        if (entitlementType == FoDEnums.EntitlementPreferenceType.SingleScanOnly ||
-                entitlementType == FoDEnums.EntitlementPreferenceType.SingleScanFirstThenSubscription) {
+    private final static Integer unitsRequired(FoDAssessmentType assessmentType, FoDEnums.EntitlementFrequencyTypes entitlementType) {
+        if (entitlementType == FoDEnums.EntitlementFrequencyTypes.SingleScan) {
             return assessmentType.getSingleUnits();
-        } else if (entitlementType == FoDEnums.EntitlementPreferenceType.SubscriptionOnly ||
-                entitlementType == FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan) {
+        } else if (entitlementType == FoDEnums.EntitlementFrequencyTypes.Subscription) {
             return assessmentType.getSubscriptionUnits();
         } else {
             throw new ValidationException("Unknown entitlement type used: " + entitlementType.name());
         }
     }
-
-    public static final FoDScanDescriptor getScanDescriptor(UnirestInstance unirest, String scanId) {
-        GetRequest request = unirest.get(FoDUrls.SCAN + "/summary").routeParam("scanId", scanId);
-        return getOptionalDescriptor(request);
-    }
-
-    public static final FoDScanDescriptor getLatestScanDescriptor(UnirestInstance unirest, String relId,
-                                                                  FoDScanTypeOptions.FoDScanType scanType,
-                                                                  boolean latestById) {
-        String queryField = (latestById ? "scanId" : "startedDateTime");
-        Optional<JsonNode> latestScan = JsonHelper.stream(
-                (ArrayNode) unirest.get(FoDUrls.RELEASE_SCANS).routeParam("relId", relId)
-                        .queryString("orderBy", queryField)
-                        .queryString("orderByDirection", "DESC")
-                        .asObject(JsonNode.class).getBody().get("items")
-        )
-                .filter(n->n.get("scanType").asText().equals(scanType.name()))
-                .filter(not(n->n.get("analysisStatusType").asText().equals("In_Progress")))
-                .findFirst();
-        return (latestScan.isEmpty() ? null : getDescriptor(latestScan.get()));
-    }
-
-    public static final Properties loadProperties() {
-        final Properties p = new Properties();
-        try (final InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("com/fortify/cli/app/fcli-build.properties")) {
-            if ( stream!=null ) { p.load(stream); }
-        } catch ( IOException ioe ) {
-            System.err.println("Error reading fcli-build.properties from classpath");
-        }
-        return p;
-    }
-
-    //
-
-    private static final FoDScanDescriptor getOptionalDescriptor(GetRequest request) {
-        JsonNode scan = request.asObject(ObjectNode.class).getBody();
-        return scan == null ? null : getDescriptor(scan);
-    }
-
-    private static final FoDScanDescriptor getDescriptor(JsonNode node) {
-        return  JsonHelper.treeToValue(node, FoDScanDescriptor.class);
-    }
-
-
 }

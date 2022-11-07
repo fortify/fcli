@@ -39,10 +39,12 @@ public class FoDScanTypeOptions {
     @ReflectiveAccess
     public static final class FoDScanTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
+
         public FoDScanTypeIterable() {
             super(Stream.of(FoDScanType.values()).map(FoDScanType::name).collect(Collectors.toList()));
         }
     }
+
     @ReflectiveAccess
     public static abstract class AbstractFoDScanType {
         public abstract FoDScanType getScanType();
@@ -52,14 +54,16 @@ public class FoDScanTypeOptions {
     public static class RequiredOption extends AbstractFoDScanType {
         @Option(names = {"--type", "--scan-type"}, required = true, arity = "1",
                 completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")
-        @Getter private FoDScanType scanType;
+        @Getter
+        private FoDScanType scanType;
     }
 
     @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDScanType {
         @Option(names = {"--type", "--scan-type"}, required = false, arity = "1",
                 completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")
-        @Getter private FoDScanType scanType;
+        @Getter
+        private FoDScanType scanType;
     }
 
 }

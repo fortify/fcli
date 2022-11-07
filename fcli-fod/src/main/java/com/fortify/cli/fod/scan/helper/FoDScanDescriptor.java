@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.scan.cli.mixin;
+package com.fortify.cli.fod.scan.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;

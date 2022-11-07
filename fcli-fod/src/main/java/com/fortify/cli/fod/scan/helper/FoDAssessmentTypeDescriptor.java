@@ -23,9 +23,10 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.dast_scan.helper;
+package com.fortify.cli.fod.scan.helper;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.fod.dast_scan.helper.FoDDastScanSetupDescriptor;
+import com.fortify.cli.fod.sast_scan.helper.FoDSastScanSetupDescriptor;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.ToString;
@@ -33,11 +34,31 @@ import lombok.ToString;
 @ReflectiveAccess
 @Data
 @ToString
-public class FoDDastScanSetupDescriptor extends JsonNodeHolder {
+public class FoDAssessmentTypeDescriptor {
     private Integer assessmentTypeId;
+    private String name;
+    private String scanType;
+    private Integer scanTypeId;
     private Integer entitlementId;
     private String entitlementDescription;
-    private String entitlementFrequencyType;
-    private Integer entitlementFrequencyTypeId;
-    private String dynamicSiteURL;
+    private Integer frequencyTypeId;
+    private String frequencyType;
+
+    public FoDAssessmentTypeDescriptor copyFromCurrentSetup(FoDDastScanSetupDescriptor curSetup) {
+        this.assessmentTypeId = curSetup.getAssessmentTypeId();
+        this.entitlementId = curSetup.getEntitlementId();
+        this.entitlementDescription = curSetup.getEntitlementDescription();
+        this.frequencyTypeId = curSetup.getEntitlementFrequencyTypeId();
+        this.frequencyType = curSetup.getEntitlementFrequencyType();
+        return this;
+    }
+
+    public FoDAssessmentTypeDescriptor copyFromCurrentSetup(FoDSastScanSetupDescriptor curSetup) {
+        this.assessmentTypeId = curSetup.getAssessmentTypeId();
+        this.entitlementId = curSetup.getEntitlementId();
+        this.entitlementDescription = curSetup.getEntitlementDescription();
+        this.frequencyTypeId = curSetup.getEntitlementFrequencyTypeId();
+        this.frequencyType = curSetup.getEntitlementFrequencyType();
+        return this;
+    }
 }

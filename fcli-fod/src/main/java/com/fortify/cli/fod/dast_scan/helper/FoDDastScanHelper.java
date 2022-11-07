@@ -32,9 +32,9 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod.release.helper.FoDAppRelAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeDescriptor;
+import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions.FoDAssessmentType;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanDescriptor;
+import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.util.FoDEnums;
@@ -74,71 +74,4 @@ public class FoDDastScanHelper extends FoDScanHelper {
         return JsonHelper.treeToValue(setup, FoDDastScanSetupDescriptor.class);
     }
 
-    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, String relId, Integer entitlementId) {
-        FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
-        FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
-                relId, FoDScanTypeOptions.FoDScanType.Dynamic, true);
-        // TODO: simplify by checking isRemediationScan?
-        if (assessmentTypeDescriptors.length > 0) {
-            System.out.println("Validating remediation entitlement...");
-            // check we have an appropriate remediation scan available
-            for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
-                if (atd.getEntitlementId() > 0 && atd.getEntitlementId().equals(entitlementId) && atd.getIsRemediation()
-                        && atd.getRemediationScansAvailable() > 0) {
-                    entitlement.setEntitlementDescription(atd.getEntitlementDescription());
-                    entitlement.setEntitlementId(atd.getEntitlementId());
-                    entitlement.setFrequencyType(atd.getFrequencyType());
-                    entitlement.setAssessmentTypeId(atd.getAssessmentTypeId());
-                    break;
-                }
-            }
-            if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
-                System.out.println("Running remediation scan using entitlement: " + entitlement.getEntitlementDescription());
-            } else {
-                throw new ValidationException("No remediation scan entitlements found");
-            }
-        }
-        return entitlement;
-    }
-
-    public static final FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, String relId,
-                                                                       FoDAssessmentType assessmentType,
-                                                                       FoDEnums.EntitlementFrequencyTypes entitlementType) {
-        FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
-        FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
-                relId, FoDScanTypeOptions.FoDScanType.Dynamic, true);
-        if (assessmentTypeDescriptors.length > 0) {
-            System.out.println("Validating entitlements...");
-            // check for an entitlement with sufficient units available
-            for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
-                System.out.println(atd);
-                System.out.println(atd.getFrequencyType());
-                System.out.println(entitlementType.name());
-
-                if (atd.getEntitlementId() != null && atd.getEntitlementId() > 0
-                        && atd.getFrequencyType().equals(entitlementType.name())
-                        && atd.getUnitsAvailable() >= unitsRequired(assessmentType, entitlementType)) {
-                    entitlement.setEntitlementDescription(atd.getEntitlementDescription());
-                    entitlement.setEntitlementId(atd.getEntitlementId());
-                    entitlement.setFrequencyType(atd.getFrequencyType());
-                    entitlement.setAssessmentTypeId(atd.getAssessmentTypeId());
-                    break;
-                }
-            }
-            if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
-                System.out.println("Running scan using entitlement: " + entitlement.getEntitlementDescription());
-            }
-        }
-        return entitlement;
-    }
-
-    private final static Integer unitsRequired(FoDAssessmentType assessmentType, FoDEnums.EntitlementFrequencyTypes entitlementType) {
-        if (entitlementType == FoDEnums.EntitlementFrequencyTypes.SingleScan) {
-            return assessmentType.getSingleUnits();
-        } else if (entitlementType == FoDEnums.EntitlementFrequencyTypes.Subscription) {
-            return assessmentType.getSubscriptionUnits();
-        } else {
-            throw new ValidationException("Unknown entitlement type used: " + entitlementType.name());
-        }
-    }
 }

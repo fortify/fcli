@@ -23,18 +23,17 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.dast_scan.cli.mixin;
+package com.fortify.cli.fod.scan.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-@ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class FoDDastScanDescriptor extends JsonNodeHolder {
-    private Integer scanId;
-    private String scanType;
+import java.util.ArrayList;
 
+@Data
+@EqualsAndHashCode
+public class FoDStartScanResponse extends JsonNodeHolder {
+    String scanId;
+    ArrayList<String> messages;
 }

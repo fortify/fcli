@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.dast_scan.cli.cmd;
+package com.fortify.cli.fod.sast_scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
@@ -49,7 +49,7 @@ import java.io.File;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Import.CMD_NAME)
-public class FoDDastScanImportCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+public class FoDSastScanImportCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
 
     @Mixin private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
@@ -62,13 +62,13 @@ public class FoDDastScanImportCommand extends AbstractFoDOutputCommand implement
         String relId = appRelResolver.getAppRelId(unirest);
         FoDImportScanResponse response = FoDFileTransferHelper.importScan(
                 unirest, relId,
-                FoDUrls.DYNAMIC_SCANS_IMPORT,
+                FoDUrls.STATIC_SCANS_IMPORT,
                 scanFile.getPath().toString()
         );
 
         // get latest scan as we cannot use the referenceId from import anywhere
         FoDScanDescriptor descriptor = FoDScanHelper.getLatestScanDescriptor(unirest, relId,
-                FoDScanTypeOptions.FoDScanType.Dynamic, true);
+                FoDScanTypeOptions.FoDScanType.Static, true);
 
         return descriptor.asObjectNode()
                 .put("scanMethod", "FPRImport")

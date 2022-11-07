@@ -34,8 +34,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.scan.cli.mixin.FoDImportScanSessionDescriptor;
+import com.fortify.cli.fod.scan.helper.FoDImportScanSessionDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDImportScanResponse;
+import com.fortify.cli.fod.scan.helper.FoDStartScanResponse;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.*;
 import lombok.*;
@@ -60,10 +61,11 @@ public class FoDFileTransferHelper {
         File f = new File(filePath);
         if (!f.exists() || !f.canRead())
             throw new ValidationException("Could not read file: " + f.getPath());
-        System.out.println("File: " + f.getPath() + "; size: " + f.length());
+        long fileLen = f.length();
+        //System.out.println("File: " + f.getPath() + "; size: " + fileLen + "bytes");
 
         String importScanSessionId = getImportScanSessionDescriptor(unirest, relId).getImportScanSessionId();
-        System.out.println("Import scan session id: " + importScanSessionId);
+        //System.out.println("Import scan session id: " + importScanSessionId);
 
         try (FileInputStream fs = new FileInputStream(filePath)) {
 
@@ -77,9 +79,9 @@ public class FoDFileTransferHelper {
                 }
                 String fragUrl = endpoint + "?fragNo=" + fragmentNumber++
                         + "&offset=" + offset
-                        + "&fileLength=" + byteCount
+                        + "&fileLength=" + fileLen
                         + "&importScanSessionId=" + importScanSessionId;
-                System.out.println(fragUrl);
+                //System.out.println(fragUrl);
 
                 HttpResponse<String> request = unirest.put(fragUrl)
                         .routeParam("relId", relId)
@@ -109,6 +111,67 @@ public class FoDFileTransferHelper {
         return null;
 
     }
+
+    @SneakyThrows
+    public static FoDStartScanResponse startScan(UnirestInstance unirest, String endpoint, String filePath) {
+
+        byte[] readByteArray = new byte[CHUNK_SIZE];
+        byte[] sendByteArray;
+        int fragmentNumber = 0;
+        int byteCount;
+        long offset = 0;
+
+        File f = new File(filePath);
+        if (!f.exists() || !f.canRead())
+            throw new ValidationException("Could not read file: " + f.getPath());
+        long fileLen = f.length();
+        //System.out.println("File: " + f.getPath() + "; size: " + fileLen + "bytes");
+
+        try (FileInputStream fs = new FileInputStream(filePath)) {
+
+            // Loop through chunks
+            while ((byteCount = fs.read(readByteArray)) != -1) {
+                if (byteCount < CHUNK_SIZE) {
+                    sendByteArray = Arrays.copyOf(readByteArray, byteCount);
+                    fragmentNumber = -1;
+                } else {
+                    sendByteArray = readByteArray;
+                }
+
+                HttpRequest postRequest = unirest.post(endpoint)
+                        .queryString("fragNo" , String.valueOf(fragmentNumber++))
+                        .queryString("offset", String.valueOf(offset))
+                        .queryString("fileLength", String.valueOf(fileLen));
+                //System.out.println(postRequest.getUrl());
+
+                HttpResponse<String> request = unirest.post(postRequest.getUrl())
+                        .body(sendByteArray)
+                        .uploadMonitor(new FoDProgressMonitor("Scan", f.length()))
+                        .asString();
+
+                offset += byteCount;
+
+                if (request.getStatus() != 202) {
+                    if (request.getStatus() == 200) {
+                        return objectMapper.readValue(request.getBody(), FoDStartScanResponse.class);
+                    } else if (request.getStatus() == 400 || request.getStatus() == 500) {
+                        FoDErrorResponse errors = objectMapper.readValue(request.getBody(), FoDErrorResponse.class);
+                        throw new RuntimeException("Error starting scan:" + errors.toString());
+                    } else {
+                        throw new RuntimeException("Error starting scan: " + request.getStatusText());
+                    }
+                }
+
+            }
+
+        } catch (Exception ex) {
+            throw new RuntimeException("Error starting scan:" + ex.getLocalizedMessage());
+        }
+
+        return null;
+
+    }
+
 
     private static FoDImportScanSessionDescriptor getImportScanSessionDescriptor(UnirestInstance unirest, String relId) {
         GetRequest request = unirest.get(FoDUrls.RELEASE_IMPORT_SCAN_SESSION)

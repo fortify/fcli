@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
 import com.fortify.cli.fod.scan.cli.cmd.FoDScanCommands;
+import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;

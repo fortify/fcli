@@ -42,8 +42,10 @@ public class FoDUrls {
     public static final String LOOKUP_ITEMS = ApiBase + "/lookup-items";
     public static final String SCANS = ApiBase + "/scans";
     public static final String SCAN = ApiBase + "/scans/{scanId}";
+    public static final String RELEASE_SCANS = RELEASE + "/scans";
     public static final String STATIC_SCANS = ApiBase + "/releases/{relId}/static-scans";
     public static final String STATIC_SCANS_IMPORT = STATIC_SCANS + "/import-scan";
+    public static final String STATIC_SCAN_START = STATIC_SCANS + "/start-scan-advanced";
     public static final String DYNAMIC_SCANS = ApiBase + "/releases/{relId}/dynamic-scans";
     public static final String DYNAMIC_SCANS_IMPORT = DYNAMIC_SCANS + "/import-scan";
     public static final String MOBILE_SCANS = ApiBase + "/releases/{relId}/mobile-scans";

@@ -23,16 +23,14 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.scan.cli.mixin;
+package com.fortify.cli.fod.sast_scan.cli.cmd;
 
-import com.fortify.cli.fod.dast_scan.helper.FoDDastScanSetupDescriptor;
+import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.scan.cli.cmd.FoDScanCancelCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Data;
-import lombok.ToString;
+import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Data
-@ToString
-public class FoDImportScanSessionDescriptor {
-    private String importScanSessionId;
+@Command(name = FoDOutputHelperMixins.Cancel.CMD_NAME)
+public class FoDSastScanCancelCommand extends FoDScanCancelCommand {
 }
