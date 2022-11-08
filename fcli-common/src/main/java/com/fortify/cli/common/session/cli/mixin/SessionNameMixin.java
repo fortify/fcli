@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.util.StringUtils;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -47,7 +48,7 @@ public class SessionNameMixin {
     @ReflectiveAccess
     public static class OptionalOption extends AbstractSessionNameMixin {
         @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
-        private SessionNameArgGroup nameOptions;
+        private SessionNameArgGroup nameOptions = new SessionNameArgGroup();
     
         static class SessionNameArgGroup {
             @Option(names = {"--session"}, required = false)
@@ -55,22 +56,22 @@ public class SessionNameMixin {
         }
         @Override
         protected String getSessionNameOrNull() {
-            return nameOptions==null ? null : nameOptions.sessionName;
+            return nameOptions.sessionName;
         }
     }
     
     @ReflectiveAccess
     public static class OptionalParameter extends AbstractSessionNameMixin {
         @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
-        private SessionNameArgGroup nameOptions;
+        private SessionNameArgGroup nameOptions = new SessionNameArgGroup();
     
         static class SessionNameArgGroup {
-            @Parameters(arity="0..1", index="0", paramLabel="session-name")
+            @Parameters(arity="0..1", index="0", paramLabel="session-name") @EnvSuffix("SESSION")
             private String sessionName;
         }
         @Override
         protected String getSessionNameOrNull() {
-            return nameOptions==null ? null : nameOptions.sessionName;
+            return nameOptions.sessionName;
         }
     }
 }

@@ -10,9 +10,9 @@ public final class ProgressHelper {
     private static final String LINE_START = "\r";
     
     public static final IProgressHelper createProgressHelper() {
-        if ( hasAnsiConsole ) { return new AnsiProgressHelper(); }
-        else if ( hasConsole ) { return new BasicProgressHelper(); }
-        else { return null; }
+        if ( hasAnsiConsole ) { return new AnsiConsoleProgressHelper(); }
+        else if ( hasConsole ) { return new BasicConsoleProgressHelper(); }
+        else { return new BasicProgressHelper(); }
     }
     
     public static interface IProgressHelper {
@@ -22,6 +22,21 @@ public final class ProgressHelper {
     }
     
     private static final class BasicProgressHelper implements IProgressHelper {
+        @Override
+        public boolean isMultiLineSupported() {
+            return true;
+        }
+        
+        @Override
+        public void writeProgress(String message) {
+            System.out.println(message+"\n");
+        }
+        
+        @Override
+        public void clearProgress() {}
+    }
+    
+    private static final class BasicConsoleProgressHelper implements IProgressHelper {
         private int lastNumberOfChars;
         
         @Override
@@ -43,7 +58,7 @@ public final class ProgressHelper {
         }
     }
     
-    private static final class AnsiProgressHelper implements IProgressHelper {
+    private static final class AnsiConsoleProgressHelper implements IProgressHelper {
         private int lastNumberOfLines = 0;
         
         @Override

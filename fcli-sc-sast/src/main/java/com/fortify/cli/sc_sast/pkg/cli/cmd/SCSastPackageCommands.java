@@ -1,13 +1,15 @@
 package com.fortify.cli.sc_sast.pkg.cli.cmd;
 
-import com.fortify.cli.common.dummy.cli.cmd.DummyCommand;
+import com.fortify.cli.sc_sast.pkg.cli.cmd.create.SCSastPackageCreateCommands;
 
 import picocli.CommandLine.Command;
 
 @Command(
         name = "package",
+        aliases = "pkg",
+        hidden = true,
         subcommands = {
-                DummyCommand.class
+                SCSastPackageCreateCommands.class,
         }
 )
 public class SCSastPackageCommands {

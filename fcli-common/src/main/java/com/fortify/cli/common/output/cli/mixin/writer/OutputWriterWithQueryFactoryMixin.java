@@ -25,11 +25,11 @@ public class OutputWriterWithQueryFactoryMixin implements IOutputWriterFactory, 
     @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false)
     private OutputOptionsArgGroup outputOptionsArgGroup = new OutputOptionsArgGroup();
     @ArgGroup(headingKey = "arggroup.query.heading", exclusive = false)
-    private QueryOptionsArgGroup queryOptionsArgGroup;
+    private QueryOptionsArgGroup queryOptionsArgGroup = new QueryOptionsArgGroup();
     
     @Override
     public List<OutputQuery> getOutputQueries() {
-        return queryOptionsArgGroup==null ? null : queryOptionsArgGroup.getOutputQueries();
+        return queryOptionsArgGroup.getOutputQueries();
     }
     
     @Override

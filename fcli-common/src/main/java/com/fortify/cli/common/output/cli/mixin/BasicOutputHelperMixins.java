@@ -138,6 +138,14 @@ public class BasicOutputHelperMixins {
     }
     
     @ReflectiveAccess
+    public static class WaitFor extends AbstractBasicOutputHelper {
+        public static final String CMD_NAME = "wait-for";
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+    
+    @ReflectiveAccess
     public static class Upload extends AbstractBasicOutputHelper {
         public static final String CMD_NAME = "upload";
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;

@@ -1,16 +1,10 @@
 #!/bin/bash -x
 
-SSC_SESSION_NAME=integration-test
-
 checkVars() {
     [[ -z "${FCLI_CMD}" ]] && echo "FCLI_CMD must be set to either 'java -jar path/to/fcli.jar' or path/to/fcli native binary" && exit 1
     [[ -z "${FCLI_SSC_URL}" ]] && echo "FCLI_SSC_URL must be set to SSC demo container URL" && exit 1
     [[ -z "${FCLI_SSC_USER}" ]] && echo "FCLI_SSC_USER must be set to SSC demo container user" && exit 1
     [[ -z "${FCLI_SSC_PASSWORD}" ]] && echo "FCLI_SSC_PASSWORD must be set to SSC demo container user password" && exit 1
-}
-
-sscSessionCmd() {
-    sscCmd "$@" --session ${SSC_SESSION_NAME}
 }
 
 sscCmd() {
@@ -27,50 +21,50 @@ runCmd() {
 }
 
 runTestCommandsInSession() {
-    checkOutput=(fgrep ${SSC_SESSION_NAME}); sscCmd session login ${SSC_SESSION_NAME}
+    checkOutput=(fgrep ${FCLI_SSC_SESSION}); sscCmd session login
     runTestCommands
-    sscCmd session logout ${SSC_SESSION_NAME}
+    sscCmd session logout
 }
 
 runTestCommands() {
-    sscSessionCmd activity-feed list
-    sscSessionCmd alert-definition list
-    sscSessionCmd alert list
-    sscSessionCmd app list
-    sscSessionCmd appversion list
-    checkOutput=(fgrep DevPhase); sscSessionCmd attribute-definition list
-    sscSessionCmd user list
-    sscSessionCmd event list
-    sscSessionCmd issue-template list
-    sscSessionCmd job list
-    sscSessionCmd plugin list
-    checkOutput=(fgrep "OWASP Top 10"); sscSessionCmd report-template list
-    checkOutput=(fgrep Administrator); sscSessionCmd role list
-    checkOutput=(fgrep projectversion_add); sscSessionCmd role-permission list
-    checkOutput=(fgrep CIToken); sscSessionCmd token-definition list
+    sscCmd activity-feed list
+    sscCmd alert-definition list
+    sscCmd alert list
+    sscCmd app list
+    sscCmd appversion list
+    checkOutput=(fgrep DevPhase); sscCmd attribute-definition list
+    sscCmd user list
+    sscCmd event list
+    sscCmd issue-template list
+    sscCmd job list
+    sscCmd plugin list
+    checkOutput=(fgrep "OWASP Top 10"); sscCmd report-template list
+    checkOutput=(fgrep Administrator); sscCmd role list
+    checkOutput=(fgrep projectversion_add); sscCmd role-permission list
+    checkOutput=(fgrep CIToken); sscCmd token-definition list
     
-    checkOutput=(fgrep CIToken); sscSessionCmd token create CIToken --expire-in 5m --store ciToken=restToken
-    sscSessionCmd token revoke {?ciToken:restToken}
+    checkOutput=(fgrep CIToken); sscCmd token create CIToken --expire-in 5m --store ciToken:restToken
+    sscCmd token revoke {?ciToken:restToken}
     runCmd ${FCLI_CMD} config var def delete ciToken
 
     appName="fcli-test $(date +%s)" 
-    sscSessionCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store currentAppVersion=id
+    sscCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store currentAppVersion:id
     # TODO Current commands don't properly produce singular output; once this is fixed, we can simply use {?currentAppVersion:id} 
     newAppVersionId="{?currentAppVersion:id}"
-    checkOutput=(fgrep "No data"); sscSessionCmd appversion-artifact list --appversion ${newAppVersionId}
-    sscSessionCmd appversion-attribute set "DevPhase=Active Development" --appversion ${newAppVersionId}
-    sscSessionCmd appversion-attribute list --appversion ${newAppVersionId}
-    checkOutput=(fgrep "SKIPPED_EXISTING"); sscSessionCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --skip-if-exists
-    sscSessionCmd appversion create "${appName}:v2" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store ?
-    checkOutput=(fgrep "v2"); sscSessionCmd appversion get ?    
-    sscSessionCmd appversion create "${appName}:v3" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs
-    sscSessionCmd app delete "${appName}" --delete-versions
-    checkOutput=(fgrep -v "${appName}"); sscSessionCmd appversion list
+    checkOutput=(fgrep "No data"); sscCmd appversion-artifact list --appversion ${newAppVersionId}
+    sscCmd appversion-attribute set "DevPhase=Active Development" --appversion ${newAppVersionId}
+    sscCmd appversion-attribute list --appversion ${newAppVersionId}
+    checkOutput=(fgrep "SKIPPED_EXISTING"); sscCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --skip-if-exists
+    sscCmd appversion create "${appName}:v2" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store ?
+    checkOutput=(fgrep "v2"); sscCmd appversion get ?    
+    sscCmd appversion create "${appName}:v3" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs
+    sscCmd app delete "${appName}" --delete-versions
+    checkOutput=(fgrep -v "${appName}"); sscCmd appversion list
 }
 
 run() {
     checkVars
-    runTestCommandsInSession
+    FCLI_SSC_SESSION=integration-test runTestCommandsInSession
 }
 
 run

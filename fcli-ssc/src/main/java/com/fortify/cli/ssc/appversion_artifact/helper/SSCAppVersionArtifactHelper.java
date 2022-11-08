@@ -1,14 +1,13 @@
 package com.fortify.cli.ssc.appversion_artifact.helper;
 
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
 
@@ -24,33 +23,31 @@ public final class SSCAppVersionArtifactHelper {
     
     private SSCAppVersionArtifactHelper() {}
     
-    public static final JsonNode delete(UnirestInstance unirest, String artifactId) {
-        return unirest.delete(SSCUrls.ARTIFACT(artifactId)).asObject(JsonNode.class).getBody();
+    public static final SSCAppVersionArtifactDescriptor getArtifactDescriptor(UnirestInstance unirest, String artifactId) {
+        return getDescriptor(getArtifactJsonNode(unirest, artifactId));
+    }
+
+    private static JsonNode getArtifactJsonNode(UnirestInstance unirest, String artifactId) {
+        return unirest.get(SSCUrls.ARTIFACT(artifactId))
+                .queryString("embed","scans")
+                .asObject(JsonNode.class).getBody().get("data");
     }
     
-    public static final JsonNode purge(UnirestInstance unirest, String artifactId) {
-        return unirest.delete(SSCUrls.ARTIFACT(artifactId)).asObject(JsonNode.class).getBody();
+    public static final SSCAppVersionArtifactDescriptor delete(UnirestInstance unirest, SSCAppVersionArtifactDescriptor descriptor) {
+        unirest.delete(SSCUrls.ARTIFACT(descriptor.getId())).asObject(JsonNode.class).getBody();
+        return descriptor;
+    }
+    
+    public static final SSCAppVersionArtifactDescriptor purge(UnirestInstance unirest, SSCAppVersionArtifactDescriptor descriptor) {
+        unirest.post(SSCUrls.ARTIFACTS_ACTION_PURGE)
+            .body(new SSCAppVersionArtifactPurgeByIdRequest(new String[] {descriptor.getId()}))
+            .asObject(JsonNode.class).getBody();
+        return descriptor;
     }
     
     public static final JsonNode purge(UnirestInstance unirest, SSCAppVersionArtifactPurgeByDateRequest purgeRequest) {
         return unirest.post(SSCUrls.PROJECT_VERSIONS_ACTION_PURGE)
                 .body(purgeRequest).asObject(JsonNode.class).getBody();
-    }
-    
-    public static final String waitForNonProcessingState(UnirestInstance unirest, String artifactId, int pollIntervalSeconds, int timeOutSeconds) {
-        Set<String> incompleteStates = new HashSet<>(Arrays.asList("PROCESSING", "SCHED_PROCESSING"));
-        long startTime = new Date().getTime();
-        String status = getArtifactStatus(unirest, artifactId);
-        while (new Date().getTime() < timeOutSeconds*1000+startTime && incompleteStates.contains(status) ) {
-            try {
-                Thread.sleep(pollIntervalSeconds*1000);
-                status = getArtifactStatus(unirest, artifactId);
-            } catch (InterruptedException ignore) {}
-        }
-        if ( incompleteStates.contains(status) ) {
-            throw new RuntimeException("Time-out while waiting for SSC to process the uploaded artifact");
-        }
-        return status;
     }
     
     public static final JsonNode approve(UnirestInstance unirest, String artifactId, String message){
@@ -65,16 +62,6 @@ public final class SSCAppVersionArtifactHelper {
                 .asObject(JsonNode.class).getBody();
     }
     
-    public static final String waitAndApprove(UnirestInstance unirest, String artifactId, String message, int pollIntervalSeconds, int timeOutSeconds) {
-        // TODO This may actually wait for 2*timeOutSeconds; once before and once after approving
-        String state = SSCAppVersionArtifactHelper.waitForNonProcessingState(unirest, artifactId, pollIntervalSeconds, timeOutSeconds);
-        if ("REQUIRE_AUTH".equals(state)) {
-            SSCAppVersionArtifactHelper.approve(unirest, artifactId, message);
-            state = SSCAppVersionArtifactHelper.waitForNonProcessingState(unirest, artifactId, pollIntervalSeconds, timeOutSeconds);
-        }
-        return state;
-    }
-    
     public static final String getArtifactStatus(UnirestInstance unirest, String artifactId){
         return JsonHelper.evaluateJsonPath(
                 unirest.get(SSCUrls.ARTIFACT(artifactId)).asObject(JsonNode.class).getBody(),
@@ -83,10 +70,31 @@ public final class SSCAppVersionArtifactHelper {
         );
     }
     
+    @Data @ReflectiveAccess @AllArgsConstructor
+    private static final class SSCAppVersionArtifactPurgeByIdRequest {
+        private String[] artifactIds;
+    }
+    
     @Data @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
     public static final class SSCAppVersionArtifactPurgeByDateRequest {
         private String[] projectVersionIds;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") 
         private OffsetDateTime purgeBefore;
+    }
+    
+    private static final SSCAppVersionArtifactDescriptor getDescriptor(JsonNode scanNode) {
+        return JsonHelper.treeToValue(scanNode, SSCAppVersionArtifactDescriptor.class);
+    }
+
+    public static JsonNode addScanTypes(JsonNode record) {
+        if ( record instanceof ObjectNode && record.has("_embed") ) {
+            JsonNode _embed = record.get("_embed");
+            if ( _embed.has("scans") ) {
+                ArrayNode scanTypes = JsonHelper.evaluateJsonPath(_embed, "$.scans.[*].type", ArrayNode.class);
+                String scanTypesString = JsonHelper.stream(scanTypes).map(JsonNode::asText).collect(Collectors.joining(", "));
+                record = ((ObjectNode)record).put("scanTypes", scanTypesString);
+            }
+        }
+        return record;
     }
 }

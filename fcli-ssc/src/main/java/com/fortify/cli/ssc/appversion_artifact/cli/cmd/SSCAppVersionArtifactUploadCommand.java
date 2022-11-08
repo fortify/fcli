@@ -32,8 +32,6 @@ import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
-import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
-import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
 
@@ -42,7 +40,6 @@ import kong.unirest.HttpRequest;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -50,30 +47,13 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Upload.CMD_NAME)
-public class SSCAppVersionArtifactUploadCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier {
+public class SSCAppVersionArtifactUploadCommand extends AbstractSSCAppVersionArtifactOutputCommand implements IUnirestBaseRequestSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Upload outputHelper; 
-    private static final int POLL_INTERVAL_SECONDS = SSCAppVersionArtifactHelper.DEFAULT_POLL_INTERVAL_SECONDS;
-    
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @Parameters(arity="1") private String filePath;
-    @ArgGroup(exclusive=false) private SSCAppVersionArtifactAutoApproveOptions autoApproveOptions = new SSCAppVersionArtifactAutoApproveOptions();
-
-    @Option(names = {"-w", "--wait"}, defaultValue = "false", description = "Will wait for the artifact to finish processing and auto approve if needed.")
-    private Boolean wait;
     
     @Option(names = {"-e", "--engine-type"}, description = "Engine type for the artifact being uploaded")
     private String engineType;
-
-    @Option(names = {"-t", "--time-out"}, defaultValue="300")
-    private int processingTimeOutSeconds;
-    
-    private static final class SSCAppVersionArtifactAutoApproveOptions {
-        @Option(names = {"-a", "--auto-approve"}, defaultValue = "false", description = "Auto approves any uploaded artifact that needs approval.")
-        private Boolean autoApprove;
-        
-        @Option(names = {"-m", "--message"}, defaultValue = "Auto-approved by fcli")
-        private String message;
-    }
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
@@ -85,15 +65,8 @@ public class SSCAppVersionArtifactUploadCommand extends AbstractSSCOutputCommand
         JsonNode uploadResponse = request.multiPartContent()
                 .field("file", new File(filePath))
                 .asObject(JsonNode.class).getBody();
-        
         String artifactId = JsonHelper.evaluateJsonPath(uploadResponse, "$.data.id", String.class);
-        
-        if (autoApproveOptions.autoApprove) {
-            SSCAppVersionArtifactHelper.waitAndApprove(unirest, artifactId, autoApproveOptions.message, POLL_INTERVAL_SECONDS, processingTimeOutSeconds);
-        } else if (wait ) {
-            SSCAppVersionArtifactHelper.waitForNonProcessingState(unirest, artifactId, POLL_INTERVAL_SECONDS, processingTimeOutSeconds);
-        }
-
+        // TODO Do we actually show any scan data from the embedded scans?
         return unirest.get(SSCUrls.ARTIFACT(artifactId)).queryString("embed","scans");
     }
     
