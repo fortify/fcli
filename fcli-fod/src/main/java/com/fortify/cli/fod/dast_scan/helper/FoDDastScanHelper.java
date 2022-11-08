@@ -29,23 +29,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.fod.release.helper.FoDAppRelAssessmentTypeDescriptor;
-import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions.FoDAssessmentType;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod.util.FoDEnums;
+import com.fortify.cli.fod.scan.helper.FoDScanNotFoundException;
+import com.fortify.cli.fod.scan.helper.FoDStartScanResponse;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
-import javax.validation.ValidationException;
-
 public class FoDDastScanHelper extends FoDScanHelper {
-    @Getter private static ObjectMapper objectMapper = new ObjectMapper();
+    @Getter
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     /*public static final FoDDastScanSetupDescriptor setupScan(UnirestInstance unirest, Integer relId, FoDSetupDastScanRequest setupDastScanRequest) {
         ObjectNode body = objectMapper.valueToTree(setupDastScanRequest);
@@ -57,14 +52,25 @@ public class FoDDastScanHelper extends FoDScanHelper {
         return JsonHelper.treeToValue(response, FoDDastScanSetupDescriptor.class);
     }*/
 
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, Integer relId, FoDStartDastScanRequest startDastScanRequest) {
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartDastScanRequest startDastScanRequest) {
         ObjectNode body = objectMapper.valueToTree(startDastScanRequest);
         JsonNode response = unirest.post(FoDUrls.DYNAMIC_SCANS + "/start-scan")
                 .routeParam("relId", String.valueOf(relId))
                 .body(body).asObject(JsonNode.class).getBody();
-        FoDScanDescriptor descriptor = JsonHelper.treeToValue(response, FoDScanDescriptor.class);
-        // TODO: wait until scan is being "executed" otherwise a 404
-        return getScanDescriptor(unirest, String.valueOf(descriptor.getScanId()));
+        FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
+        if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
+            throw new RuntimeException("Unable to retrieve scan id from response when starting Dynamic scan.");
+        }
+        JsonNode node = objectMapper.createObjectNode();
+        ((ObjectNode) node).put("scanId", startScanResponse.getScanId());
+        ((ObjectNode) node).put("status", "Pending");
+        FoDScanDescriptor scanDescriptor = JsonHelper.treeToValue(node, FoDScanDescriptor.class);
+        try {
+            scanDescriptor = getScanDescriptor(unirest, String.valueOf(startScanResponse.getScanId()));
+        } catch (FoDScanNotFoundException ex) {
+            scanDescriptor.setStatus("Unavailable");
+        }
+        return scanDescriptor;
     }
 
     public static final FoDDastScanSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {

@@ -34,11 +34,11 @@ public enum FoDScanStatus {
     Not_Started, In_Progress, Completed, Canceled, Waiting, Scheduled, Queued;
 
     public int getScanStatusType() {
-        return ordinal()+1;
+        return ordinal();
     }
     
     public static FoDScanStatus valueOf(Integer index){
-        return FoDScanStatus.values()[index-1];
+        return FoDScanStatus.values()[index];
     }
     
     public static JsonNode addScanStatus(JsonNode scanRecord) {

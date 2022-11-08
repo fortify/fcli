@@ -34,6 +34,6 @@ import java.util.ArrayList;
 @Data
 @EqualsAndHashCode
 public class FoDStartScanResponse extends JsonNodeHolder {
-    String scanId;
+    Integer scanId;
     ArrayList<String> messages;
 }

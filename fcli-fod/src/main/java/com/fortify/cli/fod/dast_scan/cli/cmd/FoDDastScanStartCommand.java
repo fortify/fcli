@@ -42,6 +42,7 @@ import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.util.FoDEnums;
+import com.fortify.cli.fod.util.FoDUtils;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
@@ -58,11 +59,12 @@ import java.util.Properties;
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Start.CMD_NAME)
 public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
-
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
-
-    @Mixin private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
+    @Getter
+    @Mixin
+    private FoDOutputHelperMixins.Create outputHelper;
+    @Mixin
+    private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
 
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
@@ -79,13 +81,15 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
     @Mixin
     private FoDInProgressScanActionTypeOptions.OptionalOption inProgressScanActionType;
 
-    @Mixin private FoDEntitlementPreferenceTypeOptions.OptionalOption entitlementType;
-    @Mixin private FoDAssessmentTypeOptions.OptionalOption assessmentType;
+    @Mixin
+    private FoDEntitlementPreferenceTypeOptions.OptionalOption entitlementType;
+    @Mixin
+    private FoDAssessmentTypeOptions.OptionalOption assessmentType;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
 
-        Properties fcliProperties = FoDScanHelper.loadProperties();
+        Properties fcliProperties = FoDUtils.loadProperties();
         FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
 
         String relId = appRelResolver.getAppRelId(unirest);
@@ -102,7 +106,7 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
                     System.out.println("Cancelling scans automatically is not currently supported.");
                 }
             } else {
-                throw new ValidationException("A dynamic scan with id '" + "" + String.valueOf(appRelDescriptor.getCurrentDynamicScanId()) +
+                throw new ValidationException("A dynamic scan with id '" + "" + appRelDescriptor.getCurrentDynamicScanId() +
                         "' is already in progress for release: " + appRelDescriptor.getReleaseName());
             }
         }
@@ -114,10 +118,19 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
                     "' has not been setup correctly - 'Dynamic Site URL' is missing or empty.");
         }
 
+        /**
+         * Logic for finding/using "entitlement" and "remediation" scanning is as follows:
+         *  - if "entitlement id" is specified directly then use it
+         *  - if "remediation" scan specified make sure it is valid and available
+         *  - if an "assessment type" (Dynamic/Dynamic+) and "entitlement type" (Static/Subscription) then find an
+         *    appropriate entitlement to use
+         *  - otherwise fall back to current setup
+         */
         if (entitlementId != null && entitlementId > 0) {
             entitlementToUse.copyFromCurrentSetup(currentSetup);
             entitlementToUse.setEntitlementId(entitlementId);
-        } else if (remediationScanType.getRemediationScanPreferenceType() != null && (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
+        } else if (remediationScanType.getRemediationScanPreferenceType() != null &&
+                (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
             // if requesting a remediation scan make we have one available
             entitlementToUse = FoDDastScanHelper.validateRemediationEntitlement(unirest, relId,
                     currentSetup.getEntitlementId(), FoDScanTypeOptions.FoDScanType.Dynamic);
@@ -135,8 +148,8 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
             throw new ValidationException("Could not find a valid FoD entitlement to use.");
 
         String startDateStr = (startDate == null || startDate.isEmpty())
-            ? LocalDateTime.now().format(dtf)
-            : LocalDateTime.parse(startDate, dtf).toString();
+                ? LocalDateTime.now().format(dtf)
+                : LocalDateTime.parse(startDate, dtf).toString();
         FoDStartDastScanRequest startScanRequest = new FoDStartDastScanRequest()
                 .setStartDate(startDateStr)
                 .setAssessmentTypeId(entitlementToUse.getAssessmentTypeId())
@@ -149,17 +162,19 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
                 .setScanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"));
 
         //System.out.println(startScanRequest);
-        return FoDDastScanHelper.startScan(unirest, Integer.valueOf(appRelResolver.getAppRelId(unirest)), startScanRequest).asJsonNode();
+        return FoDDastScanHelper.startScan(unirest, appRelResolver.getAppRelId(unirest), startScanRequest).asJsonNode();
     }
+
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDDastScanHelper.renameFields(record);
+        return FoDScanHelper.renameFields(record);
     }
 
     @Override
     public String getActionCommandResult() {
         return "STARTED";
     }
+
     @Override
     public boolean isSingular() {
         return true;

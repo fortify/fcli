@@ -23,8 +23,8 @@ import picocli.CommandLine.Command;
                 FoDAppCommands.class,
                 FoDAppRelCommands.class,
                 FoDAppMicroserviceCommands.class,
-                FoDLookupCommands.class,
                 FoDDastScanCommands.class,
+                FoDLookupCommands.class,
                 FoDSastScanCommands.class,
                 FoDScanCommands.class
         }

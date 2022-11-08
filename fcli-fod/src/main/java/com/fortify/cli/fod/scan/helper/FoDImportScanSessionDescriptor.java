@@ -25,6 +25,7 @@
 
 package com.fortify.cli.fod.scan.helper;
 
+import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.fod.dast_scan.helper.FoDDastScanSetupDescriptor;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
@@ -33,6 +34,6 @@ import lombok.ToString;
 @ReflectiveAccess
 @Data
 @ToString
-public class FoDImportScanSessionDescriptor {
+public class FoDImportScanSessionDescriptor extends JsonNodeHolder {
     private String importScanSessionId;
 }

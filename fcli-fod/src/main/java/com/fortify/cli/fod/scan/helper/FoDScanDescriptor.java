@@ -25,6 +25,7 @@
 
 package com.fortify.cli.fod.scan.helper;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
@@ -38,4 +39,5 @@ public class FoDScanDescriptor extends JsonNodeHolder {
     private String scanType;
     private Integer releaseId;
     private Integer applicationId;
+    private String status;
 }

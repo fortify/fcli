@@ -42,6 +42,7 @@ import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeOption
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.util.FoDEnums;
+import com.fortify.cli.fod.util.FoDUtils;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
@@ -58,19 +59,15 @@ import java.util.Properties;
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Start.CMD_NAME)
 public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+    @Option(names = {"--purchase-entitlement"})
+    private final Boolean purchaseEntitlement = false;
     @Getter
     @Mixin
     private FoDOutputHelperMixins.Create outputHelper;
-
     @Mixin
     private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
-
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
-
-    @Option(names = {"--purchase-entitlement"})
-    private final Boolean purchaseEntitlement = false;
-
     @Option(names = {"--notes"})
     private String notes;
 
@@ -88,7 +85,7 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
 
-        Properties fcliProperties = FoDScanHelper.loadProperties();
+        Properties fcliProperties = FoDUtils.loadProperties();
 
         String relId = appRelResolver.getAppRelId(unirest);
         Integer entitlementIdToUse = 0;
@@ -100,6 +97,12 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
                     "' has not been setup correctly - 'Technology Stack/Language Level' is missing or empty.");
         }
 
+        /**
+         * Logic for finding/using "entitlement" and "remediation" scanning is as follows:
+         *  - if "entitlement id" is specified directly then use it
+         *  - if "remediation" scan specified make sure it is valid and available
+         *  - if an "entitlement type" (Static/Subscription) then pass over to API to use
+         */
         if (entitlementId != null && entitlementId > 0) {
             entitlementIdToUse = entitlementId;
         }
@@ -112,9 +115,9 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
         FoDStartSastScanRequest startScanRequest = new FoDStartSastScanRequest()
                 .setPurchaseEntitlement(purchaseEntitlement)
                 .setEntitlementPreferenceType(remediationScanType.getRemediationScanPreferenceType() != null ?
-                        remediationScanType.getRemediationScanPreferenceType().name() : "")
+                        remediationScanType.getRemediationScanPreferenceType().name() : FoDEnums.RemediationScanPreferenceType.NonRemediationScanOnly.name())
                 .setInProgressScanActionType(inProgressScanActionType.getInProgressScanActionType() != null ?
-                        inProgressScanActionType.getInProgressScanActionType().name() : "")
+                        inProgressScanActionType.getInProgressScanActionType().name() : FoDEnums.InProgressScanActionType.Queue.name())
                 .setScanMethodType("Other")
                 .setNotes(notes != null && !notes.isEmpty() ? notes : "")
                 .setScanTool(fcliProperties.getProperty("projectName", "fcli"))
@@ -128,13 +131,12 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
             throw new ValidationException("Either an 'entitlement id' or 'entitlement type' need to be specified.");
         }
 
-        return FoDSastScanHelper.startScan(unirest, appRelResolver.getAppRelId(unirest),
-                startScanRequest, scanFile).asJsonNode();
+        return FoDSastScanHelper.startScan(unirest, appRelResolver.getAppRelId(unirest), startScanRequest, scanFile).asJsonNode();
     }
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDSastScanHelper.renameFields(record);
+        return FoDScanHelper.renameFields(record);
     }
 
     @Override
