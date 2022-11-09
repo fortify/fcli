@@ -1,3 +1,16 @@
+// the buildscript section is temporary until the missing dependency issue is resolved.
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath ("org.ysb33r.gradle:grolifant:0.16.2") {
+            force = true
+        }
+    }
+}
+
 plugins {
     id('com.github.jk1.dependency-license-report') version '2.1'
     id "org.kordamp.gradle.markdown" version "2.2.0"

@@ -9,7 +9,6 @@ import picocli.CommandLine;
 )
 public class LanguageGetCommand extends AbstractLanguageCommand {
 
-    @PostConstruct
     @Override
     public void run() {
         System.out.println(languageConfigManager.getLanguageForHelp(languageConfigManager.getLanguage()));
