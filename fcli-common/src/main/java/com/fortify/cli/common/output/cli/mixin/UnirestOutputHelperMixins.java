@@ -189,7 +189,7 @@ public class UnirestOutputHelperMixins {
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
-    
+
     @ReflectiveAccess
     public static class Upload extends AbstractUnirestOutputHelper {
         public static final String CMD_NAME = "upload";
@@ -220,6 +220,30 @@ public class UnirestOutputHelperMixins {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+
+    @ReflectiveAccess
+    public static class Import extends AbstractUnirestOutputHelper {
+        public static final String CMD_NAME = "import";
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table();
+    }
+
+    @ReflectiveAccess
+    public static class Export extends AbstractUnirestOutputHelper {
+        public static final String CMD_NAME = "export";
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table();
+    }
+
+    @ReflectiveAccess
+    public static class Setup extends AbstractUnirestOutputHelper {
+        public static final String CMD_NAME = "setup";
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table();
     }
     
     @ReflectiveAccess @Command

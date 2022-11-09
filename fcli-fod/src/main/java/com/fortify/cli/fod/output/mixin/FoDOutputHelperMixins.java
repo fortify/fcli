@@ -3,6 +3,7 @@ package com.fortify.cli.fod.output.mixin;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.UnirestOutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
@@ -83,7 +84,7 @@ public class FoDOutputHelperMixins {
                extends UnirestOutputHelperMixins.Cancel {}
 
     @ReflectiveAccess public static class WaitFor
-            extends UnirestOutputHelperMixins.WaitFor {}
+            extends BasicOutputHelperMixins.WaitFor {}
 
     @ReflectiveAccess public static class Upload 
                extends UnirestOutputHelperMixins.Upload {}
@@ -98,13 +99,13 @@ public class FoDOutputHelperMixins {
                extends UnirestOutputHelperMixins.Uninstall {}
 
     @ReflectiveAccess public static class Import
-            extends UnirestOutputHelperMixins.Upload {}
+            extends UnirestOutputHelperMixins.Import {}
 
     @ReflectiveAccess public static class Export
-            extends UnirestOutputHelperMixins.Download {}
+            extends UnirestOutputHelperMixins.Export {}
 
     @ReflectiveAccess public static class Setup
-            extends UnirestOutputHelperMixins.Set {}
+            extends UnirestOutputHelperMixins.Setup {}
 
     @ReflectiveAccess public static class Other 
                extends UnirestOutputHelperMixins.Other {}

@@ -33,41 +33,28 @@ import java.util.stream.Stream;
 public enum FoDScanStatus {
     Not_Started, In_Progress, Completed, Canceled, Waiting, Scheduled, Queued;
 
-    public int getScanStatusType() {
-        return ordinal();
-    }
-    
-    public static FoDScanStatus valueOf(Integer index){
-        return FoDScanStatus.values()[index];
-    }
-    
-    public static JsonNode addScanStatus(JsonNode scanRecord) {
-        ObjectNode record = scanRecord==null || !(scanRecord instanceof ObjectNode) 
-                ? null 
-                : (ObjectNode)scanRecord;
-        if ( record != null ) {
-            int scanStatusType = record.get("analysisStatusTypeId").asInt();
-            return record.put("analysisStatusType", FoDScanStatus.valueOf(scanStatusType).toString());
-        }
-        return scanRecord;
-    }
-    
     public static final FoDScanStatus[] getFailureStates() {
-        return new FoDScanStatus[]{
-                Canceled
-        };
+        return new FoDScanStatus[]{ Canceled };
     }
-    
+
     public static final FoDScanStatus[] getKnownStates() {
         return FoDScanStatus.values();
     }
-    
+
+    public static final FoDScanStatus[] getDefaultCompleteStates() {
+        return new FoDScanStatus[]{ Completed };
+    }
+
     public static final String[] getFailureStateNames() {
         return Stream.of(getFailureStates()).map(FoDScanStatus::name).toArray(String[]::new);
     }
     
     public static final String[] getKnownStateNames() {
         return Stream.of(getKnownStates()).map(FoDScanStatus::name).toArray(String[]::new);
+    }
+
+    public static final String[] getDefaultCompleteStateNames() {
+        return Stream.of(getDefaultCompleteStates()).map(FoDScanStatus::name).toArray(String[]::new);
     }
 
 }
