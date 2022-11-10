@@ -69,9 +69,9 @@ public class FoDSastScanHelper extends FoDScanHelper {
                         FoDEnums.RemediationScanPreferenceType.valueOf(req.getRemdiationScanPreferenceType()) : FoDEnums.RemediationScanPreferenceType.NonRemediationScanOnly))
                 .queryString("inProgressScanActionType", (req.getInProgressScanActionType() != null ?
                         FoDEnums.InProgressScanActionType.valueOf(req.getInProgressScanActionType()) : FoDEnums.InProgressScanActionType.DoNotStartScan))
-                .queryString("scanTool", "fcli")
-                .queryString("scanToolVersion", "Unknown")
-                .queryString("scanMethodType", "Other");
+                .queryString("scanTool", req.getScanTool())
+                .queryString("scanToolVersion", req.getScanToolVersion())
+                .queryString("scanMethodType", req.getScanMethodType());
         if (req.getEntitlementId() != null && req.getEntitlementId() > 0) {
             request = request.queryString("entitlementId", req.getEntitlementId());
         }
@@ -79,7 +79,8 @@ public class FoDSastScanHelper extends FoDScanHelper {
             String truncatedNotes = abbreviateString(req.getNotes(), FoDConstants.MAX_NOTES_LENGTH);
             request = request.queryString("notes", truncatedNotes);
         }
-        FoDStartScanResponse startScanResponse = FoDFileTransferHelper.startScan(unirest, request.getUrl(), scanFile.getPath());
+        FoDFileTransferHelper fileTransferHelper = new FoDFileTransferHelper(unirest);
+        FoDStartScanResponse startScanResponse = fileTransferHelper.startScan(request.getUrl(), scanFile.getPath());
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new RuntimeException("Unable to retrieve scan id from response when starting Static scan.");
         }

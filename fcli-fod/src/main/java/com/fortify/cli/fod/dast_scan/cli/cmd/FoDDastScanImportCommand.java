@@ -60,8 +60,9 @@ public class FoDDastScanImportCommand extends AbstractFoDOutputCommand implement
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         String relId = appRelResolver.getAppRelId(unirest);
-        FoDImportScanResponse response = FoDFileTransferHelper.importScan(
-                unirest, relId,
+        FoDFileTransferHelper fileTransferHelper = new FoDFileTransferHelper(unirest);
+        FoDImportScanResponse response = fileTransferHelper.importScan(
+                relId,
                 FoDUrls.DYNAMIC_SCANS_IMPORT,
                 scanFile.getPath().toString()
         );

@@ -60,19 +60,24 @@ public class FoDSastScanImportCommand extends AbstractFoDOutputCommand implement
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         String relId = appRelResolver.getAppRelId(unirest);
-        FoDImportScanResponse response = FoDFileTransferHelper.importScan(
-                unirest, relId,
+        FoDFileTransferHelper fileTransferHelper = new FoDFileTransferHelper(unirest);
+        FoDImportScanResponse response = fileTransferHelper.importScan(
+                relId,
                 FoDUrls.STATIC_SCANS_IMPORT,
                 scanFile.getPath().toString()
         );
 
-        // get latest scan as we cannot use the referenceId from import anywhere
-        FoDScanDescriptor descriptor = FoDScanHelper.getLatestScanDescriptor(unirest, relId,
-                FoDScanTypeOptions.FoDScanType.Static, true);
+        if (response == null) {
+            return null;
+        } else {
+            // get latest scan as we cannot use the referenceId from import anywhere
+            FoDScanDescriptor descriptor = FoDScanHelper.getLatestScanDescriptor(unirest, relId,
+                    FoDScanTypeOptions.FoDScanType.Static, true);
 
-        return descriptor.asObjectNode()
-                .put("scanMethod", "FPRImport")
-                .put("importReferenceId", response.getReferenceId());
+            return descriptor.asObjectNode()
+                    .put("scanMethod", "FPRImport")
+                    .put("importReferenceId", (response != null ? response.getReferenceId() : "N/A"));
+        }
     }
 
     public JsonNode transformRecord(JsonNode record) {
