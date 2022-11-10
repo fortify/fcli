@@ -52,4 +52,10 @@ public class FoDAppRelDescriptor extends JsonNodeHolder {
     private String passFailReasonType;
     private String sdlcStatusType;
     private Integer ownerId;
+    private Integer currentStaticScanId;
+    private Integer currentDynamicScanId;
+    private Integer currentMobileScanId;
+    private String staticAnalysisStatusType;
+    private String dynamicAnalysisStatusType;
+    private String mobileAnalysisStatusType;
 }

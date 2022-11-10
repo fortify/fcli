@@ -46,7 +46,6 @@ import picocli.CommandLine.*;
 import picocli.CommandLine.Model.CommandSpec;
 
 import java.util.ArrayList;
-import java.util.ResourceBundle;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Create.CMD_NAME)
@@ -77,11 +76,11 @@ public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IUn
     @Mixin
     private FoDAppTypeOptions.RequiredAppTypeOption appType;
     @Mixin
-    private FoDCriticalityTypeOptions.RequiredCritOption criticalityType;
+    private FoDCriticalityTypeOptions.RequiredOption criticalityType;
     @Mixin
     private FoDAttributeUpdateOptions.OptionalAttrOption appAttrs;
     @Mixin
-    private FoDSdlcStatusTypeOptions.RequiredSdlcOption sdlcStatus;
+    private FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {

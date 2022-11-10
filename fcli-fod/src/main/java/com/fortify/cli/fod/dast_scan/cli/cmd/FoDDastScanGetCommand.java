@@ -1,9 +1,11 @@
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
-import com.fortify.cli.common.dummy.cli.cmd.DummyCommand;
+import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.scan.cli.cmd.FoDScanGetCommand;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import picocli.CommandLine.Command;
 
-import picocli.CommandLine;
-
-@CommandLine.Command(name = "get")
-public class FoDDastScanGetCommand  extends DummyCommand {
+@ReflectiveAccess
+@Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
+public class FoDDastScanGetCommand extends FoDScanGetCommand {
 }

@@ -1,16 +1,18 @@
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
+import com.fortify.cli.common.variable.PredefinedVariable;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "dast",
         aliases = {"dast-scan"},
         subcommands = {
-                FoDDastScanCreateCommand.class,
+                FoDDastScanStartCommand.class,
+                FoDDastScanCancelCommand.class,
                 FoDDastScanGetCommand.class,
                 FoDDastScanListCommand.class,
-                FoDDastScanUpdateCommand.class,
-                FoDDastScanDeleteCommand.class
+                FoDDastScanImportCommand.class
         }
 )
+@PredefinedVariable(name = "currentScan", field = "id")
 public class FoDDastScanCommands {
 }

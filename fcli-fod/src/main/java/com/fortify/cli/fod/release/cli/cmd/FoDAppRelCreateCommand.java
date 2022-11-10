@@ -48,8 +48,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.*;
 import picocli.CommandLine.Model.CommandSpec;
 
-import java.util.ResourceBundle;
-
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Create.CMD_NAME)
 public class FoDAppRelCreateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
@@ -68,7 +66,7 @@ public class FoDAppRelCreateCommand extends AbstractFoDOutputCommand implements 
     private boolean skipIfExists = false;
 
     @Mixin
-    private FoDSdlcStatusTypeOptions.RequiredSdlcOption sdlcStatus;
+    private FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {

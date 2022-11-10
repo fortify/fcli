@@ -32,6 +32,7 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppAndRelNameDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -133,6 +134,18 @@ public class FoDAppRelHelper {
             throw new ValidationException("No application release found for id: " + relId);
         }
         return getDescriptor(rel);
+    }
+
+    public static final FoDAppRelAssessmentTypeDescriptor[] getAppRelAssessmentTypes(UnirestInstance unirestInstance,
+                                                                                     String relId, FoDScanTypeOptions.FoDScanType scanType, boolean failIfNotFound) {
+        GetRequest request = unirestInstance.get(FoDUrls.RELEASE + "/assessment-types")
+                .routeParam("relId", relId)
+                .queryString("scanType", scanType.name());
+        JsonNode assessmentTypes = request.asObject(ObjectNode.class).getBody().get("items");
+        if (failIfNotFound && assessmentTypes.size() == 0) {
+            throw new ValidationException("No assessment types found for release id: " + relId);
+        }
+        return JsonHelper.treeToValue(assessmentTypes, FoDAppRelAssessmentTypeDescriptor[].class);
     }
 
     public static final FoDAppRelDescriptor createAppRel(UnirestInstance unirest, FoDAppRelCreateRequest relCreateRequest) {

@@ -22,6 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
+
 package com.fortify.cli.fod.app.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;

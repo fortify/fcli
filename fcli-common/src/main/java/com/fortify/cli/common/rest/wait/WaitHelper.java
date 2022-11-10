@@ -96,10 +96,12 @@ public class WaitHelper {
     }
     
     public final WaitHelper waitComplete(UnirestInstance unirest) {
-        if ( result.isEmpty() && defaultCompleteStates==null || defaultCompleteStates.length==0 ) {
-            throw new IllegalArgumentException("One of --until* or --while* must be provided");
+        if ( result.isEmpty() ) {
+            if ( defaultCompleteStates==null || defaultCompleteStates.length==0 ) {
+                throw new IllegalArgumentException("One of --until* or --while* must be provided");
+            }
+            wait(unirest, new StateEvaluator(String.join("|", defaultCompleteStates), EvaluatorType.Until), AnyOrAll.ALL);
         }
-        wait(unirest, new StateEvaluator(String.join("|", defaultCompleteStates), EvaluatorType.Until), AnyOrAll.ALL);
         return this;
     }
 

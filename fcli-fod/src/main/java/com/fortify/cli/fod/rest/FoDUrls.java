@@ -32,6 +32,7 @@ public class FoDUrls {
     public static final String MICROSERVICES_UPDATE = ApiBase + "/applications/{appId}/microservices/{microserviceId}";
     public static final String RELEASES = ApiBase + "/releases";
     public static final String RELEASE = ApiBase + "/releases/{relId}";
+    public static final String RELEASE_IMPORT_SCAN_SESSION = RELEASE + "/import-scan-session-id";
     public static final String ATTRIBUTES = ApiBase + "/attributes";
     public static final String USERS = ApiBase + "/users";
     public static final String USER = ApiBase + "/users/{userId}";
@@ -39,4 +40,15 @@ public class FoDUrls {
     public static final String USER_GROUP = ApiBase + "/user-management/user-groups/{userId}";
     public static final String USER_GROUP_MEMBERS = ApiBase + "/user-management/user-groups/{userId}/members";
     public static final String LOOKUP_ITEMS = ApiBase + "/lookup-items";
+    public static final String SCANS = ApiBase + "/scans";
+    public static final String SCAN = ApiBase + "/scans/{scanId}";
+    public static final String RELEASE_SCANS = RELEASE + "/scans";
+    public static final String STATIC_SCANS = ApiBase + "/releases/{relId}/static-scans";
+    public static final String STATIC_SCANS_IMPORT = STATIC_SCANS + "/import-scan";
+    public static final String STATIC_SCAN_START = STATIC_SCANS + "/start-scan-advanced";
+    public static final String DYNAMIC_SCANS = ApiBase + "/releases/{relId}/dynamic-scans";
+    public static final String DYNAMIC_SCANS_IMPORT = DYNAMIC_SCANS + "/import-scan";
+    public static final String MOBILE_SCANS = ApiBase + "/releases/{relId}/mobile-scans";
+    public static final String MOBILE_SCANS_IMPORT = MOBILE_SCANS + "/import-scan";
+
 }

@@ -5,11 +5,11 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "sast",
         aliases = {"sast-scan"},
         subcommands = {
-                FoDSastScanCreateCommand.class,
+                FoDSastScanStartCommand.class,
+                FoDSastScanCancelCommand.class,
                 FoDSastScanGetCommand.class,
                 FoDSastScanListCommand.class,
-                FoDSastScanUpdateCommand.class,
-                FoDSastScanDeleteCommand.class
+                FoDSastScanImportCommand.class
         }
 )
 public class FoDSastScanCommands {
