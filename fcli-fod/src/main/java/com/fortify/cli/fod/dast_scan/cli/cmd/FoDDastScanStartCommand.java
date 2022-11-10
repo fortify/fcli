@@ -144,8 +144,9 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
             entitlementToUse.copyFromCurrentSetup(currentSetup);
         }
 
-        if (entitlementToUse.getEntitlementId() == null || entitlementToUse.getEntitlementId() <= 0)
+        if (entitlementToUse.getEntitlementId() == null || entitlementToUse.getEntitlementId() <= 0) {
             throw new ValidationException("Could not find a valid FoD entitlement to use.");
+        }
 
         String startDateStr = (startDate == null || startDate.isEmpty())
                 ? LocalDateTime.now().format(dtf)

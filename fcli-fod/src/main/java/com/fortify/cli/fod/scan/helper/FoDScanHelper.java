@@ -99,16 +99,29 @@ public class FoDScanHelper {
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
             System.out.println("Validating entitlements...");
-            // check for an entitlement with sufficient units available
+            // check for an entitlement
             for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
-                if (atd.getEntitlementId() != null && atd.getEntitlementId() > 0
-                        && atd.getFrequencyType().equals(entitlementType.name())
-                        && atd.getUnitsAvailable() >= unitsRequired(assessmentType, entitlementType)) {
-                    entitlement.setEntitlementDescription(atd.getEntitlementDescription());
-                    entitlement.setEntitlementId(atd.getEntitlementId());
-                    entitlement.setFrequencyType(atd.getFrequencyType());
-                    entitlement.setAssessmentTypeId(atd.getAssessmentTypeId());
-                    break;
+                //System.out.println(atd.getEntitlementId());
+                if (atd.getEntitlementId() != null && atd.getEntitlementId() > 0) {
+                    //System.out.println("  " + atd.getFrequencyType());
+                    if (atd.getFrequencyType().equals(entitlementType.name().replace("Only",""))) {
+                        //System.out.println("    " + atd.getName().replace(" ", "").replace("Assessment", ""));
+                        //System.out.println("    " + assessmentType.name());
+                        String atdName = atd.getName()
+                                .replace(" ", "")
+                                .replace("+", "Plus")
+                                .replace("Assessment", "");
+                        if (atdName.equals(assessmentType.name())) {
+                        //if (atd.getUnitsAvailable() >= unitsRequired(assessmentType, entitlementType)) {
+                            entitlement.setEntitlementDescription(atd.getEntitlementDescription());
+                            entitlement.setEntitlementId(atd.getEntitlementId());
+                            entitlement.setFrequencyType(atd.getFrequencyType());
+                            entitlement.setAssessmentTypeId(atd.getAssessmentTypeId());
+                            entitlement.setEntitlementDescription(atd.getEntitlementDescription());
+                            break;
+                        //}
+                        }
+                    }
                 }
             }
             if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
