@@ -25,34 +25,37 @@
 
 package com.fortify.cli.fod.rest.helper;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.Arrays;
-import java.util.List;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.scan.helper.FoDImportScanSessionDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDImportScanResponse;
+import com.fortify.cli.fod.scan.helper.FoDImportScanSessionDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDStartScanResponse;
+import com.fortify.cli.fod.util.FoDConstants;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import io.micronaut.http.MediaType;
-import kong.unirest.*;
-import lombok.*;
+import kong.unirest.GetRequest;
+import kong.unirest.HttpResponse;
+import kong.unirest.ProgressMonitor;
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.SneakyThrows;
 
 import javax.validation.ValidationException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.Arrays;
 
 @ReflectiveAccess
 public class FoDFileTransferHelper {
     @Getter private static final ObjectMapper objectMapper = new ObjectMapper();
     @Getter UnirestInstance unirest;
-    private static final int CHUNK_SIZE = 8388608; // 8MB
-    private static final int UPLOAD_SYNC_TIME = 5; // seconds
+    @Getter @Setter int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
+    @Getter @Setter int uploadSyncTime = FoDConstants.DEFAULT_UPLOAD_SYNC_TIME;
 
     public FoDFileTransferHelper(UnirestInstance unirest) {
         this.unirest = unirest;
@@ -71,19 +74,22 @@ public class FoDFileTransferHelper {
         System.out.println("Created import scan session id: " + importScanSessionId);
 
         try (FileInputStream fs = new FileInputStream(uploadFile)) {
-            byte[] readByteArray = new byte[CHUNK_SIZE];
+            byte[] readByteArray = new byte[chunkSize];
             byte[] sendByteArray;
             int fragmentNumber = 0;
             int byteCount;
             long offset = 0;
+            int numFragments = (int) Math.ceil(fileLen / chunkSize);
+            if (fileLen % chunkSize > 0) numFragments++;
 
-            System.out.println("TOTAL FILE SIZE = " + fileLen + " bytes");
-            System.out.println("CHUNK_SIZE = " + CHUNK_SIZE + " bytes");
+            System.out.println("Total File Size = " + fileLen + " bytes");
+            System.out.println("Upload Fragment Size = " + chunkSize + " bytes");
+            System.out.println("Number of Fragments = " + numFragments);
 
             // loop through chunks
             while ((byteCount = fs.read(readByteArray)) != -1) {
 
-                if (byteCount < CHUNK_SIZE) {
+                if (byteCount < chunkSize) {
                     sendByteArray = Arrays.copyOf(readByteArray, byteCount);
                     fragmentNumber = -1;
                 } else {
@@ -103,19 +109,14 @@ public class FoDFileTransferHelper {
                         //.uploadMonitor(new FoDProgressMonitor("Import", f.length()))
                         .asString();
 
-                if (fragmentNumber > 0 && fragmentNumber % 5 == 0) {
-                    System.out.println("\nImport Status - Current Fragment No: " + fragmentNumber + ", Bytes sent: " + offset + "/"
-                            + fileLen + " (Response: " + request.getStatusText() + ")");
-                } else {
-                    System.out.print(".");
-                }
+                System.out.print(".");
 
                 offset += byteCount;
 
                 //System.out.println("Status: " + request.getStatusText());
-                // introduce a minor delay otherwise upload stream gets out of sync! :(
+                // introduce a minor delay otherwise upload stream can get out of sync! :(
                 try {
-                    Thread.sleep(UPLOAD_SYNC_TIME * 1000);
+                    Thread.sleep(uploadSyncTime * 1000);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
@@ -132,16 +133,16 @@ public class FoDFileTransferHelper {
                         FoDErrorResponse errors = objectMapper.readValue(request.getBody(), FoDErrorResponse.class);
                         if (errors != null) {
                             if (errors.toString().contains("Can not start another import is in progress")) {
-                                System.out.println(errors.toString());
+                                System.out.println(errors);
                             } else {
                                 System.out.println("Package upload failed for the following reasons: ");
-                                System.out.println(errors.toString());
+                                System.out.println(errors);
                             }
                         } else {
                             if (!StringUtils.isNotBlank(request.getBody())) System.out.println("Raw response\n" + request.getBody());
                             else System.out.println("No response body from API");
                         }
-                        throw new RuntimeException("Error importing scan:" + errors.toString());
+                        throw new RuntimeException("Error importing scan:" + (errors != null ? errors.toString() : ""));
                     }
                 }
 
@@ -168,19 +169,22 @@ public class FoDFileTransferHelper {
         System.out.println("Uploading scan file: " + f.getPath());
 
         try (FileInputStream fs = new FileInputStream(uploadFile)) {
-            byte[] readByteArray = new byte[CHUNK_SIZE];
+            byte[] readByteArray = new byte[chunkSize];
             byte[] sendByteArray;
             int fragmentNumber = 0;
             int byteCount;
             long offset = 0;
+            int numFragments = (int) Math.ceil(fileLen / chunkSize);
+            if (fileLen % chunkSize > 0) numFragments++;
 
-            System.out.println("TOTAL FILE SIZE = " + fileLen + " bytes");
-            System.out.println("CHUNK_SIZE = " + CHUNK_SIZE + " bytes");
+            System.out.println("Total File Size = " + fileLen + " bytes");
+            System.out.println("Upload Fragment Size = " + chunkSize + " bytes");
+            System.out.println("Number of Fragments = " + numFragments);
 
             // loop through chunks
             while ((byteCount = fs.read(readByteArray)) != -1) {
 
-                if (byteCount < CHUNK_SIZE) {
+                if (byteCount < chunkSize) {
                     sendByteArray = Arrays.copyOf(readByteArray, byteCount);
                     fragmentNumber = -1;
                 } else {
@@ -196,20 +200,15 @@ public class FoDFileTransferHelper {
                         .body(sendByteArray)
                         //.uploadMonitor(new FoDProgressMonitor("Import", f.length()))
                         .asString();
-
-                if (fragmentNumber > 0 && fragmentNumber % 5 == 0) {
-                    System.out.println("\nUpload Status - Current Fragment No: " + fragmentNumber + ", Bytes sent: " + offset + "/"
-                            + fileLen + " (Response: " + request.getStatusText() + ")");
-                } else {
-                    System.out.print(".");
-                }
+                
+                System.out.print(".");
 
                 offset += byteCount;
 
                 //System.out.println("Status: " + request.getStatusText());
                 // introduce a minor delay otherwise upload stream gets out of sync! :(
                 try {
-                    Thread.sleep(UPLOAD_SYNC_TIME * 1000);
+                    Thread.sleep(uploadSyncTime * 1000);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
@@ -226,16 +225,16 @@ public class FoDFileTransferHelper {
                         FoDErrorResponse errors = objectMapper.readValue(request.getBody(), FoDErrorResponse.class);
                         if (errors != null) {
                             if (errors.toString().contains("Can not start another import is in progress")) {
-                                System.out.println(errors.toString());
+                                System.out.println(errors);
                             } else {
                                 System.out.println("Package upload failed for the following reasons: ");
-                                System.out.println(errors.toString());
+                                System.out.println(errors);
                             }
                         } else {
                             if (!StringUtils.isNotBlank(request.getBody())) System.out.println("Raw response\n" + request.getBody());
                             else System.out.println("No response body from API");
                         }
-                        throw new RuntimeException("Error starting scan:" + errors.toString());
+                        throw new RuntimeException("Error starting scan:"+ (errors != null ? errors.toString() : ""));
                     }
                 }
 

@@ -38,6 +38,7 @@ import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDImportScanResponse;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.util.FoDConstants;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -54,6 +55,10 @@ public class FoDDastScanImportCommand extends AbstractFoDOutputCommand implement
 
     @Mixin private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
 
+    @CommandLine.Option(names = {"--chunk-size"})
+    private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
+    @CommandLine.Option(names = {"--upload-sync-time"})
+    private int uploadSyncTime = FoDConstants.DEFAULT_UPLOAD_SYNC_TIME;
     @CommandLine.Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
 
@@ -61,10 +66,11 @@ public class FoDDastScanImportCommand extends AbstractFoDOutputCommand implement
     public JsonNode getJsonNode(UnirestInstance unirest) {
         String relId = appRelResolver.getAppRelId(unirest);
         FoDFileTransferHelper fileTransferHelper = new FoDFileTransferHelper(unirest);
+        fileTransferHelper.setChunkSize(chunkSize);
+        fileTransferHelper.setUploadSyncTime(uploadSyncTime);
         FoDImportScanResponse response = fileTransferHelper.importScan(
-                relId,
-                FoDUrls.DYNAMIC_SCANS_IMPORT,
-                scanFile.getPath().toString()
+                relId, FoDUrls.DYNAMIC_SCANS_IMPORT,
+                scanFile.getPath()
         );
 
         // get latest scan as we cannot use the referenceId from import anywhere

@@ -41,6 +41,7 @@ import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.util.FoDConstants;
 import com.fortify.cli.fod.util.FoDEnums;
 import com.fortify.cli.fod.util.FoDUtils;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -70,7 +71,10 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
     private Integer entitlementId;
     @Option(names = {"--notes"})
     private String notes;
-
+    @Option(names = {"--chunk-size"})
+    private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
+    @Option(names = {"--upload-sync-time"})
+    private int uploadSyncTime = FoDConstants.DEFAULT_UPLOAD_SYNC_TIME;
     @CommandLine.Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
 
@@ -131,7 +135,8 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
             throw new ValidationException("Either an 'entitlement id' or 'entitlement type' need to be specified.");
         }
 
-        return FoDSastScanHelper.startScan(unirest, appRelResolver.getAppRelId(unirest), startScanRequest, scanFile).asJsonNode();
+        return FoDSastScanHelper.startScan(unirest, appRelResolver.getAppRelId(unirest), startScanRequest, scanFile,
+                chunkSize, uploadSyncTime).asJsonNode();
     }
 
     @Override

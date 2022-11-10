@@ -60,7 +60,8 @@ public class FoDSastScanHelper extends FoDScanHelper {
         return JsonHelper.treeToValue(response, FoDDastScanSetupDescriptor.class);
     }*/
 
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartSastScanRequest req, File scanFile) {
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartSastScanRequest req,
+                                                    File scanFile, int chunkSize, int uploadSyncTime) {
         HttpRequest request = unirest.post(FoDUrls.STATIC_SCAN_START).routeParam("relId", relId)
                 .queryString("entitlementPreferenceType", (req.getEntitlementPreferenceType() != null ?
                         FoDEnums.EntitlementPreferenceType.valueOf(req.getEntitlementPreferenceType()) : FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan))
@@ -80,6 +81,8 @@ public class FoDSastScanHelper extends FoDScanHelper {
             request = request.queryString("notes", truncatedNotes);
         }
         FoDFileTransferHelper fileTransferHelper = new FoDFileTransferHelper(unirest);
+        fileTransferHelper.setChunkSize(chunkSize);
+        fileTransferHelper.setUploadSyncTime(uploadSyncTime);
         FoDStartScanResponse startScanResponse = fileTransferHelper.startScan(request.getUrl(), scanFile.getPath());
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new RuntimeException("Unable to retrieve scan id from response when starting Static scan.");
