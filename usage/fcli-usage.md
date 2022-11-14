@@ -1,7 +1,3 @@
----
-permalink: /usage.html
----
-
 # Fortify CLI (fcli) Installation & Usage
 The fcli utility can be used to interact with various Fortify products, like FoD, SSC, ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the man-pages corresponding to the fcli version that you are using, as listed in the [fcli introduction]({% post_url 2022-06-01-intro %}).
 
