@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ page.title }}</title>
+    <meta name="keywords" content="{{ site.keywords }}">
+    <meta name="description" content="{{ site.description }}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ site.baseurl }}/css/site.css">
+    <link rel="stylesheet" type="text/css" href="{{ site.baseurl }}/css/uxaspects/styles/ux-aspects.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ site.baseurl }}/css/quantum/qtm-bs3.css">
+    <link rel="icon" href="{{ site.baseurl }}/img/cropped-fOR-WEBSITE-32x32.png" sizes="32x32">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+    <script src="https://use.fontawesome.com/4104d53f87.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+</head>
+
+<body class="">
+    <nav id="top-nav" class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <img src="{{ site.baseurl }}/img/mf_fortify_bluesquare_logo.svg" class="logo img-responsive" />
+            <div class="navbar-header">
+                <h2 class="navbar-brand" href="#">FCLI: The Universal Fortify CLI</h2>
+            </div>
+            <ul id="navbar-get-code" class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="https://github.com/fortify-ps/fcli" target="_blank">
+                        <i class="hpe-icon hpe-social-github"></i> 
+                        <span>GitHub</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+                {{ content }}
+            </div>
+        </div>
+    </div>
+
+</body>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+    crossorigin="anonymous"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+
+</script>
+
+</html>
