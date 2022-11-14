@@ -16,6 +16,17 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
     <script src="https://use.fontawesome.com/4104d53f87.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <!--Fix H2 scrolling -->
+    <style>
+      h2::before {
+          display: block;
+          content: " ";
+          margin-top: -50px;
+          height: 50px;
+          visibility: hidden;
+          pointer-events: none;
+      }
+    </style>
 </head>
 
 <body class="">
