@@ -2,6 +2,8 @@
 layout: page
 title: Fortify CLI (fcli) Installation & Usage
 nav:
+  - title: FCLI Installation & Usage
+    permalink:
   - title: Installation
     permalink: installation
   - title: Command Structure
