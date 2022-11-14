@@ -3,15 +3,15 @@ layout: page
 title: Fortify CLI (fcli) Installation & Usage
 nav:
   - title: Installation
-    link: #installation
+    link: installation
   - title: Command Structure
-    link: #command-structure
+    link: command-structure
   - title: Session Management
-    link: #session-management
+    link: session-management
   - title: Environment Variables
-    link: #environment-variables
+    link: environment-variables
   - title: Fcli Variables
-    link: #fcli-variables
+    link: fcli-variables
 ---
 
 # Fortify CLI (fcli) Installation & Usage
