@@ -26,10 +26,10 @@ exclude:
 
 ### content configuration ###
 keywords:    "Fortify, FCLI, CLI"
-source_link: ""
+source_link: "/fcli"
 highlighter: rouge
 
 kramdown:
-  auto_ids:  false
+  auto_ids:  true
   
 
