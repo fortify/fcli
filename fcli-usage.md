@@ -1,6 +1,17 @@
 ---
 layout: page
 title: Fortify CLI (fcli) Installation & Usage
+nav:
+  - title: Installation
+    link: #installation
+  - title: Command Structure
+    link: #command-structure
+  - title: Session Management
+    link: #session-management
+  - title: Environment Variables
+    link: #environment-variables
+  - title: Fcli Variables
+    link: #fcli-variables
 ---
 
 # Fortify CLI (fcli) Installation & Usage
@@ -29,13 +40,13 @@ To install one of the binary distributions of fcli:
 
 To install the `.jar` version of fcli, simply download `fcli.jar` and put in in a directory of your choosing, after which it can be executed using `java -jar path/to/fcli.jar`. You may want to set up a simple wrapper script/batch file or shell alias to make it slightly easier to invoke `fcli.jar`.
 
-## General Command Structure
+## Command Structure
 
 Fcli is modeled after Fortify products.
 
 TODO
 
-## Sessions
+## Session Management
 
 TODO
 

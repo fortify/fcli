@@ -37,6 +37,15 @@
     </nav>
     <div class="container-fluid">
         <div class="row">
+            <div class="col-sm-3 col-md-2 sidebar">
+                <nav class="navbar-static-side navbar-static-side-light">
+                    <ul class="nav nav-sidebar">
+                        {% for n in page.nav %}
+                        <li class="m-b-xs"><a href="{{ n.link }}">{{ n.title }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </nav>
+            </div>
             <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
                 {{ content }}
             </div>
