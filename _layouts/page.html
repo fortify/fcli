@@ -55,7 +55,7 @@
                 <nav class="navbar-static-side navbar-static-side-light">
                     <ul class="nav nav-sidebar">
                         {% for n in page.nav %}
-                        <li class="m-b-xs"><a href="{{ n.permalink }}">{{ n.title }}</a></li>
+                        <li class="m-b-xs"><a href="#{{ n.permalink }}">{{ n.title }}</a></li>
                         {% endfor %}
                     </ul>
                 </nav>

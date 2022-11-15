@@ -3,23 +3,23 @@ layout: page
 title: Fortify CLI (fcli) Installation & Usage
 nav:
   - title: FCLI Installation & Usage
-    permalink: #
+    permalink: 
   - title: Installation
-    permalink: #installation
+    permalink: installation
   - title: Command Structure
-    permalink: #command-structure
+    permalink: command-structure
   - title: Common Options
-    permalink: #common-options
+    permalink: common-options
   - title: Session Management
-    permalink: #session-management
+    permalink: session-management
   - title: Environment Variables
-    permalink: #environment-variables
+    permalink: environment-variables
   - title: Fcli Variables
-    permalink: #fcli-variables
+    permalink: fcli-variables
   - title: Manual Pages
-    permalink: #manual-pages
+    permalink: manual-pages
   - title: Troubleshooting
-    permalink: #troubleshooting
+    permalink: troubleshooting
 ---
 
 # Fortify CLI (fcli) Installation & Usage
@@ -103,8 +103,37 @@ Available on most `list` commands and some other commands, this option allows fo
 Available on virtually all commands that interact with a target system, this option allows for specifying a session name. For more details, see the [Session Management](#session-management) section.
 
 ## Session Management
+Most fcli product modules are session-based, meaning that you need to run a `session login` command before you can use most of the other commands provided by a product module, and run a `session logout` command when finished, for example:
+
+```bash
+fcli ssc session login --url https://my.ssc.org/ssc --user <user> --password <password>
+fcli ssc appversion list
+fcli ssc session logout --user <user> --password <password>
+```
+
+For interactive use, you can choose to keep the session open until it expires (expiration period depends on target system and login method). For pipeline use or other automation scenarios, it is highly recommended to issue a `session logout` command when no further interaction with the target system is required, to allow for any client-side and server-side cleanup to be performed. For example, upon logging in to SSC with user credentials, fcli will generate a `UnifiedLoginToken`, which will be invalidated when the `ssc session logout` is being run. If you have many (frequently executed) pipelines that interact with SSC, and you don't run the `ssc session logout` command when the pipeline finishes, you risk exhausting SSC's limit on active tokens. In addition, the `logout` commands will remove the session details like URL and authentication tokens from the client system, and perform other cleanup like removing predefined fcli variables (see [Fcli Variables](#fcli-variables)).
+
+For product modules that support it, like SSC or ScanCentral DAST, it is also highly recommended to use token-based authentication rather than username/password-based authentication when incorporating fcli into pipelines or other automation tasks. This will avoid creation of a temporary token as described above, but also allows for better access control based on token permissions. Similarly, for systems that support Personal Access tokens, like FoD, it is highly recommended to utilize a Personal Access Token rather than user password. Note however that depending on (personal access) token permissions, not all fcli functionality may be available. In particular, even the least restrictive SSC `CIToken` may not provide access to all endpoints covered by fcli. If you need access to functionality not covered by `CIToken`, you may need to define a custom token definition, but this can only be done on self-hosted SSC environments, not on Fortify Hosted. If all else fails, you may need to revert to username/password-based authentication to utilize the short-lived `UnifiedLoginToken`.
+
+### Named Sessions
+Fcli supports named sessions, allowing you to have multiple sessions for a single product.
+
+TODO
+
+### Session Storage
+To keep session state between fcli invocations, fcli stores session data like URL and authentication tokens in the [Fcli Home Folder](#fcli-home-folder). To reduce the risk of unauthorized access to this sensitive data, fcli encrypts the session data files. However, this is not bullet-proof, as the encryption key and algorithm can be easily viewed in fcli source code. As such, it is recommended to ensure file permissions on the FCLI Home folder are properly configured to disallow access by other users. Being stored in the user's home directory by default, the correct file permissions should usually already be in place.
+
+Future fcli versions may provide enhancements to further improve protection of this sensitive data, for example by:
+- Allowing the user to specify a custom encryption password through an environment variable, such that the session data can only be decrypted if the environment variable value is known
+- Provide functionality for running multiple fcli commands with a single fcli invocation, like providing an `fcli shell` command or running commands from an fcli workflow definition file, which should allow session data data to be stored in memory instead of on disk, and also allow for automated logout when exiting the fcli shell or when the workflow finishes
+
 
 ## Fcli Home Folder
+Fcli stores various files in its home directory, like session files (see [Session Management](#session-management)) and fcli variable contents (see [Fcli Variables](#fcli-variables)). Future versions of fcli may also automatically generated log files in this home directory, if no `--log-file` option is provided. 
+
+By default, the fcli home directory is located at `<user home directory>/.fortify/fcli`, but this can be overridden through the `FORTIFY_HOME` or `FCLI_HOME` environment variables. If the `FCLI_HOME` environment variable is set, then this will be used as the fcli home directory. If the `FORTIFY_HOME` environment variable is set (and `FCLI_HOME` is not set), then fcli will use `<FORTIFY_HOME>/fcli` as its home directory.
+
+TODO pipeline use
 
 ## Environment Variables
 
@@ -127,6 +156,8 @@ Manual pages for individual fcli releases can be downloaded from the Assets sect
 {% endif %}
 
 ### Development versions (latest builds)
+Note that development versions may be updated at any time. The manual pages listed here are based on the latest build of a particular development version, and may not match if you are running an older build of a development version of fcli.
+
 {% assign manpages_dev = site.static_files | where: "manpage_dev", true %}
 {% assign has_devDocs = manpages_dev | first %}
 {% if has_devDocs %}
