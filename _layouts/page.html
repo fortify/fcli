@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
     <script src="https://use.fontawesome.com/4104d53f87.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-    <!--Fix H2 scrolling -->
+    <!--Fix H2 scrolling, fix indentation for lists -->
     <style>
       h2::before {
           display: block;
@@ -25,6 +25,9 @@
           height: 50px;
           visibility: hidden;
           pointer-events: none;
+      }
+      ul {
+          margin-left: 20px;
       }
     </style>
 </head>
@@ -52,7 +55,7 @@
                 <nav class="navbar-static-side navbar-static-side-light">
                     <ul class="nav nav-sidebar">
                         {% for n in page.nav %}
-                        <li class="m-b-xs"><a href="#{{ n.permalink }}">{{ n.title }}</a></li>
+                        <li class="m-b-xs"><a href="{{ n.permalink }}">{{ n.title }}</a></li>
                         {% endfor %}
                     </ul>
                 </nav>

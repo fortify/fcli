@@ -3,21 +3,21 @@ layout: page
 title: Fortify CLI (fcli) Installation & Usage
 nav:
   - title: FCLI Installation & Usage
-    permalink:
+    permalink: #
   - title: Installation
-    permalink: installation
+    permalink: #installation
   - title: Command Structure
-    permalink: command-structure
+    permalink: #command-structure
   - title: Session Management
-    permalink: session-management
+    permalink: #session-management
   - title: Environment Variables
-    permalink: environment-variables
+    permalink: #environment-variables
   - title: Fcli Variables
-    permalink: fcli-variables
+    permalink: #fcli-variables
 ---
 
 # Fortify CLI (fcli) Installation & Usage
-The fcli utility can be used to interact with various Fortify products, like FoD, SSC, ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the man-pages corresponding to the fcli version that you are using, as listed in the [fcli introduction]({% post_url 2022-06-01-intro %}).
+The fcli utility can be used to interact with various Fortify products, like FoD, SSC, ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the man-pages corresponding to the fcli version that you are using, as listed in the [Manual Pages](#manual-pages) section.
 
 ## Installation
 
@@ -43,14 +43,62 @@ To install one of the binary distributions of fcli:
 To install the `.jar` version of fcli, simply download `fcli.jar` and put in in a directory of your choosing, after which it can be executed using `java -jar path/to/fcli.jar`. You may want to set up a simple wrapper script/batch file or shell alias to make it slightly easier to invoke `fcli.jar`.
 
 ## Command Structure
+Fcli provides a product-oriented command structure, with each product represented by a separate tree of subcommands. For example, the `fcli fod` command tree can be used to interact with Fortify on Demand (FoD), and the `fcli ssc` command tree can be used to interact with Fortify Software Security Center (SSC). There are also some non product-related command trees, like the `fcli config` command tree to manage fcli configuration.
 
-Fcli is modeled after Fortify products.
+To see what top-level fcli commands are available, you can use the `fcli --help` command. You can drill down into the command tree to see what sub-commands are available within a particular parent command, for example by running `fcli ssc --help` to see all `fcli ssc` sub-commands, or `fcli ssc session --help` to see all SSC session management commands.
 
-TODO
+If you don't have fcli up and running yet, you can also refer to the downloadable or online manual pages; refer to the [Manual Pages](#manual-pages) section for more information.
+
+## Common Options
+The following sections describe common options that are available on (most) fcli commands.
+
+### -h | --help
+
+This option can be used on every fcli (sub-)command to view usage information for that command. Usage information usually shows the command synopsis, a description of the functionality provided by the command, and a description of each command line option or parameter accepted by the command.
+
+### -V | --version
+
+This option can be used on every fcli (sub-)command to view current fcli version. Currently, all sub-commands return the same version information.
+
+### --log-level
+
+This option can be used on every fcli (sub-)command to specify the fcli log level; see the help output for a list of allowed levels. Note that this option also requires the `--log-file` option to be specified, otherwise no log will be written.
+
+### --log-file
+
+This option can be used on every fcli (sub-)command to specify the file to which to output log data. If not specified, currently no log data will be written, although future versions may specify a default log file location in the fcli home folder.
+
+### -o | --output
+
+Available on virtually all (leaf) commands that output data, this option can be used to specify the output format. Fcli supports a wide variety of output formats, like `table`, `csv`, `json`, `xml`, and `tree` formats, allowing for both human-readable output or output suitable for automations. The `csv-plain` and `table-plain` output formats produce CSV or table output without headers. The `*-flat` output formats produce a flattened view of the output data, potentially making it easier to process that data without having to navigate through an object tree. For a full list of output formats supported by your fcli version, please refer to the help output or [Manual Pages](#manual-pages).
+
+Most output formats allow for specifying the JSON properties to be included in the output, for example `-o csv=id,name`. If no JSON properties are specified, most output formats will output all available JSON properties, except for table output, which usually outputs a predefined set of JSON properties.
+
+There are two output formats that are somewhat special:
+* `-o 'expr=Text with {property1} or {property2}\n'` 
+     Formats the output data based on the given expression, which is a combination of (optional) plain text and JSON property placeholders. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after evaluating the given expression. If necessary, the expression should explicitly include `\n` to output a newline character. To demonstrate the power of this output format, following are two examples of how `-o expr` can be used to generate a script that purges all application versions matching certain criteria: 
+     * `fcli ssc appversion list -q createdBy=admin -o 'expr=fcli ssc appversion-artifact purge --older-than 30d --appversion {id}\n'`
+     * for id in $(fcli ssc appversion list -q createdBy=admin -o 'expr={id}\n'); do echo "fcli ssc appversion-artifact purge --older-than 30d --appversion ${id}"; done
+* `-o json-properties` 
+     List all JSON properties returned by the current command, which can be used on options that take JSON properties as input, like output expressions (`-o expr={prop}`), properties to include in the output (`-o table=prop1,prop2`), queries (`-q prop1=value1`), and fcli variables (`--store var:prop1,prop2` & `{?var:prop1}`). Two important notes about this output format:
+     * The command will be executed as specified, so be careful when using this output option on any command that changes state (delete/update/create/...)
+     * On some commands, the list of available JSON properties may vary depending on command line options. For example, when a query returns no records, then `-o json-properties` will not output any properties. Likewise, a command may provide options for including additional data for each record; the corresponding JSON properties will only be shown if `-o json-properties` is used in combination with these options that load additional data.
+
+### --output-to-file
+Available on virtually all (leaf) commands that output data, this option can be used to write the command output data to a file, in the format specified by the `--output` option listed above. In some cases, this may be more convenient than redirecting the output to a file. For example, although currently not implemented, fcli could potentially skip creating the output file if there is no output data or if an error occurs. Also, for commands that output status updates, like `wait-for` commands, the `--output-to-file` option allows for status updates to be written to standard output while the final output of the command will be written to the file specified.
+
+### --store
+Available on virtually all (leaf) commands that output data, this option can be used to store command output data in an fcli variable. For more details, see the [Fcli Variables](#fcli-variables) section.
+
+### -q | --query
+Available on most `list` commands and some other commands, this option allows for querying the output data, outputting only records that match the given query or queries. For now, only equals-based matching is supported; future fcli versions may provide additional matching options. General format is `-q <json-property>=<value>`; the list of JSON properties available for matching can be found by executing the same command with the `-o json-properties` option; see [-o | --output](#-o-output) for details.
+
+### --session
+Available on virtually all commands that interact with a target system, this option allows for specifying a session name. For more details, see the [Session Management](#session-management) section.
 
 ## Session Management
 
-TODO
+## Fcli Home Folder
 
 ## Environment Variables
 
@@ -59,6 +107,29 @@ TODO
 ## Fcli Variables
 
 TODO
+
+## Manual Pages
+Manual pages for individual fcli releases can be downloaded from the Assets sections on the [fcli releases page](https://github.com/fortify-ps/fcli/releases), or can be viewed online here. Online manual pages are available for the following versions:
+
+### Release versions
+{% assign manpages_release = site.static_files | where: "manpage_release", true %}
+{% assign has_releaseDocs = manpages_release | first %}
+{% if has_releaseDocs %}
+- [ {{ page.path | replace_first: "/", "" | split: "/" | first }} ]( /fcli{{ page.path }} )
+{% else %}
+- *No release version documentation available*
+{% endif %}
+
+### Development versions (latest builds)
+{% assign manpages_dev = site.static_files | where: "manpage_dev", true %}
+{% assign has_devDocs = manpages_dev | first %}
+{% if has_devDocs %}
+{% for page in manpages_dev %}
+- [ {{ page.path | replace_first: "/", "" | split: "/" | first }} ]( /fcli{{ page.path }} )
+{% endfor %}
+{% else %}
+- *No development version documentation available*
+{% endif %}
 
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
