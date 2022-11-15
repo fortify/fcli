@@ -160,10 +160,55 @@ Despite #2 above, in some cases it may be useful to use less specific environmen
 * This variable value will be used as a default value for all `--url` options in the SSC module
 * This variable value will be used as a default value for all `--ssc-url` options in other product modules
 
-This means that defining a single `FCLI_SSC_URL` environment variable (and similar for SSC username/password environment variables) allows for applying this default value to all of the `fcli ssc session login`, `fcli sc-sast session login`, `fcli sc-dast session login`, and corresponding `logout` commands.
-### Fcli Variables
+This means that defining a single `FCLI_SSC_URL` environment variable, together with for example `FCLI_SSC_USER` and `FCLI_SSC_PASSWORD` environment variables, allows for applying these default values to all of the `fcli ssc session login`, `fcli sc-sast session login`, `fcli sc-dast session login`, and corresponding `logout` commands.
 
-TODO
+### Fcli Variables
+Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding `wait-for` command, or for creating an SSC application version, and passing the SSC application version id to the `appversion-artifact upload` command.
+
+Fcli supports two types of variables:
+* Named variables
+    * Stored using the `--store myVarName[:prop1,prop2]` option on data output commands
+    * If no properties are provided with the `--store` option, all JSON properties will be stored
+    * Referenced using the `{?myVarName:prop1}` syntax anywhere on the command line of subsequent fcli commands
+    * Variable names are global and can be referenced across products and sessions
+* Predefined variables:
+    * Stored using the `--store '?'` option on a subset of data output commands
+    * Stored under a command-specific predefined variable name
+    * Referenced using the `'?'` syntax on specific options
+    * Variable names are product- and session-specific, and will be removed upon session logout
+    * As a best practice, question marks should be quoted to avoid the shell interpreting `?` as a file name wildcard (for example, if you have a file named `x` in the current directory, then `--store ?` would store a variable named `x` instead of the predefined variable name)
+    * Help output and manual pages may currently lack information about which commands and options support the `'?'` syntax, so for now you'll need to look at examples or just try.
+    
+Predefined variables are easier to use; they are more concise, you do not need to remember JSON property names, and they are automatically cleaned up when logging out of a session. However, as indicated, they are more limited in use; they only store a predefined JSON property, and are only available on a subset of commands and options.
+
+Following are some examples, assuming the necessary login sessions are available:
+
+```bash
+fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store '?'
+fcli ssc appversion-artifact upload myScan.fpr --appversion '?'
+
+fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion:id,name
+fcli ssc appversion-artifact upload myScan.fpr --appversion {?myVersion:id}
+
+fcli sc-dast scan start MyScan -S 011daf6b-f2d0-4127-89ab-1d3cebab8784 --store '?'
+fcli sc-dast scan wait-for '?'
+
+fcli sc-dast scan start MyScan -S 011daf6b-f2d0-4127-89ab-1d3cebab8784 --store myScan
+fcli sc-dast scan wait-for {?myScan:id}
+```
+    
+Fcli provides dedicated commands for managing variables and variable contents through the following commands; please see help output or manual pages for available sub-commands:
+* `fcli config variable definition`
+* `fcli config variable contents`
+
+Note that the `fcli config variable contents` `get` and `list` commands support the regular fcli output options, and the `list` command also provides query capabilities. This allows for advanced use cases, like retrieving server data once and then outputting it in multiple formats, potentially even applying separate filters. As an example:
+
+```bash
+fcli ssc appversion list --store myVersions
+fcli config variable contents list myVersions -o csv --output-to-file myVersions.csv
+fcli config variable contents list myVersions -o json -q createdBy=admin --output-to-file myAdminVersions.json
+fcli config variable contents list myVersions -o 'expr={id}\n' --output-to-file myVersionIds.txt
+```
 
 ## Manual Pages
 Manual pages for individual fcli releases can be downloaded from the Assets sections on the [fcli releases page](https://github.com/fortify-ps/fcli/releases), or can be viewed online here. Online manual pages are available for the following versions:
