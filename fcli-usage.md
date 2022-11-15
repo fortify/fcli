@@ -12,6 +12,8 @@ nav:
     permalink: common-options
   - title: Session Management
     permalink: session-management
+  - title: Fcli Home Folder
+    permalink: fcli-home-folder
   - title: Environment Variables
     permalink: environment-variables
   - title: Fcli Variables
@@ -162,7 +164,7 @@ Despite #2 above, in some cases it may be useful to use less specific environmen
 
 This means that defining a single `FCLI_SSC_URL` environment variable, together with for example `FCLI_SSC_USER` and `FCLI_SSC_PASSWORD` environment variables, allows for applying these default values to all of the `fcli ssc session login`, `fcli sc-sast session login`, `fcli sc-dast session login`, and corresponding `logout` commands.
 
-### Fcli Variables
+## Fcli Variables
 Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding `wait-for` command, or for creating an SSC application version, and passing the SSC application version id to the `appversion-artifact upload` command.
 
 Fcli supports two types of variables:
@@ -237,7 +239,29 @@ Note that development versions may be updated at any time. The manual pages list
 
 ## Troubleshooting
 
-TODO
+### Native Binaries
+Native binaries require some special source code annotations for proper operation, which are not required for the plain Java `.jar` version of fcli. If fcli developers forgot to include any of these annotations, you may experience any of the following behavior:
+
+* Commands and/or option listed in manual pages are not listed by the help output of a native binary
+* Trying to use commands and/or options listed in the manual pages result in errors stating that the command or option is not recognized
+* Some commands and/or options result in technical error messages about classes, constructors or methods not being found or not being accessible
+
+If you encounter any of these issues, please submit a bug report as described in [Submitting a Bug Report](#submitting-a-bug-report). As described in that section, please include information on whether the `.jar` version of fcli exhibits the same erroneous behavior. While fcli developers are working on fixing the issue, you can temporarily use the `.jar` version of fcli until the issue is resolved.
+
+### Submitting a Bug Report
+After confirming that an issue cannot be resolved based on the information above, and is not caused by user error, please consider submitting a bug report on the [fcli issue tracker](https://github.com/fortify-ps/fcli/issues). Before doing so, please verify that there is not already a bug report open for the issue that you are experiencing; in that case, feel free to leave a comment on the existing bug report to confirm the issue and/or provide additional details.
+
+When opening a bug report, please include the following information:
+* Fcli version, as shown by the `fcli --version` command
+* Which fcli variant you are using; one of the native binaries or the `.jar` variant invoked using `java -jar fcli.jar`
+* If you are experiencing an issue with the native binaries, please confirm whether the `.jar` version of fcli exhibits the same behavior
+* Operating system and any other relevant environment details, for example:
+    * Interactive or pipeline/automation use
+    * If pipeline use, what CI/CD system are you running fcli on (Jenkins, GitHub, GitLab, ...)
+    * What FCLI environment variables have been set
+* Steps to reproduce
+* Any other information that may be relevant
+
 
 <!-- Empty space to allow scrolling to all sections when selecting a section in the navigation bar -->
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
