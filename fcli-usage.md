@@ -116,9 +116,12 @@ For interactive use, you can choose to keep the session open until it expires (e
 For product modules that support it, like SSC or ScanCentral DAST, it is also highly recommended to use token-based authentication rather than username/password-based authentication when incorporating fcli into pipelines or other automation tasks. This will avoid creation of a temporary token as described above, but also allows for better access control based on token permissions. Similarly, for systems that support Personal Access tokens, like FoD, it is highly recommended to utilize a Personal Access Token rather than user password. Note however that depending on (personal access) token permissions, not all fcli functionality may be available. In particular, even the least restrictive SSC `CIToken` may not provide access to all endpoints covered by fcli. If you need access to functionality not covered by `CIToken`, you may need to define a custom token definition, but this can only be done on self-hosted SSC environments, not on Fortify Hosted. If all else fails, you may need to revert to username/password-based authentication to utilize the short-lived `UnifiedLoginToken`.
 
 ### Named Sessions
-Fcli supports named sessions, allowing you to have multiple sessions for a single product.
+Fcli supports named sessions, allowing you to have multiple open sessions for a single product. When issuing a `session login` command, you can optionally provide a session name as in `fcli ssc session login mySession ...`, and then use that session in other commands using the `--session mySession` command line option. If no session name is specified, a session named `default` will be created/used. Named sessions allow for a variety of use cases, for example:
 
-TODO
+* Run fcli commands against multiple instances of the same product, like DEV and PROD instances or an on-premise instance and a Fortify Hosted instance, without having to continuously login and logout from one instance to switch to another instance
+* Run fcli commands against a single instance of a product, but with alternating credentials, for example with one session providing admin rights and another session providing limited user rights
+* Run one session with username/password credentials to allow access to all fcli functionality (based on user permissions), and another session with token-based authentication with access to only a subset of fcli functionality
+* Run multiple pipelines or automation scripts simultaneously, each with their own session name, to reduce chances of these pipelines and scripts affecting each other (see [Fcli Home Folder](#fcli-home-folder) though for a potentially better solution for this scenario)
 
 ### Session Storage
 To keep session state between fcli invocations, fcli stores session data like URL and authentication tokens in the [Fcli Home Folder](#fcli-home-folder). To reduce the risk of unauthorized access to this sensitive data, fcli encrypts the session data files. However, this is not bullet-proof, as the encryption key and algorithm can be easily viewed in fcli source code. As such, it is recommended to ensure file permissions on the FCLI Home folder are properly configured to disallow access by other users. Being stored in the user's home directory by default, the correct file permissions should usually already be in place.
@@ -127,19 +130,38 @@ Future fcli versions may provide enhancements to further improve protection of t
 - Allowing the user to specify a custom encryption password through an environment variable, such that the session data can only be decrypted if the environment variable value is known
 - Provide functionality for running multiple fcli commands with a single fcli invocation, like providing an `fcli shell` command or running commands from an fcli workflow definition file, which should allow session data data to be stored in memory instead of on disk, and also allow for automated logout when exiting the fcli shell or when the workflow finishes
 
-
 ## Fcli Home Folder
 Fcli stores various files in its home directory, like session files (see [Session Management](#session-management)) and fcli variable contents (see [Fcli Variables](#fcli-variables)). Future versions of fcli may also automatically generated log files in this home directory, if no `--log-file` option is provided. 
 
 By default, the fcli home directory is located at `<user home directory>/.fortify/fcli`, but this can be overridden through the `FORTIFY_HOME` or `FCLI_HOME` environment variables. If the `FCLI_HOME` environment variable is set, then this will be used as the fcli home directory. If the `FORTIFY_HOME` environment variable is set (and `FCLI_HOME` is not set), then fcli will use `<FORTIFY_HOME>/fcli` as its home directory.
 
-TODO pipeline use
+When utilizing fcli in pipelines or automation scripts, especially when multiple pipelines or scripts may be running simultaneously on a single, non-containerized system, it is highly recommended to set the `FCLI_HOME` or `FORTIFY_HOME` environment variables to a dedicated directory for each individual pipeline/script run. Failure to do so may cause these runs to share session data, variables and other persistent fcli data, which will likely cause issues. For example, both pipelines may try to login with the same session name but with different URL's or credentials, or even when using the same session configuration, one pipeline may log out of the session while the other pipeline is still using that session. Or, both pipelines may be updating the same fcli variable but with different contents, causing unexpected results when accessing those fcli variables. On containerized systems, like pipelines running in GitLab or GitHub, the fcli home folder will usually be stored inside the individual pipeline containers, so in this case it shouldn't be necessary to set the `FCLI_HOME` or `FORTIFY_HOME` variables.
 
 ## Environment Variables
 
-TODO
+Apart from the special-purpose environment variables described in other sections, like the [Fcli Home Folder](#fcli-home-folder) section, fcli allows for specifying default option and parameter values through environment variables. This is particularly useful for specifying product URL's and credentials through pipeline secrets, but also allows for preventing having to manually supply command line options if you frequently invoke a particular command with the same option value(s). For example, you could define a default value for the `fcli ssc appversion create --issue-template` option, to avoid having to remember the issue template name every time you invoke this command.
 
-## Fcli Variables
+Fcli walks the command tree to find an environment variable that matches a particular option, starting with the most detailed command prefix first. For the issue-template example above, fcli would look for the following environment variable names, in this order:
+* `FCLI_SSC_APPVERSION_CREATE_ISSUE_TEMPLATE`
+* `FCLI_SSC_APPVERSION_ISSUE_TEMPLATE`
+* `FCLI_SSC_ISSUE_TEMPLATE`
+* `FCLI_ISSUE_TEMPLATE`
+
+Environment variable lookups are based on the following rules:
+* Command aliases are not taken into account when looking for environment variables; suppose we have a `delete` command with alias `rm`, you will need to use `FCLI_..._DELETE_...` and not `FCLI_..._RM_...`
+* For options, fcli will use the longest option name when looking for environment variables; suppose we have an option with names `-a`, `--ab` and `--abc`, you will need to use `FCLI_..._ABC` and not `FCLI_..._AB` or `FCLI_..._A`
+* Currently, not all positional parameters support default values from environment variables; this will be improved over time. Please refer to the positional parameter description in help output or manual pages to identify what environment variable suffix should be used for a particular positional parameter.
+
+Although powerful, these environment variables for providing default option and parameter values should be used with some care to avoid unexpected results:
+1. Obviously command option requirements should be respected; supplying default values for exclusive options may result in errors or unexpected behavior
+2. Preferably, you should use the most specific environment variable name, like `FCLI_SSC_APPVERSION_CREATE_ISSUE_TEMPLATE` from the example above, to avoid accidentally supplying default values to a similarly named option on other commands
+
+Despite #2 above, in some cases it may be useful to use less specific environment names, in particular if the same default values should be applied to multiple commands. As an example, consider an environment variable named `FCLI_SSC_URL`:
+* This variable value will be used as a default value for all `--url` options in the SSC module
+* This variable value will be used as a default value for all `--ssc-url` options in other product modules
+
+This means that defining a single `FCLI_SSC_URL` environment variable (and similar for SSC username/password environment variables) allows for applying this default value to all of the `fcli ssc session login`, `fcli sc-sast session login`, `fcli sc-dast session login`, and corresponding `logout` commands.
+### Fcli Variables
 
 TODO
 
