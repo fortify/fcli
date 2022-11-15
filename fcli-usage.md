@@ -8,12 +8,18 @@ nav:
     permalink: #installation
   - title: Command Structure
     permalink: #command-structure
+  - title: Common Options
+    permalink: #common-options
   - title: Session Management
     permalink: #session-management
   - title: Environment Variables
     permalink: #environment-variables
   - title: Fcli Variables
     permalink: #fcli-variables
+  - title: Manual Pages
+    permalink: #manual-pages
+  - title: Troubleshooting
+    permalink: #troubleshooting
 ---
 
 # Fortify CLI (fcli) Installation & Usage
@@ -91,7 +97,7 @@ Available on virtually all (leaf) commands that output data, this option can be 
 Available on virtually all (leaf) commands that output data, this option can be used to store command output data in an fcli variable. For more details, see the [Fcli Variables](#fcli-variables) section.
 
 ### -q | --query
-Available on most `list` commands and some other commands, this option allows for querying the output data, outputting only records that match the given query or queries. For now, only equals-based matching is supported; future fcli versions may provide additional matching options. General format is `-q <json-property>=<value>`; the list of JSON properties available for matching can be found by executing the same command with the `-o json-properties` option; see [-o | --output](#-o-output) for details.
+Available on most `list` commands and some other commands, this option allows for querying the output data, outputting only records that match the given query or queries. For now, only equals-based matching is supported; future fcli versions may provide additional matching options. General format is `-q <json-property>=<value>`; the list of JSON properties available for matching can be found by executing the same command with the `-o json-properties` option; see [-o | --output](#-o--output) for details.
 
 ### --session
 Available on virtually all commands that interact with a target system, this option allows for specifying a session name. For more details, see the [Session Management](#session-management) section.
@@ -131,6 +137,11 @@ Manual pages for individual fcli releases can be downloaded from the Assets sect
 - *No development version documentation available*
 {% endif %}
 
+## Troubleshooting
+
+TODO
+
+<!-- Empty space to allow scrolling to all sections when selecting a section in the navigation bar -->
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
