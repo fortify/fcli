@@ -1,0 +1,48 @@
+defaultDownloadUrl: https://github.com/fortify/FortifyVulnerabilityExporter/releases/download/v{toolVersion}/FortifyVulnerabilityExporter.zip
+defaultVersion: latest
+versions:
+  - name: latest
+    downloadUrl: https://github.com/fortify/FortifyVulnerabilityExporter/releases/latest/download/FortifyVulnerabilityExporter.zip
+    digest: SHA-256:1f3a710003c81a9e767f2c90bbfca3f2250b01ad3a50b181a04eb7d025c05da6
+  - name: 1.8.0
+    digest: SHA-256:1f3a710003c81a9e767f2c90bbfca3f2250b01ad3a50b181a04eb7d025c05da6
+  - name: 1.7.0
+    digest: SHA-256:d04e71cd9049475911094f43bcf96184763cc0e8989fb329cc18117f8a96d98d
+  - name: 1.6.0
+    digest: SHA-256:48dffe599c8712393c7491f5c824de1a17afea0d0a5b4c8f0c657674ff2c6bb9
+  - name: 1.5.5
+    digest: SHA-256:6a6fe679768a8f079f00befe1daf6a606b091bf199829d66fe4f8b28de40e67c
+  - name: 1.5.4
+    digest: SHA-256:98a1deb443859018de25c853bb90001088819be556495b309a7e34c798c8da33
+  - name: 1.5.3
+    digest: SHA-256:86ce98782823354a3bfc0fe770ec8344df616b69316b73d2319e875a9d2bb8d2
+  - name: 1.5.2
+    digest: SHA-256:86eaa462085f8a0b178a4a697e13332ce1954a9e3d886a7d8c710ce5b53a3a07
+  - name: 1.5.1
+    digest: SHA-256:8db8d6db6c7d3e6ddeee0722179cb0f413a0d3dcefa19a21db5461a0b0c410d4
+  - name: 1.5.0
+    digest: SHA-256:cc86851b0b5adada0b04f43b93693a637ab3735e85d25246f859535aeb7835cf
+  - name: 1.4.1
+    digest: SHA-256:6e9fa005364513593ab820c79d2c1f05283ff9769fb313c669f0159c395e3d4c
+  - name: 1.4.0
+    digest: SHA-256:63b6e90c5a06f3db6d913121a5fb8a7578d2a1c65a4bdc8cfd6fd0aef286d296
+  - name: 1.3.1
+    digest: SHA-256:8b3f1d8696ed183a9ae0e005bc4165571b0be3e80e59038eb16a446e3ef5e91b
+  - name: 1.3.0
+    digest: SHA-256:28515fd51112b803a1d154884efd3743013895bb3f0037e4eedb2a8b18659bb7
+  - name: 1.2.1
+    digest: SHA-256:1badaf7f91be4482d7666d398893e1b68e24d446811843bee74aea5144f0fe1d
+  - name: 1.2.0
+    digest: SHA-256:05acd1451bcd5b7639e5abb43d42544a6ff5b53d3e9f6c49891094a4d9d6fc6a
+  - name: 1.1.3
+    digest: SHA-256:07b885a3690d111a0bc3b4e40581cd148bd36435255f1a7638c574ebeb8975e1
+  - name: 1.1.2
+    digest: SHA-256:5c27aa10b9fa8cd6b49317543f9fb0ae8e53d6d099f62daadd3b8086f3e56500
+  - name: 1.1.1
+    digest: SHA-256:d27c234a0a85ac79ab0f317777a151b70c8899f3c8bdf909779823555227d98f
+  - name: 1.1.0
+    digest: SHA-256:05a6fed8ded797ab4afb0bdede2a53fa830c218f9944cc076fcaab316505d20d
+  - name: 1.0.1
+    digest: SHA-256:23f499053ed2663084ca509d292d4190c1a609941371d7094a7b3cf474363d4f
+  - name: 1.0.0
+    digest: SHA-256:2edf4bc065e48cb8a2571752dfbe5a944495824e8a3c899e06206a24bf15562c
