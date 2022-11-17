@@ -13,13 +13,21 @@ import lombok.Getter;
 public class ToolInstallDescriptor {
     @Getter private String defaultDownloadUrl;
     @Getter private String defaultVersion;
-    @Getter private ToolVersionInstallDescriptor[] versions;
+    private ToolVersionInstallDescriptor[] versions;
     
-    public final ToolVersionInstallDescriptor getVersion(String versionName) {
+    public final ToolVersionInstallDescriptor[] getVersions() {
+        return getVersionsStream().toArray(ToolVersionInstallDescriptor[]::new);
+    }
+    
+    public final Stream<ToolVersionInstallDescriptor> getVersionsStream() {
         return Stream.of(versions)
-                .filter(v->v.versionName.equals(versionName))
-                .map(this::updateDownloadUrl)
-                .findFirst().orElseThrow(()->new IllegalArgumentException("Version "+versionName+" not defined"));
+                .map(this::updateDownloadUrl);
+    }
+    
+    public final ToolVersionInstallDescriptor getVersion(String version) {
+        return getVersionsStream()
+                .filter(v->v.version.equals(version))
+                .findFirst().orElseThrow(()->new IllegalArgumentException("Version "+version+" not defined"));
     }
     
     public final ToolVersionInstallDescriptor getVersionOrDefault(String versionName) {
@@ -30,15 +38,15 @@ public class ToolInstallDescriptor {
         if ( StringUtils.isBlank(versionDescriptor.downloadUrl) ) {
             versionDescriptor.downloadUrl = defaultDownloadUrl;
         }
-        versionDescriptor.downloadUrl = versionDescriptor.downloadUrl.replaceAll("\\{toolVersion\\}", versionDescriptor.versionName);
+        versionDescriptor.downloadUrl = versionDescriptor.downloadUrl.replaceAll("\\{toolVersion\\}", versionDescriptor.version);
         return versionDescriptor;
     }
     
     @ReflectiveAccess
     public static final class ToolVersionInstallDescriptor {
-        @JsonProperty("name") @Getter private String versionName;
+        @Getter private String version;
         @Getter private String downloadUrl;
-        @Getter private String digest;
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) @Getter private String digest;
         
         public final String getDigestAlgorithm() {
             return StringUtils.substringBefore(digest, ":");

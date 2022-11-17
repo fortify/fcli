@@ -14,13 +14,14 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.util.FcliHomeHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool.common.helper.ToolHelper;
 import com.fortify.cli.tool.common.helper.ToolInstallDescriptor.ToolVersionInstallDescriptor;
-import com.fortify.cli.tool.util.FileUtils;
+import com.fortify.cli.tool.common.util.FileUtils;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.Unirest;
@@ -34,9 +35,12 @@ import picocli.CommandLine.Parameters;
 public abstract class AbstractToolInstallCommand extends AbstractBasicOutputCommand {
     private static final Set<PosixFilePermission> binPermissions = PosixFilePermissions.fromString("rwxr-xr-x");
     @Getter @Mixin private BasicOutputHelperMixins.Install outputHelper;
-    @Getter @Parameters(index="0", arity="0..1") private String version;
-    @Getter @Option(names={"-d", "--install-dir"}, required = false) private String installDir;
-    @Getter @Option(names={"-y", "--replace-existing"}, required = false) private boolean replaceExisting;
+    @Getter @Parameters(index="0", arity="0..1", descriptionKey="fcli.tool.install.version") 
+    private String version;
+    @Getter @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
+    private String installDir;
+    @Getter @Option(names={"-y", "--replace-existing"}, required = false, descriptionKey="fcli.tool.install.replace") 
+    private boolean replaceExisting;
     
     @Override
     protected final JsonNode getJsonNode() {
@@ -58,9 +62,9 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
             File downloadedFile = download(descriptor);
             checkDigest(descriptor, downloadedFile);
             install(descriptor, installPath, binPath, downloadedFile);
-            return new ObjectMapper().createObjectNode()
+            return new ObjectMapper().<ObjectNode>valueToTree(descriptor)
                     .put("name", getToolName())
-                    .put("version", descriptor.getVersionName())
+                    .put("installed", "Yes")
                     .put("installDir", installPath.toString())
                     .put("binDir", Files.exists(binPath) ? binPath.toString() : "");
             
@@ -95,7 +99,7 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
     protected String getInstallDirOrDefault(ToolVersionInstallDescriptor descriptor) {
         String installDir = getInstallDir();
         if ( StringUtils.isBlank(installDir) ) {
-            installDir = FcliHomeHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", getToolName(), descriptor.getVersionName())).toString();
+            installDir = FcliHomeHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", getToolName(), descriptor.getVersion())).toString();
         }
         return installDir;
     }

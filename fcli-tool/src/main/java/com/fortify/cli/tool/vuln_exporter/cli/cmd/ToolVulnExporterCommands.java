@@ -3,11 +3,14 @@ package com.fortify.cli.tool.vuln_exporter.cli.cmd;
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "vuln-exporter",
+        name = ToolVulnExporterCommands.TOOL_NAME,
         aliases = {"fortify-vulnerability-exporter"},
         subcommands = {
-                ToolVulnExporterInstallCommand.class
+                ToolVulnExporterInstallCommand.class,
+                ToolVulnExporterListCommand.class
         }
 
 )
-public class ToolVulnExporterCommands {}
+public class ToolVulnExporterCommands {
+    static final String TOOL_NAME = "vuln-exporter";
+}

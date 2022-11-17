@@ -11,17 +11,14 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool.common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool.common.helper.ToolInstallDescriptor.ToolVersionInstallDescriptor;
 
+import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = BasicOutputHelperMixins.Install.CMD_NAME)
 public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
+    @Getter private String toolName = ToolSCClientCommands.TOOL_NAME;
     @Option(names= {"-t", "--client-auth-token"}) private String clientAuthToken; 
-
-    @Override
-    protected String getToolName() {
-        return "sc-client";
-    }
     
     @Override
     protected InstallType getInstallType() {

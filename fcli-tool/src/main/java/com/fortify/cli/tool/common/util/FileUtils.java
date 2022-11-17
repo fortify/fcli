@@ -1,4 +1,4 @@
-package com.fortify.cli.tool.util;
+package com.fortify.cli.tool.common.util;
 
 import java.io.File;
 import java.io.FileInputStream;
