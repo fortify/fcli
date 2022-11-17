@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Comparator;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -69,6 +71,14 @@ public final class FileUtils {
                     Files.copy(zipIn, resolvedPath);
                 }
             }
+        }
+    }
+    
+    public static final void deleteRecursive(Path installPath) throws IOException {
+        try (Stream<Path> walk = Files.walk(installPath)) {
+            walk.sorted(Comparator.reverseOrder())
+                .map(Path::toFile)
+                .forEach(File::delete);
         }
     }
 }

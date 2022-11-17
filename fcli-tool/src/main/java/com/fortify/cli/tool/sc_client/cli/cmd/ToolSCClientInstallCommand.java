@@ -9,7 +9,7 @@ import java.nio.file.StandardOpenOption;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool.common.cli.cmd.AbstractToolInstallCommand;
-import com.fortify.cli.tool.common.helper.ToolInstallDescriptor.ToolVersionInstallDescriptor;
+import com.fortify.cli.tool.common.helper.ToolVersionInstallDescriptor;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -26,9 +26,9 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     }
     
     @Override
-    protected void postInstall(ToolVersionInstallDescriptor descriptor, Path installPath, Path binPath) throws IOException {
+    protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
         // Updating bin permissions is handled by parent class
-        updateClientAuthToken(installPath);
+        updateClientAuthToken(descriptor.getInstallPath());
     }
     
     private void updateClientAuthToken(Path installPath) throws IOException {

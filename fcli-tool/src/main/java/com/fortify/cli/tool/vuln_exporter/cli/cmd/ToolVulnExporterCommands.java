@@ -7,7 +7,8 @@ import picocli.CommandLine.Command;
         aliases = {"fortify-vulnerability-exporter"},
         subcommands = {
                 ToolVulnExporterInstallCommand.class,
-                ToolVulnExporterListCommand.class
+                ToolVulnExporterListCommand.class,
+                ToolVulnExporterUninstallCommand.class
         }
 
 )

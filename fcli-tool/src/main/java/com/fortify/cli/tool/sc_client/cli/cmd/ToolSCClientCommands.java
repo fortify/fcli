@@ -7,7 +7,8 @@ import picocli.CommandLine.Command;
         aliases = {"scancentral-client"},
         subcommands = {
                 ToolSCClientInstallCommand.class,
-                ToolSCClientListCommand.class
+                ToolSCClientListCommand.class,
+                ToolSCClientUninstallCommand.class
         }
 
 )

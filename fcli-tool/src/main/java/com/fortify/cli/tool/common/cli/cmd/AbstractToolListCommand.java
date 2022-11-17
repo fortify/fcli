@@ -7,7 +7,6 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.tool.common.helper.ToolHelper;
-import com.fortify.cli.tool.common.helper.ToolInstallDescriptor;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -21,11 +20,8 @@ public abstract class AbstractToolListCommand extends AbstractBasicOutputCommand
     @Override
     protected final JsonNode getJsonNode() {
         String toolName = getToolName();
-        ToolInstallDescriptor descriptor = ToolHelper.getToolInstallDescriptor(toolName);
-        return descriptor.getVersionsStream()
+        return ToolHelper.getToolVersionCombinedDescriptorsStream(toolName)
                 .map(objectMapper::<ObjectNode>valueToTree)
-                .map(o->o.put("name", toolName)
-                         .put("installed", "Unknown"))
                 .collect(JsonHelper.arrayNodeCollector());
     }
     

@@ -7,7 +7,8 @@ import picocli.CommandLine.Command;
         aliases = {"fodupload"},
         subcommands = {
                 ToolFoDUploaderInstallCommand.class,
-                ToolFoDUploaderListCommand.class
+                ToolFoDUploaderListCommand.class,
+                ToolFoDUploaderUninstallCommand.class
         }
 
 )

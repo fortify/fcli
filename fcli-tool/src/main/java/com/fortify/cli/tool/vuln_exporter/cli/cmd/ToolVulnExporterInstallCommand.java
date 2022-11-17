@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.tool.common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool.common.helper.ToolHelper;
-import com.fortify.cli.tool.common.helper.ToolInstallDescriptor.ToolVersionInstallDescriptor;
+import com.fortify.cli.tool.common.helper.ToolVersionInstallDescriptor;
 import com.fortify.cli.tool.common.util.FileUtils;
 
 import lombok.Getter;
@@ -23,7 +23,8 @@ public class ToolVulnExporterInstallCommand extends AbstractToolInstallCommand {
     }
     
     @Override
-    protected void postInstall(ToolVersionInstallDescriptor descriptor, Path installPath, Path binPath) throws IOException {
+    protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
+        Path binPath = descriptor.getBinPath();
         Files.createDirectories(binPath);
         FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FortifyVulnerabilityExporter"), binPath);
         FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FortifyVulnerabilityExporter.bat"), binPath);
