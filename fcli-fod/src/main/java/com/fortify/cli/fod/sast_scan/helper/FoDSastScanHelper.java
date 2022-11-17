@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod.release.helper.FoDAppRelAssessmentTypeDescriptor;
+import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.helper.FoDFileTransferHelper;
@@ -62,6 +63,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
 
     public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartSastScanRequest req,
                                                     File scanFile, int chunkSize, int uploadSyncTime) {
+        FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
         HttpRequest request = unirest.post(FoDUrls.STATIC_SCAN_START).routeParam("relId", relId)
                 .queryString("entitlementPreferenceType", (req.getEntitlementPreferenceType() != null ?
                         FoDEnums.EntitlementPreferenceType.valueOf(req.getEntitlementPreferenceType()) : FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan))
@@ -96,6 +98,8 @@ public class FoDSastScanHelper extends FoDScanHelper {
         } catch (FoDScanNotFoundException ex) {
             scanDescriptor.setStatus("Unavailable");
         }
+        System.out.println(appRelDescriptor.getMicroserviceName());
+        scanDescriptor.setMicroserviceName(appRelDescriptor.getMicroserviceName());
         return scanDescriptor;
     }
 

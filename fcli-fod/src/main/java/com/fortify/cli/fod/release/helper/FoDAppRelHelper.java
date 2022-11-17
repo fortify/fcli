@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppAndRelNameDescriptor;
+import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceAndRelNameDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import kong.unirest.GetRequest;
@@ -57,12 +58,29 @@ public class FoDAppRelHelper {
         return descriptor;
     }
 
+    public static final FoDAppRelDescriptor getRequiredAppMicroserviceRel(UnirestInstance unirest, String appMicroserviceRelNameOrId, String delimiter, String... fields) {
+        FoDAppRelDescriptor descriptor = getOptionalAppMicroserviceRel(unirest, appMicroserviceRelNameOrId, delimiter, fields);
+        if (descriptor == null) {
+            throw new ValidationException("No application microservice release found for application microservice release name or id: " + appMicroserviceRelNameOrId);
+        }
+        return descriptor;
+    }
+
     public static final FoDAppRelDescriptor getOptionalAppRel(UnirestInstance unirest, String appRelNameOrId, String delimiter, String... fields) {
         try {
             int relId = Integer.parseInt(appRelNameOrId);
             return getOptionalAppRelFromId(unirest, relId, fields);
         } catch (NumberFormatException nfe) {
             return getOptionalAppRelFromAppAndRelName(unirest, FoDAppAndRelNameDescriptor.fromCombinedAppAndRelName(appRelNameOrId, delimiter), fields);
+        }
+    }
+
+    public static final FoDAppRelDescriptor getOptionalAppMicroserviceRel(UnirestInstance unirest, String appMicroserviceRelNameOrId, String delimiter, String... fields) {
+        try {
+            int relId = Integer.parseInt(appMicroserviceRelNameOrId);
+            return getOptionalAppRelFromId(unirest, relId, fields);
+        } catch (NumberFormatException nfe) {
+            return getOptionalAppMicroserviceRelFromAppAndRelName(unirest, FoDAppMicroserviceAndRelNameDescriptor.fromCombinedAppMicroserviceAndRelName(appMicroserviceRelNameOrId, delimiter), fields);
         }
     }
 
@@ -76,7 +94,12 @@ public class FoDAppRelHelper {
         GetRequest request = unirest.get(FoDUrls.RELEASES)
                 .queryString("filters", String.format("applicationName:%s+releaseName:%s", appAndRelNameDescriptor.getAppName(), appAndRelNameDescriptor.getRelName()));
         return getOptionalDescriptor(request);
+    }
 
+    public static final FoDAppRelDescriptor getOptionalAppMicroserviceRelFromAppAndRelName(UnirestInstance unirest, FoDAppMicroserviceAndRelNameDescriptor appMicroserviceAndRelNameDescriptor, String... fields) {
+        GetRequest request = unirest.get(FoDUrls.RELEASES)
+                .queryString("filters", String.format("applicationName:%s+microserviceName:%s+releaseName:%s", appMicroserviceAndRelNameDescriptor.getAppName(), appMicroserviceAndRelNameDescriptor.getMicroserviceName(), appMicroserviceAndRelNameDescriptor.getRelName()));
+        return getOptionalDescriptor(request);
     }
 
     public static final FoDAppRelDescriptor getAppRelDescriptor(UnirestInstance unirest, String appAndRelNameOrId, String delimiter, boolean failIfNotFound) {

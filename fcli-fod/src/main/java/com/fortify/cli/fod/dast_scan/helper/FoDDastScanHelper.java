@@ -29,6 +29,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
+import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
@@ -54,8 +56,9 @@ public class FoDDastScanHelper extends FoDScanHelper {
 
     public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartDastScanRequest startDastScanRequest) {
         ObjectNode body = objectMapper.valueToTree(startDastScanRequest);
+        FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
         JsonNode response = unirest.post(FoDUrls.DYNAMIC_SCANS + "/start-scan")
-                .routeParam("relId", String.valueOf(relId))
+                .routeParam("relId", relId)
                 .body(body).asObject(JsonNode.class).getBody();
         FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
@@ -64,12 +67,14 @@ public class FoDDastScanHelper extends FoDScanHelper {
         JsonNode node = objectMapper.createObjectNode();
         ((ObjectNode) node).put("scanId", startScanResponse.getScanId());
         ((ObjectNode) node).put("status", "Pending");
+
         FoDScanDescriptor scanDescriptor = JsonHelper.treeToValue(node, FoDScanDescriptor.class);
         try {
             scanDescriptor = getScanDescriptor(unirest, String.valueOf(startScanResponse.getScanId()));
         } catch (FoDScanNotFoundException ex) {
             scanDescriptor.setStatus("Unavailable");
         }
+        scanDescriptor.setMicroserviceName(appRelDescriptor.getMicroserviceName());
         return scanDescriptor;
     }
 

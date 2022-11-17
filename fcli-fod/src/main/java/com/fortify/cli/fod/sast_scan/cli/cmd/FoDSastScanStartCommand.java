@@ -32,7 +32,7 @@ import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.fod.dast_scan.helper.FoDDastScanHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.sast_scan.helper.FoDSastScanHelper;
 import com.fortify.cli.fod.sast_scan.helper.FoDSastScanSetupDescriptor;
 import com.fortify.cli.fod.sast_scan.helper.FoDStartSastScanRequest;
@@ -66,7 +66,7 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
     @Mixin
     private FoDOutputHelperMixins.Create outputHelper;
     @Mixin
-    private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
+    private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--notes"})
@@ -82,7 +82,6 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
     private FoDEntitlementPreferenceTypeOptions.OptionalOption entitlementType;
     @Mixin
     private FoDRemediationScanPreferenceTypeOptions.OptionalOption remediationScanType;
-
     @Mixin
     private FoDInProgressScanActionTypeOptions.OptionalOption inProgressScanActionType;
 
@@ -91,7 +90,8 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
 
         Properties fcliProperties = FoDUtils.loadProperties();
 
-        String relId = appRelResolver.getAppRelId(unirest);
+        String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
+
         Integer entitlementIdToUse = 0;
 
         // get current setup and check if its valid
@@ -135,8 +135,7 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
             throw new ValidationException("Either an 'entitlement id' or 'entitlement type' need to be specified.");
         }
 
-        return FoDSastScanHelper.startScan(unirest, appRelResolver.getAppRelId(unirest), startScanRequest, scanFile,
-                chunkSize, uploadSyncTime).asJsonNode();
+        return FoDSastScanHelper.startScan(unirest, relId, startScanRequest, scanFile, chunkSize, uploadSyncTime).asJsonNode();
     }
 
     @Override
