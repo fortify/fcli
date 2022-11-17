@@ -37,6 +37,7 @@ import com.fortify.cli.fod.app.helper.FoDAppUpdateRequest;
 import com.fortify.cli.fod.attribute.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
 import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.microservice.cli.mixin.FoDAppMicroserviceUpdateOptions;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -47,7 +48,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+import javax.validation.ValidationException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @ReflectiveAccess
@@ -63,7 +66,12 @@ public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IUn
     private String descriptionUpdate;
     @Option(names = {"--notify"}, arity = "0..*")
     private ArrayList<String> notificationsUpdate;
-
+    @Mixin
+    FoDAppMicroserviceUpdateOptions.AddMicroserviceOption addMicroservices;
+    @Mixin
+    FoDAppMicroserviceUpdateOptions.DeleteMicroserviceOption deleteMicroservices;
+    @Mixin
+    FoDAppMicroserviceUpdateOptions.RenameMicroserviceOption renameMicroservices;
     @Mixin
     private FoDCriticalityTypeOptions.OptionalOption criticalityTypeUpdate;
     @Mixin
@@ -93,6 +101,25 @@ public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IUn
                 .setBusinessCriticalityType(appCriticalityNew != null ? String.valueOf(appCriticalityNew) : appDescriptor.getBusinessCriticalityType())
                 .setEmailList(StringUtils.isNotEmpty(appEmailListNew) ? appEmailListNew : appDescriptor.getEmailList())
                 .setAttributes(jsonAttrs);
+
+        if (addMicroservices != null && addMicroservices.getMicroservices() != null) {
+            if (addMicroservices.getMicroservices().contains(deleteMicroservices.getMicroservices()))
+                throw new ValidationException("The --add-microservice and --delete-microservice cannot both be specified for the same microservice");
+            appUpdateRequest.setAddMicroservices(addMicroservices.getMicroservices());
+        }
+
+        if (deleteMicroservices != null && deleteMicroservices.getMicroservices() != null) {
+            if (deleteMicroservices.getMicroservices().contains(addMicroservices.getMicroservices()))
+                throw new ValidationException("The --add-microservice and --delete-microservice cannot both be specified for the same microservice");
+            appUpdateRequest.setDeleteMicroservices(deleteMicroservices.getMicroservices());
+        }
+
+        if (renameMicroservices != null && renameMicroservices.getMicroservices() != null) {
+            List<String> msNames = new ArrayList<>(renameMicroservices.getMicroservices().keySet());
+            if (msNames.contains(addMicroservices.getMicroservices()) || msNames.contains(deleteMicroservices.getMicroservices()))
+                throw new ValidationException("The --update-microservice and --add-microservice or --delete-microservice cannot both be specified for the same microservice");
+            appUpdateRequest.setRenameMicroservices(renameMicroservices.getMicroservices());
+        }
 
         return FoDAppHelper.updateApp(unirest, appDescriptor.getApplicationId(), appUpdateRequest).asJsonNode();
     }

@@ -56,7 +56,7 @@ public class FoDAppMicroserviceUpdateCommand extends AbstractFoDOutputCommand im
         FoDAppMicroserviceDescriptor appMicroserviceDescriptor = appMicroserviceResolver.getAppMicroserviceDescriptor(unirest);
         FoDAppMicroserviceUpdateRequest msUpdateRequest = new FoDAppMicroserviceUpdateRequest()
                 .setMicroserviceName(microserviceName);
-        return FoDAppMicroserviceHelper.updateteAppMicroservice(unirest, appMicroserviceDescriptor, msUpdateRequest);
+        return FoDAppMicroserviceHelper.updateAppMicroservice(unirest, appMicroserviceDescriptor, msUpdateRequest);
     }
 
     @Override

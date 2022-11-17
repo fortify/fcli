@@ -29,6 +29,9 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.util.List;
+import java.util.Map;
+
 @ReflectiveAccess
 @Getter
 @ToString
@@ -38,6 +41,9 @@ public class FoDAppUpdateRequest {
     private String businessCriticalityType;
     private String emailList;
     private JsonNode attributes;
+    private List<String> addMicroservices;
+    private List<String> deleteMicroservices;
+    private Map<String,String> renameMicroservices;
 
     public FoDAppUpdateRequest setApplicationName(String name) {
         this.applicationName = name;
@@ -61,6 +67,21 @@ public class FoDAppUpdateRequest {
 
     public FoDAppUpdateRequest setAttributes(JsonNode attributes) {
         this.attributes = attributes;
+        return this;
+    }
+
+    public FoDAppUpdateRequest setAddMicroservices(List<String> addMicroservices) {
+        this.addMicroservices = addMicroservices;
+        return this;
+    }
+
+    public FoDAppUpdateRequest setDeleteMicroservices(List<String> deleteMicroservices) {
+        this.deleteMicroservices = deleteMicroservices;
+        return this;
+    }
+
+    public FoDAppUpdateRequest setRenameMicroservices(Map<String, String> renameMicroservices) {
+        this.renameMicroservices = renameMicroservices;
         return this;
     }
 
