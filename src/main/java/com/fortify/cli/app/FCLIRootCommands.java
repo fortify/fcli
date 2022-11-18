@@ -30,7 +30,7 @@ import com.fortify.cli.fod._main.cli.cmd.FoDCommands;
 import com.fortify.cli.sc_dast._main.cli.cmd.SCDastCommands;
 import com.fortify.cli.sc_sast._main.cli.cmd.SCSastCommands;
 import com.fortify.cli.ssc._main.cli.cmd.SSCCommands;
-import com.fortify.cli.tool.picocli.command.ToolCommands;
+import com.fortify.cli.tool._main.cli.cmd.ToolCommands;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
@@ -61,10 +61,10 @@ import picocli.CommandLine.ScopeType;
     defaultValueProvider = FortifyCLIDefaultValueProvider.class,
     subcommands = {
             ConfigCommands.class,
-            SSCCommands.class,
-            SCSastCommands.class,
-            SCDastCommands.class,
             FoDCommands.class,
+            SCDastCommands.class,
+            SCSastCommands.class,
+            SSCCommands.class,
             ToolCommands.class
     }
 )

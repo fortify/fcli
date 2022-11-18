@@ -60,15 +60,13 @@ import java.util.Properties;
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Start.CMD_NAME)
 public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
-    @Option(names = {"--purchase-entitlement"})
-    private final Boolean purchaseEntitlement = false;
-    @Getter
-    @Mixin
-    private FoDOutputHelperMixins.Create outputHelper;
+    @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
     @Mixin
     private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
+    @Option(names = {"--purchase-entitlement"})
+    private final Boolean purchaseEntitlement = false;
     @Option(names = {"--notes"})
     private String notes;
     @Option(names = {"--chunk-size"})
@@ -91,7 +89,6 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
         Properties fcliProperties = FoDUtils.loadProperties();
 
         String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
-
         Integer entitlementIdToUse = 0;
 
         // get current setup and check if its valid

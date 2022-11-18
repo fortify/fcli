@@ -60,11 +60,8 @@ import java.util.Properties;
 @Command(name = FoDOutputHelperMixins.Start.CMD_NAME)
 public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
-    @Getter
-    @Mixin
-    private FoDOutputHelperMixins.Create outputHelper;
-    @Mixin
-    private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
+    @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
+    @Mixin private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--start-date"})
@@ -76,6 +73,7 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
     private FoDRemediationScanPreferenceTypeOptions.OptionalOption remediationScanType;
     @Mixin
     private FoDInProgressScanActionTypeOptions.OptionalOption inProgressScanActionType;
+
     @Mixin
     private FoDEntitlementPreferenceTypeOptions.OptionalOption entitlementType;
     @Mixin

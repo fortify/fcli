@@ -2,6 +2,8 @@
 buildscript {
     repositories {
         jcenter()
+        mavenCentral()
+        gradlePluginPortal()
     }
 
     dependencies {
@@ -15,11 +17,10 @@ plugins {
     id('com.github.jk1.dependency-license-report') version '2.1'
     id "org.kordamp.gradle.markdown" version "2.2.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("io.micronaut.graalvm") version "3.5.1" // Needed to generate Graal resource-config.json
-    id("io.micronaut.application") version "3.5.1" apply false
-    id("io.micronaut.library") version "3.5.1" apply false
+    id("io.micronaut.application") version "3.6.4" apply false
+    id("io.micronaut.library") version "3.6.4" apply false
     id 'eclipse'
-    id "com.github.ben-manes.versions" version "0.42.0"
+    id "com.github.ben-manes.versions" version "0.44.0"
     id "org.asciidoctor.jvm.convert" version "3.3.2"
 }
 
@@ -114,6 +115,26 @@ configure(allprojects.findAll {it.name != 'fcli-picocli-patches'}) {
     dependencies {
         implementation project(':fcli-picocli-patches')
     }
+    
+    // Micronaut is supposed to generate a resource-config.json file that includes all resources,
+    // but for some reason this doesn't work, so we generate our own resource-config.json file for
+    // each module
+    ext.generatedResourceConfigDir = "${buildDir}/generated-resource-config"
+    tasks.register('generateResourceConfig') {
+        doLast {
+            def outputDir = "${generatedResourceConfigDir}/META-INF/native-image/fcli-generated/${project.name}";
+            mkdir "${outputDir}"
+            def entries = [];
+            fileTree(dir: 'src/main/resources', excludes: ['**/i18n/**', 'META-INF/**'])
+                .visit {e -> if ( !e.isDirectory() ) {entries << '\n  {"pattern":"'+e.relativePath+'"}'}};
+            if ( entries.size>0 ) {
+                def contents = '{"resources":[' + entries.join(",") + '\n]}';
+                file("${outputDir}/resource-config.json").text = contents;
+                println contents
+            }
+        }
+    }
+    sourceSets.main.output.dir generatedResourceConfigDir, builtBy: generateResourceConfig
 }
 
 // TODO Remove fcli-picocli-patches condition once new picocli is released
