@@ -155,25 +155,25 @@ When utilizing fcli in pipelines or automation scripts, especially when multiple
 Apart from the special-purpose environment variables described in other sections, like the [Fcli Home Folder](#fcli-home-folder) section, fcli allows for specifying default option and parameter values through environment variables. This is particularly useful for specifying product URL's and credentials through pipeline secrets, but also allows for preventing having to manually supply command line options if you frequently invoke a particular command with the same option value(s). For example, you could define a default value for the `fcli ssc appversion create --issue-template` option, to avoid having to remember the issue template name every time you invoke this command.
 
 Fcli walks the command tree to find an environment variable that matches a particular option, starting with the most detailed command prefix first. For the issue-template example above, fcli would look for the following environment variable names, in this order:
-* `FCLI_SSC_APPVERSION_CREATE_ISSUE_TEMPLATE`
-* `FCLI_SSC_APPVERSION_ISSUE_TEMPLATE`
-* `FCLI_SSC_ISSUE_TEMPLATE`
-* `FCLI_ISSUE_TEMPLATE`
+* `FCLI_DEFAULT_SSC_APPVERSION_CREATE_ISSUE_TEMPLATE`
+* `FCLI_DEFAULT_SSC_APPVERSION_ISSUE_TEMPLATE`
+* `FCLI_DEFAULT_SSC_ISSUE_TEMPLATE`
+* `FCLI_DEFAULT_ISSUE_TEMPLATE`
 
 Environment variable lookups are based on the following rules:
-* Command aliases are not taken into account when looking for environment variables; suppose we have a `delete` command with alias `rm`, you will need to use `FCLI_..._DELETE_...` and not `FCLI_..._RM_...`
-* For options, fcli will use the longest option name when looking for environment variables; suppose we have an option with names `-a`, `--ab` and `--abc`, you will need to use `FCLI_..._ABC` and not `FCLI_..._AB` or `FCLI_..._A`
+* Command aliases are not taken into account when looking for environment variables; suppose we have a `delete` command with alias `rm`, you will need to use `FCLI_DEFAULT_..._DELETE_...` and not `FCLI_DEFAULT_..._RM_...`
+* For options, fcli will use the longest option name when looking for environment variables; suppose we have an option with names `-a`, `--ab` and `--abc`, you will need to use `FCLI_DEFAULT_..._ABC` and not `FCLI_DEFAULT_..._AB` or `FCLI_DEFAULT_..._A`
 * Currently, not all positional parameters support default values from environment variables; this will be improved over time. Please refer to the positional parameter description in help output or manual pages to identify what environment variable suffix should be used for a particular positional parameter.
 
 Although powerful, these environment variables for providing default option and parameter values should be used with some care to avoid unexpected results:
 1. Obviously command option requirements should be respected; supplying default values for exclusive options may result in errors or unexpected behavior
-2. Preferably, you should use the most specific environment variable name, like `FCLI_SSC_APPVERSION_CREATE_ISSUE_TEMPLATE` from the example above, to avoid accidentally supplying default values to a similarly named option on other commands
+2. Preferably, you should use the most specific environment variable name, like `FCLI_DEFAULT_SSC_APPVERSION_CREATE_ISSUE_TEMPLATE` from the example above, to avoid accidentally supplying default values to a similarly named option on other commands
 
-Despite #2 above, in some cases it may be useful to use less specific environment names, in particular if the same default values should be applied to multiple commands. As an example, consider an environment variable named `FCLI_SSC_URL`:
+Despite #2 above, in some cases it may be useful to use less specific environment names, in particular if the same default values should be applied to multiple commands. As an example, consider an environment variable named `FCLI_DEFAULT_SSC_URL`:
 * This variable value will be used as a default value for all `--url` options in the SSC module
 * This variable value will be used as a default value for all `--ssc-url` options in other product modules
 
-This means that defining a single `FCLI_SSC_URL` environment variable, together with for example `FCLI_SSC_USER` and `FCLI_SSC_PASSWORD` environment variables, allows for applying these default values to all of the `fcli ssc session login`, `fcli sc-sast session login`, `fcli sc-dast session login`, and corresponding `logout` commands.
+This means that defining a single `FCLI_DEFAULT_SSC_URL` environment variable, together with for example `FCLI_DEFAULT_SSC_USER` and `FCLI_DEFAULT_SSC_PASSWORD` environment variables, allows for applying these default values to all of the `fcli ssc session login`, `fcli sc-sast session login`, `fcli sc-dast session login`, and corresponding `logout` commands.
 
 ## Fcli Variables
 Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding `wait-for` command, or for creating an SSC application version, and passing the SSC application version id to the `appversion-artifact upload` command.
