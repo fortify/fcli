@@ -145,7 +145,11 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
         
     @SneakyThrows
     private static final void updateFilePermissions(Path p) {
-        Files.setPosixFilePermissions(p, binPermissions);
+        try {
+            Files.setPosixFilePermissions(p, binPermissions);
+        } catch ( UnsupportedOperationException e ) {
+            // Log warning?
+        }
     }
     
     protected static enum InstallType {
