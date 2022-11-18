@@ -44,6 +44,6 @@ public class FortifyCLIDefaultValueProvider implements CommandLine.IDefaultValue
     private final String getEnvVarName(CommandSpec command, String suffix) {
         String qualifiedCommandName = command.qualifiedName("_");
         String combinedName = String.format("%s_%s", qualifiedCommandName, suffix);
-        return combinedName.replace('-', '_').toUpperCase();
+        return combinedName.replace('-', '_').toUpperCase().replaceFirst("FCLI_", "FCLI_DEFAULT_");
     }
 }
