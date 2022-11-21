@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.config._main.manager;
+package com.fortify.cli.config.common.helper;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

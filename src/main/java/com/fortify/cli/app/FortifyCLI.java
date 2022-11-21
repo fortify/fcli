@@ -33,7 +33,7 @@ import org.jasypt.normalization.Normalizer;
 
 import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
 import com.fortify.cli.common.variable.FcliVariableHelper;
-import com.fortify.cli.config.language.manager.LanguageConfigManager;
+import com.fortify.cli.config.language.helper.LanguageConfigManager;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
