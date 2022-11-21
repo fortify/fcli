@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.config.common.helper;
+package com.fortify.cli.config.util;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,14 +47,14 @@ import lombok.SneakyThrows;
 
 // TODO Use SneakThrows or use proper exception handling?
 @Singleton
-public class FcliConfigManager {
+public class ConfigPropertiesManager {
     private static final Path CONFIG_PATH = Paths.get("config.json");
     private final ObjectMapper objectMapper; 
     private final Map<String,String> config = new HashMap<>();
     private boolean dirty = false;
     
     @Inject
-    public FcliConfigManager(ObjectMapper objectMapper) {
+    public ConfigPropertiesManager(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         load();
     }

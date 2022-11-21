@@ -1,26 +1,27 @@
-package com.fortify.cli.config.language.helper;
+package com.fortify.cli.config.language.util;
 
 import java.util.Locale;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.config.common.helper.FcliConfigManager;
+import com.fortify.cli.config.util.ConfigPropertiesManager;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Data;
 
 @Singleton
-public final class LanguageConfigManager {
+public final class LanguagePropertiesManager {
     // TODO Any way we can dynamically determine available languages?
     // TODO Re-add NL and other languages once resource bundles are up to date
-    private static final String[] supportedLanguages = {"en", "nl"};
+    private static final String[] supportedLanguages = {"en"};
     private static final String CONFIG_KEY = "defaultUserLanguage";
-    private final FcliConfigManager config;
+    private final ConfigPropertiesManager config;
 
     @Inject
-    public LanguageConfigManager(FcliConfigManager config) {
+    public LanguagePropertiesManager(ConfigPropertiesManager config) {
         this.config = config;
     }
 
@@ -62,7 +63,7 @@ public final class LanguageConfigManager {
         return isNullEmptyOrEn() ? new Locale("") : new Locale(getLanguage());
     }
     
-    @Data
+    @Data @ReflectiveAccess
     public final class LanguageDescriptor {
         private final String languageCode;
         private final String languageLocalName;

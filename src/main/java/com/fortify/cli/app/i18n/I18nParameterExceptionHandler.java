@@ -7,7 +7,7 @@ import picocli.CommandLine.IParameterExceptionHandler;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import com.fortify.cli.config.language.helper.LanguageConfigManager;
+import com.fortify.cli.config.language.util.LanguagePropertiesManager;
 
 public class I18nParameterExceptionHandler implements CommandLine.IParameterExceptionHandler {
     private final IParameterExceptionHandler origDefaultHandler;
@@ -18,11 +18,11 @@ public class I18nParameterExceptionHandler implements CommandLine.IParameterExce
      * This constructor will setup the custom Picocli Parameter Exception Handler so that error messages can be
      * localized. The constructor needs the original default exception handler from Picocli so that if there's an error
      * that does not have a localized version of the error message, then the original error message in English can still
-     * be displayed. Finally, access to {@link LanguageConfigManager} will provide access to the appropriate resource file.
+     * be displayed. Finally, access to {@link LanguagePropertiesManager} will provide access to the appropriate resource file.
      * @param origDefaultHandler
      * @param languageConfigManager
      */
-    public I18nParameterExceptionHandler(IParameterExceptionHandler origDefaultHandler, LanguageConfigManager languageConfigManager){
+    public I18nParameterExceptionHandler(IParameterExceptionHandler origDefaultHandler, LanguagePropertiesManager languageConfigManager){
         this.origDefaultHandler = origDefaultHandler;
         String resourceBundleName = "com.fortify.cli.common.i18n.FortifyCLIMessages";
         i18nResource = ResourceBundle.getBundle(resourceBundleName,

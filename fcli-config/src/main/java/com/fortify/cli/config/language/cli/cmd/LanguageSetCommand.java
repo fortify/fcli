@@ -2,7 +2,7 @@ package com.fortify.cli.config.language.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.config.language.helper.LanguageConfigManager;
+import com.fortify.cli.config.language.util.LanguagePropertiesManager;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -17,7 +17,7 @@ public class LanguageSetCommand extends AbstractLanguageCommand {
     
     @Override
     protected JsonNode getJsonNode() {
-        LanguageConfigManager languageConfigManager = getLanguageConfigManager();
+        LanguagePropertiesManager languageConfigManager = getLanguageConfigManager();
         languageConfigManager.setLanguage(language);
         return languageConfigManager.getCurrentLanguageDescriptor().asObjectNode();
     }
