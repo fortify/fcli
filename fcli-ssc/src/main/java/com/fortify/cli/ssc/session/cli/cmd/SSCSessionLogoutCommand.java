@@ -35,7 +35,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = "logout", sortOptions = false, resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages")
+@Command(name = "logout", sortOptions = false)
 public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand<SSCSessionData> {
     @Getter @Inject private SSCSessionDataManager sessionDataManager;
     @Inject private SSCTokenHelper tokenHelper;

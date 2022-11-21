@@ -31,7 +31,7 @@ import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 
-@Command(name = "list", sortOptions = false, resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages")
+@Command(name = "list", sortOptions = false)
 public class SSCSessionListCommand extends AbstractSessionListCommand {
     @Getter @Inject private SSCSessionDataManager sessionDataManager;
 }

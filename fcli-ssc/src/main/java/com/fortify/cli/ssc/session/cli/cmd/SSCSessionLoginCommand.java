@@ -37,7 +37,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = "login", sortOptions = false, resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages")
+@Command(name = "login", sortOptions = false)
 public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessionData> {
     @Getter @Inject private SSCSessionDataManager sessionDataManager;
     @Inject private SSCTokenHelper tokenHelper;
