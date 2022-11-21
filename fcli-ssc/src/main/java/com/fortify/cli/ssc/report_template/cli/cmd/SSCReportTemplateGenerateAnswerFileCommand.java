@@ -24,17 +24,17 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
+import static java.nio.file.StandardCopyOption.*;
+
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import java.io.File;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @ReflectiveAccess
 @Command(name = "generate-answerFile", aliases = {"gen-answer"})
@@ -60,7 +60,7 @@ public class SSCReportTemplateGenerateAnswerFileCommand implements Runnable {
         if(Files.notExists(outputFile) || overwrite.booleanValue()){
             Files.copy(internalCopy, outputFile , REPLACE_EXISTING);
         }else {
-            System.out.println("File exists. Use --force if you want to overwrite.");
+            throw new IllegalArgumentException("File exists. Use --force if you want to overwrite.");
         }
     }
 }

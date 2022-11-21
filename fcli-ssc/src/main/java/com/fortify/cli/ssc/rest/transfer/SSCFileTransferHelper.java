@@ -32,6 +32,8 @@ import java.util.function.Supplier;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.util.ProgressHelper;
+import com.fortify.cli.common.util.ProgressHelper.IProgressHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
@@ -51,10 +53,12 @@ public class SSCFileTransferHelper {
     @SneakyThrows
     public static final File download(UnirestInstance unirest, String endpoint, String downloadPath, ISSCAddDownloadTokenFunction addTokenFunction) {
         try ( SSCFileTransferTokenSupplier tokenSupplier = new SSCFileTransferTokenSupplier(unirest, SSCFileTransferTokenType.DOWNLOAD); ) {
-            return addTokenFunction.apply(tokenSupplier.get(), unirest.get(endpoint))
-                .downloadMonitor(new SSCProgressMonitor("Download"))
-                .asFile(downloadPath, StandardCopyOption.REPLACE_EXISTING)
-                .getBody();
+            try ( SSCProgressMonitor downloadMonitor = new SSCProgressMonitor("Download") ) {
+                return addTokenFunction.apply(tokenSupplier.get(), unirest.get(endpoint))
+                    .downloadMonitor(downloadMonitor)
+                    .asFile(downloadPath, StandardCopyOption.REPLACE_EXISTING)
+                    .getBody();
+            }
         }
     }
 
@@ -71,13 +75,15 @@ public class SSCFileTransferHelper {
                 objectMapper = XMLMAPPER;
             }
             
-            return addTokenFunction.apply(tokenSupplier.get(), unirest.post(endpoint))
-                .multiPartContent() // Force multipart request with correct Content-Type header
-                .field("file", f)
-                .uploadMonitor(new SSCProgressMonitor("Upload"))
-                .headerReplace("Accept", acceptHeaderValue) 
-                .withObjectMapper(objectMapper)
-                .asObject(returnType).getBody();
+            try ( SSCProgressMonitor uploadMonitor = new SSCProgressMonitor("Upload") ) {
+                return addTokenFunction.apply(tokenSupplier.get(), unirest.post(endpoint))
+                    .multiPartContent() // Force multipart request with correct Content-Type header
+                    .field("file", f)
+                    .uploadMonitor(uploadMonitor)
+                    .headerReplace("Accept", acceptHeaderValue) 
+                    .withObjectMapper(objectMapper)
+                    .asObject(returnType).getBody();
+            }
         }
     }
     
@@ -105,26 +111,16 @@ public class SSCFileTransferHelper {
     }
     
     @RequiredArgsConstructor
-    private static final class SSCProgressMonitor implements ProgressMonitor {
-        private static final boolean hasConsole = System.console()!=null;
+    private static final class SSCProgressMonitor implements ProgressMonitor, AutoCloseable {
+        private final IProgressHelper progressHelper = ProgressHelper.createProgressHelper();
         private final String action;
-        private int lineLength=0;
         
         @Override
         public void accept(String field, String fileName, Long bytesWritten, Long totalBytes) {
-            if ( hasConsole ) { // Only output progress when connected to a console, i.e. disable if output is being redirected
-                // TODO Should we output to stdout or stderr?
-                // TODO Should we use picocli Ansi class instead?
-                String msg = String.format("\r%s %s: %d of %d bytes complete          \r", action, fileName, bytesWritten, totalBytes);
-                lineLength = Math.max(lineLength, msg.length());
-                System.out.print(
-                    msg
-                );
-                if ( bytesWritten.equals(totalBytes) ) {
-                    // Overwrite the status line with spaces. Alternatively, we could just print a newline to keep the latest progress message
-                    System.out.print("\r"+" ".repeat(lineLength)+"\r");
-                }
-            }
+            progressHelper.writeProgress(String.format("\r%s %s: %d of %d bytes complete", action, fileName, bytesWritten, totalBytes));
+        }
+        public void close() {
+            progressHelper.clearProgress();
         }
     }
     
