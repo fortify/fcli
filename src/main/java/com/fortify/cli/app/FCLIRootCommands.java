@@ -78,7 +78,8 @@ public class FCLIRootCommands {
         @Option(names = {"-h", "--help"}, usageHelp = true, description = "display this help message", scope = ScopeType.INHERIT, order = -1003)
         boolean usageHelpRequested;
         
-        @Option(names = {"-V", "--version"}, versionHelp = true, description = "display version info", scope = ScopeType.INHERIT, order = -1002)
+        // We only want to have the --version option on the top-level fcli command
+        @Option(names = {"-V", "--version"}, versionHelp = true, description = "display version info", scope = ScopeType.LOCAL, order = -1002)
         boolean versionInfoRequested;
     }
 }
