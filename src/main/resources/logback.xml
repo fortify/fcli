@@ -12,4 +12,7 @@
   <root level="warn">
     <appender-ref ref="default" />
   </root>
+  
+  <!-- Don't log warnings about incorrect cookie contents, commonly seen when downloading files from GitHub for example -->
+  <logger name="org.apache.http.client.protocol.ResponseProcessCookies" level="ERROR"/>
 </configuration>
