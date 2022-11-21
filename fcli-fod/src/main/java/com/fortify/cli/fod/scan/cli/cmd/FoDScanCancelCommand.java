@@ -44,7 +44,7 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Cancel.CMD_NAME)
 public class FoDScanCancelCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
+    @Getter @Mixin private FoDOutputHelperMixins.Cancel outputHelper;
 
     @Mixin private FoDScanResolverMixin.PositionalParameter scanResolver;
 

@@ -52,7 +52,7 @@ import java.io.File;
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Import.CMD_NAME)
 public class FoDSastScanImportCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
+    @Getter @Mixin private FoDOutputHelperMixins.Import outputHelper;
 
     @Mixin private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
 
