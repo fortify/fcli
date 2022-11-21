@@ -1,17 +1,23 @@
 package com.fortify.cli.config.language.cli.cmd;
 
-import jakarta.annotation.PostConstruct;
-import picocli.CommandLine;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 
-@CommandLine.Command(
-        name = "get",
-        description = "Get the currently set language/locale."
-)
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+
+@Command(name = BasicOutputHelperMixins.Get.CMD_NAME)
 public class LanguageGetCommand extends AbstractLanguageCommand {
-
+    @Mixin @Getter private BasicOutputHelperMixins.Get outputHelper;
+    
     @Override
-    public void run() {
-        System.out.println(languageConfigManager.getLanguageForHelp(languageConfigManager.getLanguage()));
+    protected JsonNode getJsonNode() {
+        return getLanguageConfigManager().getCurrentLanguageDescriptor().asObjectNode();
     }
-
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

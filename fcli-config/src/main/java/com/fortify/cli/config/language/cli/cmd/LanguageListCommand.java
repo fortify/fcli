@@ -1,24 +1,27 @@
 package com.fortify.cli.config.language.cli.cmd;
 
-import com.fortify.cli.config.language.manager.LanguageConfigManager;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.config.language.helper.LanguageConfigManager.LanguageDescriptor;
 
-import jakarta.annotation.PostConstruct;
-import picocli.CommandLine;
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
-
-/**
- * TODO: I'd like for the implementation to be dynamic so that supported languages are automatically detected.
- */
-@CommandLine.Command(
-        name = "list"
-)
+@Command(name=BasicOutputHelperMixins.List.CMD_NAME)
 public class LanguageListCommand extends AbstractLanguageCommand {
+    @Mixin @Getter private BasicOutputHelperMixins.List outputHelper;
+    
     @Override
-    public void run() {
-        System.out.println("Below is a list of supported languages with fcli:");
-        for(String lang : LanguageConfigManager.supportedLanguages){
-            System.out.println(languageConfigManager.getLanguageForHelp(lang));
-        }
+    protected JsonNode getJsonNode() {
+        return getLanguageConfigManager().getSupportLanguageDescriptorsStream()
+            .map(LanguageDescriptor::asObjectNode)
+            .collect(JsonHelper.arrayNodeCollector());
     }
-
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
 }

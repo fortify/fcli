@@ -1,20 +1,29 @@
 package com.fortify.cli.config.language.cli.cmd;
 
-import jakarta.annotation.PostConstruct;
-import picocli.CommandLine;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.config.language.helper.LanguageConfigManager;
+
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
-@CommandLine.Command(
-        name = "set"
-)
+@Command(name = BasicOutputHelperMixins.Set.CMD_NAME)
 public class LanguageSetCommand extends AbstractLanguageCommand {
-    // TODO: Need to internationalize paramLabel at some point.
+    @Mixin @Getter private BasicOutputHelperMixins.Set outputHelper;
     @Parameters(index = "0", descriptionKey = "fcli.config.language.set.language")
     private String language;
-
+    
     @Override
-    public void run() {
+    protected JsonNode getJsonNode() {
+        LanguageConfigManager languageConfigManager = getLanguageConfigManager();
         languageConfigManager.setLanguage(language);
-        // TODO Write some output using StandardOutputWriterFactory mixin;
+        return languageConfigManager.getCurrentLanguageDescriptor().asObjectNode();
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
     }
 }

@@ -3,7 +3,7 @@ package com.fortify.cli.app.i18n;
 import java.util.Locale;
 
 import com.fortify.cli.app.IFortifyCLIInitializer;
-import com.fortify.cli.config.language.manager.LanguageConfigManager;
+import com.fortify.cli.config.language.helper.LanguageConfigManager;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

@@ -7,7 +7,7 @@ import picocli.CommandLine.IParameterExceptionHandler;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import com.fortify.cli.config.language.manager.LanguageConfigManager;
+import com.fortify.cli.config.language.helper.LanguageConfigManager;
 
 public class I18nParameterExceptionHandler implements CommandLine.IParameterExceptionHandler {
     private final IParameterExceptionHandler origDefaultHandler;
