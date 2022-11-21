@@ -40,24 +40,24 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * TODO Move this class one package up, to com.fortify.cli.common.output
  * @author rsenden
- *
  */
 @RequiredArgsConstructor
 public enum OutputFormat {
+    // These entries should be in alphabetical order, except for expr & json_properties as
+    // these are 'special' formats.
+    csv             (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.HEADERS)),
+    csv_plain       (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.NO_HEADERS)),
     json            (OutputStructure.TREE, "json",  new JsonRecordWriterFactory()), 
     json_flat       (OutputStructure.FLAT, "json",  new JsonRecordWriterFactory()),
-    yaml            (OutputStructure.TREE, "yaml",  new YamlRecordWriterFactory()), 
-    yaml_flat       (OutputStructure.FLAT, "yaml",  new YamlRecordWriterFactory()),
     table           (OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.HEADERS)), 
     table_plain     (OutputStructure.FLAT, "table", new TableRecordWriterFactory(TableType.NO_HEADERS)),
     tree            (OutputStructure.TREE, "tree",  new TreeRecordWriterFactory()), 
     tree_flat       (OutputStructure.FLAT, "tree",  new TreeRecordWriterFactory()),
     xml             (OutputStructure.TREE, "xml",   new XmlRecordWriterFactory()), 
     xml_flat        (OutputStructure.FLAT, "xml",   new XmlRecordWriterFactory()),
-    csv             (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.HEADERS)),
-    csv_plain       (OutputStructure.FLAT, "csv",   new CsvRecordWriterFactory(CsvType.NO_HEADERS)),
+    yaml            (OutputStructure.TREE, "yaml",  new YamlRecordWriterFactory()), 
+    yaml_flat       (OutputStructure.FLAT, "yaml",  new YamlRecordWriterFactory()),
     expr            (OutputStructure.TREE, "expr",  new ExprRecordWriterFactory()),
     json_properties (OutputStructure.TREE, "paths", new JsonPropertiesRecordWriterFactory());
     
