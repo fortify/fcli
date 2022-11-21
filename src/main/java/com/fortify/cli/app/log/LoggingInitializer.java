@@ -76,9 +76,7 @@ public class LoggingInitializer implements IFortifyCLIInitializer {
      * 
      * @author Ruud Senden
      */
-    @Command(
-            defaultValueProvider = FortifyCLIDefaultValueProvider.class
-    )
+    @Command(defaultValueProvider = FortifyCLIDefaultValueProvider.class)
     public static final class SetupLoggingCommand implements Runnable {
         @Mixin LoggingMixin loggingMixin;
         

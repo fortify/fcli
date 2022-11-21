@@ -6,6 +6,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonHelper;
 
@@ -21,6 +24,7 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 public final class SSCAuthEntitySpecPredicate implements Predicate<JsonNode> {
+    private static final Logger LOG = LoggerFactory.getLogger(SSCAuthEntitySpecPredicate.class);
     public static enum MatchMode { INCLUDE, EXCLUDE }; 
     private final String[] authEntities;
     private final SSCAuthEntitySpecPredicate.MatchMode matchMode;
@@ -59,8 +63,7 @@ public final class SSCAuthEntitySpecPredicate implements Predicate<JsonNode> {
     public void logUnmatched(String msg) {
         String[] unmatched = getUnmatched();
         if ( unmatched!=null && unmatched.length>0 ) {
-            // TODO Use proper logging
-            System.err.println(msg+String.join(", ", unmatched));
+            LOG.warn(msg+String.join(", ", unmatched));
         }
     }
 

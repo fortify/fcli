@@ -24,6 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
@@ -37,6 +40,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess @FixInjection
 public abstract class AbstractSessionLoginCommand<D extends ISessionData> extends AbstractSessionCommand {
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractSessionLoginCommand.class);
     @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
     @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
     
@@ -56,8 +60,7 @@ public abstract class AbstractSessionLoginCommand<D extends ISessionData> extend
             try {
                 logoutBeforeNewLogin(sessionName, sessionDataManager.get(sessionName, false));
             } catch ( Exception e ) {
-                // TODO Use proper logger, include exception details
-                System.err.println("WARN: Error logging out previous session");
+                LOG.warn("Error logging out previous session", e);
             } finally {
                 sessionDataManager.destroy(sessionName);
             }

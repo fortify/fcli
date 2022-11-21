@@ -25,10 +25,16 @@
 
 package com.fortify.cli.fod.sast_scan.cli.cmd;
 
+import java.io.File;
+import java.util.Properties;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
+import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.fod.dast_scan.helper.FoDDastScanHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
@@ -43,7 +49,7 @@ import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.util.FoDConstants;
 import com.fortify.cli.fod.util.FoDEnums;
-import com.fortify.cli.fod.util.FoDUtils;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
@@ -52,10 +58,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import javax.validation.ValidationException;
-import java.io.File;
-import java.util.Properties;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Start.CMD_NAME)
@@ -86,7 +88,7 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
 
-        Properties fcliProperties = FoDUtils.loadProperties();
+        Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
 
         String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
         Integer entitlementIdToUse = 0;

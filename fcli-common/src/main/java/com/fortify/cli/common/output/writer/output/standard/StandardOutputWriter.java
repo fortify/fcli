@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
@@ -42,6 +45,7 @@ import picocli.CommandLine.Model.CommandSpec;
 
 @ReflectiveAccess 
 public class StandardOutputWriter implements IOutputWriter {
+    private static final Logger LOG = LoggerFactory.getLogger(StandardOutputWriter.class);
     private final StandardOutputConfig outputConfig;
     private final OutputFormat outputFormat;
     private final CommandSpec commandSpec;
@@ -365,7 +369,7 @@ public class StandardOutputWriter implements IOutputWriter {
                     writer.close();
                 }
             } catch (IOException e) {
-                System.err.println("WARN: Error closing output");
+                LOG.warn("WARN: Error closing output");
             }   
         }
         
@@ -453,7 +457,7 @@ public class StandardOutputWriter implements IOutputWriter {
                 writer.flush();
                 writer.close();
             } catch (IOException e) {
-                System.err.println("WARN: Error closing output file");
+                LOG.warn("Error closing output file", e);
             }   
         }
         
