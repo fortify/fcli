@@ -3,7 +3,7 @@ package com.fortify.cli.config.language.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.config.language.helper.LanguageConfigManager.LanguageDescriptor;
+import com.fortify.cli.config.language.util.LanguagePropertiesManager.LanguageDescriptor;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;

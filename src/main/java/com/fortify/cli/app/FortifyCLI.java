@@ -30,7 +30,7 @@ import org.jasypt.normalization.Normalizer;
 
 import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
 import com.fortify.cli.common.variable.FcliVariableHelper;
-import com.fortify.cli.config.language.helper.LanguageConfigManager;
+import com.fortify.cli.config.language.util.LanguagePropertiesManager;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
@@ -74,7 +74,7 @@ public class FortifyCLI {
                 return commandLine.setParameterExceptionHandler(
                             new I18nParameterExceptionHandler(
                                     commandLine.getParameterExceptionHandler(),
-                                    applicationContext.getBean(LanguageConfigManager.class)
+                                    applicationContext.getBean(LanguagePropertiesManager.class)
                             )
                 ).execute(resolvedArgs);
             }
