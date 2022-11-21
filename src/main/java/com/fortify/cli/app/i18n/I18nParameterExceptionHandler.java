@@ -24,7 +24,7 @@ public class I18nParameterExceptionHandler implements CommandLine.IParameterExce
      */
     public I18nParameterExceptionHandler(IParameterExceptionHandler origDefaultHandler, LanguageConfigManager languageConfigManager){
         this.origDefaultHandler = origDefaultHandler;
-        String resourceBundleName = "com.fortify.cli.app.i18n.FortifyCLIMessages";
+        String resourceBundleName = "com.fortify.cli.common.i18n.FortifyCLIMessages";
         i18nResource = ResourceBundle.getBundle(resourceBundleName,
                 new Locale(
                         languageConfigManager.isNullEmptyOrEn() ? "" : languageConfigManager.getLanguage()
