@@ -53,6 +53,9 @@ allprojects {
         sourceCompatibility = JavaVersion.toVersion("11")
         targetCompatibility = JavaVersion.toVersion("11")
     }
+    compileJava {
+        options.compilerArgs += ["-Averbose=true"]
+    }
     micronaut {
         testRuntime("junit5")
         processing {
@@ -70,7 +73,7 @@ allprojects {
         compileOnly 'org.projectlombok:lombok:1.18.24'
         annotationProcessor 'org.projectlombok:lombok:1.18.24'
 
-        // Picocli dependency and annotation processor
+        // Picocli dependency and annotation processor. Note that for now, we cannot use 4.7.0 due to https://github.com/remkop/picocli/issues/1876
         annotationProcessor("info.picocli:picocli-codegen:4.6.3")
         
         // TODO Re-enable this line (with appropriate version) once new picocli is released
