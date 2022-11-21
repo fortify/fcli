@@ -24,9 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.impl.LogFactoryImpl;
-import org.apache.commons.logging.impl.SimpleLog;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 import org.jasypt.normalization.Normalizer;
@@ -95,12 +92,6 @@ public class FortifyCLI {
             
             // TODO Review whether these are all necessary
             RuntimeReflection.register(String.class);
-            RuntimeReflection.register(LogFactoryImpl.class);
-            RuntimeReflection.register(LogFactoryImpl.class.getDeclaredConstructors());
-            RuntimeReflection.register(LogFactory.class);
-            RuntimeReflection.register(LogFactory.class.getDeclaredConstructors());
-            RuntimeReflection.register(SimpleLog.class);
-            RuntimeReflection.register(SimpleLog.class.getDeclaredConstructors());
         }
     }
 }

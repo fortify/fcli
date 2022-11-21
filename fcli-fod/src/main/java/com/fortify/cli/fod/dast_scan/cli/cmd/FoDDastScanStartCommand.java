@@ -25,10 +25,17 @@
 
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Properties;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
+import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.fod.dast_scan.helper.FoDDastScanHelper;
 import com.fortify.cli.fod.dast_scan.helper.FoDDastScanSetupDescriptor;
 import com.fortify.cli.fod.dast_scan.helper.FoDStartDastScanRequest;
@@ -37,12 +44,16 @@ import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
-import com.fortify.cli.fod.scan.cli.mixin.*;
+import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.util.FoDEnums;
-import com.fortify.cli.fod.util.FoDUtils;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
@@ -50,11 +61,6 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import javax.validation.ValidationException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Properties;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Start.CMD_NAME)
@@ -89,7 +95,7 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
 
-        Properties fcliProperties = FoDUtils.loadProperties();
+        Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
         FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
 
         String relId = appRelResolver.getAppRelId(unirest);

@@ -94,6 +94,7 @@ allprojects {
 
         implementation('com.konghq:unirest-java:3.13.11') {
             exclude group: 'com.google.code.gson', module: 'gson' // We use Jackson, so no need for Gson
+            exclude group: 'commons-logging', module: 'commons-logging' // We use jcl-over-slf4j
         }
         implementation('com.konghq:unirest-objectmapper-jackson:3.13.11')
 
