@@ -29,7 +29,7 @@ import com.fortify.cli.common.variable.PredefinedVariable;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "release",
-        aliases = {"application-release", "app-rel"},
+        aliases = {"app-rel"},
         subcommands = {
                 FoDAppRelCreateCommand.class,
                 FoDAppRelListCommand.class,

@@ -23,22 +23,27 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.scan.helper;
+package com.fortify.cli.fod.release.cli.mixin;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
-@ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class FoDScanDescriptor extends JsonNodeHolder {
-    private Integer scanId;
-    private String scanType;
-    private Integer releaseId;
-    private Integer applicationId;
-    private String microserviceName;
-    private String status;
+import javax.validation.ValidationException;
+
+@Data @ReflectiveAccess
+public final class FoDAppMicroserviceAndRelNameDescriptor {
+    private final String appName, microserviceName, relName;
+    
+    public static final FoDAppMicroserviceAndRelNameDescriptor fromCombinedAppMicroserviceAndRelName(String appMicroserviceAndRelName, String delimiter) {
+        String[] appMicroserviceAndRelNameArray = appMicroserviceAndRelName.split(delimiter);
+        if (appMicroserviceAndRelNameArray.length < 2) {
+            throw new ValidationException("Application microservice and release name must be specified in the format <application name>"+delimiter+"<microservice name>"+delimiter+"<release name>");
+        }
+        if (appMicroserviceAndRelNameArray.length == 3) {
+            return new FoDAppMicroserviceAndRelNameDescriptor(appMicroserviceAndRelNameArray[0], appMicroserviceAndRelNameArray[1], appMicroserviceAndRelNameArray[2]);
+        } else {
+            return new FoDAppMicroserviceAndRelNameDescriptor(appMicroserviceAndRelNameArray[0], "", appMicroserviceAndRelNameArray[1]);
+
+        }
+    }
 }

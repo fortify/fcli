@@ -30,6 +30,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
+import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
+import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceUpdateRequest;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupDescriptor;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
@@ -41,6 +44,7 @@ import lombok.Getter;
 import javax.validation.ValidationException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class FoDAppHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
@@ -92,6 +96,35 @@ public class FoDAppHelper {
         unirest.put(FoDUrls.APPLICATION)
                 .routeParam("appId", String.valueOf(appId))
                 .body(body).asObject(JsonNode.class).getBody();
+        // add microservices(s)
+        if (appUpdateRequest != null && appUpdateRequest.getAddMicroservices() != null) {
+            for (String ms: appUpdateRequest.getAddMicroservices()) {
+                //System.out.println("Adding microservice: " + ms);
+                FoDAppMicroserviceUpdateRequest msUpdateRequest = new FoDAppMicroserviceUpdateRequest()
+                        .setMicroserviceName(ms);
+                FoDAppMicroserviceHelper.createAppMicroservice(unirest, appId, msUpdateRequest);
+            }
+        }
+        // delete microservice(s)
+        if (appUpdateRequest != null && appUpdateRequest.getDeleteMicroservices() != null) {
+            for (String ms: appUpdateRequest.getDeleteMicroservices()) {
+                //System.out.println("Deleting microservice: " + ms);
+                FoDAppMicroserviceDescriptor appMicroserviceDescriptor = FoDAppMicroserviceHelper
+                        .getRequiredAppMicroservice(unirest, appUpdateRequest.getApplicationName() + ":" + ms, ":");
+                FoDAppMicroserviceHelper.deleteAppMicroservice(unirest, appMicroserviceDescriptor);
+            }
+        }
+        // rename microservice(s)
+        if (appUpdateRequest != null && appUpdateRequest.getRenameMicroservices() != null) {
+            for (Map.Entry<String,String> ms: appUpdateRequest.getRenameMicroservices().entrySet()) {
+                //System.out.println("Renaming microservice " + ms.getKey() + " to " + ms.getValue());
+                FoDAppMicroserviceDescriptor appMicroserviceDescriptor = FoDAppMicroserviceHelper
+                        .getRequiredAppMicroservice(unirest, appUpdateRequest.getApplicationName() + ":" + ms.getKey(), ":");
+                FoDAppMicroserviceUpdateRequest msUpdateRequest = new FoDAppMicroserviceUpdateRequest()
+                        .setMicroserviceName(ms.getValue());
+                FoDAppMicroserviceHelper.updateAppMicroservice(unirest, appMicroserviceDescriptor, msUpdateRequest);
+            }
+        }
         return getAppDescriptor(unirest, String.valueOf(appId), true);
     }
 

@@ -133,7 +133,7 @@ public class FoDAppMicroserviceHelper {
         return node;
     }
 
-    public static final JsonNode updateteAppMicroservice(UnirestInstance unirest, FoDAppMicroserviceDescriptor currentMs, FoDAppMicroserviceUpdateRequest msRequest) {
+    public static final JsonNode updateAppMicroservice(UnirestInstance unirest, FoDAppMicroserviceDescriptor currentMs, FoDAppMicroserviceUpdateRequest msRequest) {
         ObjectNode body = objectMapper.valueToTree(msRequest);
         JsonNode response = unirest.put(FoDUrls.MICROSERVICES_UPDATE)
                 .routeParam("appId", String.valueOf(currentMs.getApplicationId()))

@@ -9,7 +9,8 @@ import picocli.CommandLine;
                 FoDSastScanCancelCommand.class,
                 FoDSastScanGetCommand.class,
                 FoDSastScanListCommand.class,
-                FoDSastScanImportCommand.class
+                FoDSastScanImportCommand.class,
+                FoDSastScanWaitForCommand.class
         }
 )
 public class FoDSastScanCommands {

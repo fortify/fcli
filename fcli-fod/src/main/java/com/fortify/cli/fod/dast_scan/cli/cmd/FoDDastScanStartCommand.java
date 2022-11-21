@@ -34,7 +34,7 @@ import com.fortify.cli.fod.dast_scan.helper.FoDDastScanSetupDescriptor;
 import com.fortify.cli.fod.dast_scan.helper.FoDStartDastScanRequest;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.scan.cli.mixin.*;
@@ -60,24 +60,17 @@ import java.util.Properties;
 @Command(name = FoDOutputHelperMixins.Start.CMD_NAME)
 public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
-    @Getter
-    @Mixin
-    private FoDOutputHelperMixins.Create outputHelper;
-    @Mixin
-    private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
-
+    @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
+    @Mixin private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
-
     @Option(names = {"--start-date"})
     private String startDate;
-
     @Option(names = {"--notes"})
     private String notes;
 
     @Mixin
     private FoDRemediationScanPreferenceTypeOptions.OptionalOption remediationScanType;
-
     @Mixin
     private FoDInProgressScanActionTypeOptions.OptionalOption inProgressScanActionType;
 
@@ -92,7 +85,7 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
         Properties fcliProperties = FoDUtils.loadProperties();
         FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
 
-        String relId = appRelResolver.getAppRelId(unirest);
+        String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
 
         // check if scan is already running
         FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptorById(unirest, relId, true);
@@ -163,7 +156,7 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
                 .setScanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"));
 
         //System.out.println(startScanRequest);
-        return FoDDastScanHelper.startScan(unirest, appRelResolver.getAppRelId(unirest), startScanRequest).asJsonNode();
+        return FoDDastScanHelper.startScan(unirest, relId, startScanRequest).asJsonNode();
     }
 
     @Override

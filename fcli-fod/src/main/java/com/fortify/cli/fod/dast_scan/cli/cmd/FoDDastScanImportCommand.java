@@ -31,6 +31,7 @@ import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.helper.FoDFileTransferHelper;
@@ -53,7 +54,7 @@ import java.io.File;
 public class FoDDastScanImportCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
 
-    @Mixin private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
+    @Mixin private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
 
     @CommandLine.Option(names = {"--chunk-size"})
     private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
@@ -64,7 +65,7 @@ public class FoDDastScanImportCommand extends AbstractFoDOutputCommand implement
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        String relId = appRelResolver.getAppRelId(unirest);
+        String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
         FoDFileTransferHelper fileTransferHelper = new FoDFileTransferHelper(unirest);
         fileTransferHelper.setChunkSize(chunkSize);
         fileTransferHelper.setUploadSyncTime(uploadSyncTime);

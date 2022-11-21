@@ -30,6 +30,7 @@ import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.helper.FoDFilterResultsTransformer;
@@ -55,7 +56,7 @@ public class FoDDastScanListCommand extends AbstractFoDOutputCommand implements 
             .add("id","scanId", FoDFiltersParamValueGenerators::plain)
             .add("type", "scanType", FoDFiltersParamValueGenerators::plain);
 
-    @Mixin private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
+    @Mixin private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
 
     @Option(names = {"--latest-first"})
     private Boolean latestFirst;
@@ -66,7 +67,7 @@ public class FoDDastScanListCommand extends AbstractFoDOutputCommand implements 
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return updateRequest(
                 unirest.get(FoDUrls.RELEASE + "/scans")
-                        .routeParam("relId", appRelResolver.getAppRelId(unirest))
+                        .routeParam("relId", appMicroserviceRelResolver.getAppMicroserviceRelId(unirest))
         );
     }
 

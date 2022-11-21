@@ -10,7 +10,8 @@ import picocli.CommandLine;
                 FoDDastScanCancelCommand.class,
                 FoDDastScanGetCommand.class,
                 FoDDastScanListCommand.class,
-                FoDDastScanImportCommand.class
+                FoDDastScanImportCommand.class,
+                FoDDastScanWaitForCommand.class
         }
 )
 @PredefinedVariable(name = "currentScan", field = "id")

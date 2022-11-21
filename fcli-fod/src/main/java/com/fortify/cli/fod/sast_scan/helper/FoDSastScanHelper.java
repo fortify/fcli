@@ -29,13 +29,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.fod.release.helper.FoDAppRelAssessmentTypeDescriptor;
+import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.helper.FoDFileTransferHelper;
-import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions.FoDAssessmentType;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
-import com.fortify.cli.fod.scan.helper.*;
+import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
+import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan.helper.FoDScanNotFoundException;
+import com.fortify.cli.fod.scan.helper.FoDStartScanResponse;
 import com.fortify.cli.fod.util.FoDConstants;
 import com.fortify.cli.fod.util.FoDEnums;
 import kong.unirest.GetRequest;
@@ -43,7 +44,6 @@ import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
-import javax.validation.ValidationException;
 import java.io.File;
 
 public class FoDSastScanHelper extends FoDScanHelper {
@@ -62,6 +62,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
 
     public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartSastScanRequest req,
                                                     File scanFile, int chunkSize, int uploadSyncTime) {
+        FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
         HttpRequest request = unirest.post(FoDUrls.STATIC_SCAN_START).routeParam("relId", relId)
                 .queryString("entitlementPreferenceType", (req.getEntitlementPreferenceType() != null ?
                         FoDEnums.EntitlementPreferenceType.valueOf(req.getEntitlementPreferenceType()) : FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan))
@@ -96,6 +97,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
         } catch (FoDScanNotFoundException ex) {
             scanDescriptor.setStatus("Unavailable");
         }
+        scanDescriptor.setMicroserviceName(appRelDescriptor.getMicroserviceName());
         return scanDescriptor;
     }
 
