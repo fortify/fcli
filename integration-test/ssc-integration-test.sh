@@ -2,9 +2,9 @@
 
 checkVars() {
     [[ -z "${FCLI_CMD}" ]] && echo "FCLI_CMD must be set to either 'java -jar path/to/fcli.jar' or path/to/fcli native binary" && exit 1
-    [[ -z "${FCLI_SSC_URL}" ]] && echo "FCLI_SSC_URL must be set to SSC demo container URL" && exit 1
-    [[ -z "${FCLI_SSC_USER}" ]] && echo "FCLI_SSC_USER must be set to SSC demo container user" && exit 1
-    [[ -z "${FCLI_SSC_PASSWORD}" ]] && echo "FCLI_SSC_PASSWORD must be set to SSC demo container user password" && exit 1
+    [[ -z "${FCLI_DEFAULT_SSC_URL}" ]] && echo "FCLI_DEFAULT_SSC_URL must be set to SSC demo container URL" && exit 1
+    [[ -z "${FCLI_DEFAULT_SSC_USER}" ]] && echo "FCLI_DEFAULT_SSC_USER must be set to SSC demo container user" && exit 1
+    [[ -z "${FCLI_DEFAULT_SSC_PASSWORD}" ]] && echo "FCLI_DEFAULT_SSC_PASSWORD must be set to SSC demo container user password" && exit 1
 }
 
 sscCmd() {
@@ -21,7 +21,7 @@ runCmd() {
 }
 
 runTestCommandsInSession() {
-    checkOutput=(fgrep ${FCLI_SSC_SESSION}); sscCmd session login
+    checkOutput=(fgrep ${FCLI_DEFAULT_SSC_SESSION}); sscCmd session login
     runTestCommands
     sscCmd session logout
 }
@@ -64,7 +64,7 @@ runTestCommands() {
 
 run() {
     checkVars
-    FCLI_SSC_SESSION=integration-test runTestCommandsInSession
+    FCLI_DEFAULT_SSC_SESSION=integration-test runTestCommandsInSession
 }
 
 run
