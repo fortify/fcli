@@ -44,7 +44,7 @@ public class SCSastSessionLoginOptions {
     }
     
     public static class SCDastTokenCredentialOptions {
-        @Option(names = {"--ssc-ci-token", "-t"}, required = true, interactive = true, echo = false)
+        @Option(names = {"--ssc-ci-token", "-t"}, interactive = true, echo = false, arity = "0..1", required = true)
         @Getter private char[] token;
     }
 }
