@@ -449,7 +449,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc token list</strong> [<strong>-hV</strong>] <strong>-p</strong>[=<em>&lt;password&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+<p><strong>fcli ssc token list</strong> [<strong>-h</strong>] <strong>-p</strong>[=<em>&lt;password&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] <strong>-u</strong>=<em>&lt;user&gt;</em> [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>
                     | [<strong>--url</strong>=<em>&lt;url&gt;</em> [<strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em>]
                     [<strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em>] [<strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em>]
@@ -462,9 +462,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sect1">
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>List tokens</p>
-</div>
+
 </div>
 </div>
 <div class="sect1">
@@ -475,10 +473,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
 <dd>
 <p>Show this help message and exit</p>
-</dd>
-<dt class="hdlist1"><strong>-V</strong>, <strong>--version</strong></dt>
-<dd>
-<p>Print version information and exit</p>
 </dd>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
@@ -494,11 +488,31 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </dd>
 <dt class="hdlist1"><strong>-u</strong>, <strong>--user</strong>=<em>&lt;user&gt;</em></dt>
 <dd>
-<p>SSC user name</p>
+<p>SSC user name. Environment variables:</p>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_USER: Shared with SC SAST/DAST</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_SESSION_USER: Only SSC session commands</pre>
+</div>
+</div>
 </dd>
 <dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;password&gt;</em>]</dt>
 <dd>
-<p>SSC password</p>
+<p>SSC password. Environment variables:</p>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_PASSWORD: Shared with SC SAST/DAST</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_SESSION_PASSWORD: Only SSC session commands</pre>
+</div>
+</div>
 </dd>
 <dt class="hdlist1"><strong>--url</strong>=<em>&lt;url&gt;</em></dt>
 <dd>
@@ -506,19 +520,59 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </dd>
 <dt class="hdlist1"><strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em></dt>
 <dd>
-<p>Hostname or IP address of the proxy server</p>
+<p>Hostname or IP address of the proxy server. Environment variables:</p>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_PROXY_HOST: Shared across all modules</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_SESSION_PROXY_HOST: Only SSC session commands</pre>
+</div>
+</div>
 </dd>
 <dt class="hdlist1"><strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em></dt>
 <dd>
-<p>Port number used to connect to the proxy server</p>
+<p>Proxy server port number. Environment variables:</p>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_PROXY_PORT: Shared across all modules</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_SESSION_PROXY_PORT: Only SSC session commands</pre>
+</div>
+</div>
 </dd>
 <dt class="hdlist1"><strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em></dt>
 <dd>
-<p>Username used to authenticate with the proxy server</p>
+<p>Proxy server user. Environment variables:</p>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_PROXY_USER: Shared across all modules</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_SESSION_PROXY_USER: Only SSC session commands</pre>
+</div>
+</div>
 </dd>
 <dt class="hdlist1"><strong>--proxy-password</strong></dt>
 <dd>
-<p>Password used to authenticate with the proxy server</p>
+<p>Proxy server password. Environment variables:</p>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_PROXY_PASSWORD: Shared across all modules</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_SESSION_PROXY_PASSWORD: Only SSC session commands</pre>
+</div>
+</div>
 </dd>
 <dt class="hdlist1"><strong>-k</strong>, <strong>--insecure</strong></dt>
 <dd>
@@ -535,7 +589,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dl>
 <dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
-<p>Output format: json, json-flat, yaml, yaml-flat, table, table-plain, tree, tree-flat, xml, xml-flat, csv, csv-plain, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
+<p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
 </dd>
 <dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
 <dd>
@@ -565,8 +619,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221121.085129-dev_main, built on 2022-11-21 08 51 58<br>
-Last updated 2022-11-21 08:53:11 UTC
+Version fcli version 0.20221123.120958-dev_main, built on 2022-11-23 12 10 26<br>
+Last updated 2022-11-23 12:11:25 UTC
 </div>
 </div>
 </body>
