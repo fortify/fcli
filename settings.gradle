@@ -7,7 +7,6 @@ include 'fcli-ssc'
 include 'fcli-fod'
 include 'fcli-sc-sast'
 include 'fcli-sc-dast'
-include 'fcli-run'
 include 'fcli-tool'
 
 
