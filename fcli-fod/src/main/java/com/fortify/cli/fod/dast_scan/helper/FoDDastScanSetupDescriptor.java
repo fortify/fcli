@@ -28,11 +28,13 @@ package com.fortify.cli.fod.dast_scan.helper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 @ReflectiveAccess
 @Data
 @ToString
+@EqualsAndHashCode(callSuper=false)
 public class FoDDastScanSetupDescriptor extends JsonNodeHolder {
     private Integer assessmentTypeId;
     private Integer entitlementId;

@@ -32,7 +32,7 @@ import lombok.EqualsAndHashCode;
 import java.util.ArrayList;
 
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper=false)
 public class FoDStartScanResponse extends JsonNodeHolder {
     Integer scanId;
     ArrayList<String> messages;

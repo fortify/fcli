@@ -30,7 +30,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper=false)
 public class FoDImportScanResponse extends JsonNodeHolder {
     String referenceId;
 }
