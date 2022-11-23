@@ -53,9 +53,6 @@ allprojects {
         sourceCompatibility = JavaVersion.toVersion("11")
         targetCompatibility = JavaVersion.toVersion("11")
     }
-    compileJava {
-        options.compilerArgs += ["-Averbose=true"]
-    }
     micronaut {
         testRuntime("junit5")
         processing {
@@ -72,9 +69,6 @@ allprojects {
         // Lombok dependency & annotation processor
         compileOnly 'org.projectlombok:lombok:1.18.24'
         annotationProcessor 'org.projectlombok:lombok:1.18.24'
-
-        // Picocli dependency and annotation processor. Note that for now, we cannot use 4.7.0 due to https://github.com/remkop/picocli/issues/1876
-        annotationProcessor("info.picocli:picocli-codegen:4.6.3")
         
         // TODO Re-enable this line (with appropriate version) once new picocli is released
         //implementation("info.picocli:picocli:4.6.3")
@@ -115,9 +109,27 @@ allprojects {
 }
 
 // TODO Remove this block once new picocli is released 
-configure(allprojects.findAll {it.name != 'fcli-picocli-patches'}) {
+configure(allprojects.findAll {it.name == 'fcli-picocli-codegen-patches'}) {
     dependencies {
         implementation project(':fcli-picocli-patches')
+    }
+}
+
+// TODO Remove this block once new picocli is released 
+configure(allprojects.findAll {it.name != 'fcli-picocli-patches' && it.name != 'fcli-picocli-codegen-patches'}) {
+    dependencies {
+        implementation project(':fcli-picocli-patches')
+        // Picocli dependency and annotation processor. Note that for now, we cannot use 4.7.0 due to https://github.com/remkop/picocli/issues/1876
+        //annotationProcessor("info.picocli:picocli-codegen:4.6.3")
+        annotationProcessor(project(":fcli-picocli-codegen-patches"))
+    }
+}
+
+// TODO Move to allprojects block once we no longer require picocli patches
+configure(allprojects.findAll {it.name != 'fcli-picocli-patches' && it.name != 'fcli-picocli-codegen-patches'}) {
+    // Set picocli annotation processor options
+    compileJava {
+        options.compilerArgs += ["-Averbose=true"]
     }
     
     // Micronaut is supposed to generate a resource-config.json file that includes all resources,
@@ -142,7 +154,7 @@ configure(allprojects.findAll {it.name != 'fcli-picocli-patches'}) {
 }
 
 // TODO Remove fcli-picocli-patches condition once new picocli is released
-configure(allprojects.findAll {it.name != 'fcli-common' && it.name != 'fcli-picocli-patches'}) {
+configure(allprojects.findAll {it.name != 'fcli-common' && it.name != 'fcli-picocli-patches' && it.name != 'fcli-picocli-codegen-patches'}) {
     dependencies {
         implementation project(':fcli-common')
     }
