@@ -154,7 +154,6 @@ dependencies {
     implementation project(':fcli-fod')
     implementation project(':fcli-sc-sast')
     implementation project(':fcli-sc-dast')
-    implementation project(':fcli-run')
     implementation project(':fcli-tool')
 
     // Logging dependencies

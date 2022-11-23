@@ -42,15 +42,23 @@ public class SSCSessionLoginOptions {
         @Getter private SSCUserCredentialOptions userCredentialsConfig = new SSCUserCredentialOptions();
         @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
         @Getter private SSCTokenCredentialOptions tokenOptions = new SSCTokenCredentialOptions();
+        @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
+        @Getter private SSCCITokenCredentialOptions ciTokenOptions = new SSCCITokenCredentialOptions();
         
         @Override
         public char[] getPredefinedToken() {
-            return tokenOptions==null || tokenOptions.token==null ? null : SSCTokenConverter.toRestToken(tokenOptions.token);
+            if ( tokenOptions!=null && tokenOptions.token!=null ) {
+                return SSCTokenConverter.toRestToken(tokenOptions.token);
+            } else if ( ciTokenOptions!=null && ciTokenOptions.token!=null ) {
+                return SSCTokenConverter.toRestToken(ciTokenOptions.token);
+            } else {
+                return null;
+            }
         }
     }
     
     public static class SSCUserCredentialOptions extends UserCredentialOptions implements ISSCUserCredentialsConfig {
-        @Option(names = {"--expire-in"}, descriptionKey = "fcli.ssc.session.expire-in", required = false, defaultValue = "1d", showDefaultValue = Visibility.ALWAYS)
+        @Option(names = {"--expire-in"}, required = false, defaultValue = "1d", showDefaultValue = Visibility.ALWAYS)
         @Getter private String expireIn;
         
         @Override
@@ -60,7 +68,12 @@ public class SSCSessionLoginOptions {
     }
     
     public static class SSCTokenCredentialOptions {
-        @Option(names = {"--token", "-t"}, descriptionKey = "fcli.ssc.session.token", required = true, interactive = true, echo = false)
+        @Option(names = {"--token", "-t"}, required = true, interactive = true, echo = false)
+        @Getter private char[] token;
+    }
+    
+    public static class SSCCITokenCredentialOptions {
+        @Option(names = {"--ci-token"}, required = true, interactive = true, echo = false)
         @Getter private char[] token;
     }
 }
