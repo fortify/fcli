@@ -108,7 +108,7 @@ public class FoDScanListCommand extends AbstractFoDOutputCommand implements IUni
         String aStatusStr = (analysisStatus != null && analysisStatus.getAnalysisStatusType() != null ? String.valueOf(analysisStatus.getAnalysisStatusType()) : "*");
         String sTypeStr = (scanType != null && scanType.getScanType() != null ? String.valueOf(scanType.getScanType()) : "*");
         return new FoDFilterResultsTransformer(new String[]{
-                "type:" + sTypeStr, "status:" + aStatusStr
+                "scanType:" + sTypeStr, "analysisStatusType:" + aStatusStr
         }).transform(FoDScanHelper.renameFields(record));
     }
 

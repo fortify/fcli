@@ -63,7 +63,6 @@ public class FoDAppResolverMixin {
 
     @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDAppResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"--app"}, required = false, descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }

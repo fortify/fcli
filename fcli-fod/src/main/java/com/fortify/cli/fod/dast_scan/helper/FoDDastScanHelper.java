@@ -66,7 +66,7 @@ public class FoDDastScanHelper extends FoDScanHelper {
         }
         JsonNode node = objectMapper.createObjectNode();
         ((ObjectNode) node).put("scanId", startScanResponse.getScanId());
-        ((ObjectNode) node).put("status", "Pending");
+        ((ObjectNode) node).put("analysisStatusType", "Pending");
 
         FoDScanDescriptor scanDescriptor = JsonHelper.treeToValue(node, FoDScanDescriptor.class);
         try {
