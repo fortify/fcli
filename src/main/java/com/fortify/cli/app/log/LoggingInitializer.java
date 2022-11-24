@@ -28,7 +28,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import com.fortify.cli.app.FortifyCLIDefaultValueProvider;
-import com.fortify.cli.app.IFortifyCLIInitializer;
+import com.fortify.cli.common.util.IFortifyCLIInitializer;
 
 import jakarta.inject.Singleton;
 import picocli.CommandLine;

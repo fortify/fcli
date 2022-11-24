@@ -14,6 +14,7 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.sc_sast.output.cli.cmd.AbstractSCSastControllerOutputCommand;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
+import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.MultipartBody;
@@ -57,7 +58,7 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
             throw new IllegalStateException("Unexpected response when submitting scan job: "+response);
         }
         String scanJobToken = response.get("token").asText();
-        return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, scanJobToken, 0).asJsonNode();
+        return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, scanJobToken, StatusEndpointVersion.v1).asJsonNode();
     }
 
     @Override

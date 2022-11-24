@@ -87,12 +87,6 @@ public class SCSastControllerOutputHelperMixins {
     @ReflectiveAccess public static class Other 
                extends UnirestOutputHelperMixins.Other {}
     
-    @ReflectiveAccess public static class Ping extends UnirestOutputHelperMixins.Other {
-        public static final String CMD_NAME = "ping";
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details(); 
-    }
-    
     @ReflectiveAccess public static class StartPackageScan extends UnirestOutputHelperMixins.Other {
         public static final String CMD_NAME = "package";
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;

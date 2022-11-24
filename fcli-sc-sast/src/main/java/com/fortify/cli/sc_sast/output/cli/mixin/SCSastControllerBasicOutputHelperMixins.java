@@ -15,20 +15,8 @@ import picocli.CommandLine.Mixin;
  */
 @ReflectiveAccess
 public class SCSastControllerBasicOutputHelperMixins {
-    @ReflectiveAccess public static class ScanWaitForArtifact extends BasicOutputHelperMixins.Other {
-        public static final String CMD_NAME = "wait-for-artifact";
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
-    }
-    
-    @ReflectiveAccess public static class ScanWaitForScan extends BasicOutputHelperMixins.Other {
-        public static final String CMD_NAME = "wait-for-scan";
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
-    }
-    
-    @ReflectiveAccess public static class ScanWaitForUpload extends BasicOutputHelperMixins.Other {
-        public static final String CMD_NAME = "wait-for-upload";
+    @ReflectiveAccess public static class WaitFor extends BasicOutputHelperMixins.WaitFor {
+        public static final String CMD_NAME = "wait-for";
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
