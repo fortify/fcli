@@ -37,12 +37,8 @@ import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelpe
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Spec;
-import picocli.CommandLine.Spec.Target;
 
 public class SSCAppVersionArtifactResolverMixin {
     @ReflectiveAccess
@@ -79,21 +75,18 @@ public class SSCAppVersionArtifactResolverMixin {
     
     @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCAppVersionArtifactResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"--artifact"}, required = true)
         @Getter private String artifactId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCAppVersionArtifactResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1", paramLabel="artifact-id")
         @Getter private String artifactId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameterMulti extends AbstractSSCAppVersionMultiArtifactResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1..", paramLabel = "artifact-id's")
         @Getter private String[] artifactIds;
     }

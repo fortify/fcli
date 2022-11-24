@@ -32,13 +32,9 @@ import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Spec;
-import picocli.CommandLine.Spec.Target;
 
 public class SSCAppVersionResolverMixin {
     @ReflectiveAccess
@@ -62,14 +58,12 @@ public class SSCAppVersionResolverMixin {
     
     @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCAppVersionResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"--appversion"}, required = true, descriptionKey = "ApplicationVersionMixin")
         @Getter private String appVersionNameOrId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCAppVersionResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationVersionMixin")
         @Getter private String appVersionNameOrId;
     }

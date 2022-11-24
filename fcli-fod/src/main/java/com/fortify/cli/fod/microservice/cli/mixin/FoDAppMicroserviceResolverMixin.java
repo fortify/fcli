@@ -30,16 +30,13 @@ import com.fortify.cli.fod.microservice.cli.cmd.FoDAppMicroserviceCommands;
 import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
 import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDDelimiterMixin;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Spec;
-import picocli.CommandLine.Spec.Target;
 
 public class FoDAppMicroserviceResolverMixin {
     @ReflectiveAccess
@@ -63,14 +60,12 @@ public class FoDAppMicroserviceResolverMixin {
 
     @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDAppMicroserviceResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"--microservice"}, required = true, descriptionKey = "ApplicationMicroserviceMixin")
         @Getter private String appMicroserviceNameOrId;
     }
 
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDAppMicroserviceResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMicroserviceMixin")
         @Getter private String AppMicroserviceNameOrId;
     }

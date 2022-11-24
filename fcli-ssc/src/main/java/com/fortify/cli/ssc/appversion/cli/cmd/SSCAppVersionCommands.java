@@ -14,6 +14,6 @@ import picocli.CommandLine.Command;
             SSCAppVersionUpdateCommand.class
         }
 )
-@PredefinedVariable(name = "currentAppVersion", field = "id")
+@PredefinedVariable(name = "_ssc_currentAppVersion", field = "id")
 public class SSCAppVersionCommands {
 }

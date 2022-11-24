@@ -8,7 +8,6 @@ import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.common.variable.IPredefinedVariableNamePrefixSupplier;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
@@ -17,18 +16,13 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess @FixInjection
-public abstract class AbstractUnirestRunnerMixin<D extends ISessionData,M extends ISessionDataManager<? extends D>> implements IUnirestRunner, IPredefinedVariableNamePrefixSupplier {
+public abstract class AbstractUnirestRunnerMixin<D extends ISessionData,M extends ISessionDataManager<? extends D>> implements IUnirestRunner {
     @Inject private UnirestRunner runner;
     @Getter @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
     
     @Override
     public final <R> R run(Function<UnirestInstance, R> f) {
         return runner.run(unirest->run(unirest, f));
-    }
-    
-    @Override
-    public final String getPredefinedVariableNamePrefix() {
-        return getSessionDataManager().getPredefinedVariableNamePrefix(sessionNameMixin.getSessionName());
     }
     
     private final <R> R run(UnirestInstance unirest, Function<UnirestInstance, R> f) {

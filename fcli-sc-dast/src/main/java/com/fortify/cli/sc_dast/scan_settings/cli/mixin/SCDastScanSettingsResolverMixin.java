@@ -65,14 +65,12 @@ public class SCDastScanSettingsResolverMixin {
     
     @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastScanSettingsResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"-S", "--settings"}, required = true)
         @Getter private String scanSettingsCicdTokenOrId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastScanSettingsResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1")
         @Getter private String scanSettingsCicdTokenOrId;
     }

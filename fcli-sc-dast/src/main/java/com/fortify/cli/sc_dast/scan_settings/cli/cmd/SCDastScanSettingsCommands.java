@@ -11,6 +11,6 @@ import picocli.CommandLine.Command;
             SCDastScanSettingsListCommand.class
         }
 )
-@PredefinedVariable(name = "currentScanSettings", field = "id")
+@PredefinedVariable(name = "_scdast_currentScanSettings", field = "id")
 public class SCDastScanSettingsCommands {
 }

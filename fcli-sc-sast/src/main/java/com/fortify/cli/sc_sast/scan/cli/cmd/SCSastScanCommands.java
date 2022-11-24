@@ -14,6 +14,6 @@ import picocli.CommandLine.Command;
                 SCSastControllerScanWaitForCommand.class
         }
 )
-@PredefinedVariable(name = "currentScan", field = "jobToken")
+@PredefinedVariable(name = "_scsast_currentScan", field = "jobToken")
 public class SCSastScanCommands {
 }

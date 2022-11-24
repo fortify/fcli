@@ -38,6 +38,6 @@ import picocli.CommandLine;
                 FoDAppMicroserviceDeleteCommand.class
         }
 )
-@PredefinedVariable(name = "currentMicroservice", field = "id")
+@PredefinedVariable(name = "_fod_currentMicroservice", field = "id")
 public class FoDAppMicroserviceCommands {
 }

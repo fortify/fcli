@@ -32,12 +32,8 @@ import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Spec;
-import picocli.CommandLine.Spec.Target;
 
 public class SSCAppResolverMixin {
     @ReflectiveAccess
@@ -60,7 +56,6 @@ public class SSCAppResolverMixin {
     
     @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCAppResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"--app"}, required = true, descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }
@@ -68,7 +63,6 @@ public class SSCAppResolverMixin {
     // delete|update <app>
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCAppResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }

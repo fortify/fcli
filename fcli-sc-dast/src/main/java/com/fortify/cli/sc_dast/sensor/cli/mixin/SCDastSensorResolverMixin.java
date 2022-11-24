@@ -61,14 +61,12 @@ public class SCDastSensorResolverMixin {
     
     @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastSensorResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"--sensor"}, required = true)
         @Getter private String sensorNameOrId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastSensorResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1")
         @Getter private String sensorNameOrId;
     }
