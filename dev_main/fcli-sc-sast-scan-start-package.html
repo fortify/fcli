@@ -441,7 +441,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>fcli-sc-sast-scan-start-package(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-sc-sast-scan-start-package - Command-line interface for working with various Fortify products</p>
+<p>fcli-sc-sast-scan-start-package - Start ScanCentral SAST scan with package file</p>
 </div>
 </div>
 <div id="content">
@@ -449,13 +449,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-sast scan start package</strong> [<strong>-h</strong>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--notify</strong>=<em>&lt;email&gt;</em>]
-                                <strong>-v</strong>=<em>&lt;sensorVersion&gt;</em> [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
-                                [<strong>--appversion</strong>=<em>&lt;appVersionId&gt;</em>
-                                <strong>--ci-token</strong>=<em>&lt;ciToken&gt;</em>] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                                [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                                [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] <em>PACKAGE-FILE</em></p>
+<p><strong>fcli sc-sast scan start package</strong> [<strong>-h</strong>] [<strong>--[no-]upload</strong>]
+                                [<strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
+                                [<strong>--ci-token</strong>=<em>&lt;ciToken&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                                [<strong>--notify</strong>=<em>&lt;email&gt;</em>] <strong>-v</strong>=<em>&lt;sensorVersion&gt;</em>
+                                [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
+                          _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                    _            <em class="=&lt;propertyNames&gt;">]
+                                [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] <em>PACKAGE-FILE</em></p>
 </div>
 </div>
 </div>
@@ -483,7 +485,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>File where logging data will be written. If not specified, no logging data will be written.</p>
 </dd>
 <dt class="hdlist1"><strong>--notify</strong>=<em>&lt;email&gt;</em></dt>
-<dt class="hdlist1"><strong>--appversion</strong>=<em>&lt;appVersionId&gt;</em></dt>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dt class="hdlist1"><strong>--[no-]upload</strong></dt>
 <dt class="hdlist1"><strong>--ci-token</strong>=<em>&lt;ciToken&gt;</em></dt>
 <dt class="hdlist1"><strong>-v</strong>, <strong>--sensor-version</strong>=<em>&lt;sensorVersion&gt;</em></dt>
 <dd>
@@ -531,8 +538,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221123.120958-dev_main, built on 2022-11-23 12 10 26<br>
-Last updated 2022-11-23 12:11:25 UTC
+Version fcli version 0.20221124.145049-dev_main, built on 2022-11-24 14 51 19<br>
+Last updated 2022-11-24 14:52:22 UTC
 </div>
 </div>
 </body>

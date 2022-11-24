@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<title>fcli-sc-sast-scan-wait-for-upload(1)</title>
+<title>fcli-sc-sast-scan-wait-for(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -438,10 +438,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="manpage">
 <div id="header">
-<h1>fcli-sc-sast-scan-wait-for-upload(1) Manual Page</h1>
+<h1>fcli-sc-sast-scan-wait-for(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-sc-sast-scan-wait-for-upload - Command-line interface for working with various Fortify products</p>
+<p>fcli-sc-sast-scan-wait-for - Wait for one or more scans to reach or exit specified scan statuses</p>
 </div>
 </div>
 <div id="content">
@@ -449,29 +449,35 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-sast scan wait-for-upload</strong> [<strong>-h</strong>] [<strong>--no-progress</strong>] [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
-                                  [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                  [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                                  [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
-                                  [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
-                                  [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
-                                  [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateR</em>
-                  _                equested&gt;_] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] <em class="[<strong>-o</strong>=_format_
-                            _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                      _            <em class="=&lt;propertyNames&gt;">]
-                                  [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
-                                  [<strong>--while-all</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> |
-                                  <strong>-w</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> | <strong>-u</strong>=<em>&lt;state1&gt;</em>
-                          _        [|&lt;state2&gt;]&#8230;&#8203;_ | <strong>--until-any</strong>=<em>&lt;state1&gt;</em>
-                          _        [|&lt;state2&gt;]&#8230;&#8203;<em>] [<strong>--session</strong>=</em>&lt;sessionName&gt;_]
-                                  <em>scan-job-tokens</em>&#8230;&#8203;</p>
+<p><strong>fcli sc-sast scan wait-for</strong> [<strong>-h</strong>] [<strong>--no-progress</strong>] [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
+                           [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                           [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
+                           [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
+                           [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
+                           [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequeste</em>
+    _                       d&gt;_] [<strong>-s</strong>=<em>&lt;waitType&gt;</em>] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] <em class="[<strong>-o</strong>=_format_
+                     _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+               _            <em class="=&lt;propertyNames&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
+                           [<strong>--while-all</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> | <strong>-w</strong>=<em>&lt;state1&gt;</em>
+                   _        [|&lt;state2&gt;]&#8230;&#8203;_ | <strong>-u</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> |
+                           <strong>--until-any</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em>]
+                           [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em>scan-job-tokens</em>&#8230;&#8203;</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>Depending on the --status-type option, this command waits for scan status, scan upload status, or scan processing status. If none of the --while or --until options are specified, this command will by default wait until one of the following states is reached:
+If --status-type is set to 'scan' or 'upload': null
+If --status-type is set to 'processing': null</p>
+</div>
+<div class="paragraph">
+<p>The following states are currently known by fcli:
+If --status-type is set to 'scan' or 'upload': null
+If --status-type is set to 'processing': null</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -532,9 +538,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>Wait until any of the records match any of the given states</p>
 </dd>
 <dt class="hdlist1"><strong>--no-progress</strong></dt>
+<dt class="hdlist1"><strong>-s</strong>, <strong>--status-type</strong>=<em>&lt;waitType&gt;</em></dt>
 <dd>
-<p>== Output options:</p>
+<p>Specify what status type to wait for. Can be one of 'scan' (wait for scan status), 'upload' (wait for SSC upload status), or 'processing' (wait for SSC artifact processing status). Default value is 'processing', but note that this is only supported on ScanCentral SAST Controller 22.1+. For older versions, either 'scan' or 'upload' must be specified.</p>
 </dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options">Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
 <p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
@@ -577,8 +593,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221123.120958-dev_main, built on 2022-11-23 12 10 26<br>
-Last updated 2022-11-23 12:11:25 UTC
+Version fcli version 0.20221124.145049-dev_main, built on 2022-11-24 14 51 19<br>
+Last updated 2022-11-24 14:52:22 UTC
 </div>
 </div>
 </body>
