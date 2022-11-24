@@ -1,5 +1,7 @@
 package com.fortify.cli.fod.sast_scan.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "sast",
@@ -13,5 +15,5 @@ import picocli.CommandLine;
                 FoDSastScanWaitForCommand.class
         }
 )
-public class FoDSastScanCommands {
+public class FoDSastScanCommands extends AbstractFortifyCLICommand {
 }

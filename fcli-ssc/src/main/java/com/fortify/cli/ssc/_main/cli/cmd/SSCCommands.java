@@ -1,5 +1,6 @@
 package com.fortify.cli.ssc._main.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.ssc.activity_feed.cli.cmd.SSCActivityFeedCommands;
 import com.fortify.cli.ssc.alert.cli.cmd.SSCAlertCommands;
 import com.fortify.cli.ssc.alert_definition.cli.cmd.SSCAlertDefinitionCommands;
@@ -59,4 +60,4 @@ import picocli.CommandLine.Command;
                 SSCTokenDefinitionCommands.class
         }
 )
-public class SSCCommands {}
+public class SSCCommands extends AbstractFortifyCLICommand {}

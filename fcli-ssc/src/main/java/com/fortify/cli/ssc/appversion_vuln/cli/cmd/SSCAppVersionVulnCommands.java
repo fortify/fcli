@@ -1,5 +1,7 @@
 package com.fortify.cli.ssc.appversion_vuln.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -8,5 +10,5 @@ import picocli.CommandLine.Command;
             SSCAppVersionVulnCountCommand.class,
         }
 )
-public class SSCAppVersionVulnCommands {
+public class SSCAppVersionVulnCommands extends AbstractFortifyCLICommand {
 }

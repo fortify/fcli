@@ -27,13 +27,20 @@ package com.fortify.cli.app.log;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import org.slf4j.LoggerFactory;
+
 import com.fortify.cli.app.FortifyCLIDefaultValueProvider;
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.util.IFortifyCLIInitializer;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.ConsoleAppender;
+import ch.qos.logback.core.FileAppender;
 import jakarta.inject.Singleton;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 
 /**
  * This class is responsible for setting up logging. It simply sets up a
@@ -77,16 +84,40 @@ public class LoggingInitializer implements IFortifyCLIInitializer {
      * @author Ruud Senden
      */
     @Command(defaultValueProvider = FortifyCLIDefaultValueProvider.class)
-    public static final class SetupLoggingCommand implements Runnable {
-        @Mixin LoggingMixin loggingMixin;
-        
+    public static final class SetupLoggingCommand extends AbstractFortifyCLICommand implements Runnable {
         /**
          * Configure logging by calling the {@link LoggingMixin#configureLogging()}
          * method.
          */
         @Override
         public void run() {
-            loggingMixin.configureLogging();
+            configureLogging();
         }
+        
+        public void configureLogging() {
+            String logFile = getGenericOptions().getLogFile();
+            LogLevel logLevel = getGenericOptions().getLogLevel();
+            if ( logFile!=null || logLevel!=null ) {
+                LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+                Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+                configureLogFile(rootLogger, logFile==null ? "fcli.log" : logFile);
+                configureLogLevel(rootLogger, logLevel==null ? LogLevel.INFO : logLevel);
+            }
+        }
+
+        private void configureLogFile(Logger rootLogger, String logFile) {
+            FileAppender<ILoggingEvent> fileAppender = new FileAppender<ILoggingEvent>();
+            fileAppender.setFile(logFile);
+            fileAppender.setAppend(false);
+            fileAppender.setEncoder(((ConsoleAppender<ILoggingEvent>)rootLogger.getAppender("default")).getEncoder());
+            fileAppender.setContext(rootLogger.getLoggerContext());
+            fileAppender.start();
+            rootLogger.addAppender(fileAppender);
+        }
+
+        private void configureLogLevel(Logger rootLogger, LogLevel level) {
+            rootLogger.setLevel(level.getLogbackLevel());
+        }
+
     }
 }

@@ -1,5 +1,6 @@
 package com.fortify.cli.tool._main.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.tool.fod_uploader.cli.cmd.ToolFoDUploaderCommands;
 import com.fortify.cli.tool.sc_client.cli.cmd.ToolSCClientCommands;
 import com.fortify.cli.tool.vuln_exporter.cli.cmd.ToolVulnExporterCommands;
@@ -15,4 +16,4 @@ import picocli.CommandLine.Command;
             ToolVulnExporterCommands.class
         }
 )
-public class ToolCommands {}
+public class ToolCommands extends AbstractFortifyCLICommand {}

@@ -1,5 +1,7 @@
 package com.fortify.cli.ssc.token_definition.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -10,5 +12,5 @@ import picocli.CommandLine.Command;
         }
 
 )
-public class SSCTokenDefinitionCommands {
+public class SSCTokenDefinitionCommands extends AbstractFortifyCLICommand {
 }

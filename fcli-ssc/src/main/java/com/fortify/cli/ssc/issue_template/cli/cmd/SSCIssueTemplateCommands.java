@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.issue_template.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -37,5 +39,5 @@ import picocli.CommandLine.Command;
                 SSCIssueTemplateUpdateCommand.class
         }
 )
-public class SSCIssueTemplateCommands {
+public class SSCIssueTemplateCommands extends AbstractFortifyCLICommand {
 }

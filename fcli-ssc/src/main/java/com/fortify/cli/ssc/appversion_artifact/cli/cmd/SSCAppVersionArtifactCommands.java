@@ -1,5 +1,6 @@
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.variable.PredefinedVariable;
 import com.fortify.cli.ssc.appversion_artifact.cli.cmd.purge.SSCAppVersionArtifactPurgeCommands;
 
@@ -19,5 +20,5 @@ import picocli.CommandLine.Command;
         }
 )
 @PredefinedVariable(name = "_ssc_currentArtifact", field = "id")
-public class SSCAppVersionArtifactCommands {
+public class SSCAppVersionArtifactCommands extends AbstractFortifyCLICommand {
 }

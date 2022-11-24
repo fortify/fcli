@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.seed_bundle.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -32,5 +34,5 @@ import picocli.CommandLine.Command;
                 SSCSeedBundleUploadCommand.class
         }
 )
-public class SSCSeedBundleCommands {
+public class SSCSeedBundleCommands extends AbstractFortifyCLICommand {
 }

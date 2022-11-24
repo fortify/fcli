@@ -1,5 +1,6 @@
 package com.fortify.cli.fod._main.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
 import com.fortify.cli.fod.microservice.cli.cmd.FoDAppMicroserviceCommands;
 import com.fortify.cli.fod.release.cli.cmd.FoDAppRelCommands;
@@ -29,4 +30,4 @@ import picocli.CommandLine.Command;
                 FoDScanCommands.class
         }
 )
-public class FoDCommands {}
+public class FoDCommands extends AbstractFortifyCLICommand {}

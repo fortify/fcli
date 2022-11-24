@@ -1,5 +1,7 @@
 package com.fortify.cli.ssc.appversion_filterset.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -9,5 +11,5 @@ import picocli.CommandLine.Command;
             SSCAppVersionFilterSetListCommand.class,
         }
 )
-public class SSCAppVersionFilterSetCommands {
+public class SSCAppVersionFilterSetCommands extends AbstractFortifyCLICommand {
 }

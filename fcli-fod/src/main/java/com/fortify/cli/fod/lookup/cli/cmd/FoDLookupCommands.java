@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.fod.lookup.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "lookup",
@@ -32,5 +34,5 @@ import picocli.CommandLine;
                 FoDLookupListCommand.class
         }
 )
-public class FoDLookupCommands {
+public class FoDLookupCommands extends AbstractFortifyCLICommand {
 }

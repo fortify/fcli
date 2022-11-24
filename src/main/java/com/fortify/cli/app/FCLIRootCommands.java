@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
-import com.fortify.cli.app.log.LoggingMixin;
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.config._main.cli.cmd.ConfigCommands;
 import com.fortify.cli.fod._main.cli.cmd.FoDCommands;
 import com.fortify.cli.sc_dast._main.cli.cmd.SCDastCommands;
@@ -34,7 +34,6 @@ import com.fortify.cli.tool._main.cli.cmd.ToolCommands;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ScopeType;
@@ -68,18 +67,8 @@ import picocli.CommandLine.ScopeType;
             ToolCommands.class
     }
 )
-public class FCLIRootCommands {
-    // TODO Once https://github.com/remkop/picocli/issues/1847 is fixed, we need to inherit the ArgGroup rather than individual options
-    @ArgGroup(exclusive = false, headingKey = "arggroup.loggingAndHelp.heading") 
-    private LoggingAndHelpOptionsArgGroup loggingAndHelpOptionsArgGroup = new LoggingAndHelpOptionsArgGroup();
-    
-    @ReflectiveAccess
-    private static final class LoggingAndHelpOptionsArgGroup extends LoggingMixin {
-        @Option(names = {"-h", "--help"}, usageHelp = true, description = "display this help message", scope = ScopeType.INHERIT, order = -1003)
-        boolean usageHelpRequested;
-        
-        // We only want to have the --version option on the top-level fcli command
-        @Option(names = {"-V", "--version"}, versionHelp = true, description = "display version info", scope = ScopeType.LOCAL, order = -1002)
-        boolean versionInfoRequested;
-    }
+public class FCLIRootCommands extends AbstractFortifyCLICommand {    
+    // We only want to have the --version option on the top-level fcli command
+    @Option(names = {"-V", "--version"}, versionHelp = true, description = "display version info", scope = ScopeType.LOCAL, order = -1002)
+    boolean versionInfoRequested;
 }

@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.fod.app.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.variable.PredefinedVariable;
 
 import picocli.CommandLine;
@@ -39,5 +40,5 @@ import picocli.CommandLine;
         }
 )
 @PredefinedVariable(name = "_fod_currentApp", field = "id")
-public class FoDAppCommands {
+public class FoDAppCommands extends AbstractFortifyCLICommand {
 }

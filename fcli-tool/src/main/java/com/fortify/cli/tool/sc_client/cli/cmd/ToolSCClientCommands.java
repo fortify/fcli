@@ -1,5 +1,7 @@
 package com.fortify.cli.tool.sc_client.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -12,6 +14,6 @@ import picocli.CommandLine.Command;
         }
 
 )
-public class ToolSCClientCommands {
+public class ToolSCClientCommands extends AbstractFortifyCLICommand {
     static final String TOOL_NAME = "sc-client";
 }

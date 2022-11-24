@@ -1,5 +1,6 @@
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.variable.PredefinedVariable;
 import picocli.CommandLine;
 
@@ -15,5 +16,5 @@ import picocli.CommandLine;
         }
 )
 @PredefinedVariable(name = "_fod_currentScan", field = "id")
-public class FoDDastScanCommands {
+public class FoDDastScanCommands extends AbstractFortifyCLICommand {
 }

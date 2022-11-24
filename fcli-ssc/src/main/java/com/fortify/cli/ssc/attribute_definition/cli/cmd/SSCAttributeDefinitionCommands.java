@@ -1,5 +1,7 @@
 package com.fortify.cli.ssc.attribute_definition.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -9,5 +11,5 @@ import picocli.CommandLine.Command;
             SSCAttributeDefinitionListCommand.class
         }
 )
-public class SSCAttributeDefinitionCommands {
+public class SSCAttributeDefinitionCommands extends AbstractFortifyCLICommand {
 }
