@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2020 Micro Focus or one of its affiliates
+ * (c) Copyright 2021 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,43 +22,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.role.cli.mixin;
+package com.fortify.cli.common.rest.runner;
 
-import com.fortify.cli.ssc.role.helper.SSCRoleDescriptor;
-import com.fortify.cli.ssc.role.helper.SSCRoleHelper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import jakarta.inject.Inject;
+import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
+import kong.unirest.jackson.JacksonObjectMapper;
 import lombok.Getter;
-import lombok.SneakyThrows;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-public class SSCRoleResolverMixin {
+public final class GenericUnirestFactory {
+    @Getter @Inject private ObjectMapper objectMapper;
     
-    public static abstract class AbstractSSCRoleMixin {
-        public abstract String getRoleNameOrId();
-
-        @SneakyThrows
-        public SSCRoleDescriptor getRoleDescriptor(UnirestInstance unirestInstance, String... fields){
-            return SSCRoleHelper.getRoleDescriptor(unirestInstance, getRoleNameOrId(), fields);
-        }
-        
-        public String getRoleId(UnirestInstance unirestInstance) {
-            return getRoleDescriptor(unirestInstance, "id").getRoleId();
-        }
-    }
-
-    public static class Role extends AbstractSSCRoleMixin {
-        @Getter
-        @Option(names = {"--role"}, required = true, descriptionKey = "SSCRoleMixin")
-        private String roleNameOrId;
-    }
-
-    public static class PositionalParameter extends AbstractSSCRoleMixin {
-        @Getter
-        @Parameters(index = "0", arity = "1", descriptionKey = "SSCRoleMixin")
-        private String roleNameOrId;
+    public final UnirestInstance createUnirestInstance() {
+        UnirestInstance instance = Unirest.spawnInstance();
+        instance.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
+        return instance;
     }
 }

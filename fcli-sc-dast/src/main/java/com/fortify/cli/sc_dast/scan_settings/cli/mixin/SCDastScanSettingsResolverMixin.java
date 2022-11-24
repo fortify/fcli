@@ -32,12 +32,8 @@ import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Spec;
-import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Spec.Target;
 
 public class SCDastScanSettingsResolverMixin {
     

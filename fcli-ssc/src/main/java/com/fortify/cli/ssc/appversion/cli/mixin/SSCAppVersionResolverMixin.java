@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.mixin;
 
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
 import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
@@ -60,6 +61,13 @@ public class SSCAppVersionResolverMixin {
     public static class RequiredOption extends AbstractSSCAppVersionResolverMixin {
         @Option(names = {"--appversion"}, required = true, descriptionKey = "ApplicationVersionMixin")
         @Getter private String appVersionNameOrId;
+    }
+    
+    @ReflectiveAccess
+    public static class OptionalOption extends AbstractSSCAppVersionResolverMixin {
+        @Option(names = {"--appversion"}, required = false, descriptionKey = "ApplicationVersionMixin")
+        @Getter private String appVersionNameOrId;
+        public final boolean hasValue() { return StringUtils.isNotBlank(appVersionNameOrId); }
     }
     
     @ReflectiveAccess

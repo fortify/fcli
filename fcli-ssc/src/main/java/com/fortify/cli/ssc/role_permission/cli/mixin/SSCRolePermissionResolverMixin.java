@@ -26,6 +26,7 @@ package com.fortify.cli.ssc.role_permission.cli.mixin;
 
 import com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionDescriptor;
 import com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

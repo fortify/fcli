@@ -3,7 +3,7 @@ package com.fortify.cli.fod.oauth.helper;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.fortify.cli.common.rest.runner.UnirestRunner;
+import com.fortify.cli.common.rest.runner.GenericUnirestRunner;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -16,7 +16,7 @@ import kong.unirest.UnirestInstance;
 
 @Singleton @FixInjection
 public class FoDOAuthHelper {
-    @Inject private UnirestRunner unirestRunner;
+    @Inject private GenericUnirestRunner unirestRunner;
     
     public final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(uc, scopes);

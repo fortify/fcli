@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.role_permission.helper;
 
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
@@ -31,9 +33,9 @@ import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder;
 import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
-import javax.validation.ValidationException;
 
 public class SSCRolePermissionHelper {
 

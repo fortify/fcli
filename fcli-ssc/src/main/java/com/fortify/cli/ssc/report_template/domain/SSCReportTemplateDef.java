@@ -24,8 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.domain;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import java.util.ArrayList;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
 public class SSCReportTemplateDef {

@@ -26,34 +26,18 @@ package com.fortify.cli.common.rest.runner;
 
 import java.util.function.Function;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
-import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
-import kong.unirest.jackson.JacksonObjectMapper;
-import lombok.Getter;
 
-//TODO For now this class instantiates a new UnirestInstance on every call to runWithUnirest,
-//which should be OK when running individual commands but less performant when running
-//multiple commands in a composite command or workflow.
 @ReflectiveAccess
-public final class UnirestRunner implements IUnirestRunner {
-    @Getter @Inject private ObjectMapper objectMapper;
+public final class GenericUnirestRunner implements IUnirestRunner {
+    @Inject private GenericUnirestFactory genericUnirestFactory;
     
-    private final UnirestInstance createUnirestInstance() {
-        UnirestInstance instance = Unirest.spawnInstance();
-        instance.config().setObjectMapper(new JacksonObjectMapper(objectMapper));
-        return instance;
-    }
-    
-    public <R> R run(Function<UnirestInstance, R> runner) {
-        if ( runner == null ) {
-            throw new IllegalStateException("Unirest runner may not be null");
-        }
-        try ( var unirestInstance = createUnirestInstance() ) {
-            return runner.apply(unirestInstance);
+    public final <R> R run(Function<UnirestInstance, R> f) {
+        if ( f == null ) { throw new IllegalStateException("Function may not be null"); }
+        try ( var unirestInstance = genericUnirestFactory.createUnirestInstance() ) {
+            return f.apply(unirestInstance);
         }
     }
 }

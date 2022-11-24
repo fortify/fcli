@@ -1,7 +1,10 @@
 package com.fortify.cli.sc_sast.rest.cli.mixin;
 
+import java.util.function.Function;
+
 import com.fortify.cli.common.rest.cli.mixin.AbstractUnirestRunnerMixin;
 import com.fortify.cli.common.util.FixInjection;
+import com.fortify.cli.sc_sast.rest.helper.SCSastUnirestHelper;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionDataManager;
 
@@ -11,16 +14,19 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 @ReflectiveAccess @FixInjection
-public abstract class AbstractSCSastUnirestRunnerMixin extends AbstractUnirestRunnerMixin<SCSastSessionData, SCSastSessionDataManager> {
+public abstract class AbstractSCSastUnirestRunnerMixin extends AbstractUnirestRunnerMixin<SCSastSessionData> {
     @Getter @Inject private SCSastSessionDataManager sessionDataManager;
     
     @Override
-    protected final SCSastSessionData getSessionData() {
-        return sessionDataManager.get(getSessionNameMixin().getSessionName(), true);
+    protected final SCSastSessionData getSessionData(String sessionName) {
+        return sessionDataManager.get(sessionName, true);
     }
     
-    @Override
-    protected final void cleanup(UnirestInstance unirest, SCSastSessionData sessionData) {
-        // Nothing to do
+    public final <R> R runOnSSC(Function<UnirestInstance, R> f) {
+        return run(SCSastUnirestHelper::configureSscUnirestInstance, f);
+    }
+    
+    public final <R> R runOnController(Function<UnirestInstance, R> f) {
+        return run(SCSastUnirestHelper::configureScSastControllerUnirestInstance, f);
     }
 }
