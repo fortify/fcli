@@ -173,18 +173,22 @@ public class FoDScanHelper {
                 .filter(n -> n.get("scanType").asText().equals(scanType.name()))
                 .filter(not(n -> n.get("analysisStatusType").asText().equals("In_Progress")))
                 .findFirst();
-        return (latestScan.isEmpty() ? null : getDescriptor(latestScan.get()));
+        return (latestScan.isEmpty() ? getEmptyDescriptor() : getDescriptor(latestScan.get()));
     }
 
     //
+
+    private static final FoDScanDescriptor getDescriptor(JsonNode node) {
+        return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
+    }
 
     private static final FoDScanDescriptor getOptionalDescriptor(GetRequest request) {
         JsonNode scan = request.asObject(ObjectNode.class).getBody();
         return scan == null ? null : getDescriptor(scan);
     }
 
-    private static final FoDScanDescriptor getDescriptor(JsonNode node) {
-        return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
+    private static final FoDScanDescriptor getEmptyDescriptor() {
+        return JsonHelper.treeToValue(getObjectMapper().createObjectNode(), FoDScanDescriptor.class);
     }
 
 

@@ -32,11 +32,8 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.rest.helper.FoDFileTransferHelper;
-import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
-import com.fortify.cli.fod.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod.scan.helper.FoDScanNotFoundException;
-import com.fortify.cli.fod.scan.helper.FoDStartScanResponse;
+import com.fortify.cli.fod.rest.helper.FoDUploadResponse;
+import com.fortify.cli.fod.scan.helper.*;
 import com.fortify.cli.fod.util.FoDConstants;
 import com.fortify.cli.fod.util.FoDEnums;
 import kong.unirest.GetRequest;
@@ -61,7 +58,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
     }*/
 
     public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartSastScanRequest req,
-                                                    File scanFile, int chunkSize, int uploadSyncTime) {
+                                                    File scanFile, int chunkSize) {
         FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
         HttpRequest request = unirest.post(FoDUrls.STATIC_SCAN_START).routeParam("relId", relId)
                 .queryString("entitlementPreferenceType", (req.getEntitlementPreferenceType() != null ?
@@ -81,10 +78,9 @@ public class FoDSastScanHelper extends FoDScanHelper {
             String truncatedNotes = abbreviateString(req.getNotes(), FoDConstants.MAX_NOTES_LENGTH);
             request = request.queryString("notes", truncatedNotes);
         }
-        FoDFileTransferHelper fileTransferHelper = new FoDFileTransferHelper(unirest);
-        fileTransferHelper.setChunkSize(chunkSize);
-        fileTransferHelper.setUploadSyncTime(uploadSyncTime);
-        FoDStartScanResponse startScanResponse = fileTransferHelper.startScan(request.getUrl(), scanFile.getPath());
+        FoDStartScan startScan = new FoDStartScan(unirest, relId, request, scanFile);
+        startScan.setChunkSize(chunkSize);
+        FoDUploadResponse startScanResponse = startScan.transfer();
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new RuntimeException("Unable to retrieve scan id from response when starting Static scan.");
         }

@@ -73,8 +73,6 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
     private String notes;
     @Option(names = {"--chunk-size"})
     private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
-    @Option(names = {"--upload-sync-time"})
-    private int uploadSyncTime = FoDConstants.DEFAULT_UPLOAD_SYNC_TIME;
     @CommandLine.Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
 
@@ -134,7 +132,7 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
             throw new ValidationException("Either an 'entitlement id' or 'entitlement type' need to be specified.");
         }
 
-        return FoDSastScanHelper.startScan(unirest, relId, startScanRequest, scanFile, chunkSize, uploadSyncTime).asJsonNode();
+        return FoDSastScanHelper.startScan(unirest, relId, startScanRequest, scanFile, chunkSize).asJsonNode();
     }
 
     @Override
