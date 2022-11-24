@@ -1,5 +1,6 @@
 package com.fortify.cli.fod.sast_scan.cli.cmd;
 
+import com.fortify.cli.common.variable.PredefinedVariable;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "sast",
@@ -13,5 +14,6 @@ import picocli.CommandLine;
                 FoDSastScanWaitForCommand.class
         }
 )
+@PredefinedVariable(name = "_fod_currentSastScan", field = "scanId")
 public class FoDSastScanCommands {
 }

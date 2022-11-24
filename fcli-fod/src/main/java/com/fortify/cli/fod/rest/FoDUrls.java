@@ -28,6 +28,7 @@ public class FoDUrls {
     private static final String ApiBase = "/api/v3";
     public static final String APPLICATIONS = ApiBase + "/applications";
     public static final String APPLICATION = ApiBase + "/applications/{appId}";
+    public static final String APPLICATION_RELEASES = ApiBase + "/applications/{appId}/releases";
     public static final String MICROSERVICES = ApiBase + "/applications/{appId}/microservices";
     public static final String MICROSERVICES_UPDATE = ApiBase + "/applications/{appId}/microservices/{microserviceId}";
     public static final String RELEASES = ApiBase + "/releases";

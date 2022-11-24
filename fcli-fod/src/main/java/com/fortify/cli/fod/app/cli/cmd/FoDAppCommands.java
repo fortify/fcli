@@ -38,6 +38,6 @@ import picocli.CommandLine;
                 FoDAppDeleteCommand.class
         }
 )
-@PredefinedVariable(name = "currentApp", field = "id")
+@PredefinedVariable(name = "_fod_currentApp", field = "applicationId")
 public class FoDAppCommands {
 }

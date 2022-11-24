@@ -56,11 +56,7 @@ public class FoDScanHelper {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static final JsonNode renameFields(JsonNode record) {
-        JsonNode transform = new RenameFieldsTransformer(new String[]{
-                "scanId:id", "scanType:type", "analysisStatusType:status", "startedDateTime:started",
-                "completedDateTime:completed", "scanMethodTypeName:scanMethod"
-        }).transform(record);
-        return transform;
+        return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
     public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, String relId,

@@ -45,9 +45,7 @@ public class FoDAppRelHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
     public static final JsonNode renameFields(JsonNode record) {
-        return new RenameFieldsTransformer(new String[] {
-                "releaseId:id", "releaseName:name", "releaseDescription:description"
-        }).transform(record);
+        return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
     public static final FoDAppRelDescriptor getRequiredAppRel(UnirestInstance unirest, String appRelNameOrId, String delimiter, String... fields) {

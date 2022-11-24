@@ -46,11 +46,14 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
+import javax.validation.ValidationException;
+
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.List.CMD_NAME)
 public class FoDAppMicroserviceListCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
-    @Mixin private FoDAppResolverMixin.PositionalParameter appResolver;
+    @Mixin private FoDAppResolverMixin.OptionalOption appResolver;
+
 
     @CommandLine.Option(names = {"--include-releases"})
     private Boolean includeReleases;
@@ -67,10 +70,14 @@ public class FoDAppMicroserviceListCommand extends AbstractFoDOutputCommand impl
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appResolver.getAppNameOrId(), true);
-        return unirest.get(FoDUrls.MICROSERVICES)
-                .routeParam("appId", String.valueOf(appDescriptor.getApplicationId()))
-                .queryString("includeReleases", (includeReleases != null && includeReleases ? "true" : "false"));
+        if (appResolver == null || appResolver.getAppNameOrId() == null) {
+            throw new ValidationException("Please specify and application id or name view the '--app' option");
+        } else {
+            // TODO: include more information on release, i.e. name if --includeReleases selected
+            return unirest.get(FoDUrls.MICROSERVICES)
+                    .routeParam("appId", appResolver.getAppId(unirest))
+                    .queryString("includeReleases", (includeReleases != null && includeReleases ? "true" : "false"));
+        }
     }
     
     @Override

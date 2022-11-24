@@ -28,6 +28,7 @@ package com.fortify.cli.fod.release.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
+import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
@@ -46,6 +47,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = FoDOutputHelperMixins.List.CMD_NAME)
 public class FoDAppRelListCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
+    @Mixin private FoDAppResolverMixin.OptionalOption appResolver;
 
     @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
             .add("id", "releaseId", FoDFiltersParamValueGenerators::plain)
@@ -62,7 +64,10 @@ public class FoDAppRelListCommand extends AbstractFoDOutputCommand implements IU
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(FoDUrls.RELEASES);
+        if (appResolver != null && appResolver.getAppNameOrId() != null)
+            return unirest.get(FoDUrls.APPLICATION_RELEASES).routeParam("appId", appResolver.getAppId(unirest));
+        else
+            return unirest.get(FoDUrls.RELEASES);
     }
     
     @Override
