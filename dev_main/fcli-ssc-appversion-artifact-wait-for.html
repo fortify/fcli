@@ -449,18 +449,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion-artifact wait-for</strong> [<strong>-h</strong>] [<strong>--no-progress</strong>]
-                                      [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
-                                      [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                      [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+<p><strong>fcli ssc appversion-artifact wait-for</strong> [<strong>--no-progress</strong>] [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
                                       [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
                                       [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
                                       [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
                                       [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownSt</em>
-                          _            ateRequested&gt;_] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>]
-                                      <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                                      [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                                      [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]]
+                          _            ateRequested&gt;_] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] [[<strong>-h</strong>]
+                                      [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                                      [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                                _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                          _            <em class="=&lt;propertyNames&gt;">]
+                                      [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
                                       [<strong>--while-all</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> |
                                       <strong>-w</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> | <strong>-u</strong>=<em>&lt;state1&gt;</em>
                               _        [|&lt;state2&gt;]&#8230;&#8203;_ | <strong>--until-any</strong>=<em>&lt;state1&gt;</em>
@@ -480,18 +479,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
-<dd>
-<p>Show this help message and exit</p>
-</dd>
-<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
-<dd>
-<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
-</dd>
-<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
-<dd>
-<p>File where logging data will be written. If not specified, no logging data will be written.</p>
-</dd>
 <dt class="hdlist1"><strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequested&gt;</em></dt>
 <dd>
 <p>Action to take when an unknown state is passed in any of the --while or --until options: ignore, fail</p>
@@ -534,8 +521,29 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </dd>
 <dt class="hdlist1"><strong>--no-progress</strong></dt>
 <dd>
-<p>== Output options:</p>
+<p>== Generic fcli options:</p>
 </dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options">Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
 <p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
@@ -578,8 +586,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221124.145049-dev_main, built on 2022-11-24 14 51 19<br>
-Last updated 2022-11-24 14:52:22 UTC
+Version fcli version 0.20221124.203214-dev_main, built on 2022-11-24 20 32 49<br>
+Last updated 2022-11-24 20:33:54 UTC
 </div>
 </div>
 </body>

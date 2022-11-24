@@ -449,9 +449,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc issue-template update</strong> [<strong>-h</strong>] [<strong>--set-as-default</strong>] [<strong>-d</strong>=<em>&lt;description&gt;</em>]
-                               [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                               [<strong>-n</strong>=<em>&lt;name&gt;</em>] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
+<p><strong>fcli ssc issue-template update</strong> [<strong>--set-as-default</strong>] [<strong>-d</strong>=<em>&lt;description&gt;</em>]
+                               [<strong>-n</strong>=<em>&lt;name&gt;</em>] [[<strong>-h</strong>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
+                               [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]]
+                               [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
                          _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
                    _            <em class="=&lt;propertyNames&gt;">]
                                [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
@@ -470,6 +471,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>-n</strong>, <strong>--name</strong>=<em>&lt;name&gt;</em></dt>
+<dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
+<dt class="hdlist1"><strong>--set-as-default</strong></dt>
+<dd>
+<p>== Generic fcli options:</p>
+</dd>
 <dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
 <dd>
 <p>Show this help message and exit</p>
@@ -482,12 +489,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dd>
 <p>File where logging data will be written. If not specified, no logging data will be written.</p>
 </dd>
-<dt class="hdlist1"><strong>-n</strong>, <strong>--name</strong>=<em>&lt;name&gt;</em></dt>
-<dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
-<dt class="hdlist1"><strong>--set-as-default</strong></dt>
-<dd>
-<p>== Output options:</p>
-</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options">Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
 <p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
@@ -530,8 +540,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221124.145049-dev_main, built on 2022-11-24 14 51 19<br>
-Last updated 2022-11-24 14:52:22 UTC
+Version fcli version 0.20221124.203214-dev_main, built on 2022-11-24 20 32 49<br>
+Last updated 2022-11-24 20:33:54 UTC
 </div>
 </div>
 </body>

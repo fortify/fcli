@@ -449,11 +449,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-dast scan start</strong> [<strong>-h</strong>] [<strong>-L</strong>=<em>&lt;loginMacroBinaryFileId&gt;</em>]
-                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                        [<strong>-M</strong>=<em>&lt;scanMode&gt;</em>] [<strong>--overrides-file</strong>=<em>&lt;overridesFile&gt;</em>]
+<p><strong>fcli sc-dast scan start</strong> [<strong>-L</strong>=<em>&lt;loginMacroBinaryFileId&gt;</em>] [<strong>-M</strong>=<em>&lt;scanMode&gt;</em>]
+                        [<strong>--overrides-file</strong>=<em>&lt;overridesFile&gt;</em>]
                         [<strong>-P</strong>=<em>&lt;scanPolicyNameOrId&gt;</em>]
                         <strong>-S</strong>=<em>&lt;scanSettingsCicdTokenOrId&gt;</em> [<strong>-U</strong>=<em>&lt;startUrls&gt;</em>]&#8230;&#8203;
+                        [[<strong>-h</strong>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]]
                         [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                         [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
                         [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] <em>name</em></p>
@@ -471,18 +471,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
-<dd>
-<p>Show this help message and exit</p>
-</dd>
-<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
-<dd>
-<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
-</dd>
-<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
-<dd>
-<p>File where logging data will be written. If not specified, no logging data will be written.</p>
-</dd>
 <dt class="hdlist1"><strong>-S</strong>, <strong>--settings</strong>=<em>&lt;scanSettingsCicdTokenOrId&gt;</em></dt>
 <dd>
 <p>Id or CICD token of the scan settings to run the scan with</p>
@@ -506,6 +494,27 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dt class="hdlist1"><strong>-L</strong>, <strong>--login-macro</strong>=<em>&lt;loginMacroBinaryFileId&gt;</em></dt>
 <dd>
 <p>Overrides the scan login macro binary file id</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options">Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. If not specified, no logging data will be written.</p>
 </dd>
 </dl>
 </div>
@@ -561,8 +570,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221124.145049-dev_main, built on 2022-11-24 14 51 19<br>
-Last updated 2022-11-24 14:52:22 UTC
+Version fcli version 0.20221124.203214-dev_main, built on 2022-11-24 20 32 49<br>
+Last updated 2022-11-24 20:33:54 UTC
 </div>
 </div>
 </body>
