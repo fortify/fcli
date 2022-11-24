@@ -13,6 +13,6 @@ import picocli.CommandLine.Command;
                 SSCAppUpdateCommand.class
         }
 )
-@PredefinedVariable(name = "currentApp", field = "id")
+@PredefinedVariable(name = "_ssc_currentApp", field = "id")
 public class SSCAppCommands {
 }

@@ -518,7 +518,7 @@ public class StandardOutputWriter implements IOutputWriter {
                 if ( predefinedVariable==null ) {
                     throw new IllegalArgumentException(String.format("Option --store doesn't support variable placeholder '%s' on this command tree", FcliVariableHelper.PREDEFINED_VARIABLE_PLACEHOLDER));
                 } else {
-                    variableName = FcliVariableHelper.resolveVariableName(cmd, predefinedVariable.name());
+                    variableName = predefinedVariable.name();
                     options = predefinedVariable.field();
                     variableType = VariableType.PREDEFINED;
                 }

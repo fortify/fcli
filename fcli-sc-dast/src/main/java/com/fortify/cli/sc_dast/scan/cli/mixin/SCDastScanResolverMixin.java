@@ -37,12 +37,8 @@ import com.fortify.cli.sc_dast.scan.helper.SCDastScanHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Spec;
-import picocli.CommandLine.Spec.Target;
 
 public class SCDastScanResolverMixin {
     @ReflectiveAccess
@@ -79,21 +75,18 @@ public class SCDastScanResolverMixin {
     
     @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastScanResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"--scan"}, required = true)
         @Getter private String scanId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastScanResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1", paramLabel="scan-id")
         @Getter private String scanId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameterMulti extends AbstractSSCDastMultiScanResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's")
         @Getter private String[] scanIds;
     }

@@ -1,6 +1,6 @@
 package com.fortify.cli.sc_dast.rest.cli.mixin;
 
-import com.fortify.cli.common.rest.cli.mixin.AbstractUnirestRunnerMixin;
+import com.fortify.cli.common.rest.cli.mixin.AbstractSimpleUnirestRunnerMixin;
 import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUrlConfigConfigurer;
@@ -14,7 +14,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 @ReflectiveAccess @FixInjection
-public class SCDastUnirestRunnerMixin extends AbstractUnirestRunnerMixin<ISCDastSessionData, SCDastSessionDataManager> {
+public class SCDastUnirestRunnerMixin extends AbstractSimpleUnirestRunnerMixin<ISCDastSessionData> {
     @Getter @Inject private SCDastSessionDataManager sessionDataManager;
     
     @Override
@@ -26,18 +26,8 @@ public class SCDastUnirestRunnerMixin extends AbstractUnirestRunnerMixin<ISCDast
         unirest.config().addDefaultHeader("Authorization", "FortifyToken "+new String(sessionData.getActiveToken()));
     }
     
-    /**
-     * Return an ISCDastSessionData instance. If no session name has been explicitly specified,
-     * and session data is available from the environment, this will return an 
-     * {@link SCDastSessionDataFromEnv} instance, otherwise {@link SCDastSessionDataManager}
-     * will be used to retrieve a previously persisted session.
-     * @return
-     */
     @Override
-    protected final ISCDastSessionData getSessionData() {
-        return sessionDataManager.get(getSessionNameMixin().getSessionName(), true);
+    protected final ISCDastSessionData getSessionData(String sessionName) {
+        return sessionDataManager.get(sessionName, true);
     }
-    
-    @Override
-    protected final void cleanup(UnirestInstance unirest, ISCDastSessionData sessionData) {}
 }

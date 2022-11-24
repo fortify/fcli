@@ -32,12 +32,8 @@ import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Spec;
-import picocli.CommandLine.Spec.Target;
 
 public class SCDastSensorResolverMixin {
     
@@ -61,14 +57,12 @@ public class SCDastSensorResolverMixin {
     
     @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastSensorResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"--sensor"}, required = true)
         @Getter private String sensorNameOrId;
     }
     
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastSensorResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1")
         @Getter private String sensorNameOrId;
     }

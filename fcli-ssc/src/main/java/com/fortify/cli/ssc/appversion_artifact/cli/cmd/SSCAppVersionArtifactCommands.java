@@ -18,6 +18,6 @@ import picocli.CommandLine.Command;
             SSCAppVersionArtifactWaitForCommand.class
         }
 )
-@PredefinedVariable(name = "currentArtifact", field = "id")
+@PredefinedVariable(name = "_ssc_currentArtifact", field = "id")
 public class SSCAppVersionArtifactCommands {
 }

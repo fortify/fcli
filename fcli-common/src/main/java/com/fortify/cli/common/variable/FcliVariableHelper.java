@@ -45,7 +45,6 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.util.EncryptionHelper;
 import com.fortify.cli.common.util.FcliHomeHelper;
-import com.fortify.cli.common.util.StringUtils;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
@@ -167,21 +166,6 @@ public final class FcliVariableHelper {
                 .build();
     }
     
-    public static final String resolveVariableName(Object potentialPrefixSupplier, String variableName) {
-        return potentialPrefixSupplier instanceof IPredefinedVariableNamePrefixSupplier
-                ? resolveVariableName((IPredefinedVariableNamePrefixSupplier)potentialPrefixSupplier, variableName)
-                : variableName;
-    }
-    
-    public static final String resolveVariableName(IPredefinedVariableNamePrefixSupplier prefixSupplier, String variableName) {
-        String prefix = prefixSupplier.getPredefinedVariableNamePrefix();
-        if ( StringUtils.isNotBlank(prefix) ) {
-            prefix = normalizeVariablePrefix(prefix);
-            variableName = String.format("%s_%s", prefix, variableName);
-        }
-        return variableName;
-    }
-    
     @SneakyThrows // TODO Do we want to use SneakyThrows? 
     private static final VariableDescriptor saveVariableDescriptor(VariableDescriptor descriptor) {
         String variableDescriptorString = objectMapper.writeValueAsString(descriptor);
@@ -210,13 +194,6 @@ public final class FcliVariableHelper {
         delete(variableDescriptor.get("name").asText());
     }
     
-    public static void deleteAllWithPrefix(String prefix) {
-        String normalizedPrefix = normalizeVariablePrefix(prefix);
-        variableNamesStream()
-            .filter(s->s.startsWith(normalizedPrefix))
-            .forEach(FcliVariableHelper::delete);
-    }
-    
     public static final boolean exists(String variableName) {
         return FcliHomeHelper.isReadable(getVariablePath(variableName));
     }
@@ -240,10 +217,6 @@ public final class FcliVariableHelper {
         return variableNames().stream()
                 .map(FcliVariableHelper::getVariableDescriptorAsJson)
                 .collect(JsonHelper.arrayNodeCollector());
-    }
-    
-    private static final String normalizeVariablePrefix(String prefix) {
-        return prefix.replaceAll("[^a-zA-Z0-9_]", "").toLowerCase();
     }
     
     private static final JsonNode getVariableDescriptorAsJson(String variableName) {

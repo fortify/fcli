@@ -14,24 +14,23 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.sc_sast.output.cli.cmd.AbstractSCSastControllerOutputCommand;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
+import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.MultipartBody;
 import kong.unirest.UnirestInstance;
-import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 public abstract class AbstractSCSastControllerScanStartCommand extends AbstractSCSastControllerOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     private String userName = System.getProperty("user.name", "unknown"); // TODO Do we want to give an option to override this?
     @Option(names = "--notify") private String email; // TODO Add email address validation
-    @ArgGroup(exclusive = false, multiplicity = "0..1") private UploadArgGroup uploadArgGroup = new UploadArgGroup();
+    @Mixin private SSCAppVersionResolverMixin.OptionalOption sscAppVersionResolver;
+    @Option(names = "--no-upload", negatable = true) private boolean upload = true;
+    @Option(names = "--ci-token") private String ciToken;
     
-    @ReflectiveAccess
-    private static final class UploadArgGroup {
-        @Option(names = "--appversion", required = true) private String appVersionId; // TODO Allow either id or <app>:<version> through resolverMixin
-        @Option(names = "--ci-token", required = true) private String ciToken; // TODO Optionally get this from session?
-    }
     // TODO Add options for specifying (custom) rules file(s), filter file(s) and project template
     // TODO Add options for pool selection
     
@@ -48,8 +47,8 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
             .field("jobType", getJobType().name(), "text/plain");
         body = updateBody(body, "email", email);
         body = updateBody(body, "buildId", getBuildId());
-        body = updateBody(body, "pvId", uploadArgGroup.appVersionId);
-        body = updateBody(body, "uploadToken", uploadArgGroup.ciToken);
+        body = updateBody(body, "pvId", getAppVersionId());
+        body = updateBody(body, "uploadToken", getUploadToken());
         body = updateBody(body, "dotNetRequired", String.valueOf(isDotNetRequired()));
         body = updateBody(body, "dotNetFrameworkRequiredVersion", getDotNetVersion());
         JsonNode response = body.asObject(JsonNode.class).getBody();
@@ -57,7 +56,7 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
             throw new IllegalStateException("Unexpected response when submitting scan job: "+response);
         }
         String scanJobToken = response.get("token").asText();
-        return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, scanJobToken, 0).asJsonNode();
+        return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, scanJobToken, StatusEndpointVersion.v1).asJsonNode();
     }
 
     @Override
@@ -77,6 +76,22 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
     protected abstract File getPayloadFile();
     protected abstract String getSensorVersion();
     protected abstract SCSastControllerJobType getJobType();
+    
+    private String getAppVersionId() {
+        return sscAppVersionResolver.hasValue()
+            ? runOnSSC(sscAppVersionResolver::getAppVersionId)
+            : null;
+    }
+    
+    private String getUploadToken() {
+        String uploadToken = null;
+        if ( upload ) {
+            uploadToken = this.ciToken;
+            // TODO Get ciToken from session if not specified
+            if ( StringUtils.isBlank(uploadToken) ) { throw new IllegalArgumentException("--ci-token is required unless --no-upload is specified"); }
+        }
+        return uploadToken;
+    }
     
     private String normalizeSensorVersion(String sensorVersion) {
         return sensorVersion.chars().filter(ch -> ch == '.').count()==1

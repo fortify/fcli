@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.runner.UnirestRunner;
+import com.fortify.cli.common.rest.runner.GenericUnirestRunner;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.rest.runner.config.UnirestBasicAuthConfigurer;
@@ -27,7 +27,7 @@ import kong.unirest.UnirestInstance;
 
 @Singleton @FixInjection
 public class SSCTokenHelper {
-    @Inject private UnirestRunner unirestRunner;
+    @Inject private GenericUnirestRunner unirestRunner;
     
     public final JsonNode listTokens(IUrlConfig urlConfig, IUserCredentialsConfig uc, Map<String,Object> queryParams) {
         return unirestRunner.run(unirest->listTokens(unirest, urlConfig, uc, queryParams));

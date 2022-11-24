@@ -29,7 +29,6 @@ import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.common.variable.FcliVariableHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -46,7 +45,7 @@ public abstract class AbstractSessionLogoutCommand<D extends ISessionData> exten
         ISessionDataManager<D> sessionDataManager = getSessionDataManager();
         if ( sessionDataManager.exists(sessionName) ) {
             logout(sessionName, sessionDataManager.get(sessionName, true));
-            FcliVariableHelper.deleteAllWithPrefix(sessionDataManager.getPredefinedVariableNamePrefix(sessionName));
+            // TODO Optionally delete all variables
             getSessionDataManager().destroy(sessionName);
         }
     }

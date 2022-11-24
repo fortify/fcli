@@ -29,15 +29,12 @@ import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
 import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Spec;
-import picocli.CommandLine.Spec.Target;
 
 public class FoDAppResolverMixin {    
     @ReflectiveAccess
@@ -60,7 +57,6 @@ public class FoDAppResolverMixin {
 
     @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDAppResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Option(names = {"--app"}, required = true, descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }
@@ -74,7 +70,6 @@ public class FoDAppResolverMixin {
 
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDAppResolverMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }

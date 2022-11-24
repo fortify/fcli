@@ -28,7 +28,7 @@ public class SCSastControllerStartMbsScanCommand extends AbstractSCSastControlle
     @Getter private final String scaRuntimeArgs = ""; // TODO Provide options
     @Getter private SCSastControllerJobType jobType = SCSastControllerJobType.SCAN_JOB;
     
-    @Parameters(arity = "1", index = "0", paramLabel="PACKAGE-FILE")
+    @Parameters(arity = "1", index = "0", paramLabel="MBS-FILE")
     public void setPackageFile(File mbsFile) {
         this.payloadFile = mbsFile;
         setMbsProperties(mbsFile);

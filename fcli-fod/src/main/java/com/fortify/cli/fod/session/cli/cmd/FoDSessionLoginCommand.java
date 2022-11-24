@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.cli.cmd;
 
-import com.fortify.cli.common.rest.runner.UnirestRunner;
+import com.fortify.cli.common.rest.runner.GenericUnirestRunner;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
 import com.fortify.cli.fod.oauth.helper.FoDOAuthHelper;
@@ -44,7 +44,7 @@ import picocli.CommandLine.Mixin;
 public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionData> {
     @Getter @Inject private FoDSessionDataManager sessionDataManager;
     @Getter @Inject private FoDOAuthHelper oauthHelper;
-    @Inject private UnirestRunner unirestRunner;
+    @Inject private GenericUnirestRunner unirestRunner;
     @Mixin private FoDSessionLoginOptions loginOptions;
     
     @Override

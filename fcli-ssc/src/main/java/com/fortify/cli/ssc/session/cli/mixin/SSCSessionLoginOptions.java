@@ -68,12 +68,12 @@ public class SSCSessionLoginOptions {
     }
     
     public static class SSCTokenCredentialOptions {
-        @Option(names = {"--token", "-t"}, required = true, interactive = true, echo = false)
+        @Option(names = {"--token", "-t"}, interactive = true, echo = false, arity = "0..1", required = true)
         @Getter private char[] token;
     }
     
     public static class SSCCITokenCredentialOptions {
-        @Option(names = {"--ci-token"}, required = true, interactive = true, echo = false)
+        @Option(names = {"--ci-token"}, interactive = true, echo = false, arity = "0..1", required = true)
         @Getter private char[] token;
     }
 }

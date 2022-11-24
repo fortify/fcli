@@ -14,6 +14,6 @@ import picocli.CommandLine;
                 FoDDastScanWaitForCommand.class
         }
 )
-@PredefinedVariable(name = "_fod_currentDastScan", field = "scanId")
+@PredefinedVariable(name = "_fod_currentScan", field = "scanId")
 public class FoDDastScanCommands {
 }

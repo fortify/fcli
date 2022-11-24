@@ -29,6 +29,7 @@ import org.graalvm.nativeimage.hosted.RuntimeReflection;
 import org.jasypt.normalization.Normalizer;
 
 import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
+import com.fortify.cli.common.util.IFortifyCLIInitializer;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 import com.fortify.cli.config.language.util.LanguagePropertiesManager;
 import com.oracle.svm.core.annotate.AutomaticFeature;

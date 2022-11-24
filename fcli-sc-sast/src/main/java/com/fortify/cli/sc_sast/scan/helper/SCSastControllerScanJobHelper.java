@@ -19,12 +19,12 @@ public class SCSastControllerScanJobHelper {
         @Getter private final String endpoint;
     }
     
-    public static final SCSastControllerScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest, String scanJobToken, Integer minEndpointVersion) {
+    public static final SCSastControllerScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest, String scanJobToken, StatusEndpointVersion minEndpointVersion) {
         SCSastControllerScanJobDescriptor descriptor = null;
         RuntimeException lastException = null;
         
         for ( StatusEndpointVersion endpointVersion : StatusEndpointVersion.values() ) {
-            if ( minEndpointVersion==null || minEndpointVersion<=endpointVersion.getVersion() ) {
+            if ( minEndpointVersion==null || minEndpointVersion.getVersion()<=endpointVersion.getVersion() ) {
                 try {
                     descriptor = getScanJobDescriptor(
                             unirest.get(endpointVersion.getEndpoint())

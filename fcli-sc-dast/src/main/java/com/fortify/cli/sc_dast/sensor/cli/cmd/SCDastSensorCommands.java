@@ -15,6 +15,6 @@ import picocli.CommandLine.Command;
             SCDastSensorListCommand.class
         }
 )
-@PredefinedVariable(name = "currentSensor", field = "id")
+@PredefinedVariable(name = "_scdast_currentSensor", field = "id")
 public class SCDastSensorCommands {
 }

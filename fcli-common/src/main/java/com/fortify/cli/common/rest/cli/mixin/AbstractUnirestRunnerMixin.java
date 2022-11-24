@@ -1,48 +1,32 @@
 package com.fortify.cli.common.rest.cli.mixin;
 
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import com.fortify.cli.common.rest.runner.GenericUnirestFactory;
 import com.fortify.cli.common.rest.runner.IUnirestRunner;
-import com.fortify.cli.common.rest.runner.UnirestRunner;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
-import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.common.variable.IPredefinedVariableNamePrefixSupplier;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess @FixInjection
-public abstract class AbstractUnirestRunnerMixin<D extends ISessionData,M extends ISessionDataManager<? extends D>> implements IUnirestRunner, IPredefinedVariableNamePrefixSupplier {
-    @Inject private UnirestRunner runner;
-    @Getter @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
+public abstract class AbstractUnirestRunnerMixin<D extends ISessionData> implements IUnirestRunner {
+    @Inject private GenericUnirestFactory genericUnirestFactory;
+    @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
     
-    @Override
-    public final <R> R run(Function<UnirestInstance, R> f) {
-        return runner.run(unirest->run(unirest, f));
-    }
-    
-    @Override
-    public final String getPredefinedVariableNamePrefix() {
-        return getSessionDataManager().getPredefinedVariableNamePrefix(sessionNameMixin.getSessionName());
-    }
-    
-    private final <R> R run(UnirestInstance unirest, Function<UnirestInstance, R> f) {
-        D sessionData = getSessionData();
-        configure(unirest, sessionData);
-        try {
+    protected final <R> R run(BiConsumer<UnirestInstance, D> configurer, Function<UnirestInstance, R> f) {
+        if ( f == null ) { throw new IllegalStateException("Function may not be null"); }
+        D sessionData = getSessionData(sessionNameMixin.getSessionName());
+        try ( var unirest = genericUnirestFactory.createUnirestInstance() ) {
+            configurer.accept(unirest, sessionData);
             return f.apply(unirest);
-        } finally {
-            cleanup(unirest, sessionData);
         }
     }
     
-    protected abstract D getSessionData();
-    protected abstract M getSessionDataManager();
-    protected abstract void configure(UnirestInstance unirest, D sessionData);
-    protected abstract void cleanup(UnirestInstance unirest, D sessionData);
+    protected abstract D getSessionData(String sessionName);
 }
