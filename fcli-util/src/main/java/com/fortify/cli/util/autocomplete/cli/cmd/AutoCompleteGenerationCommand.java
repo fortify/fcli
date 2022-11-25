@@ -22,14 +22,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.config.autocomplete.cli.cmd;
+package com.fortify.cli.util.autocomplete.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.AutoComplete;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
 /**
@@ -40,9 +40,9 @@ import picocli.CommandLine.Spec;
  * 
  */
 @ReflectiveAccess
-@Command(name = "generate-completion")
+@Command(name = "generate")
 public final class AutoCompleteGenerationCommand extends AbstractFortifyCLICommand implements Runnable {
-    @Spec CommandLine.Model.CommandSpec spec;
+    @Spec CommandSpec spec;
 
     public void run() {
         String script = AutoComplete.bash(spec.root().name(), spec.root().commandLine());

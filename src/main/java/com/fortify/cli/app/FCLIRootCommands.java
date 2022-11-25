@@ -32,6 +32,7 @@ import com.fortify.cli.sc_dast._main.cli.cmd.SCDastCommands;
 import com.fortify.cli.sc_sast._main.cli.cmd.SCSastCommands;
 import com.fortify.cli.ssc._main.cli.cmd.SSCCommands;
 import com.fortify.cli.tool._main.cli.cmd.ToolCommands;
+import com.fortify.cli.util._main.cli.cmd.UtilCommands;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Singleton;
@@ -65,7 +66,8 @@ import picocli.CommandLine.ScopeType;
             SCDastCommands.class,
             SCSastCommands.class,
             SSCCommands.class,
-            ToolCommands.class
+            ToolCommands.class,
+            UtilCommands.class
     }
 )
 public class FCLIRootCommands extends AbstractFortifyCLICommand {    

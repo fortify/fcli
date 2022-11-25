@@ -167,6 +167,7 @@ dependencies {
     implementation project(':fcli-sc-sast')
     implementation project(':fcli-sc-dast')
     implementation project(':fcli-tool')
+    implementation project(':fcli-util')
 
     // Logging dependencies
     runtimeOnly('ch.qos.logback:logback-classic:1.2.11')
