@@ -449,8 +449,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-sast session login</strong> <strong>-c</strong>[=<em>&lt;clientAuthToken&gt;</em>] [[<em>session-name</em>]] <em class="[<strong>-o</strong>=_format_
-                     _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+<p><strong>fcli sc-sast session login</strong> <strong>-c</strong>[=<em>&lt;clientAuthToken&gt;</em>] [[<strong>-h</strong>]
+                           [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                           [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<em>session-name</em>]]
+                           <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
                _            <em class="=&lt;propertyNames&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
                            (<strong>--ssc-url</strong>=<em>&lt;url&gt;</em> [<strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em>]
                            [<strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em>]
@@ -483,12 +485,12 @@ Option values are commonly configured through environment variables as listed in
 <p>SSC user name. Environment variables:</p>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SSC_USER: Shared with SSC/SC DAST</pre>
+<pre>null_SSC_USER: Shared with SSC/SC DAST</pre>
 </div>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SC_SAST_SSC_USER: Only SC SAST commands</pre>
+<pre>null_SC_SAST_SSC_USER: Only SC SAST commands</pre>
 </div>
 </div>
 </dd>
@@ -497,12 +499,12 @@ Option values are commonly configured through environment variables as listed in
 <p>SSC password. Environment variables:</p>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SSC_PASSWORD: Shared with SSC/SC DAST</pre>
+<pre>null_SSC_PASSWORD: Shared with SSC/SC DAST</pre>
 </div>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SC_SAST_SSC_PASSWORD: Only SC SAST commands</pre>
+<pre>null_SC_SAST_SSC_PASSWORD: Only SC SAST commands</pre>
 </div>
 </div>
 </dd>
@@ -520,12 +522,12 @@ Option values are commonly configured through environment variables as listed in
 <p>SSC CIToken. Environment variables:</p>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SSC_CI_TOKEN: Shared with SSC/SC DAST</pre>
+<pre>null_SSC_CI_TOKEN: Shared with SSC/SC DAST</pre>
 </div>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SC_SAST_SSC_CI_TOKEN: Only SC SAST commands</pre>
+<pre>null_SC_SAST_SSC_CI_TOKEN: Only SC SAST commands</pre>
 </div>
 </div>
 </dd>
@@ -534,7 +536,7 @@ Option values are commonly configured through environment variables as listed in
 <p>ScanCentral SAST client_auth_token. Environment variables:</p>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SC_SAST_CLIENT_AUTH_TOKEN</pre>
+<pre>null_SC_SAST_CLIENT_AUTH_TOKEN</pre>
 </div>
 </div>
 </dd>
@@ -543,12 +545,12 @@ Option values are commonly configured through environment variables as listed in
 <p>SSC URL. Environment variables:</p>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SSC_URL: Shared with SSC/SC DAST</pre>
+<pre>null_SSC_URL: Shared with SSC/SC DAST</pre>
 </div>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SC_SAST_SSC_URL: Only SC SAST commands</pre>
+<pre>null_SC_SAST_SSC_URL: Only SC SAST commands</pre>
 </div>
 </div>
 </dd>
@@ -557,12 +559,12 @@ Option values are commonly configured through environment variables as listed in
 <p>Hostname or IP address of the proxy server. Environment variables:</p>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_PROXY_HOST: Shared across all modules</pre>
+<pre>null_PROXY_HOST: Shared across all modules</pre>
 </div>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SC_SAST_PROXY_HOST: Only SC SAST commands</pre>
+<pre>null_SC_SAST_PROXY_HOST: Only SC SAST commands</pre>
 </div>
 </div>
 </dd>
@@ -571,12 +573,12 @@ Option values are commonly configured through environment variables as listed in
 <p>Proxy server port number. Environment variables:</p>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_PROXY_PORT: Shared across all modules</pre>
+<pre>null_PROXY_PORT: Shared across all modules</pre>
 </div>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SC_SAST_PROXY_PORT: Only SC SAST commands</pre>
+<pre>null_SC_SAST_PROXY_PORT: Only SC SAST commands</pre>
 </div>
 </div>
 </dd>
@@ -585,12 +587,12 @@ Option values are commonly configured through environment variables as listed in
 <p>Proxy server user. Environment variables:</p>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_PROXY_USER: Shared across all modules</pre>
+<pre>null_PROXY_USER: Shared across all modules</pre>
 </div>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SC_SAST_PROXY_USER: Only SC SAST commands</pre>
+<pre>null_SC_SAST_PROXY_USER: Only SC SAST commands</pre>
 </div>
 </div>
 </dd>
@@ -599,12 +601,12 @@ Option values are commonly configured through environment variables as listed in
 <p>Proxy server password. Environment variables:</p>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_PROXY_PASSWORD: Shared across all modules</pre>
+<pre>null_PROXY_PASSWORD: Shared across all modules</pre>
 </div>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>FCLI_DEFAULT_SC_SAST_PROXY_PASSWORD: Only SC SAST commands</pre>
+<pre>null_SC_SAST_PROXY_PASSWORD: Only SC SAST commands</pre>
 </div>
 </div>
 </dd>
@@ -638,6 +640,31 @@ Option values are commonly configured through environment variables as listed in
 </div>
 </div>
 <div class="sect1">
+<h2 id="_generic_fcli_options">Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_session_options">Session options:</h2>
 <div class="sectionbody">
 <div class="dlist">
@@ -653,8 +680,8 @@ Option values are commonly configured through environment variables as listed in
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221124.203214-dev_main, built on 2022-11-24 20 32 49<br>
-Last updated 2022-11-24 20:33:54 UTC
+Version fcli version 0.20221125.233939-dev_main, built on 2022-11-25 23 40 17<br>
+Last updated 2022-11-25 23:41:31 UTC
 </div>
 </div>
 </body>

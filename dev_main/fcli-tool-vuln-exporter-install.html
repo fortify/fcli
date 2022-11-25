@@ -450,8 +450,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli tool vuln-exporter install</strong> [<strong>-y</strong>] [<strong>-d</strong>=<em>&lt;installDir&gt;</em>] [[<strong>-h</strong>]
-                                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]
-                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                                [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format_
                           _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
                     _            <em class="=&lt;propertyNames&gt;">]
                                 [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] [<em>&lt;version&gt;</em>]</p>
@@ -482,27 +483,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_generic_fcli_options">Generic fcli options:</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
-<dd>
-<p>Show this help message and exit</p>
-</dd>
-<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
-<dd>
-<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
-</dd>
-<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
-<dd>
-<p>File where logging data will be written. If not specified, no logging data will be written.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="_output_options">Output options:</h2>
 <div class="sectionbody">
 <div class="dlist">
@@ -524,6 +504,31 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
+<h2 id="_generic_fcli_options">Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_arguments">Arguments</h2>
 <div class="sectionbody">
 <div class="dlist">
@@ -539,8 +544,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221124.203214-dev_main, built on 2022-11-24 20 32 49<br>
-Last updated 2022-11-24 20:33:55 UTC
+Version fcli version 0.20221125.233939-dev_main, built on 2022-11-25 23 40 17<br>
+Last updated 2022-11-25 23:41:32 UTC
 </div>
 </div>
 </body>

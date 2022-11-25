@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<title>fcli-config-generate-completion(1)</title>
+<title>fcli-util-auto-complete-generate(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -438,39 +438,38 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="manpage">
 <div id="header">
-<h1>fcli-config-generate-completion(1) Manual Page</h1>
+<h1>fcli-util-auto-complete-generate(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-config-generate-completion - Generate bash/zsh completion script for fcli. Run the following command to give `fcli` TAB completion in the current shell:</p>
+<p>fcli-util-auto-complete-generate - Generate fcli auto-completion script</p>
 </div>
 </div>
 <div id="content">
-<div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>source &lt;(fcli config generate-completion)</p>
-</div>
-</div>
-</div>
 <div class="sect1">
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli config generate-completion</strong></p>
+<p><strong>fcli util auto-complete generate</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                 [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                 [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>Generate bash/zsh completion script for fcli.
+Run the following command to give <code>fcli</code> TAB completion in the current shell:
+  source &lt;(fcli util auto-complete generate)</p>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221124.203214-dev_main, built on 2022-11-24 20 32 49<br>
-Last updated 2022-11-24 20:33:54 UTC
+Version fcli version 0.20221125.233939-dev_main, built on 2022-11-25 23 40 17<br>
+Last updated 2022-11-25 23:41:32 UTC
 </div>
 </div>
 </body>

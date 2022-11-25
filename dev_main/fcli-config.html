@@ -441,7 +441,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>fcli-config(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-config - Commands for configuring fcli and its runtime environment.</p>
+<p>fcli-config - Commands for configuring fcli</p>
 </div>
 </div>
 <div id="content">
@@ -449,16 +449,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli config</strong> [[<strong>-h</strong>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]] [COMMAND]</p>
+<p><strong>fcli config</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+            [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [COMMAND]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description">Description</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>Commands for configuring fcli and its runtime environment.</p>
-</div>
+
 </div>
 </div>
 <div class="sect1">
@@ -466,23 +465,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-config-generate-completion.html"><strong>generate-completion</strong></a></dt>
-<dd>
-<p>Generate bash/zsh completion script for fcli.</p>
-<div class="paragraph">
-<p>Run the following command to give <code>fcli</code> TAB completion in the current shell:</p>
-</div>
-<div class="paragraph">
-<p>source &lt;(fcli config generate-completion)</p>
-</div>
-</dd>
 <dt class="hdlist1"><a href="fcli-config-language.html"><strong>language</strong>, <strong>lang</strong>, <strong>i18n</strong></a></dt>
 <dd>
 <p>Commands for listing and setting languages that FCLI&#8217;s help information can be outputted in.</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-config-variable.html"><strong>variable</strong>, <strong>var</strong></a></dt>
 <dd>
-<p>Command-line interface for working with various Fortify products</p>
+<p>Manage fcli variables</p>
 </dd>
 </dl>
 </div>
@@ -491,8 +480,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221124.203214-dev_main, built on 2022-11-24 20 32 49<br>
-Last updated 2022-11-24 20:33:54 UTC
+Version fcli version 0.20221125.233939-dev_main, built on 2022-11-25 23 40 17<br>
+Last updated 2022-11-25 23:41:31 UTC
 </div>
 </div>
 </body>

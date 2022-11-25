@@ -441,7 +441,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>fcli-sc-sast-scan-start(1) Manual Page</h1>
 <h2 id="_name">Name</h2>
 <div class="sectionbody">
-<p>fcli-sc-sast-scan-start - Commands for starting ScanCentral SAST scans</p>
+<p>fcli-sc-sast-scan-start - Start a ScanCentral SAST scan</p>
 </div>
 </div>
 <div id="content">
@@ -449,8 +449,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-sast scan start</strong> [[<strong>-h</strong>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]]
-                        [COMMAND]</p>
+<p><strong>fcli sc-sast scan start</strong> [<strong>--[no-]upload</strong>] [<strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
+                        [<strong>--ci-token</strong>=<em>&lt;ciToken&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+                        [<strong>--notify</strong>=<em>&lt;email&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                        [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] [[[<strong>-m</strong>=<em>&lt;mbsFile&gt;</em>]] |
+                        [<strong>-v</strong>=<em>&lt;sensorVersion&gt;</em> [<strong>-p</strong>=<em>&lt;packageFile&gt;</em>]]] <em class="[<strong>-o</strong>=_format_
+                  _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                        [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -461,17 +467,100 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_commands">Commands</h2>
+<h2 id="_options">Options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-sc-sast-scan-start-package.html"><strong>package</strong></a></dt>
+<dt class="hdlist1"><strong>--notify</strong>=<em>&lt;email&gt;</em></dt>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
-<p>Start ScanCentral SAST scan with package file</p>
+<p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-sc-sast-scan-start-mbs.html"><strong>mbs</strong></a></dt>
+<dt class="hdlist1"><strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dt class="hdlist1"><strong>--[no-]upload</strong></dt>
+<dt class="hdlist1"><strong>--ci-token</strong>=<em>&lt;ciToken&gt;</em></dt>
 <dd>
-<p>Start ScanCentral SAST scan with MBS file</p>
+<p>== Options for scanning an MBS file:</p>
+</dd>
+<dt class="hdlist1"><strong>-m</strong>, <strong>--mbs-file</strong>=<em>&lt;mbsFile&gt;</em></dt>
+<dd>
+<p>MBS file to scan</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options_for_scanning_a_package_file">Options for scanning a package file:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-v</strong>, <strong>--sensor-version</strong>=<em>&lt;sensorVersion&gt;</em></dt>
+<dd>
+<p>Version of the sensor on which the package should be scanned. Officially, you should select the same sensor version as the version of the ScanCentral Client used to create the package.</p>
+</dd>
+<dt class="hdlist1"><strong>-p</strong>, <strong>--package-file</strong>=<em>&lt;packageFile&gt;</em></dt>
+<dd>
+<p>Package file to scan</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_session_options">Session options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Session name to use</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options">Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dd>
+<p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using {?variableName:property} on any subsequent command. Most commands that return a single record (get, start, create, &#8230;&#8203;) also support '?' to store the record identifier in a predefined variable, which can later be referenced using '?' on options/parameters that take the id of such records as input.</p>
+</dd>
+<dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write results to the specified files in the given output format. By default, results will be written to stdout</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options">Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
 </dd>
 </dl>
 </div>
@@ -480,8 +569,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221124.203214-dev_main, built on 2022-11-24 20 32 49<br>
-Last updated 2022-11-24 20:33:54 UTC
+Version fcli version 0.20221125.233939-dev_main, built on 2022-11-25 23 40 17<br>
+Last updated 2022-11-25 23:41:31 UTC
 </div>
 </div>
 </body>
