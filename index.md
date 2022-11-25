@@ -75,9 +75,11 @@ The following sections describe common options that are available on (most) fcli
 
 This option can be used on every fcli (sub-)command to view usage information for that command. Usage information usually shows the command synopsis, a description of the functionality provided by the command, and a description of each command line option or parameter accepted by the command.
 
-### -V | --version
+### --env-prefix
 
-This option can be used on every fcli (sub-)command to view current fcli version. Currently, all sub-commands return the same version information.
+As described in the [Environment Variables](#environment-variables) section, default option and parameter values can be retrieved from environment variables starting with `FCLI_DEFAULT`. This option allows for configuring a different environment variable prefix. This may be useful if, for example, you want to login to multiple instances of the same system using environment variables. For example, when running `fcli ssc session login --env-prefix PROD`, fcli will look for environment variables like `PROD_SSC_URL` instead of `FCLI_DEFAULT_SSC_URL`.
+
+Note that a default value for the `--env-prefix` option itself can be specified through an `FCLI_DEFAULT_ENV_PREFIX` environment variable, for example if you want to globally override the `FCLI_DEFAULT` prefix.
 
 ### --log-level
 
@@ -174,6 +176,8 @@ Despite #2 above, in some cases it may be useful to use less specific environmen
 * This variable value will be used as a default value for all `--ssc-url` options in other product modules
 
 This means that defining a single `FCLI_DEFAULT_SSC_URL` environment variable, together with for example `FCLI_DEFAULT_SSC_USER` and `FCLI_DEFAULT_SSC_PASSWORD` environment variables, allows for applying these default values to all of the `fcli ssc session login`, `fcli sc-sast session login`, `fcli sc-dast session login`, and corresponding `logout` commands.
+
+Note that as described in the [--env-prefix](#env-prefix) section, you can override the `FCLI_DEFAULT` prefix. For example, with `--env-prefix MYPREFIX`, fcli will look for `MYPREFIX_*` environment variables instead of `FCLI_DEFAULT_*` environment variables.
 
 ## Fcli Variables
 Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding `wait-for` command, or for creating an SSC application version, and passing the SSC application version id to the `appversion-artifact upload` command.
