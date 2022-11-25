@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_sast.scan.cli.cmd.start;
+package com.fortify.cli.sc_sast.scan.cli.mixin;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,19 +9,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 
-import com.fortify.cli.sc_sast.output.cli.mixin.SCSastControllerOutputHelperMixins;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
-@Command(name = SCSastControllerOutputHelperMixins.StartPackageScan.CMD_NAME)
-public class SCSastControllerStartPackageScanCommand extends AbstractSCSastControllerScanStartCommand {
+@ReflectiveAccess
+public class SCSastScanStartPackageOptions implements ISCSastScanStartOptions {
     private static final Pattern dotnetFlagFilePattern = Pattern.compile("^dotnet(-(?<version>\\d+\\.\\d+(\\.\\d+)?))?$");
-    @Getter @Mixin private SCSastControllerOutputHelperMixins.StartPackageScan outputHelper;
     @Getter @Option(names = {"--sensor-version", "-v"}, required = true) private String sensorVersion;
     @Getter private File payloadFile;
     @Getter private final String buildId = null; // TODO ScanCentral Client doesn't allow for specifying build id; should we provide a CLI option for this?
@@ -30,8 +26,8 @@ public class SCSastControllerStartPackageScanCommand extends AbstractSCSastContr
     @Getter private final String scaRuntimeArgs = "";
     @Getter private SCSastControllerJobType jobType = SCSastControllerJobType.TRANSLATION_AND_SCAN_JOB;
     
-    @Parameters(arity = "1", index = "0", paramLabel="PACKAGE-FILE")
-    public void setPackagePath(File packageFile) {
+    @Option(names = {"-p", "--package-file"})
+    public void setPackageFile(File packageFile) {
         this.payloadFile = packageFile;
         setDotNetProperties(packageFile);
     }

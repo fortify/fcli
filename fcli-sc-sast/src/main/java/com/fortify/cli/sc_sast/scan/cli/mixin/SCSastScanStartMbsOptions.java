@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_sast.scan.cli.cmd.start;
+package com.fortify.cli.sc_sast.scan.cli.mixin;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,17 +9,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-import com.fortify.cli.sc_sast.output.cli.mixin.SCSastControllerOutputHelperMixins;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Option;
 
-@Command(name = SCSastControllerOutputHelperMixins.StartMbsScan.CMD_NAME)
-public class SCSastControllerStartMbsScanCommand extends AbstractSCSastControllerScanStartCommand {
-    @Getter @Mixin private SCSastControllerOutputHelperMixins.StartMbsScan outputHelper;
+@ReflectiveAccess
+public class SCSastScanStartMbsOptions implements ISCSastScanStartOptions {
     @Getter private File payloadFile;
     @Getter private String sensorVersion;
     @Getter private String buildId;
@@ -28,8 +25,8 @@ public class SCSastControllerStartMbsScanCommand extends AbstractSCSastControlle
     @Getter private final String scaRuntimeArgs = ""; // TODO Provide options
     @Getter private SCSastControllerJobType jobType = SCSastControllerJobType.SCAN_JOB;
     
-    @Parameters(arity = "1", index = "0", paramLabel="MBS-FILE")
-    public void setPackageFile(File mbsFile) {
+    @Option(names = {"-m", "--mbs-file"})
+    public void setMbsFile(File mbsFile) {
         this.payloadFile = mbsFile;
         setMbsProperties(mbsFile);
     }

@@ -8,7 +8,7 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 public class AbstractFortifyCLICommand {
-    @ArgGroup(exclusive = false, headingKey = "fcli.genericOptions.heading") 
+    @ArgGroup(exclusive = false, headingKey = "fcli.genericOptions.heading", order = 50) 
     @Getter private GenericOptionsArgGroup genericOptions = new GenericOptionsArgGroup();
     
     public static enum LogLevel {

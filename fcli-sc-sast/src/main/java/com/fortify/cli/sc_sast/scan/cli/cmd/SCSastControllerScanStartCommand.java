@@ -1,4 +1,4 @@
-package com.fortify.cli.sc_sast.scan.cli.cmd.start;
+package com.fortify.cli.sc_sast.scan.cli.cmd;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,19 +12,25 @@ import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.sc_sast.output.cli.cmd.AbstractSCSastControllerOutputCommand;
+import com.fortify.cli.sc_sast.output.cli.mixin.SCSastControllerOutputHelperMixins;
+import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanStartOptionsArgGroup;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.MultipartBody;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
-public abstract class AbstractSCSastControllerScanStartCommand extends AbstractSCSastControllerOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
+@Command(name = SCSastControllerOutputHelperMixins.Start.CMD_NAME)
+public final class SCSastControllerScanStartCommand extends AbstractSCSastControllerOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
+    @ArgGroup(exclusive = true) private SCSastScanStartOptionsArgGroup optionsProvider;
+    @Getter @Mixin private SCSastControllerOutputHelperMixins.Start outputHelper;
     private String userName = System.getProperty("user.name", "unknown"); // TODO Do we want to give an option to override this?
     @Option(names = "--notify") private String email; // TODO Add email address validation
     @Mixin private SSCAppVersionResolverMixin.OptionalOption sscAppVersionResolver;
@@ -36,21 +42,21 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
     
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
-        String sensorVersion = normalizeSensorVersion(getSensorVersion());
+        String sensorVersion = normalizeSensorVersion(optionsProvider.getScanStartOptions().getSensorVersion());
         MultipartBody body = unirest.post("/rest/v2/job")
             .multiPartContent()
             .field("zipFile", createZipFile(), "application/zip")
             .field("username", userName, "text/plain")
             .field("scaVersion", sensorVersion, "text/plain")
             .field("clientVersion", sensorVersion, "text/plain")
-            .field("scaRuntimeArgs", getScaRuntimeArgs(), "text/plain")
-            .field("jobType", getJobType().name(), "text/plain");
+            .field("scaRuntimeArgs", optionsProvider.getScanStartOptions().getScaRuntimeArgs(), "text/plain")
+            .field("jobType", optionsProvider.getScanStartOptions().getJobType().name(), "text/plain");
         body = updateBody(body, "email", email);
-        body = updateBody(body, "buildId", getBuildId());
+        body = updateBody(body, "buildId", optionsProvider.getScanStartOptions().getBuildId());
         body = updateBody(body, "pvId", getAppVersionId());
         body = updateBody(body, "uploadToken", getUploadToken());
-        body = updateBody(body, "dotNetRequired", String.valueOf(isDotNetRequired()));
-        body = updateBody(body, "dotNetFrameworkRequiredVersion", getDotNetVersion());
+        body = updateBody(body, "dotNetRequired", String.valueOf(optionsProvider.getScanStartOptions().isDotNetRequired()));
+        body = updateBody(body, "dotNetFrameworkRequiredVersion", optionsProvider.getScanStartOptions().getDotNetVersion());
         JsonNode response = body.asObject(JsonNode.class).getBody();
         if ( !response.has("token") ) {
             throw new IllegalStateException("Unexpected response when submitting scan job: "+response);
@@ -68,14 +74,6 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
     public final boolean isSingular() {
         return true;
     }
-    
-    protected abstract String getBuildId();
-    protected abstract String getScaRuntimeArgs();
-    protected abstract boolean isDotNetRequired();
-    protected abstract String getDotNetVersion();
-    protected abstract File getPayloadFile();
-    protected abstract String getSensorVersion();
-    protected abstract SCSastControllerJobType getJobType();
     
     private String getAppVersionId() {
         return sscAppVersionResolver.hasValue()
@@ -108,8 +106,8 @@ public abstract class AbstractSCSastControllerScanStartCommand extends AbstractS
             File zipFile = File.createTempFile("zip", ".zip");
             zipFile.deleteOnExit();
             try (FileOutputStream fout = new FileOutputStream(zipFile); ZipOutputStream zout = new ZipOutputStream(fout)) {
-                final String fileName = (getJobType() == SCSastControllerJobType.TRANSLATION_AND_SCAN_JOB) ? "translation.zip" : "session.mbs";
-                addFile( zout, fileName, getPayloadFile());
+                final String fileName = (optionsProvider.getScanStartOptions().getJobType() == SCSastControllerJobType.TRANSLATION_AND_SCAN_JOB) ? "translation.zip" : "session.mbs";
+                addFile( zout, fileName, optionsProvider.getScanStartOptions().getPayloadFile());
                 // TODO Add rule files, filter files, issue template
             }
             return zipFile;

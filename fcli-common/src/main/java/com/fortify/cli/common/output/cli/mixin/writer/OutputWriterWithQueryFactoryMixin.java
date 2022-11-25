@@ -22,9 +22,9 @@ import picocli.CommandLine.Spec.Target;
 @ReflectiveAccess
 public class OutputWriterWithQueryFactoryMixin implements IOutputWriterFactory, IOutputQueriesSupplier {
     @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-    @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false)
+    @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false, order=30)
     private OutputOptionsArgGroup outputOptionsArgGroup = new OutputOptionsArgGroup();
-    @ArgGroup(headingKey = "arggroup.query.heading", exclusive = false)
+    @ArgGroup(headingKey = "arggroup.query.heading", exclusive = false, order=40)
     private QueryOptionsArgGroup queryOptionsArgGroup = new QueryOptionsArgGroup();
     
     @Override

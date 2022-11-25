@@ -2,7 +2,6 @@ package com.fortify.cli.sc_sast.scan.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.variable.PredefinedVariable;
-import com.fortify.cli.sc_sast.scan.cli.cmd.start.SCSastControllerScanStartCommands;
 
 import picocli.CommandLine.Command;
 
@@ -10,7 +9,7 @@ import picocli.CommandLine.Command;
         name = "scan",
         subcommands = {
                 SCSastControllerScanCancelCommand.class,
-                SCSastControllerScanStartCommands.class,
+                SCSastControllerScanStartCommand.class,
                 SCSastControllerScanStatusCommand.class,
                 SCSastControllerScanWaitForCommand.class
         }

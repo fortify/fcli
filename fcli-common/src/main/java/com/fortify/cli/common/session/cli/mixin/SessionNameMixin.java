@@ -47,7 +47,7 @@ public class SessionNameMixin {
     
     @ReflectiveAccess
     public static class OptionalOption extends AbstractSessionNameMixin {
-        @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
+        @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 20)
         private SessionNameArgGroup nameOptions = new SessionNameArgGroup();
     
         static class SessionNameArgGroup {

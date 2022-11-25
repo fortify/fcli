@@ -17,7 +17,7 @@ import picocli.CommandLine.Spec.Target;
 @ReflectiveAccess
 public class StandardOutputWriterFactoryMixin implements IOutputWriterFactory {
     @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-    @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false)
+    @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false, order=30)
     private OutputOptionsArgGroup outputOptionsArgGroup  = new OutputOptionsArgGroup();
     
     @Override
