@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
@@ -31,7 +32,7 @@ import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public abstract class AbstractSessionCommand implements Runnable {
+public abstract class AbstractSessionCommand extends AbstractFortifyCLICommand implements Runnable {
     @Override
     public final void run() {
         _run();
