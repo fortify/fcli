@@ -8,7 +8,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "config",
-        description = "Commands for configuring fcli",
         resourceBundle = "com.fortify.cli.config.i18n.ConfigMessages",
         subcommands = {
                 LanguageCommands.class,
