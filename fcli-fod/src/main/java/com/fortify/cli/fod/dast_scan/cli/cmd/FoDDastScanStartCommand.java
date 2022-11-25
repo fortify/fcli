@@ -48,7 +48,7 @@ import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
@@ -132,12 +132,12 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
                 (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
             // if requesting a remediation scan make we have one available
             entitlementToUse = FoDDastScanHelper.validateRemediationEntitlement(unirest, relId,
-                    currentSetup.getEntitlementId(), FoDScanTypeOptions.FoDScanType.Dynamic);
+                    currentSetup.getEntitlementId(), FoDScanFormatOptions.FoDScanType.Dynamic);
         } else if (assessmentType.getAssessmentType() != null && entitlementType.getEntitlementPreferenceType() != null) {
             // if assessment and entitlement type are both specified, find entitlement to use
             entitlementToUse = FoDDastScanHelper.getEntitlementToUse(unirest, relId,
                     assessmentType.getAssessmentType(), entitlementType.getEntitlementPreferenceType(),
-                    FoDScanTypeOptions.FoDScanType.Dynamic);
+                    FoDScanFormatOptions.FoDScanType.Dynamic);
         } else {
             // use the current scan setup
             entitlementToUse.copyFromCurrentSetup(currentSetup);

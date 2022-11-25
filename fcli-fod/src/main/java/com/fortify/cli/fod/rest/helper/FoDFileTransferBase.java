@@ -68,7 +68,7 @@ public abstract class FoDFileTransferBase {
     }
 
     @SneakyThrows
-    public FoDUploadResponse transfer() {
+    public FoDUploadResponse upload() {
         File f = this.uploadFile;
         long fileLen = f.length();
 

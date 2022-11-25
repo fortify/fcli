@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.scan.cli.mixin;
+package com.fortify.cli.fod.oss_scan.cli.mixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -33,37 +33,37 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FoDScanTypeOptions {
-    public enum FoDScanType {Static, Dynamic, Mobile, Monitoring, Network, OpenSource, Container}
+public class FoDSbomFormatOptions {
+    public enum FoDSbomFormat {CycloneDX}
 
     @ReflectiveAccess
-    public static final class FoDScanTypeIterable extends ArrayList<String> {
+    public static final class FoDSbomFormatIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
 
-        public FoDScanTypeIterable() {
-            super(Stream.of(FoDScanType.values()).map(FoDScanType::name).collect(Collectors.toList()));
+        public FoDSbomFormatIterable() {
+            super(Stream.of(FoDSbomFormat.values()).map(FoDSbomFormat::name).collect(Collectors.toList()));
         }
     }
 
     @ReflectiveAccess
-    public static abstract class AbstractFoDScanType {
-        public abstract FoDScanType getScanType();
+    public static abstract class AbstractFoDSbomFormat {
+        public abstract FoDSbomFormat getSbomFormat();
     }
 
     @ReflectiveAccess
-    public static class RequiredOption extends AbstractFoDScanType {
-        @Option(names = {"--type", "--scan-type"}, required = true, arity = "1",
-                completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")
+    public static class RequiredOption extends AbstractFoDSbomFormat {
+        @Option(names = {"--sbom-format"}, required = true, arity = "1",
+                completionCandidates = FoDSbomFormatIterable.class, descriptionKey = "SbomFormatMixin")
         @Getter
-        private FoDScanType scanType;
+        private FoDSbomFormat sbomFormat;
     }
 
     @ReflectiveAccess
-    public static class OptionalOption extends AbstractFoDScanType {
-        @Option(names = {"--type", "--scan-type"}, required = false, arity = "1",
-                completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")
+    public static class OptionalOption extends AbstractFoDSbomFormat {
+        @Option(names = {"--sbom-format"}, required = false, arity = "1",
+                completionCandidates = FoDSbomFormatIterable.class, descriptionKey = "SbomFormatMixin")
         @Getter
-        private FoDScanType scanType;
+        private FoDSbomFormat sbomFormat;
     }
 
 }

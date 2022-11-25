@@ -33,7 +33,7 @@ import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppAndRelNameDescriptor;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceAndRelNameDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -158,7 +158,7 @@ public class FoDAppRelHelper {
     }
 
     public static final FoDAppRelAssessmentTypeDescriptor[] getAppRelAssessmentTypes(UnirestInstance unirestInstance,
-                                                                                     String relId, FoDScanTypeOptions.FoDScanType scanType, boolean failIfNotFound) {
+                                                                                     String relId, FoDScanFormatOptions.FoDScanType scanType, boolean failIfNotFound) {
         GetRequest request = unirestInstance.get(FoDUrls.RELEASE + "/assessment-types")
                 .routeParam("relId", relId)
                 .queryString("scanType", scanType.name());

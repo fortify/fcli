@@ -33,12 +33,10 @@ import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.rest.helper.FoDFileTransferBase;
 import com.fortify.cli.fod.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod.scan.helper.FoDImportScan;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
-import com.fortify.cli.fod.scan.helper.FoDImportScanResponse;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.util.FoDConstants;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -71,11 +69,11 @@ public class FoDDastScanImportCommand extends AbstractFoDOutputCommand implement
                 unirest, relId, request, scanFile
         );
         importScanHelper.setChunkSize(chunkSize);
-        FoDUploadResponse response = importScanHelper.transfer();
+        FoDUploadResponse response = importScanHelper.upload();
         if (response != null) {
             // get latest scan as we cannot use the referenceId from import anywhere
             FoDScanDescriptor descriptor = FoDScanHelper.getLatestScanDescriptor(unirest, relId,
-                    FoDScanTypeOptions.FoDScanType.Dynamic, true);
+                    FoDScanFormatOptions.FoDScanType.Dynamic, true);
             return descriptor.asObjectNode()
                     .put("releaseId", relId)
                     .put("scanMethod", "FPRImport")

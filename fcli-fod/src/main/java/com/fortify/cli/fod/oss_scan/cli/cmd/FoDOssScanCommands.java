@@ -23,18 +23,18 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.rest.helper;
+package com.fortify.cli.fod.oss_scan.cli.cmd;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.variable.PredefinedVariable;
+import picocli.CommandLine;
 
-import java.util.ArrayList;
-
-@Data
-@EqualsAndHashCode(callSuper = false)
-public class FoDUploadResponse extends JsonNodeHolder {
-    Integer scanId;
-    ArrayList<String> messages;
-    String referenceId;
+@CommandLine.Command(name = "oss-scan",
+        subcommands = {
+                FoDOssScanListCommand.class,
+                FoDOssScanImportCommand.class
+        }
+)
+@PredefinedVariable(name = "_fod_currentScan", field = "scanId")
+public class FoDOssScanCommands extends AbstractFortifyCLICommand {
 }

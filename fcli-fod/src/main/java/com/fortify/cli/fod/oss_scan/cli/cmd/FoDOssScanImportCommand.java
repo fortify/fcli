@@ -23,20 +23,22 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.sast_scan.cli.cmd;
+package com.fortify.cli.fod.oss_scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
+import com.fortify.cli.fod.oss_scan.cli.mixin.FoDSbomFormatOptions;
+import com.fortify.cli.fod.oss_scan.helper.FoDOssHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.helper.FoDUploadResponse;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDImportScan;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.util.FoDConstants;
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -51,20 +53,30 @@ import java.io.File;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Import.CMD_NAME)
-public class FoDSastScanImportCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+public class FoDOssScanImportCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Import outputHelper;
 
     @Mixin private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
+    @Mixin private FoDSbomFormatOptions.OptionalOption sbomFormat;
 
     @CommandLine.Option(names = {"--chunk-size"})
     private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
+
     @CommandLine.Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
-        HttpRequest request = unirest.put(FoDUrls.STATIC_SCANS_IMPORT).routeParam("relId", relId);
+        String importUrl = FoDUrls.RELEASE_IMPORT_CYCLONEDX_SBOM;
+        if (sbomFormat != null && sbomFormat.getSbomFormat() != null) {
+            if (sbomFormat.getSbomFormat().equals(FoDSbomFormatOptions.FoDSbomFormat.CycloneDX)) {
+                importUrl = FoDUrls.RELEASE_IMPORT_CYCLONEDX_SBOM;
+            } else {
+                throw new RuntimeException("Unknown SBOM format specified");
+            }
+        }
+        HttpRequest request = unirest.put(importUrl).routeParam("relId", relId);
         FoDImportScan importScanHelper = new FoDImportScan(
                 unirest, relId, request, scanFile
         );
@@ -73,17 +85,17 @@ public class FoDSastScanImportCommand extends AbstractFoDOutputCommand implement
         if (response != null) {
             // get latest scan as we cannot use the referenceId from import anywhere
             FoDScanDescriptor descriptor = FoDScanHelper.getLatestScanDescriptor(unirest, relId,
-                    FoDScanFormatOptions.FoDScanType.Static, true);
+                    FoDScanFormatOptions.FoDScanType.OpenSource, true);
             return descriptor.asObjectNode()
                     .put("releaseId", relId)
-                    .put("scanMethod", "FPRImport")
+                    .put("scanMethod", "SBOMImport")
                     .put("importReferenceId", (response != null ? response.getReferenceId() : "N/A"));
         }
         return null;
     }
 
     public JsonNode transformRecord(JsonNode record) {
-        return FoDScanHelper.renameFields(record);
+        return FoDOssHelper.renameFields(record);
     }
 
     @Override

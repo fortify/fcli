@@ -80,7 +80,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
         }
         FoDStartScan startScan = new FoDStartScan(unirest, relId, request, scanFile);
         startScan.setChunkSize(chunkSize);
-        FoDUploadResponse startScanResponse = startScan.transfer();
+        FoDUploadResponse startScanResponse = startScan.upload();
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new RuntimeException("Unable to retrieve scan id from response when starting Static scan.");
         }

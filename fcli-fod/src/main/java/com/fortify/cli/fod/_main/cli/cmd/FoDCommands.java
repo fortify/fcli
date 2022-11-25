@@ -3,6 +3,7 @@ package com.fortify.cli.fod._main.cli.cmd;
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
 import com.fortify.cli.fod.microservice.cli.cmd.FoDAppMicroserviceCommands;
+import com.fortify.cli.fod.oss_scan.cli.cmd.FoDOssScanCommands;
 import com.fortify.cli.fod.release.cli.cmd.FoDAppRelCommands;
 import com.fortify.cli.fod.dast_scan.cli.cmd.FoDDastScanCommands;
 import com.fortify.cli.fod.lookup.cli.cmd.FoDLookupCommands;
@@ -26,6 +27,7 @@ import picocli.CommandLine.Command;
                 FoDAppMicroserviceCommands.class,
                 FoDDastScanCommands.class,
                 FoDLookupCommands.class,
+                FoDOssScanCommands.class,
                 FoDSastScanCommands.class,
                 FoDScanCommands.class
         }
