@@ -8,7 +8,7 @@ import com.fortify.cli.common.util.IFortifyCLIInitializer;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class SCSastControllerEnumSystemPropertyInitializer implements IFortifyCLIInitializer {
+public class SCSastControllerScanStatePropertiesInitializer implements IFortifyCLIInitializer {
     @Override
     public void initializeFortifyCLI(String[] args) {
         System.setProperty("fcli.sc-sast.scan.jobStates", getValuesString(SCSastControllerScanJobState.values()));
