@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -39,5 +41,5 @@ import picocli.CommandLine.Command;
         },
         description = "Commands for interacting with report template definitions on Fortify SSC."
 )
-public class SSCReportTemplateCommands {
+public class SSCReportTemplateCommands extends AbstractFortifyCLICommand {
 }

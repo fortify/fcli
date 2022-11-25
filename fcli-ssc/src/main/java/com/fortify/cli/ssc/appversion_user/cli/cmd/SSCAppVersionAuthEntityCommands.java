@@ -1,5 +1,7 @@
 package com.fortify.cli.ssc.appversion_user.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -10,5 +12,5 @@ import picocli.CommandLine.Command;
                 SSCAppVersionAuthEntityListCommand.class,
         }
 )
-public class SSCAppVersionAuthEntityCommands {
+public class SSCAppVersionAuthEntityCommands extends AbstractFortifyCLICommand {
 }

@@ -1,5 +1,7 @@
 package com.fortify.cli.fod.session.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -10,5 +12,5 @@ import picocli.CommandLine.Command;
                 FoDSessionLogoutCommand.class 
         }
 )
-public class FoDSessionCommands {
+public class FoDSessionCommands extends AbstractFortifyCLICommand {
 }

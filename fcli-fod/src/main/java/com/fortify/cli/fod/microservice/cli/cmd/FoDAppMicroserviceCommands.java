@@ -25,6 +25,7 @@
 
 package com.fortify.cli.fod.microservice.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.variable.PredefinedVariable;
 import picocli.CommandLine;
 
@@ -39,5 +40,5 @@ import picocli.CommandLine;
         }
 )
 @PredefinedVariable(name = "_fod_currentMicroservice", field = "microserviceId")
-public class FoDAppMicroserviceCommands {
+public class FoDAppMicroserviceCommands extends AbstractFortifyCLICommand {
 }

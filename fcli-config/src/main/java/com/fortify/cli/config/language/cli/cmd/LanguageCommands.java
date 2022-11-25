@@ -1,5 +1,7 @@
 package com.fortify.cli.config.language.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -11,5 +13,5 @@ import picocli.CommandLine;
                 LanguageGetCommand.class
         }
 )
-public class LanguageCommands {
+public class LanguageCommands extends AbstractFortifyCLICommand {
 }

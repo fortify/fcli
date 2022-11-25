@@ -1,5 +1,6 @@
 package com.fortify.cli.config._main.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.config.autocomplete.cli.cmd.AutoCompleteGenerationCommand;
 import com.fortify.cli.config.language.cli.cmd.LanguageCommands;
 import com.fortify.cli.config.variable.cli.cmd.VariableCommands;
@@ -16,5 +17,5 @@ import picocli.CommandLine.Command;
                 VariableCommands.class
         }
 )
-public class ConfigCommands {
+public class ConfigCommands extends AbstractFortifyCLICommand {
 }

@@ -22,9 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
+
 package com.fortify.cli.fod.lookup.cli.cmd;
 
 import com.fortify.cli.common.variable.PredefinedVariable;
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "lookup",
@@ -34,5 +37,5 @@ import picocli.CommandLine;
         }
 )
 @PredefinedVariable(name = "_fod_currentLookup", field = "text")
-public class FoDLookupCommands {
+public class FoDLookupCommands extends AbstractFortifyCLICommand {
 }

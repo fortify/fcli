@@ -1,5 +1,6 @@
 package com.fortify.cli.sc_dast._main.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.sc_dast.rest.cli.cmd.SCDastRestCommands;
 import com.fortify.cli.sc_dast.scan.cli.cmd.SCDastScanCommands;
 import com.fortify.cli.sc_dast.scan_policy.cli.cmd.SCDastScanPolicyCommands;
@@ -23,4 +24,4 @@ import picocli.CommandLine.Command;
                 SCDastSensorCommands.class,
         }
 )
-public class SCDastCommands {}
+public class SCDastCommands extends AbstractFortifyCLICommand {}

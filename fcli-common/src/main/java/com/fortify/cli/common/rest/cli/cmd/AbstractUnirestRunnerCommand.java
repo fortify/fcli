@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.rest.runner.IUnirestRunner;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -31,7 +32,7 @@ import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 
 @ReflectiveAccess
-public abstract class AbstractUnirestRunnerCommand implements Runnable {
+public abstract class AbstractUnirestRunnerCommand extends AbstractFortifyCLICommand implements Runnable {
     @Override @SneakyThrows
     public final void run() {
         // TODO Do we want to do anything with the results, like formatting it based on output options?

@@ -1,5 +1,7 @@
 package com.fortify.cli.sc_dast.scan.cli.cmd.action.retry;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -9,5 +11,5 @@ import picocli.CommandLine.Command;
                 SCDastScanRetryImportFindingsCommand.class
         }
 )
-public class SCDastScanRetryCommands {
+public class SCDastScanRetryCommands extends AbstractFortifyCLICommand {
 }

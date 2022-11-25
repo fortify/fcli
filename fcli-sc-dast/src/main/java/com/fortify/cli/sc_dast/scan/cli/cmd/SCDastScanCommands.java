@@ -1,5 +1,6 @@
 package com.fortify.cli.sc_dast.scan.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.variable.PredefinedVariable;
 import com.fortify.cli.sc_dast.scan.cli.cmd.action.SCDastScanCompleteCommand;
 import com.fortify.cli.sc_dast.scan.cli.cmd.action.SCDastScanDeleteCommand;
@@ -25,5 +26,5 @@ import picocli.CommandLine.Command;
         }
 )
 @PredefinedVariable(name = "_scdast_currentScan", field = "id")
-public class SCDastScanCommands {
+public class SCDastScanCommands extends AbstractFortifyCLICommand {
 }

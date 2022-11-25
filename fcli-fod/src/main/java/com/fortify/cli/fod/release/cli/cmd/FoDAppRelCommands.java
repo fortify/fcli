@@ -25,6 +25,7 @@
 
 package com.fortify.cli.fod.release.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.variable.PredefinedVariable;
 import picocli.CommandLine;
 
@@ -39,5 +40,5 @@ import picocli.CommandLine;
         }
 )
 @PredefinedVariable(name = "_fod_currentRel", field = "releaseId")
-public class FoDAppRelCommands {
+public class FoDAppRelCommands extends AbstractFortifyCLICommand {
 }

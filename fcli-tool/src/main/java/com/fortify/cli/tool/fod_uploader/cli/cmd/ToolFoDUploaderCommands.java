@@ -1,5 +1,7 @@
 package com.fortify.cli.tool.fod_uploader.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -12,6 +14,6 @@ import picocli.CommandLine.Command;
         }
 
 )
-public class ToolFoDUploaderCommands {
+public class ToolFoDUploaderCommands extends AbstractFortifyCLICommand {
     static final String TOOL_NAME = "fod-uploader";
 }

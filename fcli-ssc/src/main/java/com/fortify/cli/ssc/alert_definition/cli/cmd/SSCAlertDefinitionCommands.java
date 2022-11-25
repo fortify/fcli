@@ -1,5 +1,7 @@
 package com.fortify.cli.ssc.alert_definition.cli.cmd;
 
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -9,5 +11,5 @@ import picocli.CommandLine.Command;
                 SSCAlertDefinitionListCommand.class
         }
 )
-public class SSCAlertDefinitionCommands {
+public class SSCAlertDefinitionCommands extends AbstractFortifyCLICommand {
 }
