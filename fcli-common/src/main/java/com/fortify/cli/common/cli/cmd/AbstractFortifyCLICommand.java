@@ -29,10 +29,13 @@ public class AbstractFortifyCLICommand {
         @Option(names = {"-h", "--help"}, usageHelp = true, description = "display this help message")
         private boolean usageHelpRequested;
         
-        @Option(names = "--log-level")
-        @Getter private LogLevel logLevel;
-
+        @Option(names = "--env-prefix", defaultValue = "FCLI_DEFAULT")
+        @Getter private String envPrefix;
+        
         @Option(names = "--log-file")
         @Getter private String logFile;
+        
+        @Option(names = "--log-level")
+        @Getter private LogLevel logLevel;
     }
 }

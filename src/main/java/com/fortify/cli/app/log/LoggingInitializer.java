@@ -25,13 +25,13 @@
 package com.fortify.cli.app.log;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 
 import org.slf4j.LoggerFactory;
 
-import com.fortify.cli.app.FortifyCLIDefaultValueProvider;
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.util.IFortifyCLIInitializer;
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand.GenericOptionsArgGroup;
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand.LogLevel;
+import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
+import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner.FortifyCLIInitializerCommand;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
@@ -40,7 +40,6 @@ import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.FileAppender;
 import jakarta.inject.Singleton;
 import picocli.CommandLine;
-import picocli.CommandLine.Command;
 
 /**
  * This class is responsible for setting up logging. It simply sets up a
@@ -56,68 +55,33 @@ import picocli.CommandLine.Command;
  */
 @Singleton
 public class LoggingInitializer implements IFortifyCLIInitializer {
-    private static final PrintWriter DUMMY_WRITER = new PrintWriter(new StringWriter());
-    
-    /**
-     * Configure logging based on the provided command line arguments.
-     * @param args Arguments passed on the command line
-     */
-    public static final void initializeLogging(String[] args) {
-        CommandLine commandLine = new CommandLine(SetupLoggingCommand.class)
-                .setOut(DUMMY_WRITER)
-                .setErr(DUMMY_WRITER)
-                .setUnmatchedArgumentsAllowed(true)
-                .setUnmatchedOptionsArePositionalParams(true)
-                .setExpandAtFiles(true);
-        commandLine.execute(args);
-    }
-
     @Override
-    public void initializeFortifyCLI(String[] args) {
-        initializeLogging(args);
+    public void initializeFortifyCLI(FortifyCLIInitializerCommand cmd) {
+        configureLogging(cmd.getGenericOptions());
+    }
+        
+    public void configureLogging(GenericOptionsArgGroup genericOptions) {
+        String logFile = genericOptions.getLogFile();
+        LogLevel logLevel = genericOptions.getLogLevel();
+        if ( logFile!=null || logLevel!=null ) {
+            LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+            Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+            configureLogFile(rootLogger, logFile==null ? "fcli.log" : logFile);
+            configureLogLevel(rootLogger, logLevel==null ? LogLevel.INFO : logLevel);
+        }
     }
 
-    /**
-     * {@link Command} implementation for setting up logging, based on the
-     * options and functionality provided by {@link LoggingMixin}.
-     * 
-     * @author Ruud Senden
-     */
-    @Command(defaultValueProvider = FortifyCLIDefaultValueProvider.class)
-    public static final class SetupLoggingCommand extends AbstractFortifyCLICommand implements Runnable {
-        /**
-         * Configure logging by calling the {@link LoggingMixin#configureLogging()}
-         * method.
-         */
-        @Override
-        public void run() {
-            configureLogging();
-        }
-        
-        public void configureLogging() {
-            String logFile = getGenericOptions().getLogFile();
-            LogLevel logLevel = getGenericOptions().getLogLevel();
-            if ( logFile!=null || logLevel!=null ) {
-                LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-                Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-                configureLogFile(rootLogger, logFile==null ? "fcli.log" : logFile);
-                configureLogLevel(rootLogger, logLevel==null ? LogLevel.INFO : logLevel);
-            }
-        }
+    private void configureLogFile(Logger rootLogger, String logFile) {
+        FileAppender<ILoggingEvent> fileAppender = new FileAppender<ILoggingEvent>();
+        fileAppender.setFile(logFile);
+        fileAppender.setAppend(false);
+        fileAppender.setEncoder(((ConsoleAppender<ILoggingEvent>)rootLogger.getAppender("default")).getEncoder());
+        fileAppender.setContext(rootLogger.getLoggerContext());
+        fileAppender.start();
+        rootLogger.addAppender(fileAppender);
+    }
 
-        private void configureLogFile(Logger rootLogger, String logFile) {
-            FileAppender<ILoggingEvent> fileAppender = new FileAppender<ILoggingEvent>();
-            fileAppender.setFile(logFile);
-            fileAppender.setAppend(false);
-            fileAppender.setEncoder(((ConsoleAppender<ILoggingEvent>)rootLogger.getAppender("default")).getEncoder());
-            fileAppender.setContext(rootLogger.getLoggerContext());
-            fileAppender.start();
-            rootLogger.addAppender(fileAppender);
-        }
-
-        private void configureLogLevel(Logger rootLogger, LogLevel level) {
-            rootLogger.setLevel(level.getLogbackLevel());
-        }
-
+    private void configureLogLevel(Logger rootLogger, LogLevel level) {
+        rootLogger.setLevel(level.getLogbackLevel());
     }
 }

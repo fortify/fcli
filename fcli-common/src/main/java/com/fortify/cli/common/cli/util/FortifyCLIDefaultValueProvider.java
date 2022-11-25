@@ -1,16 +1,18 @@
-package com.fortify.cli.app;
+package com.fortify.cli.common.cli.util;
 
 import java.lang.reflect.AnnotatedElement;
 
-import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.util.StringUtils;
 
+import lombok.Setter;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
 public class FortifyCLIDefaultValueProvider implements CommandLine.IDefaultValueProvider {
+    @Setter private static String envPrefix = "FCLI_DEFAULT";
+
     @Override
     public String defaultValue(ArgSpec argSpec) {
         String envVarSuffix;
@@ -44,6 +46,6 @@ public class FortifyCLIDefaultValueProvider implements CommandLine.IDefaultValue
     private final String getEnvVarName(CommandSpec command, String suffix) {
         String qualifiedCommandName = command.qualifiedName("_");
         String combinedName = String.format("%s_%s", qualifiedCommandName, suffix);
-        return combinedName.replace('-', '_').toUpperCase().replaceFirst("FCLI_", "FCLI_DEFAULT_");
+        return combinedName.replace('-', '_').toUpperCase().replaceFirst("FCLI", envPrefix);
     }
 }

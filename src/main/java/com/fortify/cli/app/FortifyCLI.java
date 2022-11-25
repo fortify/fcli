@@ -29,7 +29,8 @@ import org.graalvm.nativeimage.hosted.RuntimeReflection;
 import org.jasypt.normalization.Normalizer;
 
 import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
-import com.fortify.cli.common.util.IFortifyCLIInitializer;
+import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner;
+import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 import com.fortify.cli.config.language.util.LanguagePropertiesManager;
 import com.oracle.svm.core.annotate.AutomaticFeature;
@@ -70,7 +71,7 @@ public class FortifyCLI {
         String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
         try (ApplicationContext applicationContext = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
             try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {
-                applicationContext.getBeansOfType(IFortifyCLIInitializer.class).forEach(b -> b.initializeFortifyCLI(resolvedArgs));
+                FortifyCLIInitializerRunner.initialize(resolvedArgs, micronautFactory);
                 CommandLine commandLine = new CommandLine(FCLIRootCommands.class, micronautFactory);
                 return commandLine.setParameterExceptionHandler(
                             new I18nParameterExceptionHandler(

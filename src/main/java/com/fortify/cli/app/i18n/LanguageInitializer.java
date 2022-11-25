@@ -2,7 +2,8 @@ package com.fortify.cli.app.i18n;
 
 import java.util.Locale;
 
-import com.fortify.cli.common.util.IFortifyCLIInitializer;
+import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
+import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner.FortifyCLIInitializerCommand;
 import com.fortify.cli.config.language.util.LanguagePropertiesManager;
 
 import jakarta.inject.Inject;
@@ -18,7 +19,7 @@ public class LanguageInitializer implements IFortifyCLIInitializer {
     }
 
     @Override
-    public void initializeFortifyCLI(String[] args) {
+    public void initializeFortifyCLI(FortifyCLIInitializerCommand cmd) {
         Locale.setDefault(config.getLocale());
     }
 }
