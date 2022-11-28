@@ -454,10 +454,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
                            [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<em>session-name</em>]]
                            <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
                _            <em class="=&lt;propertyNames&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
-                           (<strong>--ssc-url</strong>=<em>&lt;url&gt;</em> [<strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em>]
-                           [<strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em>]
-                           [<strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em>] [<strong>--proxy-password</strong>] [<strong>-k</strong>])
-                           (<strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>]                            [<strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em>]) | <strong>-t</strong>[=<em>&lt;token&gt;</em>]</p>
+                           (<strong>--ssc-url</strong>=<em>&lt;url&gt;</em> [<strong>-k</strong>]) (<strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>]                            [<strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em>]) | <strong>-t</strong>[=<em>&lt;token&gt;</em>]</p>
 </div>
 </div>
 </div>
@@ -554,62 +551,6 @@ Option values are commonly configured through environment variables as listed in
 </div>
 </div>
 </dd>
-<dt class="hdlist1"><strong>--proxy-host</strong>=<em>&lt;proxyHost&gt;</em></dt>
-<dd>
-<p>Hostname or IP address of the proxy server. Environment variables:</p>
-<div class="literalblock">
-<div class="content">
-<pre>null_PROXY_HOST: Shared across all modules</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>null_SC_SAST_PROXY_HOST: Only SC SAST commands</pre>
-</div>
-</div>
-</dd>
-<dt class="hdlist1"><strong>--proxy-port</strong>=<em>&lt;proxyPort&gt;</em></dt>
-<dd>
-<p>Proxy server port number. Environment variables:</p>
-<div class="literalblock">
-<div class="content">
-<pre>null_PROXY_PORT: Shared across all modules</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>null_SC_SAST_PROXY_PORT: Only SC SAST commands</pre>
-</div>
-</div>
-</dd>
-<dt class="hdlist1"><strong>--proxy-user</strong>=<em>&lt;proxyUser&gt;</em></dt>
-<dd>
-<p>Proxy server user. Environment variables:</p>
-<div class="literalblock">
-<div class="content">
-<pre>null_PROXY_USER: Shared across all modules</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>null_SC_SAST_PROXY_USER: Only SC SAST commands</pre>
-</div>
-</div>
-</dd>
-<dt class="hdlist1"><strong>--proxy-password</strong></dt>
-<dd>
-<p>Proxy server password. Environment variables:</p>
-<div class="literalblock">
-<div class="content">
-<pre>null_PROXY_PASSWORD: Shared across all modules</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>null_SC_SAST_PROXY_PASSWORD: Only SC SAST commands</pre>
-</div>
-</div>
-</dd>
 <dt class="hdlist1"><strong>-k</strong>, <strong>--insecure</strong></dt>
 <dd>
 <p>Disable SSL checks.</p>
@@ -680,8 +621,8 @@ Option values are commonly configured through environment variables as listed in
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221125.233939-dev_main, built on 2022-11-25 23 40 17<br>
-Last updated 2022-11-25 23:41:31 UTC
+Version fcli version 0.20221128.152841-dev_main, built on 2022-11-28 15 29 11<br>
+Last updated 2022-11-28 15:30:12 UTC
 </div>
 </div>
 </body>
