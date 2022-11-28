@@ -22,16 +22,16 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.Download.CMD_NAME)
 public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
-    @Parameters(index = "0", converter = DownloadTypeConverter.class, completionCandidates = DownloadTypeIterable.class, paramLabel="type")
-    @Getter private DownloadType type;
     @Getter @Mixin private SCDastOutputHelperMixins.Download outputHelper;
-    @Mixin private SCDastScanResolverMixin.RequiredOption scanResolver;
+    @Mixin private SCDastScanResolverMixin.PositionalParameter scanResolver;
     @Mixin private CommonOptionMixins.OptionalDestinationFile optionalDestination;
+    @Option(names = {"-t", "--type"}, required=true, converter = DownloadTypeConverter.class, completionCandidates = DownloadTypeIterable.class)
+    @Getter private DownloadType type;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {

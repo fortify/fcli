@@ -9,7 +9,7 @@ public class CommonOptionMixins {
     
     @ReflectiveAccess
     public static class OptionalDestinationFile {
-        @Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
+        @Option(names = {"-f", "--dest"}, descriptionKey = "fcli.destination-file")
         @Getter private String destination;
     }
 }
