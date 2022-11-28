@@ -34,6 +34,9 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -50,6 +53,7 @@ import lombok.SneakyThrows;
 
 @ReflectiveAccess @FixInjection
 public abstract class AbstractSessionDataManager<T extends ISessionData> implements ISessionDataManager<T> {
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractSessionDataManager.class);
     @Getter @Inject private ObjectMapper objectMapper;
     
     @Override
@@ -65,7 +69,8 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
         } catch ( Exception e ) {
             FcliHomeHelper.deleteFile(authSessionDataPath, false);
             conditionalThrow(failIfUnavailable, ()->new IllegalStateException("Error reading auth session data, please try logging in again", e));
-            // TODO Log warning message
+            LOG.warn("Error reading auth session data from {}; session data has been deleted", authSessionDataPath);
+            LOG.info("Exception details: ", e);
             return null;
         }
     }
