@@ -87,13 +87,13 @@ public class ConfigPropertiesManager {
     @PreDestroy @SneakyThrows
     public void save() {
         if ( dirty ) {
-            FcliHomeHelper.saveFile(CONFIG_PATH, getAsJson());
+            FcliHomeHelper.saveFile(CONFIG_PATH, getAsJsonString(), true);
         }
         dirty = false;
     }
     
     @SneakyThrows
-    private final String getAsJson() {
+    private final String getAsJsonString() {
         List<ConfigProperty> configPropertyList = config.entrySet().stream().map(this::mapEntryToConfigProperty).collect(Collectors.toList());
         return objectMapper.writeValueAsString(configPropertyList);
     }

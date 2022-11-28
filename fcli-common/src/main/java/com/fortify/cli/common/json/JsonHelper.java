@@ -42,6 +42,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.fortify.cli.common.util.StringUtils;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -139,6 +140,15 @@ public class JsonHelper {
             }
             return result;
         } catch (JsonProcessingException jpe ) {
+            throw new RuntimeException("Error processing JSON data", jpe);
+        }
+    }
+    
+    public static <T> T jsonStringToValue(String jsonString, Class<T> returnType) {
+        if ( StringUtils.isBlank(jsonString) ) { return null; }
+        try {
+            return treeToValue(objectMapper.readTree(jsonString), returnType);
+        } catch (JsonProcessingException jpe) {
             throw new RuntimeException("Error processing JSON data", jpe);
         }
     }

@@ -63,7 +63,7 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
             checkNonExpiredSessionAvailable(sessionName, failIfUnavailable, authSessionData);
             return authSessionData;
         } catch ( Exception e ) {
-            FcliHomeHelper.deleteFile(authSessionDataPath);
+            FcliHomeHelper.deleteFile(authSessionDataPath, false);
             conditionalThrow(failIfUnavailable, ()->new IllegalStateException("Error reading auth session data, please try logging in again", e));
             // TODO Log warning message
             return null;
@@ -74,13 +74,13 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
     @SneakyThrows // TODO Do we want to use SneakyThrows? 
     public final void save(String sessionName, T sessionData) {
         String authSessionDataJson = objectMapper.writeValueAsString(sessionData);
-        FcliHomeHelper.saveSecuredFile(Paths.get("sessions", getSessionTypeName(), sessionName), authSessionDataJson);
+        FcliHomeHelper.saveSecuredFile(Paths.get("sessions", getSessionTypeName(), sessionName), authSessionDataJson, true);
     }
     
     @Override
     @SneakyThrows // TODO Do we want to use SneakyThrows?
     public final void destroy(String sessionName) {
-        FcliHomeHelper.deleteFile(Paths.get("sessions", getSessionTypeName(), sessionName));
+        FcliHomeHelper.deleteFile(Paths.get("sessions", getSessionTypeName(), sessionName), true);
     }
     
     @Override
@@ -95,7 +95,7 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
         if ( !FcliHomeHelper.exists(path) ) {
             return Collections.emptyList();
         }
-        return FcliHomeHelper.listFilesInDir(path, false)
+        return FcliHomeHelper.listFilesInDir(path, true)
                 .map(Path::getFileName)
                 .map(Path::toString)
                 .collect(Collectors.toList());

@@ -36,9 +36,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = BasicOutputHelperMixins.DeleteAll.CMD_NAME)
+@Command(name = BasicOutputHelperMixins.Clear.CMD_NAME)
 public class VariableDefinitionClearCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private BasicOutputHelperMixins.DeleteAll outputHelper;
+    @Getter @Mixin private BasicOutputHelperMixins.Clear outputHelper;
 
     @Override
     public JsonNode getJsonNode() {

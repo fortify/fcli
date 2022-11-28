@@ -8,15 +8,12 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.FcliHomeHelper;
-import com.fortify.cli.common.util.StringUtils;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
 public final class ToolHelper {
-    private static final ObjectMapper jsonObjectMapper = JsonHelper.getObjectMapper();
     private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
     
     public static final ToolDownloadDescriptor getToolDownloadDescriptor(String toolName) {
@@ -29,20 +26,14 @@ public final class ToolHelper {
         }
     }
     
-    public static final ToolVersionCombinedDescriptor saveToolVersionInstallDescriptor(String toolName, ToolVersionInstallDescriptor installDescriptor) throws IOException {
+    public static final ToolVersionCombinedDescriptor saveToolVersionInstallDescriptor(String toolName, ToolVersionInstallDescriptor installDescriptor) {
         ToolVersionDownloadDescriptor downloadDescriptor = installDescriptor.getOriginalDownloadDescriptor();
-        String contents = jsonObjectMapper.writeValueAsString(installDescriptor);
-        FcliHomeHelper.saveFile(getInstallDescriptorPath(toolName, downloadDescriptor.getVersion()), contents);
+        FcliHomeHelper.saveFile(getInstallDescriptorPath(toolName, downloadDescriptor.getVersion()), installDescriptor, true);
         return new ToolVersionCombinedDescriptor(toolName, downloadDescriptor, installDescriptor);
     }
     
     public static final ToolVersionInstallDescriptor loadToolVersionInstallDescriptor(String toolName, String version) {
-        try {
-            String contents = FcliHomeHelper.readFile(getInstallDescriptorPath(toolName, version), false);
-            return StringUtils.isBlank(contents) ? null : jsonObjectMapper.readValue(contents, ToolVersionInstallDescriptor.class);
-        } catch ( IOException e ) {
-            throw new RuntimeException("Error reading installed tool data", e);
-        }
+        return FcliHomeHelper.readFile(getInstallDescriptorPath(toolName, version), ToolVersionInstallDescriptor.class, false);
     }
     
     public static final ToolVersionCombinedDescriptor loadToolVersionCombinedDescriptor(String toolName, String version) {
@@ -51,11 +42,7 @@ public final class ToolHelper {
     }
     
     public static final void deleteToolVersionInstallDescriptor(String toolName, String version) {
-        try {
-            FcliHomeHelper.deleteFile(getInstallDescriptorPath(toolName, version));
-        } catch ( IOException e ) {
-            throw new RuntimeException("Error reading installed tool data", e);
-        }
+        FcliHomeHelper.deleteFile(getInstallDescriptorPath(toolName, version), true);
     }
     
     public static final ToolVersionCombinedDescriptor[] getToolVersionCombinedDescriptors(String toolName) {

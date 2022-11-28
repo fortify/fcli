@@ -86,7 +86,7 @@ public final class FcliVariableHelper {
             JsonNode variableDescriptorJson = variableDescriptor==null ? null : objectMapper.readValue(variableDescriptor, JsonNode.class);
             return JsonHelper.treeToValue(variableDescriptorJson, VariableDescriptor.class);
         } catch ( Exception e ) {
-            FcliHomeHelper.deleteDir(variablePath.getParent());
+            FcliHomeHelper.deleteDir(variablePath.getParent(), true);
             conditionalThrow(failIfUnavailable, ()->new IllegalStateException("Error reading variable descriptor, data has been deleted", e));
             // TODO Log warning message
             return null;
@@ -107,7 +107,7 @@ public final class FcliVariableHelper {
             saveVariableDescriptor(descriptor);
             return variableContents==null ? null : objectMapper.readValue(variableContents, JsonNode.class);
         } catch ( Exception e ) {
-            FcliHomeHelper.deleteDir(variablePath.getParent());
+            FcliHomeHelper.deleteDir(variablePath.getParent(), true);
             conditionalThrow(failIfUnavailable, ()->new IllegalStateException("Error reading variable descriptor or contents, data has been deleted", e));
             // TODO Log warning message
             return null;
@@ -169,7 +169,7 @@ public final class FcliVariableHelper {
     @SneakyThrows // TODO Do we want to use SneakyThrows? 
     private static final VariableDescriptor saveVariableDescriptor(VariableDescriptor descriptor) {
         String variableDescriptorString = objectMapper.writeValueAsString(descriptor);
-        FcliHomeHelper.saveFile(getVariableDescriptorRelativePath(descriptor.getName()), variableDescriptorString);
+        FcliHomeHelper.saveFile(getVariableDescriptorRelativePath(descriptor.getName()), variableDescriptorString, true);
         return descriptor;
     }
     
@@ -179,14 +179,14 @@ public final class FcliVariableHelper {
         if ( descriptor.encrypted ) {
             variableContentsString = EncryptionHelper.encrypt(variableContentsString);
         }
-        FcliHomeHelper.saveFile(getVariableContentsRelativePath(descriptor.getName()), variableContentsString);
+        FcliHomeHelper.saveFile(getVariableContentsRelativePath(descriptor.getName()), variableContentsString, true);
     }
 
     @SneakyThrows // TODO Do we want to use SneakyThrows?
     public static final void delete(String variableName) {
         Path variableDirPath = getVariablePathIfExists(variableName, getVariablePath(variableName), false);
         if ( variableDirPath!=null ) {
-            FcliHomeHelper.deleteDir(variableDirPath);
+            FcliHomeHelper.deleteDir(variableDirPath, true);
         }
     }
     
@@ -208,7 +208,7 @@ public final class FcliVariableHelper {
         if ( !FcliHomeHelper.exists(path) ) {
             return Stream.empty();
         }
-        return FcliHomeHelper.listDirsInDir(path, false)
+        return FcliHomeHelper.listDirsInDir(path, true)
                 .map(Path::getFileName)
                 .map(Path::toString);
     }

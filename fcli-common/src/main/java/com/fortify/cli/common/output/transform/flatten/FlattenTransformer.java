@@ -26,11 +26,14 @@ package com.fortify.cli.common.output.transform.flatten;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.AbstractJsonNodeTransformer;
 
 import io.micronaut.core.util.StringUtils;
@@ -75,15 +78,32 @@ public class FlattenTransformer extends AbstractJsonNodeTransformer {
                 object.fields().forEachRemaining(entry -> {
                     flatten(entry.getValue(), getPrefix(prefix, entry.getKey()));
                 });
-            } else if (node.isArray() && flattenNestedArrays) {
+            } else if (node.isArray()) {
                 ArrayNode array = (ArrayNode) node;
+                JsonNodeType nodeType = array==null || array.isEmpty() ? null : array.get(0).getNodeType();
+                if ( nodeType!=null ) {
+                    switch (nodeType) {
+                    case ARRAY: case OBJECT: case POJO: flattenNestedArray(array, prefix); break;
+                    case STRING: case NUMBER: result.put(fieldNameFormatter.apply(prefix), toConcatenatedString(array)); break;
+                    default: // TODO Ignore all others?
+                    }
+                }
+            } else {
+                result.set(fieldNameFormatter.apply(prefix), node);
+            }
+        }
+        
+        private void flattenNestedArray(ArrayNode array, String prefix) {
+            if ( flattenNestedArrays ) {
                 AtomicInteger counter = new AtomicInteger();
                 array.elements().forEachRemaining(item -> {
                     flatten(item, getPrefix(prefix, counter.getAndIncrement()));
                 });
-            } else {
-                result.set(fieldNameFormatter.apply(prefix), node);
             }
+        }
+        
+        private String toConcatenatedString(ArrayNode array) {
+            return JsonHelper.stream(array).map(JsonNode::textValue).collect(Collectors.joining(", "));
         }
 
         private String getPrefix(String prefix, String key) {

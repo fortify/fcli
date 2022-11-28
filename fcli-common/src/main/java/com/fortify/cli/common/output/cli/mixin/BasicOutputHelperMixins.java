@@ -26,6 +26,14 @@ import picocli.CommandLine.Spec.Target;
  */
 public class BasicOutputHelperMixins {
     @ReflectiveAccess
+    public static class Add extends AbstractBasicOutputHelper {
+        public static final String CMD_NAME = "add";
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+    
+    @ReflectiveAccess
     public static class Create extends AbstractBasicOutputHelper {
         public static final String CMD_NAME = "create";
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
@@ -49,9 +57,9 @@ public class BasicOutputHelperMixins {
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
-    @ReflectiveAccess @Command(aliases = {"clear"})
-    public static class DeleteAll extends AbstractBasicOutputHelper {
-        public static final String CMD_NAME = "delete-all";
+    @ReflectiveAccess
+    public static class Clear extends AbstractBasicOutputHelper {
+        public static final String CMD_NAME = "clear";
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
