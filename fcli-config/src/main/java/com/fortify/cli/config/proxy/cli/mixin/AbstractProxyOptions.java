@@ -14,15 +14,21 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 public abstract class AbstractProxyOptions {
-    @Option(names = {"--proxy-user", "-u"}) private String proxyUser;
-    @Option(names = {"--proxy-password", "-p"}, interactive = true, echo = false, arity = "0..1") private char[] proxyPassword;
-    @Option(names = {"--priority"}) private Integer priority;
-    @Option(names = {"--modules", "-m"}, split = ",") private Set<String> modules;
+    @Option(names = {"--user", "-u"}, descriptionKey = "fcli.config.proxy.user") 
+    private String proxyUser;
+    @Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", descriptionKey = "fcli.config.proxy.password") 
+    private char[] proxyPassword;
+    @Option(names = {"--priority"}, descriptionKey = "fcli.config.proxy.priority") 
+    private Integer priority;
+    @Option(names = {"--modules", "-m"}, split = ",", descriptionKey = "fcli.config.proxy.modules") 
+    private Set<String> modules;
     @ArgGroup(exclusive=true) private ProxyTargetHostsArgGroup targetHostsArgGroup = new ProxyTargetHostsArgGroup();
     
     public static final class ProxyTargetHostsArgGroup {
-        @Option(names={"--include-hosts", "-i"}, split = ",") private Set<String> includedHosts;
-        @Option(names={"--exclude-hosts", "-e"}, split = ",") private Set<String> excludedHosts;
+        @Option(names={"--include-hosts", "-i"}, split = ",", descriptionKey = "fcli.config.proxy.include-hosts") 
+        private Set<String> includedHosts;
+        @Option(names={"--exclude-hosts", "-e"}, split = ",", descriptionKey = "fcli.config.proxy.exclude-hosts") 
+        private Set<String> excludedHosts;
         
         public Set<String> getTargetHosts() {
             return includedHosts!=null ? includedHosts : excludedHosts; 

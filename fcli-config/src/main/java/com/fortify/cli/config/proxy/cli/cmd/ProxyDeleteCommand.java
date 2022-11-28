@@ -18,7 +18,7 @@ import picocli.CommandLine.Parameters;
 @Command(name=BasicOutputHelperMixins.Delete.CMD_NAME)
 public class ProxyDeleteCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier, IRecordTransformerSupplier {
     @Mixin @Getter private BasicOutputHelperMixins.Delete outputHelper;
-    @Parameters(arity="1", descriptionKey = "fcli.config.proxy.name", paramLabel = "NAME")
+    @Parameters(arity="1", descriptionKey = "fcli.config.proxy.delete.name", paramLabel = "NAME")
     private String name;
     
     @Override

@@ -10,7 +10,7 @@ public class ProxyAddOptions extends AbstractProxyOptions {
     @Parameters(arity="1", descriptionKey = "fcli.config.proxy.hostAndPort", paramLabel = "HOST:PORT")
     @Getter private String proxyHostAndPort;
     
-    @Getter @Option(names = {"--name"}) private String name;
+    @Getter @Option(names = {"--name"}, descriptionKey = "fcli.config.proxy.add.name") private String name;
     
     public ProxyDescriptor asProxyDescriptor() {
         return getProxyDescriptorBuilder(null)

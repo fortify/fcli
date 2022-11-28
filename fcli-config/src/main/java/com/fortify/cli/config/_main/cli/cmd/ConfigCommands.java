@@ -9,6 +9,7 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "config",
+        aliases = "cfg",
         resourceBundle = "com.fortify.cli.config.i18n.ConfigMessages",
         subcommands = {
                 ConfigClearCommand.class,
