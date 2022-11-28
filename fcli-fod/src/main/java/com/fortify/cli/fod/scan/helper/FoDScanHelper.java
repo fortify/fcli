@@ -36,7 +36,7 @@ import com.fortify.cli.fod.release.helper.FoDAppRelAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.util.FoDEnums;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpResponse;
@@ -44,10 +44,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 import javax.validation.ValidationException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Optional;
-import java.util.Properties;
 
 import static java.util.function.Predicate.not;
 
@@ -56,15 +53,11 @@ public class FoDScanHelper {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static final JsonNode renameFields(JsonNode record) {
-        JsonNode transform = new RenameFieldsTransformer(new String[]{
-                "scanId:id", "scanType:type", "analysisStatusType:status", "startedDateTime:started",
-                "completedDateTime:completed", "scanMethodTypeName:scanMethod"
-        }).transform(record);
-        return transform;
+        return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
     public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, String relId,
-                                                                                   Integer entitlementId, FoDScanTypeOptions.FoDScanType scanType) {
+                                                                                   Integer entitlementId, FoDScanFormatOptions.FoDScanType scanType) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
@@ -93,7 +86,7 @@ public class FoDScanHelper {
     public static final FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, String relId,
                                                                         FoDAssessmentTypeOptions.FoDAssessmentType assessmentType,
                                                                         FoDEnums.EntitlementPreferenceType entitlementType,
-                                                                        FoDScanTypeOptions.FoDScanType scanType) {
+                                                                        FoDScanFormatOptions.FoDScanType scanType) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
@@ -161,7 +154,7 @@ public class FoDScanHelper {
     }
 
     public static final FoDScanDescriptor getLatestScanDescriptor(UnirestInstance unirest, String relId,
-                                                                  FoDScanTypeOptions.FoDScanType scanType,
+                                                                  FoDScanFormatOptions.FoDScanType scanType,
                                                                   boolean latestById) {
         String queryField = (latestById ? "scanId" : "startedDateTime");
         Optional<JsonNode> latestScan = JsonHelper.stream(
@@ -173,18 +166,22 @@ public class FoDScanHelper {
                 .filter(n -> n.get("scanType").asText().equals(scanType.name()))
                 .filter(not(n -> n.get("analysisStatusType").asText().equals("In_Progress")))
                 .findFirst();
-        return (latestScan.isEmpty() ? null : getDescriptor(latestScan.get()));
+        return (latestScan.isEmpty() ? getEmptyDescriptor() : getDescriptor(latestScan.get()));
     }
 
     //
+
+    private static final FoDScanDescriptor getDescriptor(JsonNode node) {
+        return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
+    }
 
     private static final FoDScanDescriptor getOptionalDescriptor(GetRequest request) {
         JsonNode scan = request.asObject(ObjectNode.class).getBody();
         return scan == null ? null : getDescriptor(scan);
     }
 
-    private static final FoDScanDescriptor getDescriptor(JsonNode node) {
-        return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
+    private static final FoDScanDescriptor getEmptyDescriptor() {
+        return JsonHelper.treeToValue(getObjectMapper().createObjectNode(), FoDScanDescriptor.class);
     }
 
 

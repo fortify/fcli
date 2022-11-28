@@ -25,15 +25,16 @@
 
 package com.fortify.cli.fod.scan.helper;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.fortify.cli.fod.rest.helper.FoDFileTransferBase;
+import kong.unirest.HttpRequest;
+import kong.unirest.UnirestInstance;
 
-import java.util.ArrayList;
+import java.io.File;
 
-@Data
-@EqualsAndHashCode(callSuper=false)
-public class FoDStartScanResponse extends JsonNodeHolder {
-    Integer scanId;
-    ArrayList<String> messages;
+public class FoDImportScan extends FoDFileTransferBase {
+    public FoDImportScan(UnirestInstance unirest, String relId, HttpRequest endpoint, File uploadFile) {
+        super(unirest, endpoint, uploadFile);
+        importScanSessionId = getImportScanSessionDescriptor(relId).getImportScanSessionId();
+        //System.out.println("Created import scan session id: " + importScanSessionId);
+    }
 }

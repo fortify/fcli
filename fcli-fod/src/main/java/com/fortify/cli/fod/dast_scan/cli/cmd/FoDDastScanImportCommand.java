@@ -32,15 +32,15 @@ import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.rest.helper.FoDFileTransferHelper;
+import com.fortify.cli.fod.rest.helper.FoDUploadResponse;
+import com.fortify.cli.fod.scan.helper.FoDImportScan;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
-import com.fortify.cli.fod.scan.helper.FoDImportScanResponse;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.util.FoDConstants;
 import io.micronaut.core.annotation.ReflectiveAccess;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine;
@@ -58,29 +58,28 @@ public class FoDDastScanImportCommand extends AbstractFoDOutputCommand implement
 
     @CommandLine.Option(names = {"--chunk-size"})
     private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
-    @CommandLine.Option(names = {"--upload-sync-time"})
-    private int uploadSyncTime = FoDConstants.DEFAULT_UPLOAD_SYNC_TIME;
     @CommandLine.Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
-        FoDFileTransferHelper fileTransferHelper = new FoDFileTransferHelper(unirest);
-        fileTransferHelper.setChunkSize(chunkSize);
-        fileTransferHelper.setUploadSyncTime(uploadSyncTime);
-        FoDImportScanResponse response = fileTransferHelper.importScan(
-                relId, FoDUrls.DYNAMIC_SCANS_IMPORT,
-                scanFile.getPath()
+        HttpRequest request = unirest.put(FoDUrls.DYNAMIC_SCANS_IMPORT).routeParam("relId", relId);
+        FoDImportScan importScanHelper = new FoDImportScan(
+                unirest, relId, request, scanFile
         );
-
-        // get latest scan as we cannot use the referenceId from import anywhere
-        FoDScanDescriptor descriptor = FoDScanHelper.getLatestScanDescriptor(unirest, relId,
-                FoDScanTypeOptions.FoDScanType.Dynamic, true);
-
-        return descriptor.asObjectNode()
-                .put("scanMethod", "FPRImport")
-                .put("importReferenceId", response.getReferenceId());
+        importScanHelper.setChunkSize(chunkSize);
+        FoDUploadResponse response = importScanHelper.upload();
+        if (response != null) {
+            // get latest scan as we cannot use the referenceId from import anywhere
+            FoDScanDescriptor descriptor = FoDScanHelper.getLatestScanDescriptor(unirest, relId,
+                    FoDScanFormatOptions.FoDScanType.Dynamic, true);
+            return descriptor.asObjectNode()
+                    .put("releaseId", relId)
+                    .put("scanMethod", "FPRImport")
+                    .put("importReferenceId", (response != null ? response.getReferenceId() : "N/A"));
+        }
+        return null;
     }
 
     public JsonNode transformRecord(JsonNode record) {

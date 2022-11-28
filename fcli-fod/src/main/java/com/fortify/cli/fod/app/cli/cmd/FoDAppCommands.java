@@ -39,6 +39,6 @@ import picocli.CommandLine;
                 FoDAppDeleteCommand.class
         }
 )
-@PredefinedVariable(name = "_fod_currentApp", field = "id")
+@PredefinedVariable(name = "_fod_currentApp", field = "applicationId")
 public class FoDAppCommands extends AbstractFortifyCLICommand {
 }

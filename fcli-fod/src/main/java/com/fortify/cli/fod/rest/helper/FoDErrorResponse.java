@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 import java.util.ArrayList;
 
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper=false)
 public class FoDErrorResponse extends JsonNodeHolder {
     ArrayList<FoDError> errors;
     @Data

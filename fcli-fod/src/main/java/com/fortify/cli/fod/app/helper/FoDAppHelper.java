@@ -50,10 +50,7 @@ public class FoDAppHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
     public static final JsonNode renameFields(JsonNode record) {
-        return new RenameFieldsTransformer(new String[] {
-                "applicationId:id", "applicationName:name", "applicationDescription:description",
-                "businessCriticalityType:criticality", "applicationType:type"
-        }).transform(record);
+        return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
     public static final FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String appNameOrId, boolean failIfNotFound) {

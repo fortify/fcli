@@ -45,7 +45,7 @@ import com.fortify.cli.fod.sast_scan.helper.FoDStartSastScanRequest;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.util.FoDConstants;
 import com.fortify.cli.fod.util.FoDEnums;
@@ -73,8 +73,6 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
     private String notes;
     @Option(names = {"--chunk-size"})
     private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
-    @Option(names = {"--upload-sync-time"})
-    private int uploadSyncTime = FoDConstants.DEFAULT_UPLOAD_SYNC_TIME;
     @CommandLine.Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
 
@@ -112,7 +110,7 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
         if (remediationScanType.getRemediationScanPreferenceType() != null && (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
             // if requesting a remediation scan make we have one available
             FoDDastScanHelper.validateRemediationEntitlement(unirest, relId,
-                    currentSetup.getEntitlementId(), FoDScanTypeOptions.FoDScanType.Static).getEntitlementId();
+                    currentSetup.getEntitlementId(), FoDScanFormatOptions.FoDScanType.Static).getEntitlementId();
         }
 
         FoDStartSastScanRequest startScanRequest = new FoDStartSastScanRequest()
@@ -131,10 +129,10 @@ public class FoDSastScanStartCommand extends AbstractFoDOutputCommand implements
         } else if (entitlementType.getEntitlementPreferenceType() != null) {
             startScanRequest.setEntitlementPreferenceType(entitlementType.getEntitlementPreferenceType().name());
         } else {
-            throw new ValidationException("Either an 'entitlement id' or 'entitlement type' need to be specified.");
+            startScanRequest.setEntitlementPreferenceType(String.valueOf(FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan));
         }
 
-        return FoDSastScanHelper.startScan(unirest, relId, startScanRequest, scanFile, chunkSize, uploadSyncTime).asJsonNode();
+        return FoDSastScanHelper.startScan(unirest, relId, startScanRequest, scanFile, chunkSize).asJsonNode();
     }
 
     @Override

@@ -39,6 +39,6 @@ import picocli.CommandLine;
                 FoDAppRelDeleteCommand.class
         }
 )
-@PredefinedVariable(name = "_fod_currentRel", field = "id")
+@PredefinedVariable(name = "_fod_currentRel", field = "releaseId")
 public class FoDAppRelCommands extends AbstractFortifyCLICommand {
 }

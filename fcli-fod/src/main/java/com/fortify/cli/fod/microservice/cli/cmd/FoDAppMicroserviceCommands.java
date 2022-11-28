@@ -39,6 +39,6 @@ import picocli.CommandLine;
                 FoDAppMicroserviceDeleteCommand.class
         }
 )
-@PredefinedVariable(name = "_fod_currentMicroservice", field = "id")
+@PredefinedVariable(name = "_fod_currentMicroservice", field = "microserviceId")
 public class FoDAppMicroserviceCommands extends AbstractFortifyCLICommand {
 }

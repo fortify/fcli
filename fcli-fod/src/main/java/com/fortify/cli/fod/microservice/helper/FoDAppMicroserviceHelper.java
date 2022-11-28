@@ -50,9 +50,7 @@ public class FoDAppMicroserviceHelper {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static final JsonNode renameFields(JsonNode record) {
-        return new RenameFieldsTransformer(new String[] {
-                "microserviceId:id", "microserviceName:name"
-        }).transform(record);
+        return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
     public static final FoDAppMicroserviceDescriptor getRequiredAppMicroservice(UnirestInstance unirest, String appMicroserviceNameOrId, String delimiter, String... fields) {

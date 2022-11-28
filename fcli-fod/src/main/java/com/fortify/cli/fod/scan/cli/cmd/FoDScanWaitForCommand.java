@@ -49,7 +49,7 @@ public class FoDScanWaitForCommand extends AbstractWaitForCommand {
         return builder
                 .recordsSupplier(scansResolver::getScanDescriptorJsonNodes)
                 .recordTransformer(FoDScanHelper::renameFields)
-                .currentStateProperty("status")
+                .currentStateProperty("analysisStatusType")
                 .knownStates(FoDScanStatus.getKnownStateNames())
                 .failureStates(FoDScanStatus.getFailureStateNames())
                 .defaultCompleteStates(FoDScanStatus.getDefaultCompleteStateNames());

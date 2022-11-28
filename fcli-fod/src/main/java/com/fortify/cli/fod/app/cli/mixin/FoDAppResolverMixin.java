@@ -62,6 +62,12 @@ public class FoDAppResolverMixin {
     }
 
     @ReflectiveAccess
+    public static class OptionalOption extends AbstractFoDAppResolverMixin {
+        @Option(names = {"--app"}, required = false, descriptionKey = "ApplicationMixin")
+        @Getter private String appNameOrId;
+    }
+
+    @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDAppResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;

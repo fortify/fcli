@@ -23,22 +23,21 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.dast_scan.cli.cmd;
+package com.fortify.cli.fod.oss_scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
+import com.fortify.cli.fod.oss_scan.helper.FoDOssHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.helper.FoDFilterResultsTransformer;
 import com.fortify.cli.fod.rest.query.FoDFilterParamGenerator;
 import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
 import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAnalysisStatusTypeOptions;
-import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -49,7 +48,7 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.List.CMD_NAME)
-public class FoDDastScanListCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
+public class FoDOssScanListCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.List outputHelper;
 
     @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
@@ -79,8 +78,8 @@ public class FoDDastScanListCommand extends AbstractFoDOutputCommand implements 
     public JsonNode transformRecord(JsonNode record) {
         String aStatusStr = (analysisStatus != null && analysisStatus.getAnalysisStatusType() != null? String.valueOf(analysisStatus.getAnalysisStatusType()) : "*");
         return new FoDFilterResultsTransformer(new String[] {
-                "scanType:Dynamic", "analysisStatusType:"+aStatusStr
-        }).transform(FoDScanHelper.renameFields(record));
+                "scanType:OpenSource", "analysisStatusType:"+aStatusStr
+        }).transform(FoDOssHelper.renameFields(record));
     }
 
     @Override

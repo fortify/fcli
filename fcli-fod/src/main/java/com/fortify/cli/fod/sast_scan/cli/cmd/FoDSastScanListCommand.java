@@ -79,7 +79,7 @@ public class FoDSastScanListCommand extends AbstractFoDOutputCommand implements 
     public JsonNode transformRecord(JsonNode record) {
         String aStatusStr = (analysisStatus != null && analysisStatus.getAnalysisStatusType() != null? String.valueOf(analysisStatus.getAnalysisStatusType()) : "*");
         return new FoDFilterResultsTransformer(new String[] {
-                "type:Static", "status:"+aStatusStr
+                "scanType:Static", "analysisStatusType:"+aStatusStr
         }).transform(FoDScanHelper.renameFields(record));
     }
 

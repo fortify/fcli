@@ -23,7 +23,7 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.scan.helper;
+package com.fortify.cli.fod.rest.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
 import lombok.Data;
@@ -32,8 +32,9 @@ import lombok.EqualsAndHashCode;
 import java.util.ArrayList;
 
 @Data
-@EqualsAndHashCode(callSuper=false)
-public class FoDStartScanResponse extends JsonNodeHolder {
+@EqualsAndHashCode(callSuper = false)
+public class FoDUploadResponse extends JsonNodeHolder {
     Integer scanId;
     ArrayList<String> messages;
+    String referenceId;
 }

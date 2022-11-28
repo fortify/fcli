@@ -38,7 +38,7 @@ import com.fortify.cli.fod.rest.query.FoDFilterParamGenerator;
 import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
 import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAnalysisStatusTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
@@ -71,7 +71,7 @@ public class FoDScanListCommand extends AbstractFoDOutputCommand implements IUni
     @Option(names = {"--modified-start-date"})
     private String modifiedStartDate;
     @Mixin private FoDAnalysisStatusTypeOptions.OptionalOption analysisStatus;
-    @Mixin private FoDScanTypeOptions.OptionalOption scanType;
+    @Mixin private FoDScanFormatOptions.OptionalOption scanType;
     @Mixin private FoDTimePeriodOptions.OptionalOption timePeriod;
 
     @Override
@@ -108,7 +108,7 @@ public class FoDScanListCommand extends AbstractFoDOutputCommand implements IUni
         String aStatusStr = (analysisStatus != null && analysisStatus.getAnalysisStatusType() != null ? String.valueOf(analysisStatus.getAnalysisStatusType()) : "*");
         String sTypeStr = (scanType != null && scanType.getScanType() != null ? String.valueOf(scanType.getScanType()) : "*");
         return new FoDFilterResultsTransformer(new String[]{
-                "type:" + sTypeStr, "status:" + aStatusStr
+                "scanType:" + sTypeStr, "analysisStatusType:" + aStatusStr
         }).transform(FoDScanHelper.renameFields(record));
     }
 
