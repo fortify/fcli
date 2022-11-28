@@ -26,10 +26,6 @@ package com.fortify.cli.common.rest.runner.config;
 
 public interface IUrlConfig {
     String  getUrl();
-    String  getProxyHost();
-    Integer getProxyPort();
-    String  getProxyUser();
-    char[]  getProxyPassword();
     Boolean getInsecureModeEnabled();
     default boolean isInsecureModeEnabled() {
         return Boolean.TRUE.equals(getInsecureModeEnabled());

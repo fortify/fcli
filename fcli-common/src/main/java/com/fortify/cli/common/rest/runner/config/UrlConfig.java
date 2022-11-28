@@ -37,10 +37,6 @@ import lombok.NoArgsConstructor;
 @Data @ReflectiveAccess @NoArgsConstructor @AllArgsConstructor @Builder
 public class UrlConfig implements IUrlConfig {
     private String  url;
-    private String  proxyHost;
-    private Integer proxyPort;
-    private String  proxyUser;
-    private char[]  proxyPassword;
     private Boolean insecureModeEnabled;
     
     public static final UrlConfig from(IUrlConfig other) {
@@ -52,10 +48,6 @@ public class UrlConfig implements IUrlConfig {
         if ( other!=null ) {
             builder = builder
                 .url(other.getUrl())
-                .proxyHost(other.getProxyHost())
-                .proxyPort(other.getProxyPort())
-                .proxyUser(other.getProxyUser())
-                .proxyPassword(other.getProxyPassword())
                 .insecureModeEnabled(other.isInsecureModeEnabled());
         }
         return builder;
@@ -65,10 +57,6 @@ public class UrlConfig implements IUrlConfig {
         UrlConfigBuilder builder = other==null ? builderFrom(overrides) : builderFrom(other);
         if ( other!=null && overrides!=null ) {
             override(overrides.getUrl(), builder::url);
-            override(overrides.getProxyHost(), builder::proxyHost);
-            override(overrides.getProxyPort(), builder::proxyPort);
-            override(overrides.getProxyUser(), builder::proxyUser);
-            override(overrides.getProxyPassword(), builder::proxyPassword);
             override(overrides.getInsecureModeEnabled(), builder::insecureModeEnabled);
         }
         return builder;

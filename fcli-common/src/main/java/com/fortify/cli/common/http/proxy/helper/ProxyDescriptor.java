@@ -1,5 +1,6 @@
 package com.fortify.cli.common.http.proxy.helper;
 
+import java.net.URI;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -32,12 +33,38 @@ public class ProxyDescriptor extends JsonNodeHolder {
     }
     
     @JsonIgnore
+    public String getProxyPasswordAsString() {
+        return proxyPassword==null ? null : String.valueOf(proxyPassword);
+    }
+    
+    @JsonIgnore
     public String getProxyHostAndPort() {
         return String.format("%s:%s", proxyHost, proxyPort);
     }
     
+    public boolean matches(String module, String url) {
+        return matchesModule(module) && matchesHost(URI.create(url).getHost());
+    }
+    
     public static enum ProxyMatchMode {
         include, exclude;
+    }
+    
+    private boolean matchesModule(String module) {
+        return modules.contains(module)==ProxyMatchMode.include.equals(modulesMatchMode);
+    }
+    
+    private boolean matchesHost(String host) {
+        boolean matching = targetHostNames==null 
+                ? false
+                : targetHostNames.stream()
+                    .anyMatch(hostPattern->matchesHost(hostPattern, host));
+        return matching==ProxyMatchMode.include.equals(targetHostNamesMatchMode);
+    }
+    
+    private boolean matchesHost(String hostPattern, String host) {
+        String regex = hostPattern.replaceAll("\\.", "\\\\.").replaceAll("\\*", ".*").replaceAll("\\?", ".");
+        return host.matches(regex);
     }
     
     public static final class ProxyDescriptorBuilder {

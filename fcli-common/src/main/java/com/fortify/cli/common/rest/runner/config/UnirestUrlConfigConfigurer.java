@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.runner.config;
 
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 
 public final class UnirestUrlConfigConfigurer {
@@ -39,10 +38,6 @@ public final class UnirestUrlConfigConfigurer {
         unirestInstance.config()
             .defaultBaseUrl(normalizeUrl(urlConfig.getUrl()))
             .verifySsl(urlConfig.isInsecureModeEnabled());
-        if ( StringUtils.isNotEmpty(urlConfig.getProxyHost()) ) {
-            unirestInstance.config().proxy(urlConfig.getProxyHost(), urlConfig.getProxyPort(), urlConfig.getProxyUser(), 
-                    urlConfig.getProxyHost()==null ? null : String.valueOf(urlConfig.getProxyPassword()));
-        }
     }
     
     /**

@@ -1,12 +1,25 @@
 package com.fortify.cli.common.http.proxy.helper;
 
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.stream.Stream;
 
 import com.fortify.cli.common.util.FcliHomeHelper;
 
+import kong.unirest.UnirestInstance;
+
 public final class ProxyHelper {
     private ProxyHelper() {}
+    
+    public static final void configureProxy(UnirestInstance unirest, String module, String url) {
+        getProxiesStream()
+            .sorted(Comparator.comparingInt(ProxyDescriptor::getPriority).reversed())
+            .filter(d->d.matches(module, url))
+            .findFirst()
+            .ifPresent(d->
+                unirest.config().proxy(d.getProxyHost(), d.getProxyPort(), d.getProxyUser(), d.getProxyPasswordAsString())
+            );
+    }
     
     public static final ProxyDescriptor getProxy(String name) {
         Path proxyConfigPath = getProxyConfigPath(name);

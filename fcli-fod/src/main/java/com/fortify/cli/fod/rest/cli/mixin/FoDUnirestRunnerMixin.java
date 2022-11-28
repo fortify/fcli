@@ -1,5 +1,6 @@
 package com.fortify.cli.fod.rest.cli.mixin;
 
+import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.rest.cli.mixin.AbstractSimpleUnirestRunnerMixin;
 import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -28,6 +29,7 @@ public class FoDUnirestRunnerMixin extends AbstractSimpleUnirestRunnerMixin<FoDS
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, sessionData.getUrlConfig());
+        ProxyHelper.configureProxy(unirest, "fod", sessionData.getUrlConfig().getUrl());
         final String authHeader = String.format("Bearer %s", sessionData.getActiveBearerToken());
         unirest.config().addDefaultHeader("Authorization", authHeader);
     }

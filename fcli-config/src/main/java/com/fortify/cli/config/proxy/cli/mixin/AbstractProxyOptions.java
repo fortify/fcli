@@ -7,10 +7,12 @@ import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor.ProxyDescriptorBuilder;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor.ProxyMatchMode;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
+@ReflectiveAccess
 public abstract class AbstractProxyOptions {
     @Option(names = {"--proxy-user", "-u"}) private String proxyUser;
     @Option(names = {"--proxy-password", "-p"}, interactive = true, echo = false, arity = "0..1") private char[] proxyPassword;

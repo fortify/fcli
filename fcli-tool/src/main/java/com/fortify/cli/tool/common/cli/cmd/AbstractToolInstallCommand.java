@@ -14,10 +14,13 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.runner.GenericUnirestRunner;
 import com.fortify.cli.common.util.FcliHomeHelper;
+import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool.common.helper.ToolHelper;
 import com.fortify.cli.tool.common.helper.ToolVersionCombinedDescriptor;
@@ -26,14 +29,15 @@ import com.fortify.cli.tool.common.helper.ToolVersionInstallDescriptor;
 import com.fortify.cli.tool.common.util.FileUtils;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.Unirest;
+import jakarta.inject.Inject;
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
+@ReflectiveAccess @FixInjection
 public abstract class AbstractToolInstallCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
     private static final Set<PosixFilePermission> binPermissions = PosixFilePermissions.fromString("rwxr-xr-x");
     @Getter @Mixin private BasicOutputHelperMixins.Install outputHelper;
@@ -43,6 +47,7 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
     private String installDir;
     @Getter @Option(names={"-y", "--replace-existing"}, required = false, descriptionKey="fcli.tool.install.replace") 
     private boolean replaceExisting;
+    @Inject private GenericUnirestRunner unirestRunner; 
     
     @Override
     protected final JsonNode getJsonNode() {
@@ -80,10 +85,14 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
     private final File download(ToolVersionDownloadDescriptor descriptor) throws IOException {
         File tempDownloadFile = File.createTempFile("fcli-tool-download", null);
         tempDownloadFile.deleteOnExit();
-        Unirest.get(descriptor.getDownloadUrl())
-            .asFile(tempDownloadFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING)
-            .getBody();
+        unirestRunner.run(u->download(u, descriptor.getDownloadUrl(), tempDownloadFile));
         return tempDownloadFile;
+    }
+    
+    private final Void download(UnirestInstance unirest, String downloadUrl, File destFile) {
+        ProxyHelper.configureProxy(unirest, "tool", downloadUrl);
+        unirest.get(downloadUrl).asFile(destFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
+        return null;
     }
     
     protected void install(ToolVersionInstallDescriptor descriptor, File downloadedFile) throws IOException {

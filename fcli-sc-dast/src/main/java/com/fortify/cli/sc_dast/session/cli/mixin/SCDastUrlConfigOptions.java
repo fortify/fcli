@@ -35,18 +35,6 @@ public class SCDastUrlConfigOptions implements IUrlConfig {
     @Option(names = {"--ssc-url"}, required = true, order=1)
     @Getter private String url;
     
-    @Option(names = {"--proxy-host"}, required = false, order=2)
-    @Getter private String proxyHost;
-    
-    @Option(names = {"--proxy-port"}, required = false, order=3)
-    @Getter private Integer proxyPort;
-    
-    @Option(names = {"--proxy-user"}, required = false, order=4)
-    @Getter private String proxyUser;
-    
-    @Option(names = {"--proxy-password"}, required = false, interactive = true, echo = false, order=5)
-    @Getter private char[] proxyPassword;
-    
     @Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
     @Getter private Boolean insecureModeEnabled;
     
