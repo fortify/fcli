@@ -49,8 +49,14 @@ public class EncryptionHelper {
         var encryptor = new StandardPBEStringEncryptor();
         encryptor.setAlgorithm("PBEWithHMACSHA512AndAES_256");
         encryptor.setIvGenerator(new RandomIvGenerator());
-        encryptor.setPassword("ds$%YTjdwaf#$47672dfdsGVFDa");
+        encryptor.setPassword(getEncryptPassword());
         return encryptor;
+    }
+    
+    private static final String getEncryptPassword() {
+        String userPassword = System.getenv("FCLI_ENCRYPT_KEY");
+        userPassword = StringUtils.isBlank(userPassword) ? "" : userPassword;
+        return userPassword+"ds$%YTjdwaf#$47672dfdsGVFDa";
     }
     
     @RequiredArgsConstructor
