@@ -48,7 +48,7 @@ public class SSCIssueTemplateCreateCommand extends AbstractSSCOutputCommand impl
     @Getter @Mixin private SSCOutputHelperMixins.Create outputHelper; 
     @Parameters(index = "0", arity = "1", descriptionKey = "issueTemplateName")
     private String issueTemplateName;
-    @Option(names={"--issueTemplate","-f"}, required = true)
+    @Option(names={"--issue-template-file","-f"}, required = true)
     private String fileName;
     @Option(names={"--description","-d"}, required = false, defaultValue = "")
     private String description;

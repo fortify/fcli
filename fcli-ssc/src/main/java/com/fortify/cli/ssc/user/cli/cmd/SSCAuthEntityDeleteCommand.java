@@ -51,7 +51,7 @@ public class SSCAuthEntityDeleteCommand extends AbstractSSCOutputCommand impleme
     @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper;
     @Parameters(index = "0..*", arity = "1..*")
     private String[] authEntitySpecs;
-    @Option(names="--allowMultiMatch", defaultValue = "false")
+    @Option(names="--allow-multi-match", defaultValue = "false")
     private boolean allowMultiMatch;
     
     @Override
