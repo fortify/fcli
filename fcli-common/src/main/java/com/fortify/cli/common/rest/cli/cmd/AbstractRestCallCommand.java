@@ -26,6 +26,7 @@ package com.fortify.cli.common.rest.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
+import com.fortify.cli.common.session.manager.api.ISessionData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
@@ -37,7 +38,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-public abstract class AbstractRestCallCommand extends AbstractUnirestRunnerCommand {
+public abstract class AbstractRestCallCommand<D extends ISessionData> extends AbstractUnirestRunnerCommand<D> {
     public static final String CMD_NAME = "call"; 
     @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
     @Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;

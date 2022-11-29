@@ -31,6 +31,7 @@ import com.fortify.cli.ssc.appversion_artifact.cli.mixin.SSCAppVersionArtifactRe
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactStatus;
 import com.fortify.cli.ssc.rest.cli.mixin.SSCUnirestRunnerMixin;
+import com.fortify.cli.ssc.session.manager.ISSCSessionData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -39,7 +40,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.WaitFor.CMD_NAME)
-public class SSCAppVersionArtifactWaitForCommand extends AbstractWaitForCommand {
+public class SSCAppVersionArtifactWaitForCommand extends AbstractWaitForCommand<ISSCSessionData> {
     @Getter @Mixin SSCUnirestRunnerMixin unirestRunner;
     @Mixin private SSCAppVersionArtifactResolverMixin.PositionalParameterMulti artifactsResolver;
     

@@ -24,36 +24,48 @@
  ******************************************************************************/
 package com.fortify.cli.common.output.cli.cmd.unirest;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
 import com.fortify.cli.common.output.spi.ISingularSupplier;
 import com.fortify.cli.common.rest.cli.cmd.AbstractUnirestRunnerCommand;
+import com.fortify.cli.common.session.manager.api.ISessionData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 
 @ReflectiveAccess
-public abstract class AbstractUnirestOutputCommand extends AbstractUnirestRunnerCommand implements ISingularSupplier {
+public abstract class AbstractUnirestOutputCommand<D extends ISessionData> extends AbstractUnirestRunnerCommand<D> implements ISingularSupplier {
+    private static final List<Class<?>> supportedInterfaces = Arrays.asList(
+            IUnirestBaseRequestSupplier.class, 
+            IUnirestWithSessionDataBaseRequestSupplier.class, 
+            IUnirestJsonNodeSupplier.class, 
+            IUnirestWithSessionDataJsonNodeSupplier.class);
+    @SuppressWarnings("unchecked")
     @Override
-    protected final Void run(UnirestInstance unirest) {
+    protected final Void run(UnirestInstance unirest, D sessionData) {
         IUnirestOutputHelper outputHelper = getOutputHelper();
-        if ( isBaseHttpRequestSupplier() ) {
+        if ( isInstance(IUnirestBaseRequestSupplier.class) ) {
             outputHelper.write(unirest, ((IUnirestBaseRequestSupplier)this).getBaseRequest(unirest));
-        } else if ( isJsonNodeSupplier() ) {
+        } else if ( isInstance(IUnirestWithSessionDataBaseRequestSupplier.class) ) {
+            outputHelper.write(unirest, ((IUnirestWithSessionDataBaseRequestSupplier<D>)this).getBaseRequest(unirest, sessionData));
+        } else if ( isInstance(IUnirestJsonNodeSupplier.class) ) {
             outputHelper.write(unirest, ((IUnirestJsonNodeSupplier)this).getJsonNode(unirest));
+        } else if ( isInstance(IUnirestWithSessionDataJsonNodeSupplier.class) ) {
+            outputHelper.write(unirest, ((IUnirestWithSessionDataJsonNodeSupplier<D>)this).getJsonNode(unirest, sessionData));
         } else {
-            throw new IllegalStateException(this.getClass().getName()+" must implement exactly one of I[BaseHttpRequest|JsonNodeHolder|JsonNode]Supplier");
+            throw new IllegalStateException(this.getClass().getName()+" must implement exactly one of "+supportedInterfaces);
         }
         return null;
     }
     
-    private boolean isBaseHttpRequestSupplier() {
-        return (this instanceof IUnirestBaseRequestSupplier)
-                && !(this instanceof IUnirestJsonNodeSupplier);
+    private boolean isInstance(Class<?> clazz) {
+        return clazz.isAssignableFrom(this.getClass()) &&
+                supportedInterfaces.stream()
+                .filter(c->!c.equals(clazz))
+                .noneMatch(c->c.isAssignableFrom(this.getClass()));
     }
     
-    private boolean isJsonNodeSupplier() {
-        return !(this instanceof IUnirestBaseRequestSupplier)
-                && (this instanceof IUnirestJsonNodeSupplier);
-    }
     protected abstract IUnirestOutputHelper getOutputHelper();
 }

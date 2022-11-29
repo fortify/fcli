@@ -26,12 +26,13 @@ package com.fortify.cli.fod.output.cli;
 
 import com.fortify.cli.common.output.cli.cmd.unirest.AbstractUnirestOutputCommand;
 import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
+import com.fortify.cli.fod.session.manager.FoDSessionData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-public abstract class AbstractFoDOutputCommand extends AbstractUnirestOutputCommand {
+public abstract class AbstractFoDOutputCommand extends AbstractUnirestOutputCommand<FoDSessionData> {
     @Getter @Mixin FoDUnirestRunnerMixin unirestRunner;
 }
