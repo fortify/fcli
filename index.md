@@ -255,7 +255,9 @@ Manual pages for individual fcli releases can be downloaded from the Assets sect
 {% assign manpages_release = site.static_files | where: "manpage_release", true %}
 {% assign has_releaseDocs = manpages_release | first %}
 {% if has_releaseDocs %}
+{% for page in manpages_release %}
 - [ {{ page.path | replace_first: "/", "" | split: "/" | first }} ]( /fcli{{ page.path }} )
+{% endfor %}
 {% else %}
 - *No release version documentation available*
 {% endif %}
