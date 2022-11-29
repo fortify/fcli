@@ -450,12 +450,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli sc-sast scan start</strong> [<strong>--[no-]upload</strong>] [<strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
-                        [<strong>--ci-token</strong>=<em>&lt;ciToken&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                        [<strong>--notify</strong>=<em>&lt;email&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                        [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] [[[<strong>-m</strong>=<em>&lt;mbsFile&gt;</em>]] |
-                        [<strong>-v</strong>=<em>&lt;sensorVersion&gt;</em> [<strong>-p</strong>=<em>&lt;packageFile&gt;</em>]]] <em class="[<strong>-o</strong>=_format_
-                  _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                        [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--notify</strong>=<em>&lt;email&gt;</em>]
+                        [<strong>--ssc-ci-token</strong>=<em>&lt;ciToken&gt;</em>] [[<strong>-h</strong>]
+                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
+                        [[[<strong>-m</strong>=<em>&lt;mbsFile&gt;</em>]] | [<strong>-v</strong>=<em>&lt;sensorVersion&gt;</em>
+                        [<strong>-p</strong>=<em>&lt;packageFile&gt;</em>]]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
                         [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
 </div>
@@ -472,16 +473,44 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><strong>--notify</strong>=<em>&lt;email&gt;</em></dt>
+<dd>
+<p>Email address to which to send a scan completion notification</p>
+</dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
 </dd>
 <dt class="hdlist1"><strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
-<dt class="hdlist1"><strong>--[no-]upload</strong></dt>
-<dt class="hdlist1"><strong>--ci-token</strong>=<em>&lt;ciToken&gt;</em></dt>
 <dd>
-<p>== Options for scanning an MBS file:</p>
+<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
 </dd>
+<dt class="hdlist1"><strong>--[no-]upload</strong></dt>
+<dd>
+<p>Don&#8217;t upload scan results to SSC (enabled by default)</p>
+</dd>
+<dt class="hdlist1"><strong>--ssc-ci-token</strong>=<em>&lt;ciToken&gt;</em></dt>
+<dd>
+<p>SSC CIToken. Environment variables:</p>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_CI_TOKEN: Shared with SSC/SC DAST</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SC_SAST_SSC_CI_TOKEN: Only SC SAST commands</pre>
+</div>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options_for_scanning_an_mbs_file">Options for scanning an MBS file:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><strong>-m</strong>, <strong>--mbs-file</strong>=<em>&lt;mbsFile&gt;</em></dt>
 <dd>
 <p>MBS file to scan</p>
@@ -569,8 +598,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221129.095542-dev_main, built on 2022-11-29 09 56 15<br>
-Last updated 2022-11-29 09:57:31 UTC
+Version fcli version 0.20221129.134453-dev_main, built on 2022-11-29 13 45 31<br>
+Last updated 2022-11-29 13:46:32 UTC
 </div>
 </div>
 </body>
