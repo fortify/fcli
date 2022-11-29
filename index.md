@@ -27,7 +27,7 @@ nav:
 ---
 
 # Fortify CLI (fcli) Installation & Usage
-The fcli utility can be used to interact with various Fortify products, like FoD, SSC, ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the man-pages corresponding to the fcli version that you are using, as listed in the [Manual Pages](#manual-pages) section.
+The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the man-pages corresponding to the fcli version that you are using, as listed in the [Manual Pages](#manual-pages) section.
 
 Some of the fcli highlights:
 * Interact with many different Fortify products with just a single command-line utility
@@ -35,7 +35,25 @@ Some of the fcli highlights:
 * [Modular command structure](#command-structure), making it easy to focus on particular tasks
 * [Rich output formats](#-o--output); save command output in JSON, CSV, XML or plain-text formats
 * [Session-based](#session-management); no need to pass URL's and credentials on every individual fcli invocation
+* Support for configuring option values through [environment variables](#environment-variables)
 * Support for [fcli variables](#fcli-variables); pass data between fcli commands
+
+The following Fortify products are currently supported by fcli:
+* Software Security Center (SSC)
+    * Includes virtually all functionality provided by the legacy FortifyClient utility
+    * Includes virtually all functionality provided by the ssc-client sample shipped with SSC
+    * Adds a wide range of other functionalities not previously included in any Fortify client-side utilities
+* ScanCentral SAST
+    * Support for starting and managing ScanCentral SAST scans
+* ScanCentral DAST
+    * Support for starting and managing ScanCentral DAST scans 
+    * Support for listing scan policies and settings
+    * Support for listing and managing sensors
+* Fortify on Demand (FoD)
+     * Currently in preview mode
+     * No [manual pages](#manual-pages) available
+     * `fod` command is hidden from `fcli -h` output
+     * View available FoD commands by running `fcli fod -h`
 
 
 ## Installation
