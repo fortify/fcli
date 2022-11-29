@@ -30,6 +30,7 @@ import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
 import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastUnirestRunnerMixin;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
+import com.fortify.cli.sc_dast.session.manager.ISCDastSessionData;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -38,7 +39,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.WaitFor.CMD_NAME)
-public class SCDastScanWaitForCommand extends AbstractWaitForCommand {
+public class SCDastScanWaitForCommand extends AbstractWaitForCommand<ISCDastSessionData> {
     @Getter @Mixin SCDastUnirestRunnerMixin unirestRunner;
     @Mixin private SCDastScanResolverMixin.PositionalParameterMulti scansResolver;
     

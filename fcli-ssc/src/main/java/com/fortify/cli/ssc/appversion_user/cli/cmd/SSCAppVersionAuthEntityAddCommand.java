@@ -47,7 +47,7 @@ public class SSCAppVersionAuthEntityAddCommand extends AbstractSSCOutputCommand 
     @Getter @Mixin private SSCOutputHelperMixins.Add outputHelper;
     @Mixin private SSCAppVersionAuthEntityMixin.RequiredPositionalParameter authEntityMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
-    @Option(names="--allowMultiMatch", defaultValue = "false")
+    @Option(names="--allow-multi-match", defaultValue = "false")
     private boolean allowMultiMatch;
     
     @Override

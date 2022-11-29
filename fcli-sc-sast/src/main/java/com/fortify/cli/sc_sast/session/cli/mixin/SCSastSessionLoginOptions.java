@@ -44,6 +44,10 @@ public class SCSastSessionLoginOptions {
     }
     
     public static class SCDastTokenCredentialOptions {
+        // Note that the SCSastControllerScanStartCommand requires this predefined token to be
+        // a CIToken. If we ever add support for passing arbitrary tokens (i.e. through a new 
+        // --ssc-token option), we should be sure that we can distinguish between token passed
+        // through --ssc-ci-token or --ssc-token.
         @Option(names = {"--ssc-ci-token", "-t"}, interactive = true, echo = false, arity = "0..1", required = true)
         @Getter private char[] token;
     }

@@ -1,6 +1,6 @@
 package com.fortify.cli.sc_sast.rest.cli.mixin;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import com.fortify.cli.common.rest.cli.mixin.AbstractUnirestRunnerMixin;
 import com.fortify.cli.common.util.FixInjection;
@@ -22,11 +22,11 @@ public abstract class AbstractSCSastUnirestRunnerMixin extends AbstractUnirestRu
         return sessionDataManager.get(sessionName, true);
     }
     
-    public final <R> R runOnSSC(Function<UnirestInstance, R> f) {
+    public final <R> R runOnSSC(BiFunction<UnirestInstance, SCSastSessionData, R> f) {
         return run(SCSastUnirestHelper::configureSscUnirestInstance, f);
     }
     
-    public final <R> R runOnController(Function<UnirestInstance, R> f) {
+    public final <R> R runOnController(BiFunction<UnirestInstance, SCSastSessionData, R> f) {
         return run(SCSastUnirestHelper::configureScSastControllerUnirestInstance, f);
     }
 }
