@@ -68,7 +68,7 @@ jobs:
           
     outputs:
       do_release: ${{ env.DO_RELEASE }}
-      do_dev_release: ${{ env.DO_RELEASE }}
+      do_dev_release: ${{ env.DO_DEV_RELEASE }}
       release_tag: ${{ env.RELEASE_TAG }}
 
   native_linux:
