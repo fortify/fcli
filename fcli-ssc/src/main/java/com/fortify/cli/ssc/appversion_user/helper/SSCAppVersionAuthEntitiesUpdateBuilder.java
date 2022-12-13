@@ -105,7 +105,9 @@ public final class SSCAppVersionAuthEntitiesUpdateBuilder {
     
     public final SSCAppVersionAuthEntitiesUpdateBuilder remove(boolean allowMultipleMatches, String... authEntitySpecs) {
         this.allowMultipleMatchesForRemove |= allowMultipleMatches;
-        authEntitySpecsToRemove.addAll(Arrays.asList(authEntitySpecs));
+        if ( authEntitySpecs!=null && authEntitySpecs.length>0 ) {
+        	authEntitySpecsToRemove.addAll(Arrays.asList(authEntitySpecs));
+        }
         return this;
     }
 }
