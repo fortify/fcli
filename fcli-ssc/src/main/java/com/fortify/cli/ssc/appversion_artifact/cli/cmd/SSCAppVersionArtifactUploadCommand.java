@@ -52,7 +52,7 @@ public class SSCAppVersionArtifactUploadCommand extends AbstractSSCAppVersionArt
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @Parameters(arity="1") private String filePath;
     
-    @Option(names = {"-e", "--engine-type"}, description = "Engine type for the artifact being uploaded")
+    @Option(names = {"-e", "--engine-type"})
     private String engineType;
     
     @Override
