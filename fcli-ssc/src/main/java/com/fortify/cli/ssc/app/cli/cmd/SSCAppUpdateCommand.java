@@ -31,6 +31,7 @@ import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.app.cli.mixin.SSCAppResolverMixin;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
+import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -60,7 +61,7 @@ public class SSCAppUpdateCommand extends AbstractSSCOutputCommand implements IUn
         if ( StringUtils.isNotBlank(description) ) { updateData.put("description", description); }
         unirest.put(SSCUrls.PROJECT(descriptor.getApplicationId()))
                 .body(updateData).asObject(JsonNode.class).getBody();
-        return appResolver.getAppDescriptor(unirest).asJsonNode();
+        return SSCAppHelper.getApp(unirest, descriptor.getApplicationId(), true).asJsonNode();
     }
 
     @Override
