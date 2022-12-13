@@ -31,6 +31,7 @@ import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
+import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -63,7 +64,7 @@ public class SSCIssueTemplateUpdateCommand extends AbstractSSCOutputCommand impl
         if ( setAsDefault ) { updateData.put("defaultTemplate", true); }
         unirest.put(SSCUrls.ISSUE_TEMPLATE(descriptor.getId()))
             .body(updateData).asObject(JsonNode.class).getBody();
-        return issueTemplateResolver.getIssueTemplateDescriptor(unirest).asJsonNode();
+        return new SSCIssueTemplateHelper(unirest).getDescriptorByNameOrId(descriptor.getId(), true).asJsonNode();
     }
     
     @Override
