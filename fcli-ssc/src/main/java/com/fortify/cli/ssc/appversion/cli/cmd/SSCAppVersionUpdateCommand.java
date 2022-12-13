@@ -25,14 +25,17 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateBuilder;
 import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionAuthEntityMixin;
@@ -55,7 +58,7 @@ import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Update.CMD_NAME)
-public class SSCAppVersionUpdateCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
+public class SSCAppVersionUpdateCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformerSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Update outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
     @Mixin private SSCIssueTemplateResolverMixin.OptionalFilterSetOption issueTemplateResolver;
@@ -77,6 +80,11 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCOutputCommand impleme
             .request("updatedVersion", unirest.get(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())))
             .execute(unirest);
         return bulkResponse.body("updatedVersion");
+    }
+    
+    @Override
+    public UnaryOperator<JsonNode> getRecordTransformer() {
+    	return SSCAppVersionHelper::renameFields;
     }
     
     @Override
