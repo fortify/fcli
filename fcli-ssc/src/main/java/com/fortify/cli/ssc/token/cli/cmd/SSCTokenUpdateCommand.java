@@ -25,9 +25,11 @@
 package com.fortify.cli.ssc.token.cli.cmd;
 
 import java.time.OffsetDateTime;
+import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
@@ -44,7 +46,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.Update.CMD_NAME)
-public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand {
+public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand implements IRecordTransformerSupplier {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
     @Getter @Mixin private BasicOutputHelperMixins.Update outputHelper;
     @Parameters(arity="1", paramLabel = "token-id", descriptionKey = "fcli.ssc.token.update.token-id") private String tokenId;
@@ -58,6 +60,11 @@ public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand {
                 .description(description)
                 .build();
         return tokenHelper.updateToken(urlConfig, userCredentialsConfig, tokenId, tokenUpdateRequest);
+    }
+    
+    @Override
+    public UnaryOperator<JsonNode> getRecordTransformer() {
+    	return SSCTokenHelper::transformTokenRecord;
     }
     
     @Override

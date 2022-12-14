@@ -26,9 +26,11 @@ package com.fortify.cli.ssc.token.cli.cmd;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.common.util.StringUtils;
@@ -43,7 +45,7 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.List.CMD_NAME)
-public class SSCTokenListCommand extends AbstractSSCTokenCommand {
+public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IRecordTransformerSupplier {
     @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
     private final SSCQParamGenerator qParamGenerator = 
             new SSCQParamGenerator()
@@ -53,6 +55,11 @@ public class SSCTokenListCommand extends AbstractSSCTokenCommand {
     @Override
     protected JsonNode getJsonNode(SSCTokenHelper tokenHelper, IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {
         return tokenHelper.listTokens(urlConfig, userCredentialsConfig, getQueryParams());
+    }
+    
+    @Override
+    public UnaryOperator<JsonNode> getRecordTransformer() {
+    	return SSCTokenHelper::transformTokenRecord;
     }
     
     @Override
