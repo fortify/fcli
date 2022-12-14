@@ -25,10 +25,12 @@
 package com.fortify.cli.ssc.token.cli.cmd;
 
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
@@ -41,7 +43,7 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.Revoke.CMD_NAME)
-public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand {
+public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand implements IRecordTransformerSupplier {
     @Getter @Mixin private BasicOutputHelperMixins.Revoke outputHelper;
     @Parameters(arity="1..") private String[] tokens;
     
@@ -55,6 +57,11 @@ public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand {
         return tokenIds.length>0 
                 ? tokenHelper.deleteTokensById(urlConfig, userCredentialsConfig, tokenIds)
                 : tokenHelper.deleteTokensByValue(urlConfig, userCredentialsConfig, tokenValues);
+    }
+    
+    @Override
+    public UnaryOperator<JsonNode> getRecordTransformer() {
+    	return SSCTokenHelper::transformTokenRecord;
     }
     
     @Override

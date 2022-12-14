@@ -1,5 +1,7 @@
 package com.fortify.cli.ssc.token.helper;
 
+import java.time.Duration;
+import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -25,10 +27,30 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
+import picocli.CommandLine.Help.Ansi;
 
 @Singleton @FixInjection
 public class SSCTokenHelper {
-    @Inject private GenericUnirestRunner unirestRunner;
+	@Inject private GenericUnirestRunner unirestRunner;
+    
+    public static final JsonNode transformTokenRecord(JsonNode tokenRecord) {
+    	if ( tokenRecord instanceof ObjectNode && tokenRecord.has("terminalDate") ) {
+    		Date terminalDate = JsonHelper.treeToValue(tokenRecord.get("terminalDate"), Date.class);
+    		Duration diff = Duration.between(new Date().toInstant(), terminalDate.toInstant());
+    		String timeRemaining;
+    		if ( diff.toDays()>0 ) {
+    			timeRemaining = String.format("%d days", diff.toDays()+1);
+    		} else if ( diff.toHours()>0 ) {
+    			timeRemaining = String.format("%d hours", diff.toHours()+1);
+    		} else if (diff.toMinutes()>0 ) {
+    			timeRemaining = String.format("%d minutes", diff.toMinutes()+1);
+    		} else {
+    			timeRemaining = Ansi.AUTO.string("0");
+    		}
+    		((ObjectNode)tokenRecord).put("timeRemaining", timeRemaining);
+    	}
+    	return tokenRecord;
+    }
     
     public final JsonNode listTokens(IUrlConfig urlConfig, IUserCredentialsConfig uc, Map<String,Object> queryParams) {
         return unirestRunner.run(unirest->listTokens(unirest, urlConfig, uc, queryParams));

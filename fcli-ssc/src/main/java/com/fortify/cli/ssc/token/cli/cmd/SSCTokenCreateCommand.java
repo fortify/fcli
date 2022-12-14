@@ -87,6 +87,7 @@ public class SSCTokenCreateCommand extends AbstractSSCTokenCommand implements IR
         record.put("restToken", token);
         record.put("applicationToken", SSCTokenConverter.toApplicationToken(token));
         record.remove("token");
+        SSCTokenHelper.transformTokenRecord(record);
         return record;
     }
 }
