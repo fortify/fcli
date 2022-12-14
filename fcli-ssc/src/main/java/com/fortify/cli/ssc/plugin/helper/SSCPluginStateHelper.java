@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Data;
 
@@ -24,7 +25,7 @@ public final class SSCPluginStateHelper {
             .body("pluginData");
     }
     
-    @Data
+    @Data @ReflectiveAccess
     private static final class PluginIdsData {
         private final int[] pluginIds;
         
