@@ -33,6 +33,7 @@ import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
+import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
@@ -67,8 +68,12 @@ public class SSCIssueTemplateCreateCommand extends AbstractSSCOutputCommand impl
         if ( setAsDefault ) {
             ObjectNode data = (ObjectNode)body.get("data").deepCopy();
             data.put("defaultTemplate", true);
-            body = unirest.put(SSCUrls.ISSUE_TEMPLATE(data.get("id").asText()))
-                    .body(data).asObject(JsonNode.class).getBody();
+            String url = SSCUrls.ISSUE_TEMPLATE(data.get("id").asText());
+			body = new SSCBulkRequestBuilder()
+            	.request("update", unirest.put(url).body(data))
+            	.request("result", unirest.get(url))
+            	.execute(unirest)
+            	.body("result");
         }
         return body;
     }
