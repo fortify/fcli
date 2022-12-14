@@ -47,7 +47,7 @@ import picocli.CommandLine.Parameters;
 public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
     @Getter @Mixin private BasicOutputHelperMixins.Update outputHelper;
-    @Parameters(arity="1") private String token;
+    @Parameters(arity="1", paramLabel = "token-id", descriptionKey = "fcli.ssc.token.update.token-id") private String tokenId;
     @Option(names="--expire-in") private String expireIn;
     @Option(names="--description") private String description;    
     
@@ -57,7 +57,7 @@ public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand {
                 .terminalDate(getExpiresAt())
                 .description(description)
                 .build();
-        return tokenHelper.updateToken(urlConfig, userCredentialsConfig, token, tokenUpdateRequest);
+        return tokenHelper.updateToken(urlConfig, userCredentialsConfig, tokenId, tokenUpdateRequest);
     }
     
     @Override
