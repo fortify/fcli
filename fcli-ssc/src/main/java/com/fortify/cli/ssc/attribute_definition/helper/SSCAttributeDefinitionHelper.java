@@ -68,6 +68,7 @@ public final class SSCAttributeDefinitionHelper {
         
         descriptorsById.put(id, descriptor);
         descriptorsByLowerGuid.put(guidLower, descriptor);
+        descriptorsByLowerGuid.put(categoryLower+":"+guidLower, descriptor);
         descriptorsByLowerName.put(nameLower, descriptor);
         descriptorsByLowerName.put(categoryLower+":"+nameLower, descriptor);
         attrOptionsByIdMap.put(id, new SSCAttributeOptionDefinitionHelper(descriptor.getOptions()));
