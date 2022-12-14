@@ -26,9 +26,11 @@
 
 ## Introduction
 
-Build secure software fast with [Fortify](https://www.microfocus.com/en-us/solutions/application-security). Fortify offers end-to-end application security solutions with the flexibility of testing on-premises and on-demand to scale and cover the entire software development lifecycle.  With Fortify, find security issues early and fix at the speed of DevOps. 
+Build secure software fast with [Fortify](https://www.microfocus.com/en-us/solutions/application-security). Fortify offers end-to-end application security solutions with the flexibility of testing on-premises and on-demand to scale and cover the entire software development lifecycle. With Fortify, find security issues early and fix at the speed of DevOps.
 
-Fortify CLI is currently in an early development stage, functioning as a prototype of what such a unified Fortify CLI could look like. At the moment it hardly provides any real functionality, and everything you see is subject to change at any time. We may even decide to never release this to the general public. 
+The Fortify Command Line Interface (fcli) is a command line tool that aims to be a single binary executable that allows you to interact with multiple Fortify products.
+Currently, the fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST.
+
   
 ### Related Links
 
