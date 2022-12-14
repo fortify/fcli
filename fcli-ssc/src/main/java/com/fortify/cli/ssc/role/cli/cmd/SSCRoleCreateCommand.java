@@ -65,7 +65,7 @@ public class SSCRoleCreateCommand extends AbstractSSCOutputCommand implements IU
     private Boolean allApplicationRole;
 
     @Getter
-    @Option(names = {"-p", "--permission-id"})
+    @Option(names = {"-p", "--permission-id"}, split = ",")
     private String[] permissionIds;
 
     @Override
