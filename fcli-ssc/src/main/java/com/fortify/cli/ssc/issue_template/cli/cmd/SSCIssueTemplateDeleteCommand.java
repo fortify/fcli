@@ -49,7 +49,7 @@ public class SSCIssueTemplateDeleteCommand extends AbstractSSCOutputCommand impl
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCIssueTemplateDescriptor descriptor = issueTemplateResolver.getIssueTemplateDescriptor(unirest);
-        unirest.delete(SSCUrls.ISSUE_TEMPLATE(descriptor.getId()));
+        unirest.delete(SSCUrls.ISSUE_TEMPLATE(descriptor.getId())).asString().getBody();
         return descriptor.asJsonNode();
     }
     
