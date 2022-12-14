@@ -468,8 +468,8 @@ public class SSCUrls {
     }
 
     // FOR DOWNLOAD & UPLOAD
-    public static String DOWNLOAD_ARTIFACT(String artifactId) {
-        return String.format("/download/artifactDownload.html?mat={downloadToken}&id=%s", artifactId);
+    public static String DOWNLOAD_ARTIFACT(String artifactId, boolean includeSource) {
+        return String.format("/download/artifactDownload.html?mat={downloadToken}&id=%s&includeSource=%b", artifactId, includeSource);
     }
 
     public static String DOWNLOAD_REPORT_LIBRARY(String reportLibraryId) {

@@ -55,29 +55,23 @@ public class SSCAppVersionArtifactDownloadCommand extends AbstractSSCOutputComma
     @CommandLine.Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
     private String destination;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
-    
-    @ArgGroup(exclusive=true) private SSCAppVersionArtifactDownloadOptions options = new SSCAppVersionArtifactDownloadOptions();
-    
-    private static final class SSCAppVersionArtifactDownloadOptions {
-        // When downloading an artifact by id, the --no-include-sources option is not applicable, and vice versa 
-        @Option(names = "--no-include-sources", negatable = true) private boolean includeSources = true;
-        @Option(names="--id") private String artifactId; //TODO Should this be an option or optional positional parameter?
-    }
+    @Option(names = "--no-include-sources", negatable = true) private boolean includeSources = true;
+    @Option(names="--id") private String artifactId;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCAppVersionDescriptor av = parentResolver.getAppVersionDescriptor(unirest);
         destination = destination != null ? destination : String.format("./%s_%s.fpr", av.getApplicationName(), av.getVersionName());
-        if ( StringUtils.isNotBlank(options.artifactId) ) {
+        if ( StringUtils.isBlank(artifactId) ) {
             SSCFileTransferHelper.download(
                     unirest,
-                    SSCUrls.DOWNLOAD_CURRENT_FPR(av.getVersionId(), options.includeSources),
+                    SSCUrls.DOWNLOAD_CURRENT_FPR(av.getVersionId(), includeSources),
                     destination,
                     ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
         } else {
             SSCFileTransferHelper.download(
                     unirest,
-                    SSCUrls.DOWNLOAD_ARTIFACT(options.artifactId),
+                    SSCUrls.DOWNLOAD_ARTIFACT(artifactId, includeSources),
                     destination,
                     ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN);
         }
