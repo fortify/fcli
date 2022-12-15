@@ -48,7 +48,7 @@ public class SSCRoleDeleteCommand extends AbstractSSCOutputCommand implements IU
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCRoleDescriptor descriptor = roleResolver.getRoleDescriptor(unirest);
-        unirest.delete(SSCUrls.ROLE(descriptor.getRoleId()));
+        unirest.delete(SSCUrls.ROLE(descriptor.getRoleId())).asString().getBody();
         return descriptor.asJsonNode();
     }
     
