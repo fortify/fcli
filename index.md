@@ -67,9 +67,11 @@ Each release comes with a list of assets:
     - Linux and Mac downloads include an `auto-completion` script that makes interactive fcli usage easier
 - `fcli.jar`: Java version of fcli, which should be runnable on any platform that has Java 11+ installed
     - Note that in general, the native binaries are easier to invoke, offer better performance, and have the benefit of auto-completion capabilities on Linux & Mac
-    - If you experience any unexpected behavior with native binaries, like commands or command line options not being listed or recognized, or technical error messages about methods or constructors not being found, please try with the Java version as well as it may be an issue specific to the native binaries
+    - If you experience any unexpected behavior with native binaries, like commands or command line options not being listed or recognized, or technical error messages about methods, constructors or serializers not being found, please try with the Java version as it may be an issue specific to the native binaries. See the [Troubleshooting](#troubleshooting) section for details.
 - `fcli-thirdparty.zip`: Third-party licenses and sources for license purposes; usually no need to download
 - `LICENSE.TXT` & `README.md`: Some generic information and license for fcli
+
+Please note that when publishing a new release, it may take up to 30-60 minutes before release assets are posted. If the latest release doesn't show any of the assets listed above, please check again in 30-60 minutes. If you encounter a release without these assets after waiting for 60 minutes, please consider submitting an issue on the [fcli issue tracker](https://github.com/fortify-ps/fcli/issues).
 
 To install one of the binary distributions of fcli:
 - Download the appropriate binary archive for your platform
