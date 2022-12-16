@@ -52,6 +52,7 @@ import picocli.CommandLine;
  * @author Ruud Senden
  */
 public class FortifyCLI {
+	private static final Boolean JANSI_DISABLE = Boolean.getBoolean("jansi.disable");
 
     /**
      * This is the main entry point for executing the Fortify CLI.
@@ -68,9 +69,10 @@ public class FortifyCLI {
      * @return exit code
      */
     private static int execute(String[] args) {
-        String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
+    	String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
         try (ApplicationContext applicationContext = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
             try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {
+            	installAnsiConsole();
                 FortifyCLIInitializerRunner.initialize(resolvedArgs, micronautFactory);
                 CommandLine commandLine = new CommandLine(FCLIRootCommands.class, micronautFactory);
                 return commandLine.setParameterExceptionHandler(
@@ -79,8 +81,36 @@ public class FortifyCLI {
                                     applicationContext.getBean(LanguagePropertiesManager.class)
                             )
                 ).execute(resolvedArgs);
+            } finally {
+            	uninstallAnsiConsole();
             }
         }
+    }
+    
+    private static final void installAnsiConsole() {
+    	tryInvokeAnsiConsoleMethod("systemInstall");
+    }
+    
+    private static final void uninstallAnsiConsole() {
+    	tryInvokeAnsiConsoleMethod("systemUninstall");
+    }
+    
+    private static final void tryInvokeAnsiConsoleMethod(String methodName) {
+    	if ( !JANSI_DISABLE ) {
+	    	try {
+	    		// AnsiConsole performs eager initialization in a static block, so
+	    		// referencing the class directly would initialize Jansi even if
+	    		// isJansiEnabled() returns false. As such, we use reflection to 
+	    		// only load the AnsiConsole class if Jansi is enabled, and then
+	    		// invoke the specified method. Note that in order for this to work, 
+	    		// we have a reflect-config.json file to allow reflective access to
+	    		// AnsiConsole.
+	    		Class.forName("org.fusesource.jansi.AnsiConsole")
+	    			.getMethod(methodName).invoke(null);
+	    	} catch ( Throwable t ) {
+	    		t.printStackTrace();
+	    	}
+    	}
     }
     
     /**

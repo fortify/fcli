@@ -117,8 +117,15 @@ jobs:
         with:
           path: ./
 
+      # For Linux, we build a statically linked native image, to allow for building a 'FROM scratch'
+      # Docker image, and to avoid libc version issues. Since Jansi is not supported on statically 
+      # linked images (see https://github.com/fusesource/jansi/issues/246), we set a system property 
+      # to indicate that FortifyCLI shouldn't try to invoke AnsiConsole::systemInstall/Uninstall. In 
+      # order for FortifyCLI to be able to see this system property, we need to initialize this class
+      # at build time (see https://www.graalvm.org/22.1/reference-manual/native-image/Properties/). 
+      # We also exclude the native Jansi library resources, as these are now no longer needed.
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} --static --libc=musl -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.app.FortifyCLI -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifact/fcli.jar fcli
 
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -157,8 +164,11 @@ jobs:
         with:
           path: ./
 
+      # For MacOS, we build a dynamically linked image. Jansi by default provides a resource-config.json
+      # file to include native libraries for all platforms; we override this to include only the MacOS 
+      # libraries
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifact/fcli.jar fcli
 
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -191,10 +201,13 @@ jobs:
       with:
         path: ./
     
+    # For Windows, we build a dynamically linked image. Jansi by default provides a resource-config.json
+    # file to include native libraries for all platforms; we override this to include only the 64-bit
+    # Windows library
     - name: Create native fcli
       run: >-
         "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-        ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -jar .\artifact\fcli.jar fcli
+        ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Mac/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar .\artifact\fcli.jar fcli
       shell: cmd
 
     - name: Compress native fcli

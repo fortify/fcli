@@ -72,6 +72,8 @@ allprojects {
         
         // TODO Re-enable this line (with appropriate version) once new picocli is released
         //implementation("info.picocli:picocli:4.6.3")
+        
+        implementation("org.fusesource.jansi:jansi:2.4.0");     
 
         annotationProcessor("io.micronaut:micronaut-inject-java:3.4.2")
         annotationProcessor("io.micronaut:micronaut-graal:3.4.2")
