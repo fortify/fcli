@@ -197,6 +197,14 @@ task generateFcliBuildProperties {
             entry(key: "projectVersion", value: project.version)
             entry(key: "buildDate", value: buildTime.format('yyyy-MM-dd HH:mm:ss'))
         }
+        def resourceConfigOutputDir = "${buildPropertiesDir}/META-INF/native-image/fcli-build-properties"
+        mkdir "${resourceConfigOutputDir}"
+        def contents = 
+        	'{"resources":[\n' +
+  			'  {"pattern":"com/fortify/cli/app/fcli-build.properties"}\n' +
+			']}\n'
+        file("${resourceConfigOutputDir}/resource-config.json").text = contents;
+        println contents
     }
 }
 sourceSets.main.output.dir buildPropertiesDir, builtBy: generateFcliBuildProperties

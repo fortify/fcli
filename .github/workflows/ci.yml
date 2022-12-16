@@ -61,6 +61,10 @@ jobs:
         if: env.DO_BUILD
         run: ./gradlew clean build dist distThirdParty -Pversion=${{env.RELEASE_VERSION}}
         
+      - name: Check fcli version
+        if: env.DO_BUILD
+        run: java -jar build/libs/fcli.jar --version | tee /dev/stderr | grep -E '[0-9]+\.[0-9]+\.[0-9]+' >/dev/null || (echo "fcli --version doesn't output proper version number"; exit 1)
+        
       - name: Publish build artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -123,6 +127,9 @@ jobs:
 
       - name: Basic test of native fcli
         run: ./fcli --help && ./fcli get --help
+        
+      - name: Check fcli version
+        run: ./fcli --version | tee /dev/stderr | grep -E '[0-9]+\.[0-9]+\.[0-9]+' >/dev/null || (echo "fcli --version doesn't output proper version number"; exit 1)
 
       - name: Package native fcli
         run: tar -zcvf fcli-linux.tgz fcli -C ./artifact fcli_completion
