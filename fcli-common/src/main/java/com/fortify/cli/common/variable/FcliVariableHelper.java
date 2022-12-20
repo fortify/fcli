@@ -158,8 +158,10 @@ public final class FcliVariableHelper {
     }
     
     private static final VariableDescriptor createVariableDescriptor(VariableType variableType, String variableName, boolean encrypt) {
-        return VariableDescriptor.builder()
-                .created(new Date())
+        Date currentDateTime = new Date();
+		return VariableDescriptor.builder()
+                .created(currentDateTime)
+                .accessed(currentDateTime)
                 .type(variableType)
                 .name(variableName)
                 .encrypted(encrypt)
