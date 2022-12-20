@@ -5,6 +5,7 @@ import java.util.function.UnaryOperator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.UnirestOutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.writer.OutputWriterWithQueryFactoryMixin;
 import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
 import com.fortify.cli.common.output.spi.product.IProductHelper;
 import com.fortify.cli.common.output.spi.product.ProductHelperClass;
@@ -131,7 +132,7 @@ public class SSCOutputHelperMixins {
     
     @ReflectiveAccess public static class VulnCount extends UnirestOutputHelperMixins.Other {
         public static final String CMD_NAME = "count";
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
 }
