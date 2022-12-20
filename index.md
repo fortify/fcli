@@ -208,7 +208,10 @@ Fcli supports two types of variables:
 * Named variables
     * Stored using the `--store myVarName[:prop1,prop2]` option on data output commands
     * If no properties are provided with the `--store` option, all JSON properties will be stored
-    * Referenced using the `{?myVarName:prop1}` syntax anywhere on the command line of subsequent fcli commands
+    * Referenced using the `'{?myVarName:prop1}'` syntax anywhere on the command line of subsequent fcli commands
+    * As a best practice, variable references should be quoted to avoid the shell interpreting the  curly braces
+        * On most shells, you should be able to put the variable reference in single quotes, or use `\{`
+        * If you have any suggestions for a better syntax, please comment here: https://github.com/fortify-ps/fcli/issues/160
     * Variable names are global and can be referenced across products and sessions
 * Predefined variables:
     * Stored using the `--store '?'` option on a subset of data output commands
@@ -219,7 +222,7 @@ Fcli supports two types of variables:
         * If you have any suggestions for a better syntax, please comment here: https://github.com/fortify-ps/fcli/issues/160
     * Help output and manual pages may currently lack information about which commands and options support the `'?'` syntax, so for now you'll need to look at examples or just try.
     
-Predefined variables are easier to use; they are more concise, you do not need to remember JSON property names, and they are automatically cleaned up when logging out of a session. However, as indicated, they are more limited in use; they only store a predefined JSON property, and are only available on a subset of commands and options.
+Predefined variables are easier to use; they are more concise and you do not need to remember JSON property names. However, as indicated, they are more limited in use; they only store a predefined JSON property, and are only available on a subset of commands and options.
 
 Following are some examples, assuming the necessary login sessions are available:
 
