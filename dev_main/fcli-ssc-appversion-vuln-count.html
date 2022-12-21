@@ -457,7 +457,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
                                [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
                          _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
                    _            <em class="=&lt;propertyNames&gt;">]
-                               [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+                               [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
+                               [[<strong>-q</strong>=<em>&lt;prop&gt;&lt;op&gt;&lt;value&gt;</em>]&#8230;&#8203;]</p>
 </div>
 </div>
 </div>
@@ -527,6 +528,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
+<h2 id="_query_options">Query options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;prop&gt;&lt;op&gt;&lt;value&gt;</em></dt>
+<dd>
+<p>Return records that match the given query. &lt;prop&gt; specifies the property path against which the given value should be matched; use the '-o json-properties' option on the current command to see available properties. &lt;op&gt; specifies the operator; currently only '=' is supported.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_generic_fcli_options">Generic fcli options:</h2>
 <div class="sectionbody">
 <div class="dlist">
@@ -554,8 +568,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20221220.073248-dev_main, built on 2022-12-20 07 33 22<br>
-Last updated 2022-12-20 07:34:22 UTC
+Version fcli version 0.20221220.155853-dev_main, built on 2022-12-20 15 59 30<br>
+Last updated 2022-12-20 16:01:00 UTC
 </div>
 </div>
 </body>
