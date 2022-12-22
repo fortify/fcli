@@ -82,9 +82,9 @@ public class SCDastSensorHelper {
             return descriptor;
         } else {
             ObjectNode data = new ObjectMapper().createObjectNode().put("isEnabled", enable);
-            unirest.post("​/api/v2/scanners/{id}/set-scanner-enabled-value")
-                    .routeParam("id", descriptor.getId())
-                    .body(data).asObject(JsonNode.class).getBody();
+            unirest.post("/api/v2/scanners/{id}/set-scanner-enabled-value")
+            	.routeParam("id", descriptor.getId())
+            	.body(data).asString().getBody();
             return getSensorDescriptor(unirest, descriptor.getId());
         }
     }
