@@ -86,8 +86,10 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
     private String getUploadToken(SCSastSessionData sessionData) {
         String uploadToken = null;
         if ( upload ) {
-            uploadToken = this.ciToken;
-            if ( StringUtils.isBlank(uploadToken) ) {
+        	if ( !StringUtils.isBlank(this.ciToken) ) {
+        		// Convert token to application token, in case it was provided as a REST token
+        		uploadToken = SSCTokenConverter.toApplicationToken(this.ciToken);
+        	} else if ( StringUtils.isBlank(uploadToken) ) {
                 // We assume that the predefined token from the session is a CIToken as passed through 
                 // the --ssc-ci-token option on the login command. If we ever add support for logging 
                 // in with arbitrary SSC tokens, we should make sure we can distinguish between CIToken 
