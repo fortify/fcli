@@ -26,9 +26,11 @@
 package com.fortify.cli.fod.scan.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+@ReflectiveAccess
 @Data
 @EqualsAndHashCode(callSuper=false)
 public class FoDImportScanResponse extends JsonNodeHolder {
