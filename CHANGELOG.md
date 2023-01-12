@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.0.6](https://www.github.com/fortify-ps/fcli/compare/v1.0.5...v1.0.6) (2023-01-12)
+
+
+### Bug Fixes
+
+* Improve help output for `-h` option (fixes [#217](https://www.github.com/fortify-ps/fcli/issues/217)) ([f2e47b0](https://www.github.com/fortify-ps/fcli/commit/f2e47b024f384f5fdb60a949613bf299bfd4f515))
+
 ### [1.0.5](https://www.github.com/fortify-ps/fcli/compare/v1.0.4...v1.0.5) (2023-01-11)
 
 
