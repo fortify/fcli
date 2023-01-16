@@ -77,7 +77,8 @@ To install one of the binary distributions of fcli:
 - Download the appropriate binary archive for your platform
 - Extract the archive contents to a directory of your choosing
 - For ease of use, add this directory to your operating system or shell PATH environment variable, or move the `fcli`/`fcli.exe` binary to a directory that is already on the PATH
-- Run `source <extraction-dir>/fcli_completion` to install fcli auto command completion, allowing for use of the `<tab>` to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell
+- Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the `<tab>` to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell.  
+      `source <extraction-dir>/fcli_completion`
 
 To install the `.jar` version of fcli, simply download `fcli.jar` and put in in a directory of your choosing, after which it can be executed using `java -jar path/to/fcli.jar`. You may want to set up a simple wrapper script/batch file or shell alias to make it slightly easier to invoke `fcli.jar`.
 
