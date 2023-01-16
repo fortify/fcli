@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.api.SessionSummary;
@@ -69,8 +70,8 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
         } catch ( Exception e ) {
             FcliHomeHelper.deleteFile(authSessionDataPath, false);
             conditionalThrow(failIfUnavailable, ()->new IllegalStateException("Error reading auth session data, please try logging in again", e));
-            LOG.warn("Error reading auth session data from {}; session data has been deleted", authSessionDataPath);
-            LOG.info("Exception details: ", e);
+            LOG.warn("Error reading session data from {}; session data has been deleted", authSessionDataPath);
+            LOG.warn("Exception details: ", e);
             return null;
         }
     }
@@ -123,8 +124,8 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
     }
     
     @Override
-    public String getPredefinedVariableNamePrefix(String sessionName) {
-        return String.format("%s_%s", getSessionTypeName(), sessionName);
+    public ObjectNode sessionSummaryAsObjectNode(String sessionName) {
+    	return objectMapper.valueToTree(getSessionSummary(sessionName));
     }
     
     private SessionSummary getSessionSummary(String sessionName) {

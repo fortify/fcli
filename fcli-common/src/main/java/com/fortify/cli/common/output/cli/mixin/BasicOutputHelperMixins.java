@@ -25,6 +25,23 @@ import picocli.CommandLine.Spec.Target;
  *    and/or {@link IProductHelper} is available or required.</p>
  */
 public class BasicOutputHelperMixins {
+	
+	@ReflectiveAccess
+    public static class Login extends AbstractBasicOutputHelper {
+        public static final String CMD_NAME = "login";
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+	
+	@ReflectiveAccess
+    public static class Logout extends AbstractBasicOutputHelper {
+        public static final String CMD_NAME = "logout";
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+	
     @ReflectiveAccess
     public static class Add extends AbstractBasicOutputHelper {
         public static final String CMD_NAME = "add";

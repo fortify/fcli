@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
 import com.fortify.cli.sc_sast.session.cli.mixin.SCSastSessionLoginOptions;
@@ -37,7 +38,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = "login", sortOptions = false)
+@Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
 public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSastSessionData> {
     @Getter @Inject private SCSastSessionDataManager sessionDataManager;
     @Inject private SSCTokenHelper tokenHelper;

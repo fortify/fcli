@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.cli.cmd;
 
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.rest.runner.GenericUnirestRunner;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
@@ -40,7 +41,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "login", sortOptions = false)
+@Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
 public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionData> {
     @Getter @Inject private FoDSessionDataManager sessionDataManager;
     @Getter @Inject private FoDOAuthHelper oauthHelper;

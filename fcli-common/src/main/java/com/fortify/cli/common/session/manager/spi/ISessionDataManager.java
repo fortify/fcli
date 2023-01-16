@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.api.SessionSummary;
 
@@ -16,5 +17,5 @@ public interface ISessionDataManager<T extends ISessionData> {
     Collection<SessionSummary> sessionSummaries();
     String getSessionTypeName();
     ArrayNode sessionSummariesAsArrayNode();
-    String getPredefinedVariableNamePrefix(String sessionName);
+    ObjectNode sessionSummaryAsObjectNode(String sessionName);
 }
