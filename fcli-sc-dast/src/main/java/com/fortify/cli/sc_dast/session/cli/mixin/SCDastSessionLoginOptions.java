@@ -1,33 +1,22 @@
 package com.fortify.cli.sc_dast.session.cli.mixin;
 
 import com.fortify.cli.ssc.session.manager.ISSCCredentialsConfig;
-import com.fortify.cli.ssc.session.manager.ISSCUserCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
+@ReflectiveAccess
 public class SCDastSessionLoginOptions {
     @ArgGroup(exclusive = false, multiplicity = "1", order = 1)
     @Getter private SCDastUrlConfigOptions urlConfigOptions = new SCDastUrlConfigOptions();
     
-    @ArgGroup(exclusive = false, multiplicity = "1", order = 2)
-    @Getter private SSCAuthOptions authOptions = new SSCAuthOptions();
+    @ArgGroup(exclusive = true, multiplicity = "1", order = 2)
+    @Getter private SSCCredentialOptions credentialOptions = new SSCCredentialOptions();
     
-    public ISSCCredentialsConfig getCredentialsConfig() {
-        return authOptions==null ? null : authOptions.getCredentialOptions();
-    }
-    
-    public ISSCUserCredentialsConfig getUserCredentialsConfig() {
-        return getCredentialsConfig()==null ? null : getCredentialsConfig().getUserCredentialsConfig();
-    }
-    
-    public static class SSCAuthOptions {
-        @ArgGroup(exclusive = true, multiplicity = "1", order = 3)
-        @Getter private SSCCredentialOptions credentialOptions = new SSCCredentialOptions();
-    }
-    
+    @ReflectiveAccess
     public static class SSCCredentialOptions implements ISSCCredentialsConfig {
         @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
         @Getter private SCDastUserCredentialOptions userCredentialsConfig = new SCDastUserCredentialOptions();
@@ -40,6 +29,7 @@ public class SCDastSessionLoginOptions {
         }
     }
     
+    @ReflectiveAccess
     public static class SCDastTokenCredentialOptions {
         @Option(names = {"--ssc-ci-token", "-t"}, interactive = true, echo = false, arity = "0..1", required = true)
         @Getter private char[] token;
