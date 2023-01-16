@@ -24,30 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
+import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public abstract class AbstractSessionCommand extends AbstractFortifyCLICommand implements Runnable {
-    @Override
-    public final void run() {
-        _run();
-        getOutputWriterFactory().createOutputWriter(getOutputConfig())
-            .write(getSessionDataManager().sessionSummariesAsArrayNode());
-    }
-
-    // To have picocli generate usage synopsis in the correct order, we let subcommands define the output writer factory
-    protected abstract IOutputWriterFactory getOutputWriterFactory();
-
-    protected abstract void _run();
-
-    private StandardOutputConfig getOutputConfig() {
-        return StandardOutputConfig.table();
-    }
-    
+public abstract class AbstractSessionCommand extends AbstractBasicOutputCommand {
     protected abstract ISessionDataManager<?> getSessionDataManager();
 }

@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.session.cli.cmd;
 
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
 import com.fortify.cli.ssc.session.cli.mixin.SSCSessionLogoutOptions;
 import com.fortify.cli.ssc.session.manager.SSCSessionData;
@@ -35,7 +36,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = "logout", sortOptions = false)
+@Command(name = BasicOutputHelperMixins.Logout.CMD_NAME, sortOptions = false)
 public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand<SSCSessionData> {
     @Getter @Inject private SSCSessionDataManager sessionDataManager;
     @Inject private SSCTokenHelper tokenHelper;
