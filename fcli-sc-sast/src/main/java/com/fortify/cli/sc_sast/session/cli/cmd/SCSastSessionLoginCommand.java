@@ -45,13 +45,13 @@ public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSas
     
     @Override
     protected void logoutBeforeNewLogin(String sessionName, SCSastSessionData sessionData) {
-        sessionData.logout(tokenHelper, sessionLoginOptions.getUserCredentialsConfig());
+        sessionData.logout(tokenHelper, sessionLoginOptions.getCredentialOptions().getUserCredentialsConfig());
     }
     
     @Override
     protected SCSastSessionData login(String sessionName) {
         IUrlConfig urlConfig = sessionLoginOptions.getUrlConfigOptions();
-        ISSCCredentialsConfig credentialsConfig = sessionLoginOptions.getCredentialsConfig();
+        ISSCCredentialsConfig credentialsConfig = sessionLoginOptions.getCredentialOptions();
         return new SCSastSessionData(urlConfig, credentialsConfig, sessionLoginOptions.getClientAuthToken(), tokenHelper);
     }
 }
