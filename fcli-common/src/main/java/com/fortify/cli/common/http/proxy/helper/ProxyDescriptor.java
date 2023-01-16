@@ -51,7 +51,7 @@ public class ProxyDescriptor extends JsonNodeHolder {
     }
     
     private boolean matchesModule(String module) {
-        return modules.contains(module)==ProxyMatchMode.include.equals(modulesMatchMode);
+        return modules==null || modules.contains(module)==ProxyMatchMode.include.equals(modulesMatchMode);
     }
     
     private boolean matchesHost(String host) {
