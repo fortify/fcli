@@ -29,15 +29,15 @@ public class FcliHomeHelper {
     public static final Path getFortifyHomePath() {
         String fortifyHome = System.getenv(ENVNAME_FORTIFY_HOME);
         return StringUtils.isNotBlank(fortifyHome) 
-                ? Path.of(fortifyHome)
-                : Path.of(System.getProperty("user.home"), DEFAULT_FORTIFY_DIR_NAME);
+                ? Path.of(fortifyHome).toAbsolutePath()
+                : Path.of(System.getProperty("user.home"), DEFAULT_FORTIFY_DIR_NAME).toAbsolutePath();
     }
 
     public static final Path getFcliHomePath() {
         String fcliHome = System.getenv(ENVNAME_FCLI_HOME);
         return StringUtils.isNotBlank(fcliHome) 
-                ? Path.of(fcliHome) 
-                : getFortifyHomePath().resolve(DEFAULT_FCLI_DIR_NAME);
+                ? Path.of(fcliHome).toAbsolutePath()
+                : getFortifyHomePath().resolve(DEFAULT_FCLI_DIR_NAME).toAbsolutePath();
     }
     
     public static final void saveSecuredFile(Path relativePath, Object contents, boolean failOnError) {
