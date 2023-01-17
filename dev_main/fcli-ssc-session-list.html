@@ -452,7 +452,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><strong>fcli ssc session list</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                       [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                      [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
+                      [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]]
+                      [[<strong>-q</strong>=<em>&lt;prop&gt;&lt;op&gt;&lt;value&gt;</em>]&#8230;&#8203;]</p>
 </div>
 </div>
 </div>
@@ -478,6 +479,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
 <p>Write results to the specified files in the given output format. By default, results will be written to stdout</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_query_options">Query options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;prop&gt;&lt;op&gt;&lt;value&gt;</em></dt>
+<dd>
+<p>Return records that match the given query. &lt;prop&gt; specifies the property path against which the given value should be matched; use the '-o json-properties' option on the current command to see available properties. &lt;op&gt; specifies the operator; currently only '=' is supported.</p>
 </dd>
 </dl>
 </div>
@@ -511,8 +525,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230112.114222-dev_main, built on 2023-01-12 11 42 52<br>
-Last updated 2023-01-12 11:43:54 UTC
+Version fcli version 0.20230117.022136-dev_main, built on 2023-01-17 02 21 59<br>
+Last updated 2023-01-17 02:23:00 UTC
 </div>
 </div>
 </body>
