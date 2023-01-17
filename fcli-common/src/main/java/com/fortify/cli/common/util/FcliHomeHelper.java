@@ -40,6 +40,10 @@ public class FcliHomeHelper {
                 : getFortifyHomePath().resolve(DEFAULT_FCLI_DIR_NAME).toAbsolutePath();
     }
     
+    public static final Path getFcliConfigPath() {
+    	return getFcliHomePath().resolve("config");
+    }
+    
     public static final void saveSecuredFile(Path relativePath, Object contents, boolean failOnError) {
         if ( contents == null ) {
             throwOrLog("Contents may not be null", null, failOnError);
