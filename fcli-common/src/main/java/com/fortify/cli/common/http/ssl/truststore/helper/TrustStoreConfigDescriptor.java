@@ -1,4 +1,4 @@
-package com.fortify.cli.common.http.truststore.helper;
+package com.fortify.cli.common.http.ssl.truststore.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
 

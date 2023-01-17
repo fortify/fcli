@@ -22,15 +22,15 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.app.truststore;
+package com.fortify.cli.app.http.ssl.truststore;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner.FortifyCLIInitializerCommand;
+import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
+import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
-import com.fortify.cli.common.http.truststore.helper.TrustStoreConfigDescriptor;
-import com.fortify.cli.common.http.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.util.StringUtils;
 
 import jakarta.inject.Singleton;
@@ -41,7 +41,7 @@ import jakarta.inject.Singleton;
  * @author Ruud Senden
  */
 @Singleton
-public class TrustStoreInitializer implements IFortifyCLIInitializer {
+public class SSLTrustStoreInitializer implements IFortifyCLIInitializer {
     @Override
     public void initializeFortifyCLI(FortifyCLIInitializerCommand cmd) {
     	TrustStoreConfigDescriptor descriptor = TrustStoreConfigHelper.getTrustStoreConfig();
