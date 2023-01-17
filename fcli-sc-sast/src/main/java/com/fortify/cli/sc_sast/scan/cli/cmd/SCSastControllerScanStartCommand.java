@@ -31,7 +31,8 @@ import picocli.CommandLine.Option;
 
 @Command(name = SCSastControllerOutputHelperMixins.Start.CMD_NAME)
 public final class SCSastControllerScanStartCommand extends AbstractSCSastControllerOutputCommand implements IUnirestWithSessionDataJsonNodeSupplier<SCSastSessionData>, IActionCommandResultSupplier {
-    @ArgGroup(exclusive = true) private SCSastScanStartOptionsArgGroup optionsProvider;
+    @ArgGroup(exclusive = true, multiplicity = "1") 
+    private SCSastScanStartOptionsArgGroup optionsProvider = new SCSastScanStartOptionsArgGroup();
     @Getter @Mixin private SCSastControllerOutputHelperMixins.Start outputHelper;
     private String userName = System.getProperty("user.name", "unknown"); // TODO Do we want to give an option to override this?
     @Option(names = "--notify") private String email; // TODO Add email address validation
