@@ -27,16 +27,20 @@ package com.fortify.cli.common.rest.runner;
 import kong.unirest.HttpRequestSummary;
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestException;
+import lombok.Getter;
 
 public final class UnexpectedHttpResponseException extends UnirestException {
     private static final long serialVersionUID = 1L;
+    @Getter private int status = 200;
 
     public UnexpectedHttpResponseException(HttpResponse<?> failureResponse) {
         super(getMessage(failureResponse), getCause(failureResponse));
+        this.status = failureResponse.getStatus();
     }
     
     public UnexpectedHttpResponseException(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
         super(getMessage(failureResponse, requestSummary), getCause(failureResponse));
+        this.status = failureResponse.getStatus();
     }
 
     private static final String getMessage(HttpResponse<?> failureResponse, HttpRequestSummary requestSummary) {
