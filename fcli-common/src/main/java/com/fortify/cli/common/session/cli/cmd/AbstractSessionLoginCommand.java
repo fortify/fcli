@@ -72,7 +72,8 @@ public abstract class AbstractSessionLoginCommand<D extends ISessionData> extend
             try {
                 logoutBeforeNewLogin(sessionName, sessionDataManager.get(sessionName, false));
             } catch ( Exception e ) {
-                LOG.warn("Error logging out previous session", e);
+                LOG.warn("Error logging out previous session");
+                LOG.debug("Exception details:", e);
             } finally {
                 sessionDataManager.destroy(sessionName);
             }
