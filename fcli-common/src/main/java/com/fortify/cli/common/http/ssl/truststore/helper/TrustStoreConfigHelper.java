@@ -1,4 +1,4 @@
-package com.fortify.cli.common.http.truststore.helper;
+package com.fortify.cli.common.http.ssl.truststore.helper;
 
 import java.nio.file.Path;
 
@@ -25,6 +25,6 @@ public final class TrustStoreConfigHelper {
     }
     
     private static final Path getTrustStoreConfigPath() {
-        return FcliHomeHelper.getFcliConfigPath().resolve("truststore.json");
+        return FcliHomeHelper.getFcliConfigPath().resolve("ssl/truststore.json");
     }
 }
