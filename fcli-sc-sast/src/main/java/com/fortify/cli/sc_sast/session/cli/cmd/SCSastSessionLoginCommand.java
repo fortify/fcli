@@ -25,8 +25,12 @@
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.rest.runner.GenericUnirestRunner;
+import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
+import com.fortify.cli.common.util.FixInjection;
+import com.fortify.cli.sc_sast.rest.helper.SCSastUnirestHelper;
 import com.fortify.cli.sc_sast.session.cli.mixin.SCSastSessionLoginOptions;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionDataManager;
@@ -34,13 +38,16 @@ import com.fortify.cli.ssc.session.manager.ISSCCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
 import jakarta.inject.Inject;
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
+@FixInjection
 public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSastSessionData> {
     @Getter @Inject private SCSastSessionDataManager sessionDataManager;
+    @Inject private GenericUnirestRunner unirestRunner;
     @Inject private SSCTokenHelper tokenHelper;
     @Mixin private SCSastSessionLoginOptions sessionLoginOptions;
     
@@ -55,4 +62,24 @@ public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSas
         ISSCCredentialsConfig credentialsConfig = sessionLoginOptions.getCredentialOptions();
         return new SCSastSessionData(urlConfig, credentialsConfig, sessionLoginOptions.getClientAuthToken(), tokenHelper);
     }
+    
+    @Override
+    protected void testAuthenticatedConnection(String sessionName) {
+    	SCSastSessionData sessionData = sessionDataManager.get(sessionName, true);
+    	unirestRunner.run(u->testAuthenticatedConnection(u, sessionData));
+    }
+
+	private Void testAuthenticatedConnection(UnirestInstance u, SCSastSessionData sessionData) {
+		SCSastUnirestHelper.configureScSastControllerUnirestInstance(u, sessionData);
+		try {
+			u.get("/rest/v2/ping").asString().getBody();
+		} catch ( UnexpectedHttpResponseException e ) {
+			if ( e.getStatus()==401 ) {
+				throw new IllegalArgumentException("Error authenticating with SC SAST Controller; please check that --client-auth-token option value matches the client_auth_token as configured in config.properties on SC SAST Controller", e);
+			} else {
+				throw e;
+			}
+		}
+		return null;
+	}
 }
