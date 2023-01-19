@@ -9,6 +9,8 @@ public final class ProgressHelper {
     private static final String LINE_CLEAR = "\033[2K";
     private static final String LINE_START = "\r";
     
+    private ProgressHelper() {}
+    
     public static final IProgressHelper createProgressHelper() {
         if ( hasAnsiConsole ) { return new AnsiConsoleProgressHelper(); }
         else if ( hasConsole ) { return new BasicConsoleProgressHelper(); }

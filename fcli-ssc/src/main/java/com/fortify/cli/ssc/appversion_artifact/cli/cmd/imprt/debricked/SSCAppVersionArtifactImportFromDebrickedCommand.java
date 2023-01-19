@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
@@ -43,6 +44,8 @@ import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.util.FixInjection;
+import com.fortify.cli.common.util.ProgressHelper;
+import com.fortify.cli.common.util.ProgressHelper.IProgressHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion_artifact.cli.cmd.AbstractSSCAppVersionArtifactUploadCommand;
 import com.fortify.cli.ssc.appversion_artifact.cli.cmd.imprt.debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
@@ -65,6 +68,7 @@ public class SSCAppVersionArtifactImportFromDebrickedCommand extends AbstractSSC
     @Getter @Mixin private SSCOutputHelperMixins.ImportFromDebricked outputHelper;
     @Mixin private DebrickedLoginOptions debrickedLoginOptions; 
     @Inject private GenericUnirestRunner debrickedUnirestRunner;
+    private final IProgressHelper progressHelper = ProgressHelper.createProgressHelper();
     
     @Option(names = {"-e", "--engine-type"}, required = true, defaultValue = "DEBRICKED")
     @Getter private String engineType;
@@ -97,7 +101,9 @@ public class SSCAppVersionArtifactImportFromDebrickedCommand extends AbstractSSC
     
     @Override
     protected void preUpload(UnirestInstance unirest, File file) {
+    	progressHelper.writeProgress("Status: Generating & downloading SBOM");
     	debrickedUnirestRunner.run(u->downloadSbom(u, file));
+    	progressHelper.writeProgress("Status: Uploading SBOM to SSC");
     }
     
     @Override
@@ -105,6 +111,8 @@ public class SSCAppVersionArtifactImportFromDebrickedCommand extends AbstractSSC
     	if ( StringUtils.isBlank(fileName) ) {
     		file.delete();
     	}
+    	progressHelper.writeProgress("Status: SBOM uploaded to SSC");
+    	progressHelper.clearProgress();
     }
     
     private Void downloadSbom(UnirestInstance debrickedUnirest, File file) {
@@ -164,10 +172,15 @@ public class SSCAppVersionArtifactImportFromDebrickedCommand extends AbstractSSC
 			Integer.parseInt(repository);
 			return repository;
 		} catch ( NumberFormatException e ) {
-			JsonNode data = debrickedUnirest.get("/api/1.0/open/repositories/get-repositories-names-links")
-				.asObject(JsonNode.class)
+			ArrayNode data = debrickedUnirest.get("/api/1.0/open/repositories/get-repositories-names-links")
+				.asObject(ArrayNode.class)
 				.getBody();
-			return JsonHelper.evaluateJsonPath(data, "$[?(@.name == \""+repository+"\")].id", String.class);
+			ArrayNode repositoryIds = JsonHelper.evaluateJsonPath(data, "$[?(@.name == \""+repository+"\")].id", ArrayNode.class);
+			switch ( repositoryIds.size() ) {
+				case 0: throw new IllegalArgumentException(String.format("Debricked repository with name %s not found; please use full repository name like <org>/<repo>", repository));
+				case 1: return repositoryIds.get(0).asText();
+				default: throw new IllegalArgumentException(String.format("Multiple debricked repositories with name %s foundl please use repository id instead", repository));
+			}
 		}
 	}
 	
