@@ -25,12 +25,7 @@
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd.imprt.debricked;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -210,26 +205,6 @@ public class SSCAppVersionArtifactImportFromDebrickedCommand extends AbstractSSC
 				.queryString("reportUuid", reportUuid)
 				.asFile(outputFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING)
 				.getStatus();
-			// Work-around for debricked not returning proper HTTP status code
-			status = status!=200 ? status : checkResponse(outputFile);
-		}
-	}
-
-	@SneakyThrows
-	private int checkResponse(File file) {
-		Pattern p = Pattern.compile(".*\\\"statusCode\\\":([\\d]+).*");
-		Path path = file.toPath();
-		try ( Stream<String> lines = Files.lines(path) ) {
-			String statusCode = lines.map(p::matcher)
-		     	.filter(Matcher::matches)
-		     	.findFirst()
-		     	.map(m->m.group(1))
-		     	.orElse(null);
-			int status = statusCode==null ? 200 : Integer.parseInt(statusCode);
-			if ( status!=200 && status!=202 ) {
-				throw new IllegalStateException("Unexpected Debricked response: "+Files.readString(path));
-			}
-			return status;
 		}
 	}
 }
