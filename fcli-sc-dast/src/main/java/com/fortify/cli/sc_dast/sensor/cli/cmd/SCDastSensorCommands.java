@@ -1,7 +1,7 @@
 package com.fortify.cli.sc_dast.sensor.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.variable.PredefinedVariable;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine.Command;
 
@@ -16,6 +16,6 @@ import picocli.CommandLine.Command;
             SCDastSensorListCommand.class
         }
 )
-@PredefinedVariable(name = "_scdast_currentSensor", field = "id")
+@DefaultVariablePropertyName("id")
 public class SCDastSensorCommands extends AbstractFortifyCLICommand {
 }

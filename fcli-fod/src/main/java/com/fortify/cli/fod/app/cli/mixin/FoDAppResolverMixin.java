@@ -25,8 +25,6 @@
 
 package com.fortify.cli.fod.app.cli.mixin;
 
-import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
-import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 
@@ -38,20 +36,15 @@ import picocli.CommandLine.Parameters;
 
 public class FoDAppResolverMixin {    
     @ReflectiveAccess
-    public static abstract class AbstractFoDAppResolverMixin extends AbstractPredefinedVariableResolverMixin {
+    public static abstract class AbstractFoDAppResolverMixin {
         public abstract String getAppNameOrId();
 
         public FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String... fields){
-            return FoDAppHelper.getAppDescriptor(unirest, resolvePredefinedVariable(getAppNameOrId()), true);
+            return FoDAppHelper.getAppDescriptor(unirest, getAppNameOrId(), true);
         }
 
         public String getAppId(UnirestInstance unirest) {
             return getAppDescriptor(unirest, "applicationId").getApplicationId().toString();
-        }
-        
-        @Override
-        protected Class<?> getPredefinedVariableClass() {
-            return FoDAppCommands.class;
         }
     }
 

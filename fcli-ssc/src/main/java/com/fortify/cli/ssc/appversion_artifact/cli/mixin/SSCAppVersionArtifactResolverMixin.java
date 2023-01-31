@@ -29,8 +29,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
-import com.fortify.cli.ssc.appversion_artifact.cli.cmd.SSCAppVersionArtifactCommands;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactDescriptor;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
 
@@ -42,12 +40,11 @@ import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionArtifactResolverMixin {
     @ReflectiveAccess
-    public static abstract class AbstractSSCAppVersionArtifactResolverMixin extends AbstractPredefinedVariableResolverMixin {
-        @Getter private Class<?> predefinedVariableClass = SSCAppVersionArtifactCommands.class;
+    public static abstract class AbstractSSCAppVersionArtifactResolverMixin {
         public abstract String getArtifactId();
 
         public SSCAppVersionArtifactDescriptor getArtifactDescriptor(UnirestInstance unirest){
-            return SSCAppVersionArtifactHelper.getArtifactDescriptor(unirest, resolvePredefinedVariable(getArtifactId()));
+            return SSCAppVersionArtifactHelper.getArtifactDescriptor(unirest, getArtifactId());
         }
         
         public String getArtifactId(UnirestInstance unirest) {
@@ -56,12 +53,11 @@ public class SSCAppVersionArtifactResolverMixin {
     }
     
     @ReflectiveAccess
-    public static abstract class AbstractSSCAppVersionMultiArtifactResolverMixin extends AbstractPredefinedVariableResolverMixin {
-        @Getter private Class<?> predefinedVariableClass = SSCAppVersionArtifactCommands.class;
+    public static abstract class AbstractSSCAppVersionMultiArtifactResolverMixin {
         public abstract String[] getArtifactIds();
 
         public SSCAppVersionArtifactDescriptor[] getArtifactDescriptors(UnirestInstance unirest){
-            return Stream.of(getArtifactIds()).map(id->SSCAppVersionArtifactHelper.getArtifactDescriptor(unirest, resolvePredefinedVariable(id))).toArray(SSCAppVersionArtifactDescriptor[]::new);
+            return Stream.of(getArtifactIds()).map(id->SSCAppVersionArtifactHelper.getArtifactDescriptor(unirest, id)).toArray(SSCAppVersionArtifactDescriptor[]::new);
         }
         
         public Collection<JsonNode> getArtifactDescriptorJsonNodes(UnirestInstance unirest){

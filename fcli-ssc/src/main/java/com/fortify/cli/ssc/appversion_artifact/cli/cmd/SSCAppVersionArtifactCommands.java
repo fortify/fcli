@@ -1,7 +1,7 @@
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.variable.PredefinedVariable;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.ssc.appversion_artifact.cli.cmd.imprt.SSCAppVersionArtifactImportFromCommands;
 import com.fortify.cli.ssc.appversion_artifact.cli.cmd.purge.SSCAppVersionArtifactPurgeCommands;
 
@@ -21,6 +21,6 @@ import picocli.CommandLine.Command;
             SSCAppVersionArtifactWaitForCommand.class
         }
 )
-@PredefinedVariable(name = "_ssc_currentArtifact", field = "id")
+@DefaultVariablePropertyName("id")
 public class SSCAppVersionArtifactCommands extends AbstractFortifyCLICommand {
 }

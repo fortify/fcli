@@ -25,8 +25,6 @@
 package com.fortify.cli.ssc.appversion.cli.mixin;
 
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
-import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
@@ -39,21 +37,16 @@ import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionResolverMixin {
     @ReflectiveAccess
-    public static abstract class AbstractSSCAppVersionResolverMixin extends AbstractPredefinedVariableResolverMixin {
+    public static abstract class AbstractSSCAppVersionResolverMixin {
         @Mixin private SSCDelimiterMixin delimiterMixin;
         public abstract String getAppVersionNameOrId();
 
         public SSCAppVersionDescriptor getAppVersionDescriptor(UnirestInstance unirest, String... fields){
-            return SSCAppVersionHelper.getRequiredAppVersion(unirest, resolvePredefinedVariable(getAppVersionNameOrId()), delimiterMixin.getDelimiter(), fields);
+            return SSCAppVersionHelper.getRequiredAppVersion(unirest, getAppVersionNameOrId(), delimiterMixin.getDelimiter(), fields);
         }
         
         public String getAppVersionId(UnirestInstance unirest) {
             return getAppVersionDescriptor(unirest, "id").getVersionId();
-        }
-        
-        @Override
-        protected Class<?> getPredefinedVariableClass() {
-            return SSCAppVersionCommands.class;
         }
     }
     

@@ -26,7 +26,8 @@
 package com.fortify.cli.fod.scan.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.variable.PredefinedVariable;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "scan",
@@ -37,6 +38,6 @@ import picocli.CommandLine;
                 FoDScanWaitForCommand.class
         }
 )
-@PredefinedVariable(name = "_fod_currentScan", field = "scanId")
+@DefaultVariablePropertyName("scanId")
 public class FoDScanCommands extends AbstractFortifyCLICommand {
 }

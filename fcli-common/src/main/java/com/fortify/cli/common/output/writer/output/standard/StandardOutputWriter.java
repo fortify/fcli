@@ -28,16 +28,14 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.runner.IfFailureHandler;
 import com.fortify.cli.common.util.CommandSpecHelper;
-import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.common.variable.EncryptVariable;
 import com.fortify.cli.common.variable.FcliVariableHelper;
-import com.fortify.cli.common.variable.FcliVariableHelper.VariableType;
-import com.fortify.cli.common.variable.IPredefinedVariableUnsupported;
-import com.fortify.cli.common.variable.PredefinedVariable;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
+import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -487,58 +485,45 @@ public class StandardOutputWriter implements IOutputWriter {
         
         /**
          * Create the underlying writer based on the given {@link VariableDefinition}.
-         * This method should not be called if a null parameter. 
+         * This method should not be called with a null parameter. 
          * @param variableDefinition
          * @return
          */
         private Writer createWriter(VariableDefinition variableDefinition) {
-            return FcliVariableHelper.getVariableContentsWriter(variableDefinition.getVariableType(), variableDefinition.getVariableName(), variableDefinition.encrypt);
+            return FcliVariableHelper.getVariableContentsWriter(variableDefinition.getVariableName(), variableDefinition.getDefaultPropertyName(), variableDefinition.encrypt);
         }
         
         /**
          * Create a {@link VariableDefinition} instance based on the given {@link VariableStoreConfig}.
-         * If the variable name equals '{@value FcliVariableHelper#PREDEFINED_VARIABLE_PLACEHOLDER}',
-         * the variable name and options will be retrieved from the {@link PredefinedVariable} annotation
-         * provided by the command being invoked or any of its parent commands. This method will perform
+         * The optional defaultPropertyName value will be retrieved from the {@link DefaultVariablePropertyName} 
+         * annotation provided by the command being invoked or any of its parent commands. This method will perform
          * various validations, throwing an exception if criteria are not met. 
          * @param variableStoreConfig
          * @return
          */
         private VariableDefinition createVariableDefinition(VariableStoreConfig variableStoreConfig) {
-            Object cmd = commandSpec.userObject();
             String variableName = variableStoreConfig.getVariableName();
             String options = variableStoreConfig.getOptions();
-            VariableType variableType = VariableType.USER_PROVIDED;
-            if ( FcliVariableHelper.PREDEFINED_VARIABLE_PLACEHOLDER.equals(variableName) ) {
-                if ( StringUtils.isNotBlank(options) ) { 
-                    throw new IllegalArgumentException(String.format("Option --store doesn't support options for variable placeholder '%s'", FcliVariableHelper.PREDEFINED_VARIABLE_PLACEHOLDER));
-                }
-                if ( cmd instanceof IPredefinedVariableUnsupported || !isSingularOutput() ) {
-                    throw new IllegalArgumentException(String.format("Option --store doesn't support variable placeholder '%s' on this command", FcliVariableHelper.PREDEFINED_VARIABLE_PLACEHOLDER));
-                }
-                PredefinedVariable predefinedVariable = CommandSpecHelper.findAnnotation(commandSpec, PredefinedVariable.class);
-                if ( predefinedVariable==null ) {
-                    throw new IllegalArgumentException(String.format("Option --store doesn't support variable placeholder '%s' on this command tree", FcliVariableHelper.PREDEFINED_VARIABLE_PLACEHOLDER));
-                } else {
-                    variableName = predefinedVariable.name();
-                    options = predefinedVariable.field();
-                    variableType = VariableType.PREDEFINED;
-                }
-            }
+            DefaultVariablePropertyName defaultPropertyNameAnnotation = CommandSpecHelper.findAnnotation(commandSpec, DefaultVariablePropertyName.class);
+            String defaultPropertyName = defaultPropertyNameAnnotation==null ? null : defaultPropertyNameAnnotation.value();
             boolean encrypt = CommandSpecHelper.findAnnotation(commandSpec, EncryptVariable.class)!=null;
-            return new VariableDefinition(variableName, options, variableType, encrypt);
+            return VariableDefinition.builder()
+                    .variableName(variableName)
+                    .variableOptions(options)
+                    .defaultPropertyName(defaultPropertyName)
+                    .encrypt(encrypt).build();
         }
-        
-        /**
-         * This class holds variable name, options, and type.
-         */
-        @Data
-        private final class VariableDefinition {
-            private final String variableName;
-            private final String variableOptions;
-            private final VariableType variableType;
-            private final boolean encrypt;
-        }
+    }
+    
+    /**
+     * This class holds variable name, options, and type.
+     */
+    @Data @Builder
+    private static final class VariableDefinition {
+        private final String variableName;
+        private final String variableOptions;
+        private final String defaultPropertyName;
+        private final boolean encrypt;
     }
 }
 

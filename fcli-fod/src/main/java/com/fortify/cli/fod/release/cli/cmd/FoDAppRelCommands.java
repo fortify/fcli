@@ -26,7 +26,8 @@
 package com.fortify.cli.fod.release.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.variable.PredefinedVariable;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "release",
@@ -39,6 +40,6 @@ import picocli.CommandLine;
                 FoDAppRelDeleteCommand.class
         }
 )
-@PredefinedVariable(name = "_fod_currentRel", field = "releaseId")
+@DefaultVariablePropertyName("releaseId")
 public class FoDAppRelCommands extends AbstractFortifyCLICommand {
 }

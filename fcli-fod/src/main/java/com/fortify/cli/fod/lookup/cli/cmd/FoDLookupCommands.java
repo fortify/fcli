@@ -25,8 +25,8 @@
 
 package com.fortify.cli.fod.lookup.cli.cmd;
 
-import com.fortify.cli.common.variable.PredefinedVariable;
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine;
 
@@ -36,6 +36,6 @@ import picocli.CommandLine;
                 FoDLookupListCommand.class
         }
 )
-@PredefinedVariable(name = "_fod_currentLookup", field = "text")
+@DefaultVariablePropertyName("text")
 public class FoDLookupCommands extends AbstractFortifyCLICommand {
 }

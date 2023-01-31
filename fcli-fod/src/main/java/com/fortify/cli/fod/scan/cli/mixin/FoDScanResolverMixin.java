@@ -5,8 +5,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
-import com.fortify.cli.fod.scan.cli.cmd.FoDScanCommands;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 
@@ -19,12 +17,11 @@ import picocli.CommandLine.Parameters;
 public class FoDScanResolverMixin {
 
     @ReflectiveAccess
-    public static abstract class AbstractFoDScanResolverMixin extends AbstractPredefinedVariableResolverMixin {
-        @Getter private Class<?> predefinedVariableClass = FoDScanCommands.class;
+    public static abstract class AbstractFoDScanResolverMixin {
         public abstract String getScanId();
 
         public FoDScanDescriptor getScanDescriptor(UnirestInstance unirest) {
-            return FoDScanHelper.getScanDescriptor(unirest, resolvePredefinedVariable(getScanId()));
+            return FoDScanHelper.getScanDescriptor(unirest, getScanId());
         }
 
         public Integer getScanId(UnirestInstance unirest) {
@@ -33,12 +30,11 @@ public class FoDScanResolverMixin {
     }
 
     @ReflectiveAccess
-    public static abstract class AbstractFoDMultiScanResolverMixin extends AbstractPredefinedVariableResolverMixin {
-        @Getter private Class<?> predefinedVariableClass = FoDScanCommands.class;
+    public static abstract class AbstractFoDMultiScanResolverMixin {
         public abstract String[] getScanIds();
 
         public FoDScanDescriptor[] getScanDescriptors(UnirestInstance unirest) {
-            return Stream.of(getScanIds()).map(id->FoDScanHelper.getScanDescriptor(unirest, resolvePredefinedVariable(id))).toArray(FoDScanDescriptor[]::new);
+            return Stream.of(getScanIds()).map(id->FoDScanHelper.getScanDescriptor(unirest, id)).toArray(FoDScanDescriptor[]::new);
         }
 
         public Collection<JsonNode> getScanDescriptorJsonNodes(UnirestInstance unirest) {

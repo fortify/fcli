@@ -25,7 +25,7 @@
 package com.fortify.cli.fod.app.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.variable.PredefinedVariable;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine;
 
@@ -39,6 +39,6 @@ import picocli.CommandLine;
                 FoDAppDeleteCommand.class
         }
 )
-@PredefinedVariable(name = "_fod_currentApp", field = "applicationId")
+@DefaultVariablePropertyName("applicationId")
 public class FoDAppCommands extends AbstractFortifyCLICommand {
 }

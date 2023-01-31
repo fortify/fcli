@@ -29,8 +29,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
-import com.fortify.cli.sc_sast.scan.cli.cmd.SCSastScanCommands;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobDescriptor;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
@@ -43,12 +41,11 @@ import picocli.CommandLine.Parameters;
 
 public class SCSastScanJobResolverMixin {
     @ReflectiveAccess
-    public static abstract class AbstractSCSastScanJobResolverMixin extends AbstractPredefinedVariableResolverMixin {
-        @Getter private Class<?> predefinedVariableClass = SCSastScanCommands.class;
+    public static abstract class AbstractSCSastScanJobResolverMixin {
         protected abstract String getNonResolvedScanJobToken();
         
         public SCSastControllerScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest, StatusEndpointVersion minStatusEndpointVersion) {
-            return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, resolvePredefinedVariable(getNonResolvedScanJobToken()), minStatusEndpointVersion);
+            return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, getNonResolvedScanJobToken(), minStatusEndpointVersion);
         }
 
         public SCSastControllerScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest) {
@@ -57,12 +54,11 @@ public class SCSastScanJobResolverMixin {
     }
     
     @ReflectiveAccess
-    public static abstract class AbstractSCSastMultiScanJobResolverMixin extends AbstractPredefinedVariableResolverMixin {
-        @Getter private Class<?> predefinedVariableClass = SCSastScanCommands.class;
+    public static abstract class AbstractSCSastMultiScanJobResolverMixin {
         protected abstract String[] getNonResolvedScanJobTokens();
         
         public SCSastControllerScanJobDescriptor[] getScanJobDescriptors(UnirestInstance unirest, StatusEndpointVersion minStatusEndpointVersion) {
-            return Stream.of(getNonResolvedScanJobTokens()).map(id->SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, resolvePredefinedVariable(id), minStatusEndpointVersion)).toArray(SCSastControllerScanJobDescriptor[]::new);
+            return Stream.of(getNonResolvedScanJobTokens()).map(id->SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, id, minStatusEndpointVersion)).toArray(SCSastControllerScanJobDescriptor[]::new);
         }
 
         public SCSastControllerScanJobDescriptor[] getScanJobDescriptors(UnirestInstance unirest) {

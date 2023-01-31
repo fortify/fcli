@@ -1,7 +1,7 @@
 package com.fortify.cli.sc_sast.scan.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.variable.PredefinedVariable;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine.Command;
 
@@ -14,6 +14,6 @@ import picocli.CommandLine.Command;
                 SCSastControllerScanWaitForCommand.class
         }
 )
-@PredefinedVariable(name = "_scsast_currentScan", field = "jobToken")
+@DefaultVariablePropertyName("jobToken")
 public class SCSastScanCommands extends AbstractFortifyCLICommand {
 }

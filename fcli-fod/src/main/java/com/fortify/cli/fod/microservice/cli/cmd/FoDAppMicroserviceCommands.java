@@ -26,7 +26,8 @@
 package com.fortify.cli.fod.microservice.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.variable.PredefinedVariable;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "microservice",
@@ -39,6 +40,6 @@ import picocli.CommandLine;
                 FoDAppMicroserviceDeleteCommand.class
         }
 )
-@PredefinedVariable(name = "_fod_currentMicroservice", field = "microserviceId")
+@DefaultVariablePropertyName("microserviceId")
 public class FoDAppMicroserviceCommands extends AbstractFortifyCLICommand {
 }

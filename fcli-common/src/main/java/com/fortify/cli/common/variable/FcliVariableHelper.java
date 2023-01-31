@@ -45,6 +45,7 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.util.EncryptionHelper;
 import com.fortify.cli.common.util.FcliHomeHelper;
+import com.fortify.cli.common.util.StringUtils;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
@@ -56,21 +57,19 @@ import lombok.SneakyThrows;
 
 // TODO This class could probably use some cleanup
 public final class FcliVariableHelper {
-    public static final String PREDEFINED_VARIABLE_PLACEHOLDER = "?";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final Pattern variableNamePattern = Pattern.compile("^[a-zA-Z0-9_]+$");
-    private static final Pattern variableReferencePattern = Pattern.compile("\\{\\?([a-zA-Z0-9_]+):(.+?)\\}");
+    private static final Pattern variableReferencePattern = Pattern.compile("^::([a-zA-Z0-9_]+)::(.*)$");
     private FcliVariableHelper() {}
     
-    public static enum VariableType { PREDEFINED, USER_PROVIDED }
     @Data @EqualsAndHashCode(callSuper = true) @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
     public static class VariableDescriptor extends JsonNodeHolder {
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd@HH:mm:ss.SSSZ")
         private Date created;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd@HH:mm:ss.SSSZ")
         private transient Date accessed;
-        private VariableType type;
         private String name;
+        private String defaultPropertyName; 
         private boolean encrypted;
     }
     
@@ -114,32 +113,32 @@ public final class FcliVariableHelper {
         }
     }
     
-    public static final VariableDescriptor save(VariableType variableType, String variableName, JsonNode variableContents, boolean encrypt) {
+    public static final VariableDescriptor save(String variableName, String defaultPropertyName, JsonNode variableContents, boolean encrypt) {
         checkVariableName(variableName);
-        VariableDescriptor descriptor = createVariableDescriptor(variableType, variableName, encrypt);
+        VariableDescriptor descriptor = createVariableDescriptor(variableName, defaultPropertyName, encrypt);
         saveVariableContents(descriptor, variableContents);
         return saveVariableDescriptor(descriptor);
     }
     
     @SneakyThrows // TODO Do we want to use SneakyThrows?
-    public static final Writer getVariableContentsWriter(VariableType variableType, String variableName, boolean encrypt) {
+    public static final Writer getVariableContentsWriter(String variableName, String defaultPropertyName, boolean encrypt) {
         checkVariableName(variableName);
-        VariableDescriptor descriptor = createVariableDescriptor(variableType, variableName, encrypt);
+        VariableDescriptor descriptor = createVariableDescriptor(variableName, defaultPropertyName, encrypt);
         saveVariableDescriptor(descriptor);
         PrintWriter pw = new PrintWriter(Files.newOutputStream(getVariableContentsAbsolutePath(variableName), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING));
         return encrypt ? new EncryptionHelper.EncryptWriter(pw) : pw;
     }
     
     public static final String[] resolveVariables(String[] args) {
-        return Stream.of(args).map(FcliVariableHelper::resolveVariables).toArray(String[]::new);
+        return Stream.of(args).map(FcliVariableHelper::resolveVariable).toArray(String[]::new);
     }
     
-    public static final String resolveVariables(String arg) {
+    public static final String resolveVariable(String arg) {
         StringBuilder sb = new StringBuilder();
         Matcher matcher = variableReferencePattern.matcher(arg);
         while (matcher.find()) {
             String variableName = matcher.group(1);
-            String propertyPath = matcher.group(2);
+            String propertyPath = getVariablePropertyPathOrDefault(variableName, matcher.group(2));
             JsonNode contents = getVariableContents(variableName, true);
             String value = JsonHelper.evaluateJsonPath(contents, propertyPath, String.class);
             if ( value==null ) {
@@ -151,18 +150,25 @@ public final class FcliVariableHelper {
         return sb.toString();
     }
     
+    private static final String getVariablePropertyPathOrDefault(String variableName, String propertyPath) {
+        if ( StringUtils.isNotBlank(propertyPath) ) { return propertyPath; }
+        String defaultPropertyName = getVariableDescriptor(variableName, true).getDefaultPropertyName();
+        if ( StringUtils.isNotBlank(defaultPropertyName) ) { return defaultPropertyName; }
+        throw new IllegalArgumentException("No property name specified for variable "+variableName+", and no default property name available");
+    }
+    
     private static final void checkVariableName(String variableName) {
         if ( !variableNamePattern.matcher(variableName).matches() ) {
             throw new IllegalArgumentException(String.format("Variable name '%s' doesn't match pattern '%s'", variableName, variableNamePattern.pattern()));
         }
     }
     
-    private static final VariableDescriptor createVariableDescriptor(VariableType variableType, String variableName, boolean encrypt) {
+    private static final VariableDescriptor createVariableDescriptor(String variableName, String defaultPropertyName, boolean encrypt) {
         Date currentDateTime = new Date();
 		return VariableDescriptor.builder()
                 .created(currentDateTime)
                 .accessed(currentDateTime)
-                .type(variableType)
+                .defaultPropertyName(defaultPropertyName)
                 .name(variableName)
                 .encrypted(encrypt)
                 .build();

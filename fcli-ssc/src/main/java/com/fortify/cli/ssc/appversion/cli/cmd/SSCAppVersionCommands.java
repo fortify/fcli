@@ -1,7 +1,7 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.variable.PredefinedVariable;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine.Command;
 
@@ -15,6 +15,6 @@ import picocli.CommandLine.Command;
             SSCAppVersionUpdateCommand.class
         }
 )
-@PredefinedVariable(name = "_ssc_currentAppVersion", field = "id")
+@DefaultVariablePropertyName("id")
 public class SSCAppVersionCommands extends AbstractFortifyCLICommand {
 }

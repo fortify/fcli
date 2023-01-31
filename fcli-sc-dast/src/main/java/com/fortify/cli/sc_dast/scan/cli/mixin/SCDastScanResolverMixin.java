@@ -29,8 +29,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
-import com.fortify.cli.sc_dast.scan.cli.cmd.SCDastScanCommands;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanHelper;
 
@@ -42,12 +40,11 @@ import picocli.CommandLine.Parameters;
 
 public class SCDastScanResolverMixin {
     @ReflectiveAccess
-    public static abstract class AbstractSSCDastScanResolverMixin extends AbstractPredefinedVariableResolverMixin {
-        @Getter private Class<?> predefinedVariableClass = SCDastScanCommands.class;
+    public static abstract class AbstractSSCDastScanResolverMixin {
         public abstract String getScanId();
 
         public SCDastScanDescriptor getScanDescriptor(UnirestInstance unirest){
-            return SCDastScanHelper.getScanDescriptor(unirest, resolvePredefinedVariable(getScanId()));
+            return SCDastScanHelper.getScanDescriptor(unirest, getScanId());
         }
         
         public String getScanId(UnirestInstance unirest) {
@@ -56,12 +53,11 @@ public class SCDastScanResolverMixin {
     }
     
     @ReflectiveAccess
-    public static abstract class AbstractSSCDastMultiScanResolverMixin extends AbstractPredefinedVariableResolverMixin {
-        @Getter private Class<?> predefinedVariableClass = SCDastScanCommands.class;
+    public static abstract class AbstractSSCDastMultiScanResolverMixin {
         public abstract String[] getScanIds();
 
         public SCDastScanDescriptor[] getScanDescriptors(UnirestInstance unirest){
-            return Stream.of(getScanIds()).map(id->SCDastScanHelper.getScanDescriptor(unirest, resolvePredefinedVariable(id))).toArray(SCDastScanDescriptor[]::new);
+            return Stream.of(getScanIds()).map(id->SCDastScanHelper.getScanDescriptor(unirest, id)).toArray(SCDastScanDescriptor[]::new);
         }
         
         public Collection<JsonNode> getScanDescriptorJsonNodes(UnirestInstance unirest){

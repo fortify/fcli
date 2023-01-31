@@ -25,8 +25,6 @@
 
 package com.fortify.cli.fod.release.cli.mixin;
 
-import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
-import com.fortify.cli.fod.release.cli.cmd.FoDAppRelCommands;
 import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 
@@ -39,21 +37,16 @@ import picocli.CommandLine.Parameters;
 
 public class FoDAppMicroserviceRelResolverMixin {
     @ReflectiveAccess
-    public static abstract class AbstractFoDAppMicroserviceRelResolverMixin extends AbstractPredefinedVariableResolverMixin {
+    public static abstract class AbstractFoDAppMicroserviceRelResolverMixin {
         @Mixin private FoDDelimiterMixin delimiterMixin;
         public abstract String getAppMicroserviceRelNameOrId();
 
         public FoDAppRelDescriptor getAppMicroserviceRelDescriptor(UnirestInstance unirest, String... fields){
-            return FoDAppRelHelper.getRequiredAppMicroserviceRel(unirest, resolvePredefinedVariable(getAppMicroserviceRelNameOrId()), delimiterMixin.getDelimiter(), fields);
+            return FoDAppRelHelper.getRequiredAppMicroserviceRel(unirest, getAppMicroserviceRelNameOrId(), delimiterMixin.getDelimiter(), fields);
         }
         
         public String getAppMicroserviceRelId(UnirestInstance unirest) {
             return String.valueOf(getAppMicroserviceRelDescriptor(unirest, "id").getReleaseId());
-        }
-        
-        @Override
-        protected Class<?> getPredefinedVariableClass() {
-            return FoDAppRelCommands.class;
         }
     }
     
