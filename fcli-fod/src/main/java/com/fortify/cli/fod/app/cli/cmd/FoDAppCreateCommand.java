@@ -39,6 +39,7 @@ import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
+import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -86,7 +87,7 @@ public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IUn
     public JsonNode getJsonNode(UnirestInstance unirest) {
         validate();
 
-        FoDUserDescriptor userDescriptor = FoDUserHelper.getUser(unirest, owner, true);
+        FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, owner, true);
         FoDAppTypeOptions.FoDAppType appType = this.appType.getAppType();
 
         FoDAppCreateRequest appCreateRequest = new FoDAppCreateRequest()
@@ -103,7 +104,7 @@ public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IUn
                 .setMicroservices(FoDAppHelper.getMicroservicesNode(microservices))
                 .setReleaseMicroserviceName(releaseMicroservice)
                 .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes()))
-                .setUserGroupIds(FoDAppHelper.getUserGroupsNode(unirest, userGroups));
+                .setUserGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups));
 
         return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();
     }
