@@ -1,4 +1,4 @@
 ---
 ---
 
-{% include_relative ./fcli.html %}
+{% include_relative fcli.html %}
