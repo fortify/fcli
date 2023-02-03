@@ -39,8 +39,13 @@ public class FoDUrls {
     public static final String USERS = ApiBase + "/users";
     public static final String USER = ApiBase + "/users/{userId}";
     public static final String USER_GROUPS = ApiBase + "/user-management/user-groups";
-    public static final String USER_GROUP = ApiBase + "/user-management/user-groups/{userId}";
-    public static final String USER_GROUP_MEMBERS = ApiBase + "/user-management/user-groups/{userId}/members";
+    public static final String USER_GROUP = ApiBase + "/user-management/user-groups/{groupId}";
+    public static final String USER_GROUP_MEMBERS = ApiBase + "/user-management/user-groups/{groupId}/members";
+    public static final String USER_APPLICATION_ACCESS = ApiBase + "/user-application-access/{userId}";
+    public static final String USER_APPLICATION_ACCESS_DELETE = USER_APPLICATION_ACCESS + "/{applicationId}";
+    public static final String USER_GROUP_APPLICATION_ACCESS = ApiBase + "/user-group-application-access/{userGroupId}";
+    public static final String USER_GROUP_APPLICATION_ACCESS_DELETE = USER_GROUP_APPLICATION_ACCESS + "/{applicationId}";
+
     public static final String LOOKUP_ITEMS = ApiBase + "/lookup-items";
     public static final String SCANS = ApiBase + "/scans";
     public static final String SCAN = ApiBase + "/scans/{scanId}";

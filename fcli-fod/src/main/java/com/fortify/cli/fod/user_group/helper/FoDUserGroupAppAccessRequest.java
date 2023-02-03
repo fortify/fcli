@@ -22,27 +22,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.user.helper;
+package com.fortify.cli.fod.user_group.helper;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
 @ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class FoDUserDescriptor extends JsonNodeHolder {
-    private Integer userId;
-    private String userName;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private String phoneNumber;
-    private Boolean isVerified;
-    private Integer roleId;
-    private String roleName;
-    private Boolean isSuspended;
-    private Boolean mustChange;
-    private Boolean passwordNeverExpires;
+@Getter
+@ToString
+public class FoDUserGroupAppAccessRequest {
+    private Integer applicationId;
+
+    public FoDUserGroupAppAccessRequest setApplicationId(Integer id) {
+        this.applicationId = id;
+        return this;
+    }
+
 }

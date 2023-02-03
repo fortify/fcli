@@ -34,8 +34,6 @@ import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
 import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
 import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceUpdateRequest;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.user_group.helper.FoDUserGroupDescriptor;
-import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -133,6 +131,16 @@ public class FoDAppHelper {
         }
     }
 
+    public static JsonNode getApplicationsNode(UnirestInstance unirest, ArrayList<String> applications) {
+        ArrayNode appArray = getObjectMapper().createArrayNode();
+        if (applications == null || applications.isEmpty()) return appArray;
+        for (String a : applications) {
+            FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, a, true);
+            appArray.add(appDescriptor.getApplicationId());
+        }
+        return appArray;
+    }
+
     public static JsonNode getMicroservicesNode(ArrayList<String> microservices) {
         ArrayNode microserviceArray = objectMapper.createArrayNode();
         if (microservices == null || microservices.isEmpty()) return microserviceArray;
@@ -140,25 +148,6 @@ public class FoDAppHelper {
             microserviceArray.add(ms);
         }
         return microserviceArray;
-    }
-
-    public static JsonNode getUserGroupsNode(ArrayList<Integer> userGroups) {
-        ArrayNode userGroupArray = objectMapper.createArrayNode();
-        if (userGroups == null || userGroups.isEmpty()) return userGroupArray;
-        for (Integer ug : userGroups) {
-            userGroupArray.add(ug);
-        }
-        return userGroupArray;
-    }
-
-    public static JsonNode getUserGroupsNode(UnirestInstance unirest, ArrayList<String> userGroups) {
-        ArrayNode userGroupArray = getObjectMapper().createArrayNode();
-        if (userGroups == null || userGroups.isEmpty()) return userGroupArray;
-        for (String ug : userGroups) {
-            FoDUserGroupDescriptor userGroupDescriptor = FoDUserGroupHelper.getUserGroup(unirest, ug, true);
-            userGroupArray.add(userGroupDescriptor.getId());
-        }
-        return userGroupArray;
     }
 
     public static boolean missing(List<?> list) {
