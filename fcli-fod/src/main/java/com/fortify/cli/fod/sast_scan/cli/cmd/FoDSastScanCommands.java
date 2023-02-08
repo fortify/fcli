@@ -38,6 +38,7 @@ import picocli.CommandLine;
                 FoDSastScanGetCommand.class,
                 FoDSastScanListCommand.class,
                 FoDSastScanImportCommand.class,
+                FoDSastScanSetupCommand.class,
                 FoDSastScanWaitForCommand.class
         }
 )

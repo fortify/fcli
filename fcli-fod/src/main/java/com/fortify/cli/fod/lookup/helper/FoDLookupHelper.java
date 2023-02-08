@@ -50,7 +50,7 @@ public class FoDLookupHelper {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
-    public static final FoDLookupDescriptor getTextValue(UnirestInstance unirestInstance, FoDLookupType type, String text, boolean failIfNotFound) throws JsonProcessingException {
+    public static final FoDLookupDescriptor getDescriptor(UnirestInstance unirestInstance, FoDLookupType type, String text, boolean failIfNotFound) throws JsonProcessingException {
         GetRequest request = unirestInstance.get(FoDUrls.LOOKUP_ITEMS).queryString("type",
                 type.name());
         JsonNode items = request.asObject(ObjectNode.class).getBody().get("items");
@@ -63,7 +63,25 @@ public class FoDLookupHelper {
             if (currentLookup.getText().equals(text)) return currentLookup;
         }
         if (failIfNotFound)
-            throw new ValidationException("No text value found for: " + text + " in type: " + type.name());
+            throw new ValidationException("No value found for '" + text + "' in " + type.name());
+        return null;
+    }
+
+    public static final FoDLookupDescriptor getDescriptor(UnirestInstance unirestInstance, FoDLookupType type,
+                                                          String group, String text, boolean failIfNotFound) throws JsonProcessingException {
+        GetRequest request = unirestInstance.get(FoDUrls.LOOKUP_ITEMS).queryString("type",
+                type.name());
+        JsonNode items = request.asObject(ObjectNode.class).getBody().get("items");
+        List<FoDLookupDescriptor> lookupList = objectMapper.readValue(objectMapper.writeValueAsString(items),
+                new TypeReference<List<FoDLookupDescriptor>>() {
+                });
+        Iterator<FoDLookupDescriptor> lookupIterator = lookupList.iterator();
+        while (lookupIterator.hasNext()) {
+            FoDLookupDescriptor currentLookup = lookupIterator.next();
+            if (currentLookup.getGroup().equals(group) && currentLookup.getText().equals(text)) return currentLookup;
+        }
+        if (failIfNotFound)
+            throw new ValidationException("No value found for '" + text + "' with group '" + group + "' in " + type.name());
         return null;
     }
 

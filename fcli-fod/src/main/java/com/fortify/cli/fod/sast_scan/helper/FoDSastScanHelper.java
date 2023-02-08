@@ -36,6 +36,7 @@ import com.fortify.cli.fod.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod.scan.helper.*;
 import com.fortify.cli.fod.util.FoDConstants;
 import com.fortify.cli.fod.util.FoDEnums;
+import com.fortify.cli.fod.util.FoDQueryHelper;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -47,15 +48,15 @@ public class FoDSastScanHelper extends FoDScanHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    /*public static final FoDDastScanSetupDescriptor setupScan(UnirestInstance unirest, Integer relId, FoDSetupDastScanRequest setupDastScanRequest) {
-        ObjectNode body = objectMapper.valueToTree(setupDastScanRequest);
+    public static final FoDSastScanSetupDescriptor setupScan(UnirestInstance unirest, Integer relId, FoDSetupSastScanRequest setupSastScanRequest) {
+        ObjectNode body = objectMapper.valueToTree(setupSastScanRequest);
         FoDQueryHelper.stripNulls(body);
-        System.out.println(body.toPrettyString());
-        JsonNode response = unirest.put(FoDUrls.DYNAMIC_SCANS + "/scan-setup")
+        //System.out.println(body.toPrettyString());
+        JsonNode response = unirest.put(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", String.valueOf(relId))
                 .body(body).asObject(JsonNode.class).getBody();
-        return JsonHelper.treeToValue(response, FoDDastScanSetupDescriptor.class);
-    }*/
+        return getSetupDescriptor(unirest, String.valueOf(relId));
+    }
 
     public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartSastScanRequest req,
                                                     File scanFile, int chunkSize) {

@@ -60,6 +60,21 @@ public class FoDAssessmentTypeOptions {
             return this.subscriptionUnits;
         }
 
+        public FoDScanFormatOptions.FoDScanType toScanType() {
+            switch (this) {
+                case DynamicWebsite:
+                case DynamicPlusWebsite:
+                case DynamicAPI:
+                case DynamicPlusAPI:
+                        return FoDScanFormatOptions.FoDScanType.Dynamic;
+                case Mobile:
+                case MobilePlus:
+                        return FoDScanFormatOptions.FoDScanType.Mobile;
+                default:
+                    return FoDScanFormatOptions.FoDScanType.Static;
+            }
+        }
+
     }
 
     @ReflectiveAccess

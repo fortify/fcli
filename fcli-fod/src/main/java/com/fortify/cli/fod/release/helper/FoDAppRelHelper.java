@@ -169,6 +169,23 @@ public class FoDAppRelHelper {
         return JsonHelper.treeToValue(assessmentTypes, FoDAppRelAssessmentTypeDescriptor[].class);
     }
 
+    public static final FoDAppRelAssessmentTypeDescriptor getAppRelAssessmentType(UnirestInstance unirestInstance,
+                                                                                  String relId, FoDScanFormatOptions.FoDScanType scanType,
+                                                                                  boolean isPlus, boolean failIfNotFound) {
+        String filterString = "name:" + scanType.toString() +
+                (isPlus ? "+" : "") + " Assessment";
+        System.out.println(filterString);
+        GetRequest request = unirestInstance.get(FoDUrls.RELEASE + "/assessment-types")
+                .routeParam("relId", relId)
+                .queryString("scanType", scanType.name())
+                .queryString("filters", filterString);
+        JsonNode assessmentTypes = request.asObject(ObjectNode.class).getBody().get("items");
+        if (failIfNotFound && assessmentTypes.size() == 0) {
+            throw new ValidationException("No assessment types found for release id: " + relId);
+        }
+        return JsonHelper.treeToValue(assessmentTypes, FoDAppRelAssessmentTypeDescriptor.class);
+    }
+
     public static final FoDAppRelDescriptor createAppRel(UnirestInstance unirest, FoDAppRelCreateRequest relCreateRequest) {
         ObjectNode body = objectMapper.valueToTree(relCreateRequest);
         JsonNode response = unirest.post(FoDUrls.RELEASES)

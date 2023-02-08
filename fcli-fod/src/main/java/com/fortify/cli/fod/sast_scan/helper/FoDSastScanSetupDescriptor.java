@@ -33,9 +33,9 @@ import lombok.ToString;
 
 @ReflectiveAccess
 @Data
-@ToString
 @EqualsAndHashCode(callSuper=false)
 public class FoDSastScanSetupDescriptor extends JsonNodeHolder {
+    private Integer releaseId;
     private Integer assessmentTypeId;
     private Integer entitlementId;
     private String entitlementDescription;
