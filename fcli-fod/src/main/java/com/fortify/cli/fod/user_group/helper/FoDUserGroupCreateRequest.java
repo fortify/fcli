@@ -22,27 +22,41 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.user.helper;
+package com.fortify.cli.fod.user_group.helper;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
 @ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class FoDUserDescriptor extends JsonNodeHolder {
-    private Integer userId;
-    private String userName;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private String phoneNumber;
-    private Boolean isVerified;
-    private Integer roleId;
-    private String roleName;
-    private Boolean isSuspended;
-    private Boolean mustChange;
-    private Boolean passwordNeverExpires;
+@Getter
+@ToString
+public class FoDUserGroupCreateRequest {
+    private String name;
+    private Boolean addAllUsers = false;
+    private JsonNode users;
+
+    private JsonNode applications;
+
+    public FoDUserGroupCreateRequest setName(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public FoDUserGroupCreateRequest setAddAllUsers(Boolean addAllUsers) {
+        this.addAllUsers = addAllUsers;
+        return this;
+    }
+
+    public FoDUserGroupCreateRequest setUsers(JsonNode ids) {
+        this.users = ids;
+        return this;
+    }
+
+    public FoDUserGroupCreateRequest setApplications(JsonNode ids) {
+        this.applications = ids;
+        return this;
+    }
+
 }

@@ -387,4 +387,20 @@ public class FoDEnums {
         }
 
     }
+
+    public enum UserApplicationAccessAction {
+        Add, Remove
+    }
+
+    public enum UserGroupApplicationAccessAction {
+        Add, Remove
+    }
+
+    public enum UserGroupMembershipAction {
+        Add, Remove
+    }
+
+
+
+
 }

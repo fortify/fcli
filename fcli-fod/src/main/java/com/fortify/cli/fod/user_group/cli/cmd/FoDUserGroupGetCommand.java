@@ -22,27 +22,40 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.user.helper;
+package com.fortify.cli.fod.user_group.cli.cmd;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
+import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
+import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.user_group.cli.mixin.FoDUserGroupResolverMixin;
+import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class FoDUserDescriptor extends JsonNodeHolder {
-    private Integer userId;
-    private String userName;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private String phoneNumber;
-    private Boolean isVerified;
-    private Integer roleId;
-    private String roleName;
-    private Boolean isSuspended;
-    private Boolean mustChange;
-    private Boolean passwordNeverExpires;
+@Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
+public class FoDUserGroupGetCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer {
+    @Getter @Mixin private FoDOutputHelperMixins.Get outputHelper;
+    @Mixin private FoDUserGroupResolverMixin.PositionalParameter userGroupResolver;
+
+    @Override
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return userGroupResolver.getUserGroupDescriptor(unirest).asJsonNode();
+    }
+
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDUserGroupHelper.renameFields(record);
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
+
 }

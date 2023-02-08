@@ -24,17 +24,57 @@
  ******************************************************************************/
 package com.fortify.cli.fod.user_group.helper;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
 @ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class FoDUserGroupDescriptor extends JsonNodeHolder {
-    private Integer id;
+@Getter
+@ToString
+public class FoDUserGroupUpdateRequest {
     private String name;
-    private Integer assignedUsersCount;
-    private Integer assignedApplicationsCount;
+    private Boolean addAllUsers = false;
+    private Boolean removeAllUsers = false;
+    private JsonNode addUsers;
+    private JsonNode removeUsers;
+    private JsonNode addApplications;
+    private JsonNode removeApplications;
+
+    public FoDUserGroupUpdateRequest setName(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public FoDUserGroupUpdateRequest setAddAllUsers(Boolean addAllUsers) {
+        this.addAllUsers = addAllUsers;
+        return this;
+    }
+
+    public FoDUserGroupUpdateRequest setRemoveAllUsers(Boolean removeAllUsers) {
+        this.removeAllUsers = removeAllUsers;
+        return this;
+    }
+
+    public FoDUserGroupUpdateRequest setAddUsers(JsonNode ids) {
+        this.addUsers = ids;
+        return this;
+    }
+
+    public FoDUserGroupUpdateRequest setRemoveUsers(JsonNode ids) {
+        this.removeUsers = ids;
+        return this;
+    }
+
+    public FoDUserGroupUpdateRequest setAddApplications(JsonNode ids) {
+        this.addApplications = ids;
+        return this;
+    }
+
+    public FoDUserGroupUpdateRequest setRemoveApplications(JsonNode ids) {
+        this.removeApplications = ids;
+        return this;
+    }
+
+
 }
