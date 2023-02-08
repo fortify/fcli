@@ -130,6 +130,12 @@ public class SSCOutputHelperMixins {
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
+    @ReflectiveAccess public static class ImportFromDebricked extends UnirestOutputHelperMixins.Other {
+        public static final String CMD_NAME = "debricked";
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+    
     @ReflectiveAccess public static class VulnCount extends UnirestOutputHelperMixins.Other {
         public static final String CMD_NAME = "count";
         @Getter @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;

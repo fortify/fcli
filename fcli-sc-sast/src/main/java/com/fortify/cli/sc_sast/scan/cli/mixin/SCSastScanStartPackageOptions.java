@@ -26,7 +26,7 @@ public class SCSastScanStartPackageOptions implements ISCSastScanStartOptions {
     @Getter private final String scaRuntimeArgs = "";
     @Getter private SCSastControllerJobType jobType = SCSastControllerJobType.TRANSLATION_AND_SCAN_JOB;
     
-    @Option(names = {"-p", "--package-file"})
+    @Option(names = {"-p", "--package-file"}, required = true)
     public void setPackageFile(File packageFile) {
         this.payloadFile = packageFile;
         setDotNetProperties(packageFile);

@@ -30,14 +30,15 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand.GenericOptionsArgGroup;
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand.LogLevel;
-import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
 import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner.FortifyCLIInitializerCommand;
+import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.layout.TTLLLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.FileAppender;
+import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import jakarta.inject.Singleton;
 import picocli.CommandLine;
 
@@ -72,11 +73,18 @@ public class LoggingInitializer implements IFortifyCLIInitializer {
     }
 
     private void configureLogFile(Logger rootLogger, String logFile) {
+    	LoggerContext loggerContext = rootLogger.getLoggerContext();
         FileAppender<ILoggingEvent> fileAppender = new FileAppender<ILoggingEvent>();
         fileAppender.setFile(logFile);
         fileAppender.setAppend(false);
-        fileAppender.setEncoder(((ConsoleAppender<ILoggingEvent>)rootLogger.getAppender("default")).getEncoder());
-        fileAppender.setContext(rootLogger.getLoggerContext());
+        LayoutWrappingEncoder<ILoggingEvent> encoder = new LayoutWrappingEncoder<ILoggingEvent>();
+        encoder.setContext(loggerContext);
+        TTLLLayout layout = new TTLLLayout();
+        layout.setContext(loggerContext);
+        layout.start();
+        encoder.setLayout(layout);
+        fileAppender.setEncoder(encoder);
+        fileAppender.setContext(loggerContext);
         fileAppender.start();
         rootLogger.addAppender(fileAppender);
     }

@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.fod.user_group.helper;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
@@ -34,7 +33,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class FoDUserGroupDescriptor extends JsonNodeHolder {
-    private String id;
+    private Integer id;
     private String name;
     private Integer assignedUsersCount;
     private Integer assignedApplicationsCount;

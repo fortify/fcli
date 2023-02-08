@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.cli.cmd;
 
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
 import com.fortify.cli.fod.session.manager.FoDSessionData;
 import com.fortify.cli.fod.session.manager.FoDSessionDataManager;
@@ -34,7 +35,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 
 @ReflectiveAccess
-@Command(name = "logout", sortOptions = false)
+@Command(name = BasicOutputHelperMixins.Logout.CMD_NAME, sortOptions = false)
 public class FoDSessionLogoutCommand extends AbstractSessionLogoutCommand<FoDSessionData> {
     @Getter @Inject private FoDSessionDataManager sessionDataManager;
     

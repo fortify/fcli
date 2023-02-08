@@ -3,7 +3,9 @@ defaultVersion: latest
 versions:
   - version: latest
     downloadUrl: https://github.com/fortify/FortifyVulnerabilityExporter/releases/latest/download/FortifyVulnerabilityExporter.zip
-    digest: SHA-256:1f3a710003c81a9e767f2c90bbfca3f2250b01ad3a50b181a04eb7d025c05da6
+    digest: SHA-256:fae3d3adbd0629ede5013227e33da2f25786006530b647a9f301068707a102e5
+  - version: 2.0.0
+    digest: SHA-256:fae3d3adbd0629ede5013227e33da2f25786006530b647a9f301068707a102e5
   - version: 1.8.0
     digest: SHA-256:1f3a710003c81a9e767f2c90bbfca3f2250b01ad3a50b181a04eb7d025c05da6
   - version: 1.7.0

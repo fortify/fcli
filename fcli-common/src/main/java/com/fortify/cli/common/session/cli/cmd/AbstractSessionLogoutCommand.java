@@ -24,30 +24,44 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
-import com.fortify.cli.common.util.FixInjection;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess @FixInjection
-public abstract class AbstractSessionLogoutCommand<D extends ISessionData> extends AbstractSessionCommand {
+@ReflectiveAccess
+public abstract class AbstractSessionLogoutCommand<D extends ISessionData> extends AbstractSessionCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
-    @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+    @Getter @Mixin private BasicOutputHelperMixins.Logout outputHelper;
 
     @Override
-    public final void _run() {
+    protected JsonNode getJsonNode() {
         String sessionName = sessionNameMixin.getSessionName();
+        JsonNode result = null;
         ISessionDataManager<D> sessionDataManager = getSessionDataManager();
         if ( sessionDataManager.exists(sessionName) ) {
+        	result = sessionDataManager.sessionSummaryAsObjectNode(sessionName);
             logout(sessionName, sessionDataManager.get(sessionName, true));
             // TODO Optionally delete all variables
             getSessionDataManager().destroy(sessionName);
         }
+        return result;
+    }
+    
+    @Override
+    public String getActionCommandResult() {
+    	return "TERMINATED";
+    }
+    
+    @Override
+    public boolean isSingular() {
+    	return false;
     }
     
     protected abstract void logout(String sessionName, D sessionData);

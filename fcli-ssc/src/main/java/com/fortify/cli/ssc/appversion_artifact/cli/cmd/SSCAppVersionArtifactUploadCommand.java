@@ -26,19 +26,9 @@ package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
 import java.io.File;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
-import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
-import com.fortify.cli.ssc.rest.SSCUrls;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpRequest;
-import kong.unirest.HttpRequestWithBody;
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -47,28 +37,12 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Upload.CMD_NAME)
-public class SSCAppVersionArtifactUploadCommand extends AbstractSSCAppVersionArtifactOutputCommand implements IUnirestBaseRequestSupplier {
+public class SSCAppVersionArtifactUploadCommand extends AbstractSSCAppVersionArtifactUploadCommand {
     @Getter @Mixin private SSCOutputHelperMixins.Upload outputHelper; 
-    @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
-    @Parameters(arity="1") private String filePath;
+    @Getter @Parameters(arity="1") private File file;
     
     @Option(names = {"-e", "--engine-type"})
-    private String engineType;
-    
-    @Override
-    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        SSCAppVersionDescriptor av = parentResolver.getAppVersionDescriptor(unirest);
-        HttpRequestWithBody request = unirest.post(SSCUrls.PROJECT_VERSION_ARTIFACTS(av.getVersionId()));
-        if ( StringUtils.isNotBlank(engineType) ) {
-            request.queryString("engineType", engineType);
-        }
-        JsonNode uploadResponse = request.multiPartContent()
-                .field("file", new File(filePath))
-                .asObject(JsonNode.class).getBody();
-        String artifactId = JsonHelper.evaluateJsonPath(uploadResponse, "$.data.id", String.class);
-        // TODO Do we actually show any scan data from the embedded scans?
-        return unirest.get(SSCUrls.ARTIFACT(artifactId)).queryString("embed","scans");
-    }
+    @Getter private String engineType;
     
     @Override
     public boolean isSingular() {

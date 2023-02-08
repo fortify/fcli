@@ -25,7 +25,7 @@ public class SCSastScanStartMbsOptions implements ISCSastScanStartOptions {
     @Getter private final String scaRuntimeArgs = ""; // TODO Provide options
     @Getter private SCSastControllerJobType jobType = SCSastControllerJobType.SCAN_JOB;
     
-    @Option(names = {"-m", "--mbs-file"})
+    @Option(names = {"-m", "--mbs-file"}, required= true)
     public void setMbsFile(File mbsFile) {
         this.payloadFile = mbsFile;
         setMbsProperties(mbsFile);
