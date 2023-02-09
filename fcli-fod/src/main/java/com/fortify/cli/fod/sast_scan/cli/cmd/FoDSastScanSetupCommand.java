@@ -68,7 +68,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDOutputCommand implements
     @Mixin
     private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
 
-    @Option(names = {"--entitlement-frequency", "frequency"})
+    @Option(names = {"--entitlement-frequency", "--frequency"})
     private FoDEnums.EntitlementFrequencyTypes entitlementFrequency;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;

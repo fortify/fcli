@@ -172,7 +172,7 @@ public class FoDUserHelper {
             roleId = Integer.parseInt(roleNameOrId);
         } catch (NumberFormatException nfe) {
             try {
-                FoDLookupDescriptor lookupDescriptor = FoDLookupHelper.getTextValue(unirest, FoDLookupTypeOptions.FoDLookupType.Roles, roleNameOrId, true);
+                FoDLookupDescriptor lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupTypeOptions.FoDLookupType.Roles, roleNameOrId, true);
                 roleId = Integer.valueOf(lookupDescriptor.getValue());
             } catch (JsonProcessingException e) {
                 throw new ValidationException("Unable to find role with name: " + roleNameOrId);
