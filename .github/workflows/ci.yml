@@ -5,7 +5,9 @@ on:
       - '**'
        
 env:
-  native_image_opts: --verbose -H:Log=registerResource:verbose
+  native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization
+  graal_version: 22.3.1
+  graal_java_version: 11
           
 jobs:
   build:
@@ -79,40 +81,22 @@ jobs:
     name: native-image-linux
     needs: build
     runs-on: ubuntu-22.04
-    env:
-      TOOLCHAIN_BASE: /opt/musl_cc
-      TOOLCHAIN_DIR: /opt/musl_cc/x86_64-linux-musl-native
-      CC: /opt/musl_cc/x86_64-linux-musl-native/bin/gcc
+#    env:
+#      TOOLCHAIN_BASE: /opt/musl_cc
+#      TOOLCHAIN_DIR: /opt/musl_cc/x86_64-linux-musl-native
+#      CC: /opt/musl_cc/x86_64-linux-musl-native/bin/gcc
     steps:
       - name: Check-out source code
         uses: actions/checkout@v3
 
-      # Next two actions are prerequisites for creating a statically linked binary of fcli.
-      - name: Install musl toolchain
-        run: |
-          wget --no-check-certificate 'https://github.com/fortify-ps/fcli/raw/musl-cc/v10/x86_64-linux-musl-native.tgz' -O x86_64-linux-musl-native.tgz;
-          mkdir -p $TOOLCHAIN_BASE;
-          tar -zxvf x86_64-linux-musl-native.tgz -C $TOOLCHAIN_BASE;
-          ln -s $TOOLCHAIN_DIR/bin/gcc $TOOLCHAIN_DIR/bin/musl-gcc;
-          echo "$TOOLCHAIN_DIR/bin" >> $GITHUB_PATH
-
-      - name: Install zlib
-        run: |
-          wget https://zlib.net/zlib-1.2.13.tar.gz; 
-          mkdir zlib; 
-          tar -zxvf zlib-1.2.13.tar.gz; 
-          cd zlib-1.2.13; 
-          sudo ./configure --prefix=$TOOLCHAIN_DIR --static; 
-          make; 
-          sudo make install
-
-      - uses: DeLaGuardo/setup-graalvm@5.0
+      - uses: graalvm/setup-graalvm@v1
         with:
-          graalvm-version: '21.2.0.java11'
-
-      - name: Install GraalVM's native-image extension
-        run: gu install native-image
-
+          version: ${{ env.graal_version }}
+          java-version: ${{ env.graal_java_version }}
+          components: 'native-image'
+          native-image-musl: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      
       - uses: actions/download-artifact@v3
         with:
           path: ./
@@ -153,12 +137,12 @@ jobs:
       - name: Check-out source code
         uses: actions/checkout@v3
 
-      - uses: DeLaGuardo/setup-graalvm@5.0
+      - uses: graalvm/setup-graalvm@v1
         with:
-          graalvm-version: '21.2.0.java11'
-
-      - name: Install GraalVM's native-image extension
-        run: gu install native-image
+          version: ${{ env.graal_version }}
+          java-version: ${{ env.graal_java_version }}
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/download-artifact@v3
         with:
@@ -190,42 +174,45 @@ jobs:
     needs: build
     runs-on: windows-2022
     steps:
-    - uses: DeLaGuardo/setup-graalvm@5.0
-      with:
-        graalvm-version: '21.2.0.java11'
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          version: ${{ env.graal_version }}
+          java-version: ${{ env.graal_java_version }}
+          components: 'native-image'
+          native-image-musl: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install GraalVM's native-image extension
-      run: ${{ env.JAVA_HOME }}\bin\gu.cmd install native-image
-
-    - uses: actions/download-artifact@v3
-      with:
-        path: ./
+      - uses: actions/download-artifact@v3
+        with:
+          path: ./
     
     # For Windows, we build a dynamically linked image. Jansi by default provides a resource-config.json
     # file to include native libraries for all platforms; we override this to include only the 64-bit
     # Windows library
-    - name: Create native fcli
-      run: >-
-        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-        ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Mac/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar .\artifact\fcli.jar fcli
-      shell: cmd
+      - name: Create native fcli
+        run: >-
+          "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
+          ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Mac/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar .\artifact\fcli.jar fcli
+        shell: cmd
 
-    - name: Compress native fcli
-      uses: svenstaro/upx-action@v2
-      with:
-        file: fcli.exe
+# We don't compress the Windows binary for now as this is incompatible with current Graal version.
+# See https://github.com/fortify-ps/fcli/issues/148
+#      - name: Compress native fcli
+#        uses: svenstaro/upx-action@v2
+#        with:
+#          file: fcli.exe
 
-    - name: Basic test of native fcli
-      run: |
-        .\fcli.exe --help 
-        .\fcli.exe get --help
+      - name: Basic test of native fcli
+        run: |
+          .\fcli.exe --help 
+          .\fcli.exe get --help
 
-    - name: Package native fcli
-      run: 7z a fcli-windows.zip fcli*.exe
+      - name: Package native fcli
+        run: 7z a fcli-windows.zip fcli*.exe
 
-    - uses: actions/upload-artifact@v3
-      with:
-        path: ./fcli-windows.zip
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ./fcli-windows.zip
         
   release:
     name: release
