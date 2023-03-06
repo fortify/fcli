@@ -1,0 +1,230 @@
+---
+title: fcli-ssc-appversion-user-delete(1)
+fcli_version: fcli version 1.2.1, built on 2023-03-06 17 57 44
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ssc-appversion-user-delete(1)</title>
+<link rel="stylesheet" href="./asciidoctor.css">
+<style>
+#banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  line-height: 19px;
+  height: 50px;
+  background-color: #0079ef;
+  width: 100%;
+  z-index: 2000;
+}
+#navbar {
+  position: fixed;
+  top: 50px;
+  left: 0;
+  line-height: 19px;
+  height: 20px;
+  background-color: #dddddf;
+  width: 100%;
+  z-index: 2000;
+}
+#navbar-version {
+  position: absolute;
+  right: 5px;
+}
+#banner .logo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  display: inline-block;
+  background-color: #00abf3;
+}
+#banner h2 {
+  color: white !important;
+  font-weight: bold;
+  font-size: 150%;
+  margin: 0;
+  float: left;
+  height: 50px;
+  padding: 12px;
+  margin-left: 50px;
+}
+body {
+  padding-top: 70px;
+}
+:target::before {
+    content: '';
+    display: block;
+    height:      70px;
+    margin-top: -70px;
+}
+h1, h2, h3, h4, h5, h6, #toctitle, .sidebarblock > .content > .title {
+  color: rgba(0, 0, 0, 0.8);
+}
+@media screen and (min-width: 768px) {
+  #toc.toc2 {
+    top: 70px !important;
+  }
+}
+</style>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+<div id="banner">
+<img class="logo" src="
+    			data:image/svg+xml;
+    			data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIxLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA2MTIgNjEyIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA2MTIgNjEyOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6IzAwQUJGMzt9Cgkuc3Qxe2ZpbGw6I0ZGRkZGRjt9Cjwvc3R5bGU+CjxyZWN0IHg9IjAiIGNsYXNzPSJzdDAiIHdpZHRoPSI2MTIiIGhlaWdodD0iNjEyIi8+CjxnPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTQ5MSwxMjFjMCwwLTE5Mi41LDAtMjQ3LjgsMGMtMTEuMSwwLTIyLjEsMS4zLTMyLjksNC4yYy0xNi44LDQuNi0zMS45LDEyLjQtNDUuNCwyMy41CgkJCWMtOS41LDcuOS0xNy42LDE3LTI0LjQsMjcuNGMtNy4yLDExLjEtMTIuNCwyMy0xNS43LDM1LjhjLTIuNywxMC41LTMuNywyMS4yLTMuNywzMi4xYzAsNzAuMiwwLDE0MC4zLDAsMjEwLjVoMFY0OTFoODEuOHYwCgkJCWM1NiwwLDExMiwwLDE2OCwwYzguOSwwLDE3LjctMSwyNi40LTMuMWMxMy44LTMuMiwyNi43LTguNiwzOC42LTE2LjRjMTQuMi05LjIsMjUuOS0yMC45LDM1LjItMzVjMTMuNS0yMC41LDE5LjktNDMuMiwxOS45LTY3LjcKCQkJYzAtMzkuNCwwLTc4LjcsMC0xMTguMWMwLDAsMCwwLDAsMGMwLTMxLjEsMC02Mi4xLDAtOTMuMmgwVjEyMXogTTQzNy42LDE4NS40YzAsNjEuNywwLDEyMy4zLTAuMSwxODVjMCwxMS4yLTIuNiwyMS44LTgsMzEuNgoJCQljLTksMTYuNC0yMi41LDI3LjQtNDAuNCwzMi45Yy02LjIsMS45LTEyLjcsMi43LTE5LjMsMi43Yy0zMS4zLDAtMTk1LjYsMC0xOTUuNiwwdi0xMWgwYzAtNjEuOC0wLjEtMTIzLjcsMC0xODUuNQoJCQljMC0xNi4xLDUuNS0zMC40LDE1LjgtNDIuN2M4LjgtMTAuNCwxOS44LTE3LjYsMzIuOS0yMS40YzUuOC0xLjcsMTEuNy0yLjYsMTcuOC0yLjZjNjAsMCwxOTYuNywwLDE5Ni43LDBMNDM3LjYsMTg1LjR6Ii8+Cgk8L2c+Cgk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMjYwLjYsMjQyLjhoMTYyLjV2LTUzLjZIMjUxdjAuMWMtMi43LDAtNS40LDAtOC4xLDBjLTE4LjUsMC0zMi45LDguMi00My4xLDIzLjVjLTUuNiw4LjQtOC4xLDE3LjktOC4xLDI4CgkJYzAsMTYuOSwwLDMzLjksMCw1MC44aDB2MTMyLjdoNTMuNnYtOTAuOGgxNDQuNFYyODBoLTE0NGMtMC40LTAuMy0wLjUtMC44LTAuNS0xLjdjMC4xLTUuNywwLTExLjQsMC0xNy4xCgkJQzI0NS4yLDI1MS4xLDI1MS4yLDI0NC4xLDI2MC42LDI0Mi44eiIvPgo8L2c+Cjwvc3ZnPgo="/>
+  <h2>FCLI: The Universal Fortify CLI</h2>
+</div>
+<div id="navbar">{% include navbar.html currentVersion="1.2.1" %}
+</div></div>
+<div id="header">
+<h1>fcli-ssc-appversion-user-delete(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_session_options">Session options:</a></li>
+<li><a href="#_output_options">Output options:</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_arguments">Arguments</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ssc-appversion-user-delete - Delete users from an application version</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ssc appversion-user delete</strong> [<strong>--allow-multi-match</strong>]
+                                <strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em>
+                                [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [[<strong>-h</strong>]
+                                [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                                [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
+                          _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                    _            <em class="=&lt;propertyNames&gt;">]
+                                [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                <em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dd>
+<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
+</dd>
+<dt class="hdlist1"><strong>--allow-multi-match</strong></dt>
+<dd>
+<p>Allow for multiple matches</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Session name to use</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dd>
+<p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using {?variableName:property} on any subsequent command. Most commands that return a single record (get, start, create, &#8230;&#8203;) also support '?' to store the record identifier in a predefined variable, which can later be referenced using '?' on options/parameters that take the id of such records as input.</p>
+</dd>
+<dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write results to the specified files in the given output format. By default, results will be written to stdout</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;</dt>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version fcli version 1.2.1, built on 2023-03-06 17 57 44<br>
+Last updated 2023-03-06 17:58:24 +0100
+</div>
+</div>
+</body>
+</html>

@@ -7,11 +7,11 @@ url: "https://fortify-ps.github.io"
 
 defaults:
   - scope:
-      path: "dev_*/fcli.html"
+      path: "dev_*/ndex.html"
     values:
       manpage_dev: true
   - scope:
-      path: "v*/fcli.html"
+      path: "v*/index.html"
     values:
       manpage_release: true
 
