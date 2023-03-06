@@ -7,7 +7,7 @@ url: "https://fortify-ps.github.io"
 
 defaults:
   - scope:
-      path: "dev_*/ndex.html"
+      path: "dev_*/index.html"
     values:
       manpage_dev: true
   - scope:
