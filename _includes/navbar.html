@@ -2,13 +2,16 @@
   <span class="version-label">Version:&nbsp;</span><div class="dropdown">{{ include.currentVersion}} <i class="arrow down"></i>
   <div class="dropdown-content"> 
     <span>-- Releases --</span>
-{% assign manpages_release = site.static_files | where: "manpage_release", true %}
-{% assign has_releaseDocs = manpages_release | first %}
-{% if has_releaseDocs %}
-{% for page in manpages_release %}
-    <a href="/fcli{{ page.path }}">{{ page.path | replace_first: "/", "" | split: "/" | first }}</a>
-{% endfor %}
-{% endif %}
+	<a href="/fcli/v1.2.2">v1.2.2</a>
+	<a href="/fcli/v1.2.1">v1.2.1</a>
+	<a href="/fcli/v1.2.0">v1.2.0</a>
+	<a href="/fcli/v1.1.0">v1.1.0</a>
+	<a href="/fcli/v1.0.5">v1.0.5</a>
+	<a href="/fcli/v1.0.4">v1.0.4</a>
+	<a href="/fcli/v1.0.3">v1.0.3</a>
+	<a href="/fcli/v1.0.2">v1.0.2</a>
+	<a href="/fcli/v1.0.1">v1.0.1</a>
+	<a href="/fcli/v1.0.0">v1.0.0</a>
     <span>-- Development --</span> 
 {% assign manpages_dev = site.static_files | where: "manpage_dev", true %}
 {% assign has_devDocs = manpages_dev | first %}
