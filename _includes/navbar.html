@@ -1,0 +1,22 @@
+<div id="navbar-version">
+  <span class="version-label">Version:&nbsp;</span><div class="dropdown">{{ include.currentVersion}} <i class="arrow down"></i>
+  <div class="dropdown-content"> 
+    <span>-- Releases --</span>
+{% assign manpages_release = site.static_files | where: "manpage_release", true %}
+{% assign has_releaseDocs = manpages_release | first %}
+{% if has_releaseDocs %}
+{% for page in manpages_release %}
+    <a href="/fcli{{ page.path }}">{{ page.path | replace_first: "/", "" | split: "/" | first }}</a>
+{% endfor %}
+{% endif %}
+    <span>-- Development --</span> 
+{% assign manpages_dev = site.static_files | where: "manpage_dev", true %}
+{% assign has_devDocs = manpages_dev | first %}
+{% if has_devDocs %}
+{% for page in manpages_dev %}
+    <a href="/fcli{{ page.path }}">{{ page.path | replace_first: "/", "" | split: "/" | first }}</a>
+{% endfor %}
+{% endif %}
+  </div></div>
+
+</div>
