@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fortify CLI (fcli) Installation &amp; Usage</title>
+<style>
+/* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
+/* Uncomment @import statement to use as custom stylesheet */
+/*@import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700";*/
+article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section{display:block}
+audio,video{display:inline-block}
+audio:not([controls]){display:none;height:0}
+html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
+a{background:none}
+a:focus{outline:thin dotted}
+a:active,a:hover{outline:0}
+h1{font-size:2em;margin:.67em 0}
+abbr[title]{border-bottom:1px dotted}
+b,strong{font-weight:bold}
+dfn{font-style:italic}
+hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}
+mark{background:#ff0;color:#000}
+code,kbd,pre,samp{font-family:monospace;font-size:1em}
+pre{white-space:pre-wrap}
+q{quotes:"\201C" "\201D" "\2018" "\2019"}
+small{font-size:80%}
+sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.5em}
+sub{bottom:-.25em}
+img{border:0}
+svg:not(:root){overflow:hidden}
+figure{margin:0}
+fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}
+legend{border:0;padding:0}
+button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}
+button,input{line-height:normal}
+button,select{text-transform:none}
+button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}
+button[disabled],html input[disabled]{cursor:default}
+input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}
+button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}
+textarea{overflow:auto;vertical-align:top}
+table{border-collapse:collapse;border-spacing:0}
+*,*::before,*::after{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}
+html,body{font-size:100%}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;font-weight:400;font-style:normal;line-height:1;position:relative;cursor:auto;tab-size:4;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
+a:hover{cursor:pointer}
+img,object,embed{max-width:100%;height:auto}
+object,embed{height:100%}
+img{-ms-interpolation-mode:bicubic}
+.left{float:left!important}
+.right{float:right!important}
+.text-left{text-align:left!important}
+.text-right{text-align:right!important}
+.text-center{text-align:center!important}
+.text-justify{text-align:justify!important}
+.hide{display:none}
+img,object,svg{display:inline-block;vertical-align:middle}
+textarea{height:auto;min-height:50px}
+select{width:100%}
+.center{margin-left:auto;margin-right:auto}
+.stretch{width:100%}
+.subheader,.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;color:#7a2518;font-weight:400;margin-top:0;margin-bottom:.25em}
+div,dl,dt,dd,ul,ol,li,h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6,pre,form,p,blockquote,th,td{margin:0;padding:0;direction:ltr}
+a{color:#2156a5;text-decoration:underline;line-height:inherit}
+a:hover,a:focus{color:#1d4b8f}
+a img{border:0}
+p{font-family:inherit;font-weight:400;font-size:1em;line-height:1.6;margin-bottom:1.25em;text-rendering:optimizeLegibility}
+p aside{font-size:.875em;line-height:1.35;font-style:italic}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{font-family:"Open Sans","DejaVu Sans",sans-serif;font-weight:300;font-style:normal;color:#ba3925;text-rendering:optimizeLegibility;margin-top:1em;margin-bottom:.5em;line-height:1.0125em}
+h1 small,h2 small,h3 small,#toctitle small,.sidebarblock>.content>.title small,h4 small,h5 small,h6 small{font-size:60%;color:#e99b8f;line-height:0}
+h1{font-size:2.125em}
+h2{font-size:1.6875em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
+h4,h5{font-size:1.125em}
+h6{font-size:1em}
+hr{border:solid #dddddf;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em;height:0}
+em,i{font-style:italic;line-height:inherit}
+strong,b{font-weight:bold;line-height:inherit}
+small{font-size:60%;line-height:inherit}
+code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
+ul,ol,dl{font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
+ul,ol{margin-left:1.5em}
+ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0;font-size:1em}
+ul.square li ul,ul.circle li ul,ul.disc li ul{list-style:inherit}
+ul.square{list-style-type:square}
+ul.circle{list-style-type:circle}
+ul.disc{list-style-type:disc}
+ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
+dl dt{margin-bottom:.3125em;font-weight:bold}
+dl dd{margin-bottom:1.25em}
+abbr,acronym{text-transform:uppercase;font-size:90%;color:rgba(0,0,0,.8);border-bottom:1px dotted #ddd;cursor:help}
+abbr{text-transform:none}
+blockquote{margin:0 0 1.25em;padding:.5625em 1.25em 0 1.1875em;border-left:1px solid #ddd}
+blockquote cite{display:block;font-size:.9375em;color:rgba(0,0,0,.6)}
+blockquote cite::before{content:"\2014 \0020"}
+blockquote cite a,blockquote cite a:visited{color:rgba(0,0,0,.6)}
+blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
+@media screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
+h1{font-size:2.75em}
+h2{font-size:2.3125em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
+h4{font-size:1.4375em}}
+table{background:#fff;margin-bottom:1.25em;border:solid 1px #dedede}
+table thead,table tfoot{background:#f7f8f7}
+table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
+table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
+table tr.even,table tr.alt{background:#f8f8f7}
+table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{display:table-cell;line-height:1.6}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
+h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
+.clearfix::before,.clearfix::after,.float-group::before,.float-group::after{content:" ";display:table}
+.clearfix::after,.float-group::after{clear:both}
+:not(pre):not([class^=L])>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background:#f7f7f8;-webkit-border-radius:4px;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed;word-wrap:break-word}
+:not(pre)>code.nobreak{word-wrap:normal}
+:not(pre)>code.nowrap{white-space:nowrap}
+pre{color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;line-height:1.45;text-rendering:optimizeSpeed}
+pre code,pre pre{color:inherit;font-size:inherit;line-height:inherit}
+pre>code{display:block}
+pre.nowrap,pre.nowrap pre{white-space:pre;word-wrap:normal}
+em em{font-style:normal}
+strong strong{font-weight:400}
+.keyseq{color:rgba(51,51,51,.8)}
+kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background:#f7f7f7;border:1px solid #ccc;-webkit-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em white inset;box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em #fff inset;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
+.keyseq kbd:first-child{margin-left:0}
+.keyseq kbd:last-child{margin-right:0}
+.menuseq,.menuref{color:#000}
+.menuseq b:not(.caret),.menuref{font-weight:inherit}
+.menuseq{word-spacing:-.02em}
+.menuseq b.caret{font-size:1.25em;line-height:.8}
+.menuseq i.caret{font-weight:bold;text-align:center;width:.45em}
+b.button::before,b.button::after{position:relative;top:-1px;font-weight:400}
+b.button::before{content:"[";padding:0 3px 0 2px}
+b.button::after{content:"]";padding:0 2px 0 3px}
+p a>code:hover{color:rgba(0,0,0,.9)}
+#header,#content,#footnotes,#footer{width:100%;margin-left:auto;margin-right:auto;margin-top:0;margin-bottom:0;max-width:62.5em;*zoom:1;position:relative;padding-left:.9375em;padding-right:.9375em}
+#header::before,#header::after,#content::before,#content::after,#footnotes::before,#footnotes::after,#footer::before,#footer::after{content:" ";display:table}
+#header::after,#content::after,#footnotes::after,#footer::after{clear:both}
+#content{margin-top:1.25em}
+#content::before{content:none}
+#header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
+#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
+#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:-ms-flexbox;display:-webkit-flex;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap}
+#header .details span:first-child{margin-left:-.125em}
+#header .details span.email a{color:rgba(0,0,0,.85)}
+#header .details br{display:none}
+#header .details br+span::before{content:"\00a0\2013\00a0"}
+#header .details br+span.author::before{content:"\00a0\22c5\00a0";color:rgba(0,0,0,.85)}
+#header .details br+span#revremark::before{content:"\00a0|\00a0"}
+#header #revnumber{text-transform:capitalize}
+#header #revnumber::after{content:"\00a0"}
+#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #dddddf;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
+#toc{border-bottom:1px solid #e7e7e9;padding-bottom:.5em}
+#toc>ul{margin-left:.125em}
+#toc ul.sectlevel0>li>a{font-style:italic}
+#toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
+#toc ul{font-family:"Open Sans","DejaVu Sans",sans-serif;list-style-type:none}
+#toc li{line-height:1.3334;margin-top:.3334em}
+#toc a{text-decoration:none}
+#toc a:active{text-decoration:underline}
+#toctitle{color:#7a2518;font-size:1.2em}
+@media screen and (min-width:768px){#toctitle{font-size:1.375em}
+body.toc2{padding-left:15em;padding-right:0}
+#toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
+#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
+#toc.toc2>ul{font-size:.9em;margin-bottom:0}
+#toc.toc2 ul ul{margin-left:0;padding-left:1em}
+#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
+body.toc2.toc-right{padding-left:0;padding-right:15em}
+body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #e7e7e9;left:auto;right:0}}
+@media screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
+#toc.toc2{width:20em}
+#toc.toc2 #toctitle{font-size:1.375em}
+#toc.toc2>ul{font-size:.95em}
+#toc.toc2 ul ul{padding-left:1.25em}
+body.toc2.toc-right{padding-left:0;padding-right:20em}}
+#content #toc{border-style:solid;border-width:1px;border-color:#e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;-webkit-border-radius:4px;border-radius:4px}
+#content #toc>:first-child{margin-top:0}
+#content #toc>:last-child{margin-bottom:0}
+#footer{max-width:100%;background:rgba(0,0,0,.8);padding:1.25em}
+#footer-text{color:rgba(255,255,255,.8);line-height:1.44}
+#content{margin-bottom:.625em}
+.sect1{padding-bottom:.625em}
+@media screen and (min-width:768px){#content{margin-bottom:1.25em}
+.sect1{padding-bottom:1.25em}}
+.sect1:last-child{padding-bottom:0}
+.sect1+.sect1{border-top:1px solid #e7e7e9}
+#content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
+#content h1>a.anchor::before,h2>a.anchor::before,h3>a.anchor::before,#toctitle>a.anchor::before,.sidebarblock>.content>.title>a.anchor::before,h4>a.anchor::before,h5>a.anchor::before,h6>a.anchor::before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
+#content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
+#content h1>a.link,h2>a.link,h3>a.link,#toctitle>a.link,.sidebarblock>.content>.title>a.link,h4>a.link,h5>a.link,h6>a.link{color:#ba3925;text-decoration:none}
+#content h1>a.link:hover,h2>a.link:hover,h3>a.link:hover,#toctitle>a.link:hover,.sidebarblock>.content>.title>a.link:hover,h4>a.link:hover,h5>a.link:hover,h6>a.link:hover{color:#a53221}
+details,.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
+details>summary:first-of-type{cursor:pointer;display:list-item;outline:none;margin-bottom:.75em}
+.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
+table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
+.paragraph.lead>p,#preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
+table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:inherit}
+.admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
+.admonitionblock>table td.icon{text-align:center;width:80px}
+.admonitionblock>table td.icon img{max-width:none}
+.admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
+.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #dddddf;color:rgba(0,0,0,.6)}
+.admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
+.exampleblock>.content{border-style:solid;border-width:1px;border-color:#e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;-webkit-border-radius:4px;border-radius:4px}
+.exampleblock>.content>:first-child{margin-top:0}
+.exampleblock>.content>:last-child{margin-bottom:0}
+.sidebarblock{border-style:solid;border-width:1px;border-color:#dbdbd6;margin-bottom:1.25em;padding:1.25em;background:#f3f3f2;-webkit-border-radius:4px;border-radius:4px}
+.sidebarblock>:first-child{margin-top:0}
+.sidebarblock>:last-child{margin-bottom:0}
+.sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
+.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
+.literalblock pre,.listingblock>.content>pre{-webkit-border-radius:4px;border-radius:4px;word-wrap:break-word;overflow-x:auto;padding:1em;font-size:.8125em}
+@media screen and (min-width:768px){.literalblock pre,.listingblock>.content>pre{font-size:.90625em}}
+@media screen and (min-width:1280px){.literalblock pre,.listingblock>.content>pre{font-size:1em}}
+.literalblock pre,.listingblock>.content>pre:not(.highlight),.listingblock>.content>pre[class="highlight"],.listingblock>.content>pre[class^="highlight "]{background:#f7f7f8}
+.literalblock.output pre{color:#f7f7f8;background:rgba(0,0,0,.9)}
+.listingblock>.content{position:relative}
+.listingblock code[data-lang]::before{display:none;content:attr(data-lang);position:absolute;font-size:.75em;top:.425rem;right:.5rem;line-height:1;text-transform:uppercase;color:inherit;opacity:.5}
+.listingblock:hover code[data-lang]::before{display:block}
+.listingblock.terminal pre .command::before{content:attr(data-prompt);padding-right:.5em;color:inherit;opacity:.5}
+.listingblock.terminal pre .command:not([data-prompt])::before{content:"$"}
+.listingblock pre.highlightjs{padding:0}
+.listingblock pre.highlightjs>code{padding:1em;-webkit-border-radius:4px;border-radius:4px}
+.listingblock pre.prettyprint{border-width:0}
+.prettyprint{background:#f7f7f8}
+pre.prettyprint .linenums{line-height:1.45;margin-left:2em}
+pre.prettyprint li{background:none;list-style-type:inherit;padding-left:0}
+pre.prettyprint li code[data-lang]::before{opacity:1}
+pre.prettyprint li:not(:first-child) code[data-lang]::before{display:none}
+table.linenotable{border-collapse:separate;border:0;margin-bottom:0;background:none}
+table.linenotable td[class]{color:inherit;vertical-align:top;padding:0;line-height:inherit;white-space:normal}
+table.linenotable td.code{padding-left:.75em}
+table.linenotable td.linenos{border-right:1px solid currentColor;opacity:.35;padding-right:.5em}
+pre.pygments .lineno{border-right:1px solid currentColor;opacity:.35;display:inline-block;margin-right:.75em}
+pre.pygments .lineno::before{content:"";margin-right:-.125em}
+.quoteblock{margin:0 1em 1.25em 1.5em;display:table}
+.quoteblock:not(.excerpt)>.title{margin-left:-1.5em;margin-bottom:.75em}
+.quoteblock blockquote,.quoteblock p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
+.quoteblock blockquote{margin:0;padding:0;border:0}
+.quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
+.quoteblock .attribution{margin-top:.75em;margin-right:.5ex;text-align:right}
+.verseblock{margin:0 1em 1.25em}
+.verseblock pre{font-family:"Open Sans","DejaVu Sans",sans;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
+.verseblock pre strong{font-weight:400}
+.verseblock .attribution{margin-top:1.25rem;margin-left:.5ex}
+.quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
+.quoteblock .attribution br,.verseblock .attribution br{display:none}
+.quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
+.quoteblock.abstract blockquote::before,.quoteblock.excerpt blockquote::before,.quoteblock .quoteblock blockquote::before{display:none}
+.quoteblock.abstract blockquote,.quoteblock.abstract p,.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{line-height:1.6;word-spacing:0}
+.quoteblock.abstract{margin:0 1em 1.25em;display:block}
+.quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
+.quoteblock.excerpt>blockquote,.quoteblock .quoteblock{padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
+.quoteblock.excerpt,.quoteblock .quoteblock{margin-left:0}
+.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{color:inherit;font-size:1.0625rem}
+.quoteblock.excerpt .attribution,.quoteblock .quoteblock .attribution{color:inherit;text-align:left;margin-right:0}
+table.tableblock{max-width:100%;border-collapse:separate}
+p.tableblock:last-child{margin-bottom:0}
+td.tableblock>.content>:last-child{margin-bottom:-1.25em}
+td.tableblock>.content>:last-child.sidebarblock{margin-bottom:0}
+table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
+table.grid-all>thead>tr>.tableblock,table.grid-all>tbody>tr>.tableblock{border-width:0 1px 1px 0}
+table.grid-all>tfoot>tr>.tableblock{border-width:1px 1px 0 0}
+table.grid-cols>*>tr>.tableblock{border-width:0 1px 0 0}
+table.grid-rows>thead>tr>.tableblock,table.grid-rows>tbody>tr>.tableblock{border-width:0 0 1px}
+table.grid-rows>tfoot>tr>.tableblock{border-width:1px 0 0}
+table.grid-all>*>tr>.tableblock:last-child,table.grid-cols>*>tr>.tableblock:last-child{border-right-width:0}
+table.grid-all>tbody>tr:last-child>.tableblock,table.grid-all>thead:last-child>tr>.tableblock,table.grid-rows>tbody>tr:last-child>.tableblock,table.grid-rows>thead:last-child>tr>.tableblock{border-bottom-width:0}
+table.frame-all{border-width:1px}
+table.frame-sides{border-width:0 1px}
+table.frame-topbot,table.frame-ends{border-width:1px 0}
+table.stripes-all tr,table.stripes-odd tr:nth-of-type(odd),table.stripes-even tr:nth-of-type(even),table.stripes-hover tr:hover{background:#f8f8f7}
+th.halign-left,td.halign-left{text-align:left}
+th.halign-right,td.halign-right{text-align:right}
+th.halign-center,td.halign-center{text-align:center}
+th.valign-top,td.valign-top{vertical-align:top}
+th.valign-bottom,td.valign-bottom{vertical-align:bottom}
+th.valign-middle,td.valign-middle{vertical-align:middle}
+table thead th,table tfoot th{font-weight:bold}
+tbody tr th{display:table-cell;line-height:1.6;background:#f7f8f7}
+tbody tr th,tbody tr th p,tfoot tr th,tfoot tr th p{color:rgba(0,0,0,.8);font-weight:bold}
+p.tableblock>code:only-child{background:none;padding:0}
+p.tableblock{font-size:1em}
+ol{margin-left:1.75em}
+ul li ol{margin-left:1.5em}
+dl dd{margin-left:1.125em}
+dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
+ol>li p,ul>li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
+ul.checklist,ul.none,ol.none,ul.no-bullet,ol.no-bullet,ol.unnumbered,ul.unstyled,ol.unstyled{list-style-type:none}
+ul.no-bullet,ol.no-bullet,ol.unnumbered{margin-left:.625em}
+ul.unstyled,ol.unstyled{margin-left:0}
+ul.checklist{margin-left:.625em}
+ul.checklist li>p:first-child>.fa-square-o:first-child,ul.checklist li>p:first-child>.fa-check-square-o:first-child{width:1.25em;font-size:.8em;position:relative;bottom:.125em}
+ul.checklist li>p:first-child>input[type="checkbox"]:first-child{margin-right:.25em}
+ul.inline{display:-ms-flexbox;display:-webkit-box;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap;list-style:none;margin:0 0 .625em -1.25em}
+ul.inline>li{margin-left:1.25em}
+.unstyled dl dt{font-weight:400;font-style:normal}
+ol.arabic{list-style-type:decimal}
+ol.decimal{list-style-type:decimal-leading-zero}
+ol.loweralpha{list-style-type:lower-alpha}
+ol.upperalpha{list-style-type:upper-alpha}
+ol.lowerroman{list-style-type:lower-roman}
+ol.upperroman{list-style-type:upper-roman}
+ol.lowergreek{list-style-type:lower-greek}
+.hdlist>table,.colist>table{border:0;background:none}
+.hdlist>table>tbody>tr,.colist>table>tbody>tr{background:none}
+td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
+td.hdlist1{font-weight:bold;padding-bottom:1.25em}
+.literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
+.colist td:not([class]):first-child{padding:.4em .75em 0;line-height:1;vertical-align:top}
+.colist td:not([class]):first-child img{max-width:none}
+.colist td:not([class]):last-child{padding:.25em 0}
+.thumb,.th{line-height:0;display:inline-block;border:solid 4px #fff;-webkit-box-shadow:0 0 0 1px #ddd;box-shadow:0 0 0 1px #ddd}
+.imageblock.left{margin:.25em .625em 1.25em 0}
+.imageblock.right{margin:.25em 0 1.25em .625em}
+.imageblock>.title{margin-bottom:0}
+.imageblock.thumb,.imageblock.th{border-width:6px}
+.imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
+.image.left,.image.right{margin-top:.25em;margin-bottom:.25em;display:inline-block;line-height:0}
+.image.left{margin-right:.625em}
+.image.right{margin-left:.625em}
+a.image{text-decoration:none;display:inline-block}
+a.image object{pointer-events:none}
+sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
+sup.footnote a,sup.footnoteref a{text-decoration:none}
+sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+#footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
+#footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
+#footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
+#footnotes .footnote a:first-of-type{font-weight:bold;text-decoration:none;margin-left:-1.05em}
+#footnotes .footnote:last-of-type{margin-bottom:0}
+#content #footnotes{margin-top:-.625em;margin-bottom:0;padding:.75em 0}
+.gist .file-data>table{border:0;background:#fff;width:100%;margin-bottom:0}
+.gist .file-data>table td.line-data{width:99%}
+div.unbreakable{page-break-inside:avoid}
+.big{font-size:larger}
+.small{font-size:smaller}
+.underline{text-decoration:underline}
+.overline{text-decoration:overline}
+.line-through{text-decoration:line-through}
+.aqua{color:#00bfbf}
+.aqua-background{background:#00fafa}
+.black{color:#000}
+.black-background{background:#000}
+.blue{color:#0000bf}
+.blue-background{background:#0000fa}
+.fuchsia{color:#bf00bf}
+.fuchsia-background{background:#fa00fa}
+.gray{color:#606060}
+.gray-background{background:#7d7d7d}
+.green{color:#006000}
+.green-background{background:#007d00}
+.lime{color:#00bf00}
+.lime-background{background:#00fa00}
+.maroon{color:#600000}
+.maroon-background{background:#7d0000}
+.navy{color:#000060}
+.navy-background{background:#00007d}
+.olive{color:#606000}
+.olive-background{background:#7d7d00}
+.purple{color:#600060}
+.purple-background{background:#7d007d}
+.red{color:#bf0000}
+.red-background{background:#fa0000}
+.silver{color:#909090}
+.silver-background{background:#bcbcbc}
+.teal{color:#006060}
+.teal-background{background:#007d7d}
+.white{color:#bfbfbf}
+.white-background{background:#fafafa}
+.yellow{color:#bfbf00}
+.yellow-background{background:#fafa00}
+span.icon>.fa{cursor:default}
+a span.icon>.fa{cursor:inherit}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note::before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip::before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning::before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution::before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important::before{content:"\f06a";color:#bf0000}
+.conum[data-value]{display:inline-block;color:#fff!important;background:rgba(0,0,0,.8);-webkit-border-radius:100px;border-radius:100px;text-align:center;font-size:.75em;width:1.67em;height:1.67em;line-height:1.67em;font-family:"Open Sans","DejaVu Sans",sans-serif;font-style:normal;font-weight:bold}
+.conum[data-value] *{color:#fff!important}
+.conum[data-value]+b{display:none}
+.conum[data-value]::after{content:attr(data-value)}
+pre .conum[data-value]{position:relative;top:-.125em}
+b.conum *{color:inherit!important}
+.conum:not([data-value]):empty{display:none}
+dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
+h1,h2,p,td.content,span.alt{letter-spacing:-.01em}
+p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
+p,blockquote,dt,td.content,span.alt{font-size:1.0625rem}
+p{margin-bottom:1.25rem}
+.sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
+.exampleblock>.content{background:#fffef7;border-color:#e0e0dc;-webkit-box-shadow:0 1px 4px #e0e0dc;box-shadow:0 1px 4px #e0e0dc}
+.print-only{display:none!important}
+@page{margin:1.25cm .75cm}
+@media print{*{-webkit-box-shadow:none!important;box-shadow:none!important;text-shadow:none!important}
+html{font-size:80%}
+a{color:inherit!important;text-decoration:underline!important}
+a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
+a[href^="http:"]:not(.bare)::after,a[href^="https:"]:not(.bare)::after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
+abbr[title]::after{content:" (" attr(title) ")"}
+pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
+thead{display:table-header-group}
+svg{max-width:100%}
+p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
+h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
+#toc,.sidebarblock,.exampleblock>.content{background:none!important}
+#toc{border-bottom:1px solid #dddddf!important;padding-bottom:0!important}
+body.book #header{text-align:center}
+body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em}
+body.book #header .details{border:0!important;display:block;padding:0!important}
+body.book #header .details span:first-child{margin-left:0!important}
+body.book #header .details br{display:block}
+body.book #header .details br+span::before{content:none!important}
+body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
+body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
+.listingblock code[data-lang]::before{display:block}
+#footer{padding:0 .9375em}
+.hide-on-print{display:none!important}
+.print-only{display:block!important}
+.hide-for-print{display:none!important}
+.show-for-print{display:inherit!important}}
+@media print,amzn-kf8{#header>h1:first-child{margin-top:1.25rem}
+.sect1{padding:0!important}
+.sect1+.sect1{border:0}
+#footer{background:none}
+#footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
+@media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
+</style>
+
+
+<style>
+#banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  line-height: 19px;
+  height: 50px;
+  background-color: #0079ef;
+  width: 100%;
+  z-index: 2000;
+}
+#navbar {
+  position: fixed;
+  top: 50px;
+  left: 0;
+  line-height: 19px;
+  height: 20px;
+  background-color: #dddddf;
+  width: 100%;
+  z-index: 2000;
+}
+#navbar-version {
+  position: absolute;
+  right: 5px;
+}
+#banner .logo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  display: inline-block;
+  background-color: #00abf3;
+}
+#banner h2 {
+  color: white !important;
+  font-weight: bold;
+  font-size: 150%;
+  margin: 0;
+  float: left;
+  height: 50px;
+  padding: 12px;
+  margin-left: 50px;
+}
+body {
+  padding-top: 70px;
+}
+:target::before {
+    content: '';
+    display: block;
+    height:      70px;
+    margin-top: -70px;
+}
+h1, h2, h3, h4, h5, h6, #toctitle, .sidebarblock > .content > .title {
+  color: rgba(0, 0, 0, 0.8);
+}
+@media screen and (min-width: 768px) {
+  #toc.toc2 {
+    top: 70px !important;
+  }
+}
+</style>
+
+</head>
+<body class="article toc2 toc-left">
+
+<div id="banner">
+<img class="logo" src="
+    			data:image/svg+xml;
+    			data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIxLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA2MTIgNjEyIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA2MTIgNjEyOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6IzAwQUJGMzt9Cgkuc3Qxe2ZpbGw6I0ZGRkZGRjt9Cjwvc3R5bGU+CjxyZWN0IHg9IjAiIGNsYXNzPSJzdDAiIHdpZHRoPSI2MTIiIGhlaWdodD0iNjEyIi8+CjxnPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTQ5MSwxMjFjMCwwLTE5Mi41LDAtMjQ3LjgsMGMtMTEuMSwwLTIyLjEsMS4zLTMyLjksNC4yYy0xNi44LDQuNi0zMS45LDEyLjQtNDUuNCwyMy41CgkJCWMtOS41LDcuOS0xNy42LDE3LTI0LjQsMjcuNGMtNy4yLDExLjEtMTIuNCwyMy0xNS43LDM1LjhjLTIuNywxMC41LTMuNywyMS4yLTMuNywzMi4xYzAsNzAuMiwwLDE0MC4zLDAsMjEwLjVoMFY0OTFoODEuOHYwCgkJCWM1NiwwLDExMiwwLDE2OCwwYzguOSwwLDE3LjctMSwyNi40LTMuMWMxMy44LTMuMiwyNi43LTguNiwzOC42LTE2LjRjMTQuMi05LjIsMjUuOS0yMC45LDM1LjItMzVjMTMuNS0yMC41LDE5LjktNDMuMiwxOS45LTY3LjcKCQkJYzAtMzkuNCwwLTc4LjcsMC0xMTguMWMwLDAsMCwwLDAsMGMwLTMxLjEsMC02Mi4xLDAtOTMuMmgwVjEyMXogTTQzNy42LDE4NS40YzAsNjEuNywwLDEyMy4zLTAuMSwxODVjMCwxMS4yLTIuNiwyMS44LTgsMzEuNgoJCQljLTksMTYuNC0yMi41LDI3LjQtNDAuNCwzMi45Yy02LjIsMS45LTEyLjcsMi43LTE5LjMsMi43Yy0zMS4zLDAtMTk1LjYsMC0xOTUuNiwwdi0xMWgwYzAtNjEuOC0wLjEtMTIzLjcsMC0xODUuNQoJCQljMC0xNi4xLDUuNS0zMC40LDE1LjgtNDIuN2M4LjgtMTAuNCwxOS44LTE3LjYsMzIuOS0yMS40YzUuOC0xLjcsMTEuNy0yLjYsMTcuOC0yLjZjNjAsMCwxOTYuNywwLDE5Ni43LDBMNDM3LjYsMTg1LjR6Ii8+Cgk8L2c+Cgk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMjYwLjYsMjQyLjhoMTYyLjV2LTUzLjZIMjUxdjAuMWMtMi43LDAtNS40LDAtOC4xLDBjLTE4LjUsMC0zMi45LDguMi00My4xLDIzLjVjLTUuNiw4LjQtOC4xLDE3LjktOC4xLDI4CgkJYzAsMTYuOSwwLDMzLjksMCw1MC44aDB2MTMyLjdoNTMuNnYtOTAuOGgxNDQuNFYyODBoLTE0NGMtMC40LTAuMy0wLjUtMC44LTAuNS0xLjdjMC4xLTUuNywwLTExLjQsMC0xNy4xCgkJQzI0NS4yLDI1MS4xLDI1MS4yLDI0NC4xLDI2MC42LDI0Mi44eiIvPgo8L2c+Cjwvc3ZnPgo="/>
+  <h2>FCLI: The Universal Fortify CLI</h2>
+</div>
+<div id="navbar"><div id="navbar-version">Version: 0.20230307.120624-dev_main</div>
+</div></div>
+
+
+<div id="header">
+<h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
+<div class="details">
+<span id="revnumber">version 0.20230307.120624-dev_main</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_installation">Installation</a></li>
+<li><a href="#_command_structure">Command Structure</a></li>
+<li><a href="#_common_options">Common Options</a>
+<ul class="sectlevel2">
+<li><a href="#_h_help">-h | –help</a></li>
+<li><a href="#_env_prefix">–env-prefix</a></li>
+<li><a href="#_log_level">–log-level</a></li>
+<li><a href="#_log_file">–log-file</a></li>
+<li><a href="#_o_output">-o | –output</a></li>
+<li><a href="#_output_to_file">–output-to-file</a></li>
+<li><a href="#_store">–store</a></li>
+<li><a href="#_q_query">-q | –query</a></li>
+<li><a href="#_session">–session</a></li>
+</ul>
+</li>
+<li><a href="#_session_management">Session Management</a>
+<ul class="sectlevel2">
+<li><a href="#_named_sessions">Named Sessions</a></li>
+<li><a href="#_session_storage">Session Storage</a></li>
+</ul>
+</li>
+<li><a href="#_fcli_home_folder">Fcli Home Folder</a></li>
+<li><a href="#_environment_variables">Environment Variables</a></li>
+<li><a href="#_fcli_variables">Fcli Variables</a></li>
+<li><a href="#_manual_pages">Manual Pages</a></li>
+<li><a href="#_troubleshooting">Troubleshooting</a>
+<ul class="sectlevel2">
+<li><a href="#_native_binaries">Native Binaries</a></li>
+<li><a href="#_submitting_a_bug_report">Submitting a Bug Report</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the
+man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p>
+</div>
+<div class="paragraph">
+<p>Some of the fcli highlights:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Interact with many different Fortify products with just a single command-line utility</p>
+</li>
+<li>
+<p><a href="#_installation">Both plain Java and native platform binaries for Windows&#44; Linux and Mac available</a></p>
+</li>
+<li>
+<p><a href="#_command_structure">Modular command structure</a>, making it easy to focus on particular tasks</p>
+</li>
+<li>
+<p><a href="#_o_output">Rich output formats</a>; save command output in JSON, CSV, XML or plain-text formats</p>
+</li>
+<li>
+<p><a href="#_session_management">Session-based</a>; no need to pass URL’s and credentials on every individual fcli invocation</p>
+</li>
+<li>
+<p>Support for configuring option values through <a href="#_environment_variables">environment variables</a></p>
+</li>
+<li>
+<p>Support for <a href="#_fcli_variables">fcli variables</a>; pass data between fcli commands</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The following Fortify products are currently supported by fcli:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Software Security Center (SSC)</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Includes virtually all functionality provided by the legacy FortifyClient utility</p>
+</li>
+<li>
+<p>Includes virtually all functionality provided by the ssc-client sample shipped with SSC</p>
+</li>
+<li>
+<p>Adds a wide range of other functionalities not previously included in any Fortify client-side utilities</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>ScanCentral SAST</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Support for starting and managing ScanCentral SAST scans</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>ScanCentral DAST</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Support for starting and managing ScanCentral DAST scans</p>
+</li>
+<li>
+<p>Support for listing scan policies and settings</p>
+</li>
+<li>
+<p>Support for listing and managing sensors</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Fortify on Demand (FoD)</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Currently in preview mode</p>
+</li>
+<li>
+<p>No <a href="#_manual_pages">manual pages</a> available</p>
+</li>
+<li>
+<p><code>fod</code> command is hidden from <code>fcli -h</code> output</p>
+</li>
+<li>
+<p>View available FoD commands by running <code>fcli fod -h</code></p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_installation"><a class="anchor" href="#_installation"></a>Installation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Download bundles for fcli are available on the <a href="https://github.com/fortify/fcli/releases">Releases</a> page, containing both development releases (named <code>Development Release - &lt;branch&gt; branch</code>) and final releases. In general, the use of a final release is recommended, unless you want to use any functionality that hasn’t made it into a final release yet.</p>
+</div>
+<div class="paragraph">
+<p>Each release comes with a list of assets:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>docs-html.zip</code> &amp; <code>docs-manpage.zip</code>: Manual pages in either HTML or manpage format</p>
+</li>
+<li>
+<p><code>fcli-linux.tgz</code>, <code>fcli-mac.tgz</code> &amp; <code>fcli-windows.zip</code>: Native binaries for each of the mentioned platforms</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Note that some browsers by default will disallow downloading of <code>fcli-windows.zip</code>; please bypass the warning</p>
+</li>
+<li>
+<p>Linux and Mac downloads include an <code>auto-completion</code> script that makes interactive fcli usage easier</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code>fcli.jar</code>: Java version of fcli, which should be runnable on any platform that has Java 11+ installed</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Note that in general, the native binaries are easier to invoke, offer better performance, and have the benefit of auto-completion capabilities on Linux &amp; Mac</p>
+</li>
+<li>
+<p>If you experience any unexpected behavior with native binaries, like commands or command line options not being listed or recognized, or technical error messages about methods, constructors or serializers not being
+found, please try with the Java version a s it may be an issue specific to the native binaries. See the <a href="#_troubleshooting">Troubleshooting</a> section for details.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code>fcli-thirdparty.zip</code>: Third-party licenses and sources for license purposes; usually no need to download</p>
+</li>
+<li>
+<p><code>LICENSE.TXT</code> &amp; <code>README.md</code>: Some generic information and license for fcli</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Please note that when publishing a new release, it may take up to 30-60 minutes before release assets are posted. If the latest release doesn’t show any of the assets listed above, please check again in 30-60 minutes. If you encounter a release without these assets after waiting for 60 minutes, please consider submitting an issue on the <a href="https://github.com/fortify/fcli/issues">fcli issue tracker</a>.</p>
+</div>
+<div class="paragraph">
+<p>To install one of the binary distributions of fcli:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Download the appropriate binary archive for your platform</p>
+</li>
+<li>
+<p>Extract the archive contents to a directory of your choosing</p>
+</li>
+<li>
+<p>For ease of use, add this directory to your operating system or shell PATH environment variable, or move the <code>fcli</code>/<code>fcli.exe</code> binary to a directory that is already on the PATH</p>
+</li>
+<li>
+<p>Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the <code>&lt;tab&gt;</code> to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell.<br>
+<code>source &lt;extraction-dir&gt;/fcli_completion</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>To install the <code>.jar</code> version of fcli, simply download <code>fcli.jar</code> and put in in a directory of your choosing, after which it can be executed using <code>java -jar path/to/fcli.jar</code>. You may want to set up a
+simple wrapper script/batch file or shell alias to make it slightly easier to invoke <code>fcli.jar</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_command_structure"><a class="anchor" href="#_command_structure"></a>Command Structure</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Fcli provides a product-oriented command structure, with each product represented by a separate tree of subcommands. For example, the <code>fcli fod</code> command tree can be used to interact with Fortify on Demand
+(FoD), and the <code>fcli ssc</code> command tree can be used to interact with Fortify Software Security Center (SSC). There are also some non product-related command trees, like the <code>fcli config</code> command tree to manage fcli configuration.</p>
+</div>
+<div class="paragraph">
+<p>To see what top-level fcli commands are available, you can use the <code>fcli --help</code> command. You can drill down into the command tree to see what sub-commands are available within a particular parent command, for example by running <code>fcli ssc --help</code> to see all <code>fcli ssc</code> sub-commands, or <code>fcli ssc session --help</code> to see all SSC session management commands.</p>
+</div>
+<div class="paragraph">
+<p>If you don’t have fcli up and running yet, you can also refer to the downloadable or online manual pages; refer to the <a href="#_manual_pages">Manual Pages</a> section for more information.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_common_options"><a class="anchor" href="#_common_options"></a>Common Options</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following sections describe common options that are available on (most) fcli commands.</p>
+</div>
+<div class="sect2">
+<h3 id="_h_help"><a class="anchor" href="#_h_help"></a>-h | –help</h3>
+<div class="paragraph">
+<p>This option can be used on every fcli (sub-)command to view usage information for that command. Usage information usually shows the command synopsis, a description of the functionality provided by the command, and a description of each command line option or parameter accepted by the command.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_env_prefix"><a class="anchor" href="#_env_prefix"></a>–env-prefix</h3>
+<div class="paragraph">
+<p>As described in the <a href="#_environment_variables">Environment Variables</a> section, default option and parameter values can be retrieved from environment variables starting with <code>FCLI_DEFAULT</code>. This option allows for configuring a different environment variable prefix. This may be useful if, for example, you want to login to multiple instances of the same system using environment variables. For example, when running <code>fcli ssc session login --env-prefix PROD</code>, fcli will look for environment variables like <code>PROD_SSC_URL</code> instead of <code>FCLI_DEFAULT_SSC_URL</code>.</p>
+</div>
+<div class="paragraph">
+<p>Note that a default value for the <code>--env-prefix</code> option itself can be specified through an <code>FCLI_DEFAULT_ENV_PREFIX</code> environment variable, for example if you want to globally override the <code>FCLI_DEFAULT</code> prefix.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_log_level"><a class="anchor" href="#_log_level"></a>–log-level</h3>
+<div class="paragraph">
+<p>This option can be used on every fcli (sub-)command to specify the fcli log level; see the help output for a list of allowed levels. Note that this option also requires the <code>--log-file</code> option to be specified,
+otherwise no log will be written.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_log_file"><a class="anchor" href="#_log_file"></a>–log-file</h3>
+<div class="paragraph">
+<p>This option can be used on every fcli (sub-)command to specify the file to which to output log data. If not specified, currently no log data will be written, although future versions may specify a default log file
+location in the fcli home folder.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_o_output"><a class="anchor" href="#_o_output"></a>-o | –output</h3>
+<div class="paragraph">
+<p>Available on virtually all (leaf) commands that output data, this option can be used to specify the output format. Fcli supports a wide variety of output formats, like <code>table</code>, <code>csv</code>, <code>json</code>, <code>xml</code>, and <code>tree</code> formats, allowing for both human-readable output or output suitable for automations. The <code>csv-plain</code> and <code>table-plain</code> output formats produce CSV or table output without headers. The <code>*-flat</code>
+output formats produce a flattened view of the output data, potentially making it easier to process that data without having to navigate through an object tree. For a full list of output formats supported by your fcli
+version, please refer to the help output or <a href="#_manual_pages">Manual Pages</a>.</p>
+</div>
+<div class="paragraph">
+<p>Most output formats allow for specifying the JSON properties to be included in the output, for example <code>-o csv=id,name</code>. If no JSON properties are specified, most output formats will output all available
+JSON properties, except for table output, which usually outputs a predefined set of JSON properties.</p>
+</div>
+<div class="paragraph">
+<p>There are two output formats that are somewhat special:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>-o 'expr=Text with {property1} or {property2}\n'</code> Formats the output data based on the given expression, which is a combination of (optional) plain text and JSON property placeholders. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after
+evaluating the given expression. If necessary, the expression should explicitly include <code>\n</code> to output a newline character. To demonstrate the power of this output format, following are two examples of how <code>-o expr</code> can be used to generate a script that purges all application versions matching certain criteria:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>fcli ssc appversion list -q createdBy=admin -o 'expr=fcli ssc appversion-artifact purge --older-than 30d --appversion {id}\n'</code></p>
+</li>
+<li>
+<p>for id in $(fcli ssc appversion list -q createdBy=admin -o &#8216;expr={id}&#8217;); do echo &#8220;fcli ssc appversion-artifact purge –older-than 30d –appversion ${id}&#8221;; done</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code>-o json-properties</code> List all JSON properties returned by the current command, which can be used
+on options that take JSON propert ies as input, like output expressions (<code>-o expr={prop}</code>), properties to include in the output (<code>-o table=prop1,prop2</code>), queries (<code>-q prop1=value1</code>), and fcli variables (<code>--store var:prop1,prop2</code> &amp; <code>{?var:prop1}</code>). Two important notes about this output format:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The command will be executed as specified, so be careful when using this output option on any command
+that changes state (delete/update/create/…) * On some commands, the list of available JSON properties may vary depending on command line options. For example, when a query returns no records, then <code>-o json-properties</code> will not output any properties. Likewise, a command may provide options for including additional data for each record; the corresponding JSON properties will only be shown if <code>-o json-properties</code> is used in combination with these options that load additional data.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_output_to_file"><a class="anchor" href="#_output_to_file"></a>–output-to-file</h3>
+<div class="paragraph">
+<p>Available on virtually all (leaf) commands that output data, this option can be used to write the command output data to a file, in the format specified by the <code>--output</code> option listed above. In some cases, this may be more convenient than redirecting the output to a file. For example, although currently not implemented, fcli could potentially skip creating the output file if there is no output data or if an error occurs. Also, for commands that output status updates, like <code>wait-for</code> commands, the <code>--output-to-file</code> option allows for status updates to be written to standard output while the final output of the command will be written to the file specified.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_store"><a class="anchor" href="#_store"></a>–store</h3>
+<div class="paragraph">
+<p>Available on virtually all (leaf) commands that output data, this option can be used to store command output data in an fcli variable. For more details, see the <a href="#_fcli_variables">Fcli Variables</a> section.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_q_query"><a class="anchor" href="#_q_query"></a>-q | –query</h3>
+<div class="paragraph">
+<p>Available on most <code>list</code> commands and some other commands, this option allows for querying the output data, outputting only records that match the given query or queries. For now, only equals-based matching is supported; future fcli versions may provide additional matching options. General format is <code>-q &lt;json-property&gt;=&lt;value&gt;</code>; the list of JSON properties available for matching can be found by executing the same command with the <code>-o json-properties</code> option; see <a href="#-o--output">-o | –output</a> for details.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_session"><a class="anchor" href="#_session"></a>–session</h3>
+<div class="paragraph">
+<p>Available on virtually all commands that interact with a target system, this option allows for specifying a session name. For more details, see the <a href="#_session_management">Session Management</a> section.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_session_management"><a class="anchor" href="#_session_management"></a>Session Management</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Most fcli product modules are session-based, meaning that you need to run a <code>session login</code> command before you can use most of the other commands provided by a product module, and run a <code>session logout</code> command when finished, for example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash">fcli ssc session login --url https://my.ssc.org/ssc --user &lt;user&gt; --password &lt;password&gt;
+fcli ssc appversion list
+fcli ssc session logout --user &lt;user&gt; --password &lt;password&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For interactive use, you can choose to keep the session open until it expires (expiration period depends on target system and login method). For pipeline use or other automation scenarios, it is highly recommended to issue a <code>session logout</code> command when no further interaction with the target system is required, to allow for any client-side and server-side cleanup to be performed. For example, upon logging in to SSC with user credentials, fcli will generate a <code>UnifiedLoginToken</code>, which will be invalidated when the <code>ssc session logout</code> is being run. If you have many (frequently executed) pipelines that interact with SSC, and you don’t run the <code>ssc session logout</code> command when the pipeline finishes, you risk exhausting SSC’s limit on active tokens. In addition, the <code>logout</code> commands will perform client-side cleanup, like removing session details like URL and authentication tokens from the client system.</p>
+</div>
+<div class="paragraph">
+<p>For product modules that support it, like SSC or ScanCentral DAST, it is also highly recommended to use token-based authentication rather than username/password-based authentication when incorporating fcli into pipelines or other automation tasks. This will avoid creation of a temporary token as described above, but also allows for better access control based on token permissions. Similarly, for systems that support Personal Access tokens, like FoD, it is highly recommended to utilize a Personal Access Token rather than user password. Note however that depending on (personal access) token permissions, not all fcli functionality may be available. In particular, even the least restrictive SSC <code>CIToken</code> may not provide access to all endpoints covered by fcli. If you need access to functionality not covered by <code>CIToken</code>, you may need to define a custom token definition, but this can only be done on self-hosted SSC environments, not on Fortify Hosted. If all else fails, you may need to revert to username/password-based authentication to utilize the short-lived  <code>UnifiedLoginToken</code>.</p>
+</div>
+<div class="sect2">
+<h3 id="_named_sessions"><a class="anchor" href="#_named_sessions"></a>Named Sessions</h3>
+<div class="paragraph">
+<p>Fcli supports named sessions, allowing you to have multiple open sessions for a single product. When issuing a <code>session login</code> command, you can optionally provide a session name as in <code>fcli ssc session login mySession ...</code>, and then use that session in other commands using the <code>--session mySession</code> command line option. If no session name is specified, a session named <code>default</code> will be created/used. Named sessions allow for a variety of use cases, for example:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Run fcli commands against multiple instances of the same product, like DEV and PROD instances or an on-premise instance and a Fortify Hosted instance, without having to continuously login and logout from one instance to switch to another instance</p>
+</li>
+<li>
+<p>Run fcli commands against a single instance of a product, but with alternating credentials, for example with one session providing admin rights and another session providing limited user rights</p>
+</li>
+<li>
+<p>Run one session with username/password credentials to allow access to all fcli functionality (based on user permissions), and another session with token-based authentication with access to only a subset of fcli functionality</p>
+</li>
+<li>
+<p>Run multiple pipelines or automation scripts simultaneously, each with their own session name, to reduce chances of these pipelines and scripts affecting each other (see <a href="#_fcli_home_folder">Fcli Home Folder</a> though for a potentially better solution for this scenario)</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_session_storage"><a class="anchor" href="#_session_storage"></a>Session Storage</h3>
+<div class="paragraph">
+<p>To keep session state between fcli invocations, fcli stores session data like URL and authentication tokens in the <a href="#_fcli_home_folder">Fcli Home Folder</a>. To reduce the risk of unauthorized access to this sensitive data, fcli encrypts the session data files. However, this is not bullet-proof, as the default encryption key and algorithm can be easily viewed in fcli source code. As such, it is recommended to ensure file permissions on the FCLI Home folder are properly configured to disallow access by other users. Being stored in the user’s home directory by default, the correct file permissions should usually already be in place. For enhanced security, you may also consider setting the <code>FCLI_ENCRYPT_KEY</code> environment variable; see the <a href="#_fcli_home_folder">Fcli Home Folder</a> section for details.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fcli_home_folder"><a class="anchor" href="#_fcli_home_folder"></a>Fcli Home Folder</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Fcli stores various files in its home directory, like session files (see <a href="#_session_management">Session Management</a>) and fcli variable contents (see <a href="#_fcli_variables">Fcli Variables</a>). Future versions of fcli may
+also automatically generated log files in this home directory, if no <code>--log-file</code> option is provided.</p>
+</div>
+<div class="paragraph">
+<p>By default, the fcli home directory is located at <code>&lt;user home directory&gt;/.fortify/fcli</code>, but this can be overridden through the <code>FORTIFY_HOME</code> or <code>FCLI_HOME</code> environment variables. If the <code>FCLI_HOME</code> environment variable is set, then this will be used as the fcli home directory. If the <code>FORTIFY_HOME</code> environment variable is set (and <code>FCLI_HOME</code> is not set), then fcli will use <code>&lt;FORTIFY_HOME&gt;/fcli</code> as its home directory.</p>
+</div>
+<div class="paragraph">
+<p>When utilizing fcli in pipelines or automation scripts, especially when multiple pipelines or scripts may be running simultaneously on a single, non-containerized system, it is highly recommended to set the <code>FCLI_HOME</code> or <code>FORTIFY_HOME</code> environment variables to a dedicated directory for each individual pipeline/script run. Failure to do so may cause these runs to share session data, variables and other persistent fcli data, which will likely cause issues. For example, both pipelines may try to login with the same session name but with different URL’s or credentials, or even when using the same session configuration, one pipeline may log out of the session while the other pipeline is still using that session. Or, both pipelines may be updating the same fcli variable but with different contents, causing unexpected results when accessing those fcli variables. On containerized systems, like pipelines running in GitLab or GitHub, the fcli home folder will usually be stored inside the individual pipeline containers, so in this case it shouldn’t be necessary to set the <code>FCLI_HOME</code> or <code>FORTIFY_HOME</code> variables.</p>
+</div>
+<div class="paragraph">
+<p>Note that some files stored in the fcli home directory may contain sensitive data, like authentication tokens generated by login commands, or proxy credentials configured through the <code>fcli config proxy</code> commands. Fcli encrypts any sensitive files, but since the encryption key and algorithm are hardcoded, these files can be decrypted fairly easily. You should ensure proper file access permissions on the fcli home folder. In addition, you can consider setting the <code>FCLI_ENCRYPT_KEY</code> environment variable to configure an alternative encryption key. That way, the sensitive files can only be decrypted if someone has access to this customer encryption key.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_environment_variables"><a class="anchor" href="#_environment_variables"></a>Environment Variables</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Apart from the special-purpose environment variables described in other sections, like the <a href="#_fcli_home_folder">Fcli Home Folder</a> section, fcli allows for specifying default option and parameter values through environment variables. This is particularly useful for specifying product URL’s and credentials through pipeline secrets, but also allows for preventing having to manually supply command line options if you frequently invoke a particular command with the same option value(s). For example, you could define a default value for the <code>fcli ssc appversion create --issue-template</code> option, to avoid having to remember the issue template name every time you invoke this command.</p>
+</div>
+<div class="paragraph">
+<p>Fcli walks the command tree to find an environment variable that matches a particular option, starting with the most detailed command prefix first. For the issue-template example above, fcli would look for the following environment variable names, in this order:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>FCLI_DEFAULT_SSC_APPVERSION_CREATE_ISSUE_TEMPLATE</code></p>
+</li>
+<li>
+<p><code>FCLI_DEFAULT_SSC_APPVERSION_ISSUE_TEMPLATE</code></p>
+</li>
+<li>
+<p><code>FCLI_DEFAULT_SSC_ISSUE_TEMPLATE</code></p>
+</li>
+<li>
+<p><code>FCLI_DEFAULT_ISSUE_TEMPLATE</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Environment variable lookups are based on the following rules:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Command aliases are not taken into account when looking for environment variables; suppose we have a <code>delete</code> command with alias <code>rm</code>, you will need to use <code>FCLI_DEFAULT_..._DELETE_...</code> and not <code>FCLI_DEFAULT_..._RM_...</code></p>
+</li>
+<li>
+<p>For options, fcli will use the longest option name when looking for environment variables; suppose we have an option with names <code>-a</code>, <code>--ab</code> and <code>--abc</code>, you will need to use <code>FCLI_DEFAULT_..._ABC</code> and not  <code>FCLI_DEFAULT_..._AB</code> or <code>FCLI_DEFAULT_..._A</code></p>
+</li>
+<li>
+<p>Currently, not all positional parameters support default values from environment variables; this will be  improved over time. Please refer to the positional parameter description in help output or manual pages to  identify what environment variable suffix should be used for a particular positional parameter.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Although powerful, these environment variables for providing default option and parameter values should be used with some care to avoid unexpected results:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Obviously command option requirements should be respected; supplying default values for exclusive options may result in errors or unexpected behavior</p>
+</li>
+<li>
+<p>Preferably, you should use the most specific environment variable name, like <code>FCLI_DEFAULT_SSC_APPVERSION_CREATE_ISSUE_TEMPLATE</code> from the example above, to avoid accidentally supplying default values to a similarly named option on other commands</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Despite #2 above, in some cases it may be useful to use less specific environment names, in particular if the same default values should be applied to multiple commands. As an example, consider an environment variable named <code>FCLI_DEFAULT_SSC_URL</code>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>This variable value will be used as a default value for all <code>--url</code> options in the SSC module</p>
+</li>
+<li>
+<p>This variable value will be used as a default value for all <code>--ssc-url</code> options in other product modules</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This means that defining a single <code>FCLI_DEFAULT_SSC_URL</code> environment variable, together with for example <code>FCLI_DEFAULT_SSC_USER</code> and <code>FCLI_DEFAULT_SSC_PASSWORD</code> environment variables, allows for applying these default values to all of the <code>fcli ssc session login</code>, <code>fcli sc-sast session login</code>, <code>fcli sc-dast session login</code>, and corresponding <code>logout</code> commands.</p>
+</div>
+<div class="paragraph">
+<p>Note that as described in the <a href="#_env_prefix">–env-prefix</a> section, you can override the <code>FCLI_DEFAULT</code> prefix. For example, with <code>--env-prefix MYPREFIX</code>, fcli will look for <code>MYPREFIX_*</code> environment variables instead of <code>FCLI_DEFAULT_*</code> environment variables.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_fcli_variables"><a class="anchor" href="#_fcli_variables"></a>Fcli Variables</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding <code>wait-for</code> command, or for creating an SSC application version, and passing the SSC application version id to the <code>appversion-artifact upload</code> command.</p>
+</div>
+<div class="paragraph">
+<p>Fcli supports two types of variables:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Named variables</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Stored using the <code>--store myVarName[:prop1,prop2]</code> option on data output commands</p>
+</li>
+<li>
+<p>If no properties are provided with the <code>--store</code> option, all JSON properties will be stored</p>
+</li>
+<li>
+<p>Referenced using the <code>'{?myVarName:prop1}'</code> syntax anywhere on the command line of subsequent fcli commands</p>
+</li>
+<li>
+<p>As a best practice, variable references should be quoted to avoid the shell interpreting the curly braces</p>
+</li>
+<li>
+<p>On most shells, you should be able to put the variable reference in single quotes, or use <code>\{</code></p>
+</li>
+<li>
+<p>If you have any suggestions for a better syntax, please comment here: <a href="https://github.com/fortify/fcli/issues/160" class="bare">https://github.com/fortify/fcli/issues/160</a></p>
+</li>
+<li>
+<p>Variable names are global and can be referenced across products and sessions</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Predefined variables:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Stored using the <code>--store '?'</code> option on a subset of data output commands</p>
+</li>
+<li>
+<p>Stored under a command-specific predefined variable name</p>
+</li>
+<li>
+<p>Referenced using the <code>'?'</code> syntax on specific options</p>
+</li>
+<li>
+<p>As a best practice, question marks should be quoted to avoid the shell interpreting <code>?</code> as a file name wildcard (for example, if you have a file named <code>x</code> in the current directory, then <code>--store ?</code> would store a variable named <code>x</code> instead of the predefined variable name)</p>
+</li>
+<li>
+<p>On most shells, you should be able to put the <code>?</code> in single or double quotes, or use <code>\?</code></p>
+</li>
+<li>
+<p>If you have any suggestions for a better syntax, please comment here: <a href="https://github.com/fortify/fcli/issues/160" class="bare">https://github.com/fortify/fcli/issues/160</a></p>
+</li>
+<li>
+<p>Help output and manual pages may currently lack information about which commands and options support the <code>'?'</code> syntax, so for now you’ll need to look at examples or just try.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Predefined variables are easier to use; they are more concise and you do not need to remember JSON property names. However, as indicated, they are more limited in use; they only store a predefined JSON property, and
+are only available on a subset of commands and options.</p>
+</div>
+<div class="paragraph">
+<p>Following are some examples, assuming the necessary login sessions are available:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash">fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store '?'
+fcli ssc appversion-artifact upload myScan.fpr --appversion '?'
+
+fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion:id,name
+fcli ssc appversion-artifact upload myScan.fpr --appversion {?myVersion:id}
+
+fcli sc-dast scan start MyScan -S 011daf6b-f2d0-4127-89ab-1d3cebab8784 --store '?'
+fcli sc-dast scan wait-for '?'
+
+fcli sc-dast scan start MyScan -S 011daf6b-f2d0-4127-89ab-1d3cebab8784 --store myScan
+fcli sc-dast scan wait-for {?myScan:id}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Fcli provides dedicated commands for managing variables and variable contents through the following commands; please see help output or manual pages for available sub-commands:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>fcli config variable definition</code> * <code>fcli config variable contents</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Note that the <code>fcli config variable contents</code> <code>get</code> and <code>list</code> commands support the regular fcli output options, and the <code>list</code> command also provides query capabilities. This allows for advanced use
+cases, like retrieving server data once and then outputting it in multiple formats, potentially even applying separate filters. As an example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-bash" data-lang="bash">fcli ssc appversion list --store myVersions
+fcli config variable contents list myVersions -o csv --output-to-file myVersions.csv
+fcli config variable contents list myVersions -o json -q createdBy=admin --output-to-file myAdminVersions.json
+fcli config variable contents list myVersions -o 'expr={id}\n' --output-to-file myVersionIds.txt</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_manual_pages"><a class="anchor" href="#_manual_pages"></a>Manual Pages</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The manual pages for this fcli release can be found here: <a href="manpage/fcli.html">fcli (1)</a>. If you are viewing this documentation offline, please make sure that you have fully extracted the docs-html.zip file to access the manual pages.</p>
+</div>
+<div class="paragraph">
+<p>Manual pages for each fcli release are automatically generated as new fcli releases are being built, and are available in HTML and Linux man-page formats. The manual pages in man-page format can be downloaded from the fcli releases page at <a href="https://github.com/fortify/fcli/releases" class="bare">https://github.com/fortify/fcli/releases</a>. The HTML-formatted manual pages, including this documentation page, can also be downloaded from the fcli release page or viewed online at <a href="https://fortify.github.io/fcli" class="bare">https://fortify.github.io/fcli</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_troubleshooting"><a class="anchor" href="#_troubleshooting"></a>Troubleshooting</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_native_binaries"><a class="anchor" href="#_native_binaries"></a>Native Binaries</h3>
+<div class="paragraph">
+<p>Native binaries require some special source code annotations for proper operation, which are not required for the plain Java <code>.jar</code> version of fcli. If fcli developers forgot to include any of these annotations, you
+may experience any of the following behavior:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Commands and/or option listed in manual pages are not listed by the help output of a native binary</p>
+</li>
+<li>
+<p>Trying to use commands and/or options listed in the manual pages result in errors stating that the command or option is not recognized</p>
+</li>
+<li>
+<p>Some commands and/or options result in technical error messages about classes, constructors or methods not being found or not being accessible</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If you encounter any of these issues, please submit a bug report as described in <a href="#_submitting_a_bug_report">Submitting a Bug Report</a>. As described in that section, please include information on whether the <code>.jar</code> version of fcli exhibits the same erroneous behavior. While fcli developers are working on fixing the issue, you can temporarily use the <code>.jar</code> version of fcli until the issue is resolved.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_submitting_a_bug_report"><a class="anchor" href="#_submitting_a_bug_report"></a>Submitting a Bug Report</h3>
+<div class="paragraph">
+<p>After confirming that an issue cannot be resolved based on the information above, and is not caused by user error, please consider submitting a bug report on the <a href="https://github.com/fortify/fcli/issues">fcli issue tracker</a>. Before doing so, please verify that there is not already a bug report open for the issue that you are experiencing; in that case, feel free to leave a comment on the existing bug report to confirm the issue and/or provide additional details.</p>
+</div>
+<div class="paragraph">
+<p>When opening a bug report, please include the following information:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Fcli version, as shown by the <code>fcli --version</code> command</p>
+</li>
+<li>
+<p>Which fcli variant you are using; one of the native binaries or the <code>.jar</code> variant invoked using <code>java -jar fcli.jar</code></p>
+</li>
+<li>
+<p>If you are experiencing an issue with the native binaries, please confirm whether the <code>.jar</code> version of fcli exhibits the same behavior</p>
+</li>
+<li>
+<p>Operating system and any other relevant environment details, for example:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Interactive or pipeline/automation use</p>
+</li>
+<li>
+<p>If pipeline use, what CI/CD system are you running fcli on (Jenkins, GitHub, GitLab, …)</p>
+</li>
+<li>
+<p>What FCLI environment variables have been set</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Steps to reproduce</p>
+</li>
+<li>
+<p>Any other information that may be relevant</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version 0.20230307.120624-dev_main<br>
+Last updated 2023-03-07 12:07:48 UTC
+</div>
+</div>
+</body>
+</html>
