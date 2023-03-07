@@ -295,6 +295,7 @@ jobs:
           unzip artifact/docs-html.zip -d "${dir}"
           
           # Recreate version data files, which may be empty if no versions available
+          cd docs
           mkdir -p _data/versions
           touch _data/versions/release.yml
           touch _data/versions/dev.yml
