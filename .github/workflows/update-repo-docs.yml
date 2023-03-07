@@ -1,0 +1,13 @@
+name: update-repo-docs
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '5 4 * * *'
+  push:
+    branches:
+      - main
+      
+jobs:
+  update-repo-docs:
+    uses: fortify/shared-doc-resources/.github/workflows/update-repo-docs.yml@main

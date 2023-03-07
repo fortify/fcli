@@ -237,7 +237,7 @@ task generateManpageAsciiDoc(type: JavaExec) {
 
 task copyStaticAsciiDoc(type: Copy) {
 	into "${project.buildDir}/generated-docs/src"
-	from("${projectDir}/doc-resources/asciidoc") {
+	from("${projectDir}/doc-resources/asciidoc/versioned") {
         include "*.adoc"
     }
 }
@@ -268,7 +268,6 @@ task asciiDoctorHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
             'toc'         : 'left',
             'sectanchors' : 'true',
             'docinfo'     : 'shared',
-            'docinfodir'  : new File("${project.rootDir}/doc-resources/asciidoc/docinfo").absolutePath,
             'jekyll'      : false,
             'bannertitle' : 'FCLI: The Universal Fortify CLI',
             'docversion'  : "${project.version}"
@@ -290,11 +289,32 @@ task asciidoctorJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
             'toc'         : 'left',
             'sectanchors' : 'true',
             'docinfo'     : 'shared',
-            'docinfodir'  : new File("${project.rootDir}/doc-resources/asciidoc/docinfo").absolutePath,
             'jekyll'      : true,
             'stylesheet'  : false,
             'bannertitle' : 'FCLI: The Universal Fortify CLI',
             'docversion'  : "${project.version}"
+    ]
+    options = [
+    	'template_dirs': [new File("${project.rootDir}/doc-resources/asciidoc/templates").absolutePath]
+    ]
+}
+
+task asciidoctorGHPages(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+    sourceDir = file("${project.rootDir}/doc-resources/asciidoc/gh-pages")
+    outputDir = file("${project.buildDir}/generated-docs/gh-pages")
+    logDocuments = true
+    outputOptions {
+        backends = ['html5']
+    }
+    attributes = [
+            'toc'         : 'left',
+            'sectanchors' : 'true',
+            'docinfo'     : 'shared',
+            'jekyll'      : true,
+            'stylesheet'  : false,
+            'bannertitle' : 'FCLI: The Universal Fortify CLI',
+            'docversion'  : "[select]",
+            'revnumber'   : null
     ]
     options = [
     	'template_dirs': [new File("${project.rootDir}/doc-resources/asciidoc/templates").absolutePath]
@@ -322,8 +342,15 @@ tasks.register('distDocsJekyll', Zip) {
     from layout.buildDirectory.dir("generated-docs/jekyll")
 }
 
+tasks.register('distDocsGHPages', Zip) {
+    dependsOn 'asciidoctorGHPages'
+    archiveFileName = "docs-gh-pages.zip"
+    destinationDirectory = layout.buildDirectory.dir('dist')
+    from layout.buildDirectory.dir("generated-docs/gh-pages")
+}
+
 task distDocs {
-    dependsOn 'distDocsHtml5', 'distDocsManPage', 'distDocsJekyll'
+    dependsOn 'distDocsHtml5', 'distDocsManPage', 'distDocsJekyll', 'distDocsGHPages'
 }
 
 task dist(type: Copy) {
