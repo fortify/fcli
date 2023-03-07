@@ -1,0 +1,261 @@
+---
+title: Fortify CLI (fcli) Developer Information
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fortify CLI (fcli) Developer Information</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="article toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="[select]" %}
+
+
+<div id="header">
+<h1>Fortify CLI (fcli) Developer Information</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_conventional_commits_versioning">Conventional commits &amp; versioning</a></li>
+<li><a href="#_technologies_frameworks">Technologies &amp; frameworks</a></li>
+<li><a href="#_prerequisites_considerations">Prerequisites &amp; considerations</a>
+<ul class="sectlevel2">
+<li><a href="#_ide_setup">IDE Setup</a></li>
+<li><a href="#_incremental_compilation">Incremental Compilation</a></li>
+<li><a href="#_reflection">Reflection</a></li>
+<li><a href="#_picocli">Picocli</a></li>
+<li><a href="#_jackson">Jackson</a></li>
+</ul>
+</li>
+<li><a href="#_gradle_wrapper">Gradle Wrapper</a></li>
+<li><a href="#_common_commands">Common Commands</a></li>
+<li><a href="#_documentation">Documentation</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following sections provide information that may be useful for developers of this utility.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conventional_commits_versioning"><a class="anchor" href="#_conventional_commits_versioning"></a>Conventional commits &amp; versioning</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Versioning is handled automatically by <a href="https://github.com/google-github-actions/release-please-action">release-please-action</a> based on <a href="https://www.conventionalcommits.org/">Conventional Commits</a>. Every commit to the <code>main</code> branch should follow the Conventional Commits convention. Following are some examples; these can be combined in a single commit message (separated by empty lines), or you can have commit messages describing just a single fix or feature.</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>chore: Won't show up in changelog
+
+ci: Change to GitHub Actions workflow; won't show up in changelog
+
+docs: Change to documentation; won't show up in changelog
+
+fix: Some fix (#2)
+
+feat: New feature (#3)
+
+feat!: Some feature that breaks backward compatibility
+
+feat: Some feature
+  BREAKING-CHANGE: No longer supports xyz</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See the output of <code>git log</code> to view some sample commit messages.</p>
+</div>
+<div class="paragraph">
+<p><code>release-please-action</code> invoked from the GitHub CI workflow generates pull requests containing updated <code>CHANGELOG.md</code> and <code>version.txt</code> files based on these commit messages. Merging the pull request will
+result in a new release version being published; this includes publishing the image to Docker Hub, and creating a GitHub release describing the changes.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_technologies_frameworks"><a class="anchor" href="#_technologies_frameworks"></a>Technologies &amp; frameworks</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Following is a list of the main frameworks and technologies used by fcli:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://picocli.info/">picocli</a>: Process command line options, generate usage information, …</p>
+</li>
+<li>
+<p><a href="https://micronaut.io/">Micronaut</a>: Dependency injection, features for GraalVM native image generation</p>
+</li>
+<li>
+<p><a href="https://github.com/FasterXML/jackson">Jackson</a>: Parse and generate data in JSON and other formats</p>
+</li>
+<li>
+<p><a href="https://www.graalvm.org/">GraalVM</a>: Generate native images (native executables)</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_prerequisites_considerations"><a class="anchor" href="#_prerequisites_considerations"></a>Prerequisites &amp; considerations</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As can be seen in the <a href="#technologies-frameworks">Technologies &amp; frameworks</a> section, this is no ordinary Java project. Some of these technologies and frameworks require special prerequisites, precautions and other considerations to be taken into account to prevent compilation issues and runtime errors, as described below.</p>
+</div>
+<div class="sect2">
+<h3 id="_ide_setup"><a class="anchor" href="#_ide_setup"></a>IDE Setup</h3>
+<div class="paragraph">
+<p>This project uses the following frameworks that may require some special setup in order to have your IDE compile this project without errors:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Lombok: Please see <a href="https://projectlombok.org/setup/overview" class="bare">https://projectlombok.org/setup/overview</a> for more information on how to add Lombok support to your IDE</p>
+</li>
+<li>
+<p>Micronaut &amp; picocli: These frameworks require annotation processors to be run during builds; please see your IDE documentation on how to enable annotation processing</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_incremental_compilation"><a class="anchor" href="#_incremental_compilation"></a>Incremental Compilation</h3>
+<div class="paragraph">
+<p>Incremental compilation (for example in IDE or when doing a <code>gradle build</code> without <code>clean</code>) may leave behind old AOT artifacts causing exceptions when trying to run <code>fcli</code>. This is especially the case when renaming or moving classes, which may result in exceptions like the below:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Message: Error loading bean [com.fortify.cli.ssc.rest.unirest.SSCUnirestRunner]: com/fortify/cli/rest/unirest/AbstractUnirestRunner
+...
+Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/AbstractUnirestRunner
+...</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this example, the AbstractUnirestRunner class was moved to a different package, but the now obsolete AOT-generated classes were still present. So, if at any time you see unexpected exceptions, please try to do a full clean/rebuild and run <code>fcli</code> again.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_reflection"><a class="anchor" href="#_reflection"></a>Reflection</h3>
+<div class="paragraph">
+<p>GraalVM Native Image needs to know ahead-of-time the reflectively accessed program elements; see <a href="https://www.graalvm.org/reference-manual/native-image/Reflection/">GraalVM Native Image &amp; Reflection</a> for details. Micronaut allows for generating the necessary GraalVM reflection configuration using the <code>@ReflectiveAccess</code> annotation if necessary.</p>
+</div>
+<div class="paragraph">
+<p>If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the <code>@ReflectiveAccess</code> annotation to the appropriate classes. Also see below for some reflection-related considerations specific to picocli and Jackson.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_picocli"><a class="anchor" href="#_picocli"></a>Picocli</h3>
+<div class="paragraph">
+<p>Picocli and it’s annotation processor should in theory generate the necessary reflection configuration as described above. However, the annotation processor doesn’t seem to take class hierarchies into account; see <a href="https://github.com/remkop/picocli/issues/1444">GraalVM: Options from superclass not visible</a>. As a work-around, we can complement the picocli-generated reflection configuration by using Micronaut’s <code>@ReflectiveAccess</code> annotation. In general the following classes should probably be annotated with <code>@ReflectiveAccess</code>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>All classes annotated with <code>@Command</code> (this likely duplicates the reflection configuration generated by picocli, but doesn’t hurt)</p>
+</li>
+<li>
+<p>All super-classes of all classes annotated with <code>@Command</code>, in particular if they contain any picocli annotations like <code>@Mixin</code>, <code>@ArgGroup</code>, or <code>@Option</code></p>
+</li>
+<li>
+<p>All classes used as an <code>@Mixin</code> or <code>@ArgGroup</code>, and their super-classes</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The following native image runtime behavior may indicate a missing <code>@ReflectiveAccess</code> annotation:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Options and sub-commands not listed in help output, and not recognized when entered on the command line</p>
+</li>
+<li>
+<p>Exceptions related to picocli trying to access classes, methods and fields using reflection</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_jackson"><a class="anchor" href="#_jackson"></a>Jackson</h3>
+<div class="paragraph">
+<p>Jackson is heavily based on reflection to perform object serialization and deserialization. All classes that need to be (de-)serialized with Jackson therefore need to be annotated with <code>@ReflectiveAccess</code> to allow reflection-based (de-)serialization.</p>
+</div>
+<div class="paragraph">
+<p>Note that Micronaut provides the <code>@Introspected</code> annotation that should allow for reflection-free (de-)serialization. However experience learns that there are just too many differences between reflection-based
+and introspection-based (de-)serialization. When running in a normal JVM these differences are often not visible as Jackson can easily fall back to reflection-based (de-)serialization. In native images, Jackson cannot fall back to reflection-based (de-)serialization unless properly configured, and even when properly configured there are still some differences in behavior.</p>
+</div>
+<div class="paragraph">
+<p>As such, it has been decided to disable Jackson introspection-based (de-)serialization using the <code>jackson.bean-introspection-module</code> configuration property in <code>application.yml</code>. This also means that we will not be using the <code>@Introspected</code> annotation on classes that need to be (de-)serialized with Jackson (unless of course introspection-based access is used for non Jackson-related purposes).</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_gradle_wrapper"><a class="anchor" href="#_gradle_wrapper"></a>Gradle Wrapper</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>It is strongly recommended to build this project using the included Gradle Wrapper scripts; using other Gradle versions may result in build errors and other issues.</p>
+</div>
+<div class="paragraph">
+<p>The Gradle build uses various helper scripts from <a href="https://github.com/fortify/shared-gradle-helpers" class="bare">https://github.com/fortify/shared-gradle-helpers</a>; please refer to the documentation and comments in included scripts for more information.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_common_commands"><a class="anchor" href="#_common_commands"></a>Common Commands</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>All commands listed below use Linux/bash notation; adjust accordingly if you are running on a different platform. All commands are to be executed from the main project directory.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>./gradlew tasks --all</code>: List all available tasks</p>
+</li>
+<li>
+<p>Build: (plugin binary will be stored in <code>build/libs</code>)</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>./gradlew clean build</code>: Clean and build the project</p>
+</li>
+<li>
+<p><code>./gradlew build</code>: Build the project without cleaning</p>
+</li>
+<li>
+<p><code>./gradlew dist distThirdParty</code>: Build distribution zip and third-party information bundle</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_documentation"><a class="anchor" href="#_documentation"></a>Documentation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>TODO</p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2023-03-07 14:22:30 +0100
+</div>
+</div>
+</body>
+</html>
