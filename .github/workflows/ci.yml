@@ -288,7 +288,7 @@ jobs:
           # Extract top-level documentation resources
           # TODO Should we do this only when building a release, or also for dev_main,
           #      or for all (dev & release) versions like we do now?
-          unzip artifacts/docs-gh-pages.zip -d "docs"
+          unzip artifact/docs-gh-pages.zip -d "docs"
           
           # Define the output directory, based on tag/branch name
           versionDir=docs/${{ needs.build.outputs.release_tag }}
