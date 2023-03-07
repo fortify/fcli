@@ -1,0 +1,30 @@
+<div id="banner">
+<img class="logo" src="{{ site.baseurl }}/img/mf_fortify_bluesquare_logo.svg"/>
+  <h2>{{ include.bannerTitle }}</h2>
+</div>
+<div id="navbar">
+  <div id="navbar-version">
+    <span class="version-label">Version:&nbsp;</span><div class="dropdown">{{ include.currentVersion}} <i class="arrow down"></i>
+    <div class="dropdown-content"> 
+      <span>-- Releases --</span>
+	  <a href="/fcli/v1.2.2">v1.2.2</a>
+      <a href="/fcli/v1.2.1">v1.2.1</a>
+      <a href="/fcli/v1.2.0">v1.2.0</a>
+      <a href="/fcli/v1.1.0">v1.1.0</a>
+      <a href="/fcli/v1.0.5">v1.0.5</a>
+      <a href="/fcli/v1.0.4">v1.0.4</a>
+      <a href="/fcli/v1.0.3">v1.0.3</a>
+      <a href="/fcli/v1.0.2">v1.0.2</a>
+      <a href="/fcli/v1.0.1">v1.0.1</a>
+      <a href="/fcli/v1.0.0">v1.0.0</a>
+      <span>-- Development --</span> 
+{% assign manpages_dev = site.static_files | where: "manpage_dev", true %}
+{% assign has_devDocs = manpages_dev | first %}
+{% if has_devDocs %}
+{% for page in manpages_dev %}
+      <a href="/fcli{{ page.path }}">{{ page.path | replace_first: "/", "" | split: "/" | first }}</a>
+{% endfor %}
+{% endif %}
+    </div></div>
+  </div>
+</div>

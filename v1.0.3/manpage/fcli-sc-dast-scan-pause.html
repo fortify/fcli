@@ -1,6 +1,6 @@
 ---
 title: fcli-sc-dast-scan-pause(1)
-fcli_version: fcli version 1.0.3, built on 2023-03-06 17 49 19
+fcli_version: fcli version 1.0.3, built on 2023-03-07 10 42 54
 ---
 
 <!DOCTYPE html>
@@ -10,81 +10,15 @@ fcli_version: fcli version 1.0.3, built on 2023-03-06 17 49 19
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>fcli-sc-dast-scan-pause(1)</title>
-<link rel="stylesheet" href="./asciidoctor.css">
-<style>
-#banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  line-height: 19px;
-  height: 50px;
-  background-color: #0079ef;
-  width: 100%;
-  z-index: 2000;
-}
-#navbar {
-  position: fixed;
-  top: 50px;
-  left: 0;
-  line-height: 19px;
-  height: 20px;
-  background-color: #dddddf;
-  width: 100%;
-  z-index: 2000;
-}
-#navbar-version {
-  position: absolute;
-  right: 5px;
-}
-#banner .logo {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  display: inline-block;
-  background-color: #00abf3;
-}
-#banner h2 {
-  color: white !important;
-  font-weight: bold;
-  font-size: 150%;
-  margin: 0;
-  float: left;
-  height: 50px;
-  padding: 12px;
-  margin-left: 50px;
-}
-body {
-  padding-top: 70px;
-}
-:target::before {
-    content: '';
-    display: block;
-    height:      70px;
-    margin-top: -70px;
-}
-h1, h2, h3, h4, h5, h6, #toctitle, .sidebarblock > .content > .title {
-  color: rgba(0, 0, 0, 0.8);
-}
-@media screen and (min-width: 768px) {
-  #toc.toc2 {
-    top: 70px !important;
-  }
-}
-</style>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
-<div id="banner">
-<img class="logo" src="
-    			data:image/svg+xml;
-    			data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIxLjEuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA2MTIgNjEyIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA2MTIgNjEyOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6IzAwQUJGMzt9Cgkuc3Qxe2ZpbGw6I0ZGRkZGRjt9Cjwvc3R5bGU+CjxyZWN0IHg9IjAiIGNsYXNzPSJzdDAiIHdpZHRoPSI2MTIiIGhlaWdodD0iNjEyIi8+CjxnPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MSIgZD0iTTQ5MSwxMjFjMCwwLTE5Mi41LDAtMjQ3LjgsMGMtMTEuMSwwLTIyLjEsMS4zLTMyLjksNC4yYy0xNi44LDQuNi0zMS45LDEyLjQtNDUuNCwyMy41CgkJCWMtOS41LDcuOS0xNy42LDE3LTI0LjQsMjcuNGMtNy4yLDExLjEtMTIuNCwyMy0xNS43LDM1LjhjLTIuNywxMC41LTMuNywyMS4yLTMuNywzMi4xYzAsNzAuMiwwLDE0MC4zLDAsMjEwLjVoMFY0OTFoODEuOHYwCgkJCWM1NiwwLDExMiwwLDE2OCwwYzguOSwwLDE3LjctMSwyNi40LTMuMWMxMy44LTMuMiwyNi43LTguNiwzOC42LTE2LjRjMTQuMi05LjIsMjUuOS0yMC45LDM1LjItMzVjMTMuNS0yMC41LDE5LjktNDMuMiwxOS45LTY3LjcKCQkJYzAtMzkuNCwwLTc4LjcsMC0xMTguMWMwLDAsMCwwLDAsMGMwLTMxLjEsMC02Mi4xLDAtOTMuMmgwVjEyMXogTTQzNy42LDE4NS40YzAsNjEuNywwLDEyMy4zLTAuMSwxODVjMCwxMS4yLTIuNiwyMS44LTgsMzEuNgoJCQljLTksMTYuNC0yMi41LDI3LjQtNDAuNCwzMi45Yy02LjIsMS45LTEyLjcsMi43LTE5LjMsMi43Yy0zMS4zLDAtMTk1LjYsMC0xOTUuNiwwdi0xMWgwYzAtNjEuOC0wLjEtMTIzLjcsMC0xODUuNQoJCQljMC0xNi4xLDUuNS0zMC40LDE1LjgtNDIuN2M4LjgtMTAuNCwxOS44LTE3LjYsMzIuOS0yMS40YzUuOC0xLjcsMTEuNy0yLjYsMTcuOC0yLjZjNjAsMCwxOTYuNywwLDE5Ni43LDBMNDM3LjYsMTg1LjR6Ii8+Cgk8L2c+Cgk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMjYwLjYsMjQyLjhoMTYyLjV2LTUzLjZIMjUxdjAuMWMtMi43LDAtNS40LDAtOC4xLDBjLTE4LjUsMC0zMi45LDguMi00My4xLDIzLjVjLTUuNiw4LjQtOC4xLDE3LjktOC4xLDI4CgkJYzAsMTYuOSwwLDMzLjksMCw1MC44aDB2MTMyLjdoNTMuNnYtOTAuOGgxNDQuNFYyODBoLTE0NGMtMC40LTAuMy0wLjUtMC44LTAuNS0xLjdjMC4xLTUuNywwLTExLjQsMC0xNy4xCgkJQzI0NS4yLDI1MS4xLDI1MS4yLDI0NC4xLDI2MC42LDI0Mi44eiIvPgo8L2c+Cjwvc3ZnPgo="/>
-  <h2>FCLI: The Universal Fortify CLI</h2>
-</div>
-<div id="navbar">{% include navbar.html currentVersion="1.0.3" %}
-</div></div>
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="1.0.3" %}
+
+
 <div id="header">
 <h1>fcli-sc-dast-scan-pause(1) Manual Page</h1>
 <div id="toc" class="toc2">
@@ -197,8 +131,8 @@ h1, h2, h3, h4, h5, h6, #toctitle, .sidebarblock > .content > .title {
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 1.0.3, built on 2023-03-06 17 49 19<br>
-Last updated 2023-03-06 17:50:35 +0100
+Version fcli version 1.0.3, built on 2023-03-07 10 42 54<br>
+Last updated 2023-03-07 10:43:36 +0100
 </div>
 </div>
 </body>

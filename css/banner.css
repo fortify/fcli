@@ -1,0 +1,59 @@
+#banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  line-height: 19px;
+  height: 50px;
+  background-color: #0079ef;
+  width: 100%;
+  z-index: 2000;
+}
+#navbar {
+  position: fixed;
+  top: 50px;
+  left: 0;
+  line-height: 19px;
+  height: 20px;
+  background-color: #dddddf;
+  width: 100%;
+  z-index: 2000;
+}
+#navbar-version {
+  position: absolute;
+  right: 5px;
+}
+#banner .logo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  display: inline-block;
+  background-color: #00abf3;
+}
+#banner h2 {
+  color: white !important;
+  font-weight: bold;
+  font-size: 150%;
+  margin: 0;
+  float: left;
+  height: 50px;
+  padding: 12px;
+  margin-left: 50px;
+}
+body {
+  padding-top: 70px;
+}
+:target::before {
+    content: '';
+    display: block;
+    height:      70px;
+    margin-top: -70px;
+}
+h1, h2, h3, h4, h5, h6, #toctitle, .sidebarblock > .content > .title {
+  color: rgba(0, 0, 0, 0.8);
+}
+@media screen and (min-width: 768px) {
+  #toc.toc2 {
+    top: 70px !important;
+  }
+}
