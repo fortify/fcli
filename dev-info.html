@@ -24,9 +24,9 @@ fcli_version:
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_conventional_commits_versioning">Conventional commits &amp; versioning</a></li>
-<li><a href="#_technologies_frameworks">Technologies &amp; frameworks</a></li>
-<li><a href="#_prerequisites_considerations">Prerequisites &amp; considerations</a>
+<li><a href="#_conventional_commits_versioning">Conventional Commits &amp; Versioning</a></li>
+<li><a href="#_technologies_frameworks">Technologies &amp; Frameworks</a></li>
+<li><a href="#_prerequisites_considerations">Prerequisites &amp; Considerations</a>
 <ul class="sectlevel2">
 <li><a href="#_ide_setup">IDE Setup</a></li>
 <li><a href="#_incremental_compilation">Incremental Compilation</a></li>
@@ -37,7 +37,12 @@ fcli_version:
 </li>
 <li><a href="#_gradle_wrapper">Gradle Wrapper</a></li>
 <li><a href="#_common_commands">Common Commands</a></li>
-<li><a href="#_documentation">Documentation</a></li>
+<li><a href="#_documentation">Documentation</a>
+<ul class="sectlevel2">
+<li><a href="#_repository_documentation">Repository Documentation</a></li>
+<li><a href="#_user_documentation">User Documentation</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -50,7 +55,7 @@ fcli_version:
 </div>
 </div>
 <div class="sect1">
-<h2 id="_conventional_commits_versioning"><a class="anchor" href="#_conventional_commits_versioning"></a>Conventional commits &amp; versioning</h2>
+<h2 id="_conventional_commits_versioning"><a class="anchor" href="#_conventional_commits_versioning"></a>Conventional Commits &amp; Versioning</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Versioning is handled automatically by <a href="https://github.com/google-github-actions/release-please-action">release-please-action</a> based on <a href="https://www.conventionalcommits.org/">Conventional Commits</a>. Every commit to the <code>main</code> branch should follow the Conventional Commits convention. Following are some examples; these can be combined in a single commit message (separated by empty lines), or you can have commit messages describing just a single fix or feature.</p>
@@ -83,7 +88,7 @@ result in a new release version being published; this includes publishing the im
 </div>
 </div>
 <div class="sect1">
-<h2 id="_technologies_frameworks"><a class="anchor" href="#_technologies_frameworks"></a>Technologies &amp; frameworks</h2>
+<h2 id="_technologies_frameworks"><a class="anchor" href="#_technologies_frameworks"></a>Technologies &amp; Frameworks</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Following is a list of the main frameworks and technologies used by fcli:</p>
@@ -107,10 +112,10 @@ result in a new release version being published; this includes publishing the im
 </div>
 </div>
 <div class="sect1">
-<h2 id="_prerequisites_considerations"><a class="anchor" href="#_prerequisites_considerations"></a>Prerequisites &amp; considerations</h2>
+<h2 id="_prerequisites_considerations"><a class="anchor" href="#_prerequisites_considerations"></a>Prerequisites &amp; Considerations</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>As can be seen in the <a href="#technologies-frameworks">Technologies &amp; frameworks</a> section, this is no ordinary Java project. Some of these technologies and frameworks require special prerequisites, precautions and other considerations to be taken into account to prevent compilation issues and runtime errors, as described below.</p>
+<p>As can be seen in the <a href="#_technologies_frameworks">Technologies &amp; frameworks</a> section, this is no ordinary Java project. Some of these technologies and frameworks require special prerequisites, precautions and other considerations to be taken into account to prevent compilation issues and runtime errors, as described below.</p>
 </div>
 <div class="sect2">
 <h3 id="_ide_setup"><a class="anchor" href="#_ide_setup"></a>IDE Setup</h3>
@@ -247,14 +252,192 @@ and introspection-based (de-)serialization. When running in a normal JVM these d
 <h2 id="_documentation"><a class="anchor" href="#_documentation"></a>Documentation</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>TODO</p>
+<p>Two types of documentation are automatically being generated; the standard repository documentation like <code>README.md</code> and <code>CONTRIBUTING.md</code>, and fcli user documentation (including manual pages). The following two sections describe the generation process in more detail.</p>
+</div>
+<div class="sect2">
+<h3 id="_repository_documentation"><a class="anchor" href="#_repository_documentation"></a>Repository Documentation</h3>
+<div class="paragraph">
+<p>Most or all of the <code>*.md</code> and <code>LICENSE.txt</code> files located in the repository root are generated automatically. Generation of <code>CHANGELOG.md</code> is done by <code>release-please-action</code> as described in the <a href="#_conventional_commits_versioning">Conventional Commits &amp; Versioning</a> section. Generation of the other files is done by the <code>doc-resources/update-repo-docs.sh</code> scripts, based on the templates provided in <a href="https://github.com/fortify/shared-doc-resources" class="bare">https://github.com/fortify/shared-doc-resources</a>, combined with the repo-specific MarkDown files in the repository <code>doc-resources</code> directory. For more information about this generation process, please see <a href="https://github.com/fortify/shared-doc-resources/blob/main/USAGE.md" class="bare">https://github.com/fortify/shared-doc-resources/blob/main/USAGE.md</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_user_documentation"><a class="anchor" href="#_user_documentation"></a>User Documentation</h3>
+<div class="paragraph">
+<p>User documentation is generated automatically from the following three locations:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>AsciiDoc located in the repository <code>doc-resources/asciidoc/gh-pages</code> directory</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Published to the root directory of the GitHub Pages site</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>AsciiDoc located in the repository <code>doc-resources/asciidoc/versioned</code> directory</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Published to a version-specific directory on the GitHub Pages site</p>
+</li>
+<li>
+<p>Published to docs-html.zip in release assets</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Manual pages generated from the fcli code</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Published to a version-specific directory on the GitHub Pages site</p>
+</li>
+<li>
+<p>Published to docs-html.zip in release assets</p>
+</li>
+<li>
+<p>Published to docs-manpage.zip in release assets</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The Gradle build includes various tasks for generating this documentation, following are the main tasks:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>generateManpageAsciiDoc</code>: Generate man-page style AsciiDoc documentation from fcli code</p>
+</li>
+<li>
+<p><code>asciiDoctorManPage</code>: Convert man-page style AsciiDoc to Linux man-page format</p>
+</li>
+<li>
+<p><code>asciiDoctorHtml</code>: Convert both man-page style AsciiDoc and versioned user documentation to offline HTML format</p>
+</li>
+<li>
+<p><code>asciidoctorJekyll</code>: Convert both man-page style AsciiDoc and versioned user documentation to Jekyll HTML format for publishing on the GitHub Pages site</p>
+</li>
+<li>
+<p><code>asciidoctorGHPages</code>: Convert AsciiDoc files from <code>doc-resources/asciidoc/gh-pages</code> to Jekyll HTML format for publishing on the GitHub Pages site</p>
+</li>
+<li>
+<p><code>distDocs</code>: Calls of the tasks above and packages the output from these tasks into separate <code>docs-*.zip</code> files in the <code>build/dist</code> directory</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The GitHub Actions workflow defined in <code>.github/workflows/ci.yml</code> is responsible for publishing the documentation:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>build</code> job builds the documentation artifacts and archives them as artifacts</p>
+</li>
+<li>
+<p>The <code>release</code> job publishes <code>docs-html.zip</code> and <code>docs-manpage.zip</code> to the release artifacts (when building a release or development version)</p>
+</li>
+<li>
+<p>The <code>publishPages</code> job published the output of the <code>asciidoctorJekyll</code> and <code>asciidoctorGHPages</code> to the appropriate directories on the GitHub Pages site, and updates the version index in the Jekyll <code>_data</code> directory (when building a release or development version)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>All HTML-formatted documentation described above is generated using the <code>doc-resources/templates/html5/document.html.erb</code> template. This template is based on the <a href="https://github.com/asciidoctor/asciidoctor-backends/blob/master/erb/html5/document.html.erb">official AsciiDoctor template</a> with various modifications. Based on the attributes provided in the relevant Gradle tasks:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For Jekyll output:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Add Jekyll front matter</p>
+</li>
+<li>
+<p>Add a Jekyll include to include additional content in the HTML <code>&lt;head&gt;</code> section; mostly used for applying stylesheets</p>
+</li>
+<li>
+<p>Add a Jekyll include to include the site-wide banner and (version) navigation bar</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>For offline HTML output:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Add hardcoded custom styling</p>
+</li>
+<li>
+<p>Add hardcoded banner and version bar</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The offline HTML documentation is supposed to be self-contained, i.e., users can open any HTML file from <code>docs-html.zip</code> without extracting the full contents, and the page will render correctly. Of course, links to other documentation files will not work unless the full zip-file is extracted.</p>
+</div>
+<div class="paragraph">
+<p>For now, the hardcoded banner and navigation bar in the offline documentation is similar to the banner included by Jekyll. However:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Stylesheets and images are linked rather than being included in the HTML page, allowing for better browser cache utilization</p>
+</li>
+<li>
+<p>The navigation bar in the offline documentation contains just a static version number, whereas the navigation bar in the online documentation allows for navigating to different versions</p>
+</li>
+<li>
+<p>We can potentially add more advanced (navigation) functionalities in the online documentation</p>
+</li>
+<li>
+<p>We can easily update the banner for the online documentation to have a new layout/styling, for example to apply OpenText styling; this will be automatically applied to all existing online documentation pages</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Usually it shouldn&#8217;t be necessary to update the documentation contents for existing release versions. However, if necessary, and assuming the build.gradle file is compatible with older versions, potentially a command like the following can be used to regenerate the documentation for the given versions:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>for v in 1.0.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.1.0 1.2.0 1.2.1 1.2.2; do (git restore . &amp;&amp; git clean -fd &amp;&amp; git checkout v$v &amp;&amp; cp -r ../fcli-fork/doc-resources ../fcli-fork/build.gradle . &amp;&amp; ./gradlew clean distDocs -Pversion=$v &amp;&amp; mkdir -p ~/Downloads/fcli-docs/$v &amp;&amp; cp build/dist/docs-html.zip ~/Downloads/fcli-docs/$v &amp;&amp; cd ../fcli-pages/v$v &amp;&amp; echo $pwd &amp;&amp; rm -rf * &amp;&amp; unzip ../../fcli/build/dist/docs-jekyll.zip &amp;&amp; cd - &amp;&amp; git restore . &amp;&amp; git clean -fd); done</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This command iterates over the given version numbers, regenerates the documentation for each version (using latest <code>build.gradle</code> and <code>doc-resources</code>), copies the <code>docs-html.zip</code> to a separate directory for later upload to the corresponding release assets, and updates the GitHub Pages site, based on the following assumptions:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Current directory is a clone of the fcli repository</p>
+</li>
+<li>
+<p><code>../fcli-fork</code> would contain the latest version of <code>doc-resources</code> and <code>build.gradle</code></p>
+</li>
+<li>
+<p><code>../fcli-pages</code> would be a clone of the fcli repository with the gh-pages branch checked out</p>
+</li>
+</ul>
+</div>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-03-07 14:22:30 +0100
+Last updated 2023-03-07 16:44:07 UTC
 </div>
 </div>
 </body>
