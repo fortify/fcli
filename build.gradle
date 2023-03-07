@@ -232,35 +232,98 @@ task generateManpageAsciiDoc(type: JavaExec) {
     description = "Generate AsciiDoc manpage"
     classpath(configurations.runtimeClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
     main 'picocli.codegen.docgen.manpage.ManPageGenerator'
-    args mainClassName, "--outdir=${project.buildDir}/generated-picocli-docs", "-v"
+    args mainClassName, "--outdir=${project.buildDir}/generated-docs/src/manpage", "-v"
 }
 
-asciidoctor {
-    dependsOn(generateManpageAsciiDoc)
-    sourceDir = file("${project.buildDir}/generated-picocli-docs")
-    outputDir = file("${project.buildDir}/docs")
-    logDocuments = true
-    outputOptions {
-        backends = ['manpage', 'html5']
+task copyStaticAsciiDoc(type: Copy) {
+	into "${project.buildDir}/generated-docs/src"
+	from("${projectDir}/doc-resources/asciidoc") {
+        include "*.adoc"
     }
 }
 
+task prepareAsciiDoc {
+    dependsOn 'generateManpageAsciiDoc', 'copyStaticAsciiDoc'
+}
+
+task asciiDoctorManPage(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+    dependsOn(prepareAsciiDoc)
+    sourceDir = file("${project.buildDir}/generated-docs/src/manpage")
+    outputDir = file("${project.buildDir}/generated-docs/manpage")
+    logDocuments = true
+    outputOptions {
+        backends = ['manpage']
+    }
+}
+
+task asciiDoctorHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+    dependsOn(prepareAsciiDoc)
+    sourceDir = file("${project.buildDir}/generated-docs/src")
+    outputDir = file("${project.buildDir}/generated-docs/html5")
+    logDocuments = true
+    outputOptions {
+        backends = ['html5']
+    }
+    attributes = [
+            'toc'         : 'left',
+            'sectanchors' : 'true',
+            'docinfo'     : 'shared',
+            'docinfodir'  : new File("${project.rootDir}/doc-resources/asciidoc/docinfo").absolutePath,
+            'jekyll'      : false,
+            'bannertitle' : 'FCLI: The Universal Fortify CLI',
+            'docversion'  : "${project.version}"
+    ]
+    options = [
+    	'template_dirs': [new File("${project.rootDir}/doc-resources/asciidoc/templates").absolutePath]
+    ]
+}
+
+task asciidoctorJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+	dependsOn(prepareAsciiDoc)
+    sourceDir = file("${project.buildDir}/generated-docs/src")
+    outputDir = file("${project.buildDir}/generated-docs/jekyll")
+    logDocuments = true
+    outputOptions {
+        backends = ['html5']
+    }
+    attributes = [
+            'toc'         : 'left',
+            'sectanchors' : 'true',
+            'docinfo'     : 'shared',
+            'docinfodir'  : new File("${project.rootDir}/doc-resources/asciidoc/docinfo").absolutePath,
+            'jekyll'      : true,
+            'stylesheet'  : false,
+            'bannertitle' : 'FCLI: The Universal Fortify CLI',
+            'docversion'  : "${project.version}"
+    ]
+    options = [
+    	'template_dirs': [new File("${project.rootDir}/doc-resources/asciidoc/templates").absolutePath]
+    ]
+}
+
 tasks.register('distDocsHtml5', Zip) {
-    dependsOn 'asciidoctor'
+    dependsOn 'asciiDoctorHtml'
     archiveFileName = "docs-html.zip"
     destinationDirectory = layout.buildDirectory.dir('dist')
-    from layout.buildDirectory.dir("docs/html5")
+    from layout.buildDirectory.dir("generated-docs/html5")
 }
 
 tasks.register('distDocsManPage', Zip) {
-    dependsOn 'asciidoctor'
+    dependsOn 'asciiDoctorManPage'
     archiveFileName = "docs-manpage.zip"
     destinationDirectory = layout.buildDirectory.dir('dist')
-    from layout.buildDirectory.dir("docs/manpage")
+    from layout.buildDirectory.dir("generated-docs/manpage")
+}
+
+tasks.register('distDocsJekyll', Zip) {
+    dependsOn 'asciidoctorJekyll'
+    archiveFileName = "docs-jekyll.zip"
+    destinationDirectory = layout.buildDirectory.dir('dist')
+    from layout.buildDirectory.dir("generated-docs/jekyll")
 }
 
 task distDocs {
-    dependsOn 'distDocsHtml5', 'distDocsManPage'
+    dependsOn 'distDocsHtml5', 'distDocsManPage', 'distDocsJekyll'
 }
 
 task dist(type: Copy) {

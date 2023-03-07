@@ -294,6 +294,13 @@ jobs:
           mkdir -p "${dir}"
           unzip artifact/docs-html.zip -d "${dir}"
           
+          # Recreate version data files, which may be empty if no versions available
+          mkdir -p _data/versions
+          touch _data/versions/release.yml
+          touch _data/versions/dev.yml
+          ls -d v*.*.* | sort -rV | while read line; do echo "- '$line'"; done > _data/versions/release.yml
+          ls -d dev_* | sort | while read line; do echo "- '$line'"; done > _data/versions/dev.yml
+          
       - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v3
         with:
