@@ -66,7 +66,7 @@ fcli_version: 1.2.1
 <div class="sectionbody">
 <div class="paragraph">
 <p>The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the
-man-pages corresponding to the fcli version that you are using, as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p>
+man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p>
 </div>
 <div class="paragraph">
 <p>Some of the fcli highlights:</p>
@@ -379,7 +379,7 @@ fcli ssc session logout --user &lt;user&gt; --password &lt;password&gt;</code></
 </div>
 </div>
 <div class="paragraph">
-<p>For interactive use, you can choose to keep the session open until it expires (expiration period depends on target system and login method). For pipeline use or other automation scenarios, it is highly recommended to issue a <code>session logout</code> command when no further interaction with the target system is required, to allow for any client-side and server-side cleanup to be performed. For example, upon logging in to SSC with user credentials, fcli will generate a <code>UnifiedLoginToken</code>, which will be invalidated when the <code>ssc session logout</code> is being run. If you have many (frequently executed) pipelines that interact with SSC, and you don’t run the <code>ssc session logout</code> command when the pipeline finishes, you risk exhausting SSC’s limit on active tokens. In addition, the <code>logout</code> commands will remove the session details like URL and authentication tokens from the client system, and perform other cleanup like removing predefined fcli variables (see <a href="#_fcli_variables">Fcli Variables</a>).</p>
+<p>For interactive use, you can choose to keep the session open until it expires (expiration period depends on target system and login method). For pipeline use or other automation scenarios, it is highly recommended to issue a <code>session logout</code> command when no further interaction with the target system is required, to allow for any client-side and server-side cleanup to be performed. For example, upon logging in to SSC with user credentials, fcli will generate a <code>UnifiedLoginToken</code>, which will be invalidated when the <code>ssc session logout</code> is being run. If you have many (frequently executed) pipelines that interact with SSC, and you don’t run the <code>ssc session logout</code> command when the pipeline finishes, you risk exhausting SSC’s limit on active tokens. In addition, the <code>logout</code> commands will perform client-side cleanup, like removing session details like URL and authentication tokens from the client system.</p>
 </div>
 <div class="paragraph">
 <p>For product modules that support it, like SSC or ScanCentral DAST, it is also highly recommended to use token-based authentication rather than username/password-based authentication when incorporating fcli into pipelines or other automation tasks. This will avoid creation of a temporary token as described above, but also allows for better access control based on token permissions. Similarly, for systems that support Personal Access tokens, like FoD, it is highly recommended to utilize a Personal Access Token rather than user password. Note however that depending on (personal access) token permissions, not all fcli functionality may be available. In particular, even the least restrictive SSC <code>CIToken</code> may not provide access to all endpoints covered by fcli. If you need access to functionality not covered by <code>CIToken</code>, you may need to define a custom token definition, but this can only be done on self-hosted SSC environments, not on Fortify Hosted. If all else fails, you may need to revert to username/password-based authentication to utilize the short-lived  <code>UnifiedLoginToken</code>.</p>
@@ -409,12 +409,7 @@ fcli ssc session logout --user &lt;user&gt; --password &lt;password&gt;</code></
 <div class="sect2">
 <h3 id="_session_storage"><a class="anchor" href="#_session_storage"></a>Session Storage</h3>
 <div class="paragraph">
-<p>To keep session state between fcli invocations, fcli stores session data like URL and authentication tokens in the <a href="#_fcli_home_folder">Fcli Home Folder</a>. To reduce the risk of unauthorized access to this sensitive data, fcli encrypts the session data files. However, this is not bullet-proof, as the encryption key and algorithm can be easily viewed in fcli source code. As such, it is recommended to ensure file permissions on the FCLI Home folder are properly configured to disallow access by other users. Being stored in the user’s home directory by default, the correct file permissions should usually already be in place.</p>
-</div>
-<div class="paragraph">
-<p>Future fcli versions may provide enhancements to further improve protection of this sensitive data, for example by:
-* Allowing the user to specify a custom encryption password through an environment variable, such that the session data can only be decrypted if the environment variable value is known
-* Provide functionality for running multiple fcli commands with a single fcli invocation, like providing an <code>fcli shell</code> command or running commands from an fcli workflow definition file, which should allow session data data to be stored in memory instead of on disk, and also allow for automated logout when exiting the fcli shell or when the workflow finishes</p>
+<p>To keep session state between fcli invocations, fcli stores session data like URL and authentication tokens in the <a href="#_fcli_home_folder">Fcli Home Folder</a>. To reduce the risk of unauthorized access to this sensitive data, fcli encrypts the session data files. However, this is not bullet-proof, as the default encryption key and algorithm can be easily viewed in fcli source code. As such, it is recommended to ensure file permissions on the FCLI Home folder are properly configured to disallow access by other users. Being stored in the user’s home directory by default, the correct file permissions should usually already be in place. For enhanced security, you may also consider setting the <code>FCLI_ENCRYPT_KEY</code> environment variable; see the <a href="#_fcli_home_folder">Fcli Home Folder</a> section for details.</p>
 </div>
 </div>
 </div>
@@ -441,8 +436,7 @@ also automatically generated log files in this home directory, if no <code>--log
 <h2 id="_environment_variables"><a class="anchor" href="#_environment_variables"></a>Environment Variables</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Apart from the special-purpose environment variables described in other sections, like the <a href="#_fcli_home_folder">Fcli Home Folder</a> section, fcli allows for specifying default option and parameter values through
-environment variables. This is particularly useful for specifying product URL’s and credentials through pipeline secrets, but also allows for preventing having to manually supply command line options if you frequently invoke a particular command with the same option value(s). For example, you could define a default value for the <code>fcli ssc appversion create --issue-template</code> option, to avoid having to remember the issue template name every time you invoke this command.</p>
+<p>Apart from the special-purpose environment variables described in other sections, like the <a href="#_fcli_home_folder">Fcli Home Folder</a> section, fcli allows for specifying default option and parameter values through environment variables. This is particularly useful for specifying product URL’s and credentials through pipeline secrets, but also allows for preventing having to manually supply command line options if you frequently invoke a particular command with the same option value(s). For example, you could define a default value for the <code>fcli ssc appversion create --issue-template</code> option, to avoid having to remember the issue template name every time you invoke this command.</p>
 </div>
 <div class="paragraph">
 <p>Fcli walks the command tree to find an environment variable that matches a particular option, starting with the most detailed command prefix first. For the issue-template example above, fcli would look for the following environment variable names, in this order:</p>
@@ -635,7 +629,7 @@ fcli config variable contents list myVersions -o 'expr={id}\n' --output-to-file 
 <p>The manual pages for this fcli release can be found here: <a href="manpage/fcli.html">fcli (1)</a>. If you are viewing this documentation offline, please make sure that you have fully extracted the docs-html.zip file to access the manual pages.</p>
 </div>
 <div class="paragraph">
-<p>Manual pages for each fcli release are automatically generated as new fcli releases are being built, and are available in HTML and Linux man-page formats. The manual pages in man-page format can be downloaded from the fcli releases page at <a href="https://github.com/fortify/fcli" class="bare">https://github.com/fortify/fcli</a>. The HTML-formatted manual pages, including this documentation page, can also be downloaded from the fcli release page or viewed online at <a href="https://fortify.github.io/fcli" class="bare">https://fortify.github.io/fcli</a>.</p>
+<p>Manual pages for each fcli release are automatically generated as new fcli releases are being built, and are available in HTML and Linux man-page formats. The manual pages in man-page format can be downloaded from the fcli releases page at <a href="https://github.com/fortify/fcli/releases" class="bare">https://github.com/fortify/fcli/releases</a>. The HTML-formatted manual pages, including this documentation page, can also be downloaded from the fcli release page or viewed online at <a href="https://fortify.github.io/fcli" class="bare">https://fortify.github.io/fcli</a>.</p>
 </div>
 </div>
 </div>
@@ -715,7 +709,7 @@ may experience any of the following behavior:</p>
 <div id="footer">
 <div id="footer-text">
 Version 1.2.1<br>
-Last updated 2023-03-07 10:50:36 +0100
+Last updated 2023-03-07 12:24:31 +0100
 </div>
 </div>
 </body>
