@@ -180,7 +180,7 @@ dependencies {
 }
 
 ext {
-    gradleHelpersLocation = "https://raw.githubusercontent.com/fortify-ps/gradle-helpers/1.6"
+    gradleHelpersLocation = "https://raw.githubusercontent.com/fortify/shared-gradle-helpers/1.8"
     thirdPartyBaseName = "${rootProject.name}"
     autoCompleteDir = "${project.buildDir}/autocomplete"
 }

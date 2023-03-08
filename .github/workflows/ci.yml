@@ -195,7 +195,7 @@ jobs:
         shell: cmd
 
 # We don't compress the Windows binary for now as this is incompatible with current Graal version.
-# See https://github.com/fortify-ps/fcli/issues/148
+# See https://github.com/fortify/fcli/issues/148
 #      - name: Compress native fcli
 #        uses: svenstaro/upx-action@v2
 #        with:
