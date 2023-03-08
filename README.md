@@ -1,3 +1,3 @@
-The documentation for the [fcli](https://github.com/fortify-ps/fcli) project.
+The documentation for the [fcli](https://github.com/fortify/fcli) project.
 
-Docs are running [live](https://github.com/fortify-ps/fcli/tree/gh-pages) here
+Live docs are running here: https://fortify.github.io/fcli

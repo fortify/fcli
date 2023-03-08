@@ -3,7 +3,7 @@ description: > # this means to ignore newlines until "baseurl:"
   FCLI (fcli) is a universal command line program for interacting with all Fortify application security testing products and more.
 
 baseurl: "/fcli"
-url: "https://fortify-ps.github.io"
+url: "https://fortify.github.io"
 
 # Build settings
 markdown: kramdown
