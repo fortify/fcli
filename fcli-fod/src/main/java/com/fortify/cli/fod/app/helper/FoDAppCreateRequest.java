@@ -26,6 +26,7 @@ package com.fortify.cli.fod.app.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppTypeOptions;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.ToString;

@@ -34,19 +34,23 @@ import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
 import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppAndRelNameDescriptor;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppAndRelNameResolverMixin;
-import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
-import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
-import com.fortify.cli.fod.release.helper.FoDAppRelCreateRequest;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.release.cli.mixin.FoDAppAndRelNameDescriptor;
+import com.fortify.cli.fod.release.cli.mixin.FoDAppAndRelNameResolverMixin;
+import com.fortify.cli.fod.release.helper.FoDAppRelCreateRequest;
+import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
+import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine;
-import picocli.CommandLine.*;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Spec;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Create.CMD_NAME)

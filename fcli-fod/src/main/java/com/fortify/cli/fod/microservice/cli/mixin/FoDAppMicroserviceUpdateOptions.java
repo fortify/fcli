@@ -25,13 +25,12 @@
 
 package com.fortify.cli.fod.microservice.cli.mixin;
 
+import java.util.List;
+import java.util.Map;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
-
-import java.util.List;
-import java.util.Map;
 
 public class FoDAppMicroserviceUpdateOptions {
 

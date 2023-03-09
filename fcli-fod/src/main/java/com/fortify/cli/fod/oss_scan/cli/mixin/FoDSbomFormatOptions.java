@@ -25,13 +25,13 @@
 
 package com.fortify.cli.fod.oss_scan.cli.mixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Option;
-
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
+import picocli.CommandLine.Option;
 
 public class FoDSbomFormatOptions {
     public enum FoDSbomFormat {CycloneDX}

@@ -39,6 +39,7 @@ import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.release.helper.FoDAppRelUpdateRequest;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;

@@ -24,15 +24,16 @@
  ******************************************************************************/
 package com.fortify.cli.fod.app.helper;
 
-import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.fod.attribute.helper.FoDAttributeDescriptor;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @ReflectiveAccess
 @Data

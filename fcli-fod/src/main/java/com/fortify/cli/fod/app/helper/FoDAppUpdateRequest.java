@@ -24,13 +24,14 @@
  ******************************************************************************/
 package com.fortify.cli.fod.app.helper;
 
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.ToString;
-
-import java.util.List;
-import java.util.Map;
 
 @ReflectiveAccess
 @Getter

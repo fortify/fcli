@@ -25,10 +25,6 @@
 
 package com.fortify.cli.fod.rest.cli.mixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Option;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -36,6 +32,10 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
+import picocli.CommandLine.Option;
 
 public class FoDTimePeriodOptions {
     public enum FoDTimePeriodType {

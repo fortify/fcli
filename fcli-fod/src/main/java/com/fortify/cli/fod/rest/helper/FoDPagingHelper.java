@@ -1,16 +1,14 @@
 package com.fortify.cli.fod.rest.helper;
 
+import java.net.URISyntaxException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
-
 import com.fortify.cli.fod.util.FoDQueryHelper;
-import io.micronaut.http.uri.UriBuilder;
+
 import kong.unirest.HttpRequest;
 import kong.unirest.PagedList;
-
-import java.net.URI;
-import java.net.URISyntaxException;
 
 public class FoDPagingHelper {
     public static final PagedList<JsonNode> pagedRequest(HttpRequest<?> request) {

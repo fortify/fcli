@@ -40,6 +40,7 @@ import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAnalysisStatusTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;

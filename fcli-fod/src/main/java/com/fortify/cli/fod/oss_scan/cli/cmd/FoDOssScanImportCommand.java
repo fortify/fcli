@@ -25,6 +25,8 @@
 
 package com.fortify.cli.fod.oss_scan.cli.cmd;
 
+import java.io.File;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
@@ -41,6 +43,7 @@ import com.fortify.cli.fod.scan.helper.FoDImportScan;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.util.FoDConstants;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -48,8 +51,6 @@ import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-
-import java.io.File;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Import.CMD_NAME)
@@ -76,7 +77,7 @@ public class FoDOssScanImportCommand extends AbstractFoDOutputCommand implements
                 throw new RuntimeException("Unknown SBOM format specified");
             }
         }
-        HttpRequest request = unirest.put(importUrl).routeParam("relId", relId);
+        HttpRequest<?> request = unirest.put(importUrl).routeParam("relId", relId);
         FoDImportScan importScanHelper = new FoDImportScan(
                 unirest, relId, request, scanFile
         );

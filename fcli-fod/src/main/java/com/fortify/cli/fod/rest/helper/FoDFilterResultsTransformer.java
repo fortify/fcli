@@ -25,15 +25,15 @@
 
 package com.fortify.cli.fod.rest.helper;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.transform.AbstractJsonNodeTransformer;
 import com.fortify.cli.common.output.transform.IJsonNodeTransformer;
-
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FoDFilterResultsTransformer extends AbstractJsonNodeTransformer implements IJsonNodeTransformer {
     private final Map<String, String> fieldValueMap;

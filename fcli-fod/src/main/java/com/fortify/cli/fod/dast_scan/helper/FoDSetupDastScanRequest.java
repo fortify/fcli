@@ -25,12 +25,13 @@
 
 package com.fortify.cli.fod.dast_scan.helper;
 
+import java.util.ArrayList;
+
 import com.fortify.cli.fod.util.FoDEnums;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.ToString;
-
-import java.util.ArrayList;
 
 @ReflectiveAccess
 @Getter

@@ -31,6 +31,7 @@ import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.user_group.cli.mixin.FoDUserGroupResolverMixin;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

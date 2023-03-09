@@ -24,6 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.fod.app.cli.cmd;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
@@ -40,6 +46,7 @@ import com.fortify.cli.fod.attribute.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.microservice.cli.mixin.FoDAppMicroserviceUpdateOptions;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
@@ -47,11 +54,6 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import javax.validation.ValidationException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Update.CMD_NAME)

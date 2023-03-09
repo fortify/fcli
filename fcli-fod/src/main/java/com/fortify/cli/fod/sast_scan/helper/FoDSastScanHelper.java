@@ -25,6 +25,8 @@
 
 package com.fortify.cli.fod.sast_scan.helper;
 
+import java.io.File;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -33,16 +35,18 @@ import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.helper.FoDUploadResponse;
-import com.fortify.cli.fod.scan.helper.*;
+import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
+import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan.helper.FoDScanNotFoundException;
+import com.fortify.cli.fod.scan.helper.FoDStartScan;
 import com.fortify.cli.fod.util.FoDConstants;
 import com.fortify.cli.fod.util.FoDEnums;
 import com.fortify.cli.fod.util.FoDQueryHelper;
+
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import java.io.File;
 
 public class FoDSastScanHelper extends FoDScanHelper {
     @Getter
@@ -51,8 +55,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
     public static final FoDSastScanSetupDescriptor setupScan(UnirestInstance unirest, Integer relId, FoDSetupSastScanRequest setupSastScanRequest) {
         ObjectNode body = objectMapper.valueToTree(setupSastScanRequest);
         FoDQueryHelper.stripNulls(body);
-        //System.out.println(body.toPrettyString());
-        JsonNode response = unirest.put(FoDUrls.STATIC_SCANS + "/scan-setup")
+        unirest.put(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", String.valueOf(relId))
                 .body(body).asObject(JsonNode.class).getBody();
         return getSetupDescriptor(unirest, String.valueOf(relId));
@@ -61,7 +64,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
     public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartSastScanRequest req,
                                                     File scanFile, int chunkSize) {
         FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
-        HttpRequest request = unirest.post(FoDUrls.STATIC_SCAN_START).routeParam("relId", relId)
+        HttpRequest<?> request = unirest.post(FoDUrls.STATIC_SCAN_START).routeParam("relId", relId)
                 .queryString("entitlementPreferenceType", (req.getEntitlementPreferenceType() != null ?
                         FoDEnums.EntitlementPreferenceType.valueOf(req.getEntitlementPreferenceType()) : FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan))
                 .queryString("purchaseEntitlement", Boolean.toString(req.getPurchaseEntitlement()))

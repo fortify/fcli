@@ -26,10 +26,10 @@
 package com.fortify.cli.fod.sast_scan.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 @ReflectiveAccess
 @Data

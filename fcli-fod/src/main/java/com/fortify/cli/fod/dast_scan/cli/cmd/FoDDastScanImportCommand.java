@@ -25,6 +25,8 @@
 
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
+import java.io.File;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
@@ -34,11 +36,12 @@ import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.helper.FoDUploadResponse;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDImportScan;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.util.FoDConstants;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -46,8 +49,6 @@ import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-
-import java.io.File;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Import.CMD_NAME)
@@ -64,7 +65,7 @@ public class FoDDastScanImportCommand extends AbstractFoDOutputCommand implement
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
-        HttpRequest request = unirest.put(FoDUrls.DYNAMIC_SCANS_IMPORT).routeParam("relId", relId);
+        HttpRequest<?> request = unirest.put(FoDUrls.DYNAMIC_SCANS_IMPORT).routeParam("relId", relId);
         FoDImportScan importScanHelper = new FoDImportScan(
                 unirest, relId, request, scanFile
         );

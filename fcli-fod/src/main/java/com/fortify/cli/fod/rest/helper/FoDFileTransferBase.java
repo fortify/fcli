@@ -25,6 +25,14 @@
 
 package com.fortify.cli.fod.rest.helper;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -33,32 +41,30 @@ import com.fortify.cli.common.util.ProgressHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.scan.helper.FoDImportScanSessionDescriptor;
 import com.fortify.cli.fod.util.FoDConstants;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.*;
+import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
+import kong.unirest.HttpResponse;
+import kong.unirest.ProgressMonitor;
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
 
-import javax.validation.ValidationException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-
 @ReflectiveAccess
 public abstract class FoDFileTransferBase {
     @Getter private static final ObjectMapper objectMapper = new ObjectMapper();
     @Getter UnirestInstance unirest;
-    @Getter HttpRequest endpoint;
+    @Getter HttpRequest<?> endpoint;
     @Getter File uploadFile;
     @Getter @Setter int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
 
     protected String importScanSessionId;
     private long fileLen;
 
-    public FoDFileTransferBase(UnirestInstance unirest, HttpRequest endpoint, File uploadFile) {
+    public FoDFileTransferBase(UnirestInstance unirest, HttpRequest<?> endpoint, File uploadFile) {
         this.unirest = unirest;
         this.endpoint = endpoint;
         this.uploadFile = uploadFile;
@@ -81,12 +87,6 @@ public abstract class FoDFileTransferBase {
             int fragmentNumber = 0;
             int byteCount;
             long offset = 0;
-            int numFragments = (int) Math.ceil(fileLen / chunkSize);
-            if (fileLen % chunkSize > 0) numFragments++;
-
-            //System.out.println("Total File Size = " + fileLen + " bytes");
-            //System.out.println("Upload Fragment Size = " + chunkSize + " bytes");
-            //System.out.println("Number of Fragments = " + numFragments);
 
             // loop through chunks
             while ((byteCount = fs.read(readByteArray)) != -1) {

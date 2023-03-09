@@ -24,6 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.fod.user.cli.cmd;
 
+import java.util.ArrayList;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
@@ -34,6 +36,7 @@ import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.user.helper.FoDUserCreateRequest;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -41,8 +44,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-
-import java.util.ArrayList;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Create.CMD_NAME)

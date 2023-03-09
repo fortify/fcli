@@ -25,6 +25,13 @@
 
 package com.fortify.cli.fod.microservice.helper;
 
+import static com.fortify.cli.fod.app.helper.FoDAppHelper.getAppDescriptor;
+
+import java.util.Iterator;
+import java.util.List;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,15 +42,10 @@ import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.microservice.cli.mixin.FoDAppAndMicroserviceNameDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import javax.validation.ValidationException;
-import java.util.Iterator;
-import java.util.List;
-
-import static com.fortify.cli.fod.app.helper.FoDAppHelper.getAppDescriptor;
 
 public class FoDAppMicroserviceHelper {
     @Getter
@@ -148,7 +150,7 @@ public class FoDAppMicroserviceHelper {
 
     public static final JsonNode deleteAppMicroservice(UnirestInstance unirest, FoDAppMicroserviceDescriptor currentMs) {
         FoDAppDescriptor appDescriptor = getAppDescriptor(unirest, String.valueOf(currentMs.getApplicationId()), true);
-        JsonNode response = unirest.delete(FoDUrls.MICROSERVICES_UPDATE)
+        unirest.delete(FoDUrls.MICROSERVICES_UPDATE)
                 .routeParam("appId", String.valueOf(currentMs.getApplicationId()))
                 .routeParam("microserviceId", String.valueOf(currentMs.getMicroserviceId()))
                 .asObject(JsonNode.class).getBody();

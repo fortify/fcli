@@ -26,6 +26,7 @@
 package com.fortify.cli.fod.release.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

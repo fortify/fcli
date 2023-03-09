@@ -25,13 +25,13 @@
 
 package com.fortify.cli.fod.sast_scan.cli.cmd;
 
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
-import com.fortify.cli.fod.dast_scan.helper.FoDDastScanHelper;
 import com.fortify.cli.fod.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.lookup.helper.FoDLookupHelper;
@@ -43,23 +43,18 @@ import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.sast_scan.helper.FoDSastScanHelper;
 import com.fortify.cli.fod.sast_scan.helper.FoDSastScanSetupDescriptor;
 import com.fortify.cli.fod.sast_scan.helper.FoDSetupSastScanRequest;
-import com.fortify.cli.fod.sast_scan.helper.FoDStartSastScanRequest;
-import com.fortify.cli.fod.scan.cli.mixin.*;
+import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod.util.FoDConstants;
 import com.fortify.cli.fod.util.FoDEnums;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import javax.validation.ValidationException;
-import java.io.File;
-import java.util.Properties;
 
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Setup.CMD_NAME)

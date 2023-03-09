@@ -25,6 +25,12 @@
 
 package com.fortify.cli.fod.scan.helper;
 
+import static java.util.function.Predicate.not;
+
+import java.util.Optional;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -32,24 +38,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
-import com.fortify.cli.fod.lookup.cli.mixin.FoDLookupTypeOptions;
-import com.fortify.cli.fod.lookup.helper.FoDLookupDescriptor;
-import com.fortify.cli.fod.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.release.helper.FoDAppRelAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.util.FoDEnums;
-import kong.unirest.GetRequest;
+
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import javax.validation.ValidationException;
-import java.util.Optional;
-
-import static java.util.function.Predicate.not;
 
 public class FoDScanHelper {
     @Getter
@@ -176,11 +174,6 @@ public class FoDScanHelper {
 
     private static final FoDScanDescriptor getDescriptor(JsonNode node) {
         return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
-    }
-
-    private static final FoDScanDescriptor getOptionalDescriptor(GetRequest request) {
-        JsonNode scan = request.asObject(ObjectNode.class).getBody();
-        return scan == null ? null : getDescriptor(scan);
     }
 
     private static final FoDScanDescriptor getEmptyDescriptor() {

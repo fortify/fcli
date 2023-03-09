@@ -24,7 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.fod.user.helper;
 
+import java.util.ArrayList;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -39,12 +44,10 @@ import com.fortify.cli.fod.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 import com.fortify.cli.fod.util.FoDEnums;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import javax.validation.ValidationException;
-import java.util.ArrayList;
 
 public class FoDUserHelper {
     @Getter
@@ -91,14 +94,14 @@ public class FoDUserHelper {
                 .put("lastName", userCreateRequest.getLastName())
                 .put("email", userCreateRequest.getEmail());
         // add user to any groups specified
-        ArrayList<Integer> groupsToUpdate = objectMapper.convertValue(userCreateRequest.getUserGroupIds(), ArrayList.class);
+        ArrayList<Integer> groupsToUpdate = objectMapper.convertValue(userCreateRequest.getUserGroupIds(), new TypeReference<ArrayList<Integer>>() {});
         if (userCreateRequest.getUserGroupIds() != null && userCreateRequest.getUserGroupIds().size() > 0) {
             for (Integer groupId: groupsToUpdate) {
                 FoDUserGroupHelper.updateUserGroupMembership(unirest, userCreateRequest.getUserName(), String.valueOf(groupId), FoDEnums.UserGroupMembershipAction.Add);
             }
         }
         // add user to any applications specified
-        ArrayList<Integer> appsToUpdate = objectMapper.convertValue(userCreateRequest.getApplicationIds(), ArrayList.class);
+        ArrayList<Integer> appsToUpdate = objectMapper.convertValue(userCreateRequest.getApplicationIds(), new TypeReference<ArrayList<Integer>>() {});
         if (userCreateRequest.getApplicationIds() != null && userCreateRequest.getApplicationIds().size() > 0) {
             for (Integer appId: appsToUpdate) {
                 FoDUserHelper.updateUserApplicationAccess(unirest, userCreateRequest.getUserName(), String.valueOf(appId), FoDEnums.UserApplicationAccessAction.Add);
@@ -115,28 +118,28 @@ public class FoDUserHelper {
                 .routeParam("userId", String.valueOf(userId))
                 .body(body).asObject(JsonNode.class).getBody();
         // add user to any groups specified
-        ArrayList<Integer> groupsToUpdate = objectMapper.convertValue(userUpdateRequest.getAddUserGroups(), ArrayList.class);
+        ArrayList<Integer> groupsToUpdate = objectMapper.convertValue(userUpdateRequest.getAddUserGroups(), new TypeReference<ArrayList<Integer>>() {});
         if (userUpdateRequest.getAddUserGroups() != null && userUpdateRequest.getAddUserGroups().size() > 0) {
             for (Integer groupId: groupsToUpdate) {
                 FoDUserGroupHelper.updateUserGroupMembership(unirest, userDescriptor.getUserName(), String.valueOf(groupId), FoDEnums.UserGroupMembershipAction.Add);
             }
         }
         // remove user from any groups specified
-        groupsToUpdate = objectMapper.convertValue(userUpdateRequest.getRemoveUserGroups(), ArrayList.class);
+        groupsToUpdate = objectMapper.convertValue(userUpdateRequest.getRemoveUserGroups(), new TypeReference<ArrayList<Integer>>() {});
         if (userUpdateRequest.getRemoveUserGroups() != null && userUpdateRequest.getRemoveUserGroups().size() > 0) {
             for (Integer groupId: groupsToUpdate) {
                 FoDUserGroupHelper.updateUserGroupMembership(unirest, userDescriptor.getUserName(), String.valueOf(groupId), FoDEnums.UserGroupMembershipAction.Remove);
             }
         }
         // add user to any applications specified
-        ArrayList<Integer> appsToUpdate = objectMapper.convertValue(userUpdateRequest.getAddApplications(), ArrayList.class);
+        ArrayList<Integer> appsToUpdate = objectMapper.convertValue(userUpdateRequest.getAddApplications(), new TypeReference<ArrayList<Integer>>() {});
         if (userUpdateRequest.getAddApplications() != null && userUpdateRequest.getAddApplications().size() > 0) {
             for (Integer appId: appsToUpdate) {
                 FoDUserHelper.updateUserApplicationAccess(unirest, String.valueOf(userId), String.valueOf(appId), FoDEnums.UserApplicationAccessAction.Add);
             }
         }
         // remove user from any applications specified
-        appsToUpdate = objectMapper.convertValue(userUpdateRequest.getRemoveApplications(), ArrayList.class);
+        appsToUpdate = objectMapper.convertValue(userUpdateRequest.getRemoveApplications(), new TypeReference<ArrayList<Integer>>() {});
         if (userUpdateRequest.getRemoveApplications() != null && userUpdateRequest.getRemoveApplications().size() > 0) {
             for (Integer appId: appsToUpdate) {
                 FoDUserHelper.updateUserApplicationAccess(unirest, String.valueOf(userId), String.valueOf(appId), FoDEnums.UserApplicationAccessAction.Remove);

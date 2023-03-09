@@ -24,8 +24,8 @@
  ******************************************************************************/
 package com.fortify.cli.fod.attribute.helper;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fortify.cli.common.json.JsonNodeHolder;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

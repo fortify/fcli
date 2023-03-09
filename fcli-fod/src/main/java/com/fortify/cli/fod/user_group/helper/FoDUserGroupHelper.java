@@ -24,6 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.fod.user_group.helper;
 
+import java.util.ArrayList;
+
+import javax.validation.ValidationException;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -36,12 +41,10 @@ import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
 import com.fortify.cli.fod.util.FoDEnums;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import javax.validation.ValidationException;
-import java.util.ArrayList;
 
 public class FoDUserGroupHelper {
     @Getter
@@ -84,14 +87,14 @@ public class FoDUserGroupHelper {
         FoDUserGroupDescriptor descriptor = JsonHelper.treeToValue(response, FoDUserGroupDescriptor.class);
         String groupId = String.valueOf(descriptor.getId());
         // add any users specified to group
-        ArrayList<Integer> userstoUpdate = objectMapper.convertValue(userGroupCreateRequest.getUsers(), ArrayList.class);
+        ArrayList<Integer> userstoUpdate = objectMapper.convertValue(userGroupCreateRequest.getUsers(), new TypeReference<ArrayList<Integer>>(){});
         if (userGroupCreateRequest.getUsers() != null && userGroupCreateRequest.getUsers().size() > 0) {
             for (Integer userId: userstoUpdate) {
                 FoDUserGroupHelper.updateUserGroupMembership(unirest, String.valueOf(userId), groupId, FoDEnums.UserGroupMembershipAction.Add);
             }
         }
         // add group to any applications specified
-        ArrayList<Integer> appsToUpdate = objectMapper.convertValue(userGroupCreateRequest.getApplications(), ArrayList.class);
+        ArrayList<Integer> appsToUpdate = objectMapper.convertValue(userGroupCreateRequest.getApplications(), new TypeReference<ArrayList<Integer>>() {});
         if (userGroupCreateRequest.getApplications() != null && userGroupCreateRequest.getApplications().size() > 0) {
             for (Integer appId: appsToUpdate) {
                 FoDUserGroupHelper.updateUserGroupApplicationAccess(unirest, String.valueOf(groupId), String.valueOf(appId), FoDEnums.UserGroupApplicationAccessAction.Add);
@@ -102,32 +105,32 @@ public class FoDUserGroupHelper {
 
     public static final FoDUserGroupDescriptor updateUserGroup(UnirestInstance unirest, Integer groupId, FoDUserGroupUpdateRequest userGroupUpdateRequest) {
         ObjectNode body = objectMapper.valueToTree(userGroupUpdateRequest);
-        JsonNode response = unirest.put(FoDUrls.USER_GROUP)
+        unirest.put(FoDUrls.USER_GROUP)
                 .routeParam("groupId", String.valueOf(groupId))
                 .body(body).asObject(JsonNode.class).getBody();
         // add any users specified to group
-        ArrayList<Integer> userstoUpdate = objectMapper.convertValue(userGroupUpdateRequest.getAddUsers(), ArrayList.class);
+        ArrayList<Integer> userstoUpdate = objectMapper.convertValue(userGroupUpdateRequest.getAddUsers(), new TypeReference<ArrayList<Integer>>() {});
         if (userGroupUpdateRequest.getAddUsers() != null && userGroupUpdateRequest.getAddUsers().size() > 0) {
             for (Integer userId: userstoUpdate) {
                 FoDUserGroupHelper.updateUserGroupMembership(unirest, String.valueOf(userId), String.valueOf(groupId), FoDEnums.UserGroupMembershipAction.Add);
             }
         }
         // remove any users specified from group
-        userstoUpdate = objectMapper.convertValue(userGroupUpdateRequest.getRemoveUsers(), ArrayList.class);
+        userstoUpdate = objectMapper.convertValue(userGroupUpdateRequest.getRemoveUsers(), new TypeReference<ArrayList<Integer>>() {});
         if (userGroupUpdateRequest.getRemoveUsers() != null && userGroupUpdateRequest.getRemoveUsers().size() > 0) {
             for (Integer userId: userstoUpdate) {
                 FoDUserGroupHelper.updateUserGroupMembership(unirest, String.valueOf(userId), String.valueOf(groupId), FoDEnums.UserGroupMembershipAction.Remove);
             }
         }
         // add group to any applications specified
-        ArrayList<Integer> appsToUpdate = objectMapper.convertValue(userGroupUpdateRequest.getAddApplications(), ArrayList.class);
+        ArrayList<Integer> appsToUpdate = objectMapper.convertValue(userGroupUpdateRequest.getAddApplications(), new TypeReference<ArrayList<Integer>>() {});
         if (userGroupUpdateRequest.getAddApplications() != null && userGroupUpdateRequest.getAddApplications().size() > 0) {
             for (Integer appId: appsToUpdate) {
                 FoDUserGroupHelper.updateUserGroupApplicationAccess(unirest, String.valueOf(groupId), String.valueOf(appId), FoDEnums.UserGroupApplicationAccessAction.Add);
             }
         }
         // remove group from any applications specified
-        appsToUpdate = objectMapper.convertValue(userGroupUpdateRequest.getRemoveApplications(), ArrayList.class);
+        appsToUpdate = objectMapper.convertValue(userGroupUpdateRequest.getRemoveApplications(), new TypeReference<ArrayList<Integer>>() {});
         if (userGroupUpdateRequest.getRemoveApplications() != null && userGroupUpdateRequest.getRemoveApplications().size() > 0) {
             for (Integer appId: appsToUpdate) {
                 FoDUserGroupHelper.updateUserGroupApplicationAccess(unirest, String.valueOf(groupId), String.valueOf(appId), FoDEnums.UserGroupApplicationAccessAction.Remove);
@@ -153,7 +156,7 @@ public class FoDUserGroupHelper {
             throw new ValidationException("Invalid action specified when updating users group membership");
         }
         ObjectNode body = objectMapper.valueToTree(userGroupMembersRequest);
-        JsonNode response = unirest.patch(FoDUrls.USER_GROUP_MEMBERS).routeParam("groupId", String.valueOf(userGroupDescriptor.getId()))
+        unirest.patch(FoDUrls.USER_GROUP_MEMBERS).routeParam("groupId", String.valueOf(userGroupDescriptor.getId()))
                 .body(body).asObject(JsonNode.class).getBody();
         return getUserGroupDescriptor(unirest, String.valueOf(userGroupDescriptor.getId()), true);
     }

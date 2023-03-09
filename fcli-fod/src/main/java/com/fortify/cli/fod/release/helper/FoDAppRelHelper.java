@@ -25,6 +25,10 @@
 
 package com.fortify.cli.fod.release.helper;
 
+import java.util.List;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -34,12 +38,10 @@ import com.fortify.cli.fod.release.cli.mixin.FoDAppAndRelNameDescriptor;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceAndRelNameDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import javax.validation.ValidationException;
-import java.util.List;
 
 public class FoDAppRelHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();

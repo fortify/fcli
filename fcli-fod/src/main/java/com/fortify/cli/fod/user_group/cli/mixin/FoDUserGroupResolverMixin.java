@@ -25,10 +25,9 @@
 
 package com.fortify.cli.fod.user_group.cli.mixin;
 
-import com.fortify.cli.common.variable.AbstractPredefinedVariableResolverMixin;
-import com.fortify.cli.fod.user_group.cli.cmd.FoDUserGroupCommands;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupDescriptor;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -37,20 +36,15 @@ import picocli.CommandLine.Parameters;
 
 public class FoDUserGroupResolverMixin {
     @ReflectiveAccess
-    public static abstract class AbstractFoDUserGroupResolverMixin extends AbstractPredefinedVariableResolverMixin {
+    public static abstract class AbstractFoDUserGroupResolverMixin {
         public abstract String getUserGroupNameOrId();
 
         public FoDUserGroupDescriptor getUserGroupDescriptor(UnirestInstance unirest, String... fields){
-            return FoDUserGroupHelper.getUserGroupDescriptor(unirest, resolvePredefinedVariable(getUserGroupNameOrId()), true);
+            return FoDUserGroupHelper.getUserGroupDescriptor(unirest, getUserGroupNameOrId(), true);
         }
 
         public String getGroupId(UnirestInstance unirest) {
             return getUserGroupDescriptor(unirest, "groupId").getId().toString();
-        }
-
-        @Override
-        protected Class<?> getPredefinedVariableClass() {
-            return FoDUserGroupCommands.class;
         }
     }
 

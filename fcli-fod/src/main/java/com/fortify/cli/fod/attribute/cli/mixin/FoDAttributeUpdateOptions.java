@@ -24,12 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.fod.attribute.cli.mixin;
 
+import java.util.Map;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-
-import java.util.Map;
 
 public class FoDAttributeUpdateOptions {
     private static final String PARAM_LABEL = "[ATTR=VALUE]";

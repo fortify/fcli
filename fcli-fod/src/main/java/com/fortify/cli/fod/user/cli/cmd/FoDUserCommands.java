@@ -25,7 +25,8 @@
 package com.fortify.cli.fod.user.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.variable.PredefinedVariable;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "user",
@@ -37,6 +38,6 @@ import picocli.CommandLine;
                 FoDUserDeleteCommand.class
         }
 )
-@PredefinedVariable(name = "_fod_currentUser", field = "userId")
+@DefaultVariablePropertyName("userId")
 public class FoDUserCommands extends AbstractFortifyCLICommand {
 }

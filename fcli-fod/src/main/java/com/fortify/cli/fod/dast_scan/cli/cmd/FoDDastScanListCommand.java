@@ -31,7 +31,6 @@ import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.helper.FoDFilterResultsTransformer;
 import com.fortify.cli.fod.rest.query.FoDFilterParamGenerator;
@@ -39,6 +38,7 @@ import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
 import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAnalysisStatusTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;

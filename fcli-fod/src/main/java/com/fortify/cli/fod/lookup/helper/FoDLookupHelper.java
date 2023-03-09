@@ -24,22 +24,23 @@
  ******************************************************************************/
 package com.fortify.cli.fod.lookup.helper;
 
+import java.util.Iterator;
+import java.util.List;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod.lookup.cli.mixin.FoDLookupTypeOptions.FoDLookupType;
 import com.fortify.cli.fod.rest.FoDUrls;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import javax.validation.ValidationException;
-import java.util.Iterator;
-import java.util.List;
 
 public class FoDLookupHelper {
     @Getter
@@ -84,10 +85,4 @@ public class FoDLookupHelper {
             throw new ValidationException("No value found for '" + text + "' with group '" + group + "' in " + type.name());
         return null;
     }
-
-    private static final FoDLookupDescriptor getDescriptor(JsonNode node) {
-        return JsonHelper.treeToValue(node, FoDLookupDescriptor.class);
-    }
-
-
 }

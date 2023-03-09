@@ -24,6 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.fod.app.helper;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -34,15 +40,11 @@ import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
 import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
 import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceUpdateRequest;
 import com.fortify.cli.fod.rest.FoDUrls;
+
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import javax.validation.ValidationException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class FoDAppHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();

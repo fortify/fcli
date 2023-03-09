@@ -25,12 +25,13 @@
 
 package com.fortify.cli.fod.rest.helper;
 
+import java.util.ArrayList;
+
 import com.fortify.cli.common.json.JsonNodeHolder;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
-import java.util.ArrayList;
 
 @ReflectiveAccess
 @Data

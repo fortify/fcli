@@ -38,6 +38,7 @@ import com.fortify.cli.fod.rest.query.FoDFilterParamGenerator;
 import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
 import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAnalysisStatusTypeOptions;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;

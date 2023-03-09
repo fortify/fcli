@@ -25,14 +25,15 @@
 
 package com.fortify.cli.fod.scan.cli.mixin;
 
-import com.fortify.cli.fod.util.FoDEnums;
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Option;
-
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.fortify.cli.fod.util.FoDEnums;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
+import picocli.CommandLine.Option;
 
 public class FoDInProgressScanActionTypeOptions {
     @ReflectiveAccess

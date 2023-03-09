@@ -24,13 +24,13 @@
  ******************************************************************************/
 package com.fortify.cli.fod.app.cli.mixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Option;
-
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
+import picocli.CommandLine.Option;
 
 public class FoDCriticalityTypeOptions {
     public enum FoDCriticalityType {High, Medium, Low}

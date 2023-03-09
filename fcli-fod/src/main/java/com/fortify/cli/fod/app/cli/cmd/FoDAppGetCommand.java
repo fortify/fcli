@@ -25,16 +25,14 @@
 package com.fortify.cli.fod.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.rest.FoDUrls;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
-import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;

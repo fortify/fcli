@@ -34,6 +34,7 @@ import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.user.cli.mixin.FoDUserResolverMixin;
 import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

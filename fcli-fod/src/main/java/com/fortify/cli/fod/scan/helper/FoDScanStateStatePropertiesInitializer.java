@@ -3,8 +3,8 @@ package com.fortify.cli.fod.scan.helper;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
 import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner.FortifyCLIInitializerCommand;
+import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
 
 import jakarta.inject.Singleton;
 

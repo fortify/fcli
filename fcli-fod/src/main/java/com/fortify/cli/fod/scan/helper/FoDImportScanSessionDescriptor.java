@@ -26,7 +26,7 @@
 package com.fortify.cli.fod.scan.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.fod.dast_scan.helper.FoDDastScanSetupDescriptor;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

@@ -24,11 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.fod.user_group.helper;
 
+import java.util.ArrayList;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.ToString;
-
-import java.util.ArrayList;
 
 @ReflectiveAccess
 @Getter

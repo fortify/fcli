@@ -28,6 +28,7 @@ package com.fortify.cli.fod.oss_scan.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
+
 import lombok.Getter;
 
 public class FoDOssHelper {

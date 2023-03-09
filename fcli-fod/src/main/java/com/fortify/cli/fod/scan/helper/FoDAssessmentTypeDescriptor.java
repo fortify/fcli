@@ -27,6 +27,7 @@ package com.fortify.cli.fod.scan.helper;
 
 import com.fortify.cli.fod.dast_scan.helper.FoDDastScanSetupDescriptor;
 import com.fortify.cli.fod.sast_scan.helper.FoDSastScanSetupDescriptor;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.ToString;
