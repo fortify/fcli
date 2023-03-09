@@ -19,8 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.json.JsonHelper;
 
 public class FcliHomeHelper {
-    private static final String ENVNAME_FORTIFY_HOME     = "FORTIFY_HOME";
-    private static final String ENVNAME_FCLI_HOME        = "FCLI_HOME";
+    private static final String ENVNAME_FORTIFY_HOME     = "FORTIFY_DATA";
+    private static final String ENVNAME_FCLI_HOME        = "FCLI_DATA";
     private static final String DEFAULT_FORTIFY_DIR_NAME = ".fortify";
     private static final String DEFAULT_FCLI_DIR_NAME    = "fcli";
     private static final Logger LOG = LoggerFactory.getLogger(FcliHomeHelper.class);
