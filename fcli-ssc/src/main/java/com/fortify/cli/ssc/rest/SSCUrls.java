@@ -489,7 +489,7 @@ public class SSCUrls {
     }
 
     public static String DOWNLOAD_CURRENT_FPR(String applicationVersionId, boolean includeSource) {
-        return String.format("/download/currentStateFprDownload.html?mat={downloadToken}&id=%s&includeSource=%b", applicationVersionId, includeSource);
+        return String.format("/download/currentStateFprDownload.html?mat={downloadToken}&id=%s&includeSource=%b&clientVersion=16.10", applicationVersionId, includeSource);
     }
 
     public static String DOWNLOAD_CLOUDSCAN_FPR(String jobToken) {
