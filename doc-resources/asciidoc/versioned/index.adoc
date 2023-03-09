@@ -204,48 +204,33 @@ Note that as described in the link:#_env_prefix[–env-prefix] section, you can 
 
 Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding `+wait-for+` command, or for creating an SSC application version, and passing the SSC application version id to the `+appversion-artifact upload+` command.
 
-Fcli supports two types of variables: 
+Variables can be stored using the `+--store myVarName[:prop1,prop2]+` option on data output commands. If property names are specified, then only these property names will be stored. If no property names are provided, all available JSON properties will be stored.
 
-* Named variables 
-** Stored using the `+--store myVarName[:prop1,prop2]+` option on data output commands 
-** If no properties are provided with the `+--store+` option, all JSON properties will be stored 
-** Referenced using the `+'{?myVarName:prop1}'+` syntax anywhere on the command line of subsequent fcli commands 
-** As a best practice, variable references should be quoted to avoid the shell interpreting the curly braces 
-** On most shells, you should be able to put the variable reference in single quotes, or use `+\{+` 
-** If you have any suggestions for a better syntax, please comment here: https://github.com/fortify/fcli/issues/160 
-** Variable names are global and can be referenced across products and sessions 
-* Predefined variables: 
-** Stored using the `+--store '?'+` option on a subset of data output commands 
-** Stored under a command-specific predefined variable name 
-** Referenced using the `+'?'+` syntax on specific options 
-** As a best practice, question marks should be quoted to avoid the shell interpreting `+?+` as a file name wildcard (for example, if you have a file named `+x+` in the current directory, then `+--store ?+` would store a variable named `+x+` instead of the predefined variable name) 
-** On most shells, you should be able to put the `+?+` in single or double quotes, or use `+\?+` 
-** If you have any suggestions for a better syntax, please comment here: https://github.com/fortify/fcli/issues/160 
-** Help output and manual pages may currently lack information about which commands and options support the `+'?'+` syntax, so for now you’ll need to look at examples or just try.
+Variables can be referenced in subsequent fcli commands using the `::myVarName::prop` syntax anywhere on the command line; such occurrences will be substituted with the value of the given property name. 
 
-Predefined variables are easier to use; they are more concise and you do not need to remember JSON property names. However, as indicated, they are more limited in use; they only store a predefined JSON property, and
-are only available on a subset of commands and options. 
+Many (but not all) fcli commands will also store an entity-specific default property name when using the `+--store+` option. Whether a default property name has been stored can be seen in the output of the `+fcli config var def list+` command. If a default property name was stored, the `::myVarName::` syntax can be used to reference the value of the default property name, thereby avoiding the need to manually specify the appropriate property name.
 
 Following are some examples, assuming the necessary login sessions are available:
 
 [source,bash]
 ----
-fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store '?'
-fcli ssc appversion-artifact upload myScan.fpr --appversion '?'
+fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion
+fcli ssc appversion-artifact upload myScan.fpr --appversion ::myVersion::
 
 fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion:id,name
-fcli ssc appversion-artifact upload myScan.fpr --appversion {?myVersion:id}
+fcli ssc appversion-artifact upload myScan.fpr --appversion ::myVersion::id
 
-fcli sc-dast scan start MyScan -S 011daf6b-f2d0-4127-89ab-1d3cebab8784 --store '?'
-fcli sc-dast scan wait-for '?'
+fcli sc-sast scan start -p package.zip -v 22.2 --appversion test:1.0 --store x
+fcli sc-sast scan wait-for ::x::
 
-fcli sc-dast scan start MyScan -S 011daf6b-f2d0-4127-89ab-1d3cebab8784 --store myScan
-fcli sc-dast scan wait-for {?myScan:id}
+fcli sc-sast scan start -p package.zip -v 22.2 --appversion test:1.0 --store x
+fcli sc-sast scan wait-for ::x::jobToken
 ----
 
 Fcli provides dedicated commands for managing variables and variable contents through the following commands; please see help output or manual pages for available sub-commands: 
 
-* `+fcli config variable definition+` * `+fcli config variable contents+`
+* `+fcli config variable definition+` 
+* `+fcli config variable contents+`
 
 Note that the `+fcli config variable contents+` `+get+` and `+list+` commands support the regular fcli output options, and the `+list+` command also provides query capabilities. This allows for advanced use
 cases, like retrieving server data once and then outputting it in multiple formats, potentially even applying separate filters. As an example:
@@ -257,6 +242,8 @@ fcli config variable contents list myVersions -o csv --output-to-file myVersions
 fcli config variable contents list myVersions -o json -q createdBy=admin --output-to-file myAdminVersions.json
 fcli config variable contents list myVersions -o 'expr={id}\n' --output-to-file myVersionIds.txt
 ----
+
+Note: variable-related syntax and behavior was changed in fcli version 2.0.0. If you are using an older fcli version, please refer to the documentation for that version. When upgrading from 1.x.x to 2.x.x, you may need to update your fcli invocations to match the new syntax. See link:https://github.com/fortify/fcli/issues/160[Issue 160] for information on why syntax and behavior was changed.
 
 == Manual Pages
 
