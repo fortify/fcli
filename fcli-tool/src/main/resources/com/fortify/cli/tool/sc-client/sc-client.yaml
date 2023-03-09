@@ -1,5 +1,5 @@
 defaultDownloadUrl: https://tools.fortify.com/scancentral/Fortify_ScanCentral_Client_{toolVersion}_x64.zip
-defaultVersion: latest
+defaultVersion: 22.2.1
 versions:
   - version: latest
     downloadUrl: https://tools.fortify.com/scancentral/Fortify_ScanCentral_Client_Latest_x64.zip

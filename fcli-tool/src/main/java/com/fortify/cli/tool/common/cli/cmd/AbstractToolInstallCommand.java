@@ -11,6 +11,9 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -39,15 +42,22 @@ import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess @FixInjection
 public abstract class AbstractToolInstallCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractToolInstallCommand.class);
     private static final Set<PosixFilePermission> binPermissions = PosixFilePermissions.fromString("rwxr-xr-x");
     @Getter @Mixin private BasicOutputHelperMixins.Install outputHelper;
-    @Getter @Parameters(index="0", arity="0..1", descriptionKey="fcli.tool.install.version") 
+    @Getter @Parameters(index="0", arity="0..1", descriptionKey="fcli.tool.install.version", defaultValue = "default") 
     private String version;
     @Getter @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
     private String installDir;
     @Getter @Option(names={"-y", "--replace-existing"}, required = false, descriptionKey="fcli.tool.install.replace") 
     private boolean replaceExisting;
+    @Getter @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
+    private DigestMismatchAction onDigestMismatch;
     @Inject private GenericUnirestRunner unirestRunner; 
+    
+    private static enum DigestMismatchAction {
+        fail, warn
+    }
     
     @Override
     protected final JsonNode getJsonNode() {
@@ -136,13 +146,17 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
         }
     }
     
-    private static final void checkDigest(ToolVersionDownloadDescriptor descriptor, File downloadedFile) {
+    private final void checkDigest(ToolVersionDownloadDescriptor descriptor, File downloadedFile) {
         String actualDigest = FileUtils.getFileDigest(downloadedFile, descriptor.getDigestAlgorithm());
         String expectedDigest = descriptor.getExpectedDigest();
         if ( !actualDigest.equals(expectedDigest) ) {
-            throw new IllegalStateException("Digest mismatch"
+            String msg = "Digest mismatch"
                     +"\n Expected: "+expectedDigest
-                    +"\n Actual:   "+actualDigest);
+                    +"\n Actual:   "+actualDigest;
+            switch(onDigestMismatch) {
+            case fail: throw new IllegalStateException(msg);
+            case warn: LOG.warn(msg);
+            }
         }
     }
     

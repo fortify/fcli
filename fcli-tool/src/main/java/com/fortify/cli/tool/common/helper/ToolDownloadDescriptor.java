@@ -19,24 +19,35 @@ public class ToolDownloadDescriptor {
     
     public final Stream<ToolVersionDownloadDescriptor> getVersionsStream() {
         return Stream.of(versions)
-                .map(this::updateDownloadUrl);
+                .map(this::updateDownloadUrl)
+                .map(this::addIsDefaultVersion);
     }
     
     public final ToolVersionDownloadDescriptor getVersion(String version) {
         return getVersionsStream()
-                .filter(v->v.version.equals(version))
+                .filter(v->v.getVersion().equals(version))
                 .findFirst().orElseThrow(()->new IllegalArgumentException("Version "+version+" not defined"));
     }
     
     public final ToolVersionDownloadDescriptor getVersionOrDefault(String versionName) {
-        return getVersion(StringUtils.isBlank(versionName) ? defaultVersion : versionName);
+        if ( StringUtils.isBlank(versionName) || "default".equals(versionName) ) {
+            versionName = defaultVersion;
+        }
+        return getVersion(versionName);
     }
     
     private final ToolVersionDownloadDescriptor updateDownloadUrl(ToolVersionDownloadDescriptor versionDescriptor) {
-        if ( StringUtils.isBlank(versionDescriptor.downloadUrl) ) {
-            versionDescriptor.downloadUrl = defaultDownloadUrl;
+        if ( StringUtils.isBlank(versionDescriptor.getDownloadUrl()) ) {
+            versionDescriptor.setDownloadUrl(defaultDownloadUrl);
         }
-        versionDescriptor.downloadUrl = versionDescriptor.downloadUrl.replaceAll("\\{toolVersion\\}", versionDescriptor.version);
+        versionDescriptor.setDownloadUrl(versionDescriptor.getDownloadUrl().replaceAll("\\{toolVersion\\}", versionDescriptor.getVersion()));
+        return versionDescriptor;
+    }
+    
+    private final ToolVersionDownloadDescriptor addIsDefaultVersion(ToolVersionDownloadDescriptor versionDescriptor) {
+        if ( versionDescriptor.getVersion().equals(defaultVersion) ) {
+            versionDescriptor.setIsDefaultVersion("Yes");
+        }
         return versionDescriptor;
     }
 }

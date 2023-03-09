@@ -1,5 +1,5 @@
 defaultDownloadUrl: https://github.com/fortify/FortifyVulnerabilityExporter/releases/download/v{toolVersion}/FortifyVulnerabilityExporter.zip
-defaultVersion: latest
+defaultVersion: 2.0.0
 versions:
   - version: latest
     downloadUrl: https://github.com/fortify/FortifyVulnerabilityExporter/releases/latest/download/FortifyVulnerabilityExporter.zip

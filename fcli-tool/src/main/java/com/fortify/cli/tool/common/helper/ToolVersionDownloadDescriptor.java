@@ -8,9 +8,10 @@ import lombok.Data;
 
 @ReflectiveAccess @Data
 public final class ToolVersionDownloadDescriptor {
-    String version;
-    String downloadUrl;
+    private String version;
+    private String downloadUrl;
     private String digest;
+    private String isDefaultVersion = "No";
     
     @JsonIgnore
     public final String getDigestAlgorithm() {

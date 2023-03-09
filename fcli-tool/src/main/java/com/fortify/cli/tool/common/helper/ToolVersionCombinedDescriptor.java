@@ -18,15 +18,22 @@ public class ToolVersionCombinedDescriptor {
     @JsonIgnore private final ToolVersionInstallDescriptor installDescriptor;
     
     public String getVersion() {
-        return getDownloadDescriptor().getVersion();
+        return getInstalledOrDefaultDownloadDescriptor().getVersion();
     }
     
     public String getDownloadUrl() {
-        return getDownloadDescriptor().getDownloadUrl();
+        return getInstalledOrDefaultDownloadDescriptor().getDownloadUrl();
     }
     
     public String getDigest() {
-        return getDownloadDescriptor().getDigest();
+        return getInstalledOrDefaultDownloadDescriptor().getDigest();
+    }
+    
+    public String getIsDefaultVersion() {
+        // To determine whether a version is the default version, we
+        // need to use the configured download descriptor, not the
+        // download descriptor stored during tool installation.
+        return getDownloadDescriptor().getIsDefaultVersion();
     }
     
     public String getInstalled() {
@@ -66,7 +73,7 @@ public class ToolVersionCombinedDescriptor {
     }
     
     @JsonIgnore
-    private ToolVersionDownloadDescriptor getDownloadDescriptor() {
+    private ToolVersionDownloadDescriptor getInstalledOrDefaultDownloadDescriptor() {
         return installDescriptor==null || installDescriptor.getOriginalDownloadDescriptor()==null 
                 ? downloadDescriptor : installDescriptor.getOriginalDownloadDescriptor();
     }
