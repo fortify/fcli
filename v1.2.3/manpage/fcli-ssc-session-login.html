@@ -1,0 +1,242 @@
+---
+title: fcli-ssc-session-login(1)
+fcli_version: fcli version 1.2.3, built on 2023-03-09 10 05 48
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ssc-session-login(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="1.2.3" %}
+
+
+<div id="header">
+<h1>fcli-ssc-session-login(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_output_options">Output options:</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_session_options">Session options:</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ssc-session-login - Create a session for interacting with Fortify SSC</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ssc session login</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<em>session-name</em>]] <em class="[<strong>-o</strong>=_format_
+                 _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                       [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] (<strong>--url</strong>=<em>&lt;url&gt;</em> [<strong>-k</strong>])
+                       (<strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>] [<strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em>]) |                        <strong>-t</strong>[=<em>&lt;token&gt;</em>] | <strong>--ci-token</strong>[=<em>&lt;token&gt;</em>]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For interactive use, you may choose to keep the session open until it expires.</p>
+</div>
+<div class="paragraph">
+<p>For CI/CD integrations and other automations:
+You should always issue a logout command once work is complete.
+On shared/non-containerized systems, consider setting FORTIFY_HOME or FCLI_HOME variables to prevent unexpected interactions between different pipelines.
+Option values are commonly configured through environment variables as listed in each option description. Please see the fcli documentation for more details.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-u</strong>, <strong>--user</strong>=<em>&lt;user&gt;</em></dt>
+<dd>
+<p>SSC user name</p>
+<div class="paragraph">
+<p>Environment variables:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_USER: Shared with SC SAST/DAST</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_SESSION_USER: Only SSC session commands</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;password&gt;</em>]</dt>
+<dd>
+<p>SSC password</p>
+<div class="paragraph">
+<p>Environment variables:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_PASSWORD: Shared with SC SAST/DAST</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_SESSION_PASSWORD: Only SSC session commands</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>--expire-in</strong>=<em>&lt;expireIn&gt;</em></dt>
+<dd>
+<p>Specify for how long the session should remain active, for example 1h (1 hour), 1d (1 day)</p>
+<div class="literalblock">
+<div class="content">
+<pre>Default: 1d</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--token</strong>[=<em>&lt;token&gt;</em>]</dt>
+<dd>
+<p>SSC token in either encoded or decoded format</p>
+<div class="paragraph">
+<p>Note that depending on token permissions, not all fcli commands may be available</p>
+</div>
+<div class="paragraph">
+<p>Environment variables:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_TOKEN</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>--ci-token</strong>[=<em>&lt;token&gt;</em>]</dt>
+<dd>
+<p>SSC CIToken in either encoded or decoded format</p>
+<div class="paragraph">
+<p>Note that most, but not all, fcli commands are available when logging in with a CIToken</p>
+</div>
+<div class="paragraph">
+<p>Environment variables:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_CI_TOKEN: Shared with SC SAST/DAST</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_SESSION_CI_TOKEN: Only SSC session commands</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>--url</strong>=<em>&lt;url&gt;</em></dt>
+<dd>
+<p>SSC URL</p>
+<div class="paragraph">
+<p>Environment variables:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_URL: Shared with SC SAST/DAST</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_SSC_SESSION_URL: Only SSC session commands</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>-k</strong>, <strong>--insecure</strong></dt>
+<dd>
+<p>Disable SSL checks.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dd>
+<p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using {?variableName:property} on any subsequent command. Most commands that return a single record (get, start, create, &#8230;&#8203;) also support '?' to store the record identifier in a predefined variable, which can later be referenced using '?' on options/parameters that take the id of such records as input.</p>
+</dd>
+<dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write results to the specified files in the given output format. By default, results will be written to stdout</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">[<em>session-name</em>]</dt>
+<dd>
+<p>Name for this session</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version fcli version 1.2.3, built on 2023-03-09 10 05 48<br>
+Last updated 2023-03-09 10:07:16 UTC
+</div>
+</div>
+</body>
+</html>
