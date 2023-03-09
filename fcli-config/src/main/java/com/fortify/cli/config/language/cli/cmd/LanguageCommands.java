@@ -8,6 +8,7 @@ import picocli.CommandLine;
         name = "language",
         aliases = "lang",
         subcommands = {
+                LanguageClearCommand.class,
                 LanguageListCommand.class,
                 LanguageSetCommand.class,
                 LanguageGetCommand.class

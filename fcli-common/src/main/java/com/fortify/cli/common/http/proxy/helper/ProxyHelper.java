@@ -64,7 +64,7 @@ public final class ProxyHelper {
     }
     
     private static final Path getProxiesConfigPath() {
-        return Path.of("proxies");
+        return FcliHomeHelper.getFcliConfigPath().resolve("proxies");
     }
     
     private static final Path getProxyConfigPath(ProxyDescriptor descriptor) {

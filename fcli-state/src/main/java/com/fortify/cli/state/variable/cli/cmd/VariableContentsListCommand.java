@@ -22,12 +22,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.config.variable.cli.cmd;
+package com.fortify.cli.state.variable.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.variable.FcliVariableHelper;
+import com.fortify.cli.state.variable.cli.mixin.VariableResolverMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -36,12 +36,13 @@ import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.List.CMD_NAME)
-public class VariableDefinitionListCommand extends AbstractBasicOutputCommand {
+public class VariableContentsListCommand extends AbstractBasicOutputCommand {
     @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
+    @Mixin private VariableResolverMixin.PositionalParameter variableResolver;
 
     @Override
     public JsonNode getJsonNode() {
-        return FcliVariableHelper.listDescriptors();
+        return variableResolver.getVariableContents(); // TODO Check that variable represents an ArrayNode?
     }
     
     @Override

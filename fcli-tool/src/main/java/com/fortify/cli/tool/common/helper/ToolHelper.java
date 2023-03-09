@@ -3,7 +3,6 @@ package com.fortify.cli.tool.common.helper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,6 +63,6 @@ public final class ToolHelper {
     }
     
     private static final Path getInstallDescriptorPath(String toolName, String version) {
-        return Paths.get("tools", toolName, version);
+        return FcliHomeHelper.getFcliStatePath().resolve("tools").resolve(toolName).resolve(version);
     }
 }

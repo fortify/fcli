@@ -74,7 +74,7 @@ public final class FcliVariableHelper {
     }
     
     public static final Path getVariablesPath() {
-        return Path.of("vars");
+        return FcliHomeHelper.getFcliStatePath().resolve("vars");
     }
     
     @SneakyThrows // TODO Do we want to use SneakyThrows?

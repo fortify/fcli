@@ -19,29 +19,43 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.json.JsonHelper;
 
 public class FcliHomeHelper {
-    private static final String ENVNAME_FORTIFY_HOME     = "FORTIFY_DATA";
-    private static final String ENVNAME_FCLI_HOME        = "FCLI_DATA";
-    private static final String DEFAULT_FORTIFY_DIR_NAME = ".fortify";
-    private static final String DEFAULT_FCLI_DIR_NAME    = "fcli";
+    private static final String ENVNAME_FORTIFY_DATA_DIR     = "FORTIFY_DATA_DIR";
+    private static final String ENVNAME_FCLI_DATA_DIR        = "FCLI_DATA_DIR";
+    private static final String ENVNAME_FCLI_CONFIG_DIR      = "FCLI_CONFIG_DIR";
+    private static final String ENVNAME_FCLI_STATE_DIR       = "FCLI_STATE_DIR";
+    private static final String DEFAULT_FORTIFY_DIR_NAME     = ".fortify";
+    private static final String DEFAULT_FCLI_DIR_NAME        = "fcli";
+    private static final String DEFAULT_FCLI_CONFIG_DIR_NAME = "config";
+    private static final String DEFAULT_FCLI_STATE_DIR_NAME  = "state";
     private static final Logger LOG = LoggerFactory.getLogger(FcliHomeHelper.class);
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     
     public static final Path getFortifyHomePath() {
-        String fortifyHome = System.getenv(ENVNAME_FORTIFY_HOME);
-        return StringUtils.isNotBlank(fortifyHome) 
-                ? Path.of(fortifyHome).toAbsolutePath()
+        String fortifyData = System.getenv(ENVNAME_FORTIFY_DATA_DIR);
+        return StringUtils.isNotBlank(fortifyData) 
+                ? Path.of(fortifyData).toAbsolutePath()
                 : Path.of(System.getProperty("user.home"), DEFAULT_FORTIFY_DIR_NAME).toAbsolutePath();
     }
 
     public static final Path getFcliHomePath() {
-        String fcliHome = System.getenv(ENVNAME_FCLI_HOME);
-        return StringUtils.isNotBlank(fcliHome) 
-                ? Path.of(fcliHome).toAbsolutePath()
+        String fcliData = System.getenv(ENVNAME_FCLI_DATA_DIR);
+        return StringUtils.isNotBlank(fcliData) 
+                ? Path.of(fcliData).toAbsolutePath()
                 : getFortifyHomePath().resolve(DEFAULT_FCLI_DIR_NAME).toAbsolutePath();
     }
     
     public static final Path getFcliConfigPath() {
-    	return getFcliHomePath().resolve("config");
+        String fcliConfig = System.getenv(ENVNAME_FCLI_CONFIG_DIR);
+        return StringUtils.isNotBlank(fcliConfig) 
+                ? Path.of(fcliConfig).toAbsolutePath()
+                : getFcliHomePath().resolve(DEFAULT_FCLI_CONFIG_DIR_NAME).toAbsolutePath();
+    }
+    
+    public static final Path getFcliStatePath() {
+        String fcliState = System.getenv(ENVNAME_FCLI_STATE_DIR);
+        return StringUtils.isNotBlank(fcliState) 
+                ? Path.of(fcliState).toAbsolutePath()
+                : getFcliHomePath().resolve(DEFAULT_FCLI_STATE_DIR_NAME).toAbsolutePath();
     }
     
     public static final void saveSecuredFile(Path relativePath, Object contents, boolean failOnError) {

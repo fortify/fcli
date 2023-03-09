@@ -164,6 +164,7 @@ configure(allprojects.findAll {it.name != 'fcli-common' && it.name != 'fcli-pico
 
 dependencies {
     implementation project(':fcli-config')
+    implementation project(':fcli-state')
     implementation project(':fcli-ssc')
     implementation project(':fcli-fod')
     implementation project(':fcli-sc-sast')

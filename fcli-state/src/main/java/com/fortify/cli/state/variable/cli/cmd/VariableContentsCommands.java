@@ -1,4 +1,4 @@
-package com.fortify.cli.config.variable.cli.cmd;
+package com.fortify.cli.state.variable.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 

@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.config.variable.cli.mixin;
+package com.fortify.cli.state.variable.cli.mixin;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.variable.FcliVariableHelper;

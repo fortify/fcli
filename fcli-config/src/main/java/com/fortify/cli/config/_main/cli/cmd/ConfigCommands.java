@@ -4,7 +4,6 @@ import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.config.language.cli.cmd.LanguageCommands;
 import com.fortify.cli.config.proxy.cli.cmd.ProxyCommands;
 import com.fortify.cli.config.ssl.cli.cmd.SSLCommands;
-import com.fortify.cli.config.variable.cli.cmd.VariableCommands;
 
 import picocli.CommandLine.Command;
 
@@ -16,8 +15,7 @@ import picocli.CommandLine.Command;
                 ConfigClearCommand.class,
                 LanguageCommands.class,
                 ProxyCommands.class,
-                SSLCommands.class,
-                VariableCommands.class
+                SSLCommands.class
         }
 )
 public class ConfigCommands extends AbstractFortifyCLICommand {

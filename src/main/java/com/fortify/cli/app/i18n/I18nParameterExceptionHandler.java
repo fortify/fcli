@@ -1,13 +1,12 @@
 package com.fortify.cli.app.i18n;
 
-import picocli.CommandLine;
-import picocli.CommandLine.ParameterException;
-import picocli.CommandLine.IParameterExceptionHandler;
-
-import java.util.Locale;
 import java.util.ResourceBundle;
 
-import com.fortify.cli.config.language.util.LanguagePropertiesManager;
+import com.fortify.cli.common.i18n.helper.LanguageHelper;
+
+import picocli.CommandLine;
+import picocli.CommandLine.IParameterExceptionHandler;
+import picocli.CommandLine.ParameterException;
 
 public class I18nParameterExceptionHandler implements CommandLine.IParameterExceptionHandler {
     private final IParameterExceptionHandler origDefaultHandler;
@@ -22,14 +21,10 @@ public class I18nParameterExceptionHandler implements CommandLine.IParameterExce
      * @param origDefaultHandler
      * @param languageConfigManager
      */
-    public I18nParameterExceptionHandler(IParameterExceptionHandler origDefaultHandler, LanguagePropertiesManager languageConfigManager){
+    public I18nParameterExceptionHandler(IParameterExceptionHandler origDefaultHandler){
         this.origDefaultHandler = origDefaultHandler;
         String resourceBundleName = "com.fortify.cli.common.i18n.FortifyCLIMessages";
-        i18nResource = ResourceBundle.getBundle(resourceBundleName,
-                new Locale(
-                        languageConfigManager.isNullEmptyOrEn() ? "" : languageConfigManager.getLanguage()
-                )
-        );
+        i18nResource = ResourceBundle.getBundle(resourceBundleName, LanguageHelper.getConfiguredLanguageDescriptor().getLocale());
     }
 
     /**

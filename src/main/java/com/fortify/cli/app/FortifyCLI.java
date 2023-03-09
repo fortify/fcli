@@ -32,7 +32,6 @@ import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
 import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner;
 import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
 import com.fortify.cli.common.variable.FcliVariableHelper;
-import com.fortify.cli.config.language.util.LanguagePropertiesManager;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
@@ -75,12 +74,9 @@ public class FortifyCLI {
             	installAnsiConsole();
                 FortifyCLIInitializerRunner.initialize(resolvedArgs, micronautFactory);
                 CommandLine commandLine = new CommandLine(FCLIRootCommands.class, micronautFactory);
-                return commandLine.setParameterExceptionHandler(
-                            new I18nParameterExceptionHandler(
-                                    commandLine.getParameterExceptionHandler(),
-                                    applicationContext.getBean(LanguagePropertiesManager.class)
-                            )
-                ).execute(resolvedArgs);
+                return commandLine
+                    .setParameterExceptionHandler(new I18nParameterExceptionHandler(commandLine.getParameterExceptionHandler()))
+                    .execute(resolvedArgs);
             } finally {
             	uninstallAnsiConsole();
             }

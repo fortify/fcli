@@ -1,4 +1,4 @@
-package com.fortify.cli.config._main.cli.cmd;
+package com.fortify.cli.state._main.cli.cmd;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,9 +20,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-//TODO Remove code duplication between this class and StateClearCommand
+// TODO Remove code duplication between this class and ConfigClearCommand
 @Command(name = BasicOutputHelperMixins.Clear.CMD_NAME)
-public class ConfigClearCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
+public class StateClearCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     @Getter @Mixin private BasicOutputHelperMixins.Clear outputHelper;
     @Option(names={"-y", "--confirm"}, required = true) private boolean confirm;
@@ -31,15 +31,15 @@ public class ConfigClearCommand extends AbstractBasicOutputCommand implements IA
     protected JsonNode getJsonNode() {
         ArrayNode result = objectMapper.createArrayNode();
         try {
-            if ( FcliHomeHelper.getFcliConfigPath().toFile().exists() ) {
-                Files.walk(FcliHomeHelper.getFcliConfigPath())
+            if ( FcliHomeHelper.getFcliStatePath().toFile().exists() ) {
+                Files.walk(FcliHomeHelper.getFcliStatePath())
                     .sorted(Comparator.reverseOrder())
                     .map(Path::toFile)
                     .peek(f->addResult(result,f))
                     .forEach(File::delete);
             }
         } catch ( IOException e ) {
-            throw new RuntimeException("Error clearing fcli configuration directory", e);
+            throw new RuntimeException("Error clearing fcli state directory", e);
         }
         return result;
     }

@@ -25,7 +25,6 @@
 package com.fortify.cli.common.session.manager.spi;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -60,7 +59,7 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
     @Override
     @SneakyThrows // TODO Do we want to use SneakyThrows?
     public final T get(String sessionName, boolean failIfUnavailable) {
-        Path authSessionDataPath = Paths.get("sessions", getSessionTypeName(), sessionName);
+        Path authSessionDataPath = getSessionDataPath(sessionName);
         checkSessionExists(sessionName, failIfUnavailable);
         try {
             String authSessionDataJson = FcliHomeHelper.readSecuredFile(authSessionDataPath, failIfUnavailable);
@@ -80,24 +79,24 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
     @SneakyThrows // TODO Do we want to use SneakyThrows? 
     public final void save(String sessionName, T sessionData) {
         String authSessionDataJson = objectMapper.writeValueAsString(sessionData);
-        FcliHomeHelper.saveSecuredFile(Paths.get("sessions", getSessionTypeName(), sessionName), authSessionDataJson, true);
+        FcliHomeHelper.saveSecuredFile(getSessionDataPath(sessionName), authSessionDataJson, true);
     }
     
     @Override
     @SneakyThrows // TODO Do we want to use SneakyThrows?
     public final void destroy(String sessionName) {
-        FcliHomeHelper.deleteFile(Paths.get("sessions", getSessionTypeName(), sessionName), true);
+        FcliHomeHelper.deleteFile(getSessionDataPath(sessionName), true);
     }
     
     @Override
     public final boolean exists(String sessionName) {
-        return FcliHomeHelper.isReadable(Paths.get("sessions", getSessionTypeName(), sessionName));
+        return FcliHomeHelper.isReadable(getSessionDataPath(sessionName));
     }
     
     @Override
     @SneakyThrows // TODO Do we want to use SneakyThrows?
     public final List<String> sessionNames() {
-        Path path = Paths.get("sessions", getSessionTypeName());
+        Path path = getSessionsDataPath();
         if ( !FcliHomeHelper.exists(path) ) {
             return Collections.emptyList();
         }
@@ -126,6 +125,14 @@ public abstract class AbstractSessionDataManager<T extends ISessionData> impleme
     @Override
     public ObjectNode sessionSummaryAsObjectNode(String sessionName) {
     	return objectMapper.valueToTree(getSessionSummary(sessionName));
+    }
+    
+    private final Path getSessionsDataPath() {
+        return FcliHomeHelper.getFcliStatePath().resolve("sessions").resolve(getSessionTypeName());
+    }
+    
+    private final Path getSessionDataPath(String sessionName) {
+        return getSessionsDataPath().resolve(sessionName);
     }
     
     private SessionSummary getSessionSummary(String sessionName) {
