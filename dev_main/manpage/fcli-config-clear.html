@@ -1,6 +1,6 @@
 ---
 title: fcli-config-clear(1)
-fcli_version: fcli version 0.20230309.094926-dev_main, built on 2023-03-09 09 49 49
+fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07 59
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230309.094926-dev_main, built on 2023-03-09 09 49
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230309.094926-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230310.170722-dev_main" %}
 
 
 <div id="header">
@@ -33,7 +33,7 @@ fcli_version: fcli version 0.20230309.094926-dev_main, built on 2023-03-09 09 49
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-config-clear - Clear full fcli configuration and data</p>
+<p>fcli-config-clear - Clear full fcli configuration</p>
 </div>
 </div>
 <div id="content">
@@ -52,7 +52,7 @@ fcli_version: fcli version 0.20230309.094926-dev_main, built on 2023-03-09 09 49
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command deletes the fcli home directory, clearing all fcli configuration settings and other data like sessions and variables. As a best practice, you should log out of any existing sessions before running this command.</p>
+<p>This command deletes the fcli configuration directory, clearing configuration settings like language, proxy and trust store settings. Note that this does not clear current fcli state, like session and variable data; please use the 'fcli state clear' command for clearing state data.</p>
 </div>
 </div>
 </div>
@@ -63,7 +63,7 @@ fcli_version: fcli version 0.20230309.094926-dev_main, built on 2023-03-09 09 49
 <dl>
 <dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
 <dd>
-<p>Confirm clearing all fcli configuration settings and other data</p>
+<p>Confirm clearing all fcli configuration settings</p>
 </dd>
 </dl>
 </div>
@@ -118,8 +118,8 @@ fcli_version: fcli version 0.20230309.094926-dev_main, built on 2023-03-09 09 49
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230309.094926-dev_main, built on 2023-03-09 09 49 49<br>
-Last updated 2023-03-09 09:50:58 UTC
+Version fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07 59<br>
+Last updated 2023-03-10 17:09:31 UTC
 </div>
 </div>
 </body>
