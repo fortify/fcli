@@ -32,7 +32,7 @@ result in a new release version being published; this includes publishing the im
 
 Following is a list of the main frameworks and technologies used by fcli: 
 
-* https://picocli.info/[picocli]: Process command line options, generate usage information, … 
+* https://picocli.info/[picocli]: Used for fcli command implementations; perform fcli actions, process command line options, generate usage information, generate command output, … 
 * https://micronaut.io/[Micronaut]: Dependency injection, features for GraalVM native image generation 
 * https://github.com/FasterXML/jackson[Jackson]: Parse and generate data in JSON and other formats 
 * https://www.graalvm.org/[GraalVM]: Generate native images (native executables)
@@ -68,6 +68,10 @@ GraalVM Native Image needs to know ahead-of-time the reflectively accessed progr
 If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the `+@ReflectiveAccess+` annotation to the appropriate classes. Also see below for some reflection-related considerations specific to picocli and Jackson.
 
 === Picocli
+
+Picocli is the primary framework for implementing fcli commands. The following sections describe some of the prerequisites and considerations related to picocli. Information on actually implementing fcli commands is described in the link:#_implementing_fcli_commands[Implementing fcli Commands] section.
+
+==== Java Reflection Considerations
 
 Picocli and it’s annotation processor should in theory generate the necessary reflection configuration as described above. However, the annotation processor doesn’t seem to take class hierarchies into account; see https://github.com/remkop/picocli/issues/1444[GraalVM: Options from superclass not visible]. As a work-around, we can complement the picocli-generated reflection configuration by using Micronaut’s `+@ReflectiveAccess+` annotation. In general the following classes should probably be annotated with `+@ReflectiveAccess+`: 
 
@@ -173,4 +177,130 @@ This command iterates over the given version numbers, regenerates the documentat
 * `+../fcli-fork+` would contain the latest version of `+doc-resources+` and `+build.gradle+`
 * `+../fcli-pages+` would be a clone of the fcli repository with the gh-pages branch checked out
 
+== Code Style & Structure 
 
+=== Coding Conventions
+
+Common Java coding conventions should be used for fcli source code, taking the following into consideration:
+
+* Indentation is done using 4 spaces; fcli source code should not contain tabs.
+* Use of System.out and System.err should be avoided, except for code that explicitly handles output. 
+** Command output should be generated through the output framework provided in the common module.
+** The logging framework should be used for outputting warning messages for example.
+** If you use System.out for debugging, potentially commenting out or removing these statements once done with debugging, consider using the logging framework for debug logging. If you need this information for debugging, it may be useful to permanently have this information included in debug logs.
+* Avoid having commented out source code.
+* Use the 'Organize Imports` feature of the IDE to remove any unused imports.
+* Avoid having unused variables, methods, ...
+* Avoid unsafe type conversions. In particular, when using Jackson for deserializing generic types, use `TypeReference` instead of the generic type class.
+
+=== Package Structure
+
+Most fcli command modules use the package structure described below. Note that there may be slight variations between product-specific modules that interact with a remote system, and fcli-specific modules like `config` and `tool`.
+
+* `com.fortify.cli.<module>` +
+** Root package for the given module
+* `com.fortify.cli.<module>._main.cli.cmd`
+** Contains `<module>Commands` class listing all entity commands for the given module.
+** May contain command implementations that operate at module-level rather than entity-level, like the `ConfigClearCommand`.
+* `com.fortify.cli.<module>.<entity>`
+** Root package for the given module entity
+* `com.fortify.cli.<module>.<entity>.cli`
+** Root package for Picocli-based code, like command implementations and mixins
+* `com.fortify.cli.<module>.<entity>.cli.cmd`
+** Contains the `<module><entity>Commands` class, listing all sub-commands for the given entity
+** Contains the individual entity action command classes
+** Where appropriate, sub-packages may be used to group related action commands
+* `com.fortify.cli.<module>.<entity>.cli.mixin`
+** Contains classes used as Mixin classes, for example defining reusable options and parameters, which may be used by commands in the current entity but also by other entities.
+** May contain classes used as ArgGroups, but these should be used sparingly as noted in link:_arggroup_annotations[ArgGroup Annotations]
+** Usually contains a `<module><entity>ResolverMixin` class, containing inner classes that allow for resolving one or more `<entity>` instances based on command-line options and/or positional parameters. Each inner class name describes the provided functionality, like `RequiredOption`, `OptionalOption`, `RequiredPositionalParameter`, ...
+* `com.fortify.cli.<module>.<entity>.helper`
+** Contains entity-related helper classes, for example for loading entity data, deleting entities, ...
+** Contains `*Descriptor` classes that hold entity-related data
+** Classes in this package should not contain any picocli-related functionality; they should be designed in such a way that they could potentially be used in non-picocli applications
+* `com.fortify.cli.<module>.output`
+** Root package for generic, module-specific output functionality
+* `com.fortify.cli.<module>.output.cli.cmd`
+** Contains a module-specific `Abstract<module>OutputCommand` class extending from either `AbstractBasicOutputCommand` or `AbstractUnirestOutputCommand`.
+* `com.fortify.cli.<module>.output.cli.mixin`
+** Contains a module-specific `<module>OutputHelperMixins` class, containing inner classes for every action provided by the module, like `List`, `Get`, `Delete`, `Revoke`, ...
+* `com.fortify.cli.<module>.rest`
+** Root package for module-specific REST-related functionality
+** Contents may vary depending on the target system
+* `com.fortify.cli.<module>.rest.cli.cmd`
+** Contains `<module>RestCommands` and `<module>RestCallCommand` classes that implement the `fcli <module> rest call` command structure
+* `com.fortify.cli.<module>.rest.cli.mixin`
+** Contains one or more mixin classes responsible for handling connections to the target system
+
+
+== Implementing fcli Commands
+
+The following sections provide information on implementing fcli commands.
+
+=== Command Structure
+
+In general, we try to adhere to the following fcli command structure:
+
+----
+fcli <module> <entity> <action>
+----
+
+* `<module>` represents either a product like `ssc` or `fod`, or an fcli-specific module like `config`, `state`, `tool` or `util`.
+* `<entity>` represents the entity on which the `<action>` sub-commands operate, like `app`, `appversion` or `appversion-attribute`. Virtually every entity should have its own top-level command inside a `<module>`, we usually don't use nested entities like `app->version->attribute`
+* `<action>` represents the action to be taken on the `<entity>`, like `list`, `get`, `set`, `delete`, `update`, ...
+
+In some exceptional cases, additional levels may be needed, for example like the following: +
+`fcli <module> <entity> <action> <type>`
+This should be used sparingly though, as each additional level may make it more difficult to navigate the fcli command tree.
+
+In general, each container command should contain either only leaf commands, or only container commands. For example, the top-level `<module>` command should usually only contain `<entity>` container commands and no leaf commands, whereas `<entity>` commands should usually only contain leaf commands. There are some exceptions to this rule though, for example if a command operates on all entities within a module, like the `fcli config clear` command. Likewise, entity commands may potentially contain both `<action>' leaf commands and `<action>` container commands containing action sub-types.
+
+=== Command Implementation
+
+Most or all product-specific leaf command implementations should have the following generic structure:
+
+[source,java]
+----
+@ReflectiveAccess // RefelctiveAccess is probably optional, but doesn't hurt
+@Command(name = <Module>OutputHelperMixins.<Action>.CMD_NAME)
+public class <Module><Entity><Action>Command extends <SuperClass> implements <CommonInterfaces> {
+    @Getter @Mixin private <Module>OutputHelperMixins.<Action> outputHelper; 
+    // Options, positional parameters, other fields; see next sections for info on options and parameters
+    
+    // Overrides for interfaces, for example methods generating the output data,
+    // record transformations, ...
+    
+    @Override
+    public boolean isSingular() {
+        return <false if potentially returning multiple records, true if always returning single record)
+    }
+}
+----
+
+* `<Module>`: Corresponds to the module in which this class is located; for product-specific commands this would correspond to the product name like `SSC` or `FoD`. 
+* `<Entity>` represents the entity that the command is operating on, like `App`, `AppVersion`, `User`, ...
+* `<Action>`: Represents the action performed by this command; should be one of the classes in the `<Product>OutputHelperMixins` class, like `Get`, `List`, `Delete`, ... Every action should have a corresponding inner class in the `<Product>OutputHelperMixins` class; each of these inner classes in turn extend from the appropriate inner class defined in `UnirestOutputHelperMixins` or `BasicOutputHelperMixins` classes, potentially adding product-specific behavior.
+* `<SuperClass>` is usually `Abstract<Module>OutputCommand` or an entity-specific sub-class of `Abstract<Module>OutputCommand`. Indirectly, virtually all leaf commands should extend from either `AbstractBasicOutputCommand` (for commands that don't interact with remote systems) or `AbstractUnirestOutputCommand` (for commands that do interact with remote systems).
+* `<CommonInterfaces>` is a list of interfaces that define how output is being generated and processed. Following are some commonly used interfaces; see JavaDoc for details on usage:
+** `IUnirestBaseRequestSupplier`: Supply a Unirest `HttpRequest` instance for retrieving command output data.
+** `IUnirestJsonNodeSupplier`: Supply a `JsonNode` instance representing the command output.
+** `IUnirestWithSessionData*Supplier`: Same as above, but allowing access to session data.
+** `IActionCommandResultSupplier`: Supply data for a result column to be included in the output, like `DELETED`, `CREATED`, ...
+** `IInputTransformer[Supplier]`: Allows for transforming the full JSON data before it is being processed for output.
+** `IRecordTransformer[Supplier]`: Allows for transforming individual records before they are being processed for output.
+
+Leaf commands in non-product modules usually have a similar structure, but some details may be different. Container commands, i.e. commands that represent `<module>` and `<entity>` have a very different (easier) structure as they don't have any actual functionality associated to them; please refer to existing fcli container commands to serve as an example.
+
+=== ArgGroup Annotations
+
+It was decided that `ArgGroup` annotations should be used sparingly (link:https://github.com/fortify/fcli/issues/89[Issue #89]). `ArgGroup` annotations are mostly used for generic options, like logging, help, output and query options. Command-specific options should not be contained in ArgGroups unless there is a very good reason for doing so.
+
+=== Options vs Positional Parameters
+
+It was decided that every fcli command should have at most one positional parameter definition to specify the primary entity id or name that the command operates on. For example, `<entity> delete` commands can have a positional parameter for specifying the entity name or id to be deleted, usually matching the `<entity>` command group that the command is located at. For example, an `app delete` command would take a positional parameter for identifying the `app` to be deleted. Potentially the positional parameter may be an array or collection, for example if the `app delete` command allows for deleting multiple apps in a single operation.
+
+For everything else, including parent entities, options should be used. As an example, the `fcli ssc appversion-attribute set` command takes the parent entity (application version) as an option named `--appversion`, whereas the attribute names and values to be set are taken as a positional parameter `Map` instance.
+
+=== Message Keys
+
+In general, standard picocli conventions should be used for locating i18n message keys for options, positional parameters, command descriptions, and so on. In some cases, it may be necessary to configure explicit messages keys in picocli annotations, for example for options and parameters defined in command super-classes or mixins. As an example, take the `@Option` `descriptionKey` attributes in the `AbstractToolInstallCommand`, specifying a fixed description key for all sub-commands. This way, the option description only needs to be specified once in the resource bundle, whereas using the standard picocli conventions would potentially have resulted in requiring the option description to be repeated for every individual command that extends from `AbstractToolInstallCommand`.
