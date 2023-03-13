@@ -58,7 +58,7 @@ public abstract class AbstractSCDastScanActionCommand extends AbstractSCDastScan
         ResumeScan("RESUME_REQUESTED"), 
         DeleteScan("DELETE_REQUESTED"), 
         ClearTrackedScan("CLEAR_REQUESTED"), 
-        RetryImportScanResults("RETRY_IMPORT_RESULTS_REQUESTED"), 
+        RetryImportScanResults("PUBLISH_REQUESTED"), 
         CompleteScan("COMPLETE_REQUESTED"), 
         RetryImportScanFindings("RETRY_IMPORT_FINDINGS_REQUESTED");
         

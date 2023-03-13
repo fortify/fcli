@@ -32,9 +32,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "pause")
+@Command(name = SCDastOutputHelperMixins.ScanActionPause.CMD_NAME)
 public class SCDastScanPauseCommand extends AbstractSCDastScanActionCommand {
-@Getter @Mixin private SCDastOutputHelperMixins.ScanAction outputHelper;
+@Getter @Mixin private SCDastOutputHelperMixins.ScanActionPause outputHelper;
     
     @Override
     protected SCDastScanAction getAction() {

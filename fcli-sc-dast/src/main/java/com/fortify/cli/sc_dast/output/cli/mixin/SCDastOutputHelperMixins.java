@@ -97,8 +97,28 @@ public class SCDastOutputHelperMixins {
     @ReflectiveAccess public static class Other 
                extends UnirestOutputHelperMixins.Other {}
     
-    @ReflectiveAccess public static class ScanAction extends UnirestOutputHelperMixins.Other {
+    @ReflectiveAccess private static class ScanActionBase extends UnirestOutputHelperMixins.Other {
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+    
+    @ReflectiveAccess public static class ScanActionComplete extends ScanActionBase {
+        public static final String CMD_NAME = "complete";
+    }
+    
+    @ReflectiveAccess public static class ScanActionImportFindings extends ScanActionBase {
+        public static final String CMD_NAME = "import-findings";
+    }
+    
+    @ReflectiveAccess public static class ScanActionPause extends ScanActionBase {
+        public static final String CMD_NAME = "pause";
+    }
+    
+    @ReflectiveAccess public static class ScanActionPublish extends ScanActionBase {
+        public static final String CMD_NAME = "publish";
+    }
+    
+    @ReflectiveAccess public static class ScanActionResume extends ScanActionBase {
+        public static final String CMD_NAME = "resume";
     }
 }

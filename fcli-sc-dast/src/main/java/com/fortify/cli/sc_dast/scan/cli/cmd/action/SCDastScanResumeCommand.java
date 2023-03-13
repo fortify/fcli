@@ -32,9 +32,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = "resume")
+@Command(name = SCDastOutputHelperMixins.ScanActionResume.CMD_NAME)
 public class SCDastScanResumeCommand extends AbstractSCDastScanActionCommand {
-@Getter @Mixin private SCDastOutputHelperMixins.ScanAction outputHelper;
+@Getter @Mixin private SCDastOutputHelperMixins.ScanActionResume outputHelper;
     
     @Override
     protected SCDastScanAction getAction() {
