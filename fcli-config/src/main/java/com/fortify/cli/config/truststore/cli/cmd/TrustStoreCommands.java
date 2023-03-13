@@ -1,4 +1,4 @@
-package com.fortify.cli.config.ssl.truststore.cli.cmd;
+package com.fortify.cli.config.truststore.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 
@@ -8,10 +8,10 @@ import picocli.CommandLine.Command;
         name = "truststore",
         description = "Commands for managing the trust store for SSL connections",
         subcommands = {
-            SSLTrustStoreClearCommand.class,
-            SSLTrustStoreGetCommand.class,
-            SSLTrustStoreSetCommand.class,
+            TrustStoreClearCommand.class,
+            TrustStoreGetCommand.class,
+            TrustStoreSetCommand.class,
         }
 )
-public class SSLTrustStoreCommands extends AbstractFortifyCLICommand {
+public class TrustStoreCommands extends AbstractFortifyCLICommand {
 }

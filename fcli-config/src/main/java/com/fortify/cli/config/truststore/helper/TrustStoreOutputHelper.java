@@ -1,4 +1,4 @@
-package com.fortify.cli.config.ssl.truststore.helper;
+package com.fortify.cli.config.truststore.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;

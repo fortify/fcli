@@ -3,7 +3,7 @@ package com.fortify.cli.config._main.cli.cmd;
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.config.language.cli.cmd.LanguageCommands;
 import com.fortify.cli.config.proxy.cli.cmd.ProxyCommands;
-import com.fortify.cli.config.ssl.cli.cmd.SSLCommands;
+import com.fortify.cli.config.truststore.cli.cmd.TrustStoreCommands;
 
 import picocli.CommandLine.Command;
 
@@ -15,7 +15,7 @@ import picocli.CommandLine.Command;
                 ConfigClearCommand.class,
                 LanguageCommands.class,
                 ProxyCommands.class,
-                SSLCommands.class
+                TrustStoreCommands.class
         }
 )
 public class ConfigCommands extends AbstractFortifyCLICommand {
