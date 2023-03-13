@@ -99,7 +99,7 @@ public class SSCOutputHelperMixins {
                extends UnirestOutputHelperMixins.Cancel {}
     
     @ReflectiveAccess public static class Download 
-    extends UnirestOutputHelperMixins.Download {}
+               extends UnirestOutputHelperMixins.Download {}
     
     @ReflectiveAccess public static class Upload 
                extends UnirestOutputHelperMixins.Upload {}

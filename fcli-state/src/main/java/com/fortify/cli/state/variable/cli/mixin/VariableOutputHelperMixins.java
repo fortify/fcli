@@ -20,7 +20,7 @@ public class VariableOutputHelperMixins {
         extends BasicOutputHelperMixins.Delete {}
     
     @ReflectiveAccess public static class DeleteAll 
-    extends BasicOutputHelperMixins.DeleteAll {}
+        extends BasicOutputHelperMixins.DeleteAll {}
 
     @ReflectiveAccess public static class List 
         extends BasicOutputHelperMixins.List {}
