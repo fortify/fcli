@@ -9,8 +9,12 @@ import picocli.CommandLine.Command;
         aliases = "var",
         description = "Commands for managing fcli variables",
         subcommands = {
-                VariableDefinitionCommands.class,
-                VariableContentsCommands.class
+                VariableContentsCommand.class,
+                VariableDeleteAllCommand.class,
+                VariableDeleteCommand.class,
+                VariableGetCommand.class,
+                VariableListCommand.class
+                
         }
 )
 public class VariableCommands extends AbstractFortifyCLICommand {

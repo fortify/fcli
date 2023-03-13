@@ -70,6 +70,7 @@ public final class FcliVariableHelper {
         private transient Date accessed;
         private String name;
         private String defaultPropertyName; 
+        private boolean singular;
         private boolean encrypted;
     }
     
@@ -113,17 +114,17 @@ public final class FcliVariableHelper {
         }
     }
     
-    public static final VariableDescriptor save(String variableName, String defaultPropertyName, JsonNode variableContents, boolean encrypt) {
+    public static final VariableDescriptor save(String variableName, String defaultPropertyName, JsonNode variableContents, boolean singular, boolean encrypt) {
         checkVariableName(variableName);
-        VariableDescriptor descriptor = createVariableDescriptor(variableName, defaultPropertyName, encrypt);
+        VariableDescriptor descriptor = createVariableDescriptor(variableName, defaultPropertyName, singular, encrypt);
         saveVariableContents(descriptor, variableContents);
         return saveVariableDescriptor(descriptor);
     }
     
     @SneakyThrows // TODO Do we want to use SneakyThrows?
-    public static final Writer getVariableContentsWriter(String variableName, String defaultPropertyName, boolean encrypt) {
+    public static final Writer getVariableContentsWriter(String variableName, String defaultPropertyName, boolean singular, boolean encrypt) {
         checkVariableName(variableName);
-        VariableDescriptor descriptor = createVariableDescriptor(variableName, defaultPropertyName, encrypt);
+        VariableDescriptor descriptor = createVariableDescriptor(variableName, defaultPropertyName, singular, encrypt);
         saveVariableDescriptor(descriptor);
         PrintWriter pw = new PrintWriter(Files.newOutputStream(getVariableContentsAbsolutePath(variableName), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING));
         return encrypt ? new EncryptionHelper.EncryptWriter(pw) : pw;
@@ -163,13 +164,14 @@ public final class FcliVariableHelper {
         }
     }
     
-    private static final VariableDescriptor createVariableDescriptor(String variableName, String defaultPropertyName, boolean encrypt) {
+    private static final VariableDescriptor createVariableDescriptor(String variableName, String defaultPropertyName, boolean singular, boolean encrypt) {
         Date currentDateTime = new Date();
 		return VariableDescriptor.builder()
                 .created(currentDateTime)
                 .accessed(currentDateTime)
                 .defaultPropertyName(defaultPropertyName)
                 .name(variableName)
+                .singular(singular)
                 .encrypted(encrypt)
                 .build();
     }

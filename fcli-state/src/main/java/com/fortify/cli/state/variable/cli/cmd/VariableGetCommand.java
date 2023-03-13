@@ -26,7 +26,7 @@ package com.fortify.cli.state.variable.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.state.variable.cli.mixin.VariableOutputHelperMixins;
 import com.fortify.cli.state.variable.cli.mixin.VariableResolverMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -35,18 +35,18 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = BasicOutputHelperMixins.Get.CMD_NAME)
-public class VariableContentsGetCommand extends AbstractBasicOutputCommand {
-    @Getter @Mixin private BasicOutputHelperMixins.Get outputHelper;
+@Command(name = VariableOutputHelperMixins.Get.CMD_NAME)
+public class VariableGetCommand extends AbstractBasicOutputCommand {
+    @Getter @Mixin private VariableOutputHelperMixins.Get outputHelper;
     @Mixin private VariableResolverMixin.PositionalParameter variableResolver;
 
     @Override
     public JsonNode getJsonNode() {
-        return variableResolver.getVariableContents(); // TODO Check that variable represents an ObjectNode?
+        return variableResolver.getVariableDescriptor().asJsonNode();
     }
     
     @Override
     public boolean isSingular() {
-        return !variableResolver.getVariableContents().isArray();
+        return true;
     }
 }

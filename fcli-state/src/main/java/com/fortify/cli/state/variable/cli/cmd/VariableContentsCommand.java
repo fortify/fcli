@@ -26,9 +26,8 @@ package com.fortify.cli.state.variable.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.variable.FcliVariableHelper;
+import com.fortify.cli.state.variable.cli.mixin.VariableOutputHelperMixins;
+import com.fortify.cli.state.variable.cli.mixin.VariableResolverMixin;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
@@ -36,24 +35,18 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
-@Command(name = BasicOutputHelperMixins.Clear.CMD_NAME)
-public class VariableDefinitionClearCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private BasicOutputHelperMixins.Clear outputHelper;
+@Command(name = VariableOutputHelperMixins.Contents.CMD_NAME)
+public class VariableContentsCommand extends AbstractBasicOutputCommand {
+    @Getter @Mixin private VariableOutputHelperMixins.Contents outputHelper;
+    @Mixin private VariableResolverMixin.PositionalParameter variableResolver;
 
     @Override
     public JsonNode getJsonNode() {
-        JsonNode descriptors = FcliVariableHelper.listDescriptors();
-        descriptors.forEach(FcliVariableHelper::delete);
-        return descriptors;
-    }
-    
-    @Override
-    public String getActionCommandResult() {
-        return "DELETED";
+        return variableResolver.getVariableContents();
     }
     
     @Override
     public boolean isSingular() {
-        return false;
+        return variableResolver.getVariableDescriptor().isSingular();
     }
 }

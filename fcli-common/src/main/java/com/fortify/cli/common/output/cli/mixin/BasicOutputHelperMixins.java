@@ -66,6 +66,13 @@ public class BasicOutputHelperMixins {
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
+    public static class DeleteAll extends AbstractBasicOutputHelper {
+        public static final String CMD_NAME = "delete-all";
+        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+    
     @ReflectiveAccess
     public static class Revoke extends AbstractBasicOutputHelper {
         public static final String CMD_NAME = "revoke";

@@ -110,7 +110,7 @@ evaluating the given expression. If necessary, the expression should explicitly 
 ** `+fcli ssc appversion list -q createdBy=admin -o 'expr=fcli ssc appversion-artifact purge --older-than 30d --appversion {id}\n'+`
 ** `+for id in $(fcli ssc appversion list -q createdBy=admin -o 'expr=\{id}'); do echo "fcli ssc appversion-artifact purge –older-than 30d –appversion $\{id}'; done+` 
 * `+-o json-properties+` List all JSON properties returned by the current command, which can be used
-on options that take JSON properties as input, like output expressions (`+-o expr={prop}+`), properties to include in the output (`+-o table=prop1,prop2+`), queries (`+-q prop1=value1+`), and fcli variables (`+--store var:prop1,prop2+` & `+{?var:prop1}+`). Two important notes about this output format: 
+on options that take JSON properties as input, like output expressions (`+-o expr={prop}+`), properties to include in the output (`+-o table=prop1,prop2+`), queries (`+-q prop1=value1+`), and fcli variables (`+--store var:prop1,prop2+` & `+::var::prop1}+`). Two important notes about this output format: 
 ** The command will be executed as specified, so be careful when using this output option on any command
 that changes state (delete/update/create/…). In most cases, the `+get+` or `+list+` operations will return a similar set of properties, so you can use those commands to view available properties.
 ** On some commands, the list of available JSON properties may vary depending on command line options. For example, when a query returns no records, then `+-o json-properties+` will not output any properties. Likewise, a command may provide options for including additional data for each record; the corresponding JSON properties will only be shown if `+-o json-properties+` is used in combination with these options that load additional data.
@@ -229,7 +229,7 @@ Variables can be stored using the `+--store myVarName[:prop1,prop2]+` option on 
 
 Variables can be referenced in subsequent fcli commands using the `::myVarName::prop` syntax anywhere on the command line; such occurrences will be substituted with the value of the given property name. 
 
-Many (but not all) fcli commands will also store an entity-specific default property name when using the `+--store+` option. Whether a default property name has been stored can be seen in the output of the `+fcli state var def list+` command. If a default property name was stored, the `::myVarName::` syntax can be used to reference the value of the default property name, thereby avoiding the need to manually specify the appropriate property name.
+Many (but not all) fcli commands will also store an entity-specific default property name when using the `+--store+` option. Whether a default property name has been stored can be seen in the output of the `+fcli state var list+` command. If a default property name was stored, the `::myVarName::` syntax can be used to reference the value of the default property name, thereby avoiding the need to manually specify the appropriate property name.
 
 Following are some examples, assuming the necessary login sessions are available:
 
@@ -248,20 +248,16 @@ fcli sc-sast scan start -p package.zip -v 22.2 --appversion test:1.0 --store x
 fcli sc-sast scan wait-for ::x::jobToken
 ----
 
-Fcli provides dedicated commands for managing variables and variable contents through the following commands; please see help output or manual pages for available sub-commands: 
+Fcli provides the regular `get`, `list` and `delete` operations on the `+fcli state variable` command tree, and actual variable contents can be retrieved using the `+fcli state variable contents+` command. Please see help output or manual pages for more information on these commands. 
 
-* `+fcli state variable definition+` 
-* `+fcli state variable contents+`
-
-Note that the `+fcli state variable contents+` `+get+` and `+list+` commands support the regular fcli output options, and the `+list+` command also provides query capabilities. This allows for advanced use
-cases, like retrieving server data once and then outputting it in multiple formats, potentially even applying separate filters. As an example:
+The `+fcli state variable contents+` command supports the regular fcli output options and query capabilities. This allows for advanced us cases, like retrieving server data once and then outputting it in multiple formats, potentially even applying separate filters. As an example:
 
 [source,bash]
 ----
 fcli ssc appversion list --store myVersions
-fcli state variable contents list myVersions -o csv --output-to-file myVersions.csv
-fcli state variable contents list myVersions -o json -q createdBy=admin --output-to-file myAdminVersions.json
-fcli state variable contents list myVersions -o 'expr={id}\n' --output-to-file myVersionIds.txt
+fcli state variable contents myVersions -o csv --output-to-file myVersions.csv
+fcli state variable contents myVersions -o json -q createdBy=admin --output-to-file myAdminVersions.json
+fcli state variable contents myVersions -o 'expr={id}\n' --output-to-file myVersionIds.txt
 ----
 
 Note: variable-related syntax and behavior was changed in fcli version 2.0.0. If you are using an older fcli version, please refer to the documentation for that version. When upgrading from 1.x.x to 2.x.x, you may need to update your fcli invocations to match the new syntax. See link:https://github.com/fortify/fcli/issues/160[Issue 160] for information on why syntax and behavior was changed.

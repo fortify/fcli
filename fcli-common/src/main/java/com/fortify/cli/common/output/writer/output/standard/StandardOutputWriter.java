@@ -490,7 +490,7 @@ public class StandardOutputWriter implements IOutputWriter {
          * @return
          */
         private Writer createWriter(VariableDefinition variableDefinition) {
-            return FcliVariableHelper.getVariableContentsWriter(variableDefinition.getVariableName(), variableDefinition.getDefaultPropertyName(), variableDefinition.encrypt);
+            return FcliVariableHelper.getVariableContentsWriter(variableDefinition.getVariableName(), variableDefinition.getDefaultPropertyName(), variableDefinition.isSingular(), variableDefinition.encrypt);
         }
         
         /**
@@ -510,6 +510,7 @@ public class StandardOutputWriter implements IOutputWriter {
             return VariableDefinition.builder()
                     .variableName(variableName)
                     .variableOptions(options)
+                    .singular(isSingularOutput())
                     .defaultPropertyName(defaultPropertyName)
                     .encrypt(encrypt).build();
         }
@@ -523,6 +524,7 @@ public class StandardOutputWriter implements IOutputWriter {
         private final String variableName;
         private final String variableOptions;
         private final String defaultPropertyName;
+        private final boolean singular;
         private final boolean encrypt;
     }
 }
