@@ -316,4 +316,17 @@ For everything else, including parent entities, options should be used. As an ex
 
 === Message Keys
 
-In general, standard picocli conventions should be used for locating i18n message keys for options, positional parameters, command descriptions, and so on. In some cases, it may be necessary to configure explicit messages keys in picocli annotations, for example for options and parameters defined in command super-classes or mixins. As an example, take the `@Option` `descriptionKey` attributes in the `AbstractToolInstallCommand`, specifying a fixed description key for all sub-commands. This way, the option description only needs to be specified once in the resource bundle, whereas using the standard picocli conventions would potentially have resulted in requiring the option description to be repeated for every individual command that extends from `AbstractToolInstallCommand`.
+In general, standard picocli conventions should be used for locating i18n message keys for options, positional parameters, command descriptions, and so on. In some cases, it may be necessary to configure explicit messages keys in picocli annotations, for example for options and parameters defined in command super-classes or mixins. 
+
+As an example, take the `@Option` `descriptionKey` attributes in the `AbstractToolInstallCommand`, specifying a fixed description key for all sub-commands. This way, the option description only needs to be specified once in the resource bundle, whereas using the standard picocli conventions would potentially have resulted in requiring the option description to be repeated for every individual command that extends from `AbstractToolInstallCommand`.
+
+Ideally, all commands, options and positional parameters should have a proper description. The following Linux commands can be used to find missing descriptions for options and commands:
+
+* Check which options don't have a description: +
+ `+./gradlew build generateManpageAsciiDoc &&  grep -e "^\\*-.*::" -A 1 build/generated-picocli-docs/*.adoc | grep -e "^build.*-\s*$" -B 1+`
+* Check which commands don't have a usage header (inheriting the header of the root command): +
+ `+./gradlew build && java -jar build/libs/fcli.jar util all-commands list --include-parents | fgrep "Command-line interface for working with"+`
+ 
+Where applicable, option and positional parameter descriptions should include references to other related fcli commands, in particular when these related commands are in a separate command tree. For example, available attribute names and values that can be specified on the `fcli ssc appversion-attribute set` command can be found through the `fcli ssc attribute-definition *` commands. Being in a separate command tree, this may not be obvious to users and as such should be documented on the `fcli ssc appversion-attribute set` command.
+
+Comparing this to the 'application name or id' to be passed to the `fcli ssc app get` command; available application id's can be found through the `fcli ssc app list` command under the same `app` parent command, so this doesn't need to be documented as it should be obvious to users.
