@@ -12,9 +12,11 @@ import com.fortify.cli.tool.common.util.FileUtils;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @Command(name = BasicOutputHelperMixins.Install.CMD_NAME)
 public class ToolFoDUploaderInstallCommand extends AbstractToolInstallCommand {
+    @Getter @Mixin private BasicOutputHelperMixins.Install outputHelper;
     @Getter private String toolName = ToolFoDUploaderCommands.TOOL_NAME;
     
     @Override

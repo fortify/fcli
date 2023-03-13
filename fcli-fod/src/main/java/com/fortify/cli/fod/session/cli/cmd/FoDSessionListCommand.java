@@ -31,8 +31,10 @@ import com.fortify.cli.fod.session.manager.FoDSessionDataManager;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @Command(name = BasicOutputHelperMixins.List.CMD_NAME, sortOptions = false)
 public class FoDSessionListCommand extends AbstractSessionListCommand {
+    @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
     @Getter @Inject private FoDSessionDataManager sessionDataManager;
 }

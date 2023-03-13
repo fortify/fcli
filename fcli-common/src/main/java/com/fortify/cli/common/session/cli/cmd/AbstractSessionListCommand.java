@@ -25,16 +25,11 @@
 package com.fortify.cli.common.session.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 public abstract class AbstractSessionListCommand extends AbstractSessionCommand {
-    @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
-    
     @Override
     protected JsonNode getJsonNode() {
     	return getSessionDataManager().sessionSummariesAsArrayNode();

@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
@@ -43,7 +42,6 @@ import picocli.CommandLine.Mixin;
 public abstract class AbstractSessionLoginCommand<D extends ISessionData> extends AbstractSessionCommand implements IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractSessionLoginCommand.class);
     @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
-    @Getter @Mixin private BasicOutputHelperMixins.Login outputHelper;
     
     @Override
     protected JsonNode getJsonNode() {

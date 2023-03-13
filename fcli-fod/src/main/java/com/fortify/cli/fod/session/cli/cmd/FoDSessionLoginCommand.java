@@ -43,6 +43,7 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
 public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionData> {
+    @Getter @Mixin private BasicOutputHelperMixins.Login outputHelper;
     @Getter @Inject private FoDSessionDataManager sessionDataManager;
     @Getter @Inject private FoDOAuthHelper oauthHelper;
     @Inject private GenericUnirestRunner unirestRunner;

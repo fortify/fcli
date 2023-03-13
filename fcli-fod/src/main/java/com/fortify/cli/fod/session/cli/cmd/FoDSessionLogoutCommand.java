@@ -33,10 +33,12 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.Logout.CMD_NAME, sortOptions = false)
 public class FoDSessionLogoutCommand extends AbstractSessionLogoutCommand<FoDSessionData> {
+    @Getter @Mixin private BasicOutputHelperMixins.Logout outputHelper;
     @Getter @Inject private FoDSessionDataManager sessionDataManager;
     
     @Override

@@ -13,10 +13,12 @@ import com.fortify.cli.tool.common.helper.ToolVersionInstallDescriptor;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = BasicOutputHelperMixins.Install.CMD_NAME)
 public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
+    @Getter @Mixin private BasicOutputHelperMixins.Install outputHelper;
     @Getter private String toolName = ToolSCClientCommands.TOOL_NAME;
     @Option(names= {"-t", "--client-auth-token"}) private String clientAuthToken; 
     

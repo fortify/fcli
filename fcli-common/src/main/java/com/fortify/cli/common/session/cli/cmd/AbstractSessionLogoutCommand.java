@@ -25,7 +25,6 @@
 package com.fortify.cli.common.session.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
@@ -38,8 +37,7 @@ import picocli.CommandLine.Mixin;
 @ReflectiveAccess
 public abstract class AbstractSessionLogoutCommand<D extends ISessionData> extends AbstractSessionCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
-    @Getter @Mixin private BasicOutputHelperMixins.Logout outputHelper;
-
+    
     @Override
     protected JsonNode getJsonNode() {
         String sessionName = sessionNameMixin.getSessionName();

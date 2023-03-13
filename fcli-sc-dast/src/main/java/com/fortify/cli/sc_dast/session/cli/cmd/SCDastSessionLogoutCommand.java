@@ -38,6 +38,7 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = BasicOutputHelperMixins.Logout.CMD_NAME, sortOptions = false)
 public class SCDastSessionLogoutCommand extends AbstractSessionLogoutCommand<SCDastSessionData> {
+    @Getter @Mixin private BasicOutputHelperMixins.Logout outputHelper;
     @Getter @Inject private SCDastSessionDataManager sessionDataManager;
     @Inject private SSCTokenHelper tokenHelper;
     @Mixin private SCDastSessionLogoutOptions logoutOptions;

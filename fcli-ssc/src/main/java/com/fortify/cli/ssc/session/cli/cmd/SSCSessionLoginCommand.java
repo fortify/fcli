@@ -40,6 +40,7 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
 public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessionData> {
+    @Getter @Mixin private BasicOutputHelperMixins.Login outputHelper;
     @Getter @Inject private SSCSessionDataManager sessionDataManager;
     @Inject private SSCTokenHelper tokenHelper;
     @Mixin private SSCSessionLoginOptions sessionLoginOptions;

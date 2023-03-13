@@ -31,8 +31,10 @@ import com.fortify.cli.sc_sast.session.manager.SCSastSessionDataManager;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @Command(name = BasicOutputHelperMixins.List.CMD_NAME, sortOptions = false)
 public class SCSastSessionListCommand extends AbstractSessionListCommand {
+    @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
     @Getter @Inject private SCSastSessionDataManager sessionDataManager;
 }

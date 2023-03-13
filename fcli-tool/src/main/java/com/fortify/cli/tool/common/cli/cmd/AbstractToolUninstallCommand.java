@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.tool.common.helper.ToolHelper;
 import com.fortify.cli.tool.common.helper.ToolVersionCombinedDescriptor;
@@ -14,13 +13,11 @@ import com.fortify.cli.tool.common.util.FileUtils;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
 public abstract class AbstractToolUninstallCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private BasicOutputHelperMixins.Uninstall outputHelper;
     @Getter @Parameters(index="0", arity="1", descriptionKey="fcli.tool.uninstall.version") 
     private String version;
     @Getter @Option(names={"-y", "--confirm-uninstall"}, required = false, descriptionKey="fcli.tool.uninstall.confirm") 

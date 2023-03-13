@@ -5,17 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.tool.common.helper.ToolHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
 
 @ReflectiveAccess
 public abstract class AbstractToolListCommand extends AbstractBasicOutputCommand {
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
     
     @Override
     protected final JsonNode getJsonNode() {
