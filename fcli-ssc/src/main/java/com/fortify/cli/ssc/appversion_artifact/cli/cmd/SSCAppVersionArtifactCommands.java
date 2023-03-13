@@ -2,8 +2,7 @@ package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
-import com.fortify.cli.ssc.appversion_artifact.cli.cmd.imprt.SSCAppVersionArtifactImportFromCommands;
-import com.fortify.cli.ssc.appversion_artifact.cli.cmd.purge.SSCAppVersionArtifactPurgeCommands;
+import com.fortify.cli.ssc.appversion_artifact.cli.cmd.import_debricked.SSCAppVersionArtifactImportDebrickedCommand;
 
 import picocli.CommandLine.Command;
 
@@ -12,11 +11,13 @@ import picocli.CommandLine.Command;
         subcommands = {
             SSCAppVersionArtifactApproveCommand.class,
             SSCAppVersionArtifactDeleteCommand.class,
-            SSCAppVersionArtifactDownloadCommand.class,
+            SSCAppVersionArtifactDownloadByIdCommand.class,
+            SSCAppVersionArtifactDownloadStateCommand.class,
             SSCAppVersionArtifactGetCommand.class,
-            SSCAppVersionArtifactImportFromCommands.class,
+            SSCAppVersionArtifactImportDebrickedCommand.class,
             SSCAppVersionArtifactListCommand.class,
-            SSCAppVersionArtifactPurgeCommands.class,
+            SSCAppVersionArtifactPurgeByIdCommand.class,
+            SSCAppVersionArtifactPurgeOlderThanCommand.class,
             SSCAppVersionArtifactUploadCommand.class,
             SSCAppVersionArtifactWaitForCommand.class
         }

@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion_artifact.cli.cmd.imprt.debricked;
+package com.fortify.cli.ssc.appversion_artifact.cli.cmd.import_debricked;
 
 import java.io.File;
 import java.nio.file.StandardCopyOption;
@@ -43,9 +43,9 @@ import com.fortify.cli.common.util.ProgressHelper;
 import com.fortify.cli.common.util.ProgressHelper.IProgressHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion_artifact.cli.cmd.AbstractSSCAppVersionArtifactUploadCommand;
-import com.fortify.cli.ssc.appversion_artifact.cli.cmd.imprt.debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
-import com.fortify.cli.ssc.appversion_artifact.cli.cmd.imprt.debricked.DebrickedLoginOptions.DebrickedAuthOptions;
-import com.fortify.cli.ssc.appversion_artifact.cli.cmd.imprt.debricked.DebrickedLoginOptions.DebrickedUserCredentialOptions;
+import com.fortify.cli.ssc.appversion_artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
+import com.fortify.cli.ssc.appversion_artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAuthOptions;
+import com.fortify.cli.ssc.appversion_artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedUserCredentialOptions;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -58,9 +58,9 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess @FixInjection
-@Command(name = SSCOutputHelperMixins.ImportFromDebricked.CMD_NAME)
-public class SSCAppVersionArtifactImportFromDebrickedCommand extends AbstractSSCAppVersionArtifactUploadCommand {
-    @Getter @Mixin private SSCOutputHelperMixins.ImportFromDebricked outputHelper;
+@Command(name = SSCOutputHelperMixins.ImportDebricked.CMD_NAME)
+public class SSCAppVersionArtifactImportDebrickedCommand extends AbstractSSCAppVersionArtifactUploadCommand {
+    @Getter @Mixin private SSCOutputHelperMixins.ImportDebricked outputHelper;
     @Mixin private DebrickedLoginOptions debrickedLoginOptions; 
     @Inject private GenericUnirestRunner debrickedUnirestRunner;
     private final IProgressHelper progressHelper = ProgressHelper.createProgressHelper();

@@ -24,6 +24,7 @@ import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 /**
@@ -97,11 +98,11 @@ public class SSCOutputHelperMixins {
     @ReflectiveAccess public static class Cancel 
                extends UnirestOutputHelperMixins.Cancel {}
     
+    @ReflectiveAccess public static class Download 
+    extends UnirestOutputHelperMixins.Download {}
+    
     @ReflectiveAccess public static class Upload 
                extends UnirestOutputHelperMixins.Upload {}
-    
-    @ReflectiveAccess public static class Download 
-               extends UnirestOutputHelperMixins.Download {}
     
     @ReflectiveAccess public static class Install 
                extends UnirestOutputHelperMixins.Install {}
@@ -118,20 +119,31 @@ public class SSCOutputHelperMixins {
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
-    @ReflectiveAccess public static class ArtifactPurgeByDate extends UnirestOutputHelperMixins.Other {
-        public static final String CMD_NAME = "by-date";
+    @Command(aliases = "download-by-id")
+    @ReflectiveAccess public static class ArtifactDownloadById 
+                extends UnirestOutputHelperMixins.Download {}
+    
+    @ReflectiveAccess public static class ArtifactDownloadState extends UnirestOutputHelperMixins.Other {
+        public static final String CMD_NAME = "download-state";
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
+    @Command(aliases = "purge-by-id")
     @ReflectiveAccess public static class ArtifactPurgeById extends UnirestOutputHelperMixins.Other {
-        public static final String CMD_NAME = "by-id";
+        public static final String CMD_NAME = "purge";
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
-    @ReflectiveAccess public static class ImportFromDebricked extends UnirestOutputHelperMixins.Other {
-        public static final String CMD_NAME = "debricked";
+    @ReflectiveAccess public static class ArtifactPurgeOlderThan extends UnirestOutputHelperMixins.Other {
+        public static final String CMD_NAME = "purge-older-than";
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+    
+    @ReflectiveAccess public static class ImportDebricked extends UnirestOutputHelperMixins.Other {
+        public static final String CMD_NAME = "import-debricked";
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }

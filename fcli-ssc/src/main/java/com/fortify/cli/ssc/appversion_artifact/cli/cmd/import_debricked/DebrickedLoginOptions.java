@@ -1,4 +1,4 @@
-package com.fortify.cli.ssc.appversion_artifact.cli.cmd.imprt.debricked;
+package com.fortify.cli.ssc.appversion_artifact.cli.cmd.import_debricked;
 
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 

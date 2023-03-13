@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.ssc.appversion_artifact.cli.cmd.purge;
+package com.fortify.cli.ssc.appversion_artifact.cli.cmd;
 
 import java.time.OffsetDateTime;
 import java.util.function.UnaryOperator;
@@ -48,17 +48,17 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @ReflectiveAccess
-@Command(name = SSCOutputHelperMixins.ArtifactPurgeByDate.CMD_NAME)
+@Command(name = SSCOutputHelperMixins.ArtifactPurgeOlderThan.CMD_NAME)
 // We're outputting an appversion, not an artifact, hence we configure an empty default variable property name
 @DefaultVariablePropertyName("") 
-public class SSCAppVersionArtifactPurgeByDateCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformerSupplier, IActionCommandResultSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.ArtifactPurgeByDate outputHelper;
+public class SSCAppVersionArtifactPurgeOlderThanCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformerSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private SSCOutputHelperMixins.ArtifactPurgeOlderThan outputHelper;
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.DAYS, Period.YEARS);
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
-    @Option(names = {"--older-than"}, required=true) private String olderThan;            
+    @Parameters(index = "0", arity = "1", paramLabel="older-than") private String olderThan;            
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
