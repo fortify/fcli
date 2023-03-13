@@ -25,8 +25,7 @@ feat: Some feature
 
 See the output of `+git log+` to view some sample commit messages.
 
-`+release-please-action+` invoked from the GitHub CI workflow generates pull requests containing updated `+CHANGELOG.md+` and `+version.txt+` files based on these commit messages. Merging the pull request will
-result in a new release version being published; this includes publishing the image to Docker Hub, and creating a GitHub release describing the changes.
+`+release-please-action+` invoked from the GitHub CI workflow generates pull requests containing updated `+CHANGELOG.md+` and `+version.txt+` files based on these commit messages. Merging the pull request will result in a new release version being published by creating a GitHub release describing the changes.
 
 == Technologies & Frameworks
 
@@ -156,7 +155,7 @@ All HTML-formatted documentation described above is generated using the `+doc-re
 ** Add hardcoded custom styling
 ** Add hardcoded banner and version bar
 
-The offline HTML documentation is supposed to be self-contained, i.e., users can open any HTML file from `+docs-html.zip+` without extracting the full contents, and the page will render correctly. Of course, links to other documentation files will not work unless the full zip-file is extracted.
+The offline HTML documentation is supposed to be self-contained, i.e., pages should render correctly, without having to extract the full contents, if users open any HTML file from `+docs-html.zip+`. In particular, this means that styles and images need to be embedded inside the HTML files. Of course, links to other documentation files will not work unless the full zip-file is extracted.
 
 For now, the hardcoded banner and navigation bar in the offline documentation is similar to the banner included by Jekyll. However:
 
@@ -246,14 +245,18 @@ fcli <module> <entity> <action>
 ----
 
 * `<module>` represents either a product like `ssc` or `fod`, or an fcli-specific module like `config`, `state`, `tool` or `util`.
-* `<entity>` represents the entity on which the `<action>` sub-commands operate, like `app`, `appversion` or `appversion-attribute`. Virtually every entity should have its own top-level command inside a `<module>`, we usually don't use nested entities like `app->version->attribute`
-* `<action>` represents the action to be taken on the `<entity>`, like `list`, `get`, `set`, `delete`, `update`, ...
+* `<entity>` represents the entity on which the `<action>` sub-commands operate, like `app`, `appversion` or `appversion-attribute`. Virtually every entity should have its own top-level command inside a `<module>`, we usually don't use nested entities like `app->version->attribute`.
+* `<action>` represents the action to be taken on the `<entity>` and is usually a verb like `list`, `get`, `set`, `delete`, `update`, ... 
+** If there are multiple variants of a particular command, `<action>` may include a suffix after the verb, like `download-by-id` and `download-state`, or `purge-by-id` and `purge-by-date`.
+** Aliases should be used to maintain backward compatibility if needed. For example, if there is already a `delete` command that deletes by id, and a new command for deleting by date needs to be added, the original command would be renamed to `delete-by-id` with alias `delete`.
 
-In some exceptional cases, additional levels may be needed, for example like the following: +
-`fcli <module> <entity> <action> <type>`
-This should be used sparingly though, as each additional level may make it more difficult to navigate the fcli command tree.
+Fcli commands should be atomic and specific in nature. Each command should only do one thing, and do it well. A clear example are the `wait-for` commands that provide a lot of wait-related options, rather than having the wait-related options on the command that initiated the action that we're waiting for. 
 
-In general, each container command should contain either only leaf commands, or only container commands. For example, the top-level `<module>` command should usually only contain `<entity>` container commands and no leaf commands, whereas `<entity>` commands should usually only contain leaf commands. There are some exceptions to this rule though, for example if a command operates on all entities within a module, like the `fcli config clear` command. Likewise, entity commands may potentially contain both `<action>' leaf commands and `<action>` container commands containing action sub-types.
+In general, exclusive options that influence the outcome of a command are an indication that a command is not specific enough; in such cases you may want to consider having multiple variants of the same command as described above. For example, if you are considering a single `purge` command with exclusive options `--id <id>` and `--older-than <date>`, then having more specific `purge-by-id` and `purge-by-date` or even `purge-older-than` commands would be more appropriate.
+
+As usual, there are some exceptions to this rule, in particular for commands that are consistently named across fcli modules. For example, login commands often allow for logging in with either user or token credentials; for consistency we just have a single login command that provides options for either approach.
+
+In general, each container command should contain either only leaf commands, or only container commands. For example, the top-level `<module>` command should usually only contain `<entity>` container commands and no leaf commands, whereas `<entity>` commands should usually only contain leaf commands. There are some exceptions to this rule though, for example if a command operates on all entities within a module, like the `fcli config clear` command.
 
 === Command Implementation
 
@@ -291,9 +294,19 @@ public class <Module><Entity><Action>Command extends <SuperClass> implements <Co
 
 Leaf commands in non-product modules usually have a similar structure, but some details may be different. Container commands, i.e. commands that represent `<module>` and `<entity>` have a very different (easier) structure as they don't have any actual functionality associated to them; please refer to existing fcli container commands to serve as an example.
 
+=== Aliases & Option Names
+
+Commands may have one or more aliases, and multiple names may be defined for options. Having multiple names for a single command or option may be useful for various reasons, for example:
+
+* For providing shorter names, resulting in less typing for the user.
+* To maintain backward compatibility when renaming an existing command or option
+* As a 'default' command or option name if there are multiple variants of the same command or option, for example `purge` as the an alias for `purge-by-id` to have this as the default 'purge' operation if there are also other `purge-*` commands.
+
+In general, each command and option should have at most two names; the full name and a shorter form. For options, the shorter form is usually a single letter with single `-`; the use of multiple option names with double `--` should be avoided.
+
 === ArgGroup Annotations
 
-It was decided that `ArgGroup` annotations should be used sparingly (link:https://github.com/fortify/fcli/issues/89[Issue #89]). `ArgGroup` annotations are mostly used for generic options, like logging, help, output and query options. Command-specific options should not be contained in ArgGroups unless there is a very good reason for doing so.
+It was decided that `ArgGroup` annotations should be used sparingly (link:https://github.com/fortify/fcli/issues/89[Issue #89]). `ArgGroup` annotations are mostly used for generic options, like logging, help, output and query options. In general, command-specific options should use `ArgGroup` annotations only for defining exclusive options, not for creating a separate section in the help output.
 
 === Options vs Positional Parameters
 
