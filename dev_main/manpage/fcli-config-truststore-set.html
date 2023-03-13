@@ -1,6 +1,6 @@
 ---
-title: fcli-state-variable-definition-delete(1)
-fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07 59
+title: fcli-config-truststore-set(1)
+fcli_version: fcli version 0.20230313.164403-dev_main, built on 2023-03-13 16 44 32
 ---
 
 <!DOCTYPE html>
@@ -9,31 +9,31 @@ fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-state-variable-definition-delete(1)</title>
+<title>fcli-config-truststore-set(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230310.170722-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230313.164403-dev_main" %}
 
 
 <div id="header">
-<h1>fcli-state-variable-definition-delete(1) Manual Page</h1>
+<h1>fcli-config-truststore-set(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
-<li><a href="#_output_options">Output options:</a></li>
+<li><a href="#_options">Options</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
 <li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-state-variable-definition-delete - Delete a variable definition</p>
+<p>fcli-config-truststore-set - Command-line interface for working with various Fortify products</p>
 </div>
 </div>
 <div id="content">
@@ -41,13 +41,12 @@ fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli state variable definition delete</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                                      [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                      [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format_
-                                _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                          _            <em class="=&lt;propertyNames&gt;">]
-                                      [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
-                                      <em>&lt;variableName&gt;</em></p>
+<p><strong>fcli config truststore set</strong> [<strong>-p</strong>=<em>&lt;trustStorePassword&gt;</em>] [<strong>-t</strong>=<em>&lt;trustStoreType&gt;</em>]
+                           [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                           [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                           <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+               _            <em class="=&lt;propertyNames&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
+                           <em>&lt;trustStorePath&gt;</em></p>
 </div>
 </div>
 </div>
@@ -58,10 +57,15 @@ fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07
 </div>
 </div>
 <div class="sect1">
-<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>-p</strong>, <strong>--truststore-password</strong>=<em>&lt;trustStorePassword&gt;</em></dt>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--truststore-type</strong>=<em>&lt;trustStoreType&gt;</em></dt>
+<dd>
+<p>== Output options:</p>
+</dd>
 <dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
 <p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
@@ -108,7 +112,10 @@ fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><em>&lt;variableName&gt;</em></dt>
+<dt class="hdlist1"><em>&lt;trustStorePath&gt;</em></dt>
+<dd>
+<p>Path to custom SSL trust store</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -116,8 +123,8 @@ fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07 59<br>
-Last updated 2023-03-10 17:09:32 UTC
+Version fcli version 0.20230313.164403-dev_main, built on 2023-03-13 16 44 32<br>
+Last updated 2023-03-13 16:45:47 UTC
 </div>
 </div>
 </body>

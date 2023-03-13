@@ -53,6 +53,7 @@ fcli_version:
 <ul class="sectlevel2">
 <li><a href="#_command_structure">Command Structure</a></li>
 <li><a href="#_command_implementation">Command Implementation</a></li>
+<li><a href="#_aliases_option_names">Aliases &amp; Option Names</a></li>
 <li><a href="#_arggroup_annotations">ArgGroup Annotations</a></li>
 <li><a href="#_options_vs_positional_parameters">Options vs Positional Parameters</a></li>
 <li><a href="#_message_keys">Message Keys</a></li>
@@ -97,8 +98,7 @@ feat: Some feature
 <p>See the output of <code>git log</code> to view some sample commit messages.</p>
 </div>
 <div class="paragraph">
-<p><code>release-please-action</code> invoked from the GitHub CI workflow generates pull requests containing updated <code>CHANGELOG.md</code> and <code>version.txt</code> files based on these commit messages. Merging the pull request will
-result in a new release version being published; this includes publishing the image to Docker Hub, and creating a GitHub release describing the changes.</p>
+<p><code>release-please-action</code> invoked from the GitHub CI workflow generates pull requests containing updated <code>CHANGELOG.md</code> and <code>version.txt</code> files based on these commit messages. Merging the pull request will result in a new release version being published by creating a GitHub release describing the changes.</p>
 </div>
 </div>
 </div>
@@ -407,7 +407,7 @@ and introspection-based (de-)serialization. When running in a normal JVM these d
 </ul>
 </div>
 <div class="paragraph">
-<p>The offline HTML documentation is supposed to be self-contained, i.e., users can open any HTML file from <code>docs-html.zip</code> without extracting the full contents, and the page will render correctly. Of course, links to other documentation files will not work unless the full zip-file is extracted.</p>
+<p>The offline HTML documentation is supposed to be self-contained, i.e., pages should render correctly, without having to extract the full contents, if users open any HTML file from <code>docs-html.zip</code>. In particular, this means that styles and images need to be embedded inside the HTML files. Of course, links to other documentation files will not work unless the full zip-file is extracted.</p>
 </div>
 <div class="paragraph">
 <p>For now, the hardcoded banner and navigation bar in the offline documentation is similar to the banner included by Jekyll. However:</p>
@@ -687,20 +687,34 @@ and introspection-based (de-)serialization. When running in a normal JVM these d
 <p><code>&lt;module&gt;</code> represents either a product like <code>ssc</code> or <code>fod</code>, or an fcli-specific module like <code>config</code>, <code>state</code>, <code>tool</code> or <code>util</code>.</p>
 </li>
 <li>
-<p><code>&lt;entity&gt;</code> represents the entity on which the <code>&lt;action&gt;</code> sub-commands operate, like <code>app</code>, <code>appversion</code> or <code>appversion-attribute</code>. Virtually every entity should have its own top-level command inside a <code>&lt;module&gt;</code>, we usually don&#8217;t use nested entities like <code>app&#8594;version&#8594;attribute</code></p>
+<p><code>&lt;entity&gt;</code> represents the entity on which the <code>&lt;action&gt;</code> sub-commands operate, like <code>app</code>, <code>appversion</code> or <code>appversion-attribute</code>. Virtually every entity should have its own top-level command inside a <code>&lt;module&gt;</code>, we usually don&#8217;t use nested entities like <code>app&#8594;version&#8594;attribute</code>.</p>
 </li>
 <li>
-<p><code>&lt;action&gt;</code> represents the action to be taken on the <code>&lt;entity&gt;</code>, like <code>list</code>, <code>get</code>, <code>set</code>, <code>delete</code>, <code>update</code>, &#8230;&#8203;</p>
+<p><code>&lt;action&gt;</code> represents the action to be taken on the <code>&lt;entity&gt;</code> and is usually a verb like <code>list</code>, <code>get</code>, <code>set</code>, <code>delete</code>, <code>update</code>, &#8230;&#8203;</p>
+<div class="ulist">
+<ul>
+<li>
+<p>If there are multiple variants of a particular command, <code>&lt;action&gt;</code> may include a suffix after the verb, like <code>download-by-id</code> and <code>download-state</code>, or <code>purge-by-id</code> and <code>purge-by-date</code>.</p>
+</li>
+<li>
+<p>Aliases should be used to maintain backward compatibility if needed. For example, if there is already a <code>delete</code> command that deletes by id, and a new command for deleting by date needs to be added, the original command would be renamed to <code>delete-by-id</code> with alias <code>delete</code>.</p>
+</li>
+</ul>
+</div>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>In some exceptional cases, additional levels may be needed, for example like the following:<br>
-<code>fcli &lt;module&gt; &lt;entity&gt; &lt;action&gt; &lt;type&gt;</code>
-This should be used sparingly though, as each additional level may make it more difficult to navigate the fcli command tree.</p>
+<p>Fcli commands should be atomic and specific in nature. Each command should only do one thing, and do it well. A clear example are the <code>wait-for</code> commands that provide a lot of wait-related options, rather than having the wait-related options on the command that initiated the action that we&#8217;re waiting for.</p>
 </div>
 <div class="paragraph">
-<p>In general, each container command should contain either only leaf commands, or only container commands. For example, the top-level <code>&lt;module&gt;</code> command should usually only contain <code>&lt;entity&gt;</code> container commands and no leaf commands, whereas <code>&lt;entity&gt;</code> commands should usually only contain leaf commands. There are some exceptions to this rule though, for example if a command operates on all entities within a module, like the <code>fcli config clear</code> command. Likewise, entity commands may potentially contain both <code>&lt;action&gt;' leaf commands and `&lt;action&gt;</code> container commands containing action sub-types.</p>
+<p>In general, exclusive options that influence the outcome of a command are an indication that a command is not specific enough; in such cases you may want to consider having multiple variants of the same command as described above. For example, if you are considering a single <code>purge</code> command with exclusive options <code>--id &lt;id&gt;</code> and <code>--older-than &lt;date&gt;</code>, then having more specific <code>purge-by-id</code> and <code>purge-by-date</code> or even <code>purge-older-than</code> commands would be more appropriate.</p>
+</div>
+<div class="paragraph">
+<p>As usual, there are some exceptions to this rule, in particular for commands that are consistently named across fcli modules. For example, login commands often allow for logging in with either user or token credentials; for consistency we just have a single login command that provides options for either approach.</p>
+</div>
+<div class="paragraph">
+<p>In general, each container command should contain either only leaf commands, or only container commands. For example, the top-level <code>&lt;module&gt;</code> command should usually only contain <code>&lt;entity&gt;</code> container commands and no leaf commands, whereas <code>&lt;entity&gt;</code> commands should usually only contain leaf commands. There are some exceptions to this rule though, for example if a command operates on all entities within a module, like the <code>fcli config clear</code> command.</p>
 </div>
 </div>
 <div class="sect2">
@@ -735,7 +749,17 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 <p><code>&lt;Entity&gt;</code> represents the entity that the command is operating on, like <code>App</code>, <code>AppVersion</code>, <code>User</code>, &#8230;&#8203;</p>
 </li>
 <li>
-<p><code>&lt;Action&gt;</code>: Represents the action performed by this command; should be one of the classes in the <code>&lt;Product&gt;OutputHelperMixins</code> class, like <code>Get</code>, <code>List</code>, <code>Delete</code>, &#8230;&#8203; Every action should have a corresponding inner class in the <code>&lt;Product&gt;OutputHelperMixins</code> class; each of these inner classes in turn extend from the appropriate inner class defined in <code>UnirestOutputHelperMixins</code> or <code>BasicOutputHelperMixins</code> classes, potentially adding product-specific behavior.</p>
+<p><code>&lt;Action&gt;</code>: Represents the action performed by this command; should be one of the classes in the <code>&lt;Product&gt;OutputHelperMixins</code> class, like <code>Get</code>, <code>List</code>, <code>Delete</code>, &#8230;&#8203;</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Every action should have a corresponding inner class in the <code>&lt;Product&gt;OutputHelperMixins</code> class; each of these inner classes in turn extend from the appropriate inner class defined in <code>UnirestOutputHelperMixins</code> or <code>BasicOutputHelperMixins</code> classes, potentially adding product-specific behavior.</p>
+</li>
+<li>
+<p>In general, only concrete command implementations should declare references to <code>*OutputHelperMixins</code> classes, both in the <code>@Command</code> declaration and the <code>outputHelper</code> field. Defining an <code>outputHelper</code> field in an (abstract) superclass will result in any aliases defined on <code>*OutputHelperMixins</code> inner classes not being applied to the concrete command implementations.</p>
+</li>
+</ul>
+</div>
 </li>
 <li>
 <p><code>&lt;SuperClass&gt;</code> is usually <code>Abstract&lt;Module&gt;OutputCommand</code> or an entity-specific sub-class of <code>Abstract&lt;Module&gt;OutputCommand</code>. Indirectly, virtually all leaf commands should extend from either <code>AbstractBasicOutputCommand</code> (for commands that don&#8217;t interact with remote systems) or <code>AbstractUnirestOutputCommand</code> (for commands that do interact with remote systems).</p>
@@ -772,9 +796,31 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 </div>
 </div>
 <div class="sect2">
+<h3 id="_aliases_option_names"><a class="anchor" href="#_aliases_option_names"></a>Aliases &amp; Option Names</h3>
+<div class="paragraph">
+<p>Commands may have one or more aliases, and multiple names may be defined for options. Having multiple names for a single command or option may be useful for various reasons, for example:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For providing shorter names, resulting in less typing for the user.</p>
+</li>
+<li>
+<p>To maintain backward compatibility when renaming an existing command or option</p>
+</li>
+<li>
+<p>As a 'default' command or option name if there are multiple variants of the same command or option, for example <code>purge</code> as the an alias for <code>purge-by-id</code> to have this as the default 'purge' operation if there are also other <code>purge-*</code> commands.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In general, each command and option should have at most two names; the full name and a shorter form. For options, the shorter form is usually a single letter with single <code>-</code>; the use of multiple option names with double <code>--</code> should be avoided.</p>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_arggroup_annotations"><a class="anchor" href="#_arggroup_annotations"></a>ArgGroup Annotations</h3>
 <div class="paragraph">
-<p>It was decided that <code>ArgGroup</code> annotations should be used sparingly (<a href="https://github.com/fortify/fcli/issues/89">Issue #89</a>). <code>ArgGroup</code> annotations are mostly used for generic options, like logging, help, output and query options. Command-specific options should not be contained in ArgGroups unless there is a very good reason for doing so.</p>
+<p>It was decided that <code>ArgGroup</code> annotations should be used sparingly (<a href="https://github.com/fortify/fcli/issues/89">Issue #89</a>). <code>ArgGroup</code> annotations are mostly used for generic options, like logging, help, output and query options. In general, command-specific options should use <code>ArgGroup</code> annotations only for defining exclusive options, not for creating a separate section in the help output.</p>
 </div>
 </div>
 <div class="sect2">
@@ -789,7 +835,31 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 <div class="sect2">
 <h3 id="_message_keys"><a class="anchor" href="#_message_keys"></a>Message Keys</h3>
 <div class="paragraph">
-<p>In general, standard picocli conventions should be used for locating i18n message keys for options, positional parameters, command descriptions, and so on. In some cases, it may be necessary to configure explicit messages keys in picocli annotations, for example for options and parameters defined in command super-classes or mixins. As an example, take the <code>@Option</code> <code>descriptionKey</code> attributes in the <code>AbstractToolInstallCommand</code>, specifying a fixed description key for all sub-commands. This way, the option description only needs to be specified once in the resource bundle, whereas using the standard picocli conventions would potentially have resulted in requiring the option description to be repeated for every individual command that extends from <code>AbstractToolInstallCommand</code>.</p>
+<p>In general, standard picocli conventions should be used for locating i18n message keys for options, positional parameters, command descriptions, and so on. In some cases, it may be necessary to configure explicit messages keys in picocli annotations, for example for options and parameters defined in command super-classes or mixins.</p>
+</div>
+<div class="paragraph">
+<p>As an example, take the <code>@Option</code> <code>descriptionKey</code> attributes in the <code>AbstractToolInstallCommand</code>, specifying a fixed description key for all sub-commands. This way, the option description only needs to be specified once in the resource bundle, whereas using the standard picocli conventions would potentially have resulted in requiring the option description to be repeated for every individual command that extends from <code>AbstractToolInstallCommand</code>.</p>
+</div>
+<div class="paragraph">
+<p>Ideally, all commands, options and positional parameters should have a proper description. The following Linux commands can be used to find missing descriptions for options and commands:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Check which options don&#8217;t have a description:<br>
+<code>./gradlew build generateManpageAsciiDoc &amp;&amp;  grep -e "^\\*-.*::" -A 1 build/generated-picocli-docs/*.adoc | grep -e "^build.*-\s*$" -B 1</code></p>
+</li>
+<li>
+<p>Check which commands don&#8217;t have a usage header (inheriting the header of the root command):<br>
+<code>./gradlew build &amp;&amp; java -jar build/libs/fcli.jar util all-commands list --include-parents | fgrep "Command-line interface for working with"</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Where applicable, option and positional parameter descriptions should include references to other related fcli commands, in particular when these related commands are in a separate command tree. For example, available attribute names and values that can be specified on the <code>fcli ssc appversion-attribute set</code> command can be found through the <code>fcli ssc attribute-definition *</code> commands. Being in a separate command tree, this may not be obvious to users and as such should be documented on the <code>fcli ssc appversion-attribute set</code> command.</p>
+</div>
+<div class="paragraph">
+<p>Comparing this to the 'application name or id' to be passed to the <code>fcli ssc app get</code> command; available application id&#8217;s can be found through the <code>fcli ssc app list</code> command under the same <code>app</code> parent command, so this doesn&#8217;t need to be documented as it should be obvious to users.</p>
 </div>
 </div>
 </div>
@@ -797,7 +867,7 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-03-10 17:07:17 UTC
+Last updated 2023-03-13 16:43:59 UTC
 </div>
 </div>
 </body>

@@ -1,6 +1,6 @@
 ---
 title: fcli-ssc-appversion-artifact-download(1)
-fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07 59
+fcli_version: fcli version 0.20230313.164403-dev_main, built on 2023-03-13 16 44 32
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230310.170722-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230313.164403-dev_main" %}
 
 
 <div id="header">
@@ -30,11 +30,12 @@ fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07
 <li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-appversion-artifact-download - Download an artifact</p>
+<p>fcli-ssc-appversion-artifact-download - Download an artifact by id</p>
 </div>
 </div>
 <div id="content">
@@ -43,16 +44,15 @@ fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli ssc appversion-artifact download</strong> [<strong>--[no-]include-sources</strong>]
-                                      <strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em>
-                                      [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>-f</strong>=<em>&lt;destination&gt;</em>]
-                                      [<strong>--id</strong>=<em>&lt;artifactId&gt;</em>] [[<strong>-h</strong>]
+                                      [<strong>-f</strong>=<em>&lt;destination&gt;</em>] [[<strong>-h</strong>]
                                       [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                                       [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
                                       [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
                                 _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
                           _            <em class="=&lt;propertyNames&gt;">]
-                                      [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+                                      [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                      <em>artifact-id</em></p>
 </div>
 </div>
 </div>
@@ -71,21 +71,9 @@ fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07
 <dd>
 <p>The output location for the file download.</p>
 </dd>
-<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
-<dd>
-<p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
-</dd>
-<dt class="hdlist1"><strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
-<dd>
-<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
-</dd>
 <dt class="hdlist1"><strong>--[no-]include-sources</strong></dt>
 <dd>
 <p>Sources are included by default; use --no-include-sources to download artifact without sources</p>
-</dd>
-<dt class="hdlist1"><strong>--id</strong>=<em>&lt;artifactId&gt;</em></dt>
-<dd>
-<p>Artifact id to download</p>
 </dd>
 </dl>
 </div>
@@ -150,11 +138,24 @@ fcli_version: fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><em>artifact-id</em></dt>
+<dd>
+<p>Id of the artifact to download</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230310.170722-dev_main, built on 2023-03-10 17 07 59<br>
-Last updated 2023-03-10 17:09:32 UTC
+Version fcli version 0.20230313.164403-dev_main, built on 2023-03-13 16 44 32<br>
+Last updated 2023-03-13 16:45:48 UTC
 </div>
 </div>
 </body>
