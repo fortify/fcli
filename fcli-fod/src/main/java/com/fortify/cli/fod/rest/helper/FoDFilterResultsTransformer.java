@@ -35,6 +35,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.transform.AbstractJsonNodeTransformer;
 import com.fortify.cli.common.output.transform.IJsonNodeTransformer;
 
+// TODO Maybe this class is no longer needed if we merge all scan-related commands into
+//      a single 'scan' entity with a generic 'list' command that has the generic -q option
+//      for filtering by scan type etcetera?
 public class FoDFilterResultsTransformer extends AbstractJsonNodeTransformer implements IJsonNodeTransformer {
     private final Map<String, String> fieldValueMap;
 
@@ -49,6 +52,7 @@ public class FoDFilterResultsTransformer extends AbstractJsonNodeTransformer imp
 
     @Override
     protected final ObjectNode transformObjectNode(ObjectNode input) {
+        // TODO output variable is not used
         ObjectNode output = new ObjectNode(JsonNodeFactory.instance);
         boolean found = true;
         for (String key : fieldValueMap.keySet()) {

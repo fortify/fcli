@@ -50,6 +50,7 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Update.CMD_NAME)
 public class FoDUserGroupUpdateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+    // TODO Mixin class 'Create' doesn't match 'Update.CMD_NAME' above
     @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
 
     @Mixin private FoDUserGroupResolverMixin.PositionalParameter userGroupResolver;

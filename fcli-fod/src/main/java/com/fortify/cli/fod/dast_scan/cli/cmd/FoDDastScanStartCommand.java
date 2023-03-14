@@ -66,6 +66,7 @@ import picocli.CommandLine.Option;
 @Command(name = FoDOutputHelperMixins.Start.CMD_NAME)
 public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
+    // TODO Mixin class 'Create' doesn't match 'Start.CMD_NAME' above
     @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
     @Mixin private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
     @Option(names = {"--entitlement-id"})
@@ -85,6 +86,7 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
     @Mixin
     private FoDAssessmentTypeOptions.OptionalOption assessmentType;
 
+    // TODO Method too long, consider splitting into multiple methods
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
 

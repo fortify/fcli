@@ -33,6 +33,11 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
+// TODO Change description keys to be more like picocli convention
+// TODO Do we even need description keys, or this class at all? At least 
+//      for now, this mixin is only used by a single command, so we could
+//      consider moving the option directly into that command, and remove
+//      description keys in order to use standard picocli lookup.
 public class FoDSbomFormatOptions {
     public enum FoDSbomFormat {CycloneDX}
 

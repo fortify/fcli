@@ -42,6 +42,9 @@ import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
+// TODO As a best practice, if-blocks should be enclosed in curly braces
+// TODO Looks like these methods are never expected to return null, so consider
+//      refactoring such that 'return null' at the end is not needed
 public class FoDLookupHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();

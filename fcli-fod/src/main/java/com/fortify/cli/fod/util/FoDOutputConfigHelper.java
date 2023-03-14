@@ -9,6 +9,7 @@ import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig
 import io.micronaut.http.uri.UriBuilder;
 import kong.unirest.HttpResponse;
 
+// TODO None of the methods in this class seem to be used anymore; if so, class should be removed
 public class FoDOutputConfigHelper {
     /**
      * Provide default table output configuration for results optionally embedded in an items object

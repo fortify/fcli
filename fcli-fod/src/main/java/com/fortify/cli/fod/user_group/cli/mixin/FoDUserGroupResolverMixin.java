@@ -34,6 +34,7 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+//TODO Change description keys to be more like picocli convention
 public class FoDUserGroupResolverMixin {
     @ReflectiveAccess
     public static abstract class AbstractFoDUserGroupResolverMixin {

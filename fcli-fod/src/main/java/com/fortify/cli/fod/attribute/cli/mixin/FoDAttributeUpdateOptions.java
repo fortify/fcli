@@ -31,6 +31,10 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+// TODO Attributes are not a stand-alone entity in fcli; there are no 'fcli fod [app-]attribute' commands
+//      Looks like these classes are only used by the app commands. so consider moving to that package
+//      tree, i.e., app.cli.mixin, app.cli.mixin,attribute, or app.attribute.cli.mixin.
+//      Same applies to the helper package.
 public class FoDAttributeUpdateOptions {
     private static final String PARAM_LABEL = "[ATTR=VALUE]";
 

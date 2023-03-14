@@ -33,6 +33,10 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
+// TODO This class seems to be all about scan types, so why is it named 'Format'?
+// TODO Having similarly named enum FoDScanType and abstract class AbstractFodScanType can cause confusion.
+// TODO Possibly better to move FoDScanType enum to a top-level type in the helper package
+// TODO Change description keys to be more like picocli convention
 public class FoDScanFormatOptions {
     public enum FoDScanType {Static, Dynamic, Mobile, Monitoring, Network, OpenSource, Container}
 

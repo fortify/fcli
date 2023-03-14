@@ -31,8 +31,13 @@ import com.fortify.cli.fod.scan.cli.cmd.FoDScanCancelCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
+// TODO Instead of defining a subclass, can't we have FoDDastScanCommands simply
+//      reference the FoDScanCancelCommand class?
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Cancel.CMD_NAME)
 public class FoDDastScanCancelCommand extends FoDScanCancelCommand {
-
+    // TODO Ideally, leaf commands should define outputHelper mixin:
+    //      - To make sure that mixin name matches CMD_NAME in Command annotation
+    //      - Aliases defined on mixins in superclasses may not be applied
+    //      In this case, we probably can't, as our parent already defines the outputHelper mixin.
 }

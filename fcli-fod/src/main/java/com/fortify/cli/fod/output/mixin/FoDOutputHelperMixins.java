@@ -6,12 +6,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.UnirestOutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
-import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
 import com.fortify.cli.common.output.spi.product.IProductHelper;
 import com.fortify.cli.common.output.spi.product.ProductHelperClass;
 import com.fortify.cli.common.output.spi.request.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.output.spi.transform.IInputTransformerSupplier;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins.FoDProductHelper;
 import com.fortify.cli.fod.rest.helper.FoDInputTransformer;
@@ -22,7 +20,6 @@ import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
-import picocli.CommandLine.Mixin;
 
 /**
  * <p>This class provides standard, FoD-specific {@link IUnirestOutputHelper} implementations,
@@ -109,10 +106,4 @@ public class FoDOutputHelperMixins {
 
     @ReflectiveAccess public static class Other 
                extends UnirestOutputHelperMixins.Other {}
-
-    @ReflectiveAccess public static class ScanAction extends UnirestOutputHelperMixins.Other {
-        @Getter @Mixin
-        private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table();
-    }
 }

@@ -35,6 +35,11 @@ public class FoDOssHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
+    // TODO Any plans to actually rename any fields? We should document
+    //      a convention for methods like these; do we want commands to
+    //      consistently call a *Helper.renameFields/transformRecord method,
+    //      even if it doesn't do anything, reducing the risk that commands
+    //      forget to invoke this method when it actually does something?
     public static final JsonNode renameFields(JsonNode record) {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
     }

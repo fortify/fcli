@@ -46,6 +46,7 @@ import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
+// Methods are relatively long, consider splitting
 public class FoDUserGroupHelper {
     @Getter
     private static ObjectMapper objectMapper = new ObjectMapper();

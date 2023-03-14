@@ -33,6 +33,12 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
+// TODO Can we dynamically get the number of units for each scan type?
+//      Potentially these could change in future FoD versions.
+// TODO Use @RequiredArgsConstructor instead of manually defining constructor
+// TODO USe @Getter to generate getters
+// TODO Change description keys to be more like picocli convention
+// TODO Maybe move enum its own file?
 public class FoDAssessmentTypeOptions {
     public enum FoDAssessmentType {
         Static(1, 4),

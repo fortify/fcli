@@ -49,6 +49,7 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Create.CMD_NAME)
 public class FoDAppMicroserviceCreateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+    // TODO Mixin class 'Update' doesn't match 'Create.CMD_NAME' above
     @Getter @Mixin private FoDOutputHelperMixins.Update outputHelper;
     @Mixin private FoDAppAndMicroserviceNameResolverMixin.PositionalParameter appAndMicroserviceNameResolver;
 

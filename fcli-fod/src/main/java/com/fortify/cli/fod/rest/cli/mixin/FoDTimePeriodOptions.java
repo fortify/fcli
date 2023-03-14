@@ -37,6 +37,11 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
+// TODO Why is this class in 'rest' package?
+// TODO Any reason for not using the period syntax from DateTimePeriodHelper from fcli-common?
+//      Preferably, all fcli commands should use similar date/time/period formats if not dictated
+//      by server.
+//TODO Change description keys to be more like picocli convention
 public class FoDTimePeriodOptions {
     public enum FoDTimePeriodType {
         Last30, Last60, Last90, Last180, Last360;

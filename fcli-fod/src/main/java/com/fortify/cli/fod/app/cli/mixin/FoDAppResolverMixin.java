@@ -34,6 +34,9 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+// TODO Change description keys to be more like picocli convention, 
+//      for example fcli.fod.app.app-name-or-id or fcli.for.app.resolver 
+//      (note that we should do the same in other modules like SSC) 
 public class FoDAppResolverMixin {    
     @ReflectiveAccess
     public static abstract class AbstractFoDAppResolverMixin {

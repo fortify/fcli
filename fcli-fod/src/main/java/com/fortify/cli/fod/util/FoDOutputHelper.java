@@ -6,6 +6,7 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 
 import io.micronaut.http.uri.UriBuilder;
 
+//TODO None of the methods in this class seem to be used anymore; if so, class should be removed
 public class FoDOutputHelper {
     public static final StandardOutputConfig defaultTableOutputConfig() {
         return StandardOutputConfig.table().inputTransformer(json -> json.get("items"));

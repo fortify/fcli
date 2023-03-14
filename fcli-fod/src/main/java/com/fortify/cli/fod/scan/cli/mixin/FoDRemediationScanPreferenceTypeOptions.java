@@ -35,6 +35,7 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
+//TODO Change description keys to be more like picocli convention
 public class FoDRemediationScanPreferenceTypeOptions {
     @ReflectiveAccess
     public static final class FoDRemediationScanPreferenceTypeIterable extends ArrayList<String> {

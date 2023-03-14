@@ -85,6 +85,8 @@ public class FoDAppRelUpdateCommand extends AbstractFoDOutputCommand implements 
                         appRelDescriptor.getApplicationName()+":"+microserviceNameOrId, ":", true);
                 microServiceId = descriptor.getMicroserviceId();
             } catch (JsonProcessingException e) {
+                // TODO Seems like this error is only thrown if microservice cannot be found?
+                //      In that case, reference to 'application name' in exception message is incorrect.
                 throw new CommandLine.ParameterException(spec.commandLine(),
                         "Unable to resolve application name and microservice name.");
             }

@@ -6,6 +6,7 @@ import com.fortify.cli.fod.scan.cli.cmd.FoDScanWaitForCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
+//TODO See comments in FoDDastScanCancelCommand
 @ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.WaitFor.CMD_NAME)
 public class FoDSastScanWaitForCommand extends FoDScanWaitForCommand {

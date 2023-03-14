@@ -79,6 +79,7 @@ public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IUn
     @Mixin
     private FoDAttributeUpdateOptions.OptionalAttrOption appAttrsUpdate;
 
+    // TODO Method too long; separate into multiple methods. 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
 
@@ -90,6 +91,7 @@ public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IUn
         FoDCriticalityTypeOptions.FoDCriticalityType appCriticalityNew = criticalityTypeUpdate.getCriticalityType();
         Map<String, String> attributeUpdates = appAttrsUpdate.getAttributes();
         JsonNode jsonAttrs = objectMapper.createArrayNode();
+        // TODO Use !isEmpty() instead of checking for size
         if (attributeUpdates != null && attributeUpdates.size() > 0) {
             jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, appAttrsCurrent, attributeUpdates);
         } else {
@@ -104,22 +106,30 @@ public class FoDAppUpdateCommand extends AbstractFoDOutputCommand implements IUn
                 .setEmailList(StringUtils.isNotEmpty(appEmailListNew) ? appEmailListNew : appDescriptor.getEmailList())
                 .setAttributes(jsonAttrs);
 
+        // TODO Compiler warns about unlikely argument to contains(); warning seems correct, you likely want to use Collections.disjoint() instead
+        // TODO As a best practice, statements in if-blocks should always be enclosed in curly braces
+        // TODO Avoid repetitive get*()-calls; assign to local variable instead
+        // TODO Avoid repetitive null-checks, potentially change mixin definitions 
+        //      such that the mixin itself and the collection are initialized to non-null value
+        //      to avoid null-checks
+        // TODO Some of the checks are performed twice; i.e. if both add and delete options specified, 
+        //      then we're checking twice whether they do not overlap
         if (addMicroservices != null && addMicroservices.getMicroservices() != null) {
             if (addMicroservices.getMicroservices().contains(deleteMicroservices.getMicroservices()))
-                throw new ValidationException("The --add-microservice and --delete-microservice cannot both be specified for the same microservice");
+                throw new ValidationException("The --add-microservice and --delete-microservice cannot both contain the same microservice");
             appUpdateRequest.setAddMicroservices(addMicroservices.getMicroservices());
         }
 
         if (deleteMicroservices != null && deleteMicroservices.getMicroservices() != null) {
             if (deleteMicroservices.getMicroservices().contains(addMicroservices.getMicroservices()))
-                throw new ValidationException("The --add-microservice and --delete-microservice cannot both be specified for the same microservice");
+                throw new ValidationException("The --add-microservice and --delete-microservice cannot both contain the same microservice");
             appUpdateRequest.setDeleteMicroservices(deleteMicroservices.getMicroservices());
         }
 
         if (renameMicroservices != null && renameMicroservices.getMicroservices() != null) {
             List<String> msNames = new ArrayList<>(renameMicroservices.getMicroservices().keySet());
             if (msNames.contains(addMicroservices.getMicroservices()) || msNames.contains(deleteMicroservices.getMicroservices()))
-                throw new ValidationException("The --update-microservice and --add-microservice or --delete-microservice cannot both be specified for the same microservice");
+                throw new ValidationException("The --update-microservice and --add-microservice or --delete-microservice cannot both contain the same microservice");
             appUpdateRequest.setRenameMicroservices(renameMicroservices.getMicroservices());
         }
 

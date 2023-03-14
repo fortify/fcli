@@ -33,6 +33,7 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
+//TODO Change description keys to be more like picocli convention
 public class FoDAnalysisStatusTypeOptions {
     public enum FoDAnalysisStatusType {Not_Started, In_Progress, Completed, Canceled, Waiting, Scheduled, Queued}
 

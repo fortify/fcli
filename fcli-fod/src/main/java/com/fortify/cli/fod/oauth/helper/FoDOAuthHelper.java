@@ -15,6 +15,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
 
+// TODO Consider moving all classes in this package to a more appropriate package,
+//      for example as a sub-package of the 'rest' package.
 @Singleton @FixInjection
 public class FoDOAuthHelper {
     @Inject private GenericUnirestRunner unirestRunner;

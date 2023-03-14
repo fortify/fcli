@@ -29,6 +29,7 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.ToString;
 
+//TODO Consider using @Builder instead of manual setters
 @ReflectiveAccess
 @Getter
 @ToString

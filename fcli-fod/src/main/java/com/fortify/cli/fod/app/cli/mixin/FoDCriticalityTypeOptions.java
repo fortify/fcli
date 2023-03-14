@@ -32,6 +32,8 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
+//TODO Change description keys to be more like picocli convention
+// TODO Enum case? See comments in FoDAppTypeOptions
 public class FoDCriticalityTypeOptions {
     public enum FoDCriticalityType {High, Medium, Low}
 

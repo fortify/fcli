@@ -61,6 +61,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
         return getSetupDescriptor(unirest, String.valueOf(relId));
     }
 
+    // TODO Split into multiple methods
     public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartSastScanRequest req,
                                                     File scanFile, int chunkSize) {
         FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
@@ -108,8 +109,8 @@ public class FoDSastScanHelper extends FoDScanHelper {
         return JsonHelper.treeToValue(setup, FoDSastScanSetupDescriptor.class);
     }
 
-    //
-
+    // TODO Consider having a generic abbreviate method in StringUtils
+    // TODO Consider adding commons-lang as fcli dependency, which already provides abbreviate method
     private static String abbreviateString(String input, int maxLength) {
         if (input.length() <= maxLength)
             return input;

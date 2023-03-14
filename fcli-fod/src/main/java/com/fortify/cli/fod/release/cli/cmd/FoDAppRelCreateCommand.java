@@ -72,6 +72,7 @@ public class FoDAppRelCreateCommand extends AbstractFoDOutputCommand implements 
     @Mixin
     private FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
 
+    // TODO Consider splitting method
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         if (skipIfExists) {

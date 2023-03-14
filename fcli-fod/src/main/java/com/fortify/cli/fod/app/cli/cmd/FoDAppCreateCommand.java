@@ -54,12 +54,17 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Spec;
 
+// TODO Although microservice-related functionality is based on FoD UI, I think this is not very intuitive.
+//      Also, having multiple positional parameters goes against fcli design principles.
+//      Can we somehow improve this? Some initial ideas:
+//      - Have separate commands for creating a microservices app and regular app, for example have a separate create-microservice-app
+//      - Have a single positional parameter that takes either <app>:<release> or <app>:<microservice>:<release>
+//      - Have a single positional parameter for the app name, and use (potentially repeatable) option for specifying [microservice:]<release>
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Create.CMD_NAME)
 public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
-    //ResourceBundle bundle = ResourceBundle.getBundle("com.fortify.cli.fod.i18n.FoDMessages");
 
     @Parameters(index = "0", arity = "1", descriptionKey = "application-name")
     private String applicationName;
@@ -122,7 +127,7 @@ public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IUn
                         "Missing option: if 'Microservice' type is specified then one or more 'microservice' options need to specified.");
             if (!microservices.contains(releaseMicroservice))
                 throw new ParameterException(spec.commandLine(),
-                        "Invalid option: the 'release-microservice' option specified was not found in the 'microservice' options.");
+                        "Invalid option value: microservice specified in --release-microservice not found in microservices specified in --microservice");
         }
     }
 

@@ -31,6 +31,7 @@ import com.fortify.cli.fod.scan.cli.cmd.FoDScanCancelCommand;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 
+//TODO See comments in FoDDastScanCancelCommand
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Cancel.CMD_NAME)
 public class FoDSastScanCancelCommand extends FoDScanCancelCommand {

@@ -86,6 +86,8 @@ public class FoDAppMicroserviceHelper {
         }
     }
     
+    // TODO Consider splitting into multiple methods
+    // TODO Refactor to avoid dummy 'return null' statement, assuming that this method always returns a result or throws an exception
     public static final FoDAppMicroserviceDescriptor getAppMicroserviceDescriptor(UnirestInstance unirest, String appName, String microserviceName, boolean failIfNotFound) throws JsonProcessingException {
         GetRequest request = unirest.get(FoDUrls.MICROSERVICES);
         int appId = 0;

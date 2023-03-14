@@ -46,6 +46,7 @@ import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
+// TODO Review method length (avoid long methods), in particular updateApp()
 public class FoDAppHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -152,6 +153,9 @@ public class FoDAppHelper {
         return microserviceArray;
     }
 
+    // TODO Better to rename to isEmpty
+    // TODO Consider moving to more generic class (possibly in fcli-common)
+    // TODO Consider adding commons-collections as fcli dependency, and use CollectionUtils.isEmpty instead
     public static boolean missing(List<?> list) {
         return list == null || list.isEmpty();
     }

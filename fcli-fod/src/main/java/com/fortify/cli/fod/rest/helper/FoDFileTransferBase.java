@@ -53,6 +53,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
 
+// TODO Based on some recent messages on FortifySSC, potentially we may need 
+//      chunked uploads for SC DAST as well, so consider refactoring into a
+//      generic class in fcli-common.
+// TODO Why is this an abstract class? It doesn't define any abstract methods
+//      that need to be overridden in subclasses for example. Consider refactoring
+//      this into a regular utility class.
 @ReflectiveAccess
 public abstract class FoDFileTransferBase {
     @Getter private static final ObjectMapper objectMapper = new ObjectMapper();

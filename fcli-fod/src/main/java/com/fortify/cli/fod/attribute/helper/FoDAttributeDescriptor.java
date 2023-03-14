@@ -30,6 +30,7 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+// TODO Same comments as FoDAttributeUpdateOptions
 @ReflectiveAccess
 @Data
 @EqualsAndHashCode(callSuper = true)

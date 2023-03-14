@@ -66,6 +66,7 @@ public class FoDOssScanImportCommand extends AbstractFoDOutputCommand implements
     @CommandLine.Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
 
+    // TODO Consider splitting this method into smaller methods
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);

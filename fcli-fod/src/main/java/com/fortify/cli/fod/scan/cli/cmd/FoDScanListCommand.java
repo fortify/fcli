@@ -59,8 +59,11 @@ public class FoDScanListCommand extends AbstractFoDOutputCommand implements IUni
             .add("id", "scanId", FoDFiltersParamValueGenerators::plain)
             .add("type", "scanType", FoDFiltersParamValueGenerators::plain);
 
+    // TODO Consider standardizing sorting options across fcli modules, also see https://github.com/fortify/fcli/issues/86
     @Option(names = {"--latest-first"})
     private Boolean latestFirst;
+    
+    // TODO Can we re-use existing -q option for these filters? Likely need to improve -q option to handle dates and such.
     @Option(names = {"--started-on-start-date"})
     private String startedOnStartDate;
     @Option(names = {"--started-on-end-date"})
@@ -71,6 +74,7 @@ public class FoDScanListCommand extends AbstractFoDOutputCommand implements IUni
     private String completedOnEndDate;
     @Option(names = {"--modified-start-date"})
     private String modifiedStartDate;
+    
     @Mixin private FoDAnalysisStatusTypeOptions.OptionalOption analysisStatus;
     @Mixin private FoDScanFormatOptions.OptionalOption scanType;
     @Mixin private FoDTimePeriodOptions.OptionalOption timePeriod;

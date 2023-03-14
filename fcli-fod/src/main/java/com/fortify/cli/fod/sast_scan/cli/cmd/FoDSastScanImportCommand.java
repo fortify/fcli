@@ -62,6 +62,7 @@ public class FoDSastScanImportCommand extends AbstractFoDOutputCommand implement
     @CommandLine.Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
 
+    // TODO Split method in multiple methods for upload and generating output
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);

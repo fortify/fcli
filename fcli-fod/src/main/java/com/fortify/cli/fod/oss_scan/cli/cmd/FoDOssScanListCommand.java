@@ -58,6 +58,7 @@ public class FoDOssScanListCommand extends AbstractFoDOutputCommand implements I
 
     @Mixin private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
 
+    // TODO Consider standardizing sorting options across fcli modules, also see https://github.com/fortify/fcli/issues/86
     @Option(names = {"--latest-first"})
     private Boolean latestFirst;
 

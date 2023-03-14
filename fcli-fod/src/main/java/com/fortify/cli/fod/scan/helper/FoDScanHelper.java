@@ -49,6 +49,8 @@ import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
+// TODO Class contains unused unitsRequired() method
+// TODO Class contains some fairly long methods; consider splitting methods
 public class FoDScanHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();

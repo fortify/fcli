@@ -102,6 +102,7 @@ public class FoDAppRelHelper {
         return getOptionalDescriptor(request);
     }
 
+    // TODO Consider splitting into multiple methods
     public static final FoDAppRelDescriptor getAppRelDescriptor(UnirestInstance unirest, String appAndRelNameOrId, String delimiter, boolean failIfNotFound) {
         String[] appAndRelName = appAndRelNameOrId.split(delimiter);
         GetRequest request = unirest.get(FoDUrls.RELEASES);

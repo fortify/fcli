@@ -30,6 +30,12 @@ import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine;
 
+// TODO 'lookup' isn't really an entity, potentially 'lookup-items' could be considered 
+//      an FoD entity, so lookup-items should be the command name, and 'lookup' an alias
+//      to allow for less typing.
+// TODO Any way to refactor this into more 'concrete' entity commands? Given the number of 
+//      possible lookup types, we can't define separate entities for each lookup type, but
+//      may we can think of a different approach?
 @CommandLine.Command(name = "lookup",
         aliases = {"lookup-items"},
         subcommands = {

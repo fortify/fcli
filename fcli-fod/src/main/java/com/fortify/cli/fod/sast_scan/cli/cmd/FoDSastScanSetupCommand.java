@@ -59,6 +59,7 @@ import picocli.CommandLine.Option;
 @ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Setup.CMD_NAME)
 public class FoDSastScanSetupCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
+    // TODO Mixin class 'Create' doesn't match 'Setup.CMD_NAME' above
     @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;
     @Mixin
     private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
@@ -85,6 +86,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDOutputCommand implements
     @Mixin
     private FoDAssessmentTypeOptions.RequiredOption assessmentType;
 
+    // TODO Split into multiple methods
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
 
@@ -94,6 +96,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDOutputCommand implements
         Integer technologyStackId = 0;
         Integer languageLevelId = 0;
 
+        // TODO Unused variable
         // get current setup
         FoDSastScanSetupDescriptor currentSetup = FoDSastScanHelper.getSetupDescriptor(unirest, relId);
 

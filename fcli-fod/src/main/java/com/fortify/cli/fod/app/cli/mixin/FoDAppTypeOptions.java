@@ -33,6 +33,9 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
+// TODO We need to have a convention for enum value names that are used for option value;
+//      unless enum values need to match server values, I think we should use lower case 
+//      names like 'web' instead of 'Web'. Need to document final decision in developer docs.
 public class FoDAppTypeOptions {
     public enum FoDAppType {
         Web("Web_Thick_Client"),

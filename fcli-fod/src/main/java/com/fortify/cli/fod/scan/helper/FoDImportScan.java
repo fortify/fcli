@@ -32,6 +32,7 @@ import com.fortify.cli.fod.rest.helper.FoDFileTransferBase;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 
+// TODO See comments in superclass
 public class FoDImportScan extends FoDFileTransferBase {
     public FoDImportScan(UnirestInstance unirest, String relId, HttpRequest<?> endpoint, File uploadFile) {
         super(unirest, endpoint, uploadFile);

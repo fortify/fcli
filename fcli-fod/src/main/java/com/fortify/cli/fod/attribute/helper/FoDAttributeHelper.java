@@ -41,6 +41,7 @@ import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
+//TODO Same comments as FoDAttributeUpdateOptions
 public class FoDAttributeHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 

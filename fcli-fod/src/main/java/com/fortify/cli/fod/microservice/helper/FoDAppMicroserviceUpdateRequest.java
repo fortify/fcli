@@ -29,6 +29,8 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.ToString;
 
+// TODO Consider using @Builder
+// TODO Given that there's only one field, consider using @AllArgsConstructor instead of setters
 @ReflectiveAccess
 @Getter
 @ToString
