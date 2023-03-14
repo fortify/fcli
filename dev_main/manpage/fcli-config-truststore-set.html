@@ -1,6 +1,6 @@
 ---
 title: fcli-config-truststore-set(1)
-fcli_version: fcli version 0.20230313.164403-dev_main, built on 2023-03-13 16 44 32
+fcli_version: fcli version 0.20230314.141127-dev_main, built on 2023-03-14 14 12 09
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230313.164403-dev_main, built on 2023-03-13 16 44
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230313.164403-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230314.141127-dev_main" %}
 
 
 <div id="header">
@@ -27,13 +27,14 @@ fcli_version: fcli version 0.20230313.164403-dev_main, built on 2023-03-13 16 44
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
+<li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
 <li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-config-truststore-set - Command-line interface for working with various Fortify products</p>
+<p>fcli-config-truststore-set - Configure SSL trust store</p>
 </div>
 </div>
 <div id="content">
@@ -62,10 +63,22 @@ fcli_version: fcli version 0.20230313.164403-dev_main, built on 2023-03-13 16 44
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><strong>-p</strong>, <strong>--truststore-password</strong>=<em>&lt;trustStorePassword&gt;</em></dt>
+<dd>
+<p>SSL trust store password</p>
+</dd>
 <dt class="hdlist1"><strong>-t</strong>, <strong>--truststore-type</strong>=<em>&lt;trustStoreType&gt;</em></dt>
 <dd>
-<p>== Output options:</p>
+<p>SSL trust store type (jks, pkcs12)</p>
 </dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
 <p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
@@ -123,8 +136,8 @@ fcli_version: fcli version 0.20230313.164403-dev_main, built on 2023-03-13 16 44
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230313.164403-dev_main, built on 2023-03-13 16 44 32<br>
-Last updated 2023-03-13 16:45:47 UTC
+Version fcli version 0.20230314.141127-dev_main, built on 2023-03-14 14 12 09<br>
+Last updated 2023-03-14 14:13:34 UTC
 </div>
 </div>
 </body>
