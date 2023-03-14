@@ -23,7 +23,7 @@ import picocli.CommandLine.Parameters;
 public class TrustStoreSetCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier, IRecordTransformerSupplier {
     @Mixin @Getter private BasicOutputHelperMixins.Set outputHelper;
     
-    @Parameters(arity = "1", descriptionKey = "fcli.config.ssl.truststore.set.trustStorePath")
+    @Parameters(index = "0", arity = "1", descriptionKey = "fcli.config.truststore.set.trustStorePath")
     private String trustStorePath;
     
     @Option(names = {"-p", "--truststore-password"})
