@@ -205,7 +205,7 @@ Environment variable lookups are based on the following rules:
 
 * Command aliases are not taken into account when looking for environment variables; suppose we have a `+delete+` command with alias `+rm+`, you will need to use `+FCLI_DEFAULT_..._DELETE_...+` and not `+FCLI_DEFAULT_..._RM_...+` 
 * For options, fcli will use the longest option name when looking for environment variables; suppose we have an option with names `+-a+`, `+--ab+` and `+--abc+`, you will need to use `+FCLI_DEFAULT_..._ABC+` and not  `+FCLI_DEFAULT_..._AB+` or `+FCLI_DEFAULT_..._A+` 
-* Currently, not all positional parameters support default values from environment variables; this will be  improved over time. Please refer to the positional parameter description in help output or manual pages to  identify what environment variable suffix should be used for a particular positional parameter.
+* For positional parameters, the environment variable name will be based on the parameter label, converted to `SNAKE_CASE` with all special characters replaced by an underscore. For example, `<attributeDefinitionId>` will become `ATTRIBUTE_DEFINITION_ID`, and `HOST:PORT` will become `HOST_PORT`.
 
 Although powerful, these environment variables for providing default option and parameter values should be used with some care to avoid unexpected results: 
 

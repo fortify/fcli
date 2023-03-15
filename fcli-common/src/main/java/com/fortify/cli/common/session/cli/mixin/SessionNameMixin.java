@@ -24,7 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.mixin;
 
-import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.util.StringUtils;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -66,7 +65,7 @@ public class SessionNameMixin {
         private SessionNameArgGroup nameOptions = new SessionNameArgGroup();
     
         static class SessionNameArgGroup {
-            @Parameters(arity="0..1", index="0", paramLabel="session-name") @EnvSuffix("SESSION")
+            @Parameters(arity="0..1", index="0", paramLabel="<session>")
             private String sessionName;
         }
         @Override

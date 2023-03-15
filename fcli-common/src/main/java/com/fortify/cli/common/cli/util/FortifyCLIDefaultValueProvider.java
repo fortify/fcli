@@ -20,7 +20,7 @@ public class FortifyCLIDefaultValueProvider implements CommandLine.IDefaultValue
             final var optionSpec = (OptionSpec) argSpec;
             envVarSuffix = getEnvVarSuffix(optionSpec.userObject(), optionSpec.longestName().replaceAll("^-+", ""));
         } else {
-            envVarSuffix = getEnvVarSuffix(argSpec.userObject(), null);
+            envVarSuffix = getEnvVarSuffix(argSpec.userObject(), normalizeParamLabel(argSpec.paramLabel()));
         }
         return resolve(argSpec.command(), envVarSuffix);
     }
@@ -46,6 +46,16 @@ public class FortifyCLIDefaultValueProvider implements CommandLine.IDefaultValue
     private final String getEnvVarName(CommandSpec command, String suffix) {
         String qualifiedCommandName = command.qualifiedName("_");
         String combinedName = String.format("%s_%s", qualifiedCommandName, suffix);
-        return combinedName.replace('-', '_').toUpperCase().replaceFirst("FCLI", envPrefix);
+        return combinedName.replace('-', '_')
+                .replaceAll("__", "_") // Replace duplicate underscores
+                .replaceAll("^_+|_+$", "") // Strip leading and trailing underscores
+                .toUpperCase().replaceFirst("FCLI", envPrefix);
+    }
+    
+    private final String normalizeParamLabel(String paramLabel) {
+        return paramLabel
+                .replaceAll("\\s", "_") // Replace whitespace by underscores
+                .replaceAll("[^a-zA-Z\\d-_]", "_") // Replace all special characters by underscore
+                .replaceAll("(?<!^)([A-Z][a-z]|(?<=[a-z])[^a-z]|(?<=[A-Z])[0-9_])", "_$1"); // Convert to snake-case without splitting uppercase words; see https://stackoverflow.com/a/73485568
     }
 }
