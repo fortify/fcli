@@ -103,7 +103,4 @@ public class FoDOutputHelperMixins {
 
     @ReflectiveAccess public static class Setup
             extends UnirestOutputHelperMixins.Setup {}
-
-    @ReflectiveAccess public static class Other 
-               extends UnirestOutputHelperMixins.Other {}
 }

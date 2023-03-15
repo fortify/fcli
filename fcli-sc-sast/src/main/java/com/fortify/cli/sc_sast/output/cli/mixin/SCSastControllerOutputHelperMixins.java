@@ -80,7 +80,4 @@ public class SCSastControllerOutputHelperMixins {
     
     @ReflectiveAccess public static class Uninstall 
                extends UnirestOutputHelperMixins.Uninstall {}
-    
-    @ReflectiveAccess public static class Other 
-               extends UnirestOutputHelperMixins.Other {}
 }

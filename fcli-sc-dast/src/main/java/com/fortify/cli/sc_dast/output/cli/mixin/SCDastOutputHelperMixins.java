@@ -5,12 +5,10 @@ import java.util.function.UnaryOperator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.UnirestOutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
-import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
 import com.fortify.cli.common.output.spi.product.IProductHelper;
 import com.fortify.cli.common.output.spi.product.ProductHelperClass;
 import com.fortify.cli.common.output.spi.request.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.output.spi.transform.IInputTransformerSupplier;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins.SCDastProductHelper;
 import com.fortify.cli.sc_dast.rest.helper.SCDastInputTransformer;
@@ -21,7 +19,6 @@ import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
-import picocli.CommandLine.Mixin;
 
 /**
  * <p>This class provides standard, SC-DAST specific {@link IUnirestOutputHelper} implementations,
@@ -94,31 +91,23 @@ public class SCDastOutputHelperMixins {
     @ReflectiveAccess public static class Uninstall 
                extends UnirestOutputHelperMixins.Uninstall {}
     
-    @ReflectiveAccess public static class Other 
-               extends UnirestOutputHelperMixins.Other {}
-    
-    @ReflectiveAccess private static class ScanActionBase extends UnirestOutputHelperMixins.Other {
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
-    }
-    
-    @ReflectiveAccess public static class ScanActionComplete extends ScanActionBase {
+    @ReflectiveAccess public static class ScanActionComplete extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "complete";
     }
     
-    @ReflectiveAccess public static class ScanActionImportFindings extends ScanActionBase {
+    @ReflectiveAccess public static class ScanActionImportFindings extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "import-findings";
     }
     
-    @ReflectiveAccess public static class ScanActionPause extends ScanActionBase {
+    @ReflectiveAccess public static class ScanActionPause extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "pause";
     }
     
-    @ReflectiveAccess public static class ScanActionPublish extends ScanActionBase {
+    @ReflectiveAccess public static class ScanActionPublish extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "publish";
     }
     
-    @ReflectiveAccess public static class ScanActionResume extends ScanActionBase {
+    @ReflectiveAccess public static class ScanActionResume extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "resume";
     }
 }

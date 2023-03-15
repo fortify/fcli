@@ -21,197 +21,139 @@ import picocli.CommandLine.Spec.Target;
 /**
  * <p>This class provides standard, product-agnostic {@link IBasicOutputHelper} implementations.
  *    The mixins provided in this class are equivalent to the mixins in {@link UnirestOutputHelperMixins},
- *    but allows for writing {@link JsonNode} instances to be written when no {@link UnirestInstance}
+ *    but allow for writing {@link JsonNode} instances to be written when no {@link UnirestInstance}
  *    and/or {@link IProductHelper} is available or required.</p>
  */
 public class BasicOutputHelperMixins {
-	
-	@ReflectiveAccess
-    public static class Login extends AbstractBasicOutputHelper {
-        public static final String CMD_NAME = "login";
+    @ReflectiveAccess @Command
+    public static class Other extends AbstractBasicOutputHelper {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
-    }
-	
-	@ReflectiveAccess
-    public static class Logout extends AbstractBasicOutputHelper {
-        public static final String CMD_NAME = "logout";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
-    }
-	
-    @ReflectiveAccess
-    public static class Add extends AbstractBasicOutputHelper {
-        public static final String CMD_NAME = "add";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Create extends AbstractBasicOutputHelper {
-        public static final String CMD_NAME = "create";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
-    }
-    
-    @ReflectiveAccess @Command(aliases = {"rm"})
-    public static class Delete extends AbstractBasicOutputHelper {
-        public static final String CMD_NAME = "delete";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
-    }
-    
-    @ReflectiveAccess
-    public static class DeleteAll extends AbstractBasicOutputHelper {
-        public static final String CMD_NAME = "delete-all";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
-    }
-    
-    @ReflectiveAccess
-    public static class Revoke extends AbstractBasicOutputHelper {
-        public static final String CMD_NAME = "revoke";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
-    }
-    
-    @ReflectiveAccess
-    public static class Clear extends AbstractBasicOutputHelper {
-        public static final String CMD_NAME = "clear";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
-    }
-    
-    @ReflectiveAccess @Command(name = "list", aliases = {"ls"})
-    public static class List extends AbstractBasicOutputHelper {
-        public static final String CMD_NAME = "list";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
+    public static class TableWithQuery extends Other {
         @Getter @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Get extends AbstractBasicOutputHelper {
+    public static class TableNoQuery extends Other {
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    }
+	
+	@ReflectiveAccess
+    public static class Login extends TableNoQuery {
+        public static final String CMD_NAME = "login";
+    }
+	
+	@ReflectiveAccess
+    public static class Logout extends TableNoQuery {
+        public static final String CMD_NAME = "logout";
+    }
+	
+    @ReflectiveAccess
+    public static class Add extends TableNoQuery {
+        public static final String CMD_NAME = "add";
+    }
+    
+    @ReflectiveAccess
+    public static class Create extends TableNoQuery {
+        public static final String CMD_NAME = "create";
+    }
+    
+    @ReflectiveAccess @Command(aliases = {"rm"})
+    public static class Delete extends TableNoQuery {
+        public static final String CMD_NAME = "delete";
+    }
+    
+    @ReflectiveAccess
+    public static class DeleteAll extends TableNoQuery {
+        public static final String CMD_NAME = "delete-all";
+    }
+    
+    @ReflectiveAccess
+    public static class Revoke extends TableNoQuery {
+        public static final String CMD_NAME = "revoke";
+    }
+    
+    @ReflectiveAccess
+    public static class Clear extends TableNoQuery {
+        public static final String CMD_NAME = "clear";
+    }
+    
+    @ReflectiveAccess @Command(name = "list", aliases = {"ls"})
+    public static class List extends TableWithQuery {
+        public static final String CMD_NAME = "list";
+    }
+    
+    @ReflectiveAccess
+    public static class Get extends TableNoQuery {
         public static final String CMD_NAME = "get";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details(); 
     }
     
     @ReflectiveAccess
-    public static class Set extends AbstractBasicOutputHelper {
+    public static class Set extends TableNoQuery {
         public static final String CMD_NAME = "set";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Update extends AbstractBasicOutputHelper {
+    public static class Update extends TableNoQuery {
         public static final String CMD_NAME = "update";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Enable extends AbstractBasicOutputHelper {
+    public static class Enable extends TableNoQuery {
         public static final String CMD_NAME = "enable";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Disable extends AbstractBasicOutputHelper {
+    public static class Disable extends TableNoQuery {
         public static final String CMD_NAME = "disable";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Start extends AbstractBasicOutputHelper {
+    public static class Start extends TableNoQuery {
         public static final String CMD_NAME = "start";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Pause extends AbstractBasicOutputHelper {
+    public static class Pause extends TableNoQuery {
         public static final String CMD_NAME = "pause";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Resume extends AbstractBasicOutputHelper {
+    public static class Resume extends TableNoQuery {
         public static final String CMD_NAME = "resume";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Cancel extends AbstractBasicOutputHelper {
+    public static class Cancel extends TableNoQuery {
         public static final String CMD_NAME = "cancel";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class WaitFor extends AbstractBasicOutputHelper {
+    public static class WaitFor extends TableNoQuery {
         public static final String CMD_NAME = "wait-for";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Upload extends AbstractBasicOutputHelper {
+    public static class Upload extends TableNoQuery {
         public static final String CMD_NAME = "upload";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Download extends AbstractBasicOutputHelper {
+    public static class Download extends TableNoQuery {
         public static final String CMD_NAME = "download";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Install extends AbstractBasicOutputHelper {
+    public static class Install extends TableNoQuery {
         public static final String CMD_NAME = "install";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @ReflectiveAccess
-    public static class Uninstall extends AbstractBasicOutputHelper {
+    public static class Uninstall extends TableNoQuery {
         public static final String CMD_NAME = "uninstall";
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
-    }
-    
-    @ReflectiveAccess @Command
-    public static class Other extends AbstractBasicOutputHelper {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
     }
 }

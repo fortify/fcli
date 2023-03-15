@@ -5,14 +5,11 @@ import java.util.function.UnaryOperator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.UnirestOutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
-import com.fortify.cli.common.output.cli.mixin.writer.OutputWriterWithQueryFactoryMixin;
-import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
 import com.fortify.cli.common.output.spi.product.IProductHelper;
 import com.fortify.cli.common.output.spi.product.ProductHelperClass;
 import com.fortify.cli.common.output.spi.request.IHttpRequestUpdater;
 import com.fortify.cli.common.output.spi.request.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.output.spi.transform.IInputTransformerSupplier;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins.SSCProductHelper;
 import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
@@ -25,7 +22,6 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 
 /**
  * <p>This class provides standard, SSC-specific {@link IUnirestOutputHelper} implementations,
@@ -110,47 +106,32 @@ public class SSCOutputHelperMixins {
     @ReflectiveAccess public static class Uninstall 
                extends UnirestOutputHelperMixins.Uninstall {}
     
-    @ReflectiveAccess public static class Other 
-               extends UnirestOutputHelperMixins.Other {}
-    
-    @ReflectiveAccess public static class ArtifactApprove extends UnirestOutputHelperMixins.Other {
+    @ReflectiveAccess public static class ArtifactApprove extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "approve";
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
     @Command(aliases = "download-by-id")
     @ReflectiveAccess public static class ArtifactDownloadById 
                 extends UnirestOutputHelperMixins.Download {}
     
-    @ReflectiveAccess public static class ArtifactDownloadState extends UnirestOutputHelperMixins.Other {
-        public static final String CMD_NAME = "download-state";
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
+    @ReflectiveAccess public static class ArtifactDownloadState extends UnirestOutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "download-state"; 
     }
     
     @Command(aliases = "purge-by-id")
-    @ReflectiveAccess public static class ArtifactPurgeById extends UnirestOutputHelperMixins.Other {
+    @ReflectiveAccess public static class ArtifactPurgeById extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "purge";
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
-    @ReflectiveAccess public static class ArtifactPurgeOlderThan extends UnirestOutputHelperMixins.Other {
+    @ReflectiveAccess public static class ArtifactPurgeOlderThan extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "purge-older-than";
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
-    @ReflectiveAccess public static class ImportDebricked extends UnirestOutputHelperMixins.Other {
+    @ReflectiveAccess public static class ImportDebricked extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "import-debricked";
-        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
-    @ReflectiveAccess public static class VulnCount extends UnirestOutputHelperMixins.Other {
+    @ReflectiveAccess public static class VulnCount extends UnirestOutputHelperMixins.TableWithQuery {
         public static final String CMD_NAME = "count";
-        @Getter @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
 }
