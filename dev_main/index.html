@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230315.164415-dev_main
+fcli_version: 0.20230315.180742-dev_main
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20230315.164415-dev_main
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230315.164415-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230315.180742-dev_main" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230315.164415-dev_main</span>
+<span id="revnumber">version 0.20230315.180742-dev_main</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -509,7 +509,7 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 <p>For options, fcli will use the longest option name when looking for environment variables; suppose we have an option with names <code>-a</code>, <code>--ab</code> and <code>--abc</code>, you will need to use <code>FCLI_DEFAULT_..._ABC</code> and not  <code>FCLI_DEFAULT_..._AB</code> or <code>FCLI_DEFAULT_..._A</code></p>
 </li>
 <li>
-<p>Currently, not all positional parameters support default values from environment variables; this will be  improved over time. Please refer to the positional parameter description in help output or manual pages to  identify what environment variable suffix should be used for a particular positional parameter.</p>
+<p>For positional parameters, the environment variable name will be based on the parameter label, converted to <code>SNAKE_CASE</code> with all special characters replaced by an underscore. For example, <code>&lt;attributeDefinitionId&gt;</code> will become <code>ATTRIBUTE_DEFINITION_ID</code>, and <code>HOST:PORT</code> will become <code>HOST_PORT</code>.</p>
 </li>
 </ul>
 </div>
@@ -685,8 +685,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230315.164415-dev_main<br>
-Last updated 2023-03-15 16:46:13 UTC
+Version 0.20230315.180742-dev_main<br>
+Last updated 2023-03-15 18:09:17 UTC
 </div>
 </div>
 </body>
