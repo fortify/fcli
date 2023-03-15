@@ -11,8 +11,8 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 public final class SSCIssueTemplateHelper {
-    private final Map<String, SSCIssueTemplateDescriptor> descriptorsByLowerId = new HashMap<>();
-    private final Map<String, SSCIssueTemplateDescriptor> descriptorsByLowerName = new HashMap<>();
+    private final Map<String, SSCIssueTemplateDescriptor> descriptorsById = new HashMap<>();
+    private final Map<String, SSCIssueTemplateDescriptor> descriptorsByName = new HashMap<>();
     @Getter private SSCIssueTemplateDescriptor defaultIssueTemplateDescriptor;
     
     /**
@@ -28,18 +28,16 @@ public final class SSCIssueTemplateHelper {
 
     private void processIssueTemplate(JsonNode issueTemplate) {
         SSCIssueTemplateDescriptor descriptor = JsonHelper.treeToValue(issueTemplate, SSCIssueTemplateDescriptor.class);
-        descriptorsByLowerId.put(descriptor.getId().toLowerCase(), descriptor);
-        // TODO Potentially we could have multiple templates with equal lowercase names,
-        //      but we neglect this risk for now as it is very unlikely
-        descriptorsByLowerName.put(descriptor.getName().toLowerCase(), descriptor);
+        descriptorsById.put(descriptor.getId(), descriptor);
+        descriptorsByName.put(descriptor.getName(), descriptor);
         if ( descriptor.isDefaultTemplate() ) {
             this.defaultIssueTemplateDescriptor = descriptor;
         }
     }
     
     public SSCIssueTemplateDescriptor getDescriptorByNameOrId(String issueTemplateNameOrId, boolean failIfNotFound) {
-        SSCIssueTemplateDescriptor descriptor = descriptorsByLowerId.get(issueTemplateNameOrId.toLowerCase());
-        descriptor = descriptor!=null ? descriptor : descriptorsByLowerName.get(issueTemplateNameOrId.toLowerCase());
+        SSCIssueTemplateDescriptor descriptor = descriptorsById.get(issueTemplateNameOrId);
+        descriptor = descriptor!=null ? descriptor : descriptorsByName.get(issueTemplateNameOrId);
         if ( failIfNotFound && descriptor==null ) {
             throw new IllegalArgumentException("No issue template found with name or id "+issueTemplateNameOrId);
         }

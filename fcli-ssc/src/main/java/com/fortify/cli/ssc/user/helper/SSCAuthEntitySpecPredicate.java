@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * This class provides a {@link Predicate} implementation that performs
- * case-insensitive matching between auth-entity specifications (specifying 
+ * case-sensitive matching between auth-entity specifications (specifying 
  * auth-entity id, entityName or email) and auth-entity objects.
  *  
  * @author rsenden
@@ -34,13 +34,13 @@ public final class SSCAuthEntitySpecPredicate implements Predicate<JsonNode> {
     @Override
     public boolean test(JsonNode node) {
         Set<String> values = new HashSet<>(Arrays.asList( new String[]{
-                getLowerCase(node, "id"),
-                getLowerCase(node, "entityName"),
-                getLowerCase(node, "email")
+                getString(node, "id"),
+                getString(node, "entityName"),
+                getString(node, "email")
         } )); 
         boolean isMatching = 
                 authEntities!=null &&
-                Stream.of(authEntities).map(String::toLowerCase)
+                Stream.of(authEntities)
                 .filter(values::contains)
                 .filter(this::hasPreviousMatch)
                 .count() > 0;
@@ -50,7 +50,7 @@ public final class SSCAuthEntitySpecPredicate implements Predicate<JsonNode> {
     public String[] getUnmatched() {
         return authEntities==null 
                 ? new String[] {} 
-                : Stream.of(authEntities).map(String::toLowerCase).filter(Predicate.not(previousMatchedAuthEntities::contains)).toArray(String[]::new);
+                : Stream.of(authEntities).filter(Predicate.not(previousMatchedAuthEntities::contains)).toArray(String[]::new);
     }
     
     public void checkUnmatched() {
@@ -67,9 +67,8 @@ public final class SSCAuthEntitySpecPredicate implements Predicate<JsonNode> {
         }
     }
 
-    private String getLowerCase(JsonNode node, String field) {
-        String result = JsonHelper.evaluateJsonPath(node, field, String.class);
-        return result == null ? null : result.toLowerCase();
+    private String getString(JsonNode node, String field) {
+        return JsonHelper.evaluateJsonPath(node, field, String.class);
     }
     
     private boolean hasPreviousMatch(String authEntity) {

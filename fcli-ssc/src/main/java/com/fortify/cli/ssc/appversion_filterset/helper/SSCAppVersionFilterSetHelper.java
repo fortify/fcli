@@ -11,8 +11,8 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 public final class SSCAppVersionFilterSetHelper {
-    private final Map<String, SSCAppVersionFilterSetDescriptor> descriptorsByLowerGuid = new HashMap<>();
-    private final Map<String, SSCAppVersionFilterSetDescriptor> descriptorsByLowerTitle = new HashMap<>();
+    private final Map<String, SSCAppVersionFilterSetDescriptor> descriptorsByGuid = new HashMap<>();
+    private final Map<String, SSCAppVersionFilterSetDescriptor> descriptorsByTitle = new HashMap<>();
     @Getter private SSCAppVersionFilterSetDescriptor defaultFilterSetDescriptor;
     
     /**
@@ -28,10 +28,8 @@ public final class SSCAppVersionFilterSetHelper {
 
     private void processFilterSet(JsonNode issueTemplate) {
         SSCAppVersionFilterSetDescriptor descriptor = JsonHelper.treeToValue(issueTemplate, SSCAppVersionFilterSetDescriptor.class);
-        descriptorsByLowerGuid.put(descriptor.getGuid().toLowerCase(), descriptor);
-        // TODO Potentially we could have multiple filter sets with equal lowercase names,
-        //      but we neglect this risk for now as it is very unlikely
-        descriptorsByLowerTitle.put(descriptor.getTitle().toLowerCase(), descriptor);
+        descriptorsByGuid.put(descriptor.getGuid(), descriptor);
+        descriptorsByTitle.put(descriptor.getTitle(), descriptor);
         if ( descriptor.isDefaultFilterSet() ) {
             this.defaultFilterSetDescriptor = descriptor;
         }
@@ -39,8 +37,8 @@ public final class SSCAppVersionFilterSetHelper {
     
     public SSCAppVersionFilterSetDescriptor getDescriptorByTitleOrId(String filterSetTitleOrId, boolean failIfNotFound) {
         if ( filterSetTitleOrId==null ) { return defaultFilterSetDescriptor; }
-        SSCAppVersionFilterSetDescriptor descriptor = descriptorsByLowerGuid.get(filterSetTitleOrId.toLowerCase());
-        descriptor = descriptor!=null ? descriptor : descriptorsByLowerTitle.get(filterSetTitleOrId.toLowerCase());
+        SSCAppVersionFilterSetDescriptor descriptor = descriptorsByGuid.get(filterSetTitleOrId);
+        descriptor = descriptor!=null ? descriptor : descriptorsByTitle.get(filterSetTitleOrId);
         if ( failIfNotFound && descriptor==null ) {
             throw new IllegalArgumentException("No filter set found with title or id "+filterSetTitleOrId);
         }

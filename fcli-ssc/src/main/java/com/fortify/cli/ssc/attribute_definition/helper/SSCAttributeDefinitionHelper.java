@@ -24,11 +24,11 @@ import lombok.Getter;
  */
 // TODO Properly embed option handling/retrieval in SSCAttributeDefinitionDescriptor
 public final class SSCAttributeDefinitionHelper {
-    private final Set<String> attrDuplicateLowerNames = new HashSet<>();
+    private final Set<String> attrDuplicateNames = new HashSet<>();
     private final Set<SSCAttributeDefinitionDescriptor> requiredAttrDefWithoutDefaultValueDescriptors = new HashSet<>();
     private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsById = new HashMap<>();
-    private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsByLowerName = new HashMap<>();
-    private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsByLowerGuid = new HashMap<>();
+    private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsByName = new HashMap<>();
+    private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsByGuid = new HashMap<>();
     private final Map<String, SSCAttributeOptionDefinitionHelper> attrOptionsByIdMap = new HashMap<>();
     @Getter private final ObjectNode attributeDefinitionsBody; 
     
@@ -55,22 +55,22 @@ public final class SSCAttributeDefinitionHelper {
         SSCAttributeDefinitionDescriptor descriptor = JsonHelper.treeToValue(jsonNode, SSCAttributeDefinitionDescriptor.class);
         if ( "DYNAMIC_SCAN_REQUEST".equals(descriptor.getCategory()) ) { return; } // We don't want to process these
         String id = descriptor.getId();
-        String guidLower = descriptor.getGuid().toLowerCase();
-        String nameLower = descriptor.getName().toLowerCase();
-        String categoryLower = descriptor.getCategory().toLowerCase();
+        String guid = descriptor.getGuid();
+        String name = descriptor.getName();
+        String category = descriptor.getCategory();
         
-        if ( descriptorsByLowerName.containsKey(nameLower) ) {
-            attrDuplicateLowerNames.add(nameLower); // SSC allows for having the same attribute name in different categories 
+        if ( descriptorsByName.containsKey(name) ) {
+            attrDuplicateNames.add(name); // SSC allows for having the same attribute name in different categories 
         }
         if ( descriptor.isRequired() && !descriptor.hasDefault() ) {
             requiredAttrDefWithoutDefaultValueDescriptors.add(descriptor);
         }
         
         descriptorsById.put(id, descriptor);
-        descriptorsByLowerGuid.put(guidLower, descriptor);
-        descriptorsByLowerGuid.put(categoryLower+":"+guidLower, descriptor);
-        descriptorsByLowerName.put(nameLower, descriptor);
-        descriptorsByLowerName.put(categoryLower+":"+nameLower, descriptor);
+        descriptorsByGuid.put(guid, descriptor);
+        descriptorsByGuid.put(category+":"+guid, descriptor);
+        descriptorsByName.put(name, descriptor);
+        descriptorsByName.put(category+":"+name, descriptor);
         attrOptionsByIdMap.put(id, new SSCAttributeOptionDefinitionHelper(descriptor.getOptions()));
     }
     
@@ -80,13 +80,12 @@ public final class SSCAttributeDefinitionHelper {
      * @return {@link SSCAttributeDefinitionDescriptor} instance
      */
     public SSCAttributeDefinitionDescriptor getAttributeDefinitionDescriptor(String attributeIdOrGuidOrName) {
-        String attributeIdOrGuidOrNameLower = attributeIdOrGuidOrName.toLowerCase();
-        SSCAttributeDefinitionDescriptor descriptor = descriptorsById.get(attributeIdOrGuidOrNameLower);
-        if ( descriptor==null ) { descriptor = descriptorsByLowerGuid.get(attributeIdOrGuidOrNameLower); } 
-        if ( descriptor==null && attrDuplicateLowerNames.contains(attributeIdOrGuidOrNameLower) ) { 
-            throw new IllegalArgumentException("Attribute name '"+attributeIdOrGuidOrNameLower+"' is not unique; either use the guid or <category>:<name>"); 
+        SSCAttributeDefinitionDescriptor descriptor = descriptorsById.get(attributeIdOrGuidOrName);
+        if ( descriptor==null ) { descriptor = descriptorsByGuid.get(attributeIdOrGuidOrName); } 
+        if ( descriptor==null && attrDuplicateNames.contains(attributeIdOrGuidOrName) ) { 
+            throw new IllegalArgumentException("Attribute name '"+attributeIdOrGuidOrName+"' is not unique; either use the guid or <category>:<name>"); 
         }
-        if ( descriptor==null ) { descriptor = descriptorsByLowerName.get(attributeIdOrGuidOrNameLower); }
+        if ( descriptor==null ) { descriptor = descriptorsByName.get(attributeIdOrGuidOrName); }
         if ( descriptor==null ) {
             throw new IllegalArgumentException("Attribute id, guid or name '"+attributeIdOrGuidOrName+"' does not exist");
         }
@@ -130,8 +129,8 @@ public final class SSCAttributeDefinitionHelper {
      *
      */
     private static final class SSCAttributeOptionDefinitionHelper {
-        private final Map<String, String> optionGuidsByLowerGuid = new HashMap<>();
-        private final Map<String, String> optionGuidsByLowerName = new HashMap<>();
+        private final Map<String, String> optionGuidsByGuid = new HashMap<>();
+        private final Map<String, String> optionGuidsByName = new HashMap<>();
         private final Map<String, JsonNode> optionsByGuid = new HashMap<>();
         
         /**
@@ -154,12 +153,10 @@ public final class SSCAttributeDefinitionHelper {
          */
         private void processOptionDefinition(JsonNode jsonNode) {
             String guid = jsonNode.get("guid").asText();
-            String guidLower = guid.toLowerCase();
             String name = jsonNode.get("name").asText();
-            String nameLower = name.toLowerCase();
             
-            optionGuidsByLowerGuid.put(guidLower, guid);
-            optionGuidsByLowerName.put(nameLower, guid);
+            optionGuidsByGuid.put(guid, guid);
+            optionGuidsByName.put(name, guid);
             optionsByGuid.put(guid, jsonNode);
         }
         
@@ -169,12 +166,11 @@ public final class SSCAttributeDefinitionHelper {
          * @return option name
          */
         public String getOptionGuid(String optionNameOrGuid) {
-            String optionNameOrGuidLower = optionNameOrGuid.toLowerCase();
             String guid = null;
-            if ( optionGuidsByLowerGuid.containsKey(optionNameOrGuidLower) ) { 
-                guid = optionGuidsByLowerGuid.get(optionNameOrGuidLower); 
+            if ( optionGuidsByGuid.containsKey(optionNameOrGuid) ) { 
+                guid = optionGuidsByGuid.get(optionNameOrGuid); 
             } else {
-                guid = optionGuidsByLowerName.get(optionNameOrGuidLower);
+                guid = optionGuidsByName.get(optionNameOrGuid);
             }
             if ( guid==null ) {
                 throw new IllegalArgumentException("Option name or guid '"+optionNameOrGuid+"' does not exist");

@@ -10,8 +10,8 @@ import com.fortify.cli.ssc.rest.SSCUrls;
 import kong.unirest.UnirestInstance;
 
 public final class SSCReportTemplateHelper {
-    private final Map<String, SSCReportTemplateDescriptor> descriptorsByLowerId = new HashMap<>();
-    private final Map<String, SSCReportTemplateDescriptor> descriptorsByLowerName = new HashMap<>();
+    private final Map<String, SSCReportTemplateDescriptor> descriptorsById = new HashMap<>();
+    private final Map<String, SSCReportTemplateDescriptor> descriptorsByName = new HashMap<>();
     
     /**
      * This constructor calls the SSC reportTemplates endpoint to retrieve report template data,
@@ -32,15 +32,13 @@ public final class SSCReportTemplateHelper {
 
     private void processReportTemplate(JsonNode reportTemplate) {
         SSCReportTemplateDescriptor descriptor = JsonHelper.treeToValue(reportTemplate, SSCReportTemplateDescriptor.class);
-        descriptorsByLowerId.put(descriptor.getId().toLowerCase(), descriptor);
-        // TODO Potentially we could have multiple templates with equal lowercase names,
-        //      but we neglect this risk for now as it is very unlikely
-        descriptorsByLowerName.put(descriptor.getName().toLowerCase(), descriptor);
+        descriptorsById.put(descriptor.getId(), descriptor);
+        descriptorsByName.put(descriptor.getName(), descriptor);
     }
     
     public SSCReportTemplateDescriptor getDescriptorByNameOrId(String reportTemplateNameOrId, boolean failIfNotFound) {
-        SSCReportTemplateDescriptor descriptor = descriptorsByLowerId.get(reportTemplateNameOrId.toLowerCase());
-        descriptor = descriptor!=null ? descriptor : descriptorsByLowerName.get(reportTemplateNameOrId.toLowerCase());
+        SSCReportTemplateDescriptor descriptor = descriptorsById.get(reportTemplateNameOrId);
+        descriptor = descriptor!=null ? descriptor : descriptorsByName.get(reportTemplateNameOrId);
         if ( failIfNotFound && descriptor==null ) {
             throw new IllegalArgumentException("No report template found with name or id "+reportTemplateNameOrId);
         }

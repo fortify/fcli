@@ -47,13 +47,12 @@ public class SCDastSensorHelper {
             JsonNode sensorNode = unirest.get(String.format("/api/v2/scanners/%s",sensorId)).asObject(JsonNode.class).getBody();
             return getDescriptor(sensorNode);
         } catch (NumberFormatException nfe) {
-            String lowerCaseSensorName = sensorNameOrId.toLowerCase();
             List<JsonNode> matchingSensors = SCDastPagingHelper.pagedRequest(unirest.get("/api/v2/scanners")).stream()
                 .map(HttpResponse::getBody)
                 .map(SCDastInputTransformer::getItems)
                 .map(ArrayNode.class::cast)
                 .flatMap(JsonHelper::stream)
-                .filter(j -> j.get("name").asText().toLowerCase().equals(lowerCaseSensorName)) // TODO Add null checks?
+                .filter(j -> j.get("name").asText().equals(sensorNameOrId)) // TODO Add null checks?
                 .collect(Collectors.toList());
             if ( matchingSensors.isEmpty() ) {
                 throw new IllegalArgumentException("No sensor found with name "+sensorNameOrId);

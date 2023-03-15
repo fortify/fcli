@@ -52,7 +52,7 @@ public class SCDastScanPolicyHelper {
     
     private static boolean matches(JsonNode record, String scanPolicyNameOrId) {
         return record.get("id").asText().equals(scanPolicyNameOrId) ||
-                record.get("name").asText().toLowerCase().equals(scanPolicyNameOrId.toLowerCase());
+                record.get("name").asText().equals(scanPolicyNameOrId);
     }
 
     public static final ArrayNode getScanPolicies(UnirestInstance unirest) {

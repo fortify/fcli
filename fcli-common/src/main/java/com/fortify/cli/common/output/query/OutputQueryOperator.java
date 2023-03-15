@@ -26,7 +26,7 @@ public enum OutputQueryOperator implements IJsonNodeMatcher {
     
     public static final OutputQueryOperator valueOfOperator(String operator) {
         return Stream.of(OutputQueryOperator.values())
-                .filter(o->o.getOperator().equalsIgnoreCase(operator))
+                .filter(o->o.getOperator().equals(operator))
                 .findFirst()
                 .orElseThrow(()->new IllegalArgumentException("Unknown query operator '"+operator+"'"));
     }
