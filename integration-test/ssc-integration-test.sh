@@ -45,18 +45,17 @@ runTestCommands() {
     
     checkOutput=(fgrep CIToken); sscCmd token create CIToken --expire-in 5m --store ciToken:restToken
     sscCmd token revoke {?ciToken:restToken}
-    runCmd ${FCLI_CMD} config var def delete ciToken
+    runCmd ${FCLI_CMD} state var delete ciToken
 
     appName="fcli-test $(date +%s)" 
     sscCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store currentAppVersion:id
-    # TODO Current commands don't properly produce singular output; once this is fixed, we can simply use {?currentAppVersion:id} 
-    newAppVersionId="{?currentAppVersion:id}"
+    newAppVersionId="::currentAppVersion::id"
     checkOutput=(fgrep "No data"); sscCmd appversion-artifact list --appversion ${newAppVersionId}
     sscCmd appversion-attribute set "DevPhase=Active Development" --appversion ${newAppVersionId}
     sscCmd appversion-attribute list --appversion ${newAppVersionId}
     checkOutput=(fgrep "SKIPPED_EXISTING"); sscCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --skip-if-exists
-    sscCmd appversion create "${appName}:v2" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store ?
-    checkOutput=(fgrep "v2"); sscCmd appversion get ?    
+    sscCmd appversion create "${appName}:v2" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store myAppVersion
+    checkOutput=(fgrep "v2"); sscCmd appversion get ::myAppVersion::    
     sscCmd appversion create "${appName}:v3" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs
     sscCmd app delete "${appName}" --delete-versions
     checkOutput=(fgrep -v "${appName}"); sscCmd appversion list
