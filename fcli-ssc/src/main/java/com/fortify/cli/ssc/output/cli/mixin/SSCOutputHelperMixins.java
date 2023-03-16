@@ -3,6 +3,7 @@ package com.fortify.cli.ssc.output.cli.mixin;
 import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.UnirestOutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
 import com.fortify.cli.common.output.spi.product.IProductHelper;
@@ -133,5 +134,10 @@ public class SSCOutputHelperMixins {
     
     @ReflectiveAccess public static class VulnCount extends UnirestOutputHelperMixins.TableWithQuery {
         public static final String CMD_NAME = "count";
+    }
+    
+    @Command(aliases = "gen-answer")
+    @ReflectiveAccess public static class ReportTemplateGenerateAnswerFile extends BasicOutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "generate-answerfile";
     }
 }

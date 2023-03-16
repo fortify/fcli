@@ -24,43 +24,57 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
-import static java.nio.file.StandardCopyOption.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
+import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Getter;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-@Command(name = "generate-answerFile", aliases = {"gen-answer"})
-public class SSCReportTemplateGenerateAnswerFileCommand implements Runnable {
-    String templateFileName = "ReportTemplateDefAnswerTemplate.yml";
+@Command(name = SSCOutputHelperMixins.ReportTemplateGenerateAnswerFile.CMD_NAME)
+public class SSCReportTemplateGenerateAnswerFileCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
+    private static final String RESOURCE_FILE = "com/fortify/cli/ssc/report_template/ReportTemplateDefAnswerTemplate.yml";
+    @Getter @Mixin private SSCOutputHelperMixins.ReportTemplateGenerateAnswerFile outputHelper;
 
-    @CommandLine.Option(names = {"-f"}, defaultValue = "./ReportTemplateDefAnswerTemplate.yml")
+    @Option(names = {"-f"}, defaultValue = "./ReportTemplateDefAnswerTemplate.yml") 
     private String filePath;
-
-    @CommandLine.Option(names = {"--force"}, defaultValue = "false")
-    private Boolean overwrite;
-
-    /**
-     * Create a template yaml file (the answer file) so that the user can provide the needed information for  creating a
-     * new report template definition. This is an alternative to using the "create" command with a ton of options,
-     * parameters, and whatnot.
-     */
-    @SneakyThrows
-    @Override
-    public void run() {
-        InputStream internalCopy = this.getClass().getClassLoader().getResourceAsStream("com/fortify/cli/ssc/report_template/" + templateFileName);
-        Path outputFile = new File(filePath).toPath();
-        if(Files.notExists(outputFile) || overwrite.booleanValue()){
+    @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
+    
+    @Override @SneakyThrows
+    protected JsonNode getJsonNode() {
+        try ( InputStream internalCopy = this.getClass().getClassLoader().getResourceAsStream(RESOURCE_FILE) ) {
+            Path outputFile = new File(filePath).toPath();
+            if( Files.exists(outputFile) ){
+                requireConfirmation.checkConfirmed();
+            }
             Files.copy(internalCopy, outputFile , REPLACE_EXISTING);
-        }else {
-            throw new IllegalArgumentException("File exists. Use --force if you want to overwrite.");
         }
+        return JsonHelper.getObjectMapper().createObjectNode()
+                .put("path", filePath);
+    }
+    
+    @Override
+    public String getActionCommandResult() {
+        return "GENERATED";
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return true;
     }
 }
