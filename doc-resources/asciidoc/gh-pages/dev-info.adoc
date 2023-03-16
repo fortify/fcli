@@ -296,7 +296,12 @@ public class <Module><Entity><Action>Command extends <SuperClass> implements <Co
 
 Leaf commands in non-product modules usually have a similar structure, but some details may be different. Container commands, i.e. commands that represent `<module>` and `<entity>` have a very different (easier) structure as they don't have any actual functionality associated to them; please refer to existing fcli container commands to serve as an example.
 
-=== Aliases & Option Names
+=== Commands & Options
+
+Commands (including aliases) and options should use kebab-case names, i.e., lower-case names with words separated by a dash.
+
+* Acceptable command/option names: `app`, `appversion-artifact`
+* Invalid command/option names: `App`, `appversionArtifact`, `appversion_artifact`
 
 Commands may have one or more aliases, and multiple names may be defined for options. Having multiple names for a single command or option may be useful for various reasons, for example:
 
@@ -304,7 +309,12 @@ Commands may have one or more aliases, and multiple names may be defined for opt
 * To maintain backward compatibility when renaming an existing command or option
 * As a 'default' command or option name if there are multiple variants of the same command or option, for example `purge` as the an alias for `purge-by-id` to have this as the default 'purge' operation if there are also other `purge-*` commands.
 
-In general, each command and option should have at most two names; the full name and a shorter form. For options, the shorter form is usually a single letter with single `-`; the use of multiple option names with double `--` should be avoided.
+In general:
+
+* Each command and option should have at most two names; the full name and a shorter form. For options, the shorter form is usually a single-letter option.
+* Having more than two names is only allowed if needed for backward compatibility; the backward-compatible name(s) should be removed on the next major release.
+* Options should always have a full name to describe their meaning, short (single-letter) name is optional.
+* Single-letter options are preceded by `-` (single dash), multi-letter options are preceded by `--` (double dash).
 
 === ArgGroup Annotations
 
