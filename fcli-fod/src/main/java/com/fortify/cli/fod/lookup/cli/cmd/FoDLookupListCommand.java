@@ -64,7 +64,7 @@ public class FoDLookupListCommand extends AbstractFoDOutputCommand implements IU
     public JsonNode transformRecord(JsonNode record) {
         return FoDLookupHelper.renameFields(record);
     }
-    
+
     @Override
     public boolean isSingular() {
         return false;
