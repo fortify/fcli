@@ -104,6 +104,9 @@ public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements
                 if (inProgressScanActionType.getInProgressScanActionType().equals(FoDEnums.InProgressScanActionType.DoNotStartScan)) {
                     return scanDescriptor.asObjectNode().put("__action__", "SKIPPED_RUNNING");
                 } else if (inProgressScanActionType.getInProgressScanActionType().equals(FoDEnums.InProgressScanActionType.CancelScanInProgress)) {
+                    // TODO Do not use System.out.println (https://github.com/fortify/fcli/issues/91, close after fixing all occurrences in FoD module)
+                    //      If this is supposed to be an error, throw an exception
+                    //      If this is supposed to be a warning, use logging framework to output warning
                     System.out.println("Cancelling scans automatically is not currently supported.");
                 }
             } else {

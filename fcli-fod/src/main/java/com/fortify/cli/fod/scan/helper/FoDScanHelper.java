@@ -65,6 +65,8 @@ public class FoDScanHelper {
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
+            // TODO Do not use System.out.println (https://github.com/fortify/fcli/issues/91, close after fixing all occurrences in FoD module)
+            //      Status messages should preferably be written using ProgressHelper from fcli-common
             System.out.println("Validating remediation entitlement...");
             // check we have an appropriate remediation scan available
             for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
@@ -78,6 +80,8 @@ public class FoDScanHelper {
                 }
             }
             if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
+                // TODO Do not use System.out.println (https://github.com/fortify/fcli/issues/91, close after fixing all occurrences in FoD module)
+                //      Status messages should preferably be written using ProgressHelper from fcli-common
                 System.out.println("Running remediation scan using entitlement: " + entitlement.getEntitlementDescription());
             } else {
                 throw new ValidationException("No remediation scan entitlements found");
@@ -94,6 +98,10 @@ public class FoDScanHelper {
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
+            // TODO Do not use System.out.println (https://github.com/fortify/fcli/issues/91, close after fixing all occurrences in FoD module)
+            //      Status messages should preferably be written using ProgressHelper from fcli-common
+            // TODO Remove commented statements below
+            //      If these are used for debugging, consider using the logging framework to output debug/trace messages 
             System.out.println("Validating entitlements...");
             // check for an entitlement
             for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
@@ -127,6 +135,7 @@ public class FoDScanHelper {
         return entitlement;
     }
 
+    // TODO Unused method
     private final static Integer unitsRequired(FoDAssessmentTypeOptions.FoDAssessmentType assessmentType,
                                                FoDEnums.EntitlementPreferenceType entitlementType) {
         if (entitlementType == FoDEnums.EntitlementPreferenceType.SingleScanOnly ||

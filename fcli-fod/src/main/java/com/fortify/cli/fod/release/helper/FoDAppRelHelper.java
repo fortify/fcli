@@ -177,6 +177,8 @@ public class FoDAppRelHelper {
                                                                                   boolean isPlus, boolean failIfNotFound) {
         String filterString = "name:" + scanType.toString() +
                 (isPlus ? "+" : "") + " Assessment";
+        // TODO Do not use System.out.println (https://github.com/fortify/fcli/issues/91, close after fixing all occurrences in FoD module)
+        //      If this is useful for debugging, use logging framework to output debug/trace message 
         System.out.println(filterString);
         GetRequest request = unirestInstance.get(FoDUrls.RELEASE + "/assessment-types")
                 .routeParam("relId", relId)
