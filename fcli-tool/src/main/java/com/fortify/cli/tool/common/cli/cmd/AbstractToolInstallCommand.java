@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
@@ -35,6 +36,7 @@ import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -46,8 +48,7 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
     private String version;
     @Getter @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
     private String installDir;
-    @Getter @Option(names={"-y", "--replace-existing"}, required = false, descriptionKey="fcli.tool.install.replace") 
-    private boolean replaceExisting;
+    @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Getter @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
     private DigestMismatchAction onDigestMismatch;
     @Inject private GenericUnirestRunner unirestRunner; 
@@ -135,11 +136,8 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
     
     private final void emptyExistingInstallPath(Path installPath) throws IOException {
         if ( Files.exists(installPath) && Files.list(installPath).findFirst().isPresent() ) {
-            if ( !replaceExisting ) {
-                throw new IllegalStateException(String.format("Non-empty installation directory %s already exists; use --replace-existing to replace existing installation", installPath.toString()));
-            } else {
-                FileUtils.deleteRecursive(installPath);
-            }
+            requireConfirmation.checkConfirmed();
+            FileUtils.deleteRecursive(installPath);
         }
     }
     

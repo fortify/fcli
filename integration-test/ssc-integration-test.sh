@@ -57,7 +57,7 @@ runTestCommands() {
     sscCmd appversion create "${appName}:v2" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store myAppVersion
     checkOutput=(fgrep "v2"); sscCmd appversion get ::myAppVersion::    
     sscCmd appversion create "${appName}:v3" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs
-    sscCmd app delete "${appName}" --delete-versions
+    sscCmd app delete "${appName}" --confirm
     checkOutput=(fgrep -v "${appName}"); sscCmd appversion list
 }
 

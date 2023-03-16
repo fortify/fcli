@@ -9,6 +9,7 @@ import java.util.Comparator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
@@ -18,17 +19,17 @@ import com.fortify.cli.common.util.FcliHomeHelper;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 //TODO Remove code duplication between this class and StateClearCommand
 @Command(name = BasicOutputHelperMixins.Clear.CMD_NAME)
 public class ConfigClearCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     @Getter @Mixin private BasicOutputHelperMixins.Clear outputHelper;
-    @Option(names={"-y", "--confirm"}, required = true) private boolean confirm;
+    @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     
     @Override
     protected JsonNode getJsonNode() {
+        requireConfirmation.checkConfirmed();
         ArrayNode result = objectMapper.createArrayNode();
         try {
             if ( FcliHomeHelper.getFcliConfigPath().toFile().exists() ) {

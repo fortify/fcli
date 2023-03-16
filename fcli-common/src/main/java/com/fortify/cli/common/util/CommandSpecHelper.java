@@ -29,6 +29,14 @@ public class CommandSpecHelper {
         return value!=null ? value : messages.getString(keySuffix, null);
     }
     
+    public static final String getRequiredMessageString(CommandSpec commandSpec, String keySuffix) {
+        String result = getMessageString(commandSpec, keySuffix);
+        if ( StringUtils.isBlank(result) ) {
+            throw new RuntimeException("No resource bundle entry found for required key suffix: "+keySuffix);
+        }
+        return result;
+    }
+    
     /**
      * @param commandSpec {@link CommandSpec} instance for looking up a {@link ResourceBundle}
      * @return {@link Messages} instance for the given {@link CommandSpec}, 

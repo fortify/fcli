@@ -26,6 +26,7 @@ package com.fortify.cli.ssc.app.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
@@ -40,18 +41,17 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
 public class SSCAppDeleteCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper; 
     @Mixin private SSCAppResolverMixin.PositionalParameter appResolver;
-    @Option(names="--delete-versions") private boolean deleteVersions;
+    @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        if (!deleteVersions) { throw new IllegalArgumentException("To confirm deleting all versions for this application, the --delete-versions option is required"); }
+        requireConfirmation.checkConfirmed();
         JsonNode versions = getAppVersions(unirest);
         versions.forEach(v->deleteAppVersion(unirest, (ObjectNode)v));
         return versions;
