@@ -34,9 +34,9 @@ import picocli.CommandLine.Command;
  * 
  * @author rsenden
  */
-@ReflectiveAccess
 @ProductHelperClass(SSCProductHelper.class)
 public class SSCOutputHelperMixins {
+    @ReflectiveAccess
     public static class SSCProductHelper implements IProductHelper, IInputTransformerSupplier, INextPageUrlProducerSupplier, IHttpRequestUpdater {
         @Getter @Setter private IUnirestOutputHelper outputHelper;
         @Getter private UnaryOperator<JsonNode> inputTransformer = SSCInputTransformer::getDataOrSelf;
@@ -56,88 +56,88 @@ public class SSCOutputHelperMixins {
         }
     }
     
-    @ReflectiveAccess public static class Add 
+     public static class Add 
                extends UnirestOutputHelperMixins.Add {}
     
-    @ReflectiveAccess public static class Create 
+     public static class Create 
                extends UnirestOutputHelperMixins.Create {}
     
-    @ReflectiveAccess public static class Delete 
+     public static class Delete 
                extends UnirestOutputHelperMixins.Delete {}
     
-    @ReflectiveAccess public static class List 
+     public static class List 
                extends UnirestOutputHelperMixins.List {}
     
-    @ReflectiveAccess public static class Get 
+     public static class Get 
                extends UnirestOutputHelperMixins.Get {}
     
-    @ReflectiveAccess public static class Set 
+     public static class Set 
                extends UnirestOutputHelperMixins.Set {}
     
-    @ReflectiveAccess public static class Update 
+     public static class Update 
                extends UnirestOutputHelperMixins.Update {}
     
-    @ReflectiveAccess public static class Enable 
+     public static class Enable 
                extends UnirestOutputHelperMixins.Enable {}
     
-    @ReflectiveAccess public static class Disable 
+     public static class Disable 
                extends UnirestOutputHelperMixins.Disable {}
     
-    @ReflectiveAccess public static class Start 
+     public static class Start 
                extends UnirestOutputHelperMixins.Start {}
     
-    @ReflectiveAccess public static class Pause 
+     public static class Pause 
                extends UnirestOutputHelperMixins.Pause {}
     
-    @ReflectiveAccess public static class Resume 
+     public static class Resume 
                extends UnirestOutputHelperMixins.Resume {}
     
-    @ReflectiveAccess public static class Cancel 
+     public static class Cancel 
                extends UnirestOutputHelperMixins.Cancel {}
     
-    @ReflectiveAccess public static class Download 
+     public static class Download 
                extends UnirestOutputHelperMixins.Download {}
     
-    @ReflectiveAccess public static class Upload 
+     public static class Upload 
                extends UnirestOutputHelperMixins.Upload {}
     
-    @ReflectiveAccess public static class Install 
+     public static class Install 
                extends UnirestOutputHelperMixins.Install {}
     
-    @ReflectiveAccess public static class Uninstall 
+     public static class Uninstall 
                extends UnirestOutputHelperMixins.Uninstall {}
     
-    @ReflectiveAccess public static class ArtifactApprove extends UnirestOutputHelperMixins.TableNoQuery {
+     public static class ArtifactApprove extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "approve";
     }
     
     @Command(aliases = "download-by-id")
-    @ReflectiveAccess public static class ArtifactDownloadById 
+     public static class ArtifactDownloadById 
                 extends UnirestOutputHelperMixins.Download {}
     
-    @ReflectiveAccess public static class ArtifactDownloadState extends UnirestOutputHelperMixins.TableNoQuery {
+     public static class ArtifactDownloadState extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "download-state"; 
     }
     
     @Command(aliases = "purge-by-id")
-    @ReflectiveAccess public static class ArtifactPurgeById extends UnirestOutputHelperMixins.TableNoQuery {
+     public static class ArtifactPurgeById extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "purge";
     }
     
-    @ReflectiveAccess public static class ArtifactPurgeOlderThan extends UnirestOutputHelperMixins.TableNoQuery {
+     public static class ArtifactPurgeOlderThan extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "purge-older-than";
     }
     
-    @ReflectiveAccess public static class ImportDebricked extends UnirestOutputHelperMixins.TableNoQuery {
+     public static class ImportDebricked extends UnirestOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "import-debricked";
     }
     
-    @ReflectiveAccess public static class VulnCount extends UnirestOutputHelperMixins.TableWithQuery {
+     public static class VulnCount extends UnirestOutputHelperMixins.TableWithQuery {
         public static final String CMD_NAME = "count";
     }
     
     @Command(aliases = "gen-answer")
-    @ReflectiveAccess public static class ReportTemplateGenerateAnswerFile extends BasicOutputHelperMixins.TableNoQuery {
+     public static class ReportTemplateGenerateAnswerFile extends BasicOutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "generate-answerfile";
     }
 }

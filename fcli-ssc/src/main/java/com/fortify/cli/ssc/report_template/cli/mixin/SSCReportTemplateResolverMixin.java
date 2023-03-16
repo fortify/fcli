@@ -27,26 +27,22 @@ package com.fortify.cli.ssc.report_template.cli.mixin;
 import com.fortify.cli.ssc.report_template.helper.SSCReportTemplateDescriptor;
 import com.fortify.cli.ssc.report_template.helper.SSCReportTemplateHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCReportTemplateResolverMixin {
-    @ReflectiveAccess
     private static abstract class AbstractSSCReportTemplateResolverMixin {
         protected abstract String getReportTemplateNameOrId();
         public SSCReportTemplateDescriptor getReportTemplateDescriptor(UnirestInstance unirest) {
             return new SSCReportTemplateHelper(unirest).getDescriptorByNameOrId(getReportTemplateNameOrId(), true);
         }
     }
-    @ReflectiveAccess
     public static class PositionalParameterSingle extends AbstractSSCReportTemplateResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "reportTemplateNameOrId")
         @Getter private String reportTemplateNameOrId;
     }
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCReportTemplateResolverMixin {
         @Option(names="--report-template", required=true, descriptionKey = "reportTemplateNameOrId")
         @Getter private String reportTemplateNameOrId;

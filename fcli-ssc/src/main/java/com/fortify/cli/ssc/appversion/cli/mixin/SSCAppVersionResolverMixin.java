@@ -36,7 +36,6 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionResolverMixin {
-    @ReflectiveAccess
     public static abstract class AbstractSSCAppVersionResolverMixin {
         @Mixin private SSCDelimiterMixin delimiterMixin;
         public abstract String getAppVersionNameOrId();
@@ -50,13 +49,11 @@ public class SSCAppVersionResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCAppVersionResolverMixin {
         @Option(names = {"--appversion"}, required = true, descriptionKey = "ApplicationVersionMixin")
         @Getter private String appVersionNameOrId;
     }
     
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractSSCAppVersionResolverMixin {
         @Option(names = {"--appversion"}, required = false, descriptionKey = "ApplicationVersionMixin")
         @Getter private String appVersionNameOrId;

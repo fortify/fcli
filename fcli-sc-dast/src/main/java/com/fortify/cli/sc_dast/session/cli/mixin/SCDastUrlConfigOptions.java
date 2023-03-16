@@ -26,11 +26,9 @@ package com.fortify.cli.sc_dast.session.cli.mixin;
 
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 public class SCDastUrlConfigOptions implements IUrlConfig {
     @Option(names = {"--ssc-url"}, required = true, order=1)
     @Getter private String url;

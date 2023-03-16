@@ -27,14 +27,12 @@ package com.fortify.cli.ssc.role.cli.mixin;
 import com.fortify.cli.ssc.role.helper.SSCRoleDescriptor;
 import com.fortify.cli.ssc.role.helper.SSCRoleHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 public class SSCRoleResolverMixin {
     
     public static abstract class AbstractSSCRoleMixin {

@@ -37,14 +37,12 @@ import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 import com.fortify.cli.ssc.token.helper.SSCTokenUpdateRequest;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.Update.CMD_NAME)
 public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand implements IRecordTransformerSupplier {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);

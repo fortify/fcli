@@ -28,6 +28,7 @@ import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.rest.runner.GenericUnirestRunner;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
+import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.fod.oauth.helper.FoDOAuthHelper;
 import com.fortify.cli.fod.oauth.helper.FoDTokenCreateResponse;
 import com.fortify.cli.fod.session.cli.mixin.FoDSessionLoginOptions;
@@ -40,13 +41,13 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
+@FixInjection
 public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionData> {
     @Getter @Mixin private BasicOutputHelperMixins.Login outputHelper;
-    @Getter @Inject private FoDSessionDataManager sessionDataManager;
-    @Getter @Inject private FoDOAuthHelper oauthHelper;
-    @Inject private GenericUnirestRunner unirestRunner;
+    @Inject @ReflectiveAccess @Getter private FoDSessionDataManager sessionDataManager;
+    @Inject @ReflectiveAccess @Getter private FoDOAuthHelper oauthHelper;
+    @Inject @ReflectiveAccess private GenericUnirestRunner unirestRunner;
     @Mixin private FoDSessionLoginOptions loginOptions;
     
     @Override

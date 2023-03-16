@@ -39,7 +39,6 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -48,7 +47,6 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
-@ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.List.CMD_NAME)
 public final class AllCommandsListCommand extends AbstractBasicOutputCommand {
     private static final ObjectMapper objectMapper = new ObjectMapper();

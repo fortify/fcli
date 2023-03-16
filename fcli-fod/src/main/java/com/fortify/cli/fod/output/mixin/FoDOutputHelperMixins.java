@@ -31,9 +31,9 @@ import lombok.Setter;
  * 
  * @author rsenden
  */
-@ReflectiveAccess
 @ProductHelperClass(FoDProductHelper.class)
 public class FoDOutputHelperMixins {
+    @ReflectiveAccess
     public static class FoDProductHelper implements IProductHelper, IInputTransformerSupplier, INextPageUrlProducerSupplier {
         @Getter @Setter private IUnirestOutputHelper outputHelper;
         @Getter private UnaryOperator<JsonNode> inputTransformer = FoDInputTransformer::getItems;

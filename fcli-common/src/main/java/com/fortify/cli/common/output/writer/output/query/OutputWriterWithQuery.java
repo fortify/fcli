@@ -13,7 +13,6 @@ import com.fortify.cli.common.output.writer.output.standard.IOutputOptions;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Model.CommandSpec;
 
 /**
@@ -24,7 +23,6 @@ import picocli.CommandLine.Model.CommandSpec;
  * @author rsenden
  *
  */
-@ReflectiveAccess
 public class OutputWriterWithQuery extends StandardOutputWriter {
     private final IOutputQueriesSupplier outputQueriesSupplier;
     

@@ -24,11 +24,10 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_artifact.cli.mixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess @Getter
+@Getter
 public class SSCAppVersionArtifactDownloadOptions {
     @Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
     private String destination;

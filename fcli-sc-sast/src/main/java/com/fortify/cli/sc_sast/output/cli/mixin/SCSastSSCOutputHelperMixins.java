@@ -32,9 +32,9 @@ import lombok.Setter;
  * 
  * @author rsenden
  */
-@ReflectiveAccess
 @ProductHelperClass(SSCProductHelper.class)
 public class SCSastSSCOutputHelperMixins {
+    @ReflectiveAccess
     public static class SSCProductHelper implements IProductHelper, IInputTransformerSupplier, INextPageUrlProducerSupplier, IHttpRequestUpdater {
         @Getter @Setter private IUnirestOutputHelper outputHelper;
         @Getter private UnaryOperator<JsonNode> inputTransformer = SSCInputTransformer::getDataOrSelf;
@@ -54,54 +54,54 @@ public class SCSastSSCOutputHelperMixins {
         }
     }
     
-    @ReflectiveAccess public static class Add 
+     public static class Add 
                extends UnirestOutputHelperMixins.Add {}
     
-    @ReflectiveAccess public static class Create 
+     public static class Create 
                extends UnirestOutputHelperMixins.Create {}
     
-    @ReflectiveAccess public static class Delete 
+     public static class Delete 
                extends UnirestOutputHelperMixins.Delete {}
     
-    @ReflectiveAccess public static class List 
+     public static class List 
                extends UnirestOutputHelperMixins.List {}
     
-    @ReflectiveAccess public static class Get 
+     public static class Get 
                extends UnirestOutputHelperMixins.Get {}
     
-    @ReflectiveAccess public static class Set 
+     public static class Set 
                extends UnirestOutputHelperMixins.Set {}
     
-    @ReflectiveAccess public static class Update 
+     public static class Update 
                extends UnirestOutputHelperMixins.Update {}
     
-    @ReflectiveAccess public static class Enable 
+     public static class Enable 
                extends UnirestOutputHelperMixins.Enable {}
     
-    @ReflectiveAccess public static class Disable 
+     public static class Disable 
                extends UnirestOutputHelperMixins.Disable {}
     
-    @ReflectiveAccess public static class Start 
+     public static class Start 
                extends UnirestOutputHelperMixins.Start {}
     
-    @ReflectiveAccess public static class Pause 
+     public static class Pause 
                extends UnirestOutputHelperMixins.Pause {}
     
-    @ReflectiveAccess public static class Resume 
+     public static class Resume 
                extends UnirestOutputHelperMixins.Resume {}
     
-    @ReflectiveAccess public static class Cancel 
+     public static class Cancel 
                extends UnirestOutputHelperMixins.Cancel {}
     
-    @ReflectiveAccess public static class Upload 
+     public static class Upload 
                extends UnirestOutputHelperMixins.Upload {}
     
-    @ReflectiveAccess public static class Download 
+     public static class Download 
                extends UnirestOutputHelperMixins.Download {}
     
-    @ReflectiveAccess public static class Install 
+     public static class Install 
                extends UnirestOutputHelperMixins.Install {}
     
-    @ReflectiveAccess public static class Uninstall 
+     public static class Uninstall 
                extends UnirestOutputHelperMixins.Uninstall {}
 }

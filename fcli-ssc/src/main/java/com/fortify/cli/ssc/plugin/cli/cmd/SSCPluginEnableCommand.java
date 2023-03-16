@@ -32,13 +32,11 @@ import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.plugin.cli.mixin.SSCPluginResolverMixin;
 import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Enable.CMD_NAME)
 //TODO Check whether plugin exists, and isn't enabled already
 public class SSCPluginEnableCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {

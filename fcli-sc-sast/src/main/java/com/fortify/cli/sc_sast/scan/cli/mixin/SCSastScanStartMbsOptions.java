@@ -11,11 +11,9 @@ import java.util.Properties;
 
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 public class SCSastScanStartMbsOptions implements ISCSastScanStartOptions {
     @Getter private File payloadFile;
     @Getter private String sensorVersion;

@@ -3,7 +3,6 @@ package com.fortify.cli.common.cli.mixin;
 import com.fortify.cli.common.util.CommandSpecHelper;
 import com.fortify.cli.common.util.StringUtils;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -14,13 +13,11 @@ import picocli.CommandLine.Spec.Target;
 public class CommonOptionMixins {
     private CommonOptionMixins() {}
     
-    @ReflectiveAccess
     public static class OptionalDestinationFile {
         @Option(names = {"-f", "--dest"}, descriptionKey = "fcli.destination-file")
         @Getter private String destination;
     }
     
-    @ReflectiveAccess
     public static class RequireConfirmation {
         @Spec(Target.MIXEE) CommandSpec spec;
         @Option(names = {"-y", "--confirm"}, defaultValue = "false")

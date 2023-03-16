@@ -23,6 +23,7 @@ import com.fortify.cli.common.rest.runner.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.ssc.rest.SSCUrls;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.GetRequest;
@@ -31,7 +32,7 @@ import picocli.CommandLine.Help.Ansi;
 
 @Singleton @FixInjection
 public class SSCTokenHelper {
-	@Inject private GenericUnirestRunner unirestRunner;
+	@Inject @ReflectiveAccess private GenericUnirestRunner unirestRunner;
     
     public static final JsonNode transformTokenRecord(JsonNode tokenRecord) {
     	if ( tokenRecord instanceof ObjectNode && tokenRecord.has("terminalDate") ) {

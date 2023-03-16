@@ -8,7 +8,6 @@ import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactor
 import com.fortify.cli.common.output.spi.product.ProductHelperClass;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.Setter;
 import picocli.CommandLine.Command;
@@ -25,15 +24,16 @@ import picocli.CommandLine.Spec.Target;
  * {@link UnirestOutputHelperMixins} inner class. For example:</p>
  * 
  * <pre>
- * @ReflectiveAccess
+ * 
  * @ProductHelperClass(MyProductHelper.class)
  * public class MyProductOutputHelperMixins {
+ *     @ReflectiveAccess
  *     public static class SCDastProductHelper implements IProductHelper, ... {
  *         @Getter @Setter private IUnirestOutputHelper outputHelper;
  *         ...
  *     }
  *     
- *     @ReflectiveAccess public static class Create 
+ *      public static class Create 
  *         extends UnirestOutputHelperMixins.Create {}
  *     
  *     ...
@@ -80,124 +80,124 @@ import picocli.CommandLine.Spec.Target;
  * @author rsenden
  */
 public class UnirestOutputHelperMixins {
-    @ReflectiveAccess @Command
+     @Command
     public static class Other extends AbstractUnirestOutputHelper {
         @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
     }
     
-    @ReflectiveAccess
+    
     public static class TableWithQuery extends Other {
         @Getter @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
-    @ReflectiveAccess
+    
     public static class TableNoQuery extends Other {
         @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
-    @ReflectiveAccess
+    
     public static class Add extends TableNoQuery {
         public static final String CMD_NAME = "add";
     }
     
-    @ReflectiveAccess
+    
     public static class Create extends TableNoQuery {
         public static final String CMD_NAME = "create";
     }
     
-    @ReflectiveAccess @Command(aliases = {"rm"})
+     @Command(aliases = {"rm"})
     public static class Delete extends TableNoQuery {
         public static final String CMD_NAME = "delete";
     }
     
-    @ReflectiveAccess @Command(aliases = {"clear"})
+     @Command(aliases = {"clear"})
     public static class DeleteAll extends TableNoQuery {
         public static final String CMD_NAME = "delete-all";
     }
     
-    @ReflectiveAccess @Command(name = "list", aliases = {"ls"})
+     @Command(name = "list", aliases = {"ls"})
     public static class List extends TableWithQuery {
         public static final String CMD_NAME = "list";
     }
     
-    @ReflectiveAccess
+    
     public static class Get extends TableNoQuery {
         public static final String CMD_NAME = "get";
     }
     
-    @ReflectiveAccess
+    
     public static class Set extends TableNoQuery {
         public static final String CMD_NAME = "set";
    }
     
-    @ReflectiveAccess
+    
     public static class Update extends TableNoQuery {
         public static final String CMD_NAME = "update";
     }
     
-    @ReflectiveAccess
+    
     public static class Enable extends TableNoQuery {
         public static final String CMD_NAME = "enable";
     }
     
-    @ReflectiveAccess
+    
     public static class Disable extends TableNoQuery {
         public static final String CMD_NAME = "disable";
     }
     
-    @ReflectiveAccess
+    
     public static class Start extends TableNoQuery {
         public static final String CMD_NAME = "start";
     }
     
-    @ReflectiveAccess
+    
     public static class Pause extends TableNoQuery {
         public static final String CMD_NAME = "pause";
     }
     
-    @ReflectiveAccess
+    
     public static class Resume extends TableNoQuery {
         public static final String CMD_NAME = "resume";
     }
     
-    @ReflectiveAccess
+    
     public static class Cancel extends TableNoQuery {
         public static final String CMD_NAME = "cancel";
     }
 
-    @ReflectiveAccess
+    
     public static class Upload extends TableNoQuery {
         public static final String CMD_NAME = "upload";
     }
     
-    @ReflectiveAccess
+    
     public static class Download extends TableNoQuery {
         public static final String CMD_NAME = "download";
     }
     
-    @ReflectiveAccess
+    
     public static class Install extends TableNoQuery {
         public static final String CMD_NAME = "install";
     }
     
-    @ReflectiveAccess
+    
     public static class Uninstall extends TableNoQuery {
         public static final String CMD_NAME = "uninstall";
     }
 
-    @ReflectiveAccess
+    
     public static class Import extends TableNoQuery {
         public static final String CMD_NAME = "import";
     }
 
-    @ReflectiveAccess
+    
     public static class Export extends TableNoQuery {
         public static final String CMD_NAME = "export";
     }
 
-    @ReflectiveAccess
+    
     public static class Setup extends TableNoQuery {
         public static final String CMD_NAME = "setup";
     }

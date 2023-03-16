@@ -15,13 +15,47 @@
  */
 package picocli;
 
-import java.io.*;
+import static java.util.Locale.ENGLISH;
+import static picocli.CommandLine.Help.Column.Overflow.SPAN;
+import static picocli.CommandLine.Help.Column.Overflow.TRUNCATE;
+import static picocli.CommandLine.Help.Column.Overflow.WRAP;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.Closeable;
+import java.io.Console;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StreamTokenizer;
+import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.*;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -35,22 +69,66 @@ import java.nio.charset.Charset;
 import java.text.BreakIterator;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Currency;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.Enumeration;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.IllegalFormatException;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.NoSuchElementException;
+import java.util.Properties;
+import java.util.Queue;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.Stack;
+import java.util.TimeZone;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import picocli.CommandLine.Help;
 import picocli.CommandLine.Help.Ansi.IStyle;
 import picocli.CommandLine.Help.Ansi.Style;
 import picocli.CommandLine.Help.Ansi.Text;
-import picocli.CommandLine.Model.*;
+import picocli.CommandLine.Model.ArgGroupSpec;
+import picocli.CommandLine.Model.ArgSpec;
+import picocli.CommandLine.Model.CaseAwareLinkedMap;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.IAnnotatedElement;
+import picocli.CommandLine.Model.IOrdered;
+import picocli.CommandLine.Model.ITypeInfo;
+import picocli.CommandLine.Model.Messages;
+import picocli.CommandLine.Model.OptionSpec;
+import picocli.CommandLine.Model.ParserSpec;
+import picocli.CommandLine.Model.PositionalParamSpec;
+import picocli.CommandLine.Model.TypedMember;
+import picocli.CommandLine.Model.UnmatchedArgsBinding;
+import picocli.CommandLine.Model.UsageMessageSpec;
 import picocli.CommandLine.ParseResult.GroupMatchContainer;
-
-import static java.util.Locale.ENGLISH;
-import static picocli.CommandLine.Help.Column.Overflow.SPAN;
-import static picocli.CommandLine.Help.Column.Overflow.TRUNCATE;
-import static picocli.CommandLine.Help.Column.Overflow.WRAP;
 
 /**
  * <p>
@@ -148,7 +226,7 @@ import static picocli.CommandLine.Help.Column.Overflow.WRAP;
 public class CommandLine {
 
     /** This is picocli version {@value}. */
-    public static final String VERSION = "4.7.0";
+    public static final String VERSION = "4.7.1";
     private static final Tracer TRACER = new Tracer();
 
     private CommandSpec commandSpec;
@@ -979,7 +1057,7 @@ public class CommandLine {
      * or whether such values should be rejected with a missing parameter exception.
      * The default is {@code false}, so by default input like {@code -x=subcommand} is rejected if {@code -x} is an option that takes a String parameter, and {@code subcommand} is a subcommand of this command.
      * @return {@code true} when options can have parameter values that match subcommand names or aliases, {@code false} when such values should be rejected with a missing parameter exception
-     * @since 4.7.0
+     * @since 4.7.1
      * @see ParserSpec#allowSubcommandsAsOptionParameters()
      */
     public boolean isAllowSubcommandsAsOptionParameters() {
@@ -994,7 +1072,7 @@ public class CommandLine {
      * subcommands, call the setter last, after adding subcommands.</p>
      * @param newValue the new setting. When {@code true}, options can have parameter values that match subcommand names or aliases, when {@code false}, such values are rejected with a missing parameter exception
      * @return this {@code CommandLine} object, to allow method chaining
-     * @since 4.7.0
+     * @since 4.7.1
      * @see ParserSpec#allowSubcommandsAsOptionParameters(boolean)
      */
     public CommandLine setAllowSubcommandsAsOptionParameters(boolean newValue) {
@@ -1009,7 +1087,7 @@ public class CommandLine {
      * The default is {@code false}, so by default input like {@code -x=--some-option} is rejected if {@code -x} is an option that takes a String parameter, and {@code --some-option} is an option of this command.
      * <p>This method only considers actual options of this command, as opposed to {@link #isUnmatchedOptionsAllowedAsOptionParameters()}, which considers values that <em>resemble</em> options.</p>
      * @return {@code true} when options can have parameter values that match the name of an option in this command, {@code false} when such values should be rejected with a missing parameter exception
-     * @since 4.7.0
+     * @since 4.7.1
      * @see #isUnmatchedOptionsAllowedAsOptionParameters()
      * @see ParserSpec#allowOptionsAsOptionParameters()
      */
@@ -1029,7 +1107,7 @@ public class CommandLine {
      * subcommands, call the setter last, after adding subcommands.</p>
      * @param newValue the new setting. When {@code true}, options can have parameter values that match the name of an option in this command, when {@code false}, such values are rejected with a missing parameter exception
      * @return this {@code CommandLine} object, to allow method chaining
-     * @since 4.7.0
+     * @since 4.7.1
      * @see #setUnmatchedOptionsAllowedAsOptionParameters(boolean)
      * @see ParserSpec#allowOptionsAsOptionParameters(boolean)
      */
@@ -4737,7 +4815,7 @@ public class CommandLine {
          * Note that picocli cannot reliably detect declaration order in commands that have both {@code @Option}-annotated methods and {@code @Option}-annotated fields.
          * The default ({@code true}) is to sort alphabetically.
          * @return whether options in the synopsis should be shown in alphabetic order.
-         * @since 4.7.0 */
+         * @since 4.7.1 */
         boolean sortSynopsis() default true;
 
         /** Prefix required options with this character in the options list. The default is no marker: the synopsis
@@ -5033,7 +5111,7 @@ public class CommandLine {
      * </pre>
      *
      * The {@link #convert(String)} method of this class always throws an UnsupportedOperationException.
-     * @since 4.7.0
+     * @since 4.7.1
      */
     public static final class UseDefaultConverter implements ITypeConverter<Object> {
         /** Always throws UnsupportedOperationException.
@@ -8184,7 +8262,7 @@ public class CommandLine {
             public boolean sortOptions() { return (sortOptions == null) ? DEFAULT_SORT_OPTIONS : sortOptions; }
 
             /** Returns whether the options in the synopsis should be sorted alphabetically.
-             * @since 4.7.0 */
+             * @since 4.7.1 */
             public boolean sortSynopsis() { return (sortSynopsis == null) ? DEFAULT_SORT_SYNOPSIS : sortSynopsis; }
 
             /** Returns the character used to prefix required options in the options list. */
@@ -8333,7 +8411,7 @@ public class CommandLine {
 
             /** Sets whether the options in the synopsis should be sorted alphabetically.
              * @return this UsageMessageSpec for method chaining
-             * @since 4.7.0 */
+             * @since 4.7.1 */
             public UsageMessageSpec sortSynopsis(boolean newValue) {sortSynopsis = newValue; return this;}
 
             /** Sets the character used to prefix required options in the options list.
@@ -8597,11 +8675,11 @@ public class CommandLine {
             public boolean unmatchedOptionsAllowedAsOptionParameters() { return unmatchedOptionsAllowedAsOptionParameters; }
             /**
              * @see CommandLine#isAllowSubcommandsAsOptionParameters()
-             * @since 4.7.0 */
+             * @since 4.7.1 */
             public boolean allowSubcommandsAsOptionParameters() { return allowSubcommandsAsOptionParameters; }
             /**
              * @see CommandLine#isAllowOptionsAsOptionParameters()
-             * @since 4.7.0 */
+             * @since 4.7.1 */
             public boolean allowOptionsAsOptionParameters() { return allowOptionsAsOptionParameters; }
             private boolean splitFirst()                       { return limitSplit(); }
             /** Returns true if arguments should be split first before any further processing and the number of
@@ -8661,11 +8739,11 @@ public class CommandLine {
             public ParserSpec unmatchedOptionsArePositionalParams(boolean unmatchedOptionsArePositionalParams) { this.unmatchedOptionsArePositionalParams = unmatchedOptionsArePositionalParams; return this; }
             /**
              * @see CommandLine#setAllowSubcommandsAsOptionParameters(boolean)
-             * @since 4.7.0 */
+             * @since 4.7.1 */
             public ParserSpec allowSubcommandsAsOptionParameters(boolean allowSubcommandsAsOptionParameters) { this.allowSubcommandsAsOptionParameters = allowSubcommandsAsOptionParameters; return this; }
             /**
              * @see CommandLine#setAllowOptionsAsOptionParameters(boolean)
-             * @since 4.7.0 */
+             * @since 4.7.1 */
             public ParserSpec allowOptionsAsOptionParameters(boolean allowOptionsAsOptionParameters) { this.allowOptionsAsOptionParameters = allowOptionsAsOptionParameters; return this; }
             /** Sets whether exceptions during parsing should be collected instead of thrown.
              * Multiple errors may be encountered during parsing. These can be obtained from {@link ParseResult#errors()}.
@@ -8882,7 +8960,7 @@ public class CommandLine {
             }
 
             /** Returns the original value of the option's required attribute, regardless of whether the option is used in an exclusive group or not.
-             * @since 4.7.0
+             * @since 4.7.1
              * @see Option#required() */
             public boolean originallyRequired(){
                 return originallyRequired;
@@ -11599,7 +11677,7 @@ public class CommandLine {
          * @see CommandSpec#qualifiedName(String)
          * @since 3.6 */
         public static class Messages {
-            public static boolean loadBundles = true;
+            private static boolean loadBundles = true;
             private final CommandSpec spec;
             private final String bundleBaseName;
             private final ResourceBundle rb;
@@ -11621,18 +11699,14 @@ public class CommandLine {
                 }
             }
             private static ResourceBundle createBundle(String baseName) {
-                if ( loadBundles ) {
+                if (loadBundles) {
                     return ResourceBundle.getBundle(baseName);
                 } else {
                     return new ResourceBundle() {
                         @Override
-                        protected Object handleGetObject(String key) {
-                            return null;
-                        }
+                        protected Object handleGetObject(String key) { return null; }
                         @Override
-                        public Enumeration<String> getKeys() {
-                            return new Vector<String>().elements();
-                        }
+                        public Enumeration<String> getKeys() { return Collections.enumeration(Collections.<String>emptyList()); }
                     };
                 }
             }
@@ -11661,6 +11735,18 @@ public class CommandLine {
                 Set<String> keys = new LinkedHashSet<String>();
                 for (Enumeration<String> k = rb.getKeys(); k.hasMoreElements(); keys.add(k.nextElement()));
                 return keys;
+            }
+
+            /**
+             * During annotation processing, resource bundles may not be available on the
+             * classpath and thereby cause failures. This method allows for disabling
+             * loading of resource bundles during annotation processing, preventing such
+             * errors.
+             * @since 4.7.1
+             * @param loadBundles true if bundles should be loaded (default), false if bundles should not be loaded
+             */
+            public static final void setLoadBundles(boolean loadBundles) {
+                Messages.loadBundles = loadBundles;
             }
 
             /** Returns a copy of the specified Messages object with the CommandSpec replaced by the specified one.
@@ -12975,6 +13061,7 @@ public class CommandLine {
 
                 validationResult = matches.isEmpty() ? GroupValidationResult.SUCCESS_ABSENT : GroupValidationResult.SUCCESS_PRESENT;
                 for (ArgGroupSpec missing : unmatchedSubgroups) {
+                    // PATCH Temporary fix while waiting for new picocli version; added containsRequiredOptionsOrSubgroups() call
                     if (missing.validate() && missing.multiplicity().min > 0 && containsRequiredOptionsOrSubgroups(missing)) {
                         int presentCount = 0;
                         boolean haveMissing = true;
@@ -13005,6 +13092,7 @@ public class CommandLine {
                 }
             }
             
+            // PATH START Added methods
             private boolean containsRequiredOptionsOrSubgroups(ArgGroupSpec argGroupSpec) {
                 return containsRequiredOptions(argGroupSpec) || containsRequiredSubgroups(argGroupSpec);
             }
@@ -13031,6 +13119,7 @@ public class CommandLine {
                 }
                 return false;
             }
+            // PATCH END
 
             private void failGroupMultiplicityExceeded(List<ParseResult.GroupMatch> groupMatches, CommandLine commandLine) {
                 Map<ArgGroupSpec, List<List<ParseResult.GroupMatch>>> matchesPerGroup = new LinkedHashMap<ArgGroupSpec, List<List<GroupMatch>>>();
@@ -14174,7 +14263,7 @@ public class CommandLine {
                     // boolean option with arity = 0..1 or 0..*: value MAY be a param
                     boolean optionalWithBooleanValue = arity.max > 0 && ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value));
                     if (!optionalWithBooleanValue && lookBehind != LookBehind.ATTACHED_WITH_SEPARATOR) { // if attached, try converting the value to boolean (and fail if invalid value)
-                        Boolean defaultValue = booleanValue(argSpec, argSpec.calcDefaultValue(true)); // #712 flip the default value
+                        boolean defaultValue = booleanValue(argSpec, argSpec.calcDefaultValue(true)); // #712 flip the default value
                         if (argSpec.isOption() && !empty(((OptionSpec) argSpec).fallbackValue())) {
                             defaultValue = !booleanValue(argSpec, ((OptionSpec) argSpec).fallbackValue()); // #754 Allow boolean options to get value from fallback instead of defaultProvider
                         }
@@ -14337,7 +14426,8 @@ public class CommandLine {
             String fallback = consumed == 0 && argSpec.isOption() && !OptionSpec.DEFAULT_FALLBACK_VALUE.equals(((OptionSpec) argSpec).fallbackValue())
                     ? ((OptionSpec) argSpec).fallbackValue()
                     : null;
-            if (fallback != null && (args.isEmpty() || !varargCanConsumeNextValue(argSpec, args.peek()))) {
+            if (fallback != null && (args.isEmpty() || !varargCanConsumeNextValue(argSpec, args.peek())
+                    || !canConsumeOneMapArgument(argSpec, lookBehind, alreadyUnquoted, arity, consumed, args.peek(), classes, keyConverter, valueConverter, argDescription))) {
                 args.push(fallback);
             }
             for (int i = consumed; consumed < arity.max && !args.isEmpty(); i++) {
@@ -14558,7 +14648,8 @@ public class CommandLine {
             String fallback = consumed == 0 && argSpec.isOption() && !OptionSpec.DEFAULT_FALLBACK_VALUE.equals(((OptionSpec) argSpec).fallbackValue())
                     ? ((OptionSpec) argSpec).fallbackValue()
                     : null;
-            if (fallback != null && (args.isEmpty() || !varargCanConsumeNextValue(argSpec, args.peek()))) {
+            if (fallback != null && (args.isEmpty() || !varargCanConsumeNextValue(argSpec, args.peek())
+                    || (!canConsumeOneArgument(argSpec, lookBehind, alreadyUnquoted, arity, consumed, args.peek(), argDescription)))) {
                 args.push(fallback);
             }
             for (int i = consumed; consumed < arity.max && !args.isEmpty(); i++) {
@@ -16359,7 +16450,8 @@ public class CommandLine {
          * @since 4.4 */
         public String commandList(Map<String, Help> subcommands) {
             if (subcommands.isEmpty()) { return ""; }
-            int commandLength = maxLength(subcommands.keySet());
+            int maxCommandLength = width() / 2;
+            int commandLength = Math.min(maxLength(subcommands.keySet()), maxCommandLength);
             Help.TextTable textTable = Help.TextTable.forColumns(colorScheme().ansi(),
                     new Help.Column(commandLength + 2, 2, Help.Column.Overflow.SPAN),
                     new Help.Column(width() - (commandLength + 2), 2, Help.Column.Overflow.WRAP));
@@ -18321,7 +18413,7 @@ public class CommandLine {
     }
 
     /** Enumerates over the trace level values for filtering which internal debug statements should be printed.
-     * @since 4.7.0 */
+     * @since 4.7.1 */
     public enum TraceLevel { OFF, WARN, INFO, DEBUG;
         /** Returns whether messages at the specified {@code other} trace level would be printed for the current trace level. */
         public boolean isEnabled(TraceLevel other) { return ordinal() >= other.ordinal(); }
@@ -18334,7 +18426,7 @@ public class CommandLine {
 
     /** Utility class for printing internal debug statements.
      * @see CommandLine#tracer()
-     * @since 4.7.0 */
+     * @since 4.7.1 */
     public static final class Tracer {
         private PrintStream stream = System.err;
         private TraceLevel level = TraceLevel.lookup(System.getProperty("picocli.trace"));
@@ -18377,7 +18469,7 @@ public class CommandLine {
     }
     /** Returns the {@code Tracer} used internally for printing internal debug statements.
      * @return the {@code Tracer} used internally for printing internal debug statements
-     * @since 4.7.0 */
+     * @since 4.7.1 */
     public static Tracer tracer() {
         // TRACER is a static variable.
         // Refresh to pick up changes to the system property after the CommandLine class was loaded.

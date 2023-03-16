@@ -15,7 +15,6 @@ import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,6 @@ import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.Download.CMD_NAME)
 public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.Download outputHelper;
@@ -95,7 +93,6 @@ public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand imple
         }
     }
     
-    @ReflectiveAccess
     public static final class DownloadTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
         public DownloadTypeIterable() { 

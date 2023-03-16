@@ -32,14 +32,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactDescriptor;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionArtifactResolverMixin {
-    @ReflectiveAccess
     public static abstract class AbstractSSCAppVersionArtifactResolverMixin {
         public abstract String getArtifactId();
 
@@ -52,7 +50,6 @@ public class SSCAppVersionArtifactResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static abstract class AbstractSSCAppVersionMultiArtifactResolverMixin {
         public abstract String[] getArtifactIds();
 
@@ -69,19 +66,16 @@ public class SSCAppVersionArtifactResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCAppVersionArtifactResolverMixin {
         @Option(names = {"--artifact"}, required = true)
         @Getter private String artifactId;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCAppVersionArtifactResolverMixin {
         @Parameters(index = "0", arity = "1", paramLabel="artifact-id")
         @Getter private String artifactId;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameterMulti extends AbstractSSCAppVersionMultiArtifactResolverMixin {
         @Parameters(index = "0", arity = "1..", paramLabel = "artifact-id's")
         @Getter private String[] artifactIds;

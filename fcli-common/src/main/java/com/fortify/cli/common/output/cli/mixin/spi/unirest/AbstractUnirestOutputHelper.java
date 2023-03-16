@@ -17,12 +17,10 @@ import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
-@ReflectiveAccess
 public abstract class AbstractUnirestOutputHelper extends AbstractOutputHelper implements IUnirestOutputHelper {
     @Getter private final IProductHelper productHelper;
     

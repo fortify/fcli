@@ -39,7 +39,6 @@ import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc.rest.transfer.SSCFileTransferHelper.ISSCAddUploadTokenFunction;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -48,7 +47,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Create.CMD_NAME)
 public class SSCReportTemplateCreateCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Create outputHelper;

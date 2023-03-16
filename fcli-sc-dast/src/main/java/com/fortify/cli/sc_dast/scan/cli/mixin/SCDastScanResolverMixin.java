@@ -32,14 +32,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SCDastScanResolverMixin {
-    @ReflectiveAccess
     public static abstract class AbstractSSCDastScanResolverMixin {
         public abstract String getScanId();
 
@@ -52,7 +50,6 @@ public class SCDastScanResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static abstract class AbstractSSCDastMultiScanResolverMixin {
         public abstract String[] getScanIds();
 
@@ -69,19 +66,16 @@ public class SCDastScanResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastScanResolverMixin {
         @Option(names = {"--scan"}, required = true)
         @Getter private String scanId;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastScanResolverMixin {
         @Parameters(index = "0", arity = "1", paramLabel="scan-id")
         @Getter private String scanId;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameterMulti extends AbstractSSCDastMultiScanResolverMixin {
         @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's")
         @Getter private String[] scanIds;

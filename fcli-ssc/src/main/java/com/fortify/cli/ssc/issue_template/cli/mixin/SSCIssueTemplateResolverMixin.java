@@ -28,14 +28,12 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCIssueTemplateResolverMixin {
-    @ReflectiveAccess
     private static abstract class AbstractSSCIssueTemplateResolverMixin {
         public abstract String getIssueTemplateNameOrId();
         
@@ -52,13 +50,11 @@ public class SSCIssueTemplateResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class OptionalFilterSetOption extends AbstractSSCIssueTemplateResolverMixin {
         @Option(names="--issue-template", descriptionKey = "issueTemplateNameOrId", required = false)
         @Getter private String issueTemplateNameOrId;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameterSingle extends AbstractSSCIssueTemplateResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "issueTemplateNameOrId")
         @Getter private String issueTemplateNameOrId;

@@ -27,9 +27,6 @@ package com.fortify.cli.common.session.cli.cmd;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-
-@ReflectiveAccess
 public abstract class AbstractSessionCommand extends AbstractBasicOutputCommand {
     protected abstract ISessionDataManager<?> getSessionDataManager();
 }

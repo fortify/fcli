@@ -43,14 +43,12 @@ import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelpe
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCOutputCommand;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.ArtifactPurgeOlderThan.CMD_NAME)
 // We're outputting an appversion, not an artifact, hence we configure an empty default variable property name
 @DefaultVariablePropertyName("") 

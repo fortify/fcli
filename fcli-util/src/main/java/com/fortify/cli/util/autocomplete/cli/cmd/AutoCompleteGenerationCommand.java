@@ -26,7 +26,6 @@ package com.fortify.cli.util.autocomplete.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.AutoComplete;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
@@ -39,7 +38,6 @@ import picocli.CommandLine.Spec;
  * @author Ruud Senden
  * 
  */
-@ReflectiveAccess
 @Command(name = "generate")
 public final class AutoCompleteGenerationCommand extends AbstractFortifyCLICommand implements Runnable {
     @Spec CommandSpec spec;

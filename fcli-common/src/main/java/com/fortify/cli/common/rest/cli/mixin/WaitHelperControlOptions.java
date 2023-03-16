@@ -5,11 +5,9 @@ import com.fortify.cli.common.rest.wait.WaitTimeoutAction;
 import com.fortify.cli.common.rest.wait.WaitUnknownOrFailureStateAction;
 import com.fortify.cli.common.rest.wait.WaitUnknownStateRequestedAction;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 public class WaitHelperControlOptions implements IWaitHelperControlProperties {
     @Option(names= {"--on-unknown-state-requested"}, defaultValue = "fail")
     @Getter private WaitUnknownStateRequestedAction onUnknownStateRequested;

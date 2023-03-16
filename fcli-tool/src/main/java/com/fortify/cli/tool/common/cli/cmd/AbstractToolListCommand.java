@@ -7,9 +7,6 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.tool.common.helper.ToolHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-
-@ReflectiveAccess
 public abstract class AbstractToolListCommand extends AbstractBasicOutputCommand {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     

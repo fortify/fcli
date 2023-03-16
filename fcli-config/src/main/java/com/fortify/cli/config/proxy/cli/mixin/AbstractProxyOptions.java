@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 public abstract class AbstractProxyOptions {
     @Option(names = {"--user", "-u"}, descriptionKey = "fcli.config.proxy.user") 
     private String proxyUser;

@@ -13,9 +13,9 @@ import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
-@ReflectiveAccess @FixInjection
+@FixInjection
 public abstract class AbstractSCSastUnirestRunnerMixin extends AbstractUnirestRunnerMixin<SCSastSessionData> {
-    @Getter @Inject private SCSastSessionDataManager sessionDataManager;
+    @Inject @ReflectiveAccess @Getter private SCSastSessionDataManager sessionDataManager;
     
     @Override
     protected final SCSastSessionData getSessionData(String sessionName) {

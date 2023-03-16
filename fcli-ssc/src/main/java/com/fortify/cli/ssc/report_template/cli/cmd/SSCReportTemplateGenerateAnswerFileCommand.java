@@ -38,14 +38,12 @@ import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.ReportTemplateGenerateAnswerFile.CMD_NAME)
 public class SSCReportTemplateGenerateAnswerFileCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
     private static final String RESOURCE_FILE = "com/fortify/cli/ssc/report_template/ReportTemplateDefAnswerTemplate.yml";

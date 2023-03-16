@@ -33,13 +33,11 @@ import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.role.cli.mixin.SSCRoleResolverMixin;
 import com.fortify.cli.ssc.role.helper.SSCRoleDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = "delete")
 public class SSCRoleDeleteCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper;

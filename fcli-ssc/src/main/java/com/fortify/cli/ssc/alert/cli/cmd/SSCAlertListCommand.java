@@ -35,14 +35,12 @@ import com.fortify.cli.ssc.rest.query.ISSCQParamGeneratorSupplier;
 import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.List.CMD_NAME)
 public class SSCAlertListCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, ISSCQParamGeneratorSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 

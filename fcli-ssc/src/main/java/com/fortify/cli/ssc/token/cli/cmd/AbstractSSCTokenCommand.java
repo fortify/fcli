@@ -17,9 +17,9 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess @FixInjection
+@FixInjection
 public abstract class AbstractSSCTokenCommand extends AbstractBasicOutputCommand implements IInputTransformerSupplier {
-    @Inject private SSCTokenHelper tokenHelper;
+    @Inject @ReflectiveAccess private SSCTokenHelper tokenHelper;
     @Mixin private SSCTokenCommandUrlConfigMixin urlConfigMixin;
     @Mixin private UserCredentialOptions userCredentialOptions;
     

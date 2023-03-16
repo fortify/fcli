@@ -28,14 +28,12 @@ import java.io.File;
 
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Upload.CMD_NAME)
 public class SSCAppVersionArtifactUploadCommand extends AbstractSSCAppVersionArtifactUploadCommand {
     @Getter @Mixin private SSCOutputHelperMixins.Upload outputHelper; 

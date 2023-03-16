@@ -35,13 +35,11 @@ import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.Revoke.CMD_NAME)
 public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand implements IRecordTransformerSupplier {
     @Getter @Mixin private BasicOutputHelperMixins.Revoke outputHelper;

@@ -41,11 +41,9 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionDescriptor;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 
-@ReflectiveAccess
 public final class SSCAppVersionAttributeUpdateBuilder {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private final UnirestInstance unirest;

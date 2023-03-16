@@ -27,7 +27,6 @@ package com.fortify.cli.sc_dast.sensor.cli.mixin;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorDescriptor;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -35,7 +34,6 @@ import picocli.CommandLine.Parameters;
 
 public class SCDastSensorResolverMixin {
     
-    @ReflectiveAccess
     public static abstract class AbstractSSCDastSensorResolverMixin {
         public abstract String getSensorNameOrId();
 
@@ -48,13 +46,11 @@ public class SCDastSensorResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastSensorResolverMixin {
         @Option(names = {"--sensor"}, required = true)
         @Getter private String sensorNameOrId;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastSensorResolverMixin {
         @Parameters(index = "0", arity = "1")
         @Getter private String sensorNameOrId;

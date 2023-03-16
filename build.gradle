@@ -1,26 +1,11 @@
-// the buildscript section is temporary until the missing dependency issue is resolved.
-buildscript {
-    repositories {
-        jcenter()
-        mavenCentral()
-        gradlePluginPortal()
-    }
-
-    dependencies {
-        classpath ("org.ysb33r.gradle:grolifant:0.16.2") {
-            force = true
-        }
-    }
-}
-
 plugins {
     id('com.github.jk1.dependency-license-report') version '2.1'
     id "org.kordamp.gradle.markdown" version "2.2.0"
-    id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("io.micronaut.application") version "3.6.4" apply false
-    id("io.micronaut.library") version "3.6.4" apply false
+    id("com.github.johnrengelman.shadow") version "8.1.0"
+    id("io.micronaut.application") version "3.7.5" apply false
+    id("io.micronaut.library") version "3.7.5" apply false
     id 'eclipse'
-    id "com.github.ben-manes.versions" version "0.44.0"
+    id "com.github.ben-manes.versions" version "0.46.0"
     id "org.asciidoctor.jvm.convert" version "3.3.2"
 }
 
@@ -39,20 +24,20 @@ subprojects {
     apply plugin: 'eclipse'
 }
 
-application {
-    mainClass.set("com.fortify.cli.app.FortifyCLI")
-}
-shadowJar {
-    archiveBaseName.set('fcli')
-    archiveClassifier.set('')
-    archiveVersion.set('')
-}
 
 allprojects {
+	// Define Java version
     java {
         sourceCompatibility = JavaVersion.toVersion("11")
         targetCompatibility = JavaVersion.toVersion("11")
     }
+    
+    // Define Maven Central repository
+    repositories {
+        mavenCentral()
+    }
+    
+    // Define Micronaut properties
     micronaut {
         testRuntime("junit5")
         processing {
@@ -60,79 +45,78 @@ allprojects {
             annotations("com.fortify.cli.*")
         }
     }
-
-    repositories {
-        mavenCentral()
+    
+    ext {
+    	// Define micronaut dependency versions
+    	// TODO Can we use a bom instead of this property
+    	micronautVersion = "3.8.7"
+    	// Define the top-level fcli command class, used
+    	// for generating manual pages, reflect-config.json, ...
+    	rootCommandsClassName = "com.fortify.cli.app.FCLIRootCommands"
     }
 
+	// Global dependencies for all modules
     dependencies {
         // Lombok dependency & annotation processor
-        compileOnly 'org.projectlombok:lombok:1.18.24'
-        annotationProcessor 'org.projectlombok:lombok:1.18.24'
+        compileOnly 'org.projectlombok:lombok:1.18.26'
+        annotationProcessor 'org.projectlombok:lombok:1.18.26'
         
-        // TODO Re-enable this line (with appropriate version) once new picocli is released
-        //implementation("info.picocli:picocli:4.6.3")
+        // TODO Re-enable when removing patched picocli classes from fcli-common
+        //implementation("info.picocli:picocli:4.7.1")
+        annotationProcessor("info.picocli:picocli-codegen:4.7.1")
         
         implementation("org.fusesource.jansi:jansi:2.4.0");     
 
-        annotationProcessor("io.micronaut:micronaut-inject-java:3.4.2")
-        annotationProcessor("io.micronaut:micronaut-graal:3.4.2")
+        annotationProcessor("io.micronaut:micronaut-inject-java:${micronautVersion}")
+        annotationProcessor("io.micronaut:micronaut-graal:${micronautVersion}")
 
         // Micronaut dependencies
-        implementation("io.micronaut:micronaut-runtime:3.4.2")
-        implementation("io.micronaut.picocli:micronaut-picocli:4.1.0") {
+        implementation("io.micronaut:micronaut-runtime:${micronautVersion}")
+        implementation("io.micronaut.picocli:micronaut-picocli:4.3.0") {
             exclude group: 'info.picocli'
         }
         implementation("javax.annotation:javax.annotation-api")
 
         // Logback dependency to allow us to configure logging programmatically
-        implementation("ch.qos.logback:logback-classic:1.2.11")
+        implementation("ch.qos.logback:logback-classic:1.4.6")
 
         implementation('com.konghq:unirest-java:3.13.11') {
             exclude group: 'com.google.code.gson', module: 'gson' // We use Jackson, so no need for Gson
             exclude group: 'commons-logging', module: 'commons-logging' // We use jcl-over-slf4j
         }
-        implementation('com.konghq:unirest-objectmapper-jackson:3.13.11')
+        implementation('com.konghq:unirest-objectmapper-jackson:3.14.2')
 
         implementation('com.jayway.jsonpath:json-path:2.7.0') {
             //exclude group: 'net.minidev', module: 'json-smart'
         }
 
         // for yaml support and generating trees/tables
-        implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.2')
-        implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.13.2')
-        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.2")
-        implementation('hu.webarticum:tree-printer:2.0.0')
-        implementation('com.github.freva:ascii-table:1.2.0')
+        implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.2')
+        implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.14.2')
+        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.2")
+        implementation('hu.webarticum:tree-printer:3.1.0')
+        implementation('com.github.freva:ascii-table:1.8.0')
         
         // Encryption library
         implementation('org.jasypt:jasypt:1.9.3:lite')
     }
-}
-
-// TODO Remove this block once new picocli is released 
-configure(allprojects.findAll {it.name == 'fcli-picocli-codegen-patches'}) {
-    dependencies {
-        implementation project(':fcli-picocli-patches')
-    }
-}
-
-// TODO Remove this block once new picocli is released 
-configure(allprojects.findAll {it.name != 'fcli-picocli-patches' && it.name != 'fcli-picocli-codegen-patches'}) {
-    dependencies {
-        implementation project(':fcli-picocli-patches')
-        // Picocli dependency and annotation processor. Note that for now, we cannot use 4.7.0 due to https://github.com/remkop/picocli/issues/1876
-        //annotationProcessor("info.picocli:picocli-codegen:4.6.3")
-        annotationProcessor(project(":fcli-picocli-codegen-patches"))
-    }
-}
-
-// TODO Move to allprojects block once we no longer require picocli patches
-configure(allprojects.findAll {it.name != 'fcli-picocli-patches' && it.name != 'fcli-picocli-codegen-patches'}) {
-    // Set picocli annotation processor options
+    
     compileJava {
-        options.compilerArgs += ["-Averbose=true"]
+    	// Enable verbose logging for picocli annotation processor
+    	// The reflect-config.json generated by the picocli annotation processor
+    	// is lacking many entries, hence we disable this functionality here and
+    	// use a separate generatePicocliReflectConfig task to generate a proper 
+    	// reflect-config.json file. 
+        options.compilerArgs += ["-Averbose=true","-Adisable.reflect.config=true"]
     }
+    
+    test {
+    	// Show test output in Gradle output, sometimes easier than opening the
+    	// test reports in a browser
+	    testLogging {
+	        showStandardStreams = true
+	    }
+	}
     
     // Micronaut is supposed to generate a resource-config.json file that includes all resources,
     // but for some reason this doesn't work, so we generate our own resource-config.json file for
@@ -155,13 +139,15 @@ configure(allprojects.findAll {it.name != 'fcli-picocli-patches' && it.name != '
     sourceSets.main.output.dir generatedResourceConfigDir, builtBy: generateResourceConfig
 }
 
-// TODO Remove fcli-picocli-patches condition once new picocli is released
-configure(allprojects.findAll {it.name != 'fcli-common' && it.name != 'fcli-picocli-patches' && it.name != 'fcli-picocli-codegen-patches'}) {
+// Add fcli-common dependency to all modules except fcli-common itself
+configure(allprojects.findAll {it.name != 'fcli-common'}) {
     dependencies {
         implementation project(':fcli-common')
     }
 }
 
+// Configure additional dependencies for the root module, amending the 
+// dependencies already declared in the allprojects section above.
 dependencies {
     implementation project(':fcli-config')
     implementation project(':fcli-state')
@@ -173,13 +159,14 @@ dependencies {
     implementation project(':fcli-util')
 
     // Logging dependencies
-    runtimeOnly('ch.qos.logback:logback-classic:1.2.11')
-    runtimeOnly('org.slf4j:jcl-over-slf4j:1.7.36')
+    //runtimeOnly('ch.qos.logback:logback-classic:1.4.6')
+    runtimeOnly('org.slf4j:jcl-over-slf4j:2.0.6')
 
     // GraalVM dependency
     compileOnly("org.graalvm.nativeimage:svm")
 }
 
+// Apply shared gradle helpers
 ext {
     gradleHelpersLocation = "https://raw.githubusercontent.com/fortify/shared-gradle-helpers/1.8"
     thirdPartyBaseName = "${rootProject.name}"
@@ -188,8 +175,7 @@ ext {
 apply from: "${gradleHelpersLocation}/thirdparty-helper.gradle"
 apply from: "${gradleHelpersLocation}/readme2html.gradle"
 
-mainClassName = "com.fortify.cli.app.FCLIRootCommands"
-
+// Generate build properties and associated resource-config.json file
 ext.buildPropertiesDir = "${buildDir}/generated-build-properties"
 task generateFcliBuildProperties {
     doLast {
@@ -212,30 +198,54 @@ task generateFcliBuildProperties {
 }
 sourceSets.main.output.dir buildPropertiesDir, builtBy: generateFcliBuildProperties
 
+// Generate reflect-config.json for picocli-related classes
+ext.generatedPicocliReflectConfigDir = "${buildDir}/generated-reflect-config"
+task generatePicocliReflectConfig(type: JavaExec) {
+    group = "GeneratePicocliReflectConfig"
+    description = "Generate picocli reflect-config.json"
+    classpath(configurations.runtimeClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
+    main 'picocli.codegen.aot.graalvm.ReflectionConfigGenerator'
+    args rootCommandsClassName, "-o", "${generatedPicocliReflectConfigDir}/META-INF/native-image/picocli-reflect-config/reflect-config.json"
+}
+
+// Generate shadow jar
+application {
+    mainClass.set("com.fortify.cli.app.FortifyCLI")
+}
+shadowJar {
+    archiveBaseName.set('fcli')
+    archiveClassifier.set('')
+    archiveVersion.set('')
+    from(["$generatedPicocliReflectConfigDir"])
+}
+shadowJar.dependsOn generatePicocliReflectConfig
+
+// Generate auto-completion script 
 tasks.register('generateAutoCompleteDir') {
     doLast {
         mkdir "${autoCompleteDir}"
     }
 }
-
 task generateAutoComplete(type: JavaExec) {
     dependsOn(classes, generateAutoCompleteDir)
     group = "Documentation"
     description = "Generate autocomplete"
     classpath(configurations.runtimeClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
     main 'picocli.AutoComplete'
-    args mainClassName, "-f", "--completionScript=${autoCompleteDir}/fcli_completion"
+    args rootCommandsClassName, "-f", "--completionScript=${autoCompleteDir}/fcli_completion"
 }
 
+// Generate manual pages in AsciiDoc format
 task generateManpageAsciiDoc(type: JavaExec) {
     dependsOn(classes)
     group = "Documentation"
     description = "Generate AsciiDoc manpage"
     classpath(configurations.runtimeClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
     main 'picocli.codegen.docgen.manpage.ManPageGenerator'
-    args mainClassName, "--outdir=${project.buildDir}/generated-docs/src/manpage", "-v"
+    args rootCommandsClassName, "--outdir=${project.buildDir}/generated-docs/src/manpage", "-v"
 }
 
+// Copy versioned AsciiDoc into same directory as manual pages
 task copyStaticAsciiDoc(type: Copy) {
 	into "${project.buildDir}/generated-docs/src"
 	from("${projectDir}/doc-resources/asciidoc/versioned") {
@@ -243,10 +253,12 @@ task copyStaticAsciiDoc(type: Copy) {
     }
 }
 
+// Task to combine generateManpageAsciiDoc and copyStaticAsciiDoc
 task prepareAsciiDoc {
     dependsOn 'generateManpageAsciiDoc', 'copyStaticAsciiDoc'
 }
 
+// Generate manual pages in Linux manpage format from AsciiDoc prepared by prepareAsciiDoc
 task asciiDoctorManPage(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
     dependsOn(prepareAsciiDoc)
     sourceDir = file("${project.buildDir}/generated-docs/src/manpage")
@@ -257,6 +269,7 @@ task asciiDoctorManPage(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
     }
 }
 
+// Generate stand-alone HTML documentation from AsciiDoc prepared by prepareAsciiDoc
 task asciiDoctorHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
     dependsOn(prepareAsciiDoc)
     sourceDir = file("${project.buildDir}/generated-docs/src")
@@ -278,6 +291,8 @@ task asciiDoctorHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
     ]
 }
 
+// Generate Jekyll HTML documentation from AsciiDoc prepared by prepareAsciiDoc,
+// to be deployed to a version-specific directory on the fcli gh-pages site
 task asciidoctorJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
 	dependsOn(prepareAsciiDoc)
     sourceDir = file("${project.buildDir}/generated-docs/src")
@@ -300,6 +315,8 @@ task asciidoctorJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
     ]
 }
 
+// Generate Jekyll HTML documentation from AsciiDoc files in doc-resources/asciidoc/gh-pages, 
+// to be deployed to the root directory on the fcli gh-pages site
 task asciidoctorGHPages(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
     sourceDir = file("${project.rootDir}/doc-resources/asciidoc/gh-pages")
     outputDir = file("${project.buildDir}/generated-docs/gh-pages")
@@ -322,6 +339,7 @@ task asciidoctorGHPages(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
     ]
 }
 
+// Zip the output of the asciiDoctorHtml task
 tasks.register('distDocsHtml5', Zip) {
     dependsOn 'asciiDoctorHtml'
     archiveFileName = "docs-html.zip"
@@ -329,6 +347,7 @@ tasks.register('distDocsHtml5', Zip) {
     from layout.buildDirectory.dir("generated-docs/html5")
 }
 
+// Zip the output of the asciiDoctorManPage task
 tasks.register('distDocsManPage', Zip) {
     dependsOn 'asciiDoctorManPage'
     archiveFileName = "docs-manpage.zip"
@@ -336,6 +355,7 @@ tasks.register('distDocsManPage', Zip) {
     from layout.buildDirectory.dir("generated-docs/manpage")
 }
 
+// Zip the output of the asciidoctorJekyll task
 tasks.register('distDocsJekyll', Zip) {
     dependsOn 'asciidoctorJekyll'
     archiveFileName = "docs-jekyll.zip"
@@ -343,6 +363,7 @@ tasks.register('distDocsJekyll', Zip) {
     from layout.buildDirectory.dir("generated-docs/jekyll")
 }
 
+// Zip the output of the asciidoctorGHPages task
 tasks.register('distDocsGHPages', Zip) {
     dependsOn 'asciidoctorGHPages'
     archiveFileName = "docs-gh-pages.zip"
@@ -350,16 +371,17 @@ tasks.register('distDocsGHPages', Zip) {
     from layout.buildDirectory.dir("generated-docs/gh-pages")
 }
 
+// Task to combine all distDocs* tasks
 task distDocs {
     dependsOn 'distDocsHtml5', 'distDocsManPage', 'distDocsJekyll', 'distDocsGHPages'
 }
 
+// Copy all build output (fcli.jar, documentation, license) to the $buildDir/dist directory
 task dist(type: Copy) {
     dependsOn 'build', 'readme2html', 'distDocs', 'generateAutoComplete'
     from "${buildDir}/html"
     from "${autoCompleteDir}"
     from("${projectDir}") {
-        include "config/**/*"
         include "LICENSE.TXT"
     }
     from("${buildDir}/${libsDirName}") {

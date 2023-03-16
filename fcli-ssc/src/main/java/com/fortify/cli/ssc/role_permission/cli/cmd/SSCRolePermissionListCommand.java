@@ -32,14 +32,12 @@ import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.List.CMD_NAME)
 public class SSCRolePermissionListCommand extends AbstractSSCOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer {
     @Getter @Mixin private SSCOutputHelperMixins.List outputHelper; 

@@ -26,12 +26,10 @@ package com.fortify.cli.sc_dast.scan.cli.cmd.action;
 
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.ScanActionComplete.CMD_NAME)
 public class SCDastScanCompleteCommand extends AbstractSCDastScanActionCommand {
 @Getter @Mixin private SCDastOutputHelperMixins.ScanActionComplete outputHelper;

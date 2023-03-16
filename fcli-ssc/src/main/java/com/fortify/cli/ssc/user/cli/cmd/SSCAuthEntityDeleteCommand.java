@@ -37,7 +37,6 @@ import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.user.helper.SSCAuthEntitySpecPredicate;
 import com.fortify.cli.ssc.user.helper.SSCAuthEntitySpecPredicate.MatchMode;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -45,7 +44,6 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 @Command(name = SSCOutputHelperMixins.Delete.CMD_NAME)
 public class SSCAuthEntityDeleteCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.Delete outputHelper;

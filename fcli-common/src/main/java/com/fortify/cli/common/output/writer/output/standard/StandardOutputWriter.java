@@ -32,7 +32,6 @@ import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.common.variable.EncryptVariable;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import lombok.Builder;
@@ -41,7 +40,6 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Model.CommandSpec;
 
-@ReflectiveAccess 
 public class StandardOutputWriter implements IOutputWriter {
     private static final Logger LOG = LoggerFactory.getLogger(StandardOutputWriter.class);
     private final StandardOutputConfig outputConfig;

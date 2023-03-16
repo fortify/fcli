@@ -11,6 +11,7 @@ import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseCo
 import com.fortify.cli.common.rest.runner.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.util.FixInjection;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import kong.unirest.UnirestInstance;
@@ -19,7 +20,7 @@ import kong.unirest.UnirestInstance;
 //      for example as a sub-package of the 'rest' package.
 @Singleton @FixInjection
 public class FoDOAuthHelper {
-    @Inject private GenericUnirestRunner unirestRunner;
+    @Inject @ReflectiveAccess private GenericUnirestRunner unirestRunner;
     
     public final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(uc, scopes);

@@ -27,14 +27,12 @@ package com.fortify.cli.ssc.job.cli.mixin;
 import com.fortify.cli.ssc.job.helper.SSCJobDescriptor;
 import com.fortify.cli.ssc.job.helper.SSCJobHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCJobResolverMixin {
-    @ReflectiveAccess
     private static abstract class AbstractSSCJobResolverMixin {
         public abstract String getJobName();
         
@@ -47,13 +45,11 @@ public class SSCJobResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCJobResolverMixin {
         @Option(names="--job", required = true)
         @Getter private String jobName;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCJobResolverMixin {
         @Parameters(index = "0", arity = "1")
         @Getter private String jobName;

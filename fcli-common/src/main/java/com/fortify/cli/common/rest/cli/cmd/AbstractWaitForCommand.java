@@ -34,12 +34,10 @@ import com.fortify.cli.common.rest.wait.WaitHelper;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 public abstract class AbstractWaitForCommand<D extends ISessionData> extends AbstractUnirestRunnerCommand<D> implements IActionCommandResultSupplier, ISingularSupplier {
     @Getter @Mixin private BasicOutputHelperMixins.WaitFor outputHelper;
     @Mixin private WaitHelperControlOptions controlOptions;

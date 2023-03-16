@@ -32,7 +32,6 @@ import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastSearchTextMixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -40,7 +39,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.List.CMD_NAME)
 public class SCDastScanSettingsListCommand extends AbstractSCDastOutputCommand implements IUnirestBaseRequestSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.List outputHelper;

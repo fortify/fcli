@@ -26,7 +26,6 @@ package com.fortify.cli.common.rest.cli.mixin;
 
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
@@ -35,7 +34,6 @@ import picocli.CommandLine.Option;
  * </pre>
  * @author Ruud Senden
  */
-@ReflectiveAccess
 public class UrlConfigOptions implements IUrlConfig {
     @Option(names = {"--url"}, required = true, order=1)
     @Getter private String url;

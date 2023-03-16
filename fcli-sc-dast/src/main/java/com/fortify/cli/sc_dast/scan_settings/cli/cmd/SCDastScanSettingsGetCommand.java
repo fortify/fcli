@@ -30,13 +30,11 @@ import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.scan_settings.cli.mixin.SCDastScanSettingsResolverMixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.Get.CMD_NAME)
 public class SCDastScanSettingsGetCommand extends AbstractSCDastOutputCommand implements IUnirestJsonNodeSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.Get outputHelper;

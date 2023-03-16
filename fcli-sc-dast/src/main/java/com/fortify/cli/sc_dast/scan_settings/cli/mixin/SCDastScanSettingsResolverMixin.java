@@ -27,7 +27,6 @@ package com.fortify.cli.sc_dast.scan_settings.cli.mixin;
 import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsDescriptor;
 import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -35,7 +34,6 @@ import picocli.CommandLine.Parameters;
 
 public class SCDastScanSettingsResolverMixin {
     
-    @ReflectiveAccess
     public static abstract class AbstractSSCDastScanSettingsResolverMixin {
         public abstract String getScanSettingsCicdTokenOrId();
 
@@ -52,13 +50,11 @@ public class SCDastScanSettingsResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastScanSettingsResolverMixin {
         @Option(names = {"-S", "--settings"}, required = true)
         @Getter private String scanSettingsCicdTokenOrId;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastScanSettingsResolverMixin {
         @Parameters(index = "0", arity = "1")
         @Getter private String scanSettingsCicdTokenOrId;

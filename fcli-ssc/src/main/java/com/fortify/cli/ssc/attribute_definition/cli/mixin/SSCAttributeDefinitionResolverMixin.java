@@ -27,13 +27,11 @@ package com.fortify.cli.ssc.attribute_definition.cli.mixin;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionDescriptor;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Parameters;
 
 public class SSCAttributeDefinitionResolverMixin {
-    @ReflectiveAccess
     public static abstract class AbstractSSCAttributeDefinitionResolverMixin {
         public abstract String getAttributeDefinitionNameOrId();
 
@@ -42,7 +40,6 @@ public class SSCAttributeDefinitionResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class PositionalParameterSingle extends AbstractSSCAttributeDefinitionResolverMixin {
         @Parameters(index = "0", arity = "1", paramLabel = "[CATEGORY:]ATTR")
         @Getter private String attributeDefinitionNameOrId;

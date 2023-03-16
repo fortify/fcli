@@ -1,12 +1,10 @@
 package com.fortify.cli.common.cli.cmd;
 
 import ch.qos.logback.classic.Level;
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 public class AbstractFortifyCLICommand {
     @ArgGroup(exclusive = false, headingKey = "fcli.genericOptions.heading", order = 50) 
     @Getter private GenericOptionsArgGroup genericOptions = new GenericOptionsArgGroup();
@@ -24,7 +22,6 @@ public class AbstractFortifyCLICommand {
         }
     }
     
-    @ReflectiveAccess
     public static final class GenericOptionsArgGroup {
         @Option(names = {"-h", "--help"}, usageHelp = true, description = "display this help message")
         private boolean usageHelpRequested;

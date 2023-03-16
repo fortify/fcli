@@ -26,9 +26,6 @@ package com.fortify.cli.common.session.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-
-@ReflectiveAccess
 public abstract class AbstractSessionListCommand extends AbstractSessionCommand {
     @Override
     protected JsonNode getJsonNode() {

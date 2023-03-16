@@ -54,7 +54,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-@Data @EqualsAndHashCode(callSuper = true)  @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @EqualsAndHashCode(callSuper = true) @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
 public class SCSastSessionData extends AbstractSessionData implements ISCSastSessionData {
     @JsonDeserialize(as = UrlConfig.class) private IUrlConfig sscUrlConfig;
     @JsonDeserialize(as = UrlConfig.class) private IUrlConfig scSastUrlConfig;

@@ -35,7 +35,6 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.ProgressHelper;
 import com.fortify.cli.common.util.ProgressHelper.IProgressHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpRequestWithBody;
@@ -46,7 +45,6 @@ import kong.unirest.jackson.JacksonObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
-@ReflectiveAccess
 public class SSCFileTransferHelper {
     private static final JacksonObjectMapper XMLMAPPER = new JacksonObjectMapper(new XmlMapper());
 

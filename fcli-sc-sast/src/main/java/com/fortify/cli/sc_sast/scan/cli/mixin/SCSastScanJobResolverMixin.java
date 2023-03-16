@@ -33,14 +33,12 @@ import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobDescriptor;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SCSastScanJobResolverMixin {
-    @ReflectiveAccess
     public static abstract class AbstractSCSastScanJobResolverMixin {
         protected abstract String getNonResolvedScanJobToken();
         
@@ -53,7 +51,6 @@ public class SCSastScanJobResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static abstract class AbstractSCSastMultiScanJobResolverMixin {
         protected abstract String[] getNonResolvedScanJobTokens();
         
@@ -74,19 +71,16 @@ public class SCSastScanJobResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSCSastScanJobResolverMixin {
         @Option(names = {"--job", "--job-token"}, required = true)
         @Getter private String nonResolvedScanJobToken;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSCSastScanJobResolverMixin {
         @Parameters(index = "0", arity = "1", paramLabel="scan-job-token")
         @Getter private String nonResolvedScanJobToken;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameterMulti extends AbstractSCSastMultiScanJobResolverMixin {
         @Parameters(index = "0", arity = "1..", paramLabel = "scan-job-tokens")
         @Getter private String[] nonResolvedScanJobTokens;

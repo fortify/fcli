@@ -38,12 +38,10 @@ import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.List.CMD_NAME)
 public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IRecordTransformerSupplier {
     @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;

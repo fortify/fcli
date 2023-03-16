@@ -28,7 +28,6 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyDescriptor;
 import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -36,7 +35,6 @@ import picocli.CommandLine.Parameters;
 
 public class SCDastScanPolicyResolverMixin {
     
-    @ReflectiveAccess
     public static abstract class AbstractSSCDastScanPolicyResolverMixin {
         public abstract String getScanPolicyNameOrId();
 
@@ -53,19 +51,16 @@ public class SCDastScanPolicyResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCDastScanPolicyResolverMixin {
         @Option(names = {"-P", "--policy"}, required = true)
         @Getter private String scanPolicyNameOrId;
     }
     
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractSSCDastScanPolicyResolverMixin {
         @Option(names = {"-P", "--policy"}, required = false)
         @Getter private String scanPolicyNameOrId;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCDastScanPolicyResolverMixin {
         @Parameters(index = "0", arity = "1")
         @Getter private String scanPolicyNameOrId;

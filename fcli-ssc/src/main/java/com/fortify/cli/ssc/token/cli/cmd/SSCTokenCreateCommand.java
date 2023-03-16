@@ -40,14 +40,12 @@ import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 import com.fortify.cli.ssc.token.helper.SSCTokenCreateRequest;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.Create.CMD_NAME)
 @EncryptVariable
 public class SSCTokenCreateCommand extends AbstractSSCTokenCommand implements IRecordTransformerSupplier {

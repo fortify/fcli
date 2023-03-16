@@ -6,9 +6,6 @@ import com.fortify.cli.common.output.spi.IBasicOutputConfigSupplier;
 import com.fortify.cli.common.output.spi.product.IProductHelper;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-
-@ReflectiveAccess
 public abstract class AbstractBasicOutputHelper extends AbstractOutputHelper implements IBasicOutputHelper {
     /**
      * Write the given {@link JsonNode} using the output writer created by the

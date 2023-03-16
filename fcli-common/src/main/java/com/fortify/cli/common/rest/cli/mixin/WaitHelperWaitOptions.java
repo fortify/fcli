@@ -3,17 +3,14 @@ package com.fortify.cli.common.rest.cli.mixin;
 import com.fortify.cli.common.rest.wait.IWaitHelperWaitDefinition;
 import com.fortify.cli.common.rest.wait.IWaitHelperWaitDefinitionSupplier;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 public final class WaitHelperWaitOptions implements IWaitHelperWaitDefinitionSupplier {
     @Getter @ArgGroup(exclusive = true, multiplicity = "0..1") 
     private WaitHelperWaitOptionsArgGroup waitDefinition = new WaitHelperWaitOptionsArgGroup();
     
-    @ReflectiveAccess
     private static final class WaitHelperWaitOptionsArgGroup implements IWaitHelperWaitDefinition {
         @Option(names = {"--while-all"}, required = true, paramLabel = "<state1>[|<state2>]...")
         @Getter private String whileAll;

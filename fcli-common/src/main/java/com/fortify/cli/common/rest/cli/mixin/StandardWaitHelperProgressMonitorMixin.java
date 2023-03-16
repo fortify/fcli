@@ -4,14 +4,13 @@ import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.rest.wait.StandardWaitHelperProgressMonitor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 import picocli.CommandLine.Spec.Target;
 
-@Command @ReflectiveAccess
+@Command
 public class StandardWaitHelperProgressMonitorMixin {
     private IMessageResolver messageResolver;
     @Option(names="--no-progress") private boolean noProgress;

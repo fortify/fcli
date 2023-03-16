@@ -20,10 +20,8 @@ import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.Model.CommandSpec;
 
-@ReflectiveAccess
 public abstract class AbstractOutputHelper implements IOutputHelperBase {
     
     /**

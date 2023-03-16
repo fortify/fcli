@@ -14,9 +14,9 @@ import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess @FixInjection
+@FixInjection
 public abstract class AbstractUnirestRunnerMixin<D extends ISessionData> implements IUnirestWithSessionDataRunner<D> {
-    @Inject private GenericUnirestFactory genericUnirestFactory;
+    @Inject @ReflectiveAccess private GenericUnirestFactory genericUnirestFactory;
     @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
     
     protected final <R> R run(BiConsumer<UnirestInstance, D> configurer, BiFunction<UnirestInstance, D, R> f) {

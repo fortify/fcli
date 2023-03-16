@@ -51,10 +51,10 @@ import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
-@ReflectiveAccess @FixInjection
+@FixInjection
 public abstract class AbstractSessionDataManager<T extends ISessionData> implements ISessionDataManager<T> {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractSessionDataManager.class);
-    @Getter @Inject private ObjectMapper objectMapper;
+    @Inject @ReflectiveAccess @Getter private ObjectMapper objectMapper;
     
     @Override
     @SneakyThrows // TODO Do we want to use SneakyThrows?

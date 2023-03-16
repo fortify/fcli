@@ -14,10 +14,10 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 
-@ReflectiveAccess @FixInjection
+@FixInjection
 public class FoDUnirestRunnerMixin extends AbstractSimpleUnirestRunnerMixin<FoDSessionData> {
-    @Inject private FoDSessionDataManager sessionDataManager;
-    @Inject private FoDOAuthHelper oauthHelper;
+    @Inject @ReflectiveAccess private FoDSessionDataManager sessionDataManager;
+    @Inject @ReflectiveAccess private FoDOAuthHelper oauthHelper;
     
     @Override
     protected final FoDSessionData getSessionData(String sessionName) {

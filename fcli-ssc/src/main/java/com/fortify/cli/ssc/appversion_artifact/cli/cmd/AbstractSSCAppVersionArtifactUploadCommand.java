@@ -34,13 +34,11 @@ import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.rest.SSCUrls;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpRequestWithBody;
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 public abstract class AbstractSSCAppVersionArtifactUploadCommand extends AbstractSSCAppVersionArtifactOutputCommand implements IUnirestBaseRequestSupplier {
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     

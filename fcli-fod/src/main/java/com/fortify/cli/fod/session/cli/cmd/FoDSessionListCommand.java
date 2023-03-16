@@ -26,15 +26,18 @@ package com.fortify.cli.fod.session.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionListCommand;
+import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.fod.session.manager.FoDSessionDataManager;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = BasicOutputHelperMixins.List.CMD_NAME, sortOptions = false)
+@FixInjection
 public class FoDSessionListCommand extends AbstractSessionListCommand {
     @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
-    @Getter @Inject private FoDSessionDataManager sessionDataManager;
+    @Inject @ReflectiveAccess @Getter private FoDSessionDataManager sessionDataManager;
 }

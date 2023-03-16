@@ -30,10 +30,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 
-@Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractSessionData implements ISessionData {
     private Date createdDate = new Date();
     

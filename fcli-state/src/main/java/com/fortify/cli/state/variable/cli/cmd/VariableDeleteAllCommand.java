@@ -35,7 +35,6 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = VariableOutputHelperMixins.DeleteAll.CMD_NAME)
 public class VariableDeleteAllCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private VariableOutputHelperMixins.DeleteAll outputHelper;

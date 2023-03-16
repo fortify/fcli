@@ -11,11 +11,9 @@ import java.util.stream.StreamSupport;
 
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 public class SCSastScanStartPackageOptions implements ISCSastScanStartOptions {
     private static final Pattern dotnetFlagFilePattern = Pattern.compile("^dotnet(-(?<version>\\d+\\.\\d+(\\.\\d+)?))?$");
     @Getter @Option(names = {"--sensor-version", "-v"}, required = true) private String sensorVersion;

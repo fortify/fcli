@@ -24,24 +24,20 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.mixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCPluginResolverMixin {
-    @ReflectiveAccess
     private static abstract class AbstractSSCPluginResolverMixin {
         public abstract String getNumericPluginId();
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCPluginResolverMixin {
         @Option(names="--plugin", required = true)
         @Getter private String numericPluginId;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCPluginResolverMixin {
         @Parameters(index = "0", arity = "1")
         @Getter private String numericPluginId;

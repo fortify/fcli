@@ -32,10 +32,8 @@ import com.fortify.cli.common.output.spi.ISingularSupplier;
 import com.fortify.cli.common.rest.cli.cmd.AbstractUnirestRunnerCommand;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 
-@ReflectiveAccess
 public abstract class AbstractUnirestOutputCommand<D extends ISessionData> extends AbstractUnirestRunnerCommand<D> implements ISingularSupplier {
     private static final List<Class<?>> supportedInterfaces = Arrays.asList(
             IUnirestBaseRequestSupplier.class, 

@@ -27,14 +27,12 @@ package com.fortify.cli.ssc.appversion_filterset.cli.mixin;
 import com.fortify.cli.ssc.appversion_filterset.helper.SSCAppVersionFilterSetDescriptor;
 import com.fortify.cli.ssc.appversion_filterset.helper.SSCAppVersionFilterSetHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionFilterSetResolverMixin {
-    @ReflectiveAccess
     private static abstract class AbstractSSCFilterSetResolverMixin {
         public abstract String getFilterSetTitleOrId();
         
@@ -43,13 +41,11 @@ public class SSCAppVersionFilterSetResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class FilterSetOption extends AbstractSSCFilterSetResolverMixin {
         @Option(names="--filterset")
         @Getter private String filterSetTitleOrId;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameterSingle extends AbstractSSCFilterSetResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "filterSetTitleOrId")
         @Getter private String filterSetTitleOrId;

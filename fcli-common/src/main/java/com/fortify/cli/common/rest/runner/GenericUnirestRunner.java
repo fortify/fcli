@@ -26,13 +26,15 @@ package com.fortify.cli.common.rest.runner;
 
 import java.util.function.Function;
 
+import com.fortify.cli.common.util.FixInjection;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 
-@ReflectiveAccess
+@FixInjection
 public final class GenericUnirestRunner implements IUnirestRunner {
-    @Inject private GenericUnirestFactory genericUnirestFactory;
+    @Inject @ReflectiveAccess private GenericUnirestFactory genericUnirestFactory;
     
     public final <R> R run(Function<UnirestInstance, R> f) {
         if ( f == null ) { throw new IllegalStateException("Function may not be null"); }

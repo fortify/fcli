@@ -34,11 +34,10 @@ import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 import com.fortify.cli.common.util.FixInjection;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess @FixInjection
+@FixInjection
 public abstract class AbstractSessionLoginCommand<D extends ISessionData> extends AbstractSessionCommand implements IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractSessionLoginCommand.class);
     @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;

@@ -58,9 +58,9 @@ public class FortifyCLIInitializerRunner {
     }
     
     @Command(name = "fcli", defaultValueProvider = FortifyCLIDefaultValueProvider.class)
-    @FixInjection @ReflectiveAccess
+    @FixInjection
     public static final class FortifyCLIInitializerCommand extends AbstractFortifyCLICommand implements Runnable {
-        @Inject private IFortifyCLIInitializer[] initializers;
+        @Inject @ReflectiveAccess private IFortifyCLIInitializer[] initializers;
         @Getter @Spec private CommandSpec commandSpec;
         
         @Override

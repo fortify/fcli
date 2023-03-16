@@ -27,14 +27,12 @@ package com.fortify.cli.ssc.app.cli.mixin;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCAppResolverMixin {
-    @ReflectiveAccess
     public static abstract class AbstractSSCAppResolverMixin {
         public abstract String getAppNameOrId();
 
@@ -47,14 +45,12 @@ public class SSCAppResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCAppResolverMixin {
         @Option(names = {"--app"}, required = true, descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }
     
     // delete|update <app>
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCAppResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;

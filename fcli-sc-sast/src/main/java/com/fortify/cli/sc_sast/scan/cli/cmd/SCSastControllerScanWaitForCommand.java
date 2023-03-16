@@ -36,14 +36,12 @@ import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusE
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobState;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 @Command(name = SCSastControllerBasicOutputHelperMixins.WaitFor.CMD_NAME)
 public class SCSastControllerScanWaitForCommand extends AbstractWaitForCommand<SCSastSessionData> {
     @Getter @Mixin SCSastControllerUnirestRunnerMixin unirestRunner;

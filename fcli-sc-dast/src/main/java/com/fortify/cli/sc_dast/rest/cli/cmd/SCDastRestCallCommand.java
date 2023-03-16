@@ -28,12 +28,10 @@ import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
 import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastUnirestRunnerMixin;
 import com.fortify.cli.sc_dast.session.manager.ISCDastSessionData;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = AbstractRestCallCommand.CMD_NAME)
 public final class SCDastRestCallCommand extends AbstractRestCallCommand<ISCDastSessionData> {
     @Getter @Mixin private SCDastUnirestRunnerMixin unirestRunner;

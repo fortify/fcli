@@ -57,12 +57,12 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess @FixInjection
+@FixInjection
 @Command(name = SSCOutputHelperMixins.ImportDebricked.CMD_NAME)
 public class SSCAppVersionArtifactImportDebrickedCommand extends AbstractSSCAppVersionArtifactUploadCommand {
-    @Getter @Mixin private SSCOutputHelperMixins.ImportDebricked outputHelper;
+    @Mixin @Getter private SSCOutputHelperMixins.ImportDebricked outputHelper;
     @Mixin private DebrickedLoginOptions debrickedLoginOptions; 
-    @Inject private GenericUnirestRunner debrickedUnirestRunner;
+    @Inject @ReflectiveAccess private GenericUnirestRunner debrickedUnirestRunner;
     private final IProgressHelper progressHelper = ProgressHelper.createProgressHelper();
     
     @Option(names = {"-e", "--engine-type"}, required = true, defaultValue = "DEBRICKED")

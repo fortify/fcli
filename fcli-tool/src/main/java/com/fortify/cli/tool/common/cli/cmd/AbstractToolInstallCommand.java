@@ -40,7 +40,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@ReflectiveAccess @FixInjection
+@FixInjection
 public abstract class AbstractToolInstallCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractToolInstallCommand.class);
     private static final Set<PosixFilePermission> binPermissions = PosixFilePermissions.fromString("rwxr-xr-x");
@@ -51,7 +51,7 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Getter @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
     private DigestMismatchAction onDigestMismatch;
-    @Inject private GenericUnirestRunner unirestRunner; 
+    @Inject @ReflectiveAccess private GenericUnirestRunner unirestRunner; 
     
     private static enum DigestMismatchAction {
         fail, warn

@@ -11,13 +11,13 @@ import jakarta.inject.Inject;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess @FixInjection
+@FixInjection
 public class SSCTokenCommandUrlConfigMixin implements IUrlConfigSupplier {
-    @Inject private SSCSessionDataManager sessionDataManager;
+    @Inject @ReflectiveAccess private SSCSessionDataManager sessionDataManager;
     
     @ArgGroup(exclusive=true)
     private SSCUrlConfigOrSessionName options = new SSCUrlConfigOrSessionName();
-    @ReflectiveAccess
+    
     private static final class SSCUrlConfigOrSessionName {
         @ArgGroup(exclusive=false) private UrlConfigOptions urlConfig = new UrlConfigOptions();
         @Option(names="--session") private String sessionName;

@@ -6,7 +6,6 @@ import java.util.stream.Stream;
 
 import com.fortify.cli.common.output.OutputFormat;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.ITypeConverter;
 
 public final class OutputFormatConfigConverter implements ITypeConverter<OutputFormatConfig> {
@@ -29,7 +28,6 @@ public final class OutputFormatConfigConverter implements ITypeConverter<OutputF
         return OutputFormat.valueOf(s.replace('-', '_'));
     }
     
-    @ReflectiveAccess
     public static final class OutputFormatIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
         public OutputFormatIterable() { 

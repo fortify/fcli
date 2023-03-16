@@ -7,12 +7,10 @@ import com.fortify.cli.common.output.cli.cmd.unirest.AbstractUnirestOutputComman
 import com.fortify.cli.sc_sast.rest.cli.mixin.SCSastControllerUnirestRunnerMixin;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 public abstract class AbstractSCSastControllerOutputCommand extends AbstractUnirestOutputCommand<SCSastSessionData> {
     @Getter @Mixin SCSastControllerUnirestRunnerMixin unirestRunner;
     

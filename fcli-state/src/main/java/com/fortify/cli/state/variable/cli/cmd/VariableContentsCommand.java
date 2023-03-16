@@ -34,7 +34,6 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = VariableOutputHelperMixins.Contents.CMD_NAME)
 public class VariableContentsCommand extends AbstractBasicOutputCommand {
     @Getter @Mixin private VariableOutputHelperMixins.Contents outputHelper;

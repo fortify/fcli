@@ -9,7 +9,6 @@ import com.fortify.cli.sc_dast.scan.cli.cmd.AbstractSCDastScanOutputCommand;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,6 @@ import picocli.CommandLine.Mixin;
  * @author rsenden
  *
  */
-@ReflectiveAccess
 public abstract class AbstractSCDastScanActionCommand extends AbstractSCDastScanOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @Mixin private SCDastScanResolverMixin.PositionalParameter scanResolver;
     

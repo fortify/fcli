@@ -31,12 +31,10 @@ import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.sc_dast.util.SCDastConstants;
 import com.fortify.cli.ssc.session.manager.ISSCUserCredentialsConfig;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 public class SCDastUserCredentialOptions implements ISSCUserCredentialsConfig {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
     

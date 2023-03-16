@@ -31,13 +31,11 @@ import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.sensor.cli.mixin.SCDastSensorResolverMixin;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = SCDastOutputHelperMixins.Enable.CMD_NAME)
 public class SCDastSensorEnableCommand extends AbstractSCDastOutputCommand implements IUnirestJsonNodeSupplier {
     @Getter @Mixin private SCDastOutputHelperMixins.Enable outputHelper;

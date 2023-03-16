@@ -4,10 +4,8 @@ import java.util.function.BiFunction;
 
 import com.fortify.cli.common.session.manager.api.ISessionData;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 
-@ReflectiveAccess
 public abstract class AbstractSimpleUnirestRunnerMixin<D extends ISessionData> extends AbstractUnirestRunnerMixin<D> {
     @Override
     public final <R> R run(BiFunction<UnirestInstance, D, R> f) {

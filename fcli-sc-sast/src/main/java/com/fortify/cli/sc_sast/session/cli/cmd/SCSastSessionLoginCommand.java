@@ -37,6 +37,7 @@ import com.fortify.cli.sc_sast.session.manager.SCSastSessionDataManager;
 import com.fortify.cli.ssc.session.manager.ISSCCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -46,10 +47,10 @@ import picocli.CommandLine.Mixin;
 @Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
 @FixInjection
 public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSastSessionData> {
-    @Getter @Mixin private BasicOutputHelperMixins.Login outputHelper;
-    @Getter @Inject private SCSastSessionDataManager sessionDataManager;
-    @Inject private GenericUnirestRunner unirestRunner;
-    @Inject private SSCTokenHelper tokenHelper;
+    @Mixin @Getter private BasicOutputHelperMixins.Login outputHelper;
+    @Inject @ReflectiveAccess @Getter private SCSastSessionDataManager sessionDataManager;
+    @Inject @ReflectiveAccess private GenericUnirestRunner unirestRunner;
+    @Inject @ReflectiveAccess private SSCTokenHelper tokenHelper;
     @Mixin private SCSastSessionLoginOptions sessionLoginOptions;
     
     @Override

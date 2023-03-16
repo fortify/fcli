@@ -28,11 +28,9 @@ import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.rest.runner.IUnirestWithSessionDataRunner;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 
-@ReflectiveAccess
 public abstract class AbstractUnirestRunnerCommand<D extends ISessionData> extends AbstractFortifyCLICommand implements Runnable {
     @Override @SneakyThrows
     public final void run() {

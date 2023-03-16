@@ -27,22 +27,25 @@ package com.fortify.cli.sc_dast.session.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
+import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.sc_dast.session.cli.mixin.SCDastSessionLoginOptions;
 import com.fortify.cli.sc_dast.session.manager.SCDastSessionData;
 import com.fortify.cli.sc_dast.session.manager.SCDastSessionDataManager;
 import com.fortify.cli.ssc.session.manager.ISSCCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
+import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
+@FixInjection
 public class SCDastSessionLoginCommand extends AbstractSessionLoginCommand<SCDastSessionData> {
-    @Getter @Mixin private BasicOutputHelperMixins.Login outputHelper;
-    @Getter @Inject private SCDastSessionDataManager sessionDataManager;
-    @Inject private SSCTokenHelper tokenHelper;
+    @Mixin @Getter private BasicOutputHelperMixins.Login outputHelper;
+    @Inject @ReflectiveAccess @Getter private SCDastSessionDataManager sessionDataManager;
+    @Inject @ReflectiveAccess private SSCTokenHelper tokenHelper;
     @Mixin private SCDastSessionLoginOptions sessionLoginOptions;
     
     @Override

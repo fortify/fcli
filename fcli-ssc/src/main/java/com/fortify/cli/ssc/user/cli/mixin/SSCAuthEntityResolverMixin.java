@@ -27,14 +27,12 @@ package com.fortify.cli.ssc.user.cli.mixin;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.ssc.user.helper.SSCAuthEntitiesHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCAuthEntityResolverMixin {
-    @ReflectiveAccess
     private static abstract class AbstractSSCAuthEntityResolverMixin {
         public abstract String getAuthEntitySpec();
         
@@ -43,13 +41,11 @@ public class SSCAuthEntityResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCAuthEntityResolverMixin {
         @Option(names="--user", required = true)
         @Getter private String authEntitySpec;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameterSingle extends AbstractSSCAuthEntityResolverMixin {
         @Parameters(index = "0", arity = "1")
         @Getter private String authEntitySpec;

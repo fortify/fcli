@@ -9,10 +9,9 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 
-@ReflectiveAccess
 public class SSCUnirestRunnerMixin extends AbstractSimpleUnirestRunnerMixin<ISSCSessionData> {
-    @Inject private SSCSessionDataManager sessionDataManager;
-    @Inject private SSCTokenHelper tokenHelper;
+    @Inject @ReflectiveAccess private SSCSessionDataManager sessionDataManager;
+    @Inject @ReflectiveAccess private SSCTokenHelper tokenHelper;
 
     @Override
     protected final ISSCSessionData getSessionData(String sessionName) {

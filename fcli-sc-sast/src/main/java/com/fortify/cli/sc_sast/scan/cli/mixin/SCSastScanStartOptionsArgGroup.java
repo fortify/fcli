@@ -1,9 +1,7 @@
 package com.fortify.cli.sc_sast.scan.cli.mixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import picocli.CommandLine.ArgGroup;
 
-@ReflectiveAccess
 public class SCSastScanStartOptionsArgGroup {
     @ArgGroup(exclusive = false, headingKey = "fcli.sc-sast.scan.start.mbs.heading", multiplicity = "1") 
     private SCSastScanStartMbsOptions mbsOptions;

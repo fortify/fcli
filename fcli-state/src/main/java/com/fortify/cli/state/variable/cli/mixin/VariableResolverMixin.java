@@ -28,14 +28,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 import com.fortify.cli.common.variable.FcliVariableHelper.VariableDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class VariableResolverMixin {
     
-    @ReflectiveAccess
     public static abstract class AbstractVariableResolverMixin  {
         public abstract String getVariableName();
         public abstract boolean isRequired();
@@ -49,18 +47,15 @@ public class VariableResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static abstract class AbstractRequiredVariableResolverMixin extends AbstractVariableResolverMixin {
         @Getter private boolean required = true; 
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractRequiredVariableResolverMixin {
         @Option(names = {"--variable"}, required = true)
         @Getter private String variableName;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractRequiredVariableResolverMixin {
         @Parameters(index = "0", arity = "1")
         @Getter private String variableName;

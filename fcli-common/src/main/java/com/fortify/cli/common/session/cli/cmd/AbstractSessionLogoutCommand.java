@@ -30,11 +30,9 @@ import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 public abstract class AbstractSessionLogoutCommand<D extends ISessionData> extends AbstractSessionCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
     

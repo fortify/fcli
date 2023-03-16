@@ -26,7 +26,6 @@ package com.fortify.cli.ssc.appversion.cli.mixin;
 
 import com.fortify.cli.ssc.appversion.helper.SSCAppAndVersionNameDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -34,7 +33,6 @@ import picocli.CommandLine.Parameters;
 
 public class SSCAppAndVersionNameResolverMixin {
     
-    @ReflectiveAccess
     public static abstract class AbstractSSCAppAndVersionNameResolverMixin {
         @Mixin private SSCDelimiterMixin delimiterMixin;
         public abstract String getAppAndVersionName();
@@ -49,13 +47,11 @@ public class SSCAppAndVersionNameResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractSSCAppAndVersionNameResolverMixin {
         @Option(names = {"--appversion"}, required = true, descriptionKey = "ApplicationVersionMixin")
         @Getter private String appAndVersionName;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCAppAndVersionNameResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationVersionMixin")
         @Getter private String appAndVersionName;

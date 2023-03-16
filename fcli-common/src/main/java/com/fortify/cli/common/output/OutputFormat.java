@@ -25,13 +25,13 @@
 package com.fortify.cli.common.output;
 
 import com.fortify.cli.common.output.writer.record.IRecordWriterFactory;
-import com.fortify.cli.common.output.writer.record.csv.CsvRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.csv.CsvRecordWriter.CsvType;
+import com.fortify.cli.common.output.writer.record.csv.CsvRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.expr.ExprRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.json.JsonRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.json_properties.JsonPropertiesRecordWriterFactory;
-import com.fortify.cli.common.output.writer.record.table.TableRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.table.TableRecordWriter.TableType;
+import com.fortify.cli.common.output.writer.record.table.TableRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.tree.TreeRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.xml.XmlRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.yaml.YamlRecordWriterFactory;
