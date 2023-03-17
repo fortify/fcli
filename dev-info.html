@@ -172,22 +172,19 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 <p>GraalVM Native Image needs to know ahead-of-time the reflectively accessed program elements; see <a href="https://www.graalvm.org/reference-manual/native-image/Reflection/">GraalVM Native Image &amp; Reflection</a> for details.</p>
 </div>
 <div class="paragraph">
-<p>Micronaut allows for generating the necessary GraalVM reflection configuration using the <code>@ReflectiveAccess</code> annotation if necessary. In previous fcli versions, most picocli-related classes like command, mixin and ArgGroup implementations needed to be annotated with <code>@ReflectiveAccess</code>, but this is no longer necessary as the build has been updated to generate a proper reflect-config.json file for these classes.</p>
-</div>
-<div class="paragraph">
-<p>Some fields or classes in fcli still need to be annotated with <code>@ReflectiveAccess</code> though, most notably:</p>
+<p>In fcli, the following needs to be taken into account to avoid reflection issues in native fcli binaries:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>All private fields annotated with the Micronaut <code>@Inject</code> annotation must also have the <code>@ReflectiveAccess</code> annotation.</p>
+<p>Micronaut <code>@Inject</code> annotations must not be declared on private fields</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Failure to do so will often prevent native fcli binaries from running altogether.</p>
+<p>To inject beans into fields, use <code>@Setter(onMethod=@__({@Inject}))</code> to have Lombok generate a setter method with <code>@Inject</code> annotation, allowing Micronaut to perform injection without requiring reflection.</p>
 </li>
 <li>
-<p>Missing annotations will usually be detected during the basic fcli test performed in the GitHub <code>Build &amp; release</code> workflow.</p>
+<p>Failure to do so will often result in native fcli binaries from running altogether; this will usually be detected during the basic fcli test performed in the GitHub <code>Build &amp; release</code> workflow.</p>
 </li>
 </ul>
 </div>
@@ -234,13 +231,16 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 </ul>
 </div>
 </li>
+<li>
+<p>Picocli uses reflection internally, which in earlier fcli versions required <code>@ReflectiveAccess</code> annotations on picocli-related classes like commands and mixins. However, recent fcli versions generate a proper Graal reflect-config.json file, so <code>@ReflectiveAccess</code> is no longer needed on picocli-related classes.</p>
+</li>
 </ul>
 </div>
 <div class="paragraph">
 <p>If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the <code>@ReflectiveAccess</code> annotation to the appropriate classes.</p>
 </div>
 <div class="paragraph">
-<p>Note that Micronaut provides the <code>@Introspected</code> annotation that should allow for reflection-free (de-)serialization. However experience learns that there are just too many differences between reflection-based and introspection-based (de-)serialization. When running in a normal JVM these differences are often not visible as Jackson can easily fall back to reflection-based (de-)serialization. In native images, Jackson cannot fall back to reflection-based (de-)serialization unless properly configured, and even when properly configured there are still some differences in behavior.</p>
+<p>Note that Micronaut also provides the <code>@Introspected</code> annotation that should allow for reflection-free (de-)serialization. However experience learns that there are just too many differences between reflection-based and introspection-based (de-)serialization. When running in a normal JVM these differences are often not visible as Jackson can easily fall back to reflection-based (de-)serialization. In native images, Jackson cannot fall back to reflection-based (de-)serialization unless properly configured, and even when properly configured there are still some differences in behavior.</p>
 </div>
 <div class="paragraph">
 <p>As such, it has been decided to disable Jackson introspection-based (de-)serialization using the <code>jackson.bean-introspection-module</code> configuration property in <code>application.yml</code>. This also means that we will not be using the <code>@Introspected</code> annotation on classes that need to be (de-)serialized with Jackson. The alternative is to use the <code>@ReflectiveAccess</code> annotation on such classes, as described above.</p>
@@ -918,7 +918,7 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 <div id="footer">
 <div id="footer-text">
 Version null<br>
-Last updated 2023-03-17 09:18:52 UTC
+Last updated 2023-03-17 12:11:09 UTC
 </div>
 </div>
 </body>
