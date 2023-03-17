@@ -57,5 +57,7 @@ public class FoDUrls {
     public static final String DYNAMIC_SCANS_IMPORT = DYNAMIC_SCANS + "/import-scan";
     public static final String MOBILE_SCANS = ApiBase + "/releases/{relId}/mobile-scans";
     public static final String MOBILE_SCANS_IMPORT = MOBILE_SCANS + "/import-scan";
+    public static final String MOBILE_SCANS_SETUP = MOBILE_SCANS + "/scan-setup";
+    public static final String MOBILE_SCANS_START = MOBILE_SCANS + "/start-scan";
 
 }

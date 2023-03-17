@@ -28,6 +28,14 @@ package com.fortify.cli.fod.scan.cli.cmd;
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
+import com.fortify.cli.fod.scan_dast.cli.cmd.FoDDastScanImportCommand;
+import com.fortify.cli.fod.scan_dast.cli.cmd.FoDDastScanStartCommand;
+import com.fortify.cli.fod.scan_mobile.cli.cmd.FoDMobileScanImportCommand;
+import com.fortify.cli.fod.scan_mobile.cli.cmd.FoDMobileScanStartCommand;
+import com.fortify.cli.fod.scan_oss.cli.cmd.FoDOssScanImportCommand;
+import com.fortify.cli.fod.scan_sast.cli.cmd.FoDSastScanImportCommand;
+import com.fortify.cli.fod.scan_sast.cli.cmd.FoDSastScanSetupCommand;
+import com.fortify.cli.fod.scan_sast.cli.cmd.FoDSastScanStartCommand;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "scan",
@@ -35,6 +43,19 @@ import picocli.CommandLine;
                 FoDScanCancelCommand.class,
                 FoDScanGetCommand.class,
                 FoDScanListCommand.class,
+                // commented out as single list command is probably sufficient
+                //FoDSastScanListCommand.class,
+                //FoDOssScanListCommand.class,
+                //FoDDastScanListCommand.class,
+                //FoDMobileScanListCommand.class,
+                FoDSastScanImportCommand.class,
+                FoDDastScanImportCommand.class,
+                FoDOssScanImportCommand.class,
+                FoDMobileScanImportCommand.class,
+                FoDSastScanSetupCommand.class,
+                FoDSastScanStartCommand.class,
+                FoDDastScanStartCommand.class,
+                FoDMobileScanStartCommand.class,
                 FoDScanWaitForCommand.class
         }
 )

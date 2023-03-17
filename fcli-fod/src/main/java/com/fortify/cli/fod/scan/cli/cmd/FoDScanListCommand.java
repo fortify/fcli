@@ -62,7 +62,7 @@ public class FoDScanListCommand extends AbstractFoDOutputCommand implements IUni
     // TODO Consider standardizing sorting options across fcli modules, also see https://github.com/fortify/fcli/issues/86
     @Option(names = {"--latest-first"})
     private Boolean latestFirst;
-    
+
     // TODO Can we re-use existing -q option for these filters? Likely need to improve -q option to handle dates and such.
     @Option(names = {"--started-on-start-date"})
     private String startedOnStartDate;
@@ -74,10 +74,15 @@ public class FoDScanListCommand extends AbstractFoDOutputCommand implements IUni
     private String completedOnEndDate;
     @Option(names = {"--modified-start-date"})
     private String modifiedStartDate;
-    
+
     @Mixin private FoDAnalysisStatusTypeOptions.OptionalOption analysisStatus;
     @Mixin private FoDScanFormatOptions.OptionalOption scanType;
     @Mixin private FoDTimePeriodOptions.OptionalOption timePeriod;
+
+    public String getScanType() {
+        String sTypeStr = (scanType != null && scanType.getScanType() != null ? String.valueOf(scanType.getScanType()) : "*");
+        return sTypeStr;
+    }
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
@@ -113,7 +118,7 @@ public class FoDScanListCommand extends AbstractFoDOutputCommand implements IUni
         String aStatusStr = (analysisStatus != null && analysisStatus.getAnalysisStatusType() != null ? String.valueOf(analysisStatus.getAnalysisStatusType()) : "*");
         String sTypeStr = (scanType != null && scanType.getScanType() != null ? String.valueOf(scanType.getScanType()) : "*");
         return new FoDFilterResultsTransformer(new String[]{
-                "scanType:" + sTypeStr, "analysisStatusType:" + aStatusStr
+                "scanType:" + getScanType(), "analysisStatusType:" + aStatusStr
         }).transform(FoDScanHelper.renameFields(record));
     }
 
