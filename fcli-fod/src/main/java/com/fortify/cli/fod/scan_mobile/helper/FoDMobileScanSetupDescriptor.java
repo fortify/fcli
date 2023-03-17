@@ -23,43 +23,23 @@
  * IN THE SOFTWARE.
  ******************************************************************************/
 
-package com.fortify.cli.fod.scan.helper;
+package com.fortify.cli.fod.scan_mobile.helper;
 
-import com.fortify.cli.fod.scan_dast.helper.FoDDastScanSetupDescriptor;
-import com.fortify.cli.fod.scan_sast.helper.FoDSastScanSetupDescriptor;
-
+import com.fortify.cli.common.json.JsonNodeHolder;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
-import lombok.ToString;
+import lombok.EqualsAndHashCode;
 
 @ReflectiveAccess
 @Data
-@ToString
-public class FoDAssessmentTypeDescriptor {
+@EqualsAndHashCode(callSuper=false)
+public class FoDMobileScanSetupDescriptor extends JsonNodeHolder {
+    private Integer releaseId;
     private Integer assessmentTypeId;
-    private String name;
-    private String scanType;
-    private Integer scanTypeId;
     private Integer entitlementId;
     private String entitlementDescription;
-    private Integer frequencyTypeId;
-    private String frequencyType;
-
-    public FoDAssessmentTypeDescriptor copyFromCurrentSetup(FoDDastScanSetupDescriptor curSetup) {
-        this.assessmentTypeId = curSetup.getAssessmentTypeId();
-        this.entitlementId = curSetup.getEntitlementId();
-        this.entitlementDescription = curSetup.getEntitlementDescription();
-        this.frequencyTypeId = curSetup.getEntitlementFrequencyTypeId();
-        this.frequencyType = curSetup.getEntitlementFrequencyType();
-        return this;
-    }
-
-    public FoDAssessmentTypeDescriptor copyFromCurrentSetup(FoDSastScanSetupDescriptor curSetup) {
-        this.assessmentTypeId = curSetup.getAssessmentTypeId();
-        this.entitlementId = curSetup.getEntitlementId();
-        this.entitlementDescription = curSetup.getEntitlementDescription();
-        this.frequencyTypeId = curSetup.getEntitlementFrequencyTypeId();
-        this.frequencyType = curSetup.getEntitlementFrequencyType();
-        return this;
-    }
+    private String entitlementFrequencyType;
+    private Integer entitlementFrequencyTypeId;
+    private Integer technologyStackId;
+    private String technologyStack;
 }
