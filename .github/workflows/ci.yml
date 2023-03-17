@@ -123,11 +123,11 @@ jobs:
         run: ./fcli --version | tee /dev/stderr | grep -E '[0-9]+\.[0-9]+\.[0-9]+' >/dev/null || (echo "fcli --version doesn't output proper version number"; exit 1)
 
       - name: Package native fcli
-        run: tar -zcvf fcli-linux.tgz fcli -C ./artifact fcli_completion
+        run: tar -zcvf artifact/release-assets/fcli-linux.tgz fcli -C ./artifact fcli_completion
 
       - uses: actions/upload-artifact@v3
         with:
-          path: ./fcli-linux.tgz
+          path: ./artifact/**/fcli-linux.tgz
 
   native_mac:
     name: native-image-mac
@@ -163,11 +163,11 @@ jobs:
         run: ./fcli --help && ./fcli get --help
 
       - name: Package native fcli
-        run: tar -zcvf fcli-mac.tgz fcli -C ./artifact fcli_completion
+        run: tar -zcvf ./artifact/release-assets/fcli-mac.tgz fcli -C ./artifact fcli_completion
 
       - uses: actions/upload-artifact@v3
         with:
-          path: ./fcli-mac.tgz
+          path: ./artifact/**/fcli-mac.tgz
 
   native_win:
     name: native-image-win
@@ -207,11 +207,11 @@ jobs:
           .\fcli.exe get --help
 
       - name: Package native fcli
-        run: 7z a fcli-windows.zip fcli*.exe
+        run: 7z a artifact\release-assets\fcli-windows.zip fcli*.exe
 
       - uses: actions/upload-artifact@v3
         with:
-          path: ./fcli-windows.zip
+          path: ./artifact/**/fcli-windows.zip
         
   release:
     name: release
