@@ -24,7 +24,7 @@ public class FortifyCLITest {
      * @throws Exception
      */
     @Test
-    public void testCommandNames() throws Exception {
+    public void testCommands() throws Exception {
         Set<String> errors = new HashSet<>();
         checkCommand(errors, new CommandLine(FCLIRootCommands.class));
         if ( !errors.isEmpty() ) {
