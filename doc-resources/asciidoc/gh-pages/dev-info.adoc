@@ -64,7 +64,7 @@ In this example, the AbstractUnirestRunner class was moved to a different packag
 
 GraalVM Native Image needs to know ahead-of-time the reflectively accessed program elements; see https://www.graalvm.org/reference-manual/native-image/Reflection/[GraalVM Native Image & Reflection] for details.
 
- Micronaut allows for generating the necessary GraalVM reflection configuration using the `+@ReflectiveAccess+` annotation if necessary. In previous fcli versions, most picocli-related classes like command, mixin and ArgGroup implementations needed to be annotated with `+@ReflectiveAccess+`, but this is no longer necessary as the build has been updated to generate a proper reflect-config.json file for these classes.
+Micronaut allows for generating the necessary GraalVM reflection configuration using the `+@ReflectiveAccess+` annotation if necessary. In previous fcli versions, most picocli-related classes like command, mixin and ArgGroup implementations needed to be annotated with `+@ReflectiveAccess+`, but this is no longer necessary as the build has been updated to generate a proper reflect-config.json file for these classes.
  
 Some fields or classes in fcli still need to be annotated with `+@ReflectiveAccess+` though, most notably:
 
@@ -77,7 +77,7 @@ Some fields or classes in fcli still need to be annotated with `+@ReflectiveAcce
 * All data classes that are serialized or deserialized using Jackson must be annotated with the `+@ReflectiveAccess+` annotation.
 ** Failure to do so will cause errors when serializing or deserializing data to or from classes that lack this annotation.
 ** Usually this only affects a small group of commands or a single command, possibly even only under certain conditions, and as such any missing annotations may be difficult to detect.
-** Most notably, the following classes will often need the `+@ReflectiveAccess+` annotation:
+** Most notably, the following classes will need the `+@ReflectiveAccess+` annotation:
 *** Most `*Descriptor` classes.
 *** Classes holding REST request or response data.
 *** Classes holding data stored in the fcli data folder, like configuration data classes.
