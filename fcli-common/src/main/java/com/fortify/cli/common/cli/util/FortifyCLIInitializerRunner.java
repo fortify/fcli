@@ -32,9 +32,9 @@ import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.util.FixInjection;
 
 import io.micronaut.configuration.picocli.MicronautFactory;
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
+import lombok.Setter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
@@ -60,7 +60,7 @@ public class FortifyCLIInitializerRunner {
     @Command(name = "fcli", defaultValueProvider = FortifyCLIDefaultValueProvider.class)
     @FixInjection
     public static final class FortifyCLIInitializerCommand extends AbstractFortifyCLICommand implements Runnable {
-        @Inject @ReflectiveAccess private IFortifyCLIInitializer[] initializers;
+        @Setter(onMethod=@__({@Inject})) private IFortifyCLIInitializer[] initializers;
         @Getter @Spec private CommandSpec commandSpec;
         
         @Override

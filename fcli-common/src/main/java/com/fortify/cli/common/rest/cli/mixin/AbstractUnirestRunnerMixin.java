@@ -9,14 +9,14 @@ import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
 import com.fortify.cli.common.session.manager.api.ISessionData;
 import com.fortify.cli.common.util.FixInjection;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
+import lombok.Setter;
 import picocli.CommandLine.Mixin;
 
 @FixInjection
 public abstract class AbstractUnirestRunnerMixin<D extends ISessionData> implements IUnirestWithSessionDataRunner<D> {
-    @Inject @ReflectiveAccess private GenericUnirestFactory genericUnirestFactory;
+    @Setter(onMethod=@__({@Inject})) private GenericUnirestFactory genericUnirestFactory;
     @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
     
     protected final <R> R run(BiConsumer<UnirestInstance, D> configurer, BiFunction<UnirestInstance, D, R> f) {

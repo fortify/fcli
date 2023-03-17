@@ -7,7 +7,6 @@ import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor.ProxyDescriptorBuilder;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor.ProxyMatchMode;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;

@@ -46,15 +46,15 @@ import com.fortify.cli.common.session.manager.api.SessionSummary;
 import com.fortify.cli.common.util.FcliHomeHelper;
 import com.fortify.cli.common.util.FixInjection;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 
 @FixInjection
 public abstract class AbstractSessionDataManager<T extends ISessionData> implements ISessionDataManager<T> {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractSessionDataManager.class);
-    @Inject @ReflectiveAccess @Getter private ObjectMapper objectMapper;
+    @Setter(onMethod=@__({@Inject})) @Getter private ObjectMapper objectMapper;
     
     @Override
     @SneakyThrows // TODO Do we want to use SneakyThrows?

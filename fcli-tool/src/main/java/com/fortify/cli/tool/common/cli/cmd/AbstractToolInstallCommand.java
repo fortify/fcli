@@ -31,10 +31,10 @@ import com.fortify.cli.tool.common.helper.ToolVersionDownloadDescriptor;
 import com.fortify.cli.tool.common.helper.ToolVersionInstallDescriptor;
 import com.fortify.cli.tool.common.util.FileUtils;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -51,7 +51,7 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Getter @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
     private DigestMismatchAction onDigestMismatch;
-    @Inject @ReflectiveAccess private GenericUnirestRunner unirestRunner; 
+    @Setter(onMethod=@__({@Inject})) private GenericUnirestRunner unirestRunner; 
     
     private static enum DigestMismatchAction {
         fail, warn

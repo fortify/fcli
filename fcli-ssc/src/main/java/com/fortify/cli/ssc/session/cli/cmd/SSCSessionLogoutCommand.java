@@ -32,9 +32,9 @@ import com.fortify.cli.ssc.session.manager.SSCSessionData;
 import com.fortify.cli.ssc.session.manager.SSCSessionDataManager;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
+import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -42,8 +42,8 @@ import picocli.CommandLine.Mixin;
 @FixInjection
 public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand<SSCSessionData> {
     @Mixin @Getter private BasicOutputHelperMixins.Logout outputHelper;
-    @Inject @ReflectiveAccess @Getter private SSCSessionDataManager sessionDataManager;
-    @Inject @ReflectiveAccess private SSCTokenHelper tokenHelper;
+    @Setter(onMethod=@__({@Inject})) @Getter private SSCSessionDataManager sessionDataManager;
+    @Setter(onMethod=@__({@Inject})) private SSCTokenHelper tokenHelper;
     @Mixin private SSCSessionLogoutOptions logoutOptions;
     
     @Override

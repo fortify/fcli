@@ -64,16 +64,16 @@ In this example, the AbstractUnirestRunner class was moved to a different packag
 
 GraalVM Native Image needs to know ahead-of-time the reflectively accessed program elements; see https://www.graalvm.org/reference-manual/native-image/Reflection/[GraalVM Native Image & Reflection] for details.
 
-Micronaut allows for generating the necessary GraalVM reflection configuration using the `+@ReflectiveAccess+` annotation if necessary. In previous fcli versions, most picocli-related classes like command, mixin and ArgGroup implementations needed to be annotated with `+@ReflectiveAccess+`, but this is no longer necessary as the build has been updated to generate a proper reflect-config.json file for these classes.
- 
-Some fields or classes in fcli still need to be annotated with `+@ReflectiveAccess+` though, most notably:
+In fcli, the following needs to be taken into account to avoid reflection issues in native fcli binaries:
 
-* All private fields annotated with the Micronaut `+@Inject+` annotation must also have the `+@ReflectiveAccess+` annotation. 
-** Failure to do so will often prevent native fcli binaries from running altogether.
-** Missing annotations will usually be detected during the basic fcli test performed in the GitHub `Build & release` workflow.
+* Micronaut `@Inject` annotations must not be declared on private fields
+** To inject beans into fields, use `@Setter(onMethod=@__({@Inject}))` to have Lombok generate a setter method with `@Inject` annotation, allowing Micronaut to perform injection without requiring reflection.
+** Failure to do so will often result in native fcli binaries from running altogether; this will usually be detected during the basic fcli test performed in the GitHub `Build & release` workflow.
+
 * All classes referenced in `@ProductHelperClass` annotations, i.e. all `<Product>ProductHelper` classes, must be annotated with `+@ReflectiveAccess+`. 
 ** Failure to do so will prevent most `<Product>`-specific commands from running when using the native fcli binaries. 
 ** This may not be uncovered by the basic fcli test mentioned above, but should be fairly easy to detect, for example through product module integration tests or through manual testing of arbitrary product commands.
+
 * All data classes that are serialized or deserialized using Jackson must be annotated with the `+@ReflectiveAccess+` annotation.
 ** Failure to do so will cause errors when serializing or deserializing data to or from classes that lack this annotation.
 ** Usually this only affects a small group of commands or a single command, possibly even only under certain conditions, and as such any missing annotations may be difficult to detect.
@@ -82,9 +82,11 @@ Some fields or classes in fcli still need to be annotated with `+@ReflectiveAcce
 *** Classes holding REST request or response data.
 *** Classes holding data stored in the fcli data folder, like configuration data classes.
 
+* Picocli uses reflection internally, which in earlier fcli versions required `+@ReflectiveAccess+` annotations on picocli-related classes like commands and mixins. However, recent fcli versions generate a proper Graal reflect-config.json file, so `+@ReflectiveAccess+` is no longer needed on picocli-related classes.
+
 If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the `+@ReflectiveAccess+` annotation to the appropriate classes.
 
-Note that Micronaut provides the `+@Introspected+` annotation that should allow for reflection-free (de-)serialization. However experience learns that there are just too many differences between reflection-based and introspection-based (de-)serialization. When running in a normal JVM these differences are often not visible as Jackson can easily fall back to reflection-based (de-)serialization. In native images, Jackson cannot fall back to reflection-based (de-)serialization unless properly configured, and even when properly configured there are still some differences in behavior.
+Note that Micronaut also provides the `+@Introspected+` annotation that should allow for reflection-free (de-)serialization. However experience learns that there are just too many differences between reflection-based and introspection-based (de-)serialization. When running in a normal JVM these differences are often not visible as Jackson can easily fall back to reflection-based (de-)serialization. In native images, Jackson cannot fall back to reflection-based (de-)serialization unless properly configured, and even when properly configured there are still some differences in behavior.
 
 As such, it has been decided to disable Jackson introspection-based (de-)serialization using the `+jackson.bean-introspection-module+` configuration property in `+application.yml+`. This also means that we will not be using the `+@Introspected+` annotation on classes that need to be (de-)serialized with Jackson. The alternative is to use the `+@ReflectiveAccess+` annotation on such classes, as described above.
 

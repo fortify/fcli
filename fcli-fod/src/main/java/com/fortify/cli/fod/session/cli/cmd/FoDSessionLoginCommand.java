@@ -35,9 +35,9 @@ import com.fortify.cli.fod.session.cli.mixin.FoDSessionLoginOptions;
 import com.fortify.cli.fod.session.manager.FoDSessionData;
 import com.fortify.cli.fod.session.manager.FoDSessionDataManager;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
+import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -45,9 +45,9 @@ import picocli.CommandLine.Mixin;
 @FixInjection
 public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionData> {
     @Getter @Mixin private BasicOutputHelperMixins.Login outputHelper;
-    @Inject @ReflectiveAccess @Getter private FoDSessionDataManager sessionDataManager;
-    @Inject @ReflectiveAccess @Getter private FoDOAuthHelper oauthHelper;
-    @Inject @ReflectiveAccess private GenericUnirestRunner unirestRunner;
+    @Setter(onMethod=@__({@Inject})) @Getter private FoDSessionDataManager sessionDataManager;
+    @Setter(onMethod=@__({@Inject})) @Getter private FoDOAuthHelper oauthHelper;
+    @Setter(onMethod=@__({@Inject})) private GenericUnirestRunner unirestRunner;
     @Mixin private FoDSessionLoginOptions loginOptions;
     
     @Override

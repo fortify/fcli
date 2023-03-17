@@ -48,10 +48,10 @@ import com.fortify.cli.ssc.appversion_artifact.cli.cmd.import_debricked.Debricke
 import com.fortify.cli.ssc.appversion_artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedUserCredentialOptions;
 import com.fortify.cli.ssc.output.cli.mixin.SSCOutputHelperMixins;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -62,7 +62,7 @@ import picocli.CommandLine.Option;
 public class SSCAppVersionArtifactImportDebrickedCommand extends AbstractSSCAppVersionArtifactUploadCommand {
     @Mixin @Getter private SSCOutputHelperMixins.ImportDebricked outputHelper;
     @Mixin private DebrickedLoginOptions debrickedLoginOptions; 
-    @Inject @ReflectiveAccess private GenericUnirestRunner debrickedUnirestRunner;
+    @Setter(onMethod=@__({@Inject})) private GenericUnirestRunner debrickedUnirestRunner;
     private final IProgressHelper progressHelper = ProgressHelper.createProgressHelper();
     
     @Option(names = {"-e", "--engine-type"}, required = true, defaultValue = "DEBRICKED")

@@ -29,9 +29,9 @@ import com.fortify.cli.common.session.cli.cmd.AbstractSessionListCommand;
 import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.fod.session.manager.FoDSessionDataManager;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import lombok.Getter;
+import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -39,5 +39,5 @@ import picocli.CommandLine.Mixin;
 @FixInjection
 public class FoDSessionListCommand extends AbstractSessionListCommand {
     @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
-    @Inject @ReflectiveAccess @Getter private FoDSessionDataManager sessionDataManager;
+    @Setter(onMethod=@__({@Inject})) @Getter private FoDSessionDataManager sessionDataManager;
 }

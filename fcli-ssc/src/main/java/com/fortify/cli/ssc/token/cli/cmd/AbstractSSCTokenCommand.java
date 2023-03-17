@@ -13,13 +13,13 @@ import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc.token.cli.mixin.SSCTokenCommandUrlConfigMixin;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
+import lombok.Setter;
 import picocli.CommandLine.Mixin;
 
 @FixInjection
 public abstract class AbstractSSCTokenCommand extends AbstractBasicOutputCommand implements IInputTransformerSupplier {
-    @Inject @ReflectiveAccess private SSCTokenHelper tokenHelper;
+    @Setter(onMethod=@__({@Inject})) private SSCTokenHelper tokenHelper;
     @Mixin private SSCTokenCommandUrlConfigMixin urlConfigMixin;
     @Mixin private UserCredentialOptions userCredentialOptions;
     

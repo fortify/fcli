@@ -31,10 +31,11 @@ import com.fortify.cli.common.util.FixInjection;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
+import lombok.Setter;
 
 @FixInjection
 public final class GenericUnirestRunner implements IUnirestRunner {
-    @Inject @ReflectiveAccess private GenericUnirestFactory genericUnirestFactory;
+    @Setter(onMethod=@__({@Inject})) @ReflectiveAccess private GenericUnirestFactory genericUnirestFactory;
     
     public final <R> R run(Function<UnirestInstance, R> f) {
         if ( f == null ) { throw new IllegalStateException("Function may not be null"); }

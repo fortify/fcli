@@ -6,14 +6,14 @@ import com.fortify.cli.common.rest.runner.config.IUrlConfigSupplier;
 import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.ssc.session.manager.SSCSessionDataManager;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
+import lombok.Setter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 @FixInjection
 public class SSCTokenCommandUrlConfigMixin implements IUrlConfigSupplier {
-    @Inject @ReflectiveAccess private SSCSessionDataManager sessionDataManager;
+    @Setter(onMethod=@__({@Inject})) private SSCSessionDataManager sessionDataManager;
     
     @ArgGroup(exclusive=true)
     private SSCUrlConfigOrSessionName options = new SSCUrlConfigOrSessionName();

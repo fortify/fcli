@@ -9,14 +9,14 @@ import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.sc_dast.session.manager.ISCDastSessionData;
 import com.fortify.cli.sc_dast.session.manager.SCDastSessionDataManager;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.Setter;
 
 @FixInjection
 public class SCDastUnirestRunnerMixin extends AbstractSimpleUnirestRunnerMixin<ISCDastSessionData> {
-    @Inject @ReflectiveAccess @Getter private SCDastSessionDataManager sessionDataManager;
+    @Setter(onMethod=@__({@Inject})) @Getter private SCDastSessionDataManager sessionDataManager;
     
     @Override
     protected final void configure(UnirestInstance unirest, ISCDastSessionData sessionData) {

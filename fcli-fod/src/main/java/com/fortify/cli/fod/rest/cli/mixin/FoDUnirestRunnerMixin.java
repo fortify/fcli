@@ -10,14 +10,14 @@ import com.fortify.cli.fod.oauth.helper.FoDOAuthHelper;
 import com.fortify.cli.fod.session.manager.FoDSessionData;
 import com.fortify.cli.fod.session.manager.FoDSessionDataManager;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
+import lombok.Setter;
 
 @FixInjection
 public class FoDUnirestRunnerMixin extends AbstractSimpleUnirestRunnerMixin<FoDSessionData> {
-    @Inject @ReflectiveAccess private FoDSessionDataManager sessionDataManager;
-    @Inject @ReflectiveAccess private FoDOAuthHelper oauthHelper;
+    @Setter(onMethod=@__({@Inject})) private FoDSessionDataManager sessionDataManager;
+    @Setter(onMethod=@__({@Inject})) private FoDOAuthHelper oauthHelper;
     
     @Override
     protected final FoDSessionData getSessionData(String sessionName) {

@@ -27,16 +27,16 @@ package com.fortify.cli.common.rest.runner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.util.FixInjection;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import jakarta.inject.Inject;
 import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
 import kong.unirest.jackson.JacksonObjectMapper;
 import lombok.Getter;
+import lombok.Setter;
 
 @FixInjection
 public final class GenericUnirestFactory {
-    @Inject @ReflectiveAccess @Getter private ObjectMapper objectMapper;
+    @Setter(onMethod=@__({@Inject})) @Getter private ObjectMapper objectMapper;
     
     public final UnirestInstance createUnirestInstance() {
         UnirestInstance instance = Unirest.spawnInstance();
