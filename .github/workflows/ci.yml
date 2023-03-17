@@ -61,7 +61,7 @@ jobs:
       
       - name: Build release ${{env.RELEASE_VERSION}}
         if: env.DO_BUILD
-        run: ./gradlew clean build dist distThirdParty -Pversion=${{env.RELEASE_VERSION}}
+        run: ./gradlew clean build dist distThirdPartyReleaseAsset -Pversion=${{env.RELEASE_VERSION}}
         
       - name: Check fcli version
         if: env.DO_BUILD
@@ -70,7 +70,7 @@ jobs:
       - name: Publish build artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: build/dist/*
+          path: build/dist/**/*
           
     outputs:
       do_release: ${{ env.DO_RELEASE }}
@@ -109,7 +109,7 @@ jobs:
       # at build time (see https://www.graalvm.org/22.1/reference-manual/native-image/Properties/). 
       # We also exclude the native Jansi library resources, as these are now no longer needed.
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.app.FortifyCLI -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.app.FortifyCLI -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifact/release-assets/fcli.jar fcli
 
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -152,7 +152,7 @@ jobs:
       # file to include native libraries for all platforms; we override this to include only the MacOS 
       # libraries
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifact/release-assets/fcli.jar fcli
 
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -191,7 +191,7 @@ jobs:
       - name: Create native fcli
         run: >-
           "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-          ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Mac/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar .\artifact\fcli.jar fcli
+          ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Mac/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar .\artifact\release-assets\fcli.jar fcli
         shell: cmd
 
 # We don't compress the Windows binary for now as this is incompatible with current Graal version.
@@ -227,9 +227,6 @@ jobs:
         with:
           path: ./
           
-      - name: Remove fcli_completion script
-        run: rm -f artifact/fcli_completion
-          
       - name: PROD - Prepare release PR
         if: github.ref == 'refs/heads/main'
         uses: GoogleCloudPlatform/release-please-action@v3
@@ -257,7 +254,7 @@ jobs:
       - name: Upload assets to release
         if: needs.build.outputs.do_release
         run: |
-          files=$(find "./artifact" -type f -printf "%p ")
+          files=$(find "./artifact/release-assets" -type f -printf "%p ")
           gh release upload "${{ needs.build.outputs.release_tag }}" $files --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
