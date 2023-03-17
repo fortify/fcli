@@ -44,7 +44,7 @@ runTestCommands() {
     checkOutput=(fgrep CIToken); sscCmd token-definition list
     
     checkOutput=(fgrep CIToken); sscCmd token create CIToken --expire-in 5m --store ciToken:restToken
-    sscCmd token revoke {?ciToken:restToken}
+    sscCmd token revoke ::ciToken::restToken
     runCmd ${FCLI_CMD} state var delete ciToken
 
     appName="fcli-test $(date +%s)" 
