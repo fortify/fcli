@@ -28,7 +28,6 @@ package com.fortify.cli.fod.user_group.cli.mixin;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupDescriptor;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -36,7 +35,6 @@ import picocli.CommandLine.Parameters;
 
 //TODO Change description keys to be more like picocli convention
 public class FoDUserGroupResolverMixin {
-    @ReflectiveAccess
     public static abstract class AbstractFoDUserGroupResolverMixin {
         public abstract String getUserGroupNameOrId();
 
@@ -49,19 +47,16 @@ public class FoDUserGroupResolverMixin {
         }
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDUserGroupResolverMixin {
         @Option(names = {"--group"}, required = true, descriptionKey = "GroupMixin")
         @Getter private String userGroupNameOrId;
     }
 
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDUserGroupResolverMixin {
         @Option(names = {"--group"}, required = false, descriptionKey = "GroupMixin")
         @Getter private String userGroupNameOrId;
     }
 
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDUserGroupResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "GroupMixin")
         @Getter private String userGroupNameOrId;

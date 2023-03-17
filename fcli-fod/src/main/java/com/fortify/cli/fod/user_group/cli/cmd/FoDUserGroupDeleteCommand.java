@@ -35,13 +35,11 @@ import com.fortify.cli.fod.user_group.cli.mixin.FoDUserGroupResolverMixin;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupDescriptor;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Delete.CMD_NAME)
 public class FoDUserGroupDeleteCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Delete outputHelper;

@@ -42,7 +42,6 @@ import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.scan.helper.FoDImportScanSessionDescriptor;
 import com.fortify.cli.fod.util.FoDConstants;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
@@ -59,7 +58,6 @@ import lombok.SneakyThrows;
 // TODO Why is this an abstract class? It doesn't define any abstract methods
 //      that need to be overridden in subclasses for example. Consider refactoring
 //      this into a regular utility class.
-@ReflectiveAccess
 public abstract class FoDFileTransferBase {
     @Getter private static final ObjectMapper objectMapper = new ObjectMapper();
     @Getter UnirestInstance unirest;

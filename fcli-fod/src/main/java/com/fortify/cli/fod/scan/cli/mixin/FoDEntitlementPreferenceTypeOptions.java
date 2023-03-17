@@ -31,13 +31,11 @@ import java.util.stream.Stream;
 
 import com.fortify.cli.fod.util.FoDEnums;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
 //TODO Change description keys to be more like picocli convention
 public class FoDEntitlementPreferenceTypeOptions {
-    @ReflectiveAccess
     public static final class FoDEntitlementPreferenceTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
 
@@ -46,12 +44,10 @@ public class FoDEntitlementPreferenceTypeOptions {
         }
     }
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDEntitlementPreferenceType {
         public abstract FoDEnums.EntitlementPreferenceType getEntitlementPreferenceType();
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDEntitlementPreferenceType {
         @Option(names = {"--entitlement", "--entitlement-preference"}, required = true, arity = "1",
                 completionCandidates = FoDEntitlementPreferenceTypeIterable.class, descriptionKey = "EntitlementPreferenceTypeMixin")
@@ -59,7 +55,6 @@ public class FoDEntitlementPreferenceTypeOptions {
         private FoDEnums.EntitlementPreferenceType entitlementPreferenceType;
     }
 
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDEntitlementPreferenceType {
         @Option(names = {"--entitlement", "--entitlement-preference"}, required = false, arity = "1",
                 completionCandidates = FoDEntitlementPreferenceTypeIterable.class, descriptionKey = "EntitlementPreferenceTypeMixin")

@@ -41,7 +41,6 @@ import com.fortify.cli.fod.scan.cli.mixin.FoDAnalysisStatusTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -49,7 +48,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.List.CMD_NAME)
 public class FoDScanListCommand extends AbstractFoDOutputCommand implements IUnirestBaseRequestSupplier, IRecordTransformer, IFoDFilterParamGeneratorSupplier {
 

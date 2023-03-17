@@ -25,13 +25,12 @@
 
 package com.fortify.cli.fod.scan_mobile.cli.cmd;
 
-import com.fortify.cli.fod.scan.cli.cmd.FoDScanListCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod.scan.cli.cmd.FoDScanListCommand;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
-import io.micronaut.core.annotation.ReflectiveAccess;
+
 import picocli.CommandLine.Command;
 
-@ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.ListMobile.CMD_NAME)
 public class FoDMobileScanListCommand extends FoDScanListCommand {
     @Override

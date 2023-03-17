@@ -31,13 +31,11 @@ import java.util.stream.Stream;
 
 import com.fortify.cli.fod.util.FoDEnums;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
 //TODO Change description keys to be more like picocli convention
 public class FoDInProgressScanActionTypeOptions {
-    @ReflectiveAccess
     public static final class FoDInProgressScanActionTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
 
@@ -46,12 +44,10 @@ public class FoDInProgressScanActionTypeOptions {
         }
     }
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDEntitlementType {
         public abstract FoDEnums.InProgressScanActionType getInProgressScanActionType();
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDEntitlementType {
         @Option(names = {"--in-progress", "--in-progress-action"}, required = true, arity = "1",
                 completionCandidates = FoDInProgressScanActionTypeIterable.class, descriptionKey = "InProgressActionTypeMixin")
@@ -59,7 +55,6 @@ public class FoDInProgressScanActionTypeOptions {
         private FoDEnums.InProgressScanActionType inProgressScanActionType;
     }
 
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDEntitlementType {
         @Option(names = {"--in-progress", "--in-progress-action"}, required = false, arity = "1",
                 completionCandidates = FoDInProgressScanActionTypeIterable.class, descriptionKey = "InProgressActionTypeMixin")

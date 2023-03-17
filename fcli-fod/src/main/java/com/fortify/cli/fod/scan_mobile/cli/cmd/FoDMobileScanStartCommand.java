@@ -25,6 +25,13 @@
 
 package com.fortify.cli.fod.scan_mobile.cli.cmd;
 
+import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Properties;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
@@ -35,30 +42,23 @@ import com.fortify.cli.fod.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
+import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
-import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan_mobile.helper.FoDMobileScanHelper;
 import com.fortify.cli.fod.scan_mobile.helper.FoDStartMobileScanRequest;
 import com.fortify.cli.fod.util.FoDConstants;
-import io.micronaut.core.annotation.ReflectiveAccess;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-import javax.validation.ValidationException;
-import java.io.File;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Properties;
-
-@ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.StartMobile.CMD_NAME)
 public class FoDMobileScanStartCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");

@@ -36,13 +36,11 @@ import com.fortify.cli.fod.scan.cli.mixin.FoDScanResolverMixin;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Cancel.CMD_NAME)
 public class FoDScanCancelCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Cancel outputHelper;

@@ -39,14 +39,12 @@ import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceUpdateRequest;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Create.CMD_NAME)
 public class FoDAppMicroserviceCreateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     // TODO Mixin class 'Update' doesn't match 'Create.CMD_NAME' above

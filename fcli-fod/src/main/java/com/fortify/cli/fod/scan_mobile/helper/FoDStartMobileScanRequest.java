@@ -26,6 +26,7 @@
 package com.fortify.cli.fod.scan_mobile.helper;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import lombok.ToString;

@@ -28,7 +28,6 @@ package com.fortify.cli.fod.user.cli.mixin;
 import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -36,7 +35,6 @@ import picocli.CommandLine.Parameters;
 
 //TODO Change description keys to be more like picocli convention
 public class FoDUserResolverMixin {
-    @ReflectiveAccess
     public static abstract class AbstractFoDUserResolverMixin {
         public abstract String getUserNameOrId();
 
@@ -49,19 +47,16 @@ public class FoDUserResolverMixin {
         }
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDUserResolverMixin {
         @Option(names = {"--user"}, required = true, descriptionKey = "UserMixin")
         @Getter private String userNameOrId;
     }
 
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDUserResolverMixin {
         @Option(names = {"--user"}, required = false, descriptionKey = "UserMixin")
         @Getter private String userNameOrId;
     }
 
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDUserResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "UserMixin")
         @Getter private String userNameOrId;

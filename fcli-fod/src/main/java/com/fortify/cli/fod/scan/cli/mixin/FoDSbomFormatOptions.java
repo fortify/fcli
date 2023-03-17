@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
@@ -41,7 +40,6 @@ import picocli.CommandLine.Option;
 public class FoDSbomFormatOptions {
     public enum FoDSbomFormat {CycloneDX}
 
-    @ReflectiveAccess
     public static final class FoDSbomFormatIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
 
@@ -50,12 +48,10 @@ public class FoDSbomFormatOptions {
         }
     }
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDSbomFormat {
         public abstract FoDSbomFormat getSbomFormat();
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDSbomFormat {
         @Option(names = {"--sbom-format"}, required = true, arity = "1",
                 completionCandidates = FoDSbomFormatIterable.class, descriptionKey = "SbomFormatMixin")
@@ -63,7 +59,6 @@ public class FoDSbomFormatOptions {
         private FoDSbomFormat sbomFormat;
     }
 
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDSbomFormat {
         @Option(names = {"--sbom-format"}, required = false, arity = "1",
                 completionCandidates = FoDSbomFormatIterable.class, descriptionKey = "SbomFormatMixin")

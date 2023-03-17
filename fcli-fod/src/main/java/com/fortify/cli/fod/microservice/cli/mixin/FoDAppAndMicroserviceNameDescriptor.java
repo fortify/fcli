@@ -27,10 +27,9 @@ package com.fortify.cli.fod.microservice.cli.mixin;
 
 import javax.validation.ValidationException;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 
-@Data @ReflectiveAccess
+@Data
 public final class FoDAppAndMicroserviceNameDescriptor {
     private final String appName, microserviceName;
     

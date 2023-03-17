@@ -31,13 +31,11 @@ import java.util.stream.Stream;
 
 import com.fortify.cli.fod.util.FoDEnums;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
 //TODO Change description keys to be more like picocli convention
 public class FoDRemediationScanPreferenceTypeOptions {
-    @ReflectiveAccess
     public static final class FoDRemediationScanPreferenceTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
 
@@ -46,12 +44,10 @@ public class FoDRemediationScanPreferenceTypeOptions {
         }
     }
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDEntitlementType {
         public abstract FoDEnums.RemediationScanPreferenceType getRemediationScanPreferenceType();
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDEntitlementType {
         @Option(names = {"--remediation", "--remediation-preference"}, required = true, arity = "1",
                 completionCandidates = FoDRemediationScanPreferenceTypeIterable.class, descriptionKey = "RemediationScanPreferenceTypeMixin")
@@ -59,7 +55,6 @@ public class FoDRemediationScanPreferenceTypeOptions {
         private FoDEnums.RemediationScanPreferenceType remediationScanPreferenceType;
     }
 
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDEntitlementType {
         @Option(names = {"--remediation", "--remediation-preference"}, required = false, arity = "1",
                 completionCandidates = FoDRemediationScanPreferenceTypeIterable.class, descriptionKey = "RemediationScanPreferenceTypeMixin")

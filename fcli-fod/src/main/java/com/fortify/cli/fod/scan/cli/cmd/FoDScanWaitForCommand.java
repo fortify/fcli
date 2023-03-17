@@ -34,12 +34,10 @@ import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanStatus;
 import com.fortify.cli.fod.session.manager.FoDSessionData;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = BasicOutputHelperMixins.WaitFor.CMD_NAME)
 public class FoDScanWaitForCommand extends AbstractWaitForCommand<FoDSessionData> {
     @Getter @Mixin FoDUnirestRunnerMixin unirestRunner;

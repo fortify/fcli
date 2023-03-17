@@ -25,11 +25,9 @@
 
 package com.fortify.cli.fod.release.cli.mixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 public final class FoDDelimiterMixin {
     @Option(names = {"--delim"},
             description = "Change the default delimiter character when using options that accepts " +

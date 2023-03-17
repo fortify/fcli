@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -16,7 +15,6 @@ import picocli.CommandLine.Parameters;
 
 public class FoDScanResolverMixin {
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDScanResolverMixin {
         public abstract String getScanId();
 
@@ -29,7 +27,6 @@ public class FoDScanResolverMixin {
         }
     }
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDMultiScanResolverMixin {
         public abstract String[] getScanIds();
 
@@ -46,19 +43,16 @@ public class FoDScanResolverMixin {
         }
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDScanResolverMixin {
         @Option(names = {"--scan"}, required = true)
         @Getter private String scanId;
     }
 
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDScanResolverMixin {
         @Parameters(index = "0", arity = "1", paramLabel="scan-id", descriptionKey = "ScanMixin")
         @Getter private String scanId;
     }
 
-    @ReflectiveAccess
     public static class PositionalParameterMulti extends AbstractFoDMultiScanResolverMixin {
         @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's", descriptionKey = "ScanMixin")
         @Getter private String[] scanIds;

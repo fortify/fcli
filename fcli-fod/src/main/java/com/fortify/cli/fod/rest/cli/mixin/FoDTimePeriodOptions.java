@@ -33,7 +33,6 @@ import java.util.GregorianCalendar;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
@@ -73,19 +72,16 @@ public class FoDTimePeriodOptions {
         }
     }
 
-    @ReflectiveAccess
     public static final class FoDTimePeriodTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
         public FoDTimePeriodTypeIterable() {
             super(Stream.of(FoDTimePeriodType.values()).map(FoDTimePeriodType::name).collect(Collectors.toList()));
         }
     }
-    @ReflectiveAccess
     public static abstract class AbstractFoDTimePeriodType {
         public abstract FoDTimePeriodType getTimePeriodType();
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDTimePeriodType {
         @Option(names = {"--period", "--time-period"}, required = true, arity = "1",
                 completionCandidates = FoDTimePeriodTypeIterable.class, defaultValue = "Last30",
@@ -93,7 +89,6 @@ public class FoDTimePeriodOptions {
         @Getter private FoDTimePeriodType timePeriodType;
     }
 
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDTimePeriodType {
         @Option(names = {"--period", "--time-period"}, required = false, arity = "1",
                 completionCandidates = FoDTimePeriodTypeIterable.class, defaultValue = "Last30",

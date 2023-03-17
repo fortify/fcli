@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
@@ -40,7 +39,6 @@ import picocli.CommandLine.Option;
 public class FoDScanFormatOptions {
     public enum FoDScanType {Static, Dynamic, Mobile, Monitoring, Network, OpenSource, Container}
 
-    @ReflectiveAccess
     public static final class FoDScanTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
 
@@ -49,12 +47,10 @@ public class FoDScanFormatOptions {
         }
     }
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDScanType {
         public abstract FoDScanType getScanType();
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDScanType {
         @Option(names = {"--type", "--scan-type"}, required = true, arity = "1",
                 completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")
@@ -62,7 +58,6 @@ public class FoDScanFormatOptions {
         private FoDScanType scanType;
     }
 
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDScanType {
         @Option(names = {"--type", "--scan-type"}, required = false, arity = "1",
                 completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")

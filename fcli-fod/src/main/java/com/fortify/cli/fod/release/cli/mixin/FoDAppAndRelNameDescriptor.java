@@ -27,10 +27,9 @@ package com.fortify.cli.fod.release.cli.mixin;
 
 import javax.validation.ValidationException;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 
-@Data @ReflectiveAccess
+@Data
 public final class FoDAppAndRelNameDescriptor {
     private final String appName, relName;
     

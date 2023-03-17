@@ -40,23 +40,21 @@ import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDAppRelAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
-import com.fortify.cli.fod.scan_sast.helper.FoDSastScanHelper;
-import com.fortify.cli.fod.scan_sast.helper.FoDSastScanSetupDescriptor;
-import com.fortify.cli.fod.scan_sast.helper.FoDSetupSastScanRequest;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan_sast.helper.FoDSastScanHelper;
+import com.fortify.cli.fod.scan_sast.helper.FoDSastScanSetupDescriptor;
+import com.fortify.cli.fod.scan_sast.helper.FoDSetupSastScanRequest;
 import com.fortify.cli.fod.util.FoDEnums;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.SetupSast.CMD_NAME)
 public class FoDSastScanSetupCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.SetupSast outputHelper;

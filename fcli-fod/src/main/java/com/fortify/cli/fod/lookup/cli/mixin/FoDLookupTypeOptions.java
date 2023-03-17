@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
@@ -81,25 +80,22 @@ public class FoDLookupTypeOptions {
         DynamicMobileScanTypeAuditTemplateFieldTypes
     }
 
-    @ReflectiveAccess
     public static final class FoDLookupTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
         public FoDLookupTypeIterable() {
             super(Stream.of(FoDLookupType.values()).map(FoDLookupType::name).collect(Collectors.toList()));
         }
     }
-    @ReflectiveAccess
+    
     public static abstract class AbstractFoDLookupType {
         public abstract FoDLookupType getLookupType();
     }
 
-    @ReflectiveAccess
     public static class RequiredLookupOption extends AbstractFoDLookupType {
         @Option(names = {"--type", "--lookup-type"}, required = true, arity = "1", defaultValue = "All", completionCandidates = FoDLookupTypeIterable.class)
         @Getter private FoDLookupType lookupType;
     }
 
-    @ReflectiveAccess
     public static class OptionalLookupOption extends AbstractFoDLookupType {
         @Option(names = {"--type", "--lookup-type"}, required = false, arity = "1", defaultValue = "All", completionCandidates = FoDLookupTypeIterable.class)
         @Getter private FoDLookupType lookupType;

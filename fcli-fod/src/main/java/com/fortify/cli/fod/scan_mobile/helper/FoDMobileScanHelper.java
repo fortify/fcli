@@ -25,6 +25,8 @@
 
 package com.fortify.cli.fod.scan_mobile.helper;
 
+import java.io.File;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -37,12 +39,11 @@ import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanNotFoundException;
 import com.fortify.cli.fod.scan.helper.FoDStartScan;
+
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import java.io.File;
 
 public class FoDMobileScanHelper extends FoDScanHelper {
     @Getter

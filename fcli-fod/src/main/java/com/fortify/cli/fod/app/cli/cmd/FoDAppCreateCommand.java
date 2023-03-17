@@ -43,7 +43,6 @@ import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -60,7 +59,6 @@ import picocli.CommandLine.Spec;
 //      - Have separate commands for creating a microservices app and regular app, for example have a separate create-microservice-app
 //      - Have a single positional parameter that takes either <app>:<release> or <app>:<microservice>:<release>
 //      - Have a single positional parameter for the app name, and use (potentially repeatable) option for specifying [microservice:]<release>
-@ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Create.CMD_NAME)
 public class FoDAppCreateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Create outputHelper;

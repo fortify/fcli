@@ -36,9 +36,6 @@ import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.spi.transform.IRecordTransformer;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
-import com.fortify.cli.fod.scan_dast.helper.FoDDastScanHelper;
-import com.fortify.cli.fod.scan_dast.helper.FoDDastScanSetupDescriptor;
-import com.fortify.cli.fod.scan_dast.helper.FoDStartDastScanRequest;
 import com.fortify.cli.fod.output.cli.AbstractFoDOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
@@ -52,9 +49,11 @@ import com.fortify.cli.fod.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan_dast.helper.FoDDastScanHelper;
+import com.fortify.cli.fod.scan_dast.helper.FoDDastScanSetupDescriptor;
+import com.fortify.cli.fod.scan_dast.helper.FoDStartDastScanRequest;
 import com.fortify.cli.fod.util.FoDEnums;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -62,7 +61,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.StartDast.CMD_NAME)
 public class FoDDastScanStartCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");

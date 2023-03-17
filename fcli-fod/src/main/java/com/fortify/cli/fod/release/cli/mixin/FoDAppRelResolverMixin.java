@@ -28,7 +28,6 @@ package com.fortify.cli.fod.release.cli.mixin;
 import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
@@ -37,7 +36,6 @@ import picocli.CommandLine.Parameters;
 
 //TODO Change description keys to be more like picocli convention
 public class FoDAppRelResolverMixin {
-    @ReflectiveAccess
     public static abstract class AbstractFoDAppRelResolverMixin {
         @Mixin private FoDDelimiterMixin delimiterMixin;
         public abstract String getAppRelNameOrId();
@@ -51,13 +49,11 @@ public class FoDAppRelResolverMixin {
         }
     }
     
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDAppRelResolverMixin {
         @Option(names = {"--rel", "--release"}, required = true, descriptionKey = "ApplicationReleaseMixin")
         @Getter private String appRelNameOrId;
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDAppRelResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationReleaseMixin")
         @Getter private String appRelNameOrId;

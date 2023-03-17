@@ -28,7 +28,6 @@ package com.fortify.cli.fod.app.cli.mixin;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -38,7 +37,6 @@ import picocli.CommandLine.Parameters;
 //      for example fcli.fod.app.app-name-or-id or fcli.for.app.resolver 
 //      (note that we should do the same in other modules like SSC) 
 public class FoDAppResolverMixin {    
-    @ReflectiveAccess
     public static abstract class AbstractFoDAppResolverMixin {
         public abstract String getAppNameOrId();
 
@@ -51,19 +49,16 @@ public class FoDAppResolverMixin {
         }
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDAppResolverMixin {
         @Option(names = {"--app"}, required = true, descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }
 
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDAppResolverMixin {
         @Option(names = {"--app"}, required = false, descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;
     }
 
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDAppResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMixin")
         @Getter private String appNameOrId;

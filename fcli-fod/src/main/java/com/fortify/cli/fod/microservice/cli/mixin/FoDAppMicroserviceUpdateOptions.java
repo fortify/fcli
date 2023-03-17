@@ -28,7 +28,6 @@ package com.fortify.cli.fod.microservice.cli.mixin;
 import java.util.List;
 import java.util.Map;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
@@ -37,29 +36,24 @@ public class FoDAppMicroserviceUpdateOptions {
 
     private static final String PARAM_LABEL = "[OLD_NAME=NEW_NAME]";
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDAppMicroserviceUpdateMixin {
         public abstract List<String> getMicroservices();
     }
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDAppMicroserviceRenameMixin {
         public abstract Map<String, String> getMicroservices();
     }
 
-    @ReflectiveAccess
     public static class AddMicroserviceOption extends AbstractFoDAppMicroserviceUpdateMixin {
         @Option(names = {"--add-microservice", "--add-ms"}, required = false, arity = "0..", descriptionKey = "AppMicroserviceUpdateMixin")
         @Getter private List<String> microservices;
     }
 
-    @ReflectiveAccess
     public static class DeleteMicroserviceOption extends AbstractFoDAppMicroserviceUpdateMixin {
         @Option(names = {"--delete-microservice", "--delete-ms"}, required = false, arity = "0..", descriptionKey = "AppMicroserviceUpdateMixin")
         @Getter private List<String> microservices;
     }
 
-    @ReflectiveAccess
     public static class RenameMicroserviceOption extends AbstractFoDAppMicroserviceRenameMixin {
         @Option(names = {"--rename-microservice", "--rename-ms"}, required = false, arity = "0..", paramLabel = PARAM_LABEL, descriptionKey = "AppMicroserviceUpdateMixin")
         @Getter private Map<String, String> microservices;

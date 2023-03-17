@@ -27,7 +27,6 @@ package com.fortify.cli.fod.scan.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
-
 import com.fortify.cli.fod.scan_dast.cli.cmd.FoDDastScanImportCommand;
 import com.fortify.cli.fod.scan_dast.cli.cmd.FoDDastScanStartCommand;
 import com.fortify.cli.fod.scan_mobile.cli.cmd.FoDMobileScanImportCommand;
@@ -36,6 +35,7 @@ import com.fortify.cli.fod.scan_oss.cli.cmd.FoDOssScanImportCommand;
 import com.fortify.cli.fod.scan_sast.cli.cmd.FoDSastScanImportCommand;
 import com.fortify.cli.fod.scan_sast.cli.cmd.FoDSastScanSetupCommand;
 import com.fortify.cli.fod.scan_sast.cli.cmd.FoDSastScanStartCommand;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "scan",

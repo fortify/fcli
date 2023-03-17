@@ -32,13 +32,11 @@ import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.user_group.cli.mixin.FoDUserGroupResolverMixin;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Get.CMD_NAME)
 public class FoDUserGroupGetCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer {
     @Getter @Mixin private FoDOutputHelperMixins.Get outputHelper;

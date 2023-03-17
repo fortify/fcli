@@ -27,7 +27,6 @@ package com.fortify.cli.fod.microservice.cli.mixin;
 
 import com.fortify.cli.fod.release.cli.mixin.FoDDelimiterMixin;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -36,7 +35,6 @@ import picocli.CommandLine.Parameters;
 //TODO Change description keys to be more like picocli convention
 public class FoDAppAndMicroserviceNameResolverMixin {
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDAppAndMicroserviceNameResolverMixin {
         @Mixin private FoDDelimiterMixin delimiterMixin;
         public abstract String getAppAndMicroserviceName();
@@ -51,13 +49,11 @@ public class FoDAppAndMicroserviceNameResolverMixin {
         }
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDAppAndMicroserviceNameResolverMixin {
         @Option(names = {"--microservice"}, required = true, descriptionKey = "ApplicationMicroserviceMixin")
         @Getter private String appAndMicroserviceName;
     }
 
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractFoDAppAndMicroserviceNameResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMicroserviceMixin")
         @Getter private String appAndMicroserviceName;

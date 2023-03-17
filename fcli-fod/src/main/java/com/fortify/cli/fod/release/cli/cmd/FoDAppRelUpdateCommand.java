@@ -40,7 +40,6 @@ import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.release.helper.FoDAppRelUpdateRequest;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -52,7 +51,6 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 
-@ReflectiveAccess
 @Command(name = FoDOutputHelperMixins.Update.CMD_NAME)
 public class FoDAppRelUpdateCommand extends AbstractFoDOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.Update outputHelper;

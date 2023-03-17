@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
@@ -83,7 +82,6 @@ public class FoDAssessmentTypeOptions {
 
     }
 
-    @ReflectiveAccess
     public static final class FoDAssessmentTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
 
@@ -92,12 +90,10 @@ public class FoDAssessmentTypeOptions {
         }
     }
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDAssessmentType {
         public abstract FoDAssessmentType getAssessmentType();
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDAssessmentType {
         @Option(names = {"--assessment", "--assessment-type"}, required = true, arity = "1",
                 completionCandidates = FoDAssessmentTypeIterable.class, descriptionKey = "AssessmentTypeMixin")
@@ -105,7 +101,6 @@ public class FoDAssessmentTypeOptions {
         private FoDAssessmentType assessmentType;
     }
 
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDAssessmentType {
         @Option(names = {"--assessment", "--assessment-type"}, required = false, arity = "1",
                 completionCandidates = FoDAssessmentTypeIterable.class, descriptionKey = "AssessmentTypeMixin")

@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
@@ -37,7 +36,6 @@ import picocli.CommandLine.Option;
 public class FoDAnalysisStatusTypeOptions {
     public enum FoDAnalysisStatusType {Not_Started, In_Progress, Completed, Canceled, Waiting, Scheduled, Queued}
 
-    @ReflectiveAccess
     public static final class FoDAnalysisStatusTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
 
@@ -46,12 +44,10 @@ public class FoDAnalysisStatusTypeOptions {
         }
     }
 
-    @ReflectiveAccess
     public static abstract class AbstractFoDAnalysisStatusType {
         public abstract FoDAnalysisStatusType getAnalysisStatusType();
     }
 
-    @ReflectiveAccess
     public static class RequiredOption extends AbstractFoDAnalysisStatusType {
         @Option(names = {"--status", "--analysis-status"}, required = true, arity = "1",
                 completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "AnalysisStatusMixin")
@@ -59,7 +55,6 @@ public class FoDAnalysisStatusTypeOptions {
         private FoDAnalysisStatusType analysisStatusType;
     }
 
-    @ReflectiveAccess
     public static class OptionalOption extends AbstractFoDAnalysisStatusType {
         @Option(names = {"--status", "--analysis-status"}, required = false, arity = "1",
                 completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "AnalysisStatusMixin")
