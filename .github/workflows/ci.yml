@@ -310,15 +310,3 @@ jobs:
           publish_dir: ./docs
           enable_jekyll: true
           
-          
-  cleanup:
-    name: cleanup
-    if: needs.build.outputs.do_release 
-    needs: [release, publishPages] 
-    runs-on: ubuntu-latest 
-    steps:
-      - name: Delete artifacts if uploaded to release
-        uses: geekyeggo/delete-artifact@v1
-        with:
-          name: artifact
-          failOnError: false   
