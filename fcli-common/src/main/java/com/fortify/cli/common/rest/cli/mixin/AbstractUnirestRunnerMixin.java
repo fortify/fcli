@@ -1,36 +1,27 @@
 package com.fortify.cli.common.rest.cli.mixin;
 
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.fortify.cli.common.rest.runner.GenericUnirestFactory;
-import com.fortify.cli.common.rest.runner.IUnirestWithSessionDataRunner;
-import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
-import com.fortify.cli.common.session.manager.api.ISessionData;
+import com.fortify.cli.common.rest.runner.IUnirestRunner;
 import com.fortify.cli.common.util.FixInjection;
 
 import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Setter;
-import picocli.CommandLine.Mixin;
 
 @FixInjection
-public abstract class AbstractUnirestRunnerMixin<D extends ISessionData> implements IUnirestWithSessionDataRunner<D> {
+public abstract class AbstractUnirestRunnerMixin implements IUnirestRunner {
     @Setter(onMethod=@__({@Inject})) private GenericUnirestFactory genericUnirestFactory;
-    @Mixin private SessionNameMixin.OptionalOption sessionNameMixin;
     
-    protected final <R> R run(BiConsumer<UnirestInstance, D> configurer, BiFunction<UnirestInstance, D, R> f) {
+    @Override
+    public final <R> R run(Function<UnirestInstance, R> f) {
         if ( f == null ) { throw new IllegalStateException("Function may not be null"); }
-        D sessionData = getSessionData();
         try ( var unirest = genericUnirestFactory.createUnirestInstance() ) {
-            configurer.accept(unirest, sessionData);
-            return f.apply(unirest, sessionData);
+            configure(unirest);
+            return f.apply(unirest);
         }
     }
-    
-    public D getSessionData() {
-        return getSessionData(sessionNameMixin.getSessionName());
-    }
-    
-    protected abstract D getSessionData(String sessionName);
+
+    protected abstract void configure(UnirestInstance unirest);
 }

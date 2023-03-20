@@ -25,13 +25,12 @@
 package com.fortify.cli.common.rest.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.common.rest.runner.IUnirestWithSessionDataRunner;
-import com.fortify.cli.common.session.manager.api.ISessionData;
+import com.fortify.cli.common.rest.runner.IUnirestRunner;
 
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 
-public abstract class AbstractUnirestRunnerCommand<D extends ISessionData> extends AbstractFortifyCLICommand implements Runnable {
+public abstract class AbstractUnirestRunnerCommand extends AbstractFortifyCLICommand implements Runnable {
     @Override @SneakyThrows
     public final void run() {
         // TODO Do we want to do anything with the results, like formatting it based on output options?
@@ -39,16 +38,7 @@ public abstract class AbstractUnirestRunnerCommand<D extends ISessionData> exten
         getUnirestRunner().run(this::run);
     }
     
-    protected Void run(UnirestInstance unirest, D sessionData) {
-        return run(unirest);
-    }
+    protected abstract Void run(UnirestInstance unirest);
     
-    // TODO Eventually, we'll likely want to change all command implementations to implement
-    //      the run(UnirestInstance, SessionData) method; we can then remove this method and
-    //      make the run(UnirestInstance, Session) method abstract.
-    protected Void run(UnirestInstance unirest) {
-        throw new RuntimeException("Command must implement either run(UnirestInstance,SessionData) or run(UnirestInstance)");
-    }
-    
-    protected abstract IUnirestWithSessionDataRunner<D> getUnirestRunner();
+    protected abstract IUnirestRunner getUnirestRunner();
 }

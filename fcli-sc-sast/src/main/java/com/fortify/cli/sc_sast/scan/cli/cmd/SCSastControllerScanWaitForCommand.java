@@ -34,7 +34,6 @@ import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanJobResolverMixin;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobArtifactState;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobState;
-import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +42,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = SCSastControllerBasicOutputHelperMixins.WaitFor.CMD_NAME)
-public class SCSastControllerScanWaitForCommand extends AbstractWaitForCommand<SCSastSessionData> {
+public class SCSastControllerScanWaitForCommand extends AbstractWaitForCommand {
     @Getter @Mixin SCSastControllerUnirestRunnerMixin unirestRunner;
     @Mixin private SCSastScanJobResolverMixin.PositionalParameterMulti scanJobsResolver;
     @Option(names={"-s", "--status-type"}, defaultValue="processing", required=true) private WaitType waitType;

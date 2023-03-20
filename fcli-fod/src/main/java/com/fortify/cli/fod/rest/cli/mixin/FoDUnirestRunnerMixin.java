@@ -1,7 +1,7 @@
 package com.fortify.cli.fod.rest.cli.mixin;
 
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
-import com.fortify.cli.common.rest.cli.mixin.AbstractSimpleUnirestRunnerMixin;
+import com.fortify.cli.common.rest.cli.mixin.AbstractUnirestRunnerWithSessionDataMixin;
 import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUrlConfigConfigurer;
@@ -15,7 +15,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Setter;
 
 @FixInjection
-public class FoDUnirestRunnerMixin extends AbstractSimpleUnirestRunnerMixin<FoDSessionData> {
+public class FoDUnirestRunnerMixin extends AbstractUnirestRunnerWithSessionDataMixin<FoDSessionData> {
     @Setter(onMethod=@__({@Inject})) private FoDSessionDataManager sessionDataManager;
     @Setter(onMethod=@__({@Inject})) private FoDOAuthHelper oauthHelper;
     

@@ -32,14 +32,13 @@ import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanResolverMixin;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanStatus;
-import com.fortify.cli.fod.session.manager.FoDSessionData;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = BasicOutputHelperMixins.WaitFor.CMD_NAME)
-public class FoDScanWaitForCommand extends AbstractWaitForCommand<FoDSessionData> {
+public class FoDScanWaitForCommand extends AbstractWaitForCommand {
     @Getter @Mixin FoDUnirestRunnerMixin unirestRunner;
     @Mixin private FoDScanResolverMixin.PositionalParameterMulti scansResolver;
 

@@ -26,13 +26,12 @@ package com.fortify.cli.ssc.rest.cli.cmd;
 
 import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
 import com.fortify.cli.ssc.rest.cli.mixin.SSCUnirestRunnerMixin;
-import com.fortify.cli.ssc.session.manager.ISSCSessionData;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = AbstractRestCallCommand.CMD_NAME)
-public final class SSCRestCallCommand extends AbstractRestCallCommand<ISSCSessionData> {
+public final class SSCRestCallCommand extends AbstractRestCallCommand {
     @Getter @Mixin private SSCUnirestRunnerMixin unirestRunner;
 }

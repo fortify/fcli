@@ -8,7 +8,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestWithSessionDataJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
 import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.sc_sast.output.cli.cmd.AbstractSCSastControllerOutputCommand;
@@ -17,7 +17,6 @@ import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanStartOptionsArgGroup;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
-import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 
@@ -30,7 +29,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = SCSastControllerOutputHelperMixins.Start.CMD_NAME)
-public final class SCSastControllerScanStartCommand extends AbstractSCSastControllerOutputCommand implements IUnirestWithSessionDataJsonNodeSupplier<SCSastSessionData>, IActionCommandResultSupplier {
+public final class SCSastControllerScanStartCommand extends AbstractSCSastControllerOutputCommand implements IUnirestJsonNodeSupplier, IActionCommandResultSupplier {
     @ArgGroup(exclusive = true, multiplicity = "1") 
     private SCSastScanStartOptionsArgGroup optionsProvider = new SCSastScanStartOptionsArgGroup();
     @Getter @Mixin private SCSastControllerOutputHelperMixins.Start outputHelper;
@@ -44,7 +43,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
     // TODO Add options for pool selection
     
     @Override
-    public final JsonNode getJsonNode(UnirestInstance unirest, SCSastSessionData sessionData) {
+    public final JsonNode getJsonNode(UnirestInstance unirest) {
         String sensorVersion = normalizeSensorVersion(optionsProvider.getScanStartOptions().getSensorVersion());
         MultipartBody body = unirest.post("/rest/v2/job")
             .multiPartContent()
@@ -57,7 +56,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
         body = updateBody(body, "email", email);
         body = updateBody(body, "buildId", optionsProvider.getScanStartOptions().getBuildId());
         body = updateBody(body, "pvId", getAppVersionId());
-        body = updateBody(body, "uploadToken", getUploadToken(sessionData));
+        body = updateBody(body, "uploadToken", getUploadToken());
         body = updateBody(body, "dotNetRequired", String.valueOf(optionsProvider.getScanStartOptions().isDotNetRequired()));
         body = updateBody(body, "dotNetFrameworkRequiredVersion", optionsProvider.getScanStartOptions().getDotNetVersion());
         JsonNode response = body.asObject(JsonNode.class).getBody();
@@ -84,7 +83,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
             : null;
     }
     
-    private String getUploadToken(SCSastSessionData sessionData) {
+    private String getUploadToken() {
         String uploadToken = null;
         if ( upload ) {
         	if ( !StringUtils.isBlank(this.ciToken) ) {
@@ -97,7 +96,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
                 // passed through --ssc-ci-token, and arbitrary token passed through --ssc-token on the 
                 // login command; we should only reuse a token passed through the --ssc-ci-token login 
                 // option.
-                char[] ciTokenFromSession = sessionData.getPredefinedSscToken();
+                char[] ciTokenFromSession = getUnirestRunner().getSessionData().getPredefinedSscToken();
                 uploadToken = ciTokenFromSession==null ? null : SSCTokenConverter.toApplicationToken(String.valueOf(ciTokenFromSession));
             }
             if ( StringUtils.isBlank(uploadToken) ) { throw new IllegalArgumentException("--ssc-ci-token is required unless --no-upload is specified or if --ssc-ci-token was passed to the 'sc-sast session login' command"); }

@@ -32,13 +32,12 @@ import com.fortify.cli.common.rest.cli.mixin.WaitHelperControlOptions;
 import com.fortify.cli.common.rest.cli.mixin.WaitHelperWaitOptions;
 import com.fortify.cli.common.rest.wait.WaitHelper;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.common.session.manager.api.ISessionData;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractWaitForCommand<D extends ISessionData> extends AbstractUnirestRunnerCommand<D> implements IActionCommandResultSupplier, ISingularSupplier {
+public abstract class AbstractWaitForCommand extends AbstractUnirestRunnerCommand implements IActionCommandResultSupplier, ISingularSupplier {
     @Getter @Mixin private BasicOutputHelperMixins.WaitFor outputHelper;
     @Mixin private WaitHelperControlOptions controlOptions;
     @Mixin private WaitHelperWaitOptions waitOptions;

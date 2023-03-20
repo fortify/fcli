@@ -26,11 +26,10 @@ package com.fortify.cli.fod.output.cli;
 
 import com.fortify.cli.common.output.cli.cmd.unirest.AbstractUnirestOutputCommand;
 import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
-import com.fortify.cli.fod.session.manager.FoDSessionData;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractFoDOutputCommand extends AbstractUnirestOutputCommand<FoDSessionData> {
+public abstract class AbstractFoDOutputCommand extends AbstractUnirestOutputCommand {
     @Getter @Mixin FoDUnirestRunnerMixin unirestRunner;
 }

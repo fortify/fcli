@@ -1,7 +1,7 @@
 package com.fortify.cli.sc_dast.rest.cli.mixin;
 
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
-import com.fortify.cli.common.rest.cli.mixin.AbstractSimpleUnirestRunnerMixin;
+import com.fortify.cli.common.rest.cli.mixin.AbstractUnirestRunnerWithSessionDataMixin;
 import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUrlConfigConfigurer;
@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @FixInjection
-public class SCDastUnirestRunnerMixin extends AbstractSimpleUnirestRunnerMixin<ISCDastSessionData> {
+public class SCDastUnirestRunnerMixin extends AbstractUnirestRunnerWithSessionDataMixin<ISCDastSessionData> {
     @Setter(onMethod=@__({@Inject})) @Getter private SCDastSessionDataManager sessionDataManager;
     
     @Override

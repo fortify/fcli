@@ -26,13 +26,12 @@ package com.fortify.cli.fod.rest.cli.cmd;
 
 import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
 import com.fortify.cli.fod.rest.cli.mixin.FoDUnirestRunnerMixin;
-import com.fortify.cli.fod.session.manager.FoDSessionData;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = AbstractRestCallCommand.CMD_NAME)
-public final class FoDRestCallCommand extends AbstractRestCallCommand<FoDSessionData> {
+public final class FoDRestCallCommand extends AbstractRestCallCommand {
     @Getter @Mixin private FoDUnirestRunnerMixin unirestRunner;
 }

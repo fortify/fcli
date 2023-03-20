@@ -30,14 +30,13 @@ import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
 import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastUnirestRunnerMixin;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
-import com.fortify.cli.sc_dast.session.manager.ISCDastSessionData;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = BasicOutputHelperMixins.WaitFor.CMD_NAME)
-public class SCDastScanWaitForCommand extends AbstractWaitForCommand<ISCDastSessionData> {
+public class SCDastScanWaitForCommand extends AbstractWaitForCommand {
     @Getter @Mixin SCDastUnirestRunnerMixin unirestRunner;
     @Mixin private SCDastScanResolverMixin.PositionalParameterMulti scansResolver;
     

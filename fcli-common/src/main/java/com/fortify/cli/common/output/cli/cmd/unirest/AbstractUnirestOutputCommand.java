@@ -30,28 +30,20 @@ import java.util.List;
 import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
 import com.fortify.cli.common.output.spi.ISingularSupplier;
 import com.fortify.cli.common.rest.cli.cmd.AbstractUnirestRunnerCommand;
-import com.fortify.cli.common.session.manager.api.ISessionData;
 
 import kong.unirest.UnirestInstance;
 
-public abstract class AbstractUnirestOutputCommand<D extends ISessionData> extends AbstractUnirestRunnerCommand<D> implements ISingularSupplier {
+public abstract class AbstractUnirestOutputCommand extends AbstractUnirestRunnerCommand implements ISingularSupplier {
     private static final List<Class<?>> supportedInterfaces = Arrays.asList(
             IUnirestBaseRequestSupplier.class, 
-            IUnirestWithSessionDataBaseRequestSupplier.class, 
-            IUnirestJsonNodeSupplier.class, 
-            IUnirestWithSessionDataJsonNodeSupplier.class);
-    @SuppressWarnings("unchecked")
+            IUnirestJsonNodeSupplier.class);
     @Override
-    protected final Void run(UnirestInstance unirest, D sessionData) {
+    protected final Void run(UnirestInstance unirest) {
         IUnirestOutputHelper outputHelper = getOutputHelper();
         if ( isInstance(IUnirestBaseRequestSupplier.class) ) {
             outputHelper.write(unirest, ((IUnirestBaseRequestSupplier)this).getBaseRequest(unirest));
-        } else if ( isInstance(IUnirestWithSessionDataBaseRequestSupplier.class) ) {
-            outputHelper.write(unirest, ((IUnirestWithSessionDataBaseRequestSupplier<D>)this).getBaseRequest(unirest, sessionData));
         } else if ( isInstance(IUnirestJsonNodeSupplier.class) ) {
             outputHelper.write(unirest, ((IUnirestJsonNodeSupplier)this).getJsonNode(unirest));
-        } else if ( isInstance(IUnirestWithSessionDataJsonNodeSupplier.class) ) {
-            outputHelper.write(unirest, ((IUnirestWithSessionDataJsonNodeSupplier<D>)this).getJsonNode(unirest, sessionData));
         } else {
             throw new IllegalStateException(this.getClass().getName()+" must implement exactly one of "+supportedInterfaces);
         }

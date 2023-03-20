@@ -1,6 +1,6 @@
 package com.fortify.cli.ssc.rest.cli.mixin;
 
-import com.fortify.cli.common.rest.cli.mixin.AbstractSimpleUnirestRunnerMixin;
+import com.fortify.cli.common.rest.cli.mixin.AbstractUnirestRunnerWithSessionDataMixin;
 import com.fortify.cli.ssc.session.manager.ISSCSessionData;
 import com.fortify.cli.ssc.session.manager.SSCSessionDataManager;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
@@ -9,7 +9,7 @@ import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Setter;
 
-public class SSCUnirestRunnerMixin extends AbstractSimpleUnirestRunnerMixin<ISSCSessionData> {
+public class SSCUnirestRunnerMixin extends AbstractUnirestRunnerWithSessionDataMixin<ISSCSessionData> {
     @Setter(onMethod=@__({@Inject})) private SSCSessionDataManager sessionDataManager;
     @Setter(onMethod=@__({@Inject})) private SSCTokenHelper tokenHelper;
 

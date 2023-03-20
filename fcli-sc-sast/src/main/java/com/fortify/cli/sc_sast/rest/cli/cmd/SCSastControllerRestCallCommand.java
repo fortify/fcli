@@ -26,13 +26,12 @@ package com.fortify.cli.sc_sast.rest.cli.cmd;
 
 import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
 import com.fortify.cli.sc_sast.rest.cli.mixin.SCSastControllerUnirestRunnerMixin;
-import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = AbstractRestCallCommand.CMD_NAME)
-public final class SCSastControllerRestCallCommand extends AbstractRestCallCommand<SCSastSessionData> {
+public final class SCSastControllerRestCallCommand extends AbstractRestCallCommand {
     @Getter @Mixin private SCSastControllerUnirestRunnerMixin unirestRunner;
 }

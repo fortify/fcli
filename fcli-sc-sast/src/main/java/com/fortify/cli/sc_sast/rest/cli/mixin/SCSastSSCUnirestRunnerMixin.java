@@ -1,8 +1,7 @@
 package com.fortify.cli.sc_sast.rest.cli.mixin;
 
-import java.util.function.BiFunction;
-
 import com.fortify.cli.common.util.FixInjection;
+import com.fortify.cli.sc_sast.rest.helper.SCSastUnirestHelper;
 import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
 
 import kong.unirest.UnirestInstance;
@@ -10,7 +9,7 @@ import kong.unirest.UnirestInstance;
 @FixInjection
 public class SCSastSSCUnirestRunnerMixin extends AbstractSCSastUnirestRunnerMixin {
     @Override
-    public <R> R run(BiFunction<UnirestInstance, SCSastSessionData, R> f) {
-        return runOnSSC(f);
+    protected void configure(UnirestInstance unirest, SCSastSessionData sessionData) {
+        SCSastUnirestHelper.configureSscUnirestInstance(unirest, sessionData);
     }
 }

@@ -31,14 +31,13 @@ import com.fortify.cli.ssc.appversion_artifact.cli.mixin.SSCAppVersionArtifactRe
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactHelper;
 import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactStatus;
 import com.fortify.cli.ssc.rest.cli.mixin.SSCUnirestRunnerMixin;
-import com.fortify.cli.ssc.session.manager.ISSCSessionData;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = BasicOutputHelperMixins.WaitFor.CMD_NAME)
-public class SSCAppVersionArtifactWaitForCommand extends AbstractWaitForCommand<ISSCSessionData> {
+public class SSCAppVersionArtifactWaitForCommand extends AbstractWaitForCommand {
     @Getter @Mixin SSCUnirestRunnerMixin unirestRunner;
     @Mixin private SSCAppVersionArtifactResolverMixin.PositionalParameterMulti artifactsResolver;
     
