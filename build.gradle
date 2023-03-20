@@ -159,6 +159,7 @@ dependencies {
     implementation project(':fcli-fod')
     implementation project(':fcli-sc-sast')
     implementation project(':fcli-sc-dast')
+    implementation project(':fcli-scm')
     implementation project(':fcli-tool')
     implementation project(':fcli-util')
 

@@ -5,5 +5,5 @@ import com.fasterxml.jackson.databind.JsonNode;
 import kong.unirest.HttpResponse;
 
 public interface INextPageUrlProducer {
-    String getNextPageUrl(HttpResponse<JsonNode> jsonNodeResponse);
+    String getNextPageUrl(HttpResponse<? extends JsonNode> jsonResponse);
 }

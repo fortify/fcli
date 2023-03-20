@@ -35,6 +35,9 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -61,6 +64,7 @@ import lombok.Getter;
  */
 public class JsonHelper {
     @Getter private static final ObjectMapper objectMapper = _createObjectMapper();
+    private static final Logger LOG = LoggerFactory.getLogger(JsonHelper.class);
     private final ParseContext parseContext;
     private static final JsonHelper INSTANCE = new JsonHelper();
 
@@ -97,6 +101,15 @@ public class JsonHelper {
             } else {
                 return (R)jsonNode.get(0);
             }
+        }
+    }
+    
+    public static final <R> R evaluateOptionalJsonPath(Object input, String path, Class<R> returnClass) {
+        try {
+            return evaluateJsonPath(input, path, returnClass);
+        } catch ( Exception e ) {
+            LOG.trace("Unable to evaluate JSONPath "+path+" on "+input);
+            return null;
         }
     }
     
