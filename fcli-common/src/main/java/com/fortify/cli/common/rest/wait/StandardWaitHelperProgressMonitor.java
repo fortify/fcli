@@ -11,13 +11,13 @@ import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
+import com.fortify.cli.common.progress.helper.IProgressHelper;
+import com.fortify.cli.common.progress.helper.ProgressHelperFactory;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitStatus;
-import com.fortify.cli.common.util.ProgressHelper;
-import com.fortify.cli.common.util.ProgressHelper.IProgressHelper;
 
 public class StandardWaitHelperProgressMonitor implements IWaitHelperProgressMonitor {
     private static final OutputFormat outputFormat = OutputFormat.table;
-    private final IProgressHelper progressHelper = ProgressHelper.createProgressHelper();
+    private final IProgressHelper progressHelper = ProgressHelperFactory.createProgressHelper(false);
     private final IMessageResolver messageResolver;
     private final boolean writeFinalStatus;
     

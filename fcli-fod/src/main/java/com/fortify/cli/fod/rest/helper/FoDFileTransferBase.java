@@ -37,7 +37,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.util.ProgressHelper;
+import com.fortify.cli.common.progress.helper.IProgressHelper;
+import com.fortify.cli.common.progress.helper.ProgressHelperFactory;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.scan.helper.FoDImportScanSessionDescriptor;
 import com.fortify.cli.fod.util.FoDConstants;
@@ -180,7 +181,7 @@ public abstract class FoDFileTransferBase {
 
     @RequiredArgsConstructor
     private static final class FoDProgressMonitor implements ProgressMonitor, AutoCloseable {
-        private final ProgressHelper.IProgressHelper progressHelper = ProgressHelper.createProgressHelper();
+        private final IProgressHelper progressHelper = ProgressHelperFactory.createProgressHelper(false);
         private final String action;
 
         @Override

@@ -1,26 +1,34 @@
-package com.fortify.cli.common.util;
+package com.fortify.cli.common.progress.helper;
 
 import picocli.CommandLine.Help.Ansi;
 
-public final class ProgressHelper {
+public final class ProgressHelperFactory {
     private static final boolean hasConsole = System.console()!=null;
     private static final boolean hasAnsiConsole = Ansi.AUTO.enabled() && hasConsole;
     private static final String LINE_UP = "\033[1A";
     private static final String LINE_CLEAR = "\033[2K";
     private static final String LINE_START = "\r";
     
-    private ProgressHelper() {}
+    private ProgressHelperFactory() {}
     
-    public static final IProgressHelper createProgressHelper() {
-        if ( hasAnsiConsole ) { return new AnsiConsoleProgressHelper(); }
+    public static final IProgressHelper createProgressHelper(boolean noProgress) {
+        if ( noProgress ) { return new DummyProgressHelper(); }
+        else if ( hasAnsiConsole ) { return new AnsiConsoleProgressHelper(); }
         else if ( hasConsole ) { return new BasicConsoleProgressHelper(); }
         else { return new BasicProgressHelper(); }
     }
     
-    public static interface IProgressHelper {
-        boolean isMultiLineSupported();
-        void writeProgress(String message);
-        void clearProgress();
+    private static final class DummyProgressHelper implements IProgressHelper {
+        @Override
+        public boolean isMultiLineSupported() {
+            return false;
+        }
+        
+        @Override
+        public void writeProgress(String message, Object... args) {}
+        
+        @Override
+        public void clearProgress() {}
     }
     
     private static final class BasicProgressHelper implements IProgressHelper {
@@ -30,8 +38,13 @@ public final class ProgressHelper {
         }
         
         @Override
-        public void writeProgress(String message) {
-            System.out.println(message+"\n");
+        public void writeProgress(String message, Object... args) {
+            String formattedMessage = String.format(message, args);
+            if ( formattedMessage.indexOf('\n') > 0 ) {
+                // Add extra newline to separate multi-line blocks
+                formattedMessage += "\n";
+            }
+            System.out.println(formattedMessage);
         }
         
         @Override
@@ -47,11 +60,12 @@ public final class ProgressHelper {
         }
         
         @Override
-        public void writeProgress(String message) {
+        public void writeProgress(String message, Object... args) {
             if ( message.contains("\n") ) { throw new RuntimeException("Multiline status updates are not supported; please file a bug"); }
             clearProgress();
-            System.out.print(message);
-            this.lastNumberOfChars = message.length();
+            String formattedMessage = String.format(message, args);
+            System.out.print(formattedMessage);
+            this.lastNumberOfChars = formattedMessage.length();
         }
         
         @Override
@@ -69,10 +83,11 @@ public final class ProgressHelper {
         }
         
         @Override
-        public void writeProgress(String message) {
+        public void writeProgress(String message, Object... args) {
             clearProgress();
-            System.out.print(message);
-            this.lastNumberOfLines = (int)message.chars().filter(ch -> ch == '\n').count();
+            String formattedMessage = String.format(message, args);
+            System.out.print(formattedMessage);
+            this.lastNumberOfLines = (int)formattedMessage.chars().filter(ch -> ch == '\n').count();
         }
         
         @Override

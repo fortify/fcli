@@ -32,8 +32,8 @@ import java.util.function.Supplier;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.util.ProgressHelper;
-import com.fortify.cli.common.util.ProgressHelper.IProgressHelper;
+import com.fortify.cli.common.progress.helper.IProgressHelper;
+import com.fortify.cli.common.progress.helper.ProgressHelperFactory;
 
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
@@ -110,7 +110,7 @@ public class SSCFileTransferHelper {
     
     @RequiredArgsConstructor
     private static final class SSCProgressMonitor implements ProgressMonitor, AutoCloseable {
-        private final IProgressHelper progressHelper = ProgressHelper.createProgressHelper();
+        private final IProgressHelper progressHelper = ProgressHelperFactory.createProgressHelper(false);
         private final String action;
         
         @Override

@@ -34,13 +34,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.progress.cli.mixin.ProgressHelperMixin;
 import com.fortify.cli.common.rest.runner.GenericUnirestRunner;
 import com.fortify.cli.common.rest.runner.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.runner.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.common.util.ProgressHelper;
-import com.fortify.cli.common.util.ProgressHelper.IProgressHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.appversion_artifact.cli.cmd.AbstractSSCAppVersionArtifactUploadCommand;
 import com.fortify.cli.ssc.appversion_artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
@@ -62,8 +61,8 @@ import picocli.CommandLine.Option;
 public class SSCAppVersionArtifactImportDebrickedCommand extends AbstractSSCAppVersionArtifactUploadCommand {
     @Mixin @Getter private SSCOutputHelperMixins.ImportDebricked outputHelper;
     @Mixin private DebrickedLoginOptions debrickedLoginOptions; 
+    @Mixin private ProgressHelperMixin progressHelper = new ProgressHelperMixin();
     @Setter(onMethod=@__({@Inject})) private GenericUnirestRunner debrickedUnirestRunner;
-    private final IProgressHelper progressHelper = ProgressHelper.createProgressHelper();
     
     @Option(names = {"-e", "--engine-type"}, required = true, defaultValue = "DEBRICKED")
     @Getter private String engineType;
