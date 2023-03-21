@@ -27,6 +27,9 @@ package com.fortify.cli.app;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 import org.jasypt.normalization.Normalizer;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
 import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner;
@@ -68,6 +71,9 @@ public class FortifyCLI {
      * @return exit code
      */
     private static int execute(String[] args) {
+        ExpressionParser parser = new SpelExpressionParser();
+        Expression exp = parser.parseExpression("'Hello World'"); 
+        System.out.println( (String) exp.getValue() );
     	String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
         try (ApplicationContext applicationContext = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
             try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {

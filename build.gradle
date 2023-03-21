@@ -32,8 +32,8 @@ subprojects {
 allprojects {
 	// Define Java version
     java {
-        sourceCompatibility = JavaVersion.toVersion("11")
-        targetCompatibility = JavaVersion.toVersion("11")
+        sourceCompatibility = JavaVersion.toVersion("17")
+        targetCompatibility = JavaVersion.toVersion("17")
     }
     
     // Define Maven Central repository
@@ -93,6 +93,8 @@ allprojects {
         implementation('com.jayway.jsonpath:json-path:2.7.0') {
             //exclude group: 'net.minidev', module: 'json-smart'
         }
+        
+        implementation('org.springframework:spring-expression:6.0.7')
 
         // for yaml support and generating trees/tables
         implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.2')

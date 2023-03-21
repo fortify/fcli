@@ -30,7 +30,7 @@ public class SCSastScanStartMbsOptions implements ISCSastScanStartOptions {
     }
 
     private void setMbsProperties(File mbsFile) {
-        try ( FileSystem fs = FileSystems.newFileSystem(mbsFile.toPath(), null) ) {
+        try ( FileSystem fs = FileSystems.newFileSystem(mbsFile.toPath()) ) {
             Path mbsManifest = fs.getPath("MobileBuildSession.manifest");
             try ( InputStream is = Files.newInputStream(mbsManifest) ) {
                 Properties p = new Properties();

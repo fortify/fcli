@@ -32,7 +32,7 @@ public class SCSastScanStartPackageOptions implements ISCSastScanStartOptions {
     
     // TODO Clean this up
     private void setDotNetProperties(File packageFile) {
-        try ( FileSystem fs = FileSystems.newFileSystem(packageFile.toPath(), null) ) {
+        try ( FileSystem fs = FileSystems.newFileSystem(packageFile.toPath()) ) {
             StreamSupport.stream(fs.getFileStores().spliterator(), false)
             .map(FileStore::name)
             .map(dotnetFlagFilePattern::matcher)
