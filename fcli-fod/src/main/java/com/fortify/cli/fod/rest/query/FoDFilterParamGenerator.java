@@ -25,20 +25,15 @@
 package com.fortify.cli.fod.rest.query;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
-import com.fortify.cli.common.output.query.OutputQuery;
-import com.fortify.cli.common.output.query.OutputQueryHelper;
-import com.fortify.cli.common.output.query.OutputQueryOperator;
-import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.output.query.QueryExpression;
 
 import kong.unirest.HttpRequest;
 
+// TODO Re-implement server-side filtering
 public final class FoDFilterParamGenerator {
     private final Map<String, String> filterNamesByPropertyPaths = new HashMap<>();
     private final Map<String, Function<String,String>> valueGeneratorsByPropertyPaths = new HashMap<>();
@@ -56,27 +51,34 @@ public final class FoDFilterParamGenerator {
     }
 
     public HttpRequest<?> addFilterParam(IUnirestOutputHelper outputHelper, HttpRequest<?> request) {
-        return addFilterParam(request, new OutputQueryHelper(outputHelper).getOutputQueries());
+        //return addFilterParam(request, new OutputQueryHelper(outputHelper).getOutputQueries());
+        return request;
     }
 
-    public HttpRequest<?> addFilterParam(HttpRequest<?> request, List<OutputQuery> queries) {
+    public HttpRequest<?> addFilterParam(HttpRequest<?> request, QueryExpression query) {
+        /*
         String FilterParamValue = getFilterParamValue(queries);
         if ( StringUtils.isNotBlank(FilterParamValue) ) {
             request = request.queryString("filters", FilterParamValue);
         }
+        */
         return request;
     }
 
-    public String getFilterParamValue(List<OutputQuery> queries) {
+    public String getFilterParamValue(QueryExpression query) {
+        return null;
+        /*
         return queries==null
                 ? null
                 : queries.stream()
                 .map(this::getFilterParamValueForQuery)
                 .filter(Objects::nonNull)
                 .collect(Collectors.joining("+and+"));
+         */
     }
 
-    protected String getFilterParamValueForQuery(OutputQuery query) {
+    protected String getFilterParamValueForQuery(QueryExpression query) {
+        /*
         if ( query.getOperator()==OutputQueryOperator.EQUALS ) {
             String propertyPath = query.getPropertyPath();
             String valueToMatch = query.getValueToMatch();
@@ -86,6 +88,7 @@ public final class FoDFilterParamGenerator {
                 return String.format("%s:%s", filterName, valueGenerator.apply(valueToMatch));
             }
         }
+        */
         return null;
     }
 }

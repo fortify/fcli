@@ -298,7 +298,7 @@ public class WaitHelper {
     
     public static class WaitHelperBuilder {
         public WaitHelperBuilder currentStateProperty(String currentStateProperty) {
-            this.currentState = node->JsonHelper.evaluateJsonPath(node, currentStateProperty, String.class);
+            this.currentState = node->JsonHelper.evaluateSpELExpression(node, currentStateProperty, String.class);
             return this;
         }
         

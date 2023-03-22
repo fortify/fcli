@@ -139,7 +139,7 @@ public class SSCFileTransferHelper {
                     .contentType("application/json")
                     .asObject(ObjectNode.class)
                     .getBody();
-            this.token = JsonHelper.evaluateJsonPath(response, "$.data.token", String.class);
+            this.token = JsonHelper.evaluateSpELExpression(response, "data.token", String.class);
         }
         
         @Override

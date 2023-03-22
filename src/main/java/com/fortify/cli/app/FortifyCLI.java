@@ -24,13 +24,15 @@
  ******************************************************************************/
 package com.fortify.cli.app;
 
-import org.graalvm.nativeimage.hosted.Feature;
-import org.graalvm.nativeimage.hosted.RuntimeReflection;
-import org.jasypt.normalization.Normalizer;
-import org.springframework.expression.Expression;
-import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 
+import org.graalvm.nativeimage.hosted.Feature;
+import org.jasypt.normalization.Normalizer;
+
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
 import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner;
 import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
@@ -41,6 +43,7 @@ import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
+import io.micronaut.core.annotation.TypeHint;
 import picocli.CommandLine;
 
 /**
@@ -71,9 +74,6 @@ public class FortifyCLI {
      * @return exit code
      */
     private static int execute(String[] args) {
-        ExpressionParser parser = new SpelExpressionParser();
-        Expression exp = parser.parseExpression("'Hello World'"); 
-        System.out.println( (String) exp.getValue() );
     	String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
         try (ApplicationContext applicationContext = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
             try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {
@@ -115,17 +115,36 @@ public class FortifyCLI {
     	}
     }
     
-    /**
-     * Register classes for runtime reflection in GraalVM native images
-     */
+/**
+ * Register classes for runtime reflection in GraalVM native images. The
+ * {@link TypeHint} annotation is used to generate reflect-config.json 
+ * for some standard Java data classes on which we may want to reflectively 
+ * invoke methods from SpEL expressions. Alternatively, we could look into 
+ * creating a custom MethodResolver that covers all of these classes and 
+ * potentially doesn't require reflective access.
+ */
+ @TypeHint(
+         value = {
+             Boolean.class,
+             Double.class,
+             Float.class,
+             Integer.class,
+             Long.class,
+             Short.class,
+             String.class,
+             ObjectNode.class,
+             ArrayNode.class,
+             ArrayList.class,
+             LinkedHashMap.class,
+             HashSet.class
+         },
+         accessType = TypeHint.AccessType.ALL_PUBLIC_METHODS
+     )
     @AutomaticFeature
     public static final class RuntimeReflectionRegistrationFeature implements Feature {
         public void beforeAnalysis(BeforeAnalysisAccess access) {
             // This jasypt class uses reflection, so we perform a dummy operation to have GraalVM native image generation detect this
             Normalizer.normalizeToNfc("dummy");
-            
-            // TODO Review whether these are all necessary
-            RuntimeReflection.register(String.class);
         }
     }
 }

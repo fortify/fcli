@@ -68,7 +68,7 @@ public class SSCTokenListCommand extends AbstractSSCTokenCommand implements IRec
     private Map<String, Object> getQueryParams() {
         Map<String, Object> queryParams = new HashMap<String, Object>();
         queryParams.put("limit", "-1");
-        String qParamValue = qParamGenerator.getQParamValue(outputHelper.getOutputWriterFactory().getOutputQueries());
+        String qParamValue = null; /*qParamGenerator.getQParamValue(outputHelper.getOutputWriterFactory().getOutputQueries());*/
         if ( StringUtils.isNotBlank(qParamValue) ) {
             queryParams.put("q", qParamValue);
         }

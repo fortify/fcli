@@ -68,7 +68,7 @@ public final class SSCAuthEntitySpecPredicate implements Predicate<JsonNode> {
     }
 
     private String getString(JsonNode node, String field) {
-        return JsonHelper.evaluateJsonPath(node, field, String.class);
+        return JsonHelper.evaluateSpELExpression(node, field, String.class);
     }
     
     private boolean hasPreviousMatch(String authEntity) {

@@ -89,12 +89,11 @@ allprojects {
             exclude group: 'commons-logging', module: 'commons-logging' // We use jcl-over-slf4j
         }
         implementation('com.konghq:unirest-objectmapper-jackson:3.14.2')
-
-        implementation('com.jayway.jsonpath:json-path:2.7.0') {
-            //exclude group: 'net.minidev', module: 'json-smart'
-        }
         
+        // Support for Spring expression language (SpEL)
         implementation('org.springframework:spring-expression:6.0.7')
+        // Support for handling Jackson JsonNode objects with SpEL 
+        implementation('org.springframework.integration:spring-integration-core:6.0.3')
 
         // for yaml support and generating trees/tables
         implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.2')

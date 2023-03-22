@@ -25,22 +25,22 @@
 package com.fortify.cli.common.output.writer.record.json_properties;
 
 import java.util.TreeSet;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.writer.record.AbstractRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
-import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
+import com.fortify.cli.common.util.StringUtils;
+import com.github.freva.asciitable.AsciiTable;
+import com.github.freva.asciitable.Column;
+import com.github.freva.asciitable.HorizontalAlign;
 
 import lombok.SneakyThrows;
 
 public class JsonPropertiesRecordWriter extends AbstractRecordWriter {
+    private static final String SEPARATOR = ":::";
     private final TreeSet<String> paths = new TreeSet<>();
     
     public JsonPropertiesRecordWriter(RecordWriterConfig config) {
@@ -49,20 +49,44 @@ public class JsonPropertiesRecordWriter extends AbstractRecordWriter {
 
     @Override @SneakyThrows
     public void writeRecord(ObjectNode record) {
-        Configuration configuration = Configuration.builder()
-            .options(Option.AS_PATH_LIST)
-            .jsonProvider(new JacksonJsonNodeJsonProvider(JsonHelper.getObjectMapper()))
-            .mappingProvider(new JacksonMappingProvider(JsonHelper.getObjectMapper()))
-            .build();
-        JsonPath.using(configuration).parse(record).read("$..*", ArrayNode.class).forEach(j->paths.add(normalize(j.asText())));;
+        addProperties("", record);
     }
     
-    private String normalize(String s) {
-        return s.replaceAll("\\['(.+?)'\\]", ".$1").replaceFirst("\\$\\.", "");
+    private void addProperties(String parent, ObjectNode record) {
+        record.fields().forEachRemaining(e->addProperties(parent, e.getKey(), e.getValue()));
+    }
+    
+    private void addProperties(String parent, ArrayNode record) {
+        addProperty(parent, record);
+        for ( int i = 0 ; i < record.size() ; i++ ) {
+            JsonNode value = record.get(i);
+            addProperty(parent+"["+i+"]", value);
+            addProperties(parent, "["+i+"]", value);
+        }
+    }
+    
+    private void addProperties(String parent, String name, JsonNode value) {
+        String fullName = StringUtils.isBlank(parent) || name.startsWith("[") 
+                ? parent+name : parent+"."+name;
+        if ( value instanceof ObjectNode ) { addProperties(fullName, (ObjectNode)value); }
+        else if (value instanceof ArrayNode ) {addProperties(fullName, (ArrayNode)value); }
+        else { addProperty(fullName, value); }
+    }
+    
+    private void addProperty(String name, JsonNode value) {
+        paths.add(name+SEPARATOR+value.getClass().getSimpleName());
     }
 
     @Override @SneakyThrows
     public void close() {
-        getConfig().getWriter().write(paths.stream().collect(Collectors.joining("\n")));
+        Column[] columnObjects = Stream.of("Name", "Type").map(field->
+            new Column()
+                .dataAlign(HorizontalAlign.LEFT)
+                .headerAlign(HorizontalAlign.LEFT)
+                .header(field))
+                .toArray(Column[]::new);
+        String[][] data = paths.stream().map(e->e.split(SEPARATOR)).toArray(String[][]::new);
+        getConfig().getWriter().write(
+            AsciiTable.getTable(AsciiTable.NO_BORDERS, columnObjects, data));
     }
 }

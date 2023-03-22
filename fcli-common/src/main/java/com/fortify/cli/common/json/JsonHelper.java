@@ -35,8 +35,15 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.DataBindingMethodResolver;
+import org.springframework.expression.spel.support.SimpleEvaluationContext;
+import org.springframework.integration.json.JsonNodeWrapperToJsonNodeConverter;
+import org.springframework.integration.json.JsonPropertyAccessor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -45,14 +52,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.fortify.cli.common.spring.expression.SpELHelper;
+import com.fortify.cli.common.spring.expression.StandardSpELFunctions;
 import com.fortify.cli.common.util.StringUtils;
-import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.ParseContext;
-import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
-import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 
 import lombok.Getter;
 
@@ -63,18 +65,10 @@ import lombok.Getter;
  *
  */
 public class JsonHelper {
+    private static final SpelExpressionParser spelParser = new SpelExpressionParser();
     @Getter private static final ObjectMapper objectMapper = _createObjectMapper();
-    private static final Logger LOG = LoggerFactory.getLogger(JsonHelper.class);
-    private final ParseContext parseContext;
-    private static final JsonHelper INSTANCE = new JsonHelper();
-
-    public JsonHelper() {
-        this.parseContext = JsonPath.using(Configuration.builder()
-                .jsonProvider(new JacksonJsonNodeJsonProvider(objectMapper))
-                .mappingProvider(new JacksonMappingProvider(objectMapper))
-                .options(EnumSet.noneOf(Option.class))
-                .build());
-    }
+    //private static final Logger LOG = LoggerFactory.getLogger(JsonHelper.class);
+    private static final EvaluationContext spELEvaluationContext = createSpELEvaluationContext();
     
     private static final ObjectMapper _createObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -83,34 +77,13 @@ public class JsonHelper {
         objectMapper.configure(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS, true);
         return objectMapper;
     }
-
-    @SuppressWarnings("unchecked")
-    public static final <R> R evaluateJsonPath(Object input, String path, Class<R> returnClass) {
-        DocumentContext context = INSTANCE.parseContext.parse(input);
-        if ( !ObjectNode.class.isAssignableFrom(returnClass) ) {
-            return context.read(path, returnClass);
-        } else {
-            JsonNode jsonNode = context.read(path, JsonNode.class);
-            if ( jsonNode instanceof ObjectNode ) {
-                return (R)jsonNode;
-            } else if ( jsonNode==null || !jsonNode.isArray() || jsonNode.size()>1 ) {
-                throw new IllegalStateException("Unable to get ObjectNode for JSONPath "+path+", json node: "+jsonNode);
-            } else if ( jsonNode.size()==0 ) {
-                // What to return here; null, empty ObjectNode, NullNode?
-                return null;
-            } else {
-                return (R)jsonNode.get(0);
-            }
-        }
+    
+    public static final <R> R evaluateSpELExpression(JsonNode input, Expression expression, Class<R> returnClass) {
+        return expression.getValue(spELEvaluationContext, input, returnClass);
     }
     
-    public static final <R> R evaluateOptionalJsonPath(Object input, String path, Class<R> returnClass) {
-        try {
-            return evaluateJsonPath(input, path, returnClass);
-        } catch ( Exception e ) {
-            LOG.trace("Unable to evaluate JSONPath "+path+" on "+input);
-            return null;
-        }
+    public static final <R> R evaluateSpELExpression(JsonNode input, String expression, Class<R> returnClass) {
+        return evaluateSpELExpression(input, spelParser.parseExpression(expression), returnClass);
     }
     
     public static final ObjectNode getFirstObjectNode(JsonNode input) {
@@ -195,4 +168,34 @@ public class JsonHelper {
             return EnumSet.of(Characteristics.UNORDERED);
         }
     }
+    
+    /**
+     * Create an SpEL {@link EvaluationContext} for data binding and condition evaluation
+     * that can resolve properties on {@link JsonNode} instances. We allow reflective
+     * using {@link DataBindingMethodResolver}. Note that native binaries will only be
+     * able to access methods declared in reflect-config.json; reflective access is 
+     * being enabled for some common Java types through an annotation on the 
+     * RuntimeReflectionRegistrationFeature inner class in the main FortifyCLI class.
+     * @return
+     */
+    private static final EvaluationContext createSpELEvaluationContext() {
+        DefaultConversionService conversionService = new DefaultConversionService();
+        conversionService.addConverter(new JsonNodeWrapperToJsonNodeConverter());
+        conversionService.addConverter(new ObjectToJsonNodeConverter());
+        SimpleEvaluationContext context = SimpleEvaluationContext
+                .forPropertyAccessors(new JsonPropertyAccessor())
+                .withConversionService(conversionService)
+                .withInstanceMethods()
+                .build();
+        SpELHelper.registerFunctions(context, StandardSpELFunctions.class);
+        return context;
+    }
+    
+    private static final class ObjectToJsonNodeConverter implements Converter<Object, JsonNode> {
+        @Override
+        public JsonNode convert(Object source) {
+            return objectMapper.valueToTree(source);
+        }
+    }
+    
 }

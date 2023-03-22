@@ -25,9 +25,6 @@
 package com.fortify.cli.sc_dast.scan_settings.cli.cmd;
 
 import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestBaseRequestSupplier;
-import com.fortify.cli.common.output.query.OutputQueryHelper;
-import com.fortify.cli.common.output.query.OutputQueryOperator;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.sc_dast.output.cli.cmd.AbstractSCDastOutputCommand;
 import com.fortify.cli.sc_dast.output.cli.mixin.SCDastOutputHelperMixins;
 import com.fortify.cli.sc_dast.rest.cli.mixin.SCDastSearchTextMixin;
@@ -55,7 +52,9 @@ public class SCDastScanSettingsListCommand extends AbstractSCDastOutputCommand i
         );
     };
 
+    // TODO Re-implement server-side filtering
     private HttpRequest<?> updateRequest(HttpRequest<?> request) {
+        /*
         OutputQueryHelper queryHelper = new OutputQueryHelper(outputHelper);
         request = searchTextMixin.updateRequest(request);
         request = StringUtils.isBlank(modifiedAfter) 
@@ -68,6 +67,7 @@ public class SCDastScanSettingsListCommand extends AbstractSCDastOutputCommand i
         request = StringUtils.isBlank(scanType) 
                 ? request
                 : request.queryString("scanType", scanType);
+        */
         return request;
     }
     

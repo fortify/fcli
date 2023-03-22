@@ -42,15 +42,17 @@ import lombok.RequiredArgsConstructor;
 public class DateTimePeriodHelper {
     private final Pattern periodPattern;
     
+    // TODO Rename this enum, as java.time also has a Period class
     @RequiredArgsConstructor @Getter
     public static enum Period {
         SECONDS("s", ChronoUnit.SECONDS),
         MINUTES("m", ChronoUnit.MINUTES),
         HOURS("h", ChronoUnit.HOURS),
         DAYS("d", ChronoUnit.DAYS),
-        WEEKS("w", ChronoUnit.WEEKS),
-        MONTHS("M", ChronoUnit.MONTHS),
-        YEARS("y", ChronoUnit.YEARS)
+        // TODO Currently these units result in an exception (see TODO below)
+        //WEEKS("w", ChronoUnit.WEEKS), 
+        //MONTHS("M", ChronoUnit.MONTHS),
+        //YEARS("y", ChronoUnit.YEARS)
         ;
         
         private final String type;
@@ -76,6 +78,11 @@ public class DateTimePeriodHelper {
         return new DateTimePeriodHelper(Period.getRange(min, max));
     }
     
+    public static final DateTimePeriodHelper all() {
+        // TODO Once we re-add support for months and years, update this range
+        return new DateTimePeriodHelper(Period.getRange(Period.SECONDS,Period.DAYS));
+    }
+    
     private Pattern buildPeriodPattern(Period... periods) {
         String patternString = String.format("([0-9]+)([%s])", Stream.of(periods).map(Period::getType).collect(Collectors.joining("")));
         return Pattern.compile(patternString);
@@ -89,6 +96,7 @@ public class DateTimePeriodHelper {
             int num = Integer.parseInt(matcher.group(1));
             String type = matcher.group(2);
             Period period = Period.getByType(type);
+            // TODO This call doesn't work for estimated durations like year and month
             instant=instant.plus(Duration.of(num, period.getUnit()));
         }
         return instant.toEpochMilli();

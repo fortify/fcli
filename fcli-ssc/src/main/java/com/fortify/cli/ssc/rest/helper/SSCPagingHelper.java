@@ -16,7 +16,7 @@ public class SSCPagingHelper {
         return r -> {
             JsonNode body = r.getBody();
             try {
-                return JsonHelper.evaluateJsonPath(body, "links.next.href", String.class);
+                return JsonHelper.evaluateSpELExpression(body, "links.next.href", String.class);
             } catch ( Exception e ) {} // TODO will JsonHelper.evaluatePath throw an exception if path not found?
             return null;
         };

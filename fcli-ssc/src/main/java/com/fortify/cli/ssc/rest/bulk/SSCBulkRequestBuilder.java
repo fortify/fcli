@@ -90,8 +90,12 @@ public class SSCBulkRequestBuilder {
         
         public ObjectNode body(String requestName) {
             Integer index = nameToIndexMap.get(requestName);
-            String path = String.format("$[%s].responses[0].body", index);
-            return JsonHelper.evaluateJsonPath(bulkResponse, path, ObjectNode.class);
+            // TODO Calling 'get(%s)' works, but ideally we should be able to use
+            //      standard SpEL indexing '[%s]'. Any way to make this work? The
+            //      SpEL Indexer class seems to explicitly check for arrays or 
+            //      collections, and throws an exception if we use '[%s]'.
+            String path = String.format("get(%s).responses[0].body", index);
+            return JsonHelper.evaluateSpELExpression(bulkResponse, path, ObjectNode.class);
         }
         
         public JsonNode data(String requestName) {

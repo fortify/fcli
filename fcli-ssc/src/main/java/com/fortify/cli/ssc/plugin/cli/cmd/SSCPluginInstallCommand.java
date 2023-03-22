@@ -64,7 +64,7 @@ public class SSCPluginInstallCommand extends AbstractSSCOutputCommand implements
         );
         
         if(autoEnable){
-            String pluginId = JsonHelper.evaluateJsonPath(pluginBody, "$.data.id", String.class);
+            String pluginId = JsonHelper.evaluateSpELExpression(pluginBody, "data.id", String.class);
             pluginBody = SSCPluginStateHelper.enablePlugin(unirest, pluginId);
         }
         return pluginBody;

@@ -26,6 +26,8 @@ package com.fortify.cli.ssc.appversion_artifact.cli.cmd.import_debricked;
 
 import java.io.File;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -169,11 +171,13 @@ public class SSCAppVersionArtifactImportDebrickedCommand extends AbstractSSCAppV
 			ArrayNode data = debrickedUnirest.get("/api/1.0/open/repositories/get-repositories-names-links")
 				.asObject(ArrayNode.class)
 				.getBody();
-			ArrayNode repositoryIds = JsonHelper.evaluateJsonPath(data, "$[?(@.name == \""+repository+"\")].id", ArrayNode.class);
+			// TODO Improve this to properly handle generics
+			// TODO Get rid of appending empty string to id to convert int to string as expected by SpEL
+			List<String> repositoryIds = JsonHelper.evaluateSpELExpression(data, "?[name == '"+repository+"'].![id+'']", ArrayList.class);
 			switch ( repositoryIds.size() ) {
 				case 0: throw new IllegalArgumentException(String.format("Debricked repository with name %s not found; please use full repository name like <org>/<repo>", repository));
-				case 1: return repositoryIds.get(0).asText();
-				default: throw new IllegalArgumentException(String.format("Multiple debricked repositories with name %s foundl please use repository id instead", repository));
+				case 1: return repositoryIds.get(0);
+				default: throw new IllegalArgumentException(String.format("Multiple debricked repositories with name %s found; please use repository id instead", repository));
 			}
 		}
 	}

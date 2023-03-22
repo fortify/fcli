@@ -1,11 +1,9 @@
 package com.fortify.cli.common.output.cli.mixin.writer;
 
-import java.util.List;
-
 import com.fortify.cli.common.output.cli.mixin.impl.OutputOptionsArgGroup;
 import com.fortify.cli.common.output.cli.mixin.impl.QueryOptionsArgGroup;
-import com.fortify.cli.common.output.query.IOutputQueriesSupplier;
-import com.fortify.cli.common.output.query.OutputQuery;
+import com.fortify.cli.common.output.query.IQueryExpressionSupplier;
+import com.fortify.cli.common.output.query.QueryExpression;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.query.OutputWriterWithQuery;
@@ -18,7 +16,7 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 import picocli.CommandLine.Spec.Target;
 
-public class OutputWriterWithQueryFactoryMixin implements IOutputWriterFactory, IOutputQueriesSupplier {
+public class OutputWriterWithQueryFactoryMixin implements IOutputWriterFactory, IQueryExpressionSupplier {
     @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
     @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false, order=30)
     private OutputOptionsArgGroup outputOptionsArgGroup = new OutputOptionsArgGroup();
@@ -26,8 +24,8 @@ public class OutputWriterWithQueryFactoryMixin implements IOutputWriterFactory, 
     private QueryOptionsArgGroup queryOptionsArgGroup = new QueryOptionsArgGroup();
     
     @Override
-    public List<OutputQuery> getOutputQueries() {
-        return queryOptionsArgGroup.getOutputQueries();
+    public QueryExpression getQueryExpression() {
+        return queryOptionsArgGroup.getQueryExpression();
     }
     
     @Override

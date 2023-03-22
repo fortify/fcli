@@ -1,12 +1,12 @@
 package com.fortify.cli.ssc.appversion_artifact.helper;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
@@ -63,9 +63,9 @@ public final class SSCAppVersionArtifactHelper {
     }
     
     public static final String getArtifactStatus(UnirestInstance unirest, String artifactId){
-        return JsonHelper.evaluateJsonPath(
+        return JsonHelper.evaluateSpELExpression(
                 unirest.get(SSCUrls.ARTIFACT(artifactId)).asObject(JsonNode.class).getBody(),
-                "$.data.status",
+                "data.status",
                 String.class
         );
     }
@@ -89,11 +89,13 @@ public final class SSCAppVersionArtifactHelper {
     public static JsonNode addScanTypes(JsonNode record) {
         if ( record instanceof ObjectNode && record.has("_embed") ) {
             JsonNode _embed = record.get("_embed");
+            String scanTypesString = "";
             if ( _embed.has("scans") ) {
-                ArrayNode scanTypes = JsonHelper.evaluateJsonPath(_embed, "$.scans.[*].type", ArrayNode.class);
-                String scanTypesString = JsonHelper.stream(scanTypes).map(JsonNode::asText).collect(Collectors.joining(", "));
-                record = ((ObjectNode)record).put("scanTypes", scanTypesString);
+                // TODO Can we get rid of unchecked conversion warning?
+                ArrayList<String> scanTypes = JsonHelper.evaluateSpELExpression(_embed, "scans?.![type]", ArrayList.class);
+                scanTypesString = scanTypes.stream().collect(Collectors.joining(", "));   
             }
+            record = ((ObjectNode)record).put("scanTypes", scanTypesString);
         }
         return record;
     }

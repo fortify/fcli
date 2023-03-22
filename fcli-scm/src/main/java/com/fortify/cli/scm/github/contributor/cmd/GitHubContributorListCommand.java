@@ -140,16 +140,16 @@ public class GitHubContributorListCommand extends AbstractGitHubOutputCommand im
             data.put("repositoryName", repo.getRepoName());
             data.put("repositoryFullName", repo.getFullName());
             data.set("author", author);
-            data.put("lastCommit", JsonHelper.evaluateOptionalJsonPath(commit, "commit.author.date", String.class));
+            data.put("lastCommit", JsonHelper.evaluateSpELExpression(commit, "commit?.author?.date", String.class));
             resultData.getResults().add(data);
         }
     }
     
     private ObjectNode getAuthor(JsonNode commit) {
         return JsonHelper.getObjectMapper().createObjectNode()
-            .put("name", JsonHelper.evaluateOptionalJsonPath(commit, "commit.author.name", String.class))
-            .put("email", JsonHelper.evaluateOptionalJsonPath(commit, "commit.author.email", String.class))
-            .put("login", JsonHelper.evaluateOptionalJsonPath(commit, "author.login", String.class));
+            .put("name", JsonHelper.evaluateSpELExpression(commit, "commit?.author?.name", String.class))
+            .put("email", JsonHelper.evaluateSpELExpression(commit, "commit?.author?.email", String.class))
+            .put("login", JsonHelper.evaluateSpELExpression(commit, "author?.login", String.class));
     }
 
     @Override

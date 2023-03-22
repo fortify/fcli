@@ -57,7 +57,7 @@ public abstract class AbstractSSCAppVersionArtifactUploadCommand extends Abstrac
         		.field("file", file)
         		.asObject(JsonNode.class).getBody();
         postUpload(unirest, file);
-        String artifactId = JsonHelper.evaluateJsonPath(uploadResponse, "$.data.id", String.class);
+        String artifactId = JsonHelper.evaluateSpELExpression(uploadResponse, "data.id", String.class);
         // TODO Do we actually show any scan data from the embedded scans?
         return unirest.get(SSCUrls.ARTIFACT(artifactId)).queryString("embed","scans");
     }

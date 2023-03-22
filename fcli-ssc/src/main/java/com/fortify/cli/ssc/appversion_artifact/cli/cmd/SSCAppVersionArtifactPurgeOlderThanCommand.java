@@ -54,7 +54,8 @@ import picocli.CommandLine.Parameters;
 @DefaultVariablePropertyName("") 
 public class SSCAppVersionArtifactPurgeOlderThanCommand extends AbstractSSCOutputCommand implements IUnirestJsonNodeSupplier, IRecordTransformerSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.ArtifactPurgeOlderThan outputHelper;
-    private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.DAYS, Period.YEARS);
+    // TODO We should also support weeks/months/years, but this is broken (see comments in DateTimePeriodHelper)
+    private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.DAYS, Period.DAYS);
     @Mixin private SSCAppVersionResolverMixin.RequiredOption appVersionResolver;
     @Parameters(index = "0", arity = "1", paramLabel="older-than") private String olderThan;            
     

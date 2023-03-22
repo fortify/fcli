@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_attribute.helper;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -144,7 +145,7 @@ public final class SSCAppVersionAttributeListHelper {
     private ObjectNode getAttributeNode(JsonNode attributeBody, JsonNode attrDef) {
         String guid = attrDef.get("guid").asText();
         return JsonHelper
-                .evaluateJsonPath(attributeBody, String.format("$.data[?(@.guid == '%s')]", guid), ObjectNode.class);
+                .evaluateSpELExpression(attributeBody, String.format("data?.^[guid == '%s']", guid), ObjectNode.class);
     }
     
     private ObjectNode combine(ObjectNode node1, ObjectNode node2) {
@@ -169,19 +170,11 @@ public final class SSCAppVersionAttributeListHelper {
         if ( attr.has("value") && !attr.get("value").isNull() ) {
             valueString = attr.get("value").asText();
         } else if ( attr.has("values") && !attr.get("values").isEmpty() ) {
-            valueString = concatStringArray(JsonHelper.evaluateJsonPath(attr, "$.values[*].name", ArrayNode.class));
+         // TODO Can we get rid of unchecked conversion warning?
+            ArrayList<String> values = JsonHelper.evaluateSpELExpression(attr, "values?.![name]", ArrayList.class);
+            valueString = values.stream().collect(Collectors.joining(", "));
         }
         attr.put("valueString", valueString);
         return attr;
-    }
-
-    /**
-     * Given an {@link ArrayNode} containing {@link String} values, this method concatenates
-     * those values in a comma+space-separated string. 
-     * @param array
-     * @return
-     */
-    private String concatStringArray(ArrayNode array) {
-        return JsonHelper.stream(array).map(JsonNode::asText).collect(Collectors.joining(", "));
     }
 }

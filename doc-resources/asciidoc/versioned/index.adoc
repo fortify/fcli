@@ -105,12 +105,12 @@ JSON properties, except for table output, which usually outputs a predefined set
 
 There are two output formats that are somewhat special: 
 
-* `+-o 'expr=Text with {property1} or {property2}\n'+` Formats the output data based on the given expression, which is a combination of (optional) plain text and JSON property placeholders. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after
-evaluating the given expression. If necessary, the expression should explicitly include `+\n+` to output a newline character. To demonstrate the power of this output format, following are two examples of how `+-o expr+` can be used to generate a script that purges all application versions matching certain criteria: 
-** `+fcli ssc appversion list -q createdBy=admin -o 'expr=fcli ssc appversion-artifact purge --older-than 30d --appversion {id}\n'+`
-** `+for id in $(fcli ssc appversion list -q createdBy=admin -o 'expr=\{id}'); do echo "fcli ssc appversion-artifact purge –older-than 30d –appversion $\{id}'; done+` 
-* `+-o json-properties+` List all JSON properties returned by the current command, which can be used
-on options that take JSON properties as input, like output expressions (`+-o expr={prop}+`), properties to include in the output (`+-o table=prop1,prop2+`), queries (`+-q prop1=value1+`), and fcli variables (`+--store var:prop1,prop2+` & `+::var::prop1}+`). Two important notes about this output format: 
+* `+-o 'expr=Text with {expression1} or {expression2}\n'+` +
+ Formats the output data based on the given template expression, which is a combination of (optional) plain text and SpEL expressions; see link:#_option_expressions[Option Expressions] for details. In most cases, expressions will be simple property references, i.e., `+{property.subProperty}+`. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after evaluating the given expression. If necessary, the expression should explicitly include `+\n+` to output a newline character. To demonstrate the power of this output format, following are two examples of how `+-o expr+` can be used to generate a script that purges all application versions matching certain criteria: 
+** `+fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr=fcli ssc appversion-artifact purge --older-than 30d --appversion {id}\n'+`
+** `+for id in $(fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr={id} '); do echo "fcli ssc appversion-artifact purge –older-than 30d –appversion ${id}'"; done+` 
+* `+-o json-properties+` +
+ List all JSON properties returned by the current command, which can be used on options that take JSON properties as input, like output expressions (`+-o expr={prop}+`), properties to include in the output (`+-o table=prop1,prop2+`), queries (`+-q 'prop1=="value1"'+`), and fcli variables (`+--store var:prop1,prop2+` & `+::var::prop1}+`). Two important notes about this output format: 
 ** The command will be executed as specified, so be careful when using this output option on any command
 that changes state (delete/update/create/…). In most cases, the `+get+` or `+list+` operations will return a similar set of properties, so you can use those commands to view available properties.
 ** On some commands, the list of available JSON properties may vary depending on command line options. For example, when a query returns no records, then `+-o json-properties+` will not output any properties. Likewise, a command may provide options for including additional data for each record; the corresponding JSON properties will only be shown if `+-o json-properties+` is used in combination with these options that load additional data.
@@ -125,11 +125,56 @@ Available on virtually all (leaf) commands that output data, this option can be 
 
 === -q | –query
 
-Available on most `+list+` commands and some other commands, this option allows for querying the output data, outputting only records that match the given query or queries. For now, only equals-based matching is supported; future fcli versions may provide additional matching options. General format is `+-q <json-property>=<value>+`; the list of JSON properties available for matching can be found by executing the same command with the `+-o json-properties+` option; see link:++#-o--output++[-o | –output] for details.
+Available on most `+list+` commands and some other commands, this option allows for querying the output data, outputting only records that match the given Spring Expression Language (SpEL) expression. See the link:#_option_expressions[Option Expressions] section for details.
+
+Expressions are evaluated on individual records; record properties can be accessed as shown in the SpEL documentation. The list of properties that can be queried can be obtained by executing the current command with the `+-o json-properties+` option; see link:++#-o--output++[-o | –output] for details.
+
+Following are some examples using bash syntax, assuming the record contains `p1`, `p2`, ... properties:
+
+* `+-q 'p1=="v1"'+` +
+  Only output records if the value of property `p1` equals `v1`
+* `+-q 'p1=="v1" || p1=="v2"'+` +
+  Only output records if the value of property `p1` equals either `v1` or `v2`
+* `+-q '{"v1","v2"}.contains(p1)'+` +
+  Same as previous, but more concise if matching against many different values
+* `+-q 'name matches "val1|val2"'+` +
+  Similar as above, but using regex-based OR matching
+* `+-q 'p2==25 || p2<5'+` +
+  Only output records if the value of property `p2` either equals 25 or is less than 5
+* `+-q 'p1=="v1" && (p2=="v2" || p3=="v2")'+` +
+  Only output records if the value of property `p1` equals `v1` and the value of either property `p2` or `p3` is `v2`
+* `+fcli ssc appversion-artifact list --appversion MyApp:main -q 'scanTypes matches "\bSCA\b"'+` +
+  Only output artifacts containing a Fortify SCA scan (matching the whole word `SCA` against `scanTypes` property)
+* `+fcli ssc appversion-artifact list --appversion MyApp:main -q '_embed.scans.![buildLabel].contains("myLabel")'+` +
+  Only output artifacts for which any of the scans included in the artifact has a `buildLabel` that equals `myLabel`
+* `+fcli ssc appversion-artifact list --appversion MyApp:main -q '#now("-90d") < #date(uploadDate)'+` +
+  Only output artifacts that were uploaded less than 90 days ago. 
+
 
 === –session
 
 Available on virtually all commands that interact with a target system, this option allows for specifying a session name. For more details, see the link:#_session_management[Session Management] section.
+
+=== Option Expressions
+
+Various fcli options take either plain expressions, like link:++#-o--output++[-o | –output expr=...], or template expressions (plain text combined with expressions embedded between curly braces), like link:++#-q--query++[-q | --query]. These expressions use Spring Expression Language (SpEL); general information on syntax, supported operators and more can be found in the link:https://docs.spring.io/spring-framework/docs/6.0.x/reference/html/core.html#expressions[SpEL Documentation].
+
+When evaluating expressions, fcli configures SpEL for 'data binding and condition evaluation', meaning that not all SpEL features are available. In particular, query expressions cannot invoke constructors nor static methods, and write access is mostly disabled.
+
+Fcli provides some utility functions that may be used in expressions. Note that these functions calls are preceded by a `+#+` character.
+
+* `+#date(string)+`: Convert the given date/time in string format to a proper date/time representation, allowing for date/time-based comparison operations. This can be used on property references or literal strings. 
+* `+#now()+`: Get the current date/time, allowing for date/time-based comparison operations.
+* `+#now(period)+`: Get the current date/time plus or minus the given period. The given period must start with either a `+` or `-`, followed by a number and the time unit. Some examples: `-90d` (now minus 90 days), `+15m` (now plus 15 minutes) and `-90s` (now minus 90 seconds).
+* `+#var(name)+`: Get fcli variable contents; variable properties can be accessed as usual, i.e. `+#var("myVar")?.rootProp?.subProp+`.
+* `+#env(name)+`: Get the value of an environment variable.
+
+SpEL expressions may contain various characters that will be interpreted by some shells, like the `#` character for calling functions, and either single or double quotes around literal string values. As such, with most shells you should enclose the full expression in single or double quotes, and use the other quotes in the expression, for example:
+
+* `+-q '... "literal SpEL string" ...'+` (single quotes for shell, double quotes for SpEL literals)
+* `+-q "... 'literal SpEL string' ..."+` (double quotes for shell, single quotes for SpEL literals)
+
+Which one to choose depends on any other characters appearing in the expression. For example, in `bash` you'd usually use single quotes to have everything in-between passed to fcli as-is, unless you want to use specific shell features inside the expression. Note that you can use the `+#env+` function to retrieve environment variable contents, so you don't need to use shell syntax to insert environment variable contents into expressions.
 
 == Session Management
 

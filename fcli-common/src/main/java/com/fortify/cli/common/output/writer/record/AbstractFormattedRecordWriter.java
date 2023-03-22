@@ -14,7 +14,6 @@ import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.PropertyPathFormatter;
 import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.util.StringUtils;
-import com.jayway.jsonpath.PathNotFoundException;
 
 public abstract class AbstractFormattedRecordWriter extends AbstractRecordWriter {
     private static final JsonNode NA_NODE = new TextNode("N/A");
@@ -79,11 +78,8 @@ public abstract class AbstractFormattedRecordWriter extends AbstractRecordWriter
     }
 
     private static final JsonNode evaluateValue(ObjectNode record, String path) {
-        try {
-            return JsonHelper.evaluateJsonPath(record, path, JsonNode.class);
-        } catch ( PathNotFoundException e ) {
-            return NA_NODE; 
-        }
+        JsonNode result = JsonHelper.evaluateSpELExpression(record, path, JsonNode.class);
+        return result!=null ? result : NA_NODE;
     }
     
     private static final List<String> getFieldPaths(String options) {

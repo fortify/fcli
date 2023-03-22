@@ -141,7 +141,7 @@ public final class FcliVariableHelper {
             String variableName = matcher.group(1);
             String propertyPath = getVariablePropertyPathOrDefault(variableName, matcher.group(2));
             JsonNode contents = getVariableContents(variableName, true);
-            String value = JsonHelper.evaluateJsonPath(contents, propertyPath, String.class);
+            String value = JsonHelper.evaluateSpELExpression(contents, propertyPath, String.class);
             if ( value==null ) {
                 throw new IllegalArgumentException(String.format("Property path '%s' for variable '%s' resolves to null", propertyPath, variableName));
             }
