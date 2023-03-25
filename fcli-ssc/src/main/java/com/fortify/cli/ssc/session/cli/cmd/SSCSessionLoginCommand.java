@@ -24,39 +24,33 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.rest.runner.config.IUrlConfig;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.ssc.session.cli.mixin.SSCSessionLoginOptions;
-import com.fortify.cli.ssc.session.manager.ISSCCredentialsConfig;
-import com.fortify.cli.ssc.session.manager.SSCSessionData;
-import com.fortify.cli.ssc.session.manager.SSCSessionDataManager;
-import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
+import com.fortify.cli.ssc.session.helper.ISSCCredentialsConfig;
+import com.fortify.cli.ssc.session.helper.SSCSessionDescriptor;
+import com.fortify.cli.ssc.session.helper.SSCSessionHelper;
 
-import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
-@FixInjection
-public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessionData> {
-    @Mixin @Getter private BasicOutputHelperMixins.Login outputHelper;
-    @Setter(onMethod=@__({@Inject})) @Getter private SSCSessionDataManager sessionDataManager;
-    @Setter(onMethod=@__({@Inject})) private SSCTokenHelper tokenHelper;
+@Command(name = OutputHelperMixins.Login.CMD_NAME, sortOptions = false)
+public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessionDescriptor> {
+    @Mixin @Getter private OutputHelperMixins.Login outputHelper;
+    @Getter private SSCSessionHelper sessionHelper = SSCSessionHelper.instance();
     @Mixin private SSCSessionLoginOptions sessionLoginOptions;
     
     @Override
-    protected void logoutBeforeNewLogin(String sessionName, SSCSessionData sessionData) {
-        sessionData.logout(tokenHelper, sessionLoginOptions.getUserCredentialsConfig());
+    protected void logoutBeforeNewLogin(String sessionName, SSCSessionDescriptor sessionDescriptor) {
+        sessionDescriptor.logout(sessionLoginOptions.getUserCredentialsConfig());
     }
     
     @Override
-    protected SSCSessionData login(String sessionName) {
+    protected SSCSessionDescriptor login(String sessionName) {
         IUrlConfig urlConfig = sessionLoginOptions.getUrlConfigOptions();
         ISSCCredentialsConfig credentialsConfig = sessionLoginOptions.getCredentialsConfig();
-        return new SSCSessionData(urlConfig, credentialsConfig, tokenHelper);
+        return new SSCSessionDescriptor(urlConfig, credentialsConfig);
     }
 }

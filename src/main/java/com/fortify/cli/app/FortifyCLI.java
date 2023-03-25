@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
 import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner;
 import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
+import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
@@ -84,6 +85,7 @@ public class FortifyCLI {
                     .setParameterExceptionHandler(new I18nParameterExceptionHandler(commandLine.getParameterExceptionHandler()))
                     .execute(resolvedArgs);
             } finally {
+                GenericUnirestFactory.shutdown();
             	uninstallAnsiConsole();
             }
         }

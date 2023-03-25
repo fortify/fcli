@@ -38,13 +38,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.cmd.unirest.IUnirestJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.cli.mixin.ProgressHelperMixin;
-import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
-import com.fortify.cli.scm.github.cli.cmd.AbstractGitHubOutputCommand;
-import com.fortify.cli.scm.github.cli.mixin.GitHubOutputHelperMixins;
+import com.fortify.cli.scm.github.cli.cmd.AbstractGitHubJsonNodeOutputCommand;
 import com.fortify.cli.scm.github.cli.util.GitHubPagingHelper;
 
 import kong.unirest.GetRequest;
@@ -59,11 +58,11 @@ import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = GitHubOutputHelperMixins.List.CMD_NAME)
-public class GitHubContributorListCommand extends AbstractGitHubOutputCommand implements IUnirestJsonNodeSupplier {
+@Command(name = OutputHelperMixins.List.CMD_NAME)
+public class GitHubContributorListCommand extends AbstractGitHubJsonNodeOutputCommand {
     private static final Logger LOG = LoggerFactory.getLogger(GitHubContributorListCommand.class);
     private static final DateTimePeriodHelper PERIOD_HELPER = new DateTimePeriodHelper(Period.DAYS);
-    @Getter @Mixin private GitHubOutputHelperMixins.List outputHelper;
+    @Getter @Mixin private OutputHelperMixins.List outputHelper;
     @Option(names = "--last", defaultValue = "90d", paramLabel = "[x]d")
     private String lastPeriod;
     @Option(names = "--no-older", negatable = true) 

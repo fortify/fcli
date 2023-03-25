@@ -34,7 +34,7 @@ public final class ToolHelper {
     
     public static final ToolVersionCombinedDescriptor loadToolVersionCombinedDescriptor(String toolName, String version) {
         ToolVersionInstallDescriptor installDescriptor = loadToolVersionInstallDescriptor(toolName, version);
-        return installDescriptor==null ? null : new ToolVersionCombinedDescriptor(toolName, null, installDescriptor);
+        return installDescriptor==null ? null : new ToolVersionCombinedDescriptor(toolName, getToolDownloadDescriptor(toolName).getVersion(version), installDescriptor);
     }
     
     public static final void deleteToolVersionInstallDescriptor(String toolName, String version) {

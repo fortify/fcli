@@ -25,17 +25,18 @@
 package com.fortify.cli.state.variable.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.variable.FcliVariableHelper;
-import com.fortify.cli.state.variable.cli.mixin.VariableOutputHelperMixins;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = VariableOutputHelperMixins.List.CMD_NAME)
-public class VariableListCommand extends AbstractBasicOutputCommand {
-    @Getter @Mixin private VariableOutputHelperMixins.List outputHelper;
+@Command(name = OutputHelperMixins.List.CMD_NAME)
+public class VariableListCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
+    @Getter @Mixin private OutputHelperMixins.List outputHelper;
 
     @Override
     public JsonNode getJsonNode() {

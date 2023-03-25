@@ -36,8 +36,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
 import lombok.Getter;
 import picocli.CommandLine;
@@ -47,16 +48,16 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
-@Command(name = BasicOutputHelperMixins.List.CMD_NAME)
-public final class AllCommandsListCommand extends AbstractBasicOutputCommand {
+@Command(name = OutputHelperMixins.List.CMD_NAME)
+public final class AllCommandsListCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
+    @Getter @Mixin private OutputHelperMixins.List outputHelper;
     @Spec private CommandSpec spec;
     @Option(names = "--include-hidden") private boolean includeHidden;
     @Option(names = "--include-parents") private boolean includeParents;
     
     @Override
-    protected JsonNode getJsonNode() {
+    public JsonNode getJsonNode() {
         ResultHolder result = new ResultHolder();
         addCommands(result, spec.root().subcommands());
         return result.result;

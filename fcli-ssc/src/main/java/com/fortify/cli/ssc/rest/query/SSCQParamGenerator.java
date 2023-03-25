@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.query.QueryExpression;
 
 import kong.unirest.HttpRequest;
@@ -26,7 +26,7 @@ public final class SSCQParamGenerator {
         return this;
     }
     
-    public HttpRequest<?> addQParam(IUnirestOutputHelper unirestOutputHelper, HttpRequest<?> request) {
+    public HttpRequest<?> addQParam(IOutputHelper unirestOutputHelper, HttpRequest<?> request) {
         //return addQParam(request, new OutputQueryHelper(unirestOutputHelper).getOutputQueries());
         return request;
     }

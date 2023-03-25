@@ -24,9 +24,11 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.session.helper.AbstractSessionHelper;
+import com.fortify.cli.common.session.helper.ISessionDescriptor;
 
-public abstract class AbstractSessionCommand extends AbstractBasicOutputCommand {
-    protected abstract ISessionDataManager<?> getSessionDataManager();
+public abstract class AbstractSessionCommand<D extends ISessionDescriptor> extends AbstractOutputCommand implements IJsonNodeSupplier {
+    protected abstract AbstractSessionHelper<D> getSessionHelper();
 }

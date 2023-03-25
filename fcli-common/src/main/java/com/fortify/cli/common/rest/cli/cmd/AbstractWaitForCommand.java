@@ -24,12 +24,15 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.output.spi.ISingularSupplier;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.product.IProductHelperSupplier;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.writer.ISingularSupplier;
 import com.fortify.cli.common.rest.cli.mixin.StandardWaitHelperProgressMonitorMixin;
 import com.fortify.cli.common.rest.cli.mixin.WaitHelperControlOptions;
 import com.fortify.cli.common.rest.cli.mixin.WaitHelperWaitOptions;
+import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.wait.WaitHelper;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
 
@@ -37,21 +40,30 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractWaitForCommand extends AbstractUnirestRunnerCommand implements IActionCommandResultSupplier, ISingularSupplier {
-    @Getter @Mixin private BasicOutputHelperMixins.WaitFor outputHelper;
+public abstract class AbstractWaitForCommand extends AbstractFortifyCLICommand implements IActionCommandResultSupplier, IProductHelperSupplier, ISingularSupplier, Runnable {
+    @Getter @Mixin private OutputHelperMixins.WaitFor outputHelper;
     @Mixin private WaitHelperControlOptions controlOptions;
     @Mixin private WaitHelperWaitOptions waitOptions;
     @Mixin StandardWaitHelperProgressMonitorMixin progressMonitorMixin;
     
     @Override
-    protected Void run(UnirestInstance unirest) {
+    public void run() {
+        var productHelper = getProductHelper();
+        if ( productHelper instanceof IUnirestInstanceSupplier ) {
+            UnirestInstance unirest = ((IUnirestInstanceSupplier)productHelper).getUnirestInstance();
+            wait(unirest);
+        } else {
+            throw new RuntimeException("Class doesn't implement IUnirestInstanceSupplier: "+productHelper.getClass().getName());
+        }
+    }
+    
+    private void wait(UnirestInstance unirest) {
         configure(
-            WaitHelper.builder()
-                .controlProperties(controlOptions)
-                .progressMonitor(progressMonitorMixin.createProgressMonitor(false))
-                .onFinish(WaitHelper::recordsWithActionAsArrayNode, outputHelper::write)
-        ).build().wait(unirest, waitOptions);
-        return null;
+                WaitHelper.builder()
+                    .controlProperties(controlOptions)
+                    .progressMonitor(progressMonitorMixin.createProgressMonitor(false))
+                    .onFinish(WaitHelper::recordsWithActionAsArrayNode, outputHelper::write)
+            ).build().wait(unirest, waitOptions);
     }
     
     protected abstract WaitHelperBuilder configure(WaitHelperBuilder builder);

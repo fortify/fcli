@@ -24,54 +24,49 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.rest.runner.GenericUnirestRunner;
-import com.fortify.cli.common.rest.runner.UnexpectedHttpResponseException;
-import com.fortify.cli.common.rest.runner.config.IUrlConfig;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
+import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
+import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.sc_sast.rest.helper.SCSastUnirestHelper;
 import com.fortify.cli.sc_sast.session.cli.mixin.SCSastSessionLoginOptions;
-import com.fortify.cli.sc_sast.session.manager.SCSastSessionData;
-import com.fortify.cli.sc_sast.session.manager.SCSastSessionDataManager;
-import com.fortify.cli.ssc.session.manager.ISSCCredentialsConfig;
-import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
+import com.fortify.cli.sc_sast.session.helper.SCSastSessionDescriptor;
+import com.fortify.cli.sc_sast.session.helper.SCSastSessionHelper;
+import com.fortify.cli.ssc.session.helper.ISSCCredentialsConfig;
 
-import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
-@FixInjection
-public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSastSessionData> {
-    @Mixin @Getter private BasicOutputHelperMixins.Login outputHelper;
-    @Setter(onMethod=@__({@Inject})) @Getter private SCSastSessionDataManager sessionDataManager;
-    @Setter(onMethod=@__({@Inject})) private GenericUnirestRunner unirestRunner;
-    @Setter(onMethod=@__({@Inject})) private SSCTokenHelper tokenHelper;
+@Command(name = OutputHelperMixins.Login.CMD_NAME, sortOptions = false)
+public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSastSessionDescriptor> {
+    @Mixin @Getter private OutputHelperMixins.Login outputHelper;
+    @Getter private SCSastSessionHelper sessionHelper = SCSastSessionHelper.instance();
     @Mixin private SCSastSessionLoginOptions sessionLoginOptions;
     
     @Override
-    protected void logoutBeforeNewLogin(String sessionName, SCSastSessionData sessionData) {
-        sessionData.logout(tokenHelper, sessionLoginOptions.getCredentialOptions().getUserCredentialsConfig());
+    protected void logoutBeforeNewLogin(String sessionName, SCSastSessionDescriptor sessionData) {
+        sessionData.logout(sessionLoginOptions.getCredentialOptions().getUserCredentialsConfig());
     }
     
     @Override
-    protected SCSastSessionData login(String sessionName) {
+    protected SCSastSessionDescriptor login(String sessionName) {
         IUrlConfig urlConfig = sessionLoginOptions.getUrlConfigOptions();
         ISSCCredentialsConfig credentialsConfig = sessionLoginOptions.getCredentialOptions();
-        return new SCSastSessionData(urlConfig, credentialsConfig, sessionLoginOptions.getClientAuthToken(), tokenHelper);
+        return new SCSastSessionDescriptor(urlConfig, credentialsConfig, sessionLoginOptions.getClientAuthToken());
     }
     
     @Override
     protected void testAuthenticatedConnection(String sessionName) {
-    	SCSastSessionData sessionData = sessionDataManager.get(sessionName, true);
-    	unirestRunner.run(u->testAuthenticatedConnection(u, sessionData));
+    	SCSastSessionDescriptor sessionData = SCSastSessionHelper.instance().get(sessionName, true);
+    	try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
+    	    testAuthenticatedConnection(unirest, sessionData);
+    	}
     }
 
-	private Void testAuthenticatedConnection(UnirestInstance u, SCSastSessionData sessionData) {
+	private Void testAuthenticatedConnection(UnirestInstance u, SCSastSessionDescriptor sessionData) {
 		SCSastUnirestHelper.configureScSastControllerUnirestInstance(u, sessionData);
 		try {
 			u.get("/rest/v2/ping").asString().getBody();

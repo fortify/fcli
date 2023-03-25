@@ -25,7 +25,8 @@
 package com.fortify.cli.state.variable.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.state.variable.cli.mixin.VariableOutputHelperMixins;
 import com.fortify.cli.state.variable.cli.mixin.VariableResolverMixin;
 
@@ -34,7 +35,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = VariableOutputHelperMixins.Contents.CMD_NAME)
-public class VariableContentsCommand extends AbstractBasicOutputCommand {
+public class VariableContentsCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     @Getter @Mixin private VariableOutputHelperMixins.Contents outputHelper;
     @Mixin private VariableResolverMixin.PositionalParameter variableResolver;
 

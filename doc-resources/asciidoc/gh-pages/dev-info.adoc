@@ -262,10 +262,9 @@ Most or all product-specific leaf command implementations should have the follow
 
 [source,java]
 ----
-@ReflectiveAccess // RefelctiveAccess is probably optional, but doesn't hurt
-@Command(name = <Module>OutputHelperMixins.<Action>.CMD_NAME)
+@Command(name = [Module]OutputHelperMixins.<Action>.CMD_NAME)
 public class <Module><Entity><Action>Command extends <SuperClass> implements <CommonInterfaces> {
-    @Getter @Mixin private <Module>OutputHelperMixins.<Action> outputHelper; 
+    @Getter @Mixin private [Module]OutputHelperMixins.<Action> outputHelper; 
     // Options, positional parameters, other fields; see next sections for info on options and parameters
     
     // Overrides for interfaces, for example methods generating the output data,
@@ -273,24 +272,24 @@ public class <Module><Entity><Action>Command extends <SuperClass> implements <Co
     
     @Override
     public boolean isSingular() {
-        return <false if potentially returning multiple records, true if always returning single record)
+        return <false if potentially returning multiple records, true if always returning single record>;
     }
 }
 ----
 
 * `<Module>`: Corresponds to the module in which this class is located; for product-specific commands this would correspond to the product name like `SSC` or `FoD`. 
+* `[Module]`: Commands can use `IOutputHelper` implementations from either the generic `OutputHelperMixins` or the module-specific `[Module]OutputHelperMixins`
 * `<Entity>` represents the entity that the command is operating on, like `App`, `AppVersion`, `User`, ...
-* `<Action>`: Represents the action performed by this command; should be one of the classes in the `<Product>OutputHelperMixins` class, like `Get`, `List`, `Delete`, ... 
-** Every action should have a corresponding inner class in the `<Product>OutputHelperMixins` class; each of these inner classes in turn extend from the appropriate inner class defined in `UnirestOutputHelperMixins` or `BasicOutputHelperMixins` classes, potentially adding product-specific behavior.
+* `<Action>`: Represents the action performed by this command; should be one of the classes in the `[Module]OutputHelperMixins` class, like `Get`, `List`, `Delete`, ... 
+** Every action should have a corresponding inner class in either the generic `OutputHelperMixins` class, or the module-specific `[Module]OutputHelperMixins` class.
 ** In general, only concrete command implementations should declare references to `*OutputHelperMixins` classes, both in the `@Command` declaration and the `outputHelper` field. Defining an `outputHelper` field in an (abstract) superclass will result in any aliases defined on `*OutputHelperMixins` inner classes not being applied to the concrete command implementations.
-* `<SuperClass>` is usually `Abstract<Module>OutputCommand` or an entity-specific sub-class of `Abstract<Module>OutputCommand`. Indirectly, virtually all leaf commands should extend from either `AbstractBasicOutputCommand` (for commands that don't interact with remote systems) or `AbstractUnirestOutputCommand` (for commands that do interact with remote systems).
+* `<SuperClass>` is usually `Abstract<Module>OutputCommand` or one of its abstract subclasses. Most modules provide `Abstract<Module>JsonNodeOutputCommand` and `Abstract<Module>BaseRequestOutputCommand` as bases classes for commands that generate `JsonNode` or `HttpRequest` instances respectively. Indirectly, virtually all leaf commands should extend from  `AbstractOutputCommand`.
 * `<CommonInterfaces>` is a list of interfaces that define how output is being generated and processed. Following are some commonly used interfaces; see JavaDoc for details on usage:
-** `IUnirestBaseRequestSupplier`: Supply a Unirest `HttpRequest` instance for retrieving command output data.
-** `IUnirestJsonNodeSupplier`: Supply a `JsonNode` instance representing the command output.
-** `IUnirestWithSessionData*Supplier`: Same as above, but allowing access to session data.
+** `IBaseRequestSupplier`: Supply a Unirest `HttpRequest` instance for retrieving command output data.
+** `IJsonNodeSupplier`: Supply a `JsonNode` instance representing the command output.
 ** `IActionCommandResultSupplier`: Supply data for a result column to be included in the output, like `DELETED`, `CREATED`, ...
-** `IInputTransformer[Supplier]`: Allows for transforming the full JSON data before it is being processed for output.
-** `IRecordTransformer[Supplier]`: Allows for transforming individual records before they are being processed for output.
+** `IInputTransformer`: Allows for transforming the full JSON data before it is being processed for output.
+** `IRecordTransformer`: Allows for transforming individual records before they are being processed for output.
 
 Leaf commands in non-product modules usually have a similar structure, but some details may be different. Container commands, i.e. commands that represent `<module>` and `<entity>` have a very different (easier) structure as they don't have any actual functionality associated to them; please refer to existing fcli container commands to serve as an example.
 

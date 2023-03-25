@@ -24,30 +24,24 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
-import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.ssc.session.cli.mixin.SSCSessionLogoutOptions;
-import com.fortify.cli.ssc.session.manager.SSCSessionData;
-import com.fortify.cli.ssc.session.manager.SSCSessionDataManager;
-import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
+import com.fortify.cli.ssc.session.helper.SSCSessionDescriptor;
+import com.fortify.cli.ssc.session.helper.SSCSessionHelper;
 
-import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = BasicOutputHelperMixins.Logout.CMD_NAME, sortOptions = false)
-@FixInjection
-public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand<SSCSessionData> {
-    @Mixin @Getter private BasicOutputHelperMixins.Logout outputHelper;
-    @Setter(onMethod=@__({@Inject})) @Getter private SSCSessionDataManager sessionDataManager;
-    @Setter(onMethod=@__({@Inject})) private SSCTokenHelper tokenHelper;
+@Command(name = OutputHelperMixins.Logout.CMD_NAME, sortOptions = false)
+public class SSCSessionLogoutCommand extends AbstractSessionLogoutCommand<SSCSessionDescriptor> {
+    @Mixin @Getter private OutputHelperMixins.Logout outputHelper;
+    @Getter private SSCSessionHelper sessionHelper = SSCSessionHelper.instance();
     @Mixin private SSCSessionLogoutOptions logoutOptions;
     
     @Override
-    protected void logout(String sessionName, SSCSessionData sessionData) {
-        sessionData.logout(tokenHelper, logoutOptions.getUserCredentialOptions());
+    protected void logout(String sessionName, SSCSessionDescriptor sessionDescriptor) {
+        sessionDescriptor.logout(logoutOptions.getUserCredentialOptions());
     }
 }

@@ -1,8 +1,8 @@
 package com.fortify.cli.sc_sast._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.sc_sast.rest.cli.cmd.SCSastControllerRestCommands;
-import com.fortify.cli.sc_sast.scan.cli.cmd.SCSastScanCommands;
+import com.fortify.cli.sc_sast.entity.rest.cli.cmd.SCSastControllerRestCommands;
+import com.fortify.cli.sc_sast.entity.scan.cli.cmd.SCSastScanCommands;
 import com.fortify.cli.sc_sast.session.cli.cmd.SCSastSessionCommands;
 
 import picocli.CommandLine.Command;

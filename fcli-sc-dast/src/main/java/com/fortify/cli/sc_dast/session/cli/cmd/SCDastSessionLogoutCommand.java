@@ -24,30 +24,24 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLogoutCommand;
-import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.sc_dast.session.cli.mixin.SCDastSessionLogoutOptions;
-import com.fortify.cli.sc_dast.session.manager.SCDastSessionData;
-import com.fortify.cli.sc_dast.session.manager.SCDastSessionDataManager;
-import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
+import com.fortify.cli.sc_dast.session.helper.SCDastSessionDescriptor;
+import com.fortify.cli.sc_dast.session.helper.SCDastSessionHelper;
 
-import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = BasicOutputHelperMixins.Logout.CMD_NAME, sortOptions = false)
-@FixInjection
-public class SCDastSessionLogoutCommand extends AbstractSessionLogoutCommand<SCDastSessionData> {
-    @Mixin @Getter private BasicOutputHelperMixins.Logout outputHelper;
-    @Setter(onMethod=@__({@Inject})) @Getter private SCDastSessionDataManager sessionDataManager;
-    @Setter(onMethod=@__({@Inject})) private SSCTokenHelper tokenHelper;
+@Command(name = OutputHelperMixins.Logout.CMD_NAME, sortOptions = false)
+public class SCDastSessionLogoutCommand extends AbstractSessionLogoutCommand<SCDastSessionDescriptor> {
+    @Mixin @Getter private OutputHelperMixins.Logout outputHelper;
+    @Getter private SCDastSessionHelper sessionHelper = SCDastSessionHelper.instance();
     @Mixin private SCDastSessionLogoutOptions logoutOptions;
     
     @Override
-    protected void logout(String sessionName, SCDastSessionData sessionData) {
-        sessionData.logout(tokenHelper, logoutOptions.getUserCredentialOptions());
+    protected void logout(String sessionName, SCDastSessionDescriptor sessionDescriptor) {
+        sessionDescriptor.logout(logoutOptions.getUserCredentialOptions());
     }
 }

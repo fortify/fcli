@@ -24,39 +24,33 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.rest.runner.config.IUrlConfig;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.sc_dast.session.cli.mixin.SCDastSessionLoginOptions;
-import com.fortify.cli.sc_dast.session.manager.SCDastSessionData;
-import com.fortify.cli.sc_dast.session.manager.SCDastSessionDataManager;
-import com.fortify.cli.ssc.session.manager.ISSCCredentialsConfig;
-import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
+import com.fortify.cli.sc_dast.session.helper.SCDastSessionDescriptor;
+import com.fortify.cli.sc_dast.session.helper.SCDastSessionHelper;
+import com.fortify.cli.ssc.session.helper.ISSCCredentialsConfig;
 
-import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
-@FixInjection
-public class SCDastSessionLoginCommand extends AbstractSessionLoginCommand<SCDastSessionData> {
-    @Mixin @Getter private BasicOutputHelperMixins.Login outputHelper;
-    @Setter(onMethod=@__({@Inject})) @Getter private SCDastSessionDataManager sessionDataManager;
-    @Setter(onMethod=@__({@Inject})) private SSCTokenHelper tokenHelper;
+@Command(name = OutputHelperMixins.Login.CMD_NAME, sortOptions = false)
+public class SCDastSessionLoginCommand extends AbstractSessionLoginCommand<SCDastSessionDescriptor> {
+    @Mixin @Getter private OutputHelperMixins.Login outputHelper;
+    @Getter private SCDastSessionHelper sessionHelper = SCDastSessionHelper.instance();
     @Mixin private SCDastSessionLoginOptions sessionLoginOptions;
     
     @Override
-    protected void logoutBeforeNewLogin(String sessionName, SCDastSessionData sessionData) {
-        sessionData.logout(tokenHelper, sessionLoginOptions.getCredentialOptions().getUserCredentialsConfig());
+    protected void logoutBeforeNewLogin(String sessionName, SCDastSessionDescriptor sessionDescriptor) {
+        sessionDescriptor.logout(sessionLoginOptions.getCredentialOptions().getUserCredentialsConfig());
     }
     
     @Override
-    protected SCDastSessionData login(String sessionName) {
+    protected SCDastSessionDescriptor login(String sessionName) {
         IUrlConfig urlConfig = sessionLoginOptions.getUrlConfigOptions();
         ISSCCredentialsConfig credentialsConfig = sessionLoginOptions.getCredentialOptions();
-        return new SCDastSessionData(urlConfig, credentialsConfig, tokenHelper);
+        return new SCDastSessionDescriptor(urlConfig, credentialsConfig);
     }
 }

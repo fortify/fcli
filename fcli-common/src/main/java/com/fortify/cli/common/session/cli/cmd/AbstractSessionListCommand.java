@@ -25,11 +25,12 @@
 package com.fortify.cli.common.session.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.session.helper.ISessionDescriptor;
 
-public abstract class AbstractSessionListCommand extends AbstractSessionCommand {
+public abstract class AbstractSessionListCommand<D extends ISessionDescriptor> extends AbstractSessionCommand<D> {
     @Override
-    protected JsonNode getJsonNode() {
-    	return getSessionDataManager().sessionSummariesAsArrayNode();
+    public JsonNode getJsonNode() {
+    	return getSessionHelper().sessionSummariesAsArrayNode();
     }
     
     @Override

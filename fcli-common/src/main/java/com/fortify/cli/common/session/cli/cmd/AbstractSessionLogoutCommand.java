@@ -25,27 +25,26 @@
 package com.fortify.cli.common.session.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
-import com.fortify.cli.common.session.manager.api.ISessionData;
-import com.fortify.cli.common.session.manager.spi.ISessionDataManager;
+import com.fortify.cli.common.session.helper.ISessionDescriptor;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractSessionLogoutCommand<D extends ISessionData> extends AbstractSessionCommand implements IActionCommandResultSupplier {
+public abstract class AbstractSessionLogoutCommand<D extends ISessionDescriptor> extends AbstractSessionCommand<D> implements IActionCommandResultSupplier {
     @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
     
     @Override
-    protected JsonNode getJsonNode() {
+    public JsonNode getJsonNode() {
         String sessionName = sessionNameMixin.getSessionName();
         JsonNode result = null;
-        ISessionDataManager<D> sessionDataManager = getSessionDataManager();
-        if ( sessionDataManager.exists(sessionName) ) {
-        	result = sessionDataManager.sessionSummaryAsObjectNode(sessionName);
-            logout(sessionName, sessionDataManager.get(sessionName, true));
+        var sessionHelper = getSessionHelper();
+        if ( sessionHelper.exists(sessionName) ) {
+        	result = sessionHelper.sessionSummaryAsObjectNode(sessionName);
+            logout(sessionName, sessionHelper.get(sessionName, true));
             // TODO Optionally delete all variables
-            getSessionDataManager().destroy(sessionName);
+            getSessionHelper().destroy(sessionName);
         }
         return result;
     }
@@ -60,6 +59,5 @@ public abstract class AbstractSessionLogoutCommand<D extends ISessionData> exten
     	return false;
     }
     
-    protected abstract void logout(String sessionName, D sessionData);
-    protected abstract ISessionDataManager<D> getSessionDataManager();
+    protected abstract void logout(String sessionName, D sessionDescriptor);
 }

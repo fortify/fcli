@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.PropertyPathFormatter;
 import com.fortify.cli.common.output.transform.flatten.FlattenTransformer;
 import com.fortify.cli.common.util.StringUtils;

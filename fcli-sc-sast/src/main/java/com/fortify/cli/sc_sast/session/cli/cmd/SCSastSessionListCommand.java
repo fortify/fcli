@@ -24,20 +24,17 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionListCommand;
-import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.sc_sast.session.manager.SCSastSessionDataManager;
+import com.fortify.cli.sc_sast.session.helper.SCSastSessionDescriptor;
+import com.fortify.cli.sc_sast.session.helper.SCSastSessionHelper;
 
-import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = BasicOutputHelperMixins.List.CMD_NAME, sortOptions = false)
-@FixInjection
-public class SCSastSessionListCommand extends AbstractSessionListCommand {
-    @Getter @Mixin private BasicOutputHelperMixins.List outputHelper;
-    @Setter(onMethod=@__({@Inject})) @Getter private SCSastSessionDataManager sessionDataManager;
+@Command(name = OutputHelperMixins.List.CMD_NAME, sortOptions = false)
+public class SCSastSessionListCommand extends AbstractSessionListCommand<SCSastSessionDescriptor> {
+    @Getter @Mixin private OutputHelperMixins.List outputHelper;
+    @Getter private SCSastSessionHelper sessionHelper = SCSastSessionHelper.instance();
 }

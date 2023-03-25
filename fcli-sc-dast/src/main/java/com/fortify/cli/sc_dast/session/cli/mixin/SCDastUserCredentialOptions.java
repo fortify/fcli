@@ -29,7 +29,7 @@ import java.time.OffsetDateTime;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.sc_dast.util.SCDastConstants;
-import com.fortify.cli.ssc.session.manager.ISSCUserCredentialsConfig;
+import com.fortify.cli.ssc.session.helper.ISSCUserCredentialsConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Help.Visibility;

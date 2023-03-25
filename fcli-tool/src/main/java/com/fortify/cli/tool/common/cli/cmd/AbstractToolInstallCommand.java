@@ -19,11 +19,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.rest.runner.GenericUnirestRunner;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.util.FcliHomeHelper;
-import com.fortify.cli.common.util.FixInjection;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool.common.helper.ToolHelper;
 import com.fortify.cli.tool.common.helper.ToolVersionCombinedDescriptor;
@@ -31,17 +31,14 @@ import com.fortify.cli.tool.common.helper.ToolVersionDownloadDescriptor;
 import com.fortify.cli.tool.common.helper.ToolVersionInstallDescriptor;
 import com.fortify.cli.tool.common.util.FileUtils;
 
-import jakarta.inject.Inject;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@FixInjection
-public abstract class AbstractToolInstallCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
+public abstract class AbstractToolInstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractToolInstallCommand.class);
     private static final Set<PosixFilePermission> binPermissions = PosixFilePermissions.fromString("rwxr-xr-x");
     @Getter @Parameters(index="0", arity="0..1", descriptionKey="fcli.tool.install.version", defaultValue = "default") 
@@ -51,14 +48,13 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Getter @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
     private DigestMismatchAction onDigestMismatch;
-    @Setter(onMethod=@__({@Inject})) private GenericUnirestRunner unirestRunner; 
     
     private static enum DigestMismatchAction {
         fail, warn
     }
     
     @Override
-    protected final JsonNode getJsonNode() {
+    public final JsonNode getJsonNode() {
         String toolName = getToolName();
         ToolVersionDownloadDescriptor descriptor = ToolHelper.getToolDownloadDescriptor(toolName).getVersionOrDefault(version);
         return downloadAndInstall(toolName, descriptor);
@@ -93,11 +89,12 @@ public abstract class AbstractToolInstallCommand extends AbstractBasicOutputComm
     private final File download(ToolVersionDownloadDescriptor descriptor) throws IOException {
         File tempDownloadFile = File.createTempFile("fcli-tool-download", null);
         tempDownloadFile.deleteOnExit();
-        unirestRunner.run(u->download(u, descriptor.getDownloadUrl(), tempDownloadFile));
+        download(descriptor.getDownloadUrl(), tempDownloadFile);
         return tempDownloadFile;
     }
     
-    private final Void download(UnirestInstance unirest, String downloadUrl, File destFile) {
+    private final Void download(String downloadUrl, File destFile) {
+        UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance("tool");
         ProxyHelper.configureProxy(unirest, "tool", downloadUrl);
         unirest.get(downloadUrl).asFile(destFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
         return null;

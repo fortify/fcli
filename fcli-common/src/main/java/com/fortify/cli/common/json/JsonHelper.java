@@ -52,6 +52,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fortify.cli.common.spring.expression.SpELHelper;
 import com.fortify.cli.common.spring.expression.StandardSpELFunctions;
 import com.fortify.cli.common.util.StringUtils;
@@ -75,6 +76,7 @@ public class JsonHelper {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
         objectMapper.configure(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS, true);
+        objectMapper.registerModule(new JavaTimeModule());
         return objectMapper;
     }
     
@@ -136,6 +138,17 @@ public class JsonHelper {
             return treeToValue(objectMapper.readTree(jsonString), returnType);
         } catch (JsonProcessingException jpe) {
             throw new RuntimeException("Error processing JSON data", jpe);
+        }
+    }
+    
+    public static final void stripNulls(JsonNode node) {
+        Iterator<JsonNode> it = node.iterator();
+        while (it.hasNext()) {
+            JsonNode child = it.next();
+            if (child.isNull())
+                it.remove();
+            else
+                stripNulls(child);
         }
     }
     

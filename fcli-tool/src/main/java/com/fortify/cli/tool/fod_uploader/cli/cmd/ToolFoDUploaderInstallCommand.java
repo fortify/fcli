@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool.common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool.common.helper.ToolHelper;
 import com.fortify.cli.tool.common.helper.ToolVersionInstallDescriptor;
@@ -14,9 +14,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = BasicOutputHelperMixins.Install.CMD_NAME)
+@Command(name = OutputHelperMixins.Install.CMD_NAME)
 public class ToolFoDUploaderInstallCommand extends AbstractToolInstallCommand {
-    @Getter @Mixin private BasicOutputHelperMixins.Install outputHelper;
+    @Getter @Mixin private OutputHelperMixins.Install outputHelper;
     @Getter private String toolName = ToolFoDUploaderCommands.TOOL_NAME;
     
     @Override

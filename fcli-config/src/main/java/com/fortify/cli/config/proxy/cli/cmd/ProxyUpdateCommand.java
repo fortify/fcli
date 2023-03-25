@@ -1,13 +1,12 @@
 package com.fortify.cli.config.proxy.cli.cmd;
 
-import java.util.function.UnaryOperator;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.config.proxy.cli.mixin.ProxyUpdateOptions;
 import com.fortify.cli.config.proxy.helper.ProxyOutputHelper;
 
@@ -15,13 +14,13 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name=BasicOutputHelperMixins.Update.CMD_NAME)
-public class ProxyUpdateCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier, IRecordTransformerSupplier {
-    @Mixin @Getter private BasicOutputHelperMixins.Update outputHelper;
+@Command(name=OutputHelperMixins.Update.CMD_NAME)
+public class ProxyUpdateCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier, IRecordTransformer {
+    @Mixin @Getter private OutputHelperMixins.Update outputHelper;
     @Mixin private ProxyUpdateOptions proxyUpdateOptions;
     
     @Override
-    protected JsonNode getJsonNode() {
+    public JsonNode getJsonNode() {
         return ProxyHelper.updateProxy(proxyUpdateOptions.asProxyDescriptor()).asJsonNode();
     }
     
@@ -36,7 +35,7 @@ public class ProxyUpdateCommand extends AbstractBasicOutputCommand implements IA
     }
     
     @Override
-    public UnaryOperator<JsonNode> getRecordTransformer() {
-        return ProxyOutputHelper::transformRecord;
+    public JsonNode transformRecord(JsonNode input) {
+        return ProxyOutputHelper.transformRecord(input);
     }
 }

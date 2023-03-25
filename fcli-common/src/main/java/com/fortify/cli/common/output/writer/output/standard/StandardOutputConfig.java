@@ -32,14 +32,14 @@ import java.util.function.UnaryOperator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.output.cli.mixin.UnirestOutputHelperMixins;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 /**
- * TODO Move this class to the writer.output package once all commands have been refactored to use {@link UnirestOutputHelperMixins}.
+ * TODO Move this class to the writer.output package once all commands have been refactored to use {@link OutputHelperMixins}.
  * @author rsenden
  *
  */

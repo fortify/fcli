@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.sc_sast.session.cli.mixin;
 
-import com.fortify.cli.common.rest.runner.config.IUrlConfig;
+import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;

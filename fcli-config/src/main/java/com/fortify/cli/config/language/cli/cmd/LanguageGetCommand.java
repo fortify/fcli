@@ -2,19 +2,20 @@ package com.fortify.cli.config.language.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.i18n.helper.LanguageHelper;
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = BasicOutputHelperMixins.Get.CMD_NAME)
-public class LanguageGetCommand extends AbstractBasicOutputCommand {
-    @Mixin @Getter private BasicOutputHelperMixins.Get outputHelper;
+@Command(name = OutputHelperMixins.Get.CMD_NAME)
+public class LanguageGetCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
+    @Mixin @Getter private OutputHelperMixins.Get outputHelper;
     
     @Override
-    protected JsonNode getJsonNode() {
+    public JsonNode getJsonNode() {
         return LanguageHelper.getConfiguredLanguageDescriptor().asObjectNode();
     }
     

@@ -1,22 +1,24 @@
 package com.fortify.cli.sc_sast.output.cli.cmd;
 
-import java.util.function.Function;
-
-import com.fortify.cli.common.output.cli.cmd.unirest.AbstractUnirestOutputCommand;
-import com.fortify.cli.sc_sast.rest.cli.mixin.SCSastControllerUnirestRunnerMixin;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.product.IProductHelperSupplier;
+import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
+import com.fortify.cli.sc_sast.output.cli.mixin.SCSastControllerProductHelperMixin;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractSCSastControllerOutputCommand extends AbstractUnirestOutputCommand {
-    @Getter @Mixin SCSastControllerUnirestRunnerMixin unirestRunner;
+public abstract class AbstractSCSastControllerOutputCommand extends AbstractOutputCommand 
+    implements IProductHelperSupplier, IUnirestInstanceSupplier
+{
+    @Getter @Mixin SCSastControllerProductHelperMixin productHelper;
     
-    public final <R> R runOnSSC(Function<UnirestInstance, R> f) {
-        return unirestRunner.runOnSSC(f);
+    public final UnirestInstance getUnirestInstance() {
+        return productHelper.getUnirestInstance();
     }
     
-    public final <R> R runOnController(Function<UnirestInstance, R> f) {
-        return unirestRunner.runOnController(f);
+    protected final UnirestInstance getSscUnirestInstance() {
+        return productHelper.getSscUnirestInstance();
     }
 }

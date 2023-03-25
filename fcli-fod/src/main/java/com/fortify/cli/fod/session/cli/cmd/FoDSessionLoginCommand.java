@@ -24,50 +24,43 @@
  ******************************************************************************/
 package com.fortify.cli.fod.session.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.rest.runner.GenericUnirestRunner;
-import com.fortify.cli.common.rest.runner.config.IUrlConfig;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.cli.cmd.AbstractSessionLoginCommand;
-import com.fortify.cli.common.util.FixInjection;
-import com.fortify.cli.fod.oauth.helper.FoDOAuthHelper;
-import com.fortify.cli.fod.oauth.helper.FoDTokenCreateResponse;
 import com.fortify.cli.fod.session.cli.mixin.FoDSessionLoginOptions;
-import com.fortify.cli.fod.session.manager.FoDSessionData;
-import com.fortify.cli.fod.session.manager.FoDSessionDataManager;
+import com.fortify.cli.fod.session.helper.FoDSessionDescriptor;
+import com.fortify.cli.fod.session.helper.FoDSessionHelper;
+import com.fortify.cli.fod.session.helper.oauth.FoDOAuthHelper;
+import com.fortify.cli.fod.session.helper.oauth.FoDTokenCreateResponse;
 
-import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = BasicOutputHelperMixins.Login.CMD_NAME, sortOptions = false)
-@FixInjection
-public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionData> {
-    @Getter @Mixin private BasicOutputHelperMixins.Login outputHelper;
-    @Setter(onMethod=@__({@Inject})) @Getter private FoDSessionDataManager sessionDataManager;
-    @Setter(onMethod=@__({@Inject})) @Getter private FoDOAuthHelper oauthHelper;
-    @Setter(onMethod=@__({@Inject})) private GenericUnirestRunner unirestRunner;
+@Command(name = OutputHelperMixins.Login.CMD_NAME, sortOptions = false)
+public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessionDescriptor> {
+    @Getter @Mixin private OutputHelperMixins.Login outputHelper;
+    @Getter private FoDSessionHelper sessionHelper = FoDSessionHelper.instance();
     @Mixin private FoDSessionLoginOptions loginOptions;
     
     @Override
-    protected void logoutBeforeNewLogin(String sessionName, FoDSessionData sessionData) {
+    protected void logoutBeforeNewLogin(String sessionName, FoDSessionDescriptor sessionDescriptor) {
         // TODO Can we revoke a previously generated FoD token?
     }
 
     @Override
-    protected FoDSessionData login(String sessionName) {
-        FoDSessionData sessionData;
+    protected FoDSessionDescriptor login(String sessionName) {
+        FoDSessionDescriptor sessionDescriptor;
         IUrlConfig urlConfig = loginOptions.getUrlConfigOptions();
         if ( loginOptions.hasClientCredentials() ) {
-            FoDTokenCreateResponse createTokenResponse = oauthHelper.createToken(urlConfig, loginOptions.getClientCredentialOptions(), loginOptions.getScopes());
-            sessionData = new FoDSessionData(urlConfig, createTokenResponse);
+            FoDTokenCreateResponse createTokenResponse = FoDOAuthHelper.createToken(urlConfig, loginOptions.getClientCredentialOptions(), loginOptions.getScopes());
+            sessionDescriptor = new FoDSessionDescriptor(urlConfig, createTokenResponse);
         } else if ( loginOptions.hasUserCredentialsConfig() ) {
-            FoDTokenCreateResponse createTokenResponse = oauthHelper.createToken(urlConfig, loginOptions.getUserCredentialOptions(), loginOptions.getScopes());
-            sessionData = new FoDSessionData(urlConfig, createTokenResponse);
+            FoDTokenCreateResponse createTokenResponse = FoDOAuthHelper.createToken(urlConfig, loginOptions.getUserCredentialOptions(), loginOptions.getScopes());
+            sessionDescriptor = new FoDSessionDescriptor(urlConfig, createTokenResponse);
         } else {
             throw new IllegalArgumentException("Either FoD client or user credentials must be provided");
         }
-        return sessionData;
+        return sessionDescriptor;
     }
 }

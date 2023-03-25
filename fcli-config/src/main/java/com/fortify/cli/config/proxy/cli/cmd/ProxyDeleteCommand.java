@@ -1,13 +1,12 @@
 package com.fortify.cli.config.proxy.cli.cmd;
 
-import java.util.function.UnaryOperator;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.config.proxy.helper.ProxyOutputHelper;
 
 import lombok.Getter;
@@ -15,14 +14,14 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
-@Command(name=BasicOutputHelperMixins.Delete.CMD_NAME)
-public class ProxyDeleteCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier, IRecordTransformerSupplier {
-    @Mixin @Getter private BasicOutputHelperMixins.Delete outputHelper;
+@Command(name=OutputHelperMixins.Delete.CMD_NAME)
+public class ProxyDeleteCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier, IRecordTransformer {
+    @Mixin @Getter private OutputHelperMixins.Delete outputHelper;
     @Parameters(arity="1", descriptionKey = "fcli.config.proxy.delete.name", paramLabel = "NAME")
     private String name;
     
     @Override
-    protected JsonNode getJsonNode() {
+    public JsonNode getJsonNode() {
         return ProxyHelper.deleteProxy(ProxyHelper.getProxy(name)).asJsonNode();
     }
     
@@ -37,7 +36,7 @@ public class ProxyDeleteCommand extends AbstractBasicOutputCommand implements IA
     }
     
     @Override
-    public UnaryOperator<JsonNode> getRecordTransformer() {
-        return ProxyOutputHelper::transformRecord;
+    public JsonNode transformRecord(JsonNode input) {
+        return ProxyOutputHelper.transformRecord(input);
     }
 }

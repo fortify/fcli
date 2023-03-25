@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.fortify.cli.common.output.cli.mixin.spi.unirest.IUnirestOutputHelper;
+import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.query.QueryExpression;
 
 import kong.unirest.HttpRequest;
@@ -50,7 +50,7 @@ public final class FoDFilterParamGenerator {
         return this;
     }
 
-    public HttpRequest<?> addFilterParam(IUnirestOutputHelper outputHelper, HttpRequest<?> request) {
+    public HttpRequest<?> addFilterParam(IOutputHelper outputHelper, HttpRequest<?> request) {
         //return addFilterParam(request, new OutputQueryHelper(outputHelper).getOutputQueries());
         return request;
     }

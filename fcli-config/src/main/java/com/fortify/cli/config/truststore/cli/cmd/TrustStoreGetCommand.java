@@ -1,24 +1,23 @@
 package com.fortify.cli.config.truststore.cli.cmd;
 
-import java.util.function.UnaryOperator;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.output.spi.transform.IRecordTransformerSupplier;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.config.truststore.helper.TrustStoreOutputHelper;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name=BasicOutputHelperMixins.Get.CMD_NAME)
-public class TrustStoreGetCommand extends AbstractBasicOutputCommand implements IRecordTransformerSupplier {
-    @Mixin @Getter private BasicOutputHelperMixins.Get outputHelper;
+@Command(name=OutputHelperMixins.Get.CMD_NAME)
+public class TrustStoreGetCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IRecordTransformer {
+    @Mixin @Getter private OutputHelperMixins.Get outputHelper;
     
     @Override
-    protected JsonNode getJsonNode() {
+    public JsonNode getJsonNode() {
     	return TrustStoreConfigHelper.getTrustStoreConfig().asJsonNode();
     }
     
@@ -28,7 +27,7 @@ public class TrustStoreGetCommand extends AbstractBasicOutputCommand implements 
     }
     
     @Override
-    public UnaryOperator<JsonNode> getRecordTransformer() {
-        return TrustStoreOutputHelper::transformRecord;
+    public JsonNode transformRecord(JsonNode input) {
+        return TrustStoreOutputHelper.transformRecord(input);
     }
 }

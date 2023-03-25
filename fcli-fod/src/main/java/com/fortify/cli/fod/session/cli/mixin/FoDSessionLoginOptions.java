@@ -4,8 +4,8 @@ import java.util.Optional;
 
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
-import com.fortify.cli.fod.oauth.helper.IFoDClientCredentials;
-import com.fortify.cli.fod.oauth.helper.IFoDUserCredentials;
+import com.fortify.cli.fod.session.helper.oauth.IFoDClientCredentials;
+import com.fortify.cli.fod.session.helper.oauth.IFoDUserCredentials;
 
 import io.micronaut.core.util.StringUtils;
 import lombok.Getter;

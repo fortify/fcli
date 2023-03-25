@@ -24,7 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.session.cli.mixin;
 
-import com.fortify.cli.common.rest.runner.config.IUserCredentialsConfig;
+import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;

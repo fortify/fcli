@@ -6,9 +6,9 @@ import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
-import com.fortify.cli.ssc.session.manager.ISSCCredentialsConfig;
-import com.fortify.cli.ssc.session.manager.ISSCUserCredentialsConfig;
-import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
+import com.fortify.cli.ssc.entity.token.helper.SSCTokenConverter;
+import com.fortify.cli.ssc.session.helper.ISSCCredentialsConfig;
+import com.fortify.cli.ssc.session.helper.ISSCUserCredentialsConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;

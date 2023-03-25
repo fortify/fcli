@@ -25,19 +25,20 @@
 package com.fortify.cli.state.variable.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.variable.FcliVariableHelper;
-import com.fortify.cli.state.variable.cli.mixin.VariableOutputHelperMixins;
 import com.fortify.cli.state.variable.cli.mixin.VariableResolverMixin;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = VariableOutputHelperMixins.Delete.CMD_NAME)
-public class VariableDeleteCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private VariableOutputHelperMixins.Delete outputHelper;
+@Command(name = OutputHelperMixins.Delete.CMD_NAME)
+public class VariableDeleteCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
     @Mixin private VariableResolverMixin.PositionalParameter variableResolver;
 
     @Override

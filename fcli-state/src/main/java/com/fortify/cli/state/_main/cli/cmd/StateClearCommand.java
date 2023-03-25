@@ -11,9 +11,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.cli.mixin.BasicOutputHelperMixins;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.FcliHomeHelper;
 
 import lombok.Getter;
@@ -21,14 +22,14 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 // TODO Remove code duplication between this class and ConfigClearCommand
-@Command(name = BasicOutputHelperMixins.Clear.CMD_NAME)
-public class StateClearCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
+@Command(name = OutputHelperMixins.DeleteAll.CMD_NAME)
+public class StateClearCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
-    @Getter @Mixin private BasicOutputHelperMixins.Clear outputHelper;
+    @Getter @Mixin private OutputHelperMixins.DeleteAll outputHelper;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     
     @Override
-    protected JsonNode getJsonNode() {
+    public JsonNode getJsonNode() {
         requireConfirmation.checkConfirmed();
         ArrayNode result = objectMapper.createArrayNode();
         try {

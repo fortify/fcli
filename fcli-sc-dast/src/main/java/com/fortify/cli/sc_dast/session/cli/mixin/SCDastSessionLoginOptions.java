@@ -1,7 +1,7 @@
 package com.fortify.cli.sc_dast.session.cli.mixin;
 
-import com.fortify.cli.ssc.session.manager.ISSCCredentialsConfig;
-import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
+import com.fortify.cli.ssc.entity.token.helper.SSCTokenConverter;
+import com.fortify.cli.ssc.session.helper.ISSCCredentialsConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;

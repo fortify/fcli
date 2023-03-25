@@ -6,8 +6,9 @@ import java.nio.file.Path;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
-import com.fortify.cli.common.output.cli.cmd.basic.AbstractBasicOutputCommand;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.tool.common.helper.ToolHelper;
 import com.fortify.cli.tool.common.helper.ToolVersionCombinedDescriptor;
 import com.fortify.cli.tool.common.util.FileUtils;
@@ -16,13 +17,13 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
-public abstract class AbstractToolUninstallCommand extends AbstractBasicOutputCommand implements IActionCommandResultSupplier {
+public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Parameters(index="0", arity="1", descriptionKey="fcli.tool.uninstall.version") 
     private String version;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     
     @Override
-    protected final JsonNode getJsonNode() {
+    public final JsonNode getJsonNode() {
         String toolName = getToolName();
         ToolVersionCombinedDescriptor descriptor = ToolHelper.loadToolVersionCombinedDescriptor(toolName, version);
         if ( descriptor==null ) {

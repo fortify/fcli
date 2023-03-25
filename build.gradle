@@ -94,6 +94,8 @@ allprojects {
         implementation('org.springframework:spring-expression:6.0.7')
         // Support for handling Jackson JsonNode objects with SpEL 
         implementation('org.springframework.integration:spring-integration-core:6.0.3')
+        // Remove annotation processor warning
+        compileOnly('com.google.code.findbugs:jsr305:3.0.2')
 
         // for yaml support and generating trees/tables
         implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.2')

@@ -24,20 +24,22 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.writer.StandardOutputWriterFactoryMixin;
-import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
+import com.fortify.cli.common.output.product.IProductHelperSupplier;
+import com.fortify.cli.common.output.transform.IInputTransformer;
+import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-public abstract class AbstractRestCallCommand extends AbstractUnirestRunnerCommand {
-    public static final String CMD_NAME = "call"; 
-    @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+public abstract class AbstractRestCallCommand extends AbstractOutputCommand implements IBaseRequestSupplier, IProductHelperSupplier, IInputTransformer, IRecordTransformer {
     @Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
     
     @Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
@@ -46,13 +48,42 @@ public abstract class AbstractRestCallCommand extends AbstractUnirestRunnerComma
     @Option(names = {"--data", "-d"}, required = false)
     @Getter private String data; // TODO Add ability to read data from file
     
+    @Option(names="--no-transform-input", negatable = true, defaultValue = "false") 
+    private boolean noTransformInput;
+    
+    @Option(names="--no-transform-records", negatable = true, defaultValue = "false") 
+    private boolean noTransformRecords;
+    
     // TODO Add options for content-type, arbitrary headers, ...?
     
     @Override
-    protected final Void run(UnirestInstance unirest) {
-        outputWriterFactory.createOutputWriter(StandardOutputConfig.json())
-            .write(prepareRequest(unirest));
-        return null;
+    public HttpRequest<?> getBaseRequest() {
+        if ( getProductHelper() instanceof IUnirestInstanceSupplier ) {
+            UnirestInstance unirest = ((IUnirestInstanceSupplier)getProductHelper()).getUnirestInstance();
+            return prepareRequest(unirest);
+        }
+        throw new RuntimeException("Class doesn't implement IUnirestInstanceSupplier: "+getProductHelper().getClass().getName());
+    }
+    
+    @Override
+    public boolean isSingular() {
+        return false;
+    }
+    
+    @Override
+    public JsonNode transformInput(JsonNode input) {
+        if ( !noTransformInput && getProductHelper() instanceof IInputTransformer ) {
+            input = ((IInputTransformer)getProductHelper()).transformInput(input);
+        }
+        return input;
+    }
+    
+    @Override
+    public JsonNode transformRecord(JsonNode input) {
+        if ( !noTransformRecords && getProductHelper() instanceof IRecordTransformer ) {
+            input = ((IRecordTransformer)getProductHelper()).transformRecord(input);
+        }
+        return input;
     }
     
     protected final HttpRequest<?> prepareRequest(UnirestInstance unirest) {

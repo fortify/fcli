@@ -39,8 +39,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressHelper;
 import com.fortify.cli.common.progress.helper.ProgressHelperFactory;
+import com.fortify.cli.fod.entity.scan.helper.FoDImportScanSessionDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.scan.helper.FoDImportScanSessionDescriptor;
 import com.fortify.cli.fod.util.FoDConstants;
 
 import kong.unirest.GetRequest;

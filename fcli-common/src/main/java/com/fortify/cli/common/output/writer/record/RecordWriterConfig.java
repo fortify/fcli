@@ -27,7 +27,7 @@ package com.fortify.cli.common.output.writer.record;
 import java.io.Writer;
 
 import com.fortify.cli.common.output.OutputFormat;
-import com.fortify.cli.common.output.spi.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 
 import lombok.Builder;
