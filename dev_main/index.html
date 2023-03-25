@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230317.165523-dev_main
+fcli_version: 0.20230325.011338-dev_main
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20230317.165523-dev_main
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230317.165523-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230325.011338-dev_main" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230317.165523-dev_main</span>
+<span id="revnumber">version 0.20230325.011338-dev_main</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -40,6 +40,7 @@ fcli_version: 0.20230317.165523-dev_main
 <li><a href="#_store">–store</a></li>
 <li><a href="#_q_query">-q | –query</a></li>
 <li><a href="#_session">–session</a></li>
+<li><a href="#_option_expressions">Option Expressions</a></li>
 </ul>
 </li>
 <li><a href="#_session_management">Session Management</a>
@@ -311,22 +312,22 @@ JSON properties, except for table output, which usually outputs a predefined set
 <div class="ulist">
 <ul>
 <li>
-<p><code>-o 'expr=Text with {property1} or {property2}\n'</code> Formats the output data based on the given expression, which is a combination of (optional) plain text and JSON property placeholders. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after
-evaluating the given expression. If necessary, the expression should explicitly include <code>\n</code> to output a newline character. To demonstrate the power of this output format, following are two examples of how <code>-o expr</code> can be used to generate a script that purges all application versions matching certain criteria:</p>
+<p><code>-o 'expr=Text with {expression1} or {expression2}\n'</code><br>
+Formats the output data based on the given template expression, which is a combination of (optional) plain text and SpEL expressions; see <a href="#_option_expressions">Option Expressions</a> for details. In most cases, expressions will be simple property references, i.e., <code>{property.subProperty}</code>. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after evaluating the given expression. If necessary, the expression should explicitly include <code>\n</code> to output a newline character. To demonstrate the power of this output format, following are two examples of how <code>-o expr</code> can be used to generate a script that purges all application versions matching certain criteria:</p>
 <div class="ulist">
 <ul>
 <li>
-<p><code>fcli ssc appversion list -q createdBy=admin -o 'expr=fcli ssc appversion-artifact purge --older-than 30d --appversion {id}\n'</code></p>
+<p><code>fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr=fcli ssc appversion-artifact purge --older-than 30d --appversion {id}\n'</code></p>
 </li>
 <li>
-<p><code>for id in $(fcli ssc appversion list -q createdBy=admin -o 'expr=\{id}'); do echo "fcli ssc appversion-artifact purge –older-than 30d –appversion $\{id}'; done</code></p>
+<p><code>for id in $(fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr={id} '); do echo "fcli ssc appversion-artifact purge –older-than 30d –appversion ${id}'"; done</code></p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p><code>-o json-properties</code> List all JSON properties returned by the current command, which can be used
-on options that take JSON properties as input, like output expressions (<code>-o expr={prop}</code>), properties to include in the output (<code>-o table=prop1,prop2</code>), queries (<code>-q prop1=value1</code>), and fcli variables (<code>--store var:prop1,prop2</code> &amp; <code>::var::prop1}</code>). Two important notes about this output format:</p>
+<p><code>-o json-properties</code><br>
+List all JSON properties returned by the current command, which can be used on options that take JSON properties as input, like output expressions (<code>-o expr={prop}</code>), properties to include in the output (<code>-o table=prop1,prop2</code>), queries (<code>-q 'prop1=="value1"'</code>), and fcli variables (<code>--store var:prop1,prop2</code> &amp; <code>::var::prop1}</code>). Two important notes about this output format:</p>
 <div class="ulist">
 <ul>
 <li>
@@ -357,13 +358,106 @@ that changes state (delete/update/create/…). In most cases, the <code>get</cod
 <div class="sect2">
 <h3 id="_q_query"><a class="anchor" href="#_q_query"></a>-q | –query</h3>
 <div class="paragraph">
-<p>Available on most <code>list</code> commands and some other commands, this option allows for querying the output data, outputting only records that match the given query or queries. For now, only equals-based matching is supported; future fcli versions may provide additional matching options. General format is <code>-q &lt;json-property&gt;=&lt;value&gt;</code>; the list of JSON properties available for matching can be found by executing the same command with the <code>-o json-properties</code> option; see <a href="#-o--output">-o | –output</a> for details.</p>
+<p>Available on most <code>list</code> commands and some other commands, this option allows for querying the output data, outputting only records that match the given Spring Expression Language (SpEL) expression. See the <a href="#_option_expressions">Option Expressions</a> section for details.</p>
+</div>
+<div class="paragraph">
+<p>Expressions are evaluated on individual records; record properties can be accessed as shown in the SpEL documentation. The list of properties that can be queried can be obtained by executing the current command with the <code>-o json-properties</code> option; see <a href="#-o--output">-o | –output</a> for details.</p>
+</div>
+<div class="paragraph">
+<p>Following are some examples using bash syntax, assuming the record contains <code>p1</code>, <code>p2</code>, &#8230;&#8203; properties:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>-q 'p1=="v1"'</code><br>
+Only output records if the value of property <code>p1</code> equals <code>v1</code></p>
+</li>
+<li>
+<p><code>-q 'p1=="v1" || p1=="v2"'</code><br>
+Only output records if the value of property <code>p1</code> equals either <code>v1</code> or <code>v2</code></p>
+</li>
+<li>
+<p><code>-q '{"v1","v2"}.contains(p1)'</code><br>
+Same as previous, but more concise if matching against many different values</p>
+</li>
+<li>
+<p><code>-q 'name matches "val1|val2"'</code><br>
+Similar as above, but using regex-based OR matching</p>
+</li>
+<li>
+<p><code>-q 'p2==25 || p2&lt;5'</code><br>
+Only output records if the value of property <code>p2</code> either equals 25 or is less than 5</p>
+</li>
+<li>
+<p><code>-q 'p1=="v1" &amp;&amp; (p2=="v2" || p3=="v2")'</code><br>
+Only output records if the value of property <code>p1</code> equals <code>v1</code> and the value of either property <code>p2</code> or <code>p3</code> is <code>v2</code></p>
+</li>
+<li>
+<p><code>fcli ssc appversion-artifact list --appversion MyApp:main -q 'scanTypes matches "\bSCA\b"'</code><br>
+Only output artifacts containing a Fortify SCA scan (matching the whole word <code>SCA</code> against <code>scanTypes</code> property)</p>
+</li>
+<li>
+<p><code>fcli ssc appversion-artifact list --appversion MyApp:main -q '_embed.scans.![buildLabel].contains("myLabel")'</code><br>
+Only output artifacts for which any of the scans included in the artifact has a <code>buildLabel</code> that equals <code>myLabel</code></p>
+</li>
+<li>
+<p><code>fcli ssc appversion-artifact list --appversion MyApp:main -q '#now("-90d") &lt; #date(uploadDate)'</code><br>
+Only output artifacts that were uploaded less than 90 days ago.</p>
+</li>
+</ul>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_session"><a class="anchor" href="#_session"></a>–session</h3>
 <div class="paragraph">
 <p>Available on virtually all commands that interact with a target system, this option allows for specifying a session name. For more details, see the <a href="#_session_management">Session Management</a> section.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_option_expressions"><a class="anchor" href="#_option_expressions"></a>Option Expressions</h3>
+<div class="paragraph">
+<p>Various fcli options take either plain expressions, like <a href="#-o--output">-o | –output expr=&#8230;&#8203;</a>, or template expressions (plain text combined with expressions embedded between curly braces), like <a href="#-q--query">-q | --query</a>. These expressions use Spring Expression Language (SpEL); general information on syntax, supported operators and more can be found in the <a href="https://docs.spring.io/spring-framework/docs/6.0.x/reference/html/core.html#expressions">SpEL Documentation</a>.</p>
+</div>
+<div class="paragraph">
+<p>When evaluating expressions, fcli configures SpEL for 'data binding and condition evaluation', meaning that not all SpEL features are available. In particular, query expressions cannot invoke constructors nor static methods, and write access is mostly disabled.</p>
+</div>
+<div class="paragraph">
+<p>Fcli provides some utility functions that may be used in expressions. Note that these functions calls are preceded by a <code>#</code> character.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>#date(string)</code>: Convert the given date/time in string format to a proper date/time representation, allowing for date/time-based comparison operations. This can be used on property references or literal strings.</p>
+</li>
+<li>
+<p><code>#now()</code>: Get the current date/time, allowing for date/time-based comparison operations.</p>
+</li>
+<li>
+<p><code>#now(period)</code>: Get the current date/time plus or minus the given period. The given period must start with either a <code>+</code> or <code>-</code>, followed by a number and the time unit. Some examples: <code>-90d</code> (now minus 90 days), <code>+15m</code> (now plus 15 minutes) and <code>-90s</code> (now minus 90 seconds).</p>
+</li>
+<li>
+<p><code>#var(name)</code>: Get fcli variable contents; variable properties can be accessed as usual, i.e. <code>#var("myVar")?.rootProp?.subProp</code>.</p>
+</li>
+<li>
+<p><code>#env(name)</code>: Get the value of an environment variable.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>SpEL expressions may contain various characters that will be interpreted by some shells, like the <code>#</code> character for calling functions, and either single or double quotes around literal string values. As such, with most shells you should enclose the full expression in single or double quotes, and use the other quotes in the expression, for example:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>-q '... "literal SpEL string" ...'</code> (single quotes for shell, double quotes for SpEL literals)</p>
+</li>
+<li>
+<p><code>-q "... 'literal SpEL string' ..."</code> (double quotes for shell, single quotes for SpEL literals)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Which one to choose depends on any other characters appearing in the expression. For example, in <code>bash</code> you&#8217;d usually use single quotes to have everything in-between passed to fcli as-is, unless you want to use specific shell features inside the expression. Note that you can use the <code>#env</code> function to retrieve environment variable contents, so you don&#8217;t need to use shell syntax to insert environment variable contents into expressions.</p>
 </div>
 </div>
 </div>
@@ -685,8 +779,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230317.165523-dev_main<br>
-Last updated 2023-03-17 16:57:15 UTC
+Version 0.20230325.011338-dev_main<br>
+Last updated 2023-03-25 01:15:21 UTC
 </div>
 </div>
 </body>

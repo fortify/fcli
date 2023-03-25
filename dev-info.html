@@ -745,10 +745,9 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">@ReflectiveAccess // RefelctiveAccess is probably optional, but doesn't hurt
-@Command(name = &lt;Module&gt;OutputHelperMixins.&lt;Action&gt;.CMD_NAME)
+<pre class="highlight"><code class="language-java" data-lang="java">@Command(name = [Module]OutputHelperMixins.&lt;Action&gt;.CMD_NAME)
 public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;SuperClass&gt; implements &lt;CommonInterfaces&gt; {
-    @Getter @Mixin private &lt;Module&gt;OutputHelperMixins.&lt;Action&gt; outputHelper;
+    @Getter @Mixin private [Module]OutputHelperMixins.&lt;Action&gt; outputHelper;
     // Options, positional parameters, other fields; see next sections for info on options and parameters
 
     // Overrides for interfaces, for example methods generating the output data,
@@ -756,7 +755,7 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 
     @Override
     public boolean isSingular() {
-        return &lt;false if potentially returning multiple records, true if always returning single record)
+        return &lt;false if potentially returning multiple records, true if always returning single record&gt;;
     }
 }</code></pre>
 </div>
@@ -767,14 +766,17 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 <p><code>&lt;Module&gt;</code>: Corresponds to the module in which this class is located; for product-specific commands this would correspond to the product name like <code>SSC</code> or <code>FoD</code>.</p>
 </li>
 <li>
+<p><code>[Module]</code>: Commands can use <code>IOutputHelper</code> implementations from either the generic <code>OutputHelperMixins</code> or the module-specific <code>[Module]OutputHelperMixins</code></p>
+</li>
+<li>
 <p><code>&lt;Entity&gt;</code> represents the entity that the command is operating on, like <code>App</code>, <code>AppVersion</code>, <code>User</code>, &#8230;&#8203;</p>
 </li>
 <li>
-<p><code>&lt;Action&gt;</code>: Represents the action performed by this command; should be one of the classes in the <code>&lt;Product&gt;OutputHelperMixins</code> class, like <code>Get</code>, <code>List</code>, <code>Delete</code>, &#8230;&#8203;</p>
+<p><code>&lt;Action&gt;</code>: Represents the action performed by this command; should be one of the classes in the <code>[Module]OutputHelperMixins</code> class, like <code>Get</code>, <code>List</code>, <code>Delete</code>, &#8230;&#8203;</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Every action should have a corresponding inner class in the <code>&lt;Product&gt;OutputHelperMixins</code> class; each of these inner classes in turn extend from the appropriate inner class defined in <code>UnirestOutputHelperMixins</code> or <code>BasicOutputHelperMixins</code> classes, potentially adding product-specific behavior.</p>
+<p>Every action should have a corresponding inner class in either the generic <code>OutputHelperMixins</code> class, or the module-specific <code>[Module]OutputHelperMixins</code> class.</p>
 </li>
 <li>
 <p>In general, only concrete command implementations should declare references to <code>*OutputHelperMixins</code> classes, both in the <code>@Command</code> declaration and the <code>outputHelper</code> field. Defining an <code>outputHelper</code> field in an (abstract) superclass will result in any aliases defined on <code>*OutputHelperMixins</code> inner classes not being applied to the concrete command implementations.</p>
@@ -783,29 +785,26 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 </div>
 </li>
 <li>
-<p><code>&lt;SuperClass&gt;</code> is usually <code>Abstract&lt;Module&gt;OutputCommand</code> or an entity-specific sub-class of <code>Abstract&lt;Module&gt;OutputCommand</code>. Indirectly, virtually all leaf commands should extend from either <code>AbstractBasicOutputCommand</code> (for commands that don&#8217;t interact with remote systems) or <code>AbstractUnirestOutputCommand</code> (for commands that do interact with remote systems).</p>
+<p><code>&lt;SuperClass&gt;</code> is usually <code>Abstract&lt;Module&gt;OutputCommand</code> or one of its abstract subclasses. Most modules provide <code>Abstract&lt;Module&gt;JsonNodeOutputCommand</code> and <code>Abstract&lt;Module&gt;BaseRequestOutputCommand</code> as bases classes for commands that generate <code>JsonNode</code> or <code>HttpRequest</code> instances respectively. Indirectly, virtually all leaf commands should extend from  <code>AbstractOutputCommand</code>.</p>
 </li>
 <li>
 <p><code>&lt;CommonInterfaces&gt;</code> is a list of interfaces that define how output is being generated and processed. Following are some commonly used interfaces; see JavaDoc for details on usage:</p>
 <div class="ulist">
 <ul>
 <li>
-<p><code>IUnirestBaseRequestSupplier</code>: Supply a Unirest <code>HttpRequest</code> instance for retrieving command output data.</p>
+<p><code>IBaseRequestSupplier</code>: Supply a Unirest <code>HttpRequest</code> instance for retrieving command output data.</p>
 </li>
 <li>
-<p><code>IUnirestJsonNodeSupplier</code>: Supply a <code>JsonNode</code> instance representing the command output.</p>
-</li>
-<li>
-<p><code>IUnirestWithSessionData*Supplier</code>: Same as above, but allowing access to session data.</p>
+<p><code>IJsonNodeSupplier</code>: Supply a <code>JsonNode</code> instance representing the command output.</p>
 </li>
 <li>
 <p><code>IActionCommandResultSupplier</code>: Supply data for a result column to be included in the output, like <code>DELETED</code>, <code>CREATED</code>, &#8230;&#8203;</p>
 </li>
 <li>
-<p><code>IInputTransformer[Supplier]</code>: Allows for transforming the full JSON data before it is being processed for output.</p>
+<p><code>IInputTransformer</code>: Allows for transforming the full JSON data before it is being processed for output.</p>
 </li>
 <li>
-<p><code>IRecordTransformer[Supplier]</code>: Allows for transforming individual records before they are being processed for output.</p>
+<p><code>IRecordTransformer</code>: Allows for transforming individual records before they are being processed for output.</p>
 </li>
 </ul>
 </div>
@@ -918,7 +917,7 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 <div id="footer">
 <div id="footer-text">
 Version null<br>
-Last updated 2023-03-17 16:55:04 UTC
+Last updated 2023-03-25 01:13:21 UTC
 </div>
 </div>
 </body>
