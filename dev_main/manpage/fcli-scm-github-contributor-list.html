@@ -1,6 +1,6 @@
 ---
 title: fcli-scm-github-contributor-list(1)
-fcli_version: fcli version 0.20230325.011338-dev_main, built on 2023-03-25 01 14 02
+fcli_version: fcli version 0.20230327.101840-dev_main, built on 2023-03-27 10 19 31
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230325.011338-dev_main, built on 2023-03-25 01 14
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230325.011338-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230327.101840-dev_main" %}
 
 
 <div id="header">
@@ -52,10 +52,9 @@ fcli_version: fcli version 0.20230325.011338-dev_main, built on 2023-03-25 01 14
                                  [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] [[<strong>-q</strong>=<em>&lt;SpEL _
                            _      expression&gt;</em>]] [<strong>--orgs</strong>=<em>&lt;organizations&gt;</em>[,
                                  <em>&lt;organizations&gt;</em>&#8230;&#8203;] [<strong>--orgs</strong>=<em>&lt;organizations&gt;</em>[,
-                                 <em>&lt;organizations&gt;</em>&#8230;&#8203;]]&#8230;&#8203; |
-                                 <strong>--repos</strong>=<em>&lt;repositories&gt;</em>[,<em>&lt;repositories&gt;</em>&#8230;&#8203;]
-                                 [<strong>--repos</strong>=<em>&lt;repositories&gt;</em>[,
-                                 <em>&lt;repositories&gt;</em>&#8230;&#8203;]]&#8230;&#8203;]</p>
+                                 <em>&lt;organizations&gt;</em>&#8230;&#8203;]]&#8230;&#8203; | <strong>--repos</strong>=<em>&lt;repoSlugs&gt;</em>[,
+                                 <em>&lt;repoSlugs&gt;</em>&#8230;&#8203;] [<strong>--repos</strong>=<em>&lt;repoSlugs&gt;</em>[,
+                                 <em>&lt;repoSlugs&gt;</em>&#8230;&#8203;]]&#8230;&#8203;]</p>
 </div>
 </div>
 </div>
@@ -89,6 +88,18 @@ fcli_version: fcli version 0.20230325.011338-dev_main, built on 2023-03-25 01 14
 <dd>
 <p>GitHub Personal Access Token.</p>
 </dd>
+<dt class="hdlist1"><strong>--[no-]progress</strong></dt>
+<dd>
+<p>Don&#8217;t show progress information</p>
+</dd>
+<dt class="hdlist1"><strong>--orgs, --organizations</strong>=<em>&lt;organizations&gt;</em>[,<em>&lt;organizations&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Load data for all repositories (accessible by the given token) for the given organizations. This option accepts multiple organizations separated by comma&#8217;s.</p>
+</dd>
+<dt class="hdlist1"><strong>--repos, --repositories</strong>=<em>&lt;repoSlugs&gt;</em>[,<em>&lt;repoSlugs&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Load data for for the given repositories only. This option accepts multiple repositories separated by comma&#8217;s.</p>
+</dd>
 <dt class="hdlist1"><strong>--last</strong>=<em>[x]d</em></dt>
 <dd>
 <p>Load contribution data for the given time period, for example last '5d' (5 days). Default value: 90d (which corresponds to what is stated in the NCD license terms).</p>
@@ -96,18 +107,6 @@ fcli_version: fcli version 0.20230325.011338-dev_main, built on 2023-03-25 01 14
 <dt class="hdlist1"><strong>--[no-]older</strong></dt>
 <dd>
 <p>By default, this command includes the latest contribution older than the given time period if there are no contributions within the specified time period (which corresponds to what is stated in the NCD license terms). Use --no-older to only include contributions for the given time period.</p>
-</dd>
-<dt class="hdlist1"><strong>--orgs, --organizations</strong>=<em>&lt;organizations&gt;</em>[,<em>&lt;organizations&gt;</em>&#8230;&#8203;]</dt>
-<dd>
-<p>Load data for all repositories (accessible by the given token) for the given organizations. This option accepts multiple organizations separated by comma&#8217;s.</p>
-</dd>
-<dt class="hdlist1"><strong>--repos, --repositories</strong>=<em>&lt;repositories&gt;</em>[,<em>&lt;repositories&gt;</em>&#8230;&#8203;]</dt>
-<dd>
-<p>Load data for for the given repositories only. This option accepts multiple repositories separated by comma&#8217;s.</p>
-</dd>
-<dt class="hdlist1"><strong>--[no-]progress</strong></dt>
-<dd>
-<p>Don&#8217;t show progress information</p>
 </dd>
 <dt class="hdlist1"><strong>-k</strong>, <strong>--insecure</strong></dt>
 <dd>
@@ -179,8 +178,8 @@ fcli_version: fcli version 0.20230325.011338-dev_main, built on 2023-03-25 01 14
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230325.011338-dev_main, built on 2023-03-25 01 14 02<br>
-Last updated 2023-03-25 01:15:21 UTC
+Version fcli version 0.20230327.101840-dev_main, built on 2023-03-27 10 19 31<br>
+Last updated 2023-03-27 10:20:50 UTC
 </div>
 </div>
 </body>
