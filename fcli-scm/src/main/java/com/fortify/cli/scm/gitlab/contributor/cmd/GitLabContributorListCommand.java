@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.scm.github.contributor.cmd;
+package com.fortify.cli.scm.gitlab.contributor.cmd;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -42,10 +42,10 @@ import com.fortify.cli.common.progress.cli.mixin.ProgressHelperMixin;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
-import com.fortify.cli.scm.github.cli.cmd.AbstractGitHubJsonNodeOutputCommand;
-import com.fortify.cli.scm.github.cli.mixin.AbstractGitHubRepoProcessorMixin;
-import com.fortify.cli.scm.github.cli.util.GitHubPagingHelper;
-import com.fortify.cli.scm.github.helper.GitHubRepoDescriptor;
+import com.fortify.cli.scm.gitlab.cli.cmd.AbstractGitLabJsonNodeOutputCommand;
+import com.fortify.cli.scm.gitlab.cli.mixin.AbstractGitLabProjectProcessorMixin;
+import com.fortify.cli.scm.gitlab.cli.util.GitLabPagingHelper;
+import com.fortify.cli.scm.gitlab.helper.GitLabProjectDescriptor;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
@@ -59,12 +59,12 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class GitHubContributorListCommand extends AbstractGitHubJsonNodeOutputCommand {
-    private static final Logger LOG = LoggerFactory.getLogger(GitHubContributorListCommand.class);
+public class GitLabContributorListCommand extends AbstractGitLabJsonNodeOutputCommand {
+    private static final Logger LOG = LoggerFactory.getLogger(GitLabContributorListCommand.class);
     private static final DateTimePeriodHelper PERIOD_HELPER = new DateTimePeriodHelper(Period.DAYS);
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
     @Mixin private ProgressHelperMixin progressHelper;
-    @Mixin private GitHubContributorProcessor contributorProcessor = new GitHubContributorProcessor();
+    @Mixin private GitLabContributorProcessor contributorProcessor = new GitLabContributorProcessor();
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -72,7 +72,7 @@ public class GitHubContributorListCommand extends AbstractGitHubJsonNodeOutputCo
         return contributorProcessor.finish(progressHelper);
     }
 
-    private static final class GitHubContributorProcessor extends AbstractGitHubRepoProcessorMixin {
+    private static final class GitLabContributorProcessor extends AbstractGitLabProjectProcessorMixin {
         @Option(names = "--last", defaultValue = "90d", paramLabel = "[x]d")
         private String lastPeriod;
         @Option(names = "--no-older", negatable = true) 
@@ -81,57 +81,55 @@ public class GitHubContributorListCommand extends AbstractGitHubJsonNodeOutputCo
         @Getter private ResultData resultData = new ResultData();
         
         @Override
-        protected void processRepo(UnirestInstance unirest, ProgressHelperMixin progressHelper, JsonNode repoNode) {
-            ExtendedGitHubRepoDescriptor repoDescriptor = JsonHelper.treeToValue(repoNode, ExtendedGitHubRepoDescriptor.class);
-            progressHelper.writeI18nProgress("loading.repository", repoDescriptor.getFullName());
+        protected void processProject(UnirestInstance unirest, ProgressHelperMixin progressHelper, JsonNode projectNode) {
+            ExtendedGitLabProjectDescriptor projectDescriptor = JsonHelper.treeToValue(projectNode, ExtendedGitLabProjectDescriptor.class);
+            progressHelper.writeI18nProgress("loading.project", projectDescriptor.getProjectFullPath());
             String since = PERIOD_HELPER.getCurrentOffsetDateTimeMinusPeriod(lastPeriod)
                     .format(DateTimeFormatter.ISO_INSTANT);
-            HttpRequest<?> req = getCommitsRequest(unirest, repoDescriptor)
+            HttpRequest<?> req = getCommitsRequest(unirest, projectDescriptor)
                     .queryString("since", since);
             try {
                 CollectedAuthors collectedAuthors = new CollectedAuthors(); 
-                GitHubPagingHelper.pagedRequest(req, ArrayNode.class)
-                    .ifSuccess(r->r.getBody().forEach(commit->collectDataForCommit(resultData, collectedAuthors, repoDescriptor, commit)));
+                GitLabPagingHelper.pagedRequest(req, ArrayNode.class)
+                    .ifSuccess(r->r.getBody().forEach(commit->collectDataForCommit(resultData, collectedAuthors, projectDescriptor, commit)));
                 
                 if ( includeOlder && collectedAuthors.isEmpty() ) {
-                    getCommitsRequest(unirest, repoDescriptor).queryString("per_page", "1")
+                    getCommitsRequest(unirest, projectDescriptor).queryString("per_page", "1")
                         .asObject(JsonNode.class)
-                        .ifSuccess(r->r.getBody().forEach(commit->collectDataForCommit(resultData, collectedAuthors, repoDescriptor, commit)));
+                        .ifSuccess(r->r.getBody().forEach(commit->collectDataForCommit(resultData, collectedAuthors, projectDescriptor, commit)));
                 }
             } catch ( UnexpectedHttpResponseException e ) {
-                handleRepoDataFailure(e, resultData, repoDescriptor);
+                handleRepoDataFailure(e, resultData, projectDescriptor);
             }
         }
         
-        private GetRequest getCommitsRequest(UnirestInstance unirest, GitHubRepoDescriptor descriptor) {
-            return unirest.get("/repos/{org}/{repo}/commits")
-                    .routeParam("org", descriptor.getOwnerName())
-                    .routeParam("repo", descriptor.getRepoName());
+        private GetRequest getCommitsRequest(UnirestInstance unirest, ExtendedGitLabProjectDescriptor descriptor) {
+            return unirest.get("/api/v4/projects/{id}/repository/commits")
+                    .routeParam("id", descriptor.getProjectId());
         }
         
-        private void handleRepoDataFailure(UnexpectedHttpResponseException e, ResultData resultData, ExtendedGitHubRepoDescriptor repoDescriptor) {
-            String msg = "Error loading commit data for repository: "+repoDescriptor.getFullName();
+        private void handleRepoDataFailure(UnexpectedHttpResponseException e, ResultData resultData, ExtendedGitLabProjectDescriptor repoDescriptor) {
+            String msg = "Error loading commit data for project: "+repoDescriptor.getProjectFullPath();
             resultData.getWarnings().add(msg);
             LOG.debug(msg, e);
         }
         
-        private void collectDataForCommit(ResultData resultData, CollectedAuthors collectedAuthors, ExtendedGitHubRepoDescriptor repoDescriptor, JsonNode commit) {
+        private void collectDataForCommit(ResultData resultData, CollectedAuthors collectedAuthors, ExtendedGitLabProjectDescriptor projectDescriptor, JsonNode commit) {
             ObjectNode author = getAuthor(commit);
             if ( !collectedAuthors.contains(author) ) {
                 collectedAuthors.add(author);
                 ObjectNode data = JsonHelper.getObjectMapper().createObjectNode();
-                data.setAll((ObjectNode)JsonHelper.getObjectMapper().valueToTree(repoDescriptor));
+                data.setAll((ObjectNode)JsonHelper.getObjectMapper().valueToTree(projectDescriptor));
                 data.set("author", author);
-                data.put("lastCommit", JsonHelper.evaluateSpELExpression(commit, "commit?.author?.date", String.class));
+                data.put("lastCommit", JsonHelper.evaluateSpELExpression(commit, "authored_date", String.class));
                 resultData.getResults().add(data);
             }
         }
         
         private ObjectNode getAuthor(JsonNode commit) {
             return JsonHelper.getObjectMapper().createObjectNode()
-                .put("name", JsonHelper.evaluateSpELExpression(commit, "commit?.author?.name", String.class))
-                .put("email", JsonHelper.evaluateSpELExpression(commit, "commit?.author?.email", String.class))
-                .put("login", JsonHelper.evaluateSpELExpression(commit, "author?.login", String.class));
+                .put("name", JsonHelper.evaluateSpELExpression(commit, "author_name", String.class))
+                .put("email", JsonHelper.evaluateSpELExpression(commit, "author_email", String.class));
         }
         
         protected ArrayNode finish(ProgressHelperMixin progressHelper) {
@@ -149,22 +147,19 @@ public class GitHubContributorListCommand extends AbstractGitHubJsonNodeOutputCo
     private static final class CollectedAuthors {
         Set<String> names = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
         Set<String> emails = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
-        Set<String> logins = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
         
         public void add(ObjectNode author) {
             add(names, "name", author);
             add(emails, "email", author);
-            add(logins, "login", author);
         }
         
         public boolean contains(ObjectNode author) {
             return contains(names, "name", author)
-                || contains(emails, "email", author)
-                || contains(logins, "login", author);
+                || contains(emails, "email", author);
         }
         
         public boolean isEmpty() {
-            return names.isEmpty() && emails.isEmpty() && logins.isEmpty();
+            return names.isEmpty() && emails.isEmpty();
         }
 
         private final void add(Set<String> set, String field, ObjectNode author) {
@@ -188,8 +183,7 @@ public class GitHubContributorListCommand extends AbstractGitHubJsonNodeOutputCo
     
     @ReflectiveAccess
     @Data @EqualsAndHashCode(callSuper = true)
-    private static final class ExtendedGitHubRepoDescriptor extends GitHubRepoDescriptor {
-        private int size;
-        private String html_url;
+    private static final class ExtendedGitLabProjectDescriptor extends GitLabProjectDescriptor {
+        private String web_url;
     }
 }

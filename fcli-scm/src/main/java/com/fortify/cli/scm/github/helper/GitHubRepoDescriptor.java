@@ -14,7 +14,7 @@ import lombok.Setter;
 
 @ReflectiveAccess
 @Data @EqualsAndHashCode(callSuper=true)
-@JsonPropertyOrder({"owner_name","repo_name","full_name"})
+@JsonPropertyOrder({"owner_name","repo_name","full_name","visibility","fork"})
 public class GitHubRepoDescriptor extends JsonNodeHolder {
     @JsonProperty("owner_name")
     private String ownerName;
@@ -22,6 +22,8 @@ public class GitHubRepoDescriptor extends JsonNodeHolder {
     private String repoName;
     @JsonProperty("full_name")
     private String fullName;
+    private String visibility;
+    private boolean fork;
     
     @JsonProperty("owner")
     private void unpackOwner(Map<String, String> owner) {
