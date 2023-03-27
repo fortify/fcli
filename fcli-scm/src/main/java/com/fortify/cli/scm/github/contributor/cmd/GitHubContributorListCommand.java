@@ -47,12 +47,10 @@ import com.fortify.cli.scm.github.cli.mixin.AbstractGitHubRepoProcessorMixin;
 import com.fortify.cli.scm.github.cli.util.GitHubPagingHelper;
 import com.fortify.cli.scm.github.helper.GitHubRepoDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -82,7 +80,7 @@ public class GitHubContributorListCommand extends AbstractGitHubJsonNodeOutputCo
         
         @Override
         protected void processRepo(UnirestInstance unirest, ProgressHelperMixin progressHelper, JsonNode repoNode) {
-            ExtendedGitHubRepoDescriptor repoDescriptor = JsonHelper.treeToValue(repoNode, ExtendedGitHubRepoDescriptor.class);
+            GitHubRepoDescriptor repoDescriptor = JsonHelper.treeToValue(repoNode, GitHubRepoDescriptor.class);
             progressHelper.writeI18nProgress("loading.repository", repoDescriptor.getFullName());
             String since = PERIOD_HELPER.getCurrentOffsetDateTimeMinusPeriod(lastPeriod)
                     .format(DateTimeFormatter.ISO_INSTANT);
@@ -104,18 +102,18 @@ public class GitHubContributorListCommand extends AbstractGitHubJsonNodeOutputCo
         }
         
         private GetRequest getCommitsRequest(UnirestInstance unirest, GitHubRepoDescriptor descriptor) {
-            return unirest.get("/repos/{org}/{repo}/commits")
-                    .routeParam("org", descriptor.getOwnerName())
+            return unirest.get("/repos/{owner}/{repo}/commits")
+                    .routeParam("owner", descriptor.getOwnerName())
                     .routeParam("repo", descriptor.getRepoName());
         }
         
-        private void handleRepoDataFailure(UnexpectedHttpResponseException e, ResultData resultData, ExtendedGitHubRepoDescriptor repoDescriptor) {
+        private void handleRepoDataFailure(UnexpectedHttpResponseException e, ResultData resultData, GitHubRepoDescriptor repoDescriptor) {
             String msg = "Error loading commit data for repository: "+repoDescriptor.getFullName();
             resultData.getWarnings().add(msg);
             LOG.debug(msg, e);
         }
         
-        private void collectDataForCommit(ResultData resultData, CollectedAuthors collectedAuthors, ExtendedGitHubRepoDescriptor repoDescriptor, JsonNode commit) {
+        private void collectDataForCommit(ResultData resultData, CollectedAuthors collectedAuthors, GitHubRepoDescriptor repoDescriptor, JsonNode commit) {
             ObjectNode author = getAuthor(commit);
             if ( !collectedAuthors.contains(author) ) {
                 collectedAuthors.add(author);
@@ -184,12 +182,5 @@ public class GitHubContributorListCommand extends AbstractGitHubJsonNodeOutputCo
     private static final class ResultData {
         private ArrayNode results = JsonHelper.getObjectMapper().createArrayNode();
         private List<String> warnings = new ArrayList<>();  
-    }
-    
-    @ReflectiveAccess
-    @Data @EqualsAndHashCode(callSuper = true)
-    private static final class ExtendedGitHubRepoDescriptor extends GitHubRepoDescriptor {
-        private int size;
-        private String html_url;
     }
 }

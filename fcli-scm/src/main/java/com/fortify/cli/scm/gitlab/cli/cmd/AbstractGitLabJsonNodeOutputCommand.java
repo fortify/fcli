@@ -5,7 +5,7 @@ import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 
 import kong.unirest.UnirestInstance;
 
-public abstract class AbstractGitLabJsonNodeOutputCommand extends AbstractLabHubOutputCommand  implements IJsonNodeSupplier {
+public abstract class AbstractGitLabJsonNodeOutputCommand extends AbstractGitLabOutputCommand  implements IJsonNodeSupplier {
     @Override
     public final JsonNode getJsonNode() {
         try ( var unirest = getProductHelper().createUnirestInstance() ) {

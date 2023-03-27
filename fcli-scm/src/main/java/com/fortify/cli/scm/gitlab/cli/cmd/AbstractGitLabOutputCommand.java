@@ -7,7 +7,7 @@ import com.fortify.cli.scm.gitlab.cli.mixin.GitLabProductHelperMixin;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractLabHubOutputCommand extends AbstractOutputCommand 
+public abstract class AbstractGitLabOutputCommand extends AbstractOutputCommand 
     implements IProductHelperSupplier
 {
     @Getter @Mixin GitLabProductHelperMixin productHelper;

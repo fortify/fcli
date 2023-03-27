@@ -47,12 +47,10 @@ import com.fortify.cli.scm.gitlab.cli.mixin.AbstractGitLabProjectProcessorMixin;
 import com.fortify.cli.scm.gitlab.cli.util.GitLabPagingHelper;
 import com.fortify.cli.scm.gitlab.helper.GitLabProjectDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -82,7 +80,7 @@ public class GitLabContributorListCommand extends AbstractGitLabJsonNodeOutputCo
         
         @Override
         protected void processProject(UnirestInstance unirest, ProgressHelperMixin progressHelper, JsonNode projectNode) {
-            ExtendedGitLabProjectDescriptor projectDescriptor = JsonHelper.treeToValue(projectNode, ExtendedGitLabProjectDescriptor.class);
+            GitLabProjectDescriptor projectDescriptor = JsonHelper.treeToValue(projectNode, GitLabProjectDescriptor.class);
             progressHelper.writeI18nProgress("loading.project", projectDescriptor.getProjectFullPath());
             String since = PERIOD_HELPER.getCurrentOffsetDateTimeMinusPeriod(lastPeriod)
                     .format(DateTimeFormatter.ISO_INSTANT);
@@ -103,18 +101,18 @@ public class GitLabContributorListCommand extends AbstractGitLabJsonNodeOutputCo
             }
         }
         
-        private GetRequest getCommitsRequest(UnirestInstance unirest, ExtendedGitLabProjectDescriptor descriptor) {
+        private GetRequest getCommitsRequest(UnirestInstance unirest, GitLabProjectDescriptor descriptor) {
             return unirest.get("/api/v4/projects/{id}/repository/commits")
                     .routeParam("id", descriptor.getProjectId());
         }
         
-        private void handleRepoDataFailure(UnexpectedHttpResponseException e, ResultData resultData, ExtendedGitLabProjectDescriptor repoDescriptor) {
+        private void handleRepoDataFailure(UnexpectedHttpResponseException e, ResultData resultData, GitLabProjectDescriptor repoDescriptor) {
             String msg = "Error loading commit data for project: "+repoDescriptor.getProjectFullPath();
             resultData.getWarnings().add(msg);
             LOG.debug(msg, e);
         }
         
-        private void collectDataForCommit(ResultData resultData, CollectedAuthors collectedAuthors, ExtendedGitLabProjectDescriptor projectDescriptor, JsonNode commit) {
+        private void collectDataForCommit(ResultData resultData, CollectedAuthors collectedAuthors, GitLabProjectDescriptor projectDescriptor, JsonNode commit) {
             ObjectNode author = getAuthor(commit);
             if ( !collectedAuthors.contains(author) ) {
                 collectedAuthors.add(author);
@@ -179,11 +177,5 @@ public class GitLabContributorListCommand extends AbstractGitLabJsonNodeOutputCo
     private static final class ResultData {
         private ArrayNode results = JsonHelper.getObjectMapper().createArrayNode();
         private List<String> warnings = new ArrayList<>();  
-    }
-    
-    @ReflectiveAccess
-    @Data @EqualsAndHashCode(callSuper = true)
-    private static final class ExtendedGitLabProjectDescriptor extends GitLabProjectDescriptor {
-        private String web_url;
     }
 }
