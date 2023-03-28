@@ -4,12 +4,8 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
 
 import lombok.Getter;
-import lombok.Setter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Spec;
-import picocli.CommandLine.Spec.Target;
 
 /**
  * <p>This class provides standard {@link IOutputHelper} implementations. Individual
@@ -44,10 +40,7 @@ import picocli.CommandLine.Spec.Target;
  * @author rsenden
  */
 public class OutputHelperMixins {
-     @Command
-    public static class Other extends AbstractOutputHelperMixin {
-        @Getter @Setter(onMethod=@__({@Spec(Target.MIXEE)})) private CommandSpec mixee;
-    }
+    public static class Other extends AbstractOutputHelperMixin {}
     
     
     public static class TableWithQuery extends Other {

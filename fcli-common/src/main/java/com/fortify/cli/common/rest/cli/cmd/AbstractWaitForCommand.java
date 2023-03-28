@@ -48,6 +48,7 @@ public abstract class AbstractWaitForCommand extends AbstractFortifyCLICommand i
     
     @Override
     public void run() {
+        initMixins();
         var productHelper = getProductHelper();
         if ( productHelper instanceof IUnirestInstanceSupplier ) {
             UnirestInstance unirest = ((IUnirestInstanceSupplier)productHelper).getUnirestInstance();

@@ -7,6 +7,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
@@ -25,11 +26,13 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
 
 import kong.unirest.HttpRequest;
-import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Mixin;
 
 public abstract class AbstractOutputHelperMixin implements IOutputHelper {
+    @Mixin private CommandHelperMixin commandHelper;
+    
     public IProductHelper getProductHelper() {
-        IProductHelperSupplier supplier = getCommandAs(IProductHelperSupplier.class);
+        IProductHelperSupplier supplier = commandHelper.getCommandAs(IProductHelperSupplier.class);
         return supplier==null ? new NoOpProductHelper() : supplier.getProductHelper();
     }
 
@@ -82,7 +85,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      */
     protected final HttpRequest<?> updateRequest(HttpRequest<?> request) {
         request = applyWithDefault(getProductHelper(), IHttpRequestUpdater.class, httpRequestUpdater(request), request);
-        request = applyWithDefault(getCommand(), IHttpRequestUpdater.class, httpRequestUpdater(request), request);
+        request = applyWithDefault(commandHelper.getCommand(), IHttpRequestUpdater.class, httpRequestUpdater(request), request);
         return request;
     }
     
@@ -94,7 +97,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @return
      */
     protected final INextPageUrlProducer getNextPageUrlProducer(HttpRequest<?> request) {
-        return Stream.of(getCommand(), getProductHelper())
+        return Stream.of(commandHelper.getCommand(), getProductHelper())
                 .map(obj->getNextPageUrlProducerFromObject(obj, request))
                 .filter(Objects::nonNull)
                 .findFirst().orElse(null);
@@ -162,28 +165,6 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     }
     
     /**
-     * Utility method for retrieving the command being invoked as the given 
-     * type, returning null if the command is not an instance of the given 
-     * type.
-     */
-    @Override
-    public final <T> T getCommandAs(Class<T> asType) {
-        return getAs(getCommand(), asType);
-    }
-    
-    /**
-     * Get the {@link CommandSpec} for the command being invoked.
-     */
-    @Override
-    public final CommandSpec getCommandSpec() {
-        CommandSpec mixee = getMixee();
-        // mixee may represent an intermediate mixin rather than representing the actual command
-        // so we use mixee.commandLine() if available to retrieve the CommandSpec for the actual
-        // command.
-        return mixee.commandLine()==null ? mixee : mixee.commandLine().getCommandSpec();
-    }
-    
-    /**
      * This default implementation of {@link IOutputHelper#getBasicOutputConfig()}
      * tries to retrieve a basic output configuration from the command being invoked,
      * if it implements the {@link IBasicOutputConfigSupplier} interface. If the
@@ -195,7 +176,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      */
     @Override
     public StandardOutputConfig getBasicOutputConfig() {
-        Object cmd = getCommand();
+        Object cmd = commandHelper.getCommand();
         return applyWithDefaultSupplier(cmd, 
                 IBasicOutputConfigSupplier.class, IBasicOutputConfigSupplier::getBasicOutputConfig,
                 ()->{throw new IllegalStateException(cmd.getClass().getName()+" must implement IBasicOutputConfigSupplier, or use an IOutputHelper implementation that provides a basic output configuration");});
@@ -213,7 +194,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      */
     @Override
     public IOutputWriterFactory getOutputWriterFactory() {
-        Object cmd = getCommand();
+        Object cmd = commandHelper.getCommand();
         return applyWithDefaultSupplier(cmd, 
                 IOutputWriterFactorySupplier.class, IOutputWriterFactorySupplier::getOutputWriterFactory,
                 ()->{throw new IllegalStateException(cmd.getClass().getName()+" must implement IOutputWriterFactorySupplier, or use an IOutputHelper implementation that provides an output factory");});
@@ -230,14 +211,6 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
         return getOutputWriterFactory().createOutputWriter(getOutputConfig());
     }
     
-    /**
-     * Utility method for retrieving the command currently being invoked.
-     * @return
-     */
-    private final Object getCommand() {
-        return getCommandSpec().userObject();
-    }
-    
     /** 
      * This method returns an {@link StandardOutputConfig} instance that is
      * based on the basic output configuration returned by the
@@ -247,15 +220,13 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @return
      */
     private final StandardOutputConfig getOutputConfig() {
-        Object cmd = getCommand();
+        Object cmd = commandHelper.getCommand();
         StandardOutputConfig standardOutputConfig = getBasicOutputConfig(cmd);
         addInputTransformersForCommand(standardOutputConfig, cmd);
         addRecordTransformersForCommand(standardOutputConfig, cmd);
         addCommandActionResultRecordTransformer(standardOutputConfig, cmd);
         return standardOutputConfig;
     }
-
-    protected abstract CommandSpec getMixee();
 
     /**
      * If the command being invoked implements {@link IBasicOutputConfigSupplier}, the
@@ -270,23 +241,6 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      */
     private final StandardOutputConfig getBasicOutputConfig(Object cmd) {
         return applyWithDefaultSupplier(cmd, IBasicOutputConfigSupplier.class, IBasicOutputConfigSupplier::getBasicOutputConfig, this::getBasicOutputConfig);
-    }
-    
-    /**
-     * Utility method for getting the given object as the given type,
-     * returning null if the given object is not an instance of the
-     * given type.
-     * @param <T>
-     * @param obj
-     * @param asType
-     * @return
-     */
-    @SuppressWarnings("unchecked")
-    private static final <T> T getAs(Object obj, Class<T> asType) {
-        if ( obj!=null && asType.isAssignableFrom(obj.getClass()) ) {
-            return (T)obj;
-        }
-        return null;
     }
     
     /**
@@ -305,7 +259,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @return
      */
     private static final <T,R> R applyWithDefaultSupplier(Object obj, Class<T> type, Function<T,R> function, Supplier<R> defaultValueSupplier) {
-        T target = getAs(obj, type);
+        T target = CommandHelperMixin.getAs(obj, type);
         R result = target==null ? null : function.apply(target);
         if ( result==null && defaultValueSupplier!=null ) {
             result = defaultValueSupplier.get();
