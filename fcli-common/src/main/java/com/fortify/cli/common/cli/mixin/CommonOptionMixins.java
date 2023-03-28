@@ -1,6 +1,6 @@
 package com.fortify.cli.common.cli.mixin;
 
-import com.fortify.cli.common.util.CommandSpecHelper;
+import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Getter;
@@ -28,7 +28,7 @@ public class CommonOptionMixins {
                 if ( System.console()==null ) {
                     throw new ParameterException(spec.commandLine(), "Missing option: Confirm operation with -y / --confirm (interactive prompt not available)");
                 } else {
-                    String expectedResponse = CommandSpecHelper.getRequiredMessageString(spec, "expectedConfirmPromptResponse");
+                    String expectedResponse = PicocliSpecHelper.getRequiredMessageString(spec, "expectedConfirmPromptResponse");
                     String response = System.console().readLine(getPrompt());
                     if ( response.equalsIgnoreCase(expectedResponse) ) {
                         return;
@@ -40,7 +40,7 @@ public class CommonOptionMixins {
         }
         
         private String getPrompt() {
-            String prompt = CommandSpecHelper.getMessageString(spec, "confirmPrompt");
+            String prompt = PicocliSpecHelper.getMessageString(spec, "confirmPrompt");
             if ( StringUtils.isBlank(prompt) ) {
                 String[] descriptionLines = spec.optionsMap().get("-y").description();
                 if ( descriptionLines==null || descriptionLines.length<1 ) {
@@ -48,7 +48,7 @@ public class CommonOptionMixins {
                 }
                 prompt = spec.optionsMap().get("-y").description()[0]+"?";
             }
-            String promptOptions = CommandSpecHelper.getRequiredMessageString(spec, "confirmPromptOptions");
+            String promptOptions = PicocliSpecHelper.getRequiredMessageString(spec, "confirmPromptOptions");
             return String.format("%s (%s) ", prompt, promptOptions);
         }
     }

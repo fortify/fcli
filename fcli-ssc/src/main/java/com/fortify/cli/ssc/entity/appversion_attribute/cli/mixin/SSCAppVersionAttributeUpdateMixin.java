@@ -14,7 +14,7 @@ public class SSCAppVersionAttributeUpdateMixin {
     }
     
     public static class OptionalAttrOption extends AbstractSSCAppVersionAttributeUpdateMixin {
-        @Option(names = {"--attr", "--attribute"}, required = false, arity="0..", paramLabel = PARAM_LABEL)
+        @Option(names = {"--attrs", "--attributes"}, required = false, split = ",", paramLabel = PARAM_LABEL)
         @Getter private Map<String,String> attributes;
     }
     
