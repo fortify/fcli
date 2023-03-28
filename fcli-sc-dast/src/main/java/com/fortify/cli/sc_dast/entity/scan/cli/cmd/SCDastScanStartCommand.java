@@ -60,7 +60,7 @@ public final class SCDastScanStartCommand extends AbstractSCDastOutputCommand im
     @Option(names= {"--mode", "-M"})
     private ScanModes scanMode;
 
-    @Option(names = {"--start-url", "-U"})
+    @Option(names = {"--start-urls", "-U"}, split=",")
     private String[] startUrls;
 
     @Option(names = {"--login-macro", "-L"})

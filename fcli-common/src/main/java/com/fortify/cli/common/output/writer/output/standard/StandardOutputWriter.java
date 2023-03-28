@@ -27,7 +27,7 @@ import com.fortify.cli.common.output.writer.record.RecordWriterConfig.RecordWrit
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.IfFailureHandler;
-import com.fortify.cli.common.util.CommandSpecHelper;
+import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.common.variable.EncryptVariable;
 import com.fortify.cli.common.variable.FcliVariableHelper;
@@ -502,9 +502,9 @@ public class StandardOutputWriter implements IOutputWriter {
         private VariableDefinition createVariableDefinition(VariableStoreConfig variableStoreConfig) {
             String variableName = variableStoreConfig.getVariableName();
             String options = variableStoreConfig.getOptions();
-            DefaultVariablePropertyName defaultPropertyNameAnnotation = CommandSpecHelper.findAnnotation(commandSpec, DefaultVariablePropertyName.class);
+            DefaultVariablePropertyName defaultPropertyNameAnnotation = PicocliSpecHelper.findAnnotation(commandSpec, DefaultVariablePropertyName.class);
             String defaultPropertyName = defaultPropertyNameAnnotation==null ? null : defaultPropertyNameAnnotation.value();
-            boolean encrypt = CommandSpecHelper.findAnnotation(commandSpec, EncryptVariable.class)!=null;
+            boolean encrypt = PicocliSpecHelper.findAnnotation(commandSpec, EncryptVariable.class)!=null;
             return VariableDefinition.builder()
                     .variableName(variableName)
                     .variableOptions(options)

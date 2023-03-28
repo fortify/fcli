@@ -1,12 +1,14 @@
 package com.fortify.cli.common.util;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AccessibleObject;
 import java.util.ResourceBundle;
 
+import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.Messages;
 
-public class CommandSpecHelper {
+public class PicocliSpecHelper {
     public static final <T extends Annotation> T findAnnotation(CommandSpec commandSpec, Class<T> annotationType) {
         T annotation = null;
         while ( commandSpec!=null && annotation==null ) {
@@ -15,6 +17,22 @@ public class CommandSpecHelper {
             commandSpec = commandSpec.parent();
         }
         return annotation;
+    }
+    
+    public static final <T extends Annotation> T getAnnotation(CommandSpec cmdSpec, Class<T> annotationType) {
+        var userObject = cmdSpec==null ? null : cmdSpec.userObject();
+        if ( userObject!=null ) {
+            return userObject.getClass().getAnnotation(annotationType);
+        }
+        return null;
+    }
+    
+    public static final <T extends Annotation> T getAnnotation(ArgSpec argSpec, Class<T> annotationType) {
+        var userObject = argSpec==null ? null : argSpec.userObject();
+        if ( userObject!=null && userObject instanceof AccessibleObject ) {
+            return ((AccessibleObject) userObject).getAnnotation(annotationType);
+        }
+        return null;
     }
     
     public static final String getMessageString(CommandSpec commandSpec, String keySuffix) {
