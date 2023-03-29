@@ -24,8 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.fod.entity.app.cli.cmd;
 
-import java.util.ArrayList;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -37,95 +35,71 @@ import com.fortify.cli.fod.entity.app.helper.FoDAppCreateRequest;
 import com.fortify.cli.fod.entity.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.entity.attribute.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.entity.attribute.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppAndRelNameDescriptor;
+import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.entity.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.entity.user.helper.FoDUserHelper;
 import com.fortify.cli.fod.entity.user_group.helper.FoDUserGroupHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDJsonNodeOutputCommand;
-
+import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.ParameterException;
-import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Spec;
 
-// TODO Although microservice-related functionality is based on FoD UI, I think this is not very intuitive.
-//      Also, having multiple positional parameters goes against fcli design principles.
-//      Can we somehow improve this? Some initial ideas:
-//      - Have separate commands for creating a microservices app and regular app, for example have a separate create-microservice-app
-//      - Have a single positional parameter that takes either <app>:<release> or <app>:<microservice>:<release>
-//      - Have a single positional parameter for the app name, and use (potentially repeatable) option for specifying [microservice:]<release>
-@Command(name = OutputHelperMixins.Create.CMD_NAME)
-public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.Create outputHelper;
+import java.util.ArrayList;
+
+public abstract class FoDAppCreateAppCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Spec CommandSpec spec;
 
-    @Parameters(index = "0", arity = "1", descriptionKey = "application-name")
-    private String applicationName;
-    @Parameters(index = "1", arity = "1", descriptionKey = "release-name")
-    private String releaseName;
+    @Mixin protected FoDAppRelResolverMixin.PositionalParameter appRelResolver;
+
     @Option(names = {"--description", "-d"})
-    private String description;
-    @Option(names = {"--notify"}, required = false, arity = "0..*")
-    private ArrayList<String> notifications;
+    protected String description;
+    @Option(names = {"--notify"}, required = false, split=",")
+    protected ArrayList<String> notifications;
     @Option(names = {"--release-description", "--rel-desc"})
-    private String releaseDescription;
+    protected String releaseDescription;
     @Option(names = {"--owner"}, required = true)
-    private String owner;
-    @Option(names = {"--user-group", "--group"}, arity = "0..*")
-    private ArrayList<String> userGroups;
-    @Option(names = {"--microservice"}, arity = "0..*")
-    private ArrayList<String> microservices;
-    @Option(names = {"--release-microservice"})
-    private String releaseMicroservice;
+    protected String owner;
+    @Option(names = {"--user-groups", "--groups"}, required = false, split=",")
+    protected ArrayList<String> userGroups;
 
     @Mixin
-    private FoDAppTypeOptions.RequiredAppTypeOption appType;
+    protected FoDCriticalityTypeOptions.RequiredOption criticalityType;
     @Mixin
-    private FoDCriticalityTypeOptions.RequiredOption criticalityType;
+    protected FoDAttributeUpdateOptions.OptionalAttrOption appAttrs;
     @Mixin
-    private FoDAttributeUpdateOptions.OptionalAttrOption appAttrs;
-    @Mixin
-    private FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
+    protected FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         validate();
 
+        FoDAppAndRelNameDescriptor appRelName = appRelResolver.getAppAndRelName();
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, owner, true);
-        FoDAppTypeOptions.FoDAppType appType = this.appType.getAppType();
 
         FoDAppCreateRequest appCreateRequest = new FoDAppCreateRequest()
-                .setApplicationName(applicationName)
+                .setApplicationName(appRelName.getAppName())
                 .setApplicationDescription(description)
                 .setBusinessCriticalityType(String.valueOf(criticalityType.getCriticalityType()))
                 .setEmailList(FoDAppHelper.getEmailList(notifications))
-                .setReleaseName(releaseName)
+                .setReleaseName(appRelName.getRelName())
                 .setReleaseDescription(releaseDescription)
                 .setSdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
                 .setOwnerId(userDescriptor.getUserId())
-                .setApplicationType(appType.getName())
-                .setHasMicroservices(appType.isMicroservice())
-                .setMicroservices(FoDAppHelper.getMicroservicesNode(microservices))
-                .setReleaseMicroserviceName(releaseMicroservice)
+                .setApplicationType(FoDAppTypeOptions.FoDAppType.Web.getName())
+                .setHasMicroservices(false)
                 .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes()))
                 .setUserGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups));
 
         return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();
     }
 
-    private void validate() {
-        if (appType.getAppType().equals(FoDAppTypeOptions.FoDAppType.Microservice)) {
-            if ((FoDAppHelper.missing(microservices) || (releaseMicroservice == null || releaseMicroservice.isEmpty())))
-                throw new ParameterException(spec.commandLine(),
-                        "Missing option: if 'Microservice' type is specified then one or more 'microservice' options need to specified.");
-            if (!microservices.contains(releaseMicroservice))
-                throw new ParameterException(spec.commandLine(),
-                        "Invalid option value: microservice specified in --release-microservice not found in microservices specified in --microservice");
-        }
+    protected void validate() {
     }
 
     @Override
@@ -137,7 +111,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
     public String getActionCommandResult() {
         return "CREATED";
     }
-    
+
     @Override
     public boolean isSingular() {
         return true;

@@ -45,17 +45,17 @@ public class FoDAppMicroserviceUpdateOptions {
     }
 
     public static class AddMicroserviceOption extends AbstractFoDAppMicroserviceUpdateMixin {
-        @Option(names = {"--add-microservice", "--add-ms"}, required = false, arity = "0..", descriptionKey = "AppMicroserviceUpdateMixin")
+        @Option(names = {"--add-microservices", "--add-ms"}, required = false, split=",", descriptionKey = "AppMicroserviceUpdateMixin")
         @Getter private List<String> microservices;
     }
 
     public static class DeleteMicroserviceOption extends AbstractFoDAppMicroserviceUpdateMixin {
-        @Option(names = {"--delete-microservice", "--delete-ms"}, required = false, arity = "0..", descriptionKey = "AppMicroserviceUpdateMixin")
+        @Option(names = {"--delete-microservices", "--delete-ms"}, required = false, split=",", descriptionKey = "AppMicroserviceUpdateMixin")
         @Getter private List<String> microservices;
     }
 
     public static class RenameMicroserviceOption extends AbstractFoDAppMicroserviceRenameMixin {
-        @Option(names = {"--rename-microservice", "--rename-ms"}, required = false, arity = "0..", paramLabel = PARAM_LABEL, descriptionKey = "AppMicroserviceUpdateMixin")
+        @Option(names = {"--rename-microservices", "--rename-ms"}, required = false, split=",", paramLabel = PARAM_LABEL, descriptionKey = "AppMicroserviceUpdateMixin")
         @Getter private Map<String, String> microservices;
     }
 

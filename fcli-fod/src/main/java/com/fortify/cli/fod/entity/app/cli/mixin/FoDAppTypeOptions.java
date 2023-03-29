@@ -33,7 +33,7 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 
 // TODO We need to have a convention for enum value names that are used for option value;
-//      unless enum values need to match server values, I think we should use lower case 
+//      unless enum values need to match server values, I think we should use lower case
 //      names like 'web' instead of 'Web'. Need to document final decision in developer docs.
 public class FoDAppTypeOptions {
     public enum FoDAppType {
@@ -68,12 +68,12 @@ public class FoDAppTypeOptions {
     }
 
     public static class RequiredAppTypeOption extends AbstractFoDAppType {
-        @Option(names = {"--type", "--app-type"}, required = true, arity = "1", completionCandidates = FoDAppTypeIterable.class)
+        @Option(names = {"--type", "--app-type"}, required = true, completionCandidates = FoDAppTypeIterable.class)
         @Getter private FoDAppType appType;
     }
 
     public static class OptionalAppTypeOption extends AbstractFoDAppType {
-        @Option(names = {"--type", "--app-type"}, required = false, arity = "1", completionCandidates = FoDAppTypeIterable.class)
+        @Option(names = {"--type", "--app-type"}, required = false, completionCandidates = FoDAppTypeIterable.class)
         @Getter private FoDAppType appType;
     }
 

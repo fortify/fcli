@@ -63,7 +63,7 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
     private String applicationNameUpdate;
     @Option(names = {"--description", "-d"})
     private String descriptionUpdate;
-    @Option(names = {"--notify"}, arity = "0..*")
+    @Option(names = {"--notify"}, required = false, split=",")
     private ArrayList<String> notificationsUpdate;
     @Mixin
     FoDAppMicroserviceUpdateOptions.AddMicroserviceOption addMicroservices;
@@ -76,7 +76,7 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
     @Mixin
     private FoDAttributeUpdateOptions.OptionalAttrOption appAttrsUpdate;
 
-    // TODO Method too long; separate into multiple methods. 
+    // TODO Method too long; separate into multiple methods.
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
 
@@ -88,8 +88,7 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
         FoDCriticalityTypeOptions.FoDCriticalityType appCriticalityNew = criticalityTypeUpdate.getCriticalityType();
         Map<String, String> attributeUpdates = appAttrsUpdate.getAttributes();
         JsonNode jsonAttrs = objectMapper.createArrayNode();
-        // TODO Use !isEmpty() instead of checking for size
-        if (attributeUpdates != null && attributeUpdates.size() > 0) {
+        if (attributeUpdates != null && !attributeUpdates.isEmpty()) {
             jsonAttrs = FoDAttributeHelper.mergeAttributesNode(unirest, appAttrsCurrent, attributeUpdates);
         } else {
             jsonAttrs = FoDAttributeHelper.getAttributesNode(appAttrsCurrent);
@@ -106,10 +105,10 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
         // TODO Compiler warns about unlikely argument to contains(); warning seems correct, you likely want to use Collections.disjoint() instead
         // TODO As a best practice, statements in if-blocks should always be enclosed in curly braces
         // TODO Avoid repetitive get*()-calls; assign to local variable instead
-        // TODO Avoid repetitive null-checks, potentially change mixin definitions 
+        // TODO Avoid repetitive null-checks, potentially change mixin definitions
         //      such that the mixin itself and the collection are initialized to non-null value
         //      to avoid null-checks
-        // TODO Some of the checks are performed twice; i.e. if both add and delete options specified, 
+        // TODO Some of the checks are performed twice; i.e. if both add and delete options specified,
         //      then we're checking twice whether they do not overlap
         if (addMicroservices != null && addMicroservices.getMicroservices() != null) {
             if (addMicroservices.getMicroservices().contains(deleteMicroservices.getMicroservices()))
@@ -142,7 +141,7 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
     public String getActionCommandResult() {
         return "UPDATED";
     }
-    
+
     @Override
     public boolean isSingular() {
         return true;

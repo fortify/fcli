@@ -48,13 +48,13 @@ public class FoDCriticalityTypeOptions {
     }
 
     public static class RequiredOption extends AbstractFoDCriticalityType {
-        @Option(names = {"--criticality", "--business-criticality"}, required = true, arity = "1",
+        @Option(names = {"--criticality", "--business-criticality"}, required = true,
                 completionCandidates = FoDCriticalityTypeIterable.class, descriptionKey = "CriticalityTypeMixin")
         @Getter private FoDCriticalityType criticalityType;
     }
 
     public static class OptionalOption extends AbstractFoDCriticalityType {
-        @Option(names = {"--criticality", "--business-criticality"}, required = false, arity = "1",
+        @Option(names = {"--criticality", "--business-criticality"}, required = false,
                 completionCandidates = FoDCriticalityTypeIterable.class, descriptionKey = "CriticalityTypeMixin")
         @Getter private FoDCriticalityType criticalityType;
     }

@@ -53,7 +53,7 @@ public class FoDAppAndRelNameResolverMixin {
     }
 
     public static class PositionalParameter extends AbstractFoDAppAndRelNameResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationReleaseMixin")
+        @Parameters(index = "0", descriptionKey = "ApplicationReleaseMixin")
         @Getter private String appAndRelName;
     }
 }

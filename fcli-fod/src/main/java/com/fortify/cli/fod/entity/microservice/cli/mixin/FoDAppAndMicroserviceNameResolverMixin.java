@@ -55,7 +55,7 @@ public class FoDAppAndMicroserviceNameResolverMixin {
     }
 
     public static class PositionalParameter extends AbstractFoDAppAndMicroserviceNameResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMicroserviceMixin")
+        @Parameters(index = "0", descriptionKey = "ApplicationMicroserviceMixin")
         @Getter private String appAndMicroserviceName;
     }
 }

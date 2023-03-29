@@ -79,7 +79,7 @@ public class FoDAppRelUpdateCommand extends AbstractFoDJsonNodeOutputCommand imp
         if (microserviceNameOrId != null && !microserviceNameOrId.isEmpty()) {
             try {
                 FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getAppMicroserviceDescriptor(unirest,
-                        appRelDescriptor.getApplicationName()+":"+microserviceNameOrId, ":", true);
+                        appRelDescriptor.getApplicationName(), microserviceNameOrId, true);
                 microServiceId = descriptor.getMicroserviceId();
             } catch (JsonProcessingException e) {
                 // TODO Seems like this error is only thrown if microservice cannot be found?
