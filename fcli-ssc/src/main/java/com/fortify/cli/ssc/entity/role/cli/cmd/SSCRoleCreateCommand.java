@@ -62,7 +62,7 @@ public class SSCRoleCreateCommand extends AbstractSSCBaseRequestOutputCommand im
     private Boolean allApplicationRole;
 
     @Getter
-    @Option(names = {"-p", "--permission-id"}, split = ",")
+    @Option(names = {"-p", "--permission-ids"}, split = ",")
     private String[] permissionIds;
 
     @Override

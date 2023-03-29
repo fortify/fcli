@@ -10,12 +10,12 @@ public class SSCAppVersionAuthEntityMixin {
     }
     
     public static class OptionalUserAddOption extends AbstractSSCAppVersionAuthEntityMixin {
-        @Option(names = {"--useradd"}, required = false, arity="0..")
+        @Option(names = {"--add-users"}, required = false, split = ",")
         @Getter private String[] authEntitySpecs;
     }
     
     public static class OptionalUserDelOption extends AbstractSSCAppVersionAuthEntityMixin {
-        @Option(names = {"--userdel"}, required = false, arity="0..")
+        @Option(names = {"--rm-users"}, required = false, split = ",")
         @Getter private String[] authEntitySpecs;
     }
     
