@@ -1,6 +1,6 @@
 ---
 title: fcli-sc-dast-scan-start(1)
-fcli_version: fcli version 0.20230329.215531-dev_main, built on 2023-03-29 21 56 10
+fcli_version: fcli version 0.20230329.215646-dev_main, built on 2023-03-29 21 57 23
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230329.215531-dev_main, built on 2023-03-29 21 56
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230329.215531-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230329.215646-dev_main" %}
 
 
 <div id="header">
@@ -46,12 +46,12 @@ fcli_version: fcli version 0.20230329.215531-dev_main, built on 2023-03-29 21 56
 <p><strong>fcli sc-dast scan start</strong> [<strong>-L</strong>=<em>&lt;loginMacroBinaryFileId&gt;</em>] [<strong>-M</strong>=<em>&lt;scanMode&gt;</em>]
                         [<strong>--overrides-file</strong>=<em>&lt;overridesFile&gt;</em>]
                         [<strong>-P</strong>=<em>&lt;scanPolicyNameOrId&gt;</em>]
-                        <strong>-S</strong>=<em>&lt;scanSettingsCicdTokenOrId&gt;</em> [<strong>-U</strong>=<em>&lt;startUrls&gt;</em>]&#8230;&#8203;
-                        [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
-                        <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-            _            <em class="=&lt;propertyNames&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
-                        <em>name</em></p>
+                        <strong>-S</strong>=<em>&lt;scanSettingsCicdTokenOrId&gt;</em> [<strong>-U</strong>=<em>&lt;startUrls&gt;</em>[,
+                        <em>&lt;startUrls&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                        [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                        [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] <em>name</em></p>
 </div>
 </div>
 </div>
@@ -82,10 +82,7 @@ fcli_version: fcli version 0.20230329.215531-dev_main, built on 2023-03-29 21 56
 <dd>
 <p>Overrides the scan mode. Accepted values are: CrawlOnly, CrawlAndAudit, AuditOnly</p>
 </dd>
-<dt class="hdlist1"><strong>-U</strong>, <strong>--start-url</strong>=<em>&lt;startUrls&gt;</em></dt>
-<dd>
-<p>Overrides the scan start URL(s)</p>
-</dd>
+<dt class="hdlist1"><strong>-U</strong>, <strong>--start-urls</strong>=<em>&lt;startUrls&gt;</em>[,<em>&lt;startUrls&gt;</em>&#8230;&#8203;]</dt>
 <dt class="hdlist1"><strong>-L</strong>, <strong>--login-macro</strong>=<em>&lt;loginMacroBinaryFileId&gt;</em></dt>
 <dd>
 <p>Overrides the scan login macro binary file id</p>
@@ -169,8 +166,8 @@ fcli_version: fcli version 0.20230329.215531-dev_main, built on 2023-03-29 21 56
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230329.215531-dev_main, built on 2023-03-29 21 56 10<br>
-Last updated 2023-03-29 21:57:32 UTC
+Version fcli version 0.20230329.215646-dev_main, built on 2023-03-29 21 57 23<br>
+Last updated 2023-03-29 21:58:58 UTC
 </div>
 </div>
 </body>
