@@ -88,7 +88,7 @@ public class FoDAppRelCreateCommand extends AbstractFoDJsonNodeOutputCommand imp
         }
         if (microserviceNameOrId != null && !microserviceNameOrId.isEmpty()) {
             try {
-                FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getAppMicroserviceDescriptor(unirest, appAndRelNameDescriptor.getAppName()+":"+ microserviceNameOrId, ":", true);
+                FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getAppMicroserviceDescriptor(unirest, appAndRelNameDescriptor.getAppName(), microserviceNameOrId, true);
                 microServiceId = descriptor.getMicroserviceId();
             } catch (JsonProcessingException e) {
                 throw new CommandLine.ParameterException(spec.commandLine(),

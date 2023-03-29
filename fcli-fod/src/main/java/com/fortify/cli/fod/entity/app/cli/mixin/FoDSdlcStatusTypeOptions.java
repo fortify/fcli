@@ -42,19 +42,19 @@ public class FoDSdlcStatusTypeOptions {
             super(Stream.of(FoDSdlcStatusType.values()).map(FoDSdlcStatusType::name).collect(Collectors.toList()));
         }
     }
-    
+
     public static abstract class AbstractFoDSdlcStatusType {
         public abstract FoDSdlcStatusType getSdlcStatusType();
     }
 
     public static class RequiredOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = true, arity = "1",
+        @Option(names = {"--status", "--sdlc-status"}, required = true,
                 completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "SdlcStatusMixin")
         @Getter private FoDSdlcStatusType sdlcStatusType;
     }
 
     public static class OptionalOption extends AbstractFoDSdlcStatusType {
-        @Option(names = {"--status", "--sdlc-status"}, required = false, arity = "1",
+        @Option(names = {"--status", "--sdlc-status"}, required = false,
                 completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "SdlcStatusMixin")
         @Getter private FoDSdlcStatusType sdlcStatusType;
     }

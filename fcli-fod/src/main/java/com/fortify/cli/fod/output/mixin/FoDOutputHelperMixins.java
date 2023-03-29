@@ -5,10 +5,21 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
 /**
  * <p>This class provides FoD-specific {@link IOutputHelper} implementations.</p>
- * 
+ *
  * @author rsenden
  */
 public class FoDOutputHelperMixins {
+
+    public static class CreateWebApp extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "create-web-app";
+    }
+    public static class CreateMicroserviceApp extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "create-microservice-app";
+    }
+    public static class CreateMobileApp extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "create-mobile-app";
+    }
+
      public static class ListSast extends OutputHelperMixins.TableWithQuery {
         public static final String CMD_NAME = "list-sast";
     }
