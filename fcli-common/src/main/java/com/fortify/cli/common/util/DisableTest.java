@@ -47,5 +47,7 @@ public @interface DisableTest {
         OPT_ARITY_INTERACTIVE,
         // Check that arity is not specified for any other options
         OPT_ARITY_PRESENT,
+        // Check that mixins don't have @Spec(MIXEE)
+        INJECT_MIXEE,
     } 
 }

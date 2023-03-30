@@ -1,5 +1,6 @@
 package com.fortify.cli;
 
+import java.lang.reflect.AccessibleObject;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +21,7 @@ import com.fortify.cli.common.util.StringUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
+import picocli.CommandLine.Spec;
 
 public class FortifyCLITest {
     /**
@@ -46,6 +48,7 @@ public class FortifyCLITest {
         checkOptions(results, spec);
         checkCommandNamingConvention(results, spec);
         checkMaxCommandDepth(results, spec);
+        checkMixins(results, spec, spec.mixins());
         Map<String, CommandLine> subcommands = spec.subcommands();
         if ( subcommands==null || subcommands.isEmpty() ) {
             checkLeafCommand(results, spec);
@@ -128,6 +131,34 @@ public class FortifyCLITest {
         }
         Stream.of(spec.aliases()).filter(this::isInvalidCommandName).forEach(
                 name->results.add(TestType.CMD_NAME, Level.ERROR, spec, "Invalid alias name: "+name));
+    }
+    
+    private void checkMixins(Results results, CommandSpec cmdSpec, Map<String, CommandSpec> mixins) {
+        if ( mixins!=null  ) {
+            mixins.values().forEach(mixin->checkMixin(results, cmdSpec, mixin));
+        }
+    }
+    
+    private void checkMixin(Results results, CommandSpec cmdSpec, CommandSpec mixinSpec) {
+        checkMixins(results, cmdSpec, mixinSpec.mixins());
+        checkMixeeAnnotationPresent(results, cmdSpec, mixinSpec);
+    }
+
+    private void checkMixeeAnnotationPresent(Results results, CommandSpec cmdSpec, CommandSpec mixinSpec) {
+        Object mixin = mixinSpec.userObject();
+        if ( mixin!=null ) {
+            checkMixeeAnnotation(results, cmdSpec, mixinSpec, mixin.getClass().getDeclaredFields());
+            checkMixeeAnnotation(results, cmdSpec, mixinSpec, mixin.getClass().getMethods());
+        }
+    }
+
+    private void checkMixeeAnnotation(Results results, CommandSpec cmdSpec, CommandSpec mixinSpec, AccessibleObject[] accessibleObjects) {
+        for ( var accessibleObject : accessibleObjects ) {
+            var annotation = accessibleObject.getAnnotation(Spec.class);
+            if ( annotation!=null ) {
+                results.add(TestType.INJECT_MIXEE, Level.ERROR, cmdSpec, "Mixin class must use CommandHelperMixin to access CommandSpec: "+mixinSpec.userObject().getClass().getName());
+            }
+        }
     }
     
     private boolean isInvalidCommandName(String s) {

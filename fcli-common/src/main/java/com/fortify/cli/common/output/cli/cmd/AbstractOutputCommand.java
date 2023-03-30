@@ -37,6 +37,7 @@ public abstract class AbstractOutputCommand extends AbstractFortifyCLICommand im
             IJsonNodeSupplier.class);
     @Override
     public final void run() {
+        initMixins();
         IOutputHelper outputHelper = getOutputHelper();
         if ( isInstance(IBaseRequestSupplier.class) ) {
             outputHelper.write(((IBaseRequestSupplier)this).getBaseRequest());
