@@ -4,7 +4,7 @@ import org.springframework.expression.Expression;
 import org.springframework.expression.spel.SpelNode;
 import org.springframework.expression.spel.standard.SpelExpression;
 
-public abstract class AbstractSpELTreeVisitor {
+public abstract class AbstractSpelTreeVisitor {
     public final void process(Expression e) {
         if ( e instanceof SpelExpression ) {
             visit(((SpelExpression) e).getAST());

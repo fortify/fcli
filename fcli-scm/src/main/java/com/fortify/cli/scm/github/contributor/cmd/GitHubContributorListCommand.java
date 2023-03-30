@@ -120,16 +120,16 @@ public class GitHubContributorListCommand extends AbstractGitHubJsonNodeOutputCo
                 ObjectNode data = JsonHelper.getObjectMapper().createObjectNode();
                 data.setAll((ObjectNode)JsonHelper.getObjectMapper().valueToTree(repoDescriptor));
                 data.set("author", author);
-                data.put("lastCommit", JsonHelper.evaluateSpELExpression(commit, "commit?.author?.date", String.class));
+                data.put("lastCommit", JsonHelper.evaluateSpelExpression(commit, "commit?.author?.date", String.class));
                 resultData.getResults().add(data);
             }
         }
         
         private ObjectNode getAuthor(JsonNode commit) {
             return JsonHelper.getObjectMapper().createObjectNode()
-                .put("name", JsonHelper.evaluateSpELExpression(commit, "commit?.author?.name", String.class))
-                .put("email", JsonHelper.evaluateSpELExpression(commit, "commit?.author?.email", String.class))
-                .put("login", JsonHelper.evaluateSpELExpression(commit, "author?.login", String.class));
+                .put("name", JsonHelper.evaluateSpelExpression(commit, "commit?.author?.name", String.class))
+                .put("email", JsonHelper.evaluateSpelExpression(commit, "commit?.author?.email", String.class))
+                .put("login", JsonHelper.evaluateSpelExpression(commit, "author?.login", String.class));
         }
         
         protected ArrayNode finish(ProgressHelperMixin progressHelper) {

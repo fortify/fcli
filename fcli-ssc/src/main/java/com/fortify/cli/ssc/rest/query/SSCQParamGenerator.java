@@ -12,8 +12,8 @@ import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.expression.spel.ast.OpEQ;
 
 import com.fortify.cli.common.output.query.QueryExpression;
-import com.fortify.cli.common.spring.expression.AbstractSpELTreeVisitor;
-import com.fortify.cli.common.spring.expression.SpELNodeHelper;
+import com.fortify.cli.common.spring.expression.AbstractSpelTreeVisitor;
+import com.fortify.cli.common.spring.expression.SpelNodeHelper;
 
 public final class SSCQParamGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(SSCQParamGenerator.class);
@@ -40,7 +40,7 @@ public final class SSCQParamGenerator {
         return new SSCQParamSpELTreeVisitor(expression).getQParamValue();
     }
     
-    private final class SSCQParamSpELTreeVisitor extends AbstractSpELTreeVisitor {
+    private final class SSCQParamSpELTreeVisitor extends AbstractSpelTreeVisitor {
         private StringBuffer qParamValue = new StringBuffer();
         
         public SSCQParamSpELTreeVisitor(Expression expression) {
@@ -65,8 +65,8 @@ public final class SSCQParamGenerator {
         private void visitEQ(OpEQ node) {
             var left = node.getLeftOperand();
             var right = node.getRightOperand();
-            var literal = SpELNodeHelper.getFirstLiteral(right,left);
-            var propertyName = SpELNodeHelper.getFirstQualifiedPropertyName(right,left);
+            var literal = SpelNodeHelper.getFirstLiteral(right,left);
+            var propertyName = SpelNodeHelper.getFirstQualifiedPropertyName(right,left);
             String literalString = literal==null ? null : literal.getLiteralValue().getValue().toString();
             LOG.trace("OpEQ property: {}, literal: {}", propertyName, literalString);
             if ( propertyName!=null && literalString!=null ) {

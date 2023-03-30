@@ -170,7 +170,7 @@ public class SSCAppVersionArtifactImportDebrickedCommand extends AbstractSSCAppV
 				.getBody();
 			// TODO Improve this to properly handle generics
 			// TODO Get rid of appending empty string to id to convert int to string as expected by SpEL
-			List<String> repositoryIds = JsonHelper.evaluateSpELExpression(data, "?[name == '"+repository+"'].![id+'']", ArrayList.class);
+			List<String> repositoryIds = JsonHelper.evaluateSpelExpression(data, "?[name == '"+repository+"'].![id+'']", ArrayList.class);
 			switch ( repositoryIds.size() ) {
 				case 0: throw new IllegalArgumentException(String.format("Debricked repository with name %s not found; please use full repository name like <org>/<repo>", repository));
 				case 1: return repositoryIds.get(0);

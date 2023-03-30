@@ -48,7 +48,7 @@ public class ExprRecordWriter extends AbstractRecordWriter {
 
     @Override @SneakyThrows
     public void writeRecord(ObjectNode record) {
-        getConfig().getWriter().write(JsonHelper.evaluateSpELExpression(record, expression, String.class));
+        getConfig().getWriter().write(JsonHelper.evaluateSpelExpression(record, expression, String.class));
     }
 
     private static final String insertControlCharacters(String s) {

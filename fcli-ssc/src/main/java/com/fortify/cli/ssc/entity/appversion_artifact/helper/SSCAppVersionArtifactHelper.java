@@ -63,7 +63,7 @@ public final class SSCAppVersionArtifactHelper {
     }
     
     public static final String getArtifactStatus(UnirestInstance unirest, String artifactId){
-        return JsonHelper.evaluateSpELExpression(
+        return JsonHelper.evaluateSpelExpression(
                 unirest.get(SSCUrls.ARTIFACT(artifactId)).asObject(JsonNode.class).getBody(),
                 "data.status",
                 String.class
@@ -92,7 +92,7 @@ public final class SSCAppVersionArtifactHelper {
             String scanTypesString = "";
             if ( _embed.has("scans") ) {
                 // TODO Can we get rid of unchecked conversion warning?
-                ArrayList<String> scanTypes = JsonHelper.evaluateSpELExpression(_embed, "scans?.![type]", ArrayList.class);
+                ArrayList<String> scanTypes = JsonHelper.evaluateSpelExpression(_embed, "scans?.![type]", ArrayList.class);
                 scanTypesString = scanTypes.stream().collect(Collectors.joining(", "));   
             }
             record = ((ObjectNode)record).put("scanTypes", scanTypesString);

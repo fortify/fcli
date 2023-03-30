@@ -13,11 +13,11 @@ import org.springframework.expression.spel.ast.PropertyOrFieldReference;
 
 import lombok.RequiredArgsConstructor;
 
-public class SpELNodeHelper {
-    private SpELNodeHelper() {}
+public class SpelNodeHelper {
+    private SpelNodeHelper() {}
     
     public static final Literal getFirstLiteral(SpelNode... nodes) {
-        return (Literal)Stream.of(nodes).filter(SpELNodeHelper::isLiteral).findFirst().orElse(null);
+        return (Literal)Stream.of(nodes).filter(SpelNodeHelper::isLiteral).findFirst().orElse(null);
     }
     
     public static final boolean isLiteral(SpelNode node) {
@@ -25,7 +25,7 @@ public class SpELNodeHelper {
     }
     
     public static final String getFirstQualifiedPropertyName(SpelNode... nodes) {
-        return Stream.of(nodes).map(SpELNodeHelper::getQualifiedPropertyName)
+        return Stream.of(nodes).map(SpelNodeHelper::getQualifiedPropertyName)
                 .filter(Objects::nonNull).findFirst().orElse(null);
     }
     
@@ -37,14 +37,14 @@ public class SpELNodeHelper {
     
     public static final String getCompoundPropertyName(SpelNode node) {
         if ( isCompoundPropertyReference(node) ) {
-            return childrenStream(node).map(SpELNodeHelper::getQualifiedPropertyName)
+            return childrenStream(node).map(SpelNodeHelper::getQualifiedPropertyName)
                 .collect(Collectors.joining("."));
         }
         return null;
     }
     
     public static final SpelNode getFirstPropertyReference(SpelNode... nodes) {
-        return Stream.of(nodes).filter(SpELNodeHelper::isPropertyReference).findFirst().orElse(null);
+        return Stream.of(nodes).filter(SpelNodeHelper::isPropertyReference).findFirst().orElse(null);
     }
     
     public static final boolean isPropertyReference(SpelNode node) {
@@ -54,7 +54,7 @@ public class SpELNodeHelper {
 
     public static final boolean isCompoundPropertyReference(SpelNode node) {
         if ( node instanceof CompoundExpression ) {
-            return childrenStream(node).allMatch(SpELNodeHelper::isPropertyReference);
+            return childrenStream(node).allMatch(SpelNodeHelper::isPropertyReference);
         } 
         return false;
     }

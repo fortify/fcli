@@ -188,18 +188,18 @@ public class SCSastSessionDescriptor extends AbstractSessionDescriptor {
                 .asObject(ObjectNode.class)
                 .getBody(); 
         
-        return JsonHelper.evaluateSpELExpression(configData, "data.properties", ArrayNode.class);
+        return JsonHelper.evaluateSpelExpression(configData, "data.properties", ArrayNode.class);
     }
     
     private static final void checkScSastIsEnabled(ArrayNode properties) {
-        boolean scSastEnabled = JsonHelper.evaluateSpELExpression(properties, "^[name=='cloud.ctrl.poll.enabled']?.value=='true'", Boolean.class);
+        boolean scSastEnabled = JsonHelper.evaluateSpelExpression(properties, "^[name=='cloud.ctrl.poll.enabled']?.value=='true'", Boolean.class);
         if (!scSastEnabled) {
             throw new IllegalStateException("ScanCentral SAST must be enabled in SSC");
         }
     }
     
     private static final String getScSastUrlFromProperties(ArrayNode properties) {
-        String scSastUrl = JsonHelper.evaluateSpELExpression(properties, "^[name=='cloud.ctrl.url']?.value", String.class);
+        String scSastUrl = JsonHelper.evaluateSpelExpression(properties, "^[name=='cloud.ctrl.url']?.value", String.class);
         if ( scSastUrl.isEmpty() ) {
             throw new IllegalStateException("SSC returns an empty ScanCentral SAST URL");
         }
