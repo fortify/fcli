@@ -1,0 +1,36 @@
+# Simple plain property
+"plain=='test'","plain:test"
+
+# Simple wrapped property
+"wrapped=='test'","wrapped:""test"""
+
+# Method calls should be ignored
+"wrapped.toLowerCase()=='test'",null
+
+# Unknown properties should be ignored
+"unknown=='test'",null
+
+# Only known properties in AND expression should end up in q-param
+"plain=='test' && unknown=='test2'","plain:test"
+
+# OR expressions should be ignored
+"plain=='test' || plain=='test2'",null
+
+# Simple nested property
+"nested.nested.plain=='test'", "nested.nested.plain:test"
+
+# Simple nested null-safe property
+"nested?.nested?.plain=='test'", "nested.nested.plain:test"
+
+# Wrapped nested property
+"nested.nested.wrapped=='test'", "nested.nested.wrapped:""test"""
+
+# Wrapped nested null-safe property
+"nested?.nested?.wrapped=='test'", "nested.nested.wrapped:""test"""
+
+# Rename nested property
+"nested?.reword?.plain=='test'", "rewordPlain:test"
+
+# Rename nested property
+"nested?.reword?.wrapped=='test'", "rewordWrapped:""test"""
+

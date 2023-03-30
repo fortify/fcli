@@ -33,6 +33,7 @@ import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.query.ISSCQParamGeneratorSupplier;
 import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
+import com.fortify.cli.ssc.rest.query.cli.mixin.SSCQParamMixin;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -43,6 +44,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.List.CMD_NAME)
 public class SSCActivityFeedListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer, ISSCQParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
+    @Mixin private SSCQParamMixin qParamMixin;
     @Getter private final SSCQParamGenerator qParamGenerator = new SSCQParamGenerator()
             .add("userName", SSCQParamValueGenerators::wrapInQuotes)
             .add("eventType", SSCQParamValueGenerators::wrapInQuotes)

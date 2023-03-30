@@ -78,13 +78,17 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     /**
      * This method updates the given base {@link HttpRequest} by calling the
      * {@link IHttpRequestUpdater#updateRequest(HttpRequest)} method
-     * on the configured {@link IProductHelper} and on the command currently being
-     * invoked, in this order, if they implement the {@link IHttpRequestUpdater} interface. 
+     * on the configured {@link IProductHelper}, any mixins on the command
+     * currently being invoked, and the command itself, in this order, if 
+     * they implement the {@link IHttpRequestUpdater} interface. 
      * @param baseRequest
      * @return
      */
     protected final HttpRequest<?> updateRequest(HttpRequest<?> request) {
         request = applyWithDefault(getProductHelper(), IHttpRequestUpdater.class, httpRequestUpdater(request), request);
+        for ( var mixin : commandHelper.getCommandSpec().mixins().values() ) {
+            request = applyWithDefault(mixin.userObject(), IHttpRequestUpdater.class, httpRequestUpdater(request), request);
+        }
         request = applyWithDefault(commandHelper.getCommand(), IHttpRequestUpdater.class, httpRequestUpdater(request), request);
         return request;
     }
