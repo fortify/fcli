@@ -34,3 +34,6 @@
 # Rename nested property
 "nested?.reword?.wrapped=='test'", "rewordWrapped:""test"""
 
+# AND expression
+"nested?.reword?.wrapped=='test' && nested?.reword?.plain=='test2'", "rewordWrapped:""test""+and+rewordPlain:test2"
+
