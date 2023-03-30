@@ -27,6 +27,8 @@ package com.fortify.cli.fod.entity.scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
+import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.entity.rest.cli.mixin.FoDTimePeriodOptions;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDAnalysisStatusTypeOptions;
@@ -35,9 +37,8 @@ import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDBaseRequestOutputCommand;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.helper.FoDFilterResultsTransformer;
-import com.fortify.cli.fod.rest.query.FoDFilterParamGenerator;
-import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
-import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
+import com.fortify.cli.fod.rest.query.FoDFiltersParamGenerator;
+import com.fortify.cli.fod.rest.query.cli.mixin.FoDFiltersParamMixin;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -45,10 +46,11 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-public abstract class AbstractFoDScanListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IFoDFilterParamGeneratorSupplier {
-    @Getter private final FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
-            .add("id", "scanId", FoDFiltersParamValueGenerators::plain)
-            .add("type", "scanType", FoDFiltersParamValueGenerators::plain);
+public abstract class AbstractFoDScanListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
+    @Mixin private FoDFiltersParamMixin filterParamMixin;
+    @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new FoDFiltersParamGenerator()
+            .add("id", "scanId")
+            .add("type", "scanType");
 
     // TODO Consider standardizing sorting options across fcli modules, also see https://github.com/fortify/fcli/issues/86
     @Option(names = {"--latest-first"})

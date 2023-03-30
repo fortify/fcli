@@ -28,9 +28,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
+import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.query.ISSCQParamGeneratorSupplier;
 import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc.rest.query.cli.mixin.SSCQParamMixin;
@@ -42,10 +43,10 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class SSCAlertListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer, ISSCQParamGeneratorSupplier {
+public class SSCAlertListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
     @Mixin private SSCQParamMixin qParamMixin;
-    @Getter private SSCQParamGenerator qParamGenerator = new SSCQParamGenerator()
+    @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
                 .add("id", SSCQParamValueGenerators::plain)
                 .add("alertDefinitionName", SSCQParamValueGenerators::wrapInQuotes)
                 .add("userName", SSCQParamValueGenerators::wrapInQuotes)

@@ -15,7 +15,7 @@ public class OutputWriterWithQueryFactoryMixin implements IOutputWriterFactory, 
     @Mixin private CommandHelperMixin commandHelper;
     @ArgGroup(headingKey = "arggroup.output.heading", exclusive = false, order=30)
     private OutputOptionsArgGroup outputOptionsArgGroup = new OutputOptionsArgGroup();
-    @ArgGroup(headingKey = "arggroup.query.heading", exclusive = false, order=40)
+    @ArgGroup
     private QueryOptionsArgGroup queryOptionsArgGroup = new QueryOptionsArgGroup();
     
     @Override

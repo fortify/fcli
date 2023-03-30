@@ -1,6 +1,9 @@
 # Simple plain property
 "plain=='test'","plain:test"
 
+# Simple prop property reversed operands
+"'test'==plain","plain:test"
+
 # Simple wrapped property
 "wrapped=='test'","wrapped:""test"""
 

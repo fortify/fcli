@@ -20,7 +20,7 @@ public class SSCQParamGeneratorTest {
     public void testQParamGenerator(String expressionString, String expectedQParam) {
         try {
             Expression expression = new SpelExpressionParser().parseExpression(expressionString);
-            String qParam = generator.getQParamValue(expression);
+            String qParam = generator.getServerSideQueryParamValue(expression);
             System.out.println(String.format("INFO: expr: %s, qParam: %s, expected: %s",expressionString, qParam, expectedQParam));
             Assertions.assertEquals(qParam, expectedQParam);
         } catch ( SpelParseException e ) {

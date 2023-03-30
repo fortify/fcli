@@ -22,8 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.rest.query;
+package com.fortify.cli.common.rest.query;
 
-public interface IFoDFilterParamGeneratorSupplier {
-    FoDFilterParamGenerator getFilterParamGenerator();
+public interface IServerSideQueryParamGeneratorSupplier {
+    IServerSideQueryParamValueGenerator getServerSideQueryParamGenerator();
 }

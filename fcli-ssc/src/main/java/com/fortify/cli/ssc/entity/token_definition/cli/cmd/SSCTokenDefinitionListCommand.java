@@ -25,9 +25,10 @@
 package com.fortify.cli.ssc.entity.token_definition.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
+import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc.rest.SSCUrls;
-import com.fortify.cli.ssc.rest.query.ISSCQParamGeneratorSupplier;
 import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc.rest.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc.rest.query.cli.mixin.SSCQParamMixin;
@@ -39,10 +40,10 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class SSCTokenDefinitionListCommand extends AbstractSSCBaseRequestOutputCommand implements ISSCQParamGeneratorSupplier {
+public class SSCTokenDefinitionListCommand extends AbstractSSCBaseRequestOutputCommand implements IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper; 
     @Mixin private SSCQParamMixin qParamMixin;
-    @Getter private SSCQParamGenerator qParamGenerator = new SSCQParamGenerator()
+    @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
                 .add("type", SSCQParamValueGenerators::wrapInQuotes)
                 .add("maxDaysToLive", SSCQParamValueGenerators::plain)
                 .add("maxUsages", SSCQParamValueGenerators::plain)

@@ -1,6 +1,7 @@
 package com.fortify.cli.common.output.cli.mixin;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -24,6 +25,7 @@ import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
+import com.fortify.cli.common.util.JavaHelper;
 
 import kong.unirest.HttpRequest;
 import picocli.CommandLine.Mixin;
@@ -32,8 +34,9 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     @Mixin private CommandHelperMixin commandHelper;
     
     public IProductHelper getProductHelper() {
-        IProductHelperSupplier supplier = commandHelper.getCommandAs(IProductHelperSupplier.class);
-        return supplier==null ? new NoOpProductHelper() : supplier.getProductHelper();
+        return commandHelper.getCommandAs(IProductHelperSupplier.class)
+            .map(IProductHelperSupplier::getProductHelper)
+            .orElse(NoOpProductHelper.instance());
     }
 
     /**
@@ -263,12 +266,11 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @return
      */
     private static final <T,R> R applyWithDefaultSupplier(Object obj, Class<T> type, Function<T,R> function, Supplier<R> defaultValueSupplier) {
-        T target = CommandHelperMixin.getAs(obj, type);
-        R result = target==null ? null : function.apply(target);
-        if ( result==null && defaultValueSupplier!=null ) {
-            result = defaultValueSupplier.get();
+        var result = JavaHelper.as(obj, type).map(function);
+        if ( defaultValueSupplier!=null ) {
+            result = result.or(()->Optional.of(defaultValueSupplier.get()));
         }
-        return result;
+        return result.orElse(null);
     }
     
     /**

@@ -24,8 +24,9 @@
  ******************************************************************************/
 package com.fortify.cli.fod.entity.app.cli.cmd;
 
+import java.util.ArrayList;
+
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDAppTypeOptions;
@@ -41,16 +42,12 @@ import com.fortify.cli.fod.entity.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.entity.user.helper.FoDUserHelper;
 import com.fortify.cli.fod.entity.user_group.helper.FoDUserGroupHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDJsonNodeOutputCommand;
-import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
-
-import java.util.ArrayList;
 
 public abstract class FoDAppCreateAppCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Spec CommandSpec spec;

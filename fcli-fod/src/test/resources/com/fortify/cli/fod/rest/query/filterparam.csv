@@ -1,0 +1,45 @@
+# Simple prop property
+"prop=='test'","prop:test"
+
+# Simple prop property reversed operands
+"'test'==prop","prop:test"
+
+# Method calls should be ignored
+"prop.toLowerCase()=='test'",null
+
+# Unknown properties should be ignored
+"unknown=='test'",null
+
+# Only known properties in AND expression should end up in filter-param
+"prop=='test' && unknown=='test2'","prop:test"
+
+# OR expression on same property
+"prop=='test' || prop=='test2'", "prop:test|test2"
+
+# OR expression on different properties
+"prop=='test' || nested.nested.prop=='test2'", null
+
+# OR expression using inline list
+"{'test', 'test2'}.contains(prop)", "prop:test|test2"
+
+# OR expression using regex
+"prop matches 'test|test2'", "prop:test|test2"
+
+"prop matches 'test.special|test2'", null
+
+"prop matches 'test\.notspecial|test2'", "prop:test.notspecial|test2"
+
+# Nested property
+"nested.nested.prop=='test'", "nested.nested.prop:test"
+
+# Nested null-safe property
+"nested?.nested?.prop=='test'", "nested.nested.prop:test"
+
+
+# Rename nested property
+"nested?.reword?.prop=='test'", "rewordProp:test"
+
+# AND expression
+"nested?.reword?.prop=='test' && nested?.nested?.prop=='test2'", "rewordProp:test+nested.nested.prop:test2"
+
+
