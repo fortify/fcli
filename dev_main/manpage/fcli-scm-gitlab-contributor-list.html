@@ -1,6 +1,6 @@
 ---
 title: fcli-scm-gitlab-contributor-list(1)
-fcli_version: fcli version 0.20230331.175921-dev_main, built on 2023-03-31 17 59 46
+fcli_version: fcli version 0.20230331.210351-dev_main, built on 2023-03-31 21 04 35
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230331.175921-dev_main, built on 2023-03-31 17 59
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230331.175921-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230331.210351-dev_main" %}
 
 
 <div id="header">
@@ -28,7 +28,6 @@ fcli_version: fcli version 0.20230331.175921-dev_main, built on 2023-03-31 17 59
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
 <li><a href="#_output_options">Output options:</a></li>
-<li><a href="#_query_options">Query options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
 </ul>
 </div>
@@ -49,8 +48,8 @@ fcli_version: fcli version 0.20230331.175921-dev_main, built on 2023-03-31 17 59
                                  [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format_
                            _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
                      _            <em class="=&lt;propertyNames&gt;">]
-                                 [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] [[<strong>-q</strong>=<em>&lt;SpEL _
-                           _      expression&gt;</em>]] [<strong>--projects</strong>=<em>&lt;projects&gt;</em>[,
+                                 [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
+                           _      expression&gt;</em>] [<strong>--projects</strong>=<em>&lt;projects&gt;</em>[,
                                  <em>&lt;projects&gt;</em>&#8230;&#8203;] [<strong>--projects</strong>=<em>&lt;projects&gt;</em>[,
                                  <em>&lt;projects&gt;</em>&#8230;&#8203;]]&#8230;&#8203; | <strong>--search</strong>=<em>&lt;search&gt;</em> |
                                  <strong>--topic</strong>=<em>&lt;topic&gt;</em> | [<strong>--groups</strong>=<em>&lt;groups&gt;</em>[,
@@ -121,6 +120,10 @@ fcli_version: fcli version 0.20230331.175921-dev_main, built on 2023-03-31 17 59
 <dd>
 <p>By default, this command includes the latest contribution older than the given time period if there are no contributions within the specified time period (which corresponds to what is stated in the NCD license terms). Use --no-older to only include contributions for the given time period.</p>
 </dd>
+<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
+<dd>
+<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true. See fcli documentation for more information.</p>
+</dd>
 <dt class="hdlist1"><strong>-k</strong>, <strong>--insecure</strong></dt>
 <dd>
 <p>Disable SSL checks.</p>
@@ -145,19 +148,6 @@ fcli_version: fcli version 0.20230331.175921-dev_main, built on 2023-03-31 17 59
 <dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
 <p>Write results to the specified files in the given output format. By default, results will be written to stdout</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_query_options"><a class="anchor" href="#_query_options"></a>Query options:</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
-<dd>
-<p>Return records that match the given query. &lt;prop&gt; specifies the property path against which the given value should be matched; use the '-o json-properties' option on the current command to see available properties. &lt;op&gt; specifies the operator; currently only '=' is supported.</p>
 </dd>
 </dl>
 </div>
@@ -191,8 +181,8 @@ fcli_version: fcli version 0.20230331.175921-dev_main, built on 2023-03-31 17 59
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230331.175921-dev_main, built on 2023-03-31 17 59 46<br>
-Last updated 2023-03-31 18:01:20 UTC
+Version fcli version 0.20230331.210351-dev_main, built on 2023-03-31 21 04 35<br>
+Last updated 2023-03-31 21:06:20 UTC
 </div>
 </div>
 </body>

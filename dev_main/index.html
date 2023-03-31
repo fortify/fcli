@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230331.175921-dev_main
+fcli_version: 0.20230331.210351-dev_main
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20230331.175921-dev_main
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230331.175921-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230331.210351-dev_main" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230331.175921-dev_main</span>
+<span id="revnumber">version 0.20230331.210351-dev_main</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -406,6 +406,64 @@ Only output artifacts that were uploaded less than 90 days ago.</p>
 </li>
 </ul>
 </div>
+<div class="sect3">
+<h4 id="_server_side_queries"><a class="anchor" href="#_server_side_queries"></a>Server-side queries</h4>
+<div class="paragraph">
+<p>In general, queries specified using the <code>-q</code> / <code>--query</code> option are evaluated on the client. Some commands will analyze the given query and generate corresponding server-side query parameters to minimize the amount of data that needs to be transferred from server to client. Generated queries can be viewed in the log file if <code>--log-level</code> is set to <code>DEBUG</code> level.</p>
+</div>
+<div class="paragraph">
+<p>All commands that automatically generate server-side queries also provide a dedicated option for overriding the automatically generated server-side query, for example to further optimize the query or in case the automatically generated query is causing any issues. Following bullet points provide details on server-side queries for the various product modules:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>FoD:<br>
+All commands that automatically generate server-side queries provide the <code>--filters-param</code> option to override the automatically generated query. Server-side queries are automatically generated for the following SpEL expressions:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>prop1=='value'</code> (simple equals expressions)</p>
+</li>
+<li>
+<p><code>prop1=='val1' || prop1=='val2'</code> (or-expressions on a single property)</p>
+</li>
+<li>
+<p><code>{'value1','value2'}.contains(prop1)</code> (or-expression on a single property)</p>
+</li>
+<li>
+<p><code>prop1 matches 'literalValue1|literalValue2'</code> (or-expression on a single property)</p>
+</li>
+<li>
+<p><code>prop1=='value' &amp;&amp; prop2 matches 'val1|val2'</code> (and-expression containing any of the above)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>ScanCentral SAST:<br>
+No server-side queries are automatically being generated.</p>
+</li>
+<li>
+<p>ScanCentral DAST:<br>
+No server-side queries are automatically being generated. Some commands provide the <code>--server-query</code> option to explicitly pass query parameters to the server.</p>
+</li>
+<li>
+<p>SSC:<br>
+All commands that automatically generate server-side queries provide the <code>--q-param</code> option to override the automatically generated query. Server-side queries are automatically generated for the following SpEL expressions:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>prop1=='value'</code> (simple equals expressions)</p>
+</li>
+<li>
+<p><code>prop1=='value' &amp;&amp; prop2=='val2'</code> (and-expression containing simple equals expressions)</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_session"><a class="anchor" href="#_session"></a>–session</h3>
@@ -779,8 +837,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230331.175921-dev_main<br>
-Last updated 2023-03-31 18:01:20 UTC
+Version 0.20230331.210351-dev_main<br>
+Last updated 2023-03-31 21:06:20 UTC
 </div>
 </div>
 </body>
