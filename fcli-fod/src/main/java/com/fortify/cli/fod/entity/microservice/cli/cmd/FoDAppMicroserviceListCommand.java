@@ -30,34 +30,32 @@ import javax.validation.ValidationException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
+import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.entity.microservice.helper.FoDAppMicroserviceHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDBaseRequestOutputCommand;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.rest.query.FoDFilterParamGenerator;
-import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
-import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
+import com.fortify.cli.fod.rest.query.FoDFiltersParamGenerator;
+import com.fortify.cli.fod.rest.query.cli.mixin.FoDFiltersParamMixin;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class FoDAppMicroserviceListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IFoDFilterParamGeneratorSupplier {
+public class FoDAppMicroserviceListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
     @Mixin private FoDAppResolverMixin.OptionalOption appResolver;
-
-
-    @CommandLine.Option(names = {"--include-releases"})
-    private Boolean includeReleases;
-
-    @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
-            .add("id", "microserviceId", FoDFiltersParamValueGenerators::plain)
-            .add("name", "microserviceName", FoDFiltersParamValueGenerators::plain)
-            .add("releaseId", "release.id", FoDFiltersParamValueGenerators::plain);
+    @Mixin private FoDFiltersParamMixin filterParamMixin;
+    @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new FoDFiltersParamGenerator()
+            .add("id", "microserviceId")
+            .add("name", "microserviceName")
+            .add("releaseId", "release.id");
+    @Option(names = {"--include-releases"}) private Boolean includeReleases;
 
     @Override
     public JsonNode transformRecord(JsonNode record) {

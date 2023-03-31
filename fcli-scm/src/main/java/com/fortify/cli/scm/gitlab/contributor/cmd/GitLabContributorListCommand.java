@@ -119,15 +119,15 @@ public class GitLabContributorListCommand extends AbstractGitLabJsonNodeOutputCo
                 ObjectNode data = JsonHelper.getObjectMapper().createObjectNode();
                 data.setAll((ObjectNode)JsonHelper.getObjectMapper().valueToTree(projectDescriptor));
                 data.set("author", author);
-                data.put("lastCommit", JsonHelper.evaluateSpELExpression(commit, "authored_date", String.class));
+                data.put("lastCommit", JsonHelper.evaluateSpelExpression(commit, "authored_date", String.class));
                 resultData.getResults().add(data);
             }
         }
         
         private ObjectNode getAuthor(JsonNode commit) {
             return JsonHelper.getObjectMapper().createObjectNode()
-                .put("name", JsonHelper.evaluateSpELExpression(commit, "author_name", String.class))
-                .put("email", JsonHelper.evaluateSpELExpression(commit, "author_email", String.class));
+                .put("name", JsonHelper.evaluateSpelExpression(commit, "author_name", String.class))
+                .put("email", JsonHelper.evaluateSpelExpression(commit, "author_email", String.class));
         }
         
         protected ArrayNode finish(ProgressHelperMixin progressHelper) {

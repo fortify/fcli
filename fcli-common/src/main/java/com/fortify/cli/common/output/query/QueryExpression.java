@@ -7,12 +7,13 @@ import com.fortify.cli.common.json.JsonHelper;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
-@RequiredArgsConstructor
+@RequiredArgsConstructor @ToString
 public class QueryExpression {
     @Getter private final Expression expression;
 
     public boolean matches(JsonNode record) {
-        return JsonHelper.evaluateSpELExpression(record, expression, Boolean.class);
+        return JsonHelper.evaluateSpelExpression(record, expression, Boolean.class);
     }
 }

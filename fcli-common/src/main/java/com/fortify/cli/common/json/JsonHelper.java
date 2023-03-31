@@ -53,8 +53,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fortify.cli.common.spring.expression.SpELHelper;
-import com.fortify.cli.common.spring.expression.StandardSpELFunctions;
+import com.fortify.cli.common.spring.expression.SpelHelper;
+import com.fortify.cli.common.spring.expression.StandardSpelFunctions;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Getter;
@@ -69,7 +69,7 @@ public class JsonHelper {
     private static final SpelExpressionParser spelParser = new SpelExpressionParser();
     @Getter private static final ObjectMapper objectMapper = _createObjectMapper();
     //private static final Logger LOG = LoggerFactory.getLogger(JsonHelper.class);
-    private static final EvaluationContext spELEvaluationContext = createSpELEvaluationContext();
+    private static final EvaluationContext spelEvaluationContext = createSpelEvaluationContext();
     
     private static final ObjectMapper _createObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -80,12 +80,12 @@ public class JsonHelper {
         return objectMapper;
     }
     
-    public static final <R> R evaluateSpELExpression(JsonNode input, Expression expression, Class<R> returnClass) {
-        return expression.getValue(spELEvaluationContext, input, returnClass);
+    public static final <R> R evaluateSpelExpression(JsonNode input, Expression expression, Class<R> returnClass) {
+        return expression.getValue(spelEvaluationContext, input, returnClass);
     }
     
-    public static final <R> R evaluateSpELExpression(JsonNode input, String expression, Class<R> returnClass) {
-        return evaluateSpELExpression(input, spelParser.parseExpression(expression), returnClass);
+    public static final <R> R evaluateSpelExpression(JsonNode input, String expression, Class<R> returnClass) {
+        return evaluateSpelExpression(input, spelParser.parseExpression(expression), returnClass);
     }
     
     public static final ObjectNode getFirstObjectNode(JsonNode input) {
@@ -191,7 +191,7 @@ public class JsonHelper {
      * RuntimeReflectionRegistrationFeature inner class in the main FortifyCLI class.
      * @return
      */
-    private static final EvaluationContext createSpELEvaluationContext() {
+    private static final EvaluationContext createSpelEvaluationContext() {
         DefaultConversionService conversionService = new DefaultConversionService();
         conversionService.addConverter(new JsonNodeWrapperToJsonNodeConverter());
         conversionService.addConverter(new ObjectToJsonNodeConverter());
@@ -200,7 +200,7 @@ public class JsonHelper {
                 .withConversionService(conversionService)
                 .withInstanceMethods()
                 .build();
-        SpELHelper.registerFunctions(context, StandardSpELFunctions.class);
+        SpelHelper.registerFunctions(context, StandardSpelFunctions.class);
         return context;
     }
     

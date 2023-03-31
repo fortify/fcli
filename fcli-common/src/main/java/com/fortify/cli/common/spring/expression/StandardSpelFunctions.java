@@ -10,7 +10,7 @@ import com.fortify.cli.common.variable.FcliVariableHelper;
 import io.micronaut.core.annotation.ReflectiveAccess;
 
 @ReflectiveAccess
-public class StandardSpELFunctions {
+public class StandardSpelFunctions {
     private static final DateTimePeriodHelper PeriodHelper = DateTimePeriodHelper.all();
 
     public static final OffsetDateTime date(String s) {

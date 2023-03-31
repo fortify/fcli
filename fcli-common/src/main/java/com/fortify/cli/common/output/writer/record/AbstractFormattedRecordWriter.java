@@ -78,7 +78,7 @@ public abstract class AbstractFormattedRecordWriter extends AbstractRecordWriter
     }
 
     private static final JsonNode evaluateValue(ObjectNode record, String path) {
-        JsonNode result = JsonHelper.evaluateSpELExpression(record, path, JsonNode.class);
+        JsonNode result = JsonHelper.evaluateSpelExpression(record, path, JsonNode.class);
         return result!=null ? result : NA_NODE;
     }
     

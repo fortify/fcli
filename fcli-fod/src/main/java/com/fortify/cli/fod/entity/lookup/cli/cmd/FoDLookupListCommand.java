@@ -27,13 +27,14 @@ package com.fortify.cli.fod.entity.lookup.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
+import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.fod.entity.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.entity.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDBaseRequestOutputCommand;
 import com.fortify.cli.fod.rest.FoDUrls;
-import com.fortify.cli.fod.rest.query.FoDFilterParamGenerator;
-import com.fortify.cli.fod.rest.query.FoDFiltersParamValueGenerators;
-import com.fortify.cli.fod.rest.query.IFoDFilterParamGeneratorSupplier;
+import com.fortify.cli.fod.rest.query.FoDFiltersParamGenerator;
+import com.fortify.cli.fod.rest.query.cli.mixin.FoDFiltersParamMixin;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -42,14 +43,13 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class FoDLookupListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IFoDFilterParamGeneratorSupplier {
+public class FoDLookupListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
 
-    @Mixin
-    private FoDLookupTypeOptions.OptionalLookupOption lookupType;
-
-    @Getter private FoDFilterParamGenerator filterParamGenerator = new FoDFilterParamGenerator()
-            .add("type", "type", FoDFiltersParamValueGenerators::plain);
+    @Mixin private FoDLookupTypeOptions.OptionalLookupOption lookupType;
+    @Mixin private FoDFiltersParamMixin filterParamMixin;
+    @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new FoDFiltersParamGenerator()
+            .add("type");
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {

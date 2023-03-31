@@ -95,7 +95,7 @@ public class SSCBulkRequestBuilder {
             //      SpEL Indexer class seems to explicitly check for arrays or 
             //      collections, and throws an exception if we use '[%s]'.
             String path = String.format("get(%s).responses[0].body", index);
-            return JsonHelper.evaluateSpELExpression(bulkResponse, path, ObjectNode.class);
+            return JsonHelper.evaluateSpelExpression(bulkResponse, path, ObjectNode.class);
         }
         
         public JsonNode data(String requestName) {

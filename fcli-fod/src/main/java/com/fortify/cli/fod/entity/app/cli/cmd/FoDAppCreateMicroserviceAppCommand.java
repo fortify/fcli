@@ -24,30 +24,24 @@
  ******************************************************************************/
 package com.fortify.cli.fod.entity.app.cli.cmd;
 
+import java.util.ArrayList;
+
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDAppTypeOptions;
-import com.fortify.cli.fod.entity.app.cli.mixin.FoDCriticalityTypeOptions;
-import com.fortify.cli.fod.entity.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.entity.app.helper.FoDAppCreateRequest;
 import com.fortify.cli.fod.entity.app.helper.FoDAppHelper;
-import com.fortify.cli.fod.entity.attribute.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.entity.attribute.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppAndRelNameDescriptor;
-import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppRelResolverMixin;
 import com.fortify.cli.fod.entity.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.entity.user.helper.FoDUserHelper;
 import com.fortify.cli.fod.entity.user_group.helper.FoDUserGroupHelper;
-import com.fortify.cli.fod.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.*;
-import picocli.CommandLine.Model.CommandSpec;
-
-import java.util.ArrayList;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @Command(name = FoDOutputHelperMixins.CreateMicroserviceApp.CMD_NAME)
 public class FoDAppCreateMicroserviceAppCommand extends FoDAppCreateAppCommand {

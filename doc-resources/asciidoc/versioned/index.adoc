@@ -150,6 +150,30 @@ Following are some examples using bash syntax, assuming the record contains `p1`
 * `+fcli ssc appversion-artifact list --appversion MyApp:main -q '#now("-90d") < #date(uploadDate)'+` +
   Only output artifacts that were uploaded less than 90 days ago. 
 
+==== Server-side queries
+
+In general, queries specified using the `-q` / `--query` option are evaluated on the client. Some commands will analyze the given query and generate corresponding server-side query parameters to minimize the amount of data that needs to be transferred from server to client. Generated queries can be viewed in the log file if `--log-level` is set to `DEBUG` level. 
+
+All commands that automatically generate server-side queries also provide a dedicated option for overriding the automatically generated server-side query, for example to further optimize the query or in case the automatically generated query is causing any issues. Following bullet points provide details on server-side queries for the various product modules:
+
+* FoD: +
+  All commands that automatically generate server-side queries provide the `--filters-param` option to override the automatically generated query. Server-side queries are automatically generated for the following SpEL expressions:
+** `prop1=='value'` (simple equals expressions)
+** `prop1=='val1' || prop1=='val2'` (or-expressions on a single property)
+** `{'value1','value2'}.contains(prop1)` (or-expression on a single property)
+** `prop1 matches 'literalValue1|literalValue2'` (or-expression on a single property)
+** `prop1=='value' && prop2 matches 'val1|val2'` (and-expression containing any of the above)
+
+* ScanCentral SAST: +
+  No server-side queries are automatically being generated.
+  
+* ScanCentral DAST: +
+  No server-side queries are automatically being generated. Some commands provide the `--server-query` option to explicitly pass query parameters to the server.
+  
+* SSC: +
+  All commands that automatically generate server-side queries provide the `--q-param` option to override the automatically generated query. Server-side queries are automatically generated for the following SpEL expressions:
+** `prop1=='value'` (simple equals expressions)
+** `prop1=='value' && prop2=='val2'` (and-expression containing simple equals expressions)
 
 === –session
 

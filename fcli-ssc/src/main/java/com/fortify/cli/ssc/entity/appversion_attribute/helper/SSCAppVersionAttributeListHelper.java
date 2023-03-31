@@ -145,7 +145,7 @@ public final class SSCAppVersionAttributeListHelper {
     private ObjectNode getAttributeNode(JsonNode attributeBody, JsonNode attrDef) {
         String guid = attrDef.get("guid").asText();
         return JsonHelper
-                .evaluateSpELExpression(attributeBody, String.format("data?.^[guid == '%s']", guid), ObjectNode.class);
+                .evaluateSpelExpression(attributeBody, String.format("data?.^[guid == '%s']", guid), ObjectNode.class);
     }
     
     private ObjectNode combine(ObjectNode node1, ObjectNode node2) {
@@ -171,7 +171,7 @@ public final class SSCAppVersionAttributeListHelper {
             valueString = attr.get("value").asText();
         } else if ( attr.has("values") && !attr.get("values").isEmpty() ) {
          // TODO Can we get rid of unchecked conversion warning?
-            ArrayList<String> values = JsonHelper.evaluateSpELExpression(attr, "values?.![name]", ArrayList.class);
+            ArrayList<String> values = JsonHelper.evaluateSpelExpression(attr, "values?.![name]", ArrayList.class);
             valueString = values.stream().collect(Collectors.joining(", "));
         }
         attr.put("valueString", valueString);
