@@ -88,33 +88,29 @@ public class FortifyCLITest {
         Stream.of(optionSpec.names()).filter(this::isInvalidOptionName).forEach(
                 name->results.add(TestType.OPT_NAME, Level.ERROR, cmdSpec, optionSpec, "Invalid option name: "+name));
         if ( optionSpec.isMultiValue() ) {
-            // TODO For now we only output warnings for FoD; update once FoD commands have been fixed
-            Level resultType = isFoD(cmdSpec) ? Level.WARN : Level.ERROR;
             Stream.of(optionSpec.names()).filter(n->n.startsWith("--") && !n.endsWith("s")).forEach(
-                name->results.add(TestType.MULTI_OPT_PLURAL_NAME, resultType, cmdSpec, optionSpec, "Multi-value option should use plural option name: "+name));
+                name->results.add(TestType.MULTI_OPT_PLURAL_NAME, Level.ERROR, cmdSpec, optionSpec, "Multi-value option should use plural option name: "+name));
             if ( StringUtils.isBlank(optionSpec.splitRegex()) ) {
-                results.add(TestType.MULTI_OPT_SPLIT, resultType, cmdSpec, optionSpec, "Multi-value option should define a split expression");
+                results.add(TestType.MULTI_OPT_SPLIT, Level.ERROR, cmdSpec, optionSpec, "Multi-value option should define a split expression");
             }
         }
     }
     
     private void checkOptionArity(Results results, CommandSpec cmdSpec, OptionSpec optionSpec) {
         var arity = optionSpec.arity();
-        // TODO For now we only output warnings for FoD; update once FoD commands have been fixed
-        Level resultType = isFoD(cmdSpec) ? Level.WARN : Level.ERROR;
         if ( arity.isVariable() ) {
-            results.add(TestType.OPT_ARITY_VARIABLE, resultType, cmdSpec, optionSpec, "Variable arity not allowed: "+arity.originalValue());
+            results.add(TestType.OPT_ARITY_VARIABLE, Level.ERROR, cmdSpec, optionSpec, "Variable arity not allowed: "+arity.originalValue());
         } else if ( !arity.isUnspecified() ) {
             if ( optionSpec.type().isAssignableFrom(Boolean.class) || optionSpec.type().isAssignableFrom(boolean.class) ) {
                 if ( arity.min()!=arity.max() || (arity.min()!=0 && arity.min()!=1) ) {
-                    results.add(TestType.OPT_ARITY_BOOL, resultType, cmdSpec, optionSpec, "Arity for boolean options must be either 0 (flags) or 1 (require true/false value)");
+                    results.add(TestType.OPT_ARITY_BOOL, Level.ERROR, cmdSpec, optionSpec, "Arity for boolean options must be either 0 (flags) or 1 (require true/false value)");
                 }
             } else if ( optionSpec.interactive() ) {
                 if ( arity.min()!=0 || arity.max()!=1 ) {
-                    results.add(TestType.OPT_ARITY_INTERACTIVE, resultType, cmdSpec, optionSpec, "Arity for interactive options must be 0..1");
+                    results.add(TestType.OPT_ARITY_INTERACTIVE, Level.ERROR, cmdSpec, optionSpec, "Arity for interactive options must be 0..1");
                 }
             } else {
-                results.add(TestType.OPT_ARITY_PRESENT, resultType, cmdSpec, optionSpec, "Arity may only be specified on boolean or interactive options");
+                results.add(TestType.OPT_ARITY_PRESENT, Level.ERROR, cmdSpec, optionSpec, "Arity may only be specified on boolean or interactive options");
             }
         }
     }
@@ -173,10 +169,6 @@ public class FortifyCLITest {
         if ( spec.qualifiedName().chars().filter(ch -> ch == ' ').count() > maxDepth-1 ) {
             results.add(TestType.CMD_DEPTH, Level.ERROR, spec, "Command depth > "+maxDepth);
         }
-    }
-    
-    private final boolean isFoD(CommandSpec cmdSpec) {
-        return cmdSpec.qualifiedName().startsWith("fcli fod");
     }
     
     private static class Results {
