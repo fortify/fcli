@@ -95,14 +95,14 @@ public class FoDAssessmentTypeOptions {
     }
 
     public static class RequiredOption extends AbstractFoDAssessmentType {
-        @Option(names = {"--assessment", "--assessment-type"}, required = true, arity = "1",
+        @Option(names = {"--assessment", "--assessment-type"}, required = true,
                 completionCandidates = FoDAssessmentTypeIterable.class, descriptionKey = "AssessmentTypeMixin")
         @Getter
         private FoDAssessmentType assessmentType;
     }
 
     public static class OptionalOption extends AbstractFoDAssessmentType {
-        @Option(names = {"--assessment", "--assessment-type"}, required = false, arity = "1",
+        @Option(names = {"--assessment", "--assessment-type"}, required = false,
                 completionCandidates = FoDAssessmentTypeIterable.class, descriptionKey = "AssessmentTypeMixin")
         @Getter
         private FoDAssessmentType assessmentType;

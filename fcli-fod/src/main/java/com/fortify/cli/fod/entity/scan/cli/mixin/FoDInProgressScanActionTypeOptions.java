@@ -49,14 +49,14 @@ public class FoDInProgressScanActionTypeOptions {
     }
 
     public static class RequiredOption extends AbstractFoDEntitlementType {
-        @Option(names = {"--in-progress", "--in-progress-action"}, required = true, arity = "1",
+        @Option(names = {"--in-progress", "--in-progress-action"}, required = true,
                 completionCandidates = FoDInProgressScanActionTypeIterable.class, descriptionKey = "InProgressActionTypeMixin")
         @Getter
         private FoDEnums.InProgressScanActionType inProgressScanActionType;
     }
 
     public static class OptionalOption extends AbstractFoDEntitlementType {
-        @Option(names = {"--in-progress", "--in-progress-action"}, required = false, arity = "1",
+        @Option(names = {"--in-progress", "--in-progress-action"}, required = false,
                 completionCandidates = FoDInProgressScanActionTypeIterable.class, descriptionKey = "InProgressActionTypeMixin")
         @Getter
         private FoDEnums.InProgressScanActionType inProgressScanActionType;

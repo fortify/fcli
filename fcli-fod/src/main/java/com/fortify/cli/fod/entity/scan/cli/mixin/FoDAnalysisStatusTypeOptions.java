@@ -49,14 +49,14 @@ public class FoDAnalysisStatusTypeOptions {
     }
 
     public static class RequiredOption extends AbstractFoDAnalysisStatusType {
-        @Option(names = {"--status", "--analysis-status"}, required = true, arity = "1",
+        @Option(names = {"--status", "--analysis-status"}, required = true,
                 completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "AnalysisStatusMixin")
         @Getter
         private FoDAnalysisStatusType analysisStatusType;
     }
 
     public static class OptionalOption extends AbstractFoDAnalysisStatusType {
-        @Option(names = {"--status", "--analysis-status"}, required = false, arity = "1",
+        @Option(names = {"--status", "--analysis-status"}, required = false,
                 completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "AnalysisStatusMixin")
         @Getter
         private FoDAnalysisStatusType analysisStatusType;

@@ -86,18 +86,18 @@ public class FoDLookupTypeOptions {
             super(Stream.of(FoDLookupType.values()).map(FoDLookupType::name).collect(Collectors.toList()));
         }
     }
-    
+
     public static abstract class AbstractFoDLookupType {
         public abstract FoDLookupType getLookupType();
     }
 
     public static class RequiredLookupOption extends AbstractFoDLookupType {
-        @Option(names = {"--type", "--lookup-type"}, required = true, arity = "1", defaultValue = "All", completionCandidates = FoDLookupTypeIterable.class)
+        @Option(names = {"--type", "--lookup-type"}, required = true, defaultValue = "All", completionCandidates = FoDLookupTypeIterable.class)
         @Getter private FoDLookupType lookupType;
     }
 
     public static class OptionalLookupOption extends AbstractFoDLookupType {
-        @Option(names = {"--type", "--lookup-type"}, required = false, arity = "1", defaultValue = "All", completionCandidates = FoDLookupTypeIterable.class)
+        @Option(names = {"--type", "--lookup-type"}, required = false, defaultValue = "All", completionCandidates = FoDLookupTypeIterable.class)
         @Getter private FoDLookupType lookupType;
     }
 

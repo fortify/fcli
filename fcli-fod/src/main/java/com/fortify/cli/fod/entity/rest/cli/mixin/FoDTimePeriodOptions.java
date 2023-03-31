@@ -83,14 +83,14 @@ public class FoDTimePeriodOptions {
     }
 
     public static class RequiredOption extends AbstractFoDTimePeriodType {
-        @Option(names = {"--period", "--time-period"}, required = true, arity = "1",
+        @Option(names = {"--period", "--time-period"}, required = true,
                 completionCandidates = FoDTimePeriodTypeIterable.class, defaultValue = "Last30",
                 descriptionKey = "TimePeriodMixin")
         @Getter private FoDTimePeriodType timePeriodType;
     }
 
     public static class OptionalOption extends AbstractFoDTimePeriodType {
-        @Option(names = {"--period", "--time-period"}, required = false, arity = "1",
+        @Option(names = {"--period", "--time-period"}, required = false,
                 completionCandidates = FoDTimePeriodTypeIterable.class, defaultValue = "Last30",
                 descriptionKey = "TimePeriodMixin")
         @Getter private FoDTimePeriodType timePeriodType;

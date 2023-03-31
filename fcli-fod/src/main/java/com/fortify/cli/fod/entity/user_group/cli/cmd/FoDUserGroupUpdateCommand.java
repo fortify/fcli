@@ -47,8 +47,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class FoDUserGroupUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
-    // TODO Mixin class 'Create' doesn't match 'Update.CMD_NAME' above
-    @Getter @Mixin private OutputHelperMixins.Create outputHelper;
+    @Getter @Mixin private OutputHelperMixins.Update outputHelper;
 
     @Mixin private FoDUserGroupResolverMixin.PositionalParameter userGroupResolver;
 
@@ -58,13 +57,13 @@ public class FoDUserGroupUpdateCommand extends AbstractFoDJsonNodeOutputCommand 
     private Boolean addAllUsers = false;
     @Option(names = {"--remove-all-users"})
     private Boolean removeAllUsers = false;
-    @Option(names = {"--add-user"}, required = false, arity = "0..*")
+    @Option(names = {"--add-users"}, required = false, split = ",")
     private ArrayList<String> addUsers;
-    @Option(names = {"--remove-user"}, required = false, arity = "0..*")
+    @Option(names = {"--remove-users"}, required = false, split = ",")
     private ArrayList<String> removeUsers;
-    @Option(names = {"--add-app", "--add-application"}, required = false, arity = "0..*")
+    @Option(names = {"--add-apps", "--add-applications"}, required = false, split = ",")
     private ArrayList<String> addApplications;
-    @Option(names = {"--remove-app", "--remove-application"}, required = false, arity = "0..*")
+    @Option(names = {"--remove-apps", "--remove-applications"}, required = false, split = ",")
     private ArrayList<String> removeApplications;
 
     @Override
@@ -106,7 +105,7 @@ public class FoDUserGroupUpdateCommand extends AbstractFoDJsonNodeOutputCommand 
     public String getActionCommandResult() {
         return "CREATED";
     }
-    
+
     @Override
     public boolean isSingular() {
         return true;

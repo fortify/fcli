@@ -47,13 +47,13 @@ import picocli.CommandLine.Parameters;
 public class FoDUserGroupCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
 
-    @Parameters(index = "0", arity = "1", descriptionKey = "group-name")
+    @Parameters(index = "0", descriptionKey = "group-name")
     private String groupName;
     @Option(names = {"--add-all-users"})
     private Boolean addAllUsers = false;
-    @Option(names = {"--user"}, required = false, arity = "0..*")
+    @Option(names = {"--users"}, required = false, split = ",")
     private ArrayList<String> users;
-    @Option(names = {"--application"}, required = false, arity = "0..*")
+    @Option(names = {"--applications"}, required = false, split = ",")
     private ArrayList<String> applications;
 
     @Override
@@ -82,7 +82,7 @@ public class FoDUserGroupCreateCommand extends AbstractFoDJsonNodeOutputCommand 
     public String getActionCommandResult() {
         return "CREATED";
     }
-    
+
     @Override
     public boolean isSingular() {
         return true;

@@ -52,14 +52,14 @@ public class FoDScanFormatOptions {
     }
 
     public static class RequiredOption extends AbstractFoDScanType {
-        @Option(names = {"--type", "--scan-type"}, required = true, arity = "1",
+        @Option(names = {"--type", "--scan-type"}, required = true,
                 completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")
         @Getter
         private FoDScanType scanType;
     }
 
     public static class OptionalOption extends AbstractFoDScanType {
-        @Option(names = {"--type", "--scan-type"}, required = false, arity = "1",
+        @Option(names = {"--type", "--scan-type"}, required = false,
                 completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")
         @Getter
         private FoDScanType scanType;

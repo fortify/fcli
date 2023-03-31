@@ -53,14 +53,14 @@ public class FoDSbomFormatOptions {
     }
 
     public static class RequiredOption extends AbstractFoDSbomFormat {
-        @Option(names = {"--sbom-format"}, required = true, arity = "1",
+        @Option(names = {"--sbom-format"}, required = true,
                 completionCandidates = FoDSbomFormatIterable.class, descriptionKey = "SbomFormatMixin")
         @Getter
         private FoDSbomFormat sbomFormat;
     }
 
     public static class OptionalOption extends AbstractFoDSbomFormat {
-        @Option(names = {"--sbom-format"}, required = false, arity = "1",
+        @Option(names = {"--sbom-format"}, required = false,
                 completionCandidates = FoDSbomFormatIterable.class, descriptionKey = "SbomFormatMixin")
         @Getter
         private FoDSbomFormat sbomFormat;

@@ -68,13 +68,13 @@ public class FoDUserUpdateCommand extends AbstractFoDJsonNodeOutputCommand imple
     private Boolean isSuspended = false;
     @Option(names = {"--must-change"})
     private Boolean mustChange = false;
-    @Option(names = {"--add-group"}, required = false, arity = "0..*")
+    @Option(names = {"--add-groups"}, required = false, split = ",")
     private ArrayList<String> addUserGroups;
-    @Option(names = {"--remove-group"}, required = false, arity = "0..*")
+    @Option(names = {"--remove-groups"}, required = false, split = ",")
     private ArrayList<String> removeUserGroups;
-    @Option(names = {"--add-app", "--add-application"}, required = false, arity = "0..*")
+    @Option(names = {"--add-apps", "--add-applications"}, required = false, split = ",")
     private ArrayList<String> addApplications;
-    @Option(names = {"--remove-app", "--remove-application"}, required = false, arity = "0..*")
+    @Option(names = {"--remove-apps", "--remove-applications"}, required = false, split = ",")
     private ArrayList<String> removeApplications;
 
     @Override
@@ -129,7 +129,7 @@ public class FoDUserUpdateCommand extends AbstractFoDJsonNodeOutputCommand imple
     public String getActionCommandResult() {
         return "UPDATED";
     }
-    
+
     @Override
     public boolean isSingular() {
         return true;
