@@ -47,7 +47,7 @@ import picocli.CommandLine.Parameters;
 public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
 
-    @Parameters(index = "0", arity = "1", descriptionKey = "user-name")
+    @Parameters(index = "0", descriptionKey = "user-name")
     private String userName;
     @Option(names = {"--email"}, required = true)
     private String email;
@@ -59,9 +59,9 @@ public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand imple
     private String phoneNumber;
     @Option(names = {"--role"}, required = true)
     private String roleNameOrId;
-    @Option(names = {"--group"}, required = false, arity = "0..*")
+    @Option(names = {"--groups"}, required = false, split = ",")
     private ArrayList<String> userGroups;
-    @Option(names = {"--application"}, required = false, arity = "0..*")
+    @Option(names = {"--applications"}, required = false, split=",")
     private ArrayList<String> applications;
 
     @Override
@@ -99,7 +99,7 @@ public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand imple
     public String getActionCommandResult() {
         return "CREATED";
     }
-    
+
     @Override
     public boolean isSingular() {
         return true;

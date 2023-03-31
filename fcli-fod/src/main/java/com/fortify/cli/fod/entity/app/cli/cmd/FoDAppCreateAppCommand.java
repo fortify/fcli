@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDAppTypeOptions;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDCriticalityTypeOptions;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDSdlcStatusTypeOptions;
@@ -52,6 +53,8 @@ import picocli.CommandLine.Spec;
 
 import java.util.ArrayList;
 
+import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_NAME;
+
 public abstract class FoDAppCreateAppCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Spec CommandSpec spec;
 
@@ -59,6 +62,7 @@ public abstract class FoDAppCreateAppCommand extends AbstractFoDJsonNodeOutputCo
 
     @Option(names = {"--description", "-d"})
     protected String description;
+    @DisableTest(MULTI_OPT_PLURAL_NAME)
     @Option(names = {"--notify"}, required = false, split=",")
     protected ArrayList<String> notifications;
     @Option(names = {"--release-description", "--rel-desc"})

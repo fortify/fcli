@@ -49,14 +49,14 @@ public class FoDEntitlementPreferenceTypeOptions {
     }
 
     public static class RequiredOption extends AbstractFoDEntitlementPreferenceType {
-        @Option(names = {"--entitlement", "--entitlement-preference"}, required = true, arity = "1",
+        @Option(names = {"--entitlement", "--entitlement-preference"}, required = true,
                 completionCandidates = FoDEntitlementPreferenceTypeIterable.class, descriptionKey = "EntitlementPreferenceTypeMixin")
         @Getter
         private FoDEnums.EntitlementPreferenceType entitlementPreferenceType;
     }
 
     public static class OptionalOption extends AbstractFoDEntitlementPreferenceType {
-        @Option(names = {"--entitlement", "--entitlement-preference"}, required = false, arity = "1",
+        @Option(names = {"--entitlement", "--entitlement-preference"}, required = false,
                 completionCandidates = FoDEntitlementPreferenceTypeIterable.class, descriptionKey = "EntitlementPreferenceTypeMixin")
         @Getter
         private FoDEnums.EntitlementPreferenceType entitlementPreferenceType;

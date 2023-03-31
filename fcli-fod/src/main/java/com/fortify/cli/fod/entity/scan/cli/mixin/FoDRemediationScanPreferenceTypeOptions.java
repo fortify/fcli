@@ -49,14 +49,14 @@ public class FoDRemediationScanPreferenceTypeOptions {
     }
 
     public static class RequiredOption extends AbstractFoDEntitlementType {
-        @Option(names = {"--remediation", "--remediation-preference"}, required = true, arity = "1",
+        @Option(names = {"--remediation", "--remediation-preference"}, required = true,
                 completionCandidates = FoDRemediationScanPreferenceTypeIterable.class, descriptionKey = "RemediationScanPreferenceTypeMixin")
         @Getter
         private FoDEnums.RemediationScanPreferenceType remediationScanPreferenceType;
     }
 
     public static class OptionalOption extends AbstractFoDEntitlementType {
-        @Option(names = {"--remediation", "--remediation-preference"}, required = false, arity = "1",
+        @Option(names = {"--remediation", "--remediation-preference"}, required = false,
                 completionCandidates = FoDRemediationScanPreferenceTypeIterable.class, descriptionKey = "RemediationScanPreferenceTypeMixin")
         @Getter
         private FoDEnums.RemediationScanPreferenceType remediationScanPreferenceType;

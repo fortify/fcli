@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDCriticalityTypeOptions;
 import com.fortify.cli.fod.entity.app.helper.FoDAppDescriptor;
@@ -53,6 +54,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_NAME;
+
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
@@ -63,6 +66,7 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
     private String applicationNameUpdate;
     @Option(names = {"--description", "-d"})
     private String descriptionUpdate;
+    @DisableTest(MULTI_OPT_PLURAL_NAME)
     @Option(names = {"--notify"}, required = false, split=",")
     private ArrayList<String> notificationsUpdate;
     @Mixin
