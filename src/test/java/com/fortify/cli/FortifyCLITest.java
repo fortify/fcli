@@ -47,6 +47,7 @@ public class FortifyCLITest {
         CommandSpec spec = cl.getCommandSpec();
         checkOptions(results, spec);
         checkCommandNamingConvention(results, spec);
+        checkUsageHeader(results, spec);
         checkMaxCommandDepth(results, spec);
         checkMixins(results, spec, spec.mixins());
         Map<String, CommandLine> subcommands = spec.subcommands();
@@ -82,6 +83,7 @@ public class FortifyCLITest {
     private void checkOptionSpec(Results results, CommandSpec cmdSpec, OptionSpec optionSpec) {
         checkOptionNames(results, cmdSpec, optionSpec);
         checkOptionArity(results, cmdSpec, optionSpec);
+        checkOptionDescription(results, cmdSpec, optionSpec);
     }
     
     private void checkOptionNames(Results results, CommandSpec cmdSpec, OptionSpec optionSpec) {
@@ -115,10 +117,27 @@ public class FortifyCLITest {
         }
     }
     
+    private void checkOptionDescription(Results results, CommandSpec cmdSpec, OptionSpec optionSpec) {
+        var descriptionArray = optionSpec.description();
+        if ( descriptionArray.length==0 || Stream.of(descriptionArray).allMatch(StringUtils::isBlank) ) {
+            results.add(TestType.OPT_EMPTY_DESCRIPTION, Level.WARN, cmdSpec, optionSpec, "Option has an empty description");
+        }
+    }
+    
     private boolean isInvalidOptionName(String s) {
         // Check for either single-letter option (which may be upper/lower-case or number)
         // or long option; long options must be at least two characters after double dash
         return !s.matches("-[a-zA-Z0-9]|--(?!-)[a-z0-9-]+[^-]");
+    }
+    
+    private void checkUsageHeader(Results results, CommandSpec spec) {
+        if ( !spec.equals(spec.root()) ) {
+            var rootHeader = spec.root().usageMessage().header();
+            var cmdHeader = spec.usageMessage().header();
+            if ( Arrays.equals(rootHeader, cmdHeader) ) {
+                results.add(TestType.CMD_USAGE_HEADER, Level.WARN, spec, "Command doesn't define proper usage header: "+Arrays.asList(cmdHeader));
+            }
+        }
     }
     
     private void checkCommandNamingConvention(Results results, CommandSpec spec) {
