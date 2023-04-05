@@ -24,15 +24,25 @@
  ******************************************************************************/
 package com.fortify.cli.sc_dast.session.cli.mixin;
 
-import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
+import java.time.OffsetDateTime;
+
+import com.fortify.cli.common.util.DateTimePeriodHelper;
+import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
+import com.fortify.cli.sc_dast.util.SCDastConstants;
+import com.fortify.cli.ssc.session.helper.ISSCUserCredentialsConfig;
 
 import lombok.Getter;
+import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 
-public class SCDastUserCredentialOptions implements IUserCredentialsConfig {
-    @Option(names = {"--ssc-user", "-u"}, required = true)
-    @Getter private String user;
+public class SCDastUserCredentialAndExpiryOptions extends SCDastUserCredentialOptions implements ISSCUserCredentialsConfig {
+    private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
     
-    @Option(names = {"--ssc-password", "-p"}, interactive = true, echo = false, arity = "0..1", required = true)
-    @Getter private char[] password;
+    @Option(names = {"--expire-in"}, descriptionKey = "fcli.ssc.session.expire-in", required = false, defaultValue = SCDastConstants.DEFAULT_TOKEN_EXPIRY, showDefaultValue = Visibility.ALWAYS)
+    @Getter private String expireIn;
+    
+    @Override
+    public OffsetDateTime getExpiresAt() {
+        return PERIOD_HELPER.getCurrentOffsetDateTimePlusPeriod(expireIn);
+    }
 }

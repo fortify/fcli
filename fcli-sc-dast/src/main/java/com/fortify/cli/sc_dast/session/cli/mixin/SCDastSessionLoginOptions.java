@@ -16,7 +16,7 @@ public class SCDastSessionLoginOptions {
     
     public static class SSCCredentialOptions implements ISSCCredentialsConfig {
         @ArgGroup(exclusive = false, multiplicity = "1", order = 1) 
-        @Getter private SCDastUserCredentialOptions userCredentialsConfig = new SCDastUserCredentialOptions();
+        @Getter private SCDastUserCredentialAndExpiryOptions userCredentialsConfig = new SCDastUserCredentialAndExpiryOptions();
         @ArgGroup(exclusive = false, multiplicity = "1", order = 2) 
         @Getter private SCDastTokenCredentialOptions tokenOptions = new SCDastTokenCredentialOptions();
         

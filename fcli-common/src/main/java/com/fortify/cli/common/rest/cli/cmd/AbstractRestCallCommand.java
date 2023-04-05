@@ -48,11 +48,8 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     @Option(names = {"--data", "-d"}, required = false)
     @Getter private String data; // TODO Add ability to read data from file
     
-    @Option(names="--no-transform-input", negatable = true, defaultValue = "false") 
-    private boolean noTransformInput;
-    
-    @Option(names="--no-transform-records", negatable = true, defaultValue = "false") 
-    private boolean noTransformRecords;
+    @Option(names="--no-transform", negatable = true, defaultValue = "false") 
+    private boolean noTransform;
     
     // TODO Add options for content-type, arbitrary headers, ...?
     
@@ -72,7 +69,7 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     
     @Override
     public JsonNode transformInput(JsonNode input) {
-        if ( !noTransformInput && getProductHelper() instanceof IInputTransformer ) {
+        if ( !noTransform && getProductHelper() instanceof IInputTransformer ) {
             input = ((IInputTransformer)getProductHelper()).transformInput(input);
         }
         return input;
@@ -80,7 +77,7 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     
     @Override
     public JsonNode transformRecord(JsonNode input) {
-        if ( !noTransformRecords && getProductHelper() instanceof IRecordTransformer ) {
+        if ( !noTransform && getProductHelper() instanceof IRecordTransformer ) {
             input = ((IRecordTransformer)getProductHelper()).transformRecord(input);
         }
         return input;
