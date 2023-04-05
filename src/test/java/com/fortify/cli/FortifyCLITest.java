@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.app.FCLIRootCommands;
+import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.PicocliSpecHelper;
@@ -64,9 +65,18 @@ public class FortifyCLITest {
     }
 
     private void checkLeafCommand(Results results, CommandSpec spec) {
-        // TODO Any tests specific for leaf commands?
+        checkDefaultTableOptionsPresent(results, spec);
     }
     
+    private void checkDefaultTableOptionsPresent(Results results, CommandSpec spec) {
+        if ( spec.mixins().containsKey("outputHelper") ) {
+            var tableOptions = new CommandSpecMessageResolver(spec).getMessageString("output.table.options");
+            if ( StringUtils.isBlank(tableOptions) ) {
+                results.add(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT, Level.WARN, spec, "No *.output.table.options defined to specify default table output columns");
+            }
+        }
+    }
+
     private void checkOptions(Results results, CommandSpec cmdSpec) {
         checkStandardOptions(results, cmdSpec);
         cmdSpec.options().forEach(optionSpec->checkOptionSpec(results, cmdSpec, optionSpec));

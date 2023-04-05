@@ -26,6 +26,8 @@ package com.fortify.cli.fod.entity.rest.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.fod.output.mixin.FoDProductHelperMixin;
 
 import lombok.Getter;
@@ -33,6 +35,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.RestCall.CMD_NAME)
+@DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT) // Output columns depend on response contents
 public final class FoDRestCallCommand extends AbstractRestCallCommand {
     @Getter @Mixin private OutputHelperMixins.RestCall outputHelper;
     @Getter @Mixin private FoDProductHelperMixin productHelper;

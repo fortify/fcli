@@ -33,6 +33,8 @@ public @interface DisableTest {
         CMD_NAME,
         // Check for proper command usage header
         CMD_USAGE_HEADER,
+        // Check default table options present in resource bundle
+        CMD_DEFAULT_TABLE_OPTIONS_PRESENT,
         // Check maximum command depth
         CMD_DEPTH,
         // Check option names are in kebab-case
@@ -52,6 +54,6 @@ public @interface DisableTest {
         // Check option doesn't have an empty description
         OPT_EMPTY_DESCRIPTION,
         // Check that mixins don't have @Spec(MIXEE)
-        INJECT_MIXEE,
+        INJECT_MIXEE, 
     } 
 }

@@ -27,6 +27,8 @@ package com.fortify.cli.state.variable.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.state.variable.cli.mixin.VariableOutputHelperMixins;
 import com.fortify.cli.state.variable.cli.mixin.VariableResolverMixin;
 
@@ -35,6 +37,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = VariableOutputHelperMixins.Contents.CMD_NAME)
+@DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT) // Output columns depend on variable contents
 public class VariableContentsCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     @Getter @Mixin private VariableOutputHelperMixins.Contents outputHelper;
     @Mixin private VariableResolverMixin.PositionalParameter variableResolver;
