@@ -1,0 +1,192 @@
+---
+title: fcli-ssc(1)
+fcli_version: fcli version 1.2.5, built on 2023-04-07 14 19 04
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ssc(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="1.2.5" %}
+
+
+<div id="header">
+<h1>fcli-ssc(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_commands">Commands</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ssc - Commands for interacting with Fortify Software Security Center (SSC).</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ssc</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [COMMAND]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_commands"><a class="anchor" href="#_commands"></a>Commands</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="fcli-ssc-session.html"><strong>session</strong></a></dt>
+<dd>
+<p>Login, logout and manage Fortify Software Security Center (SSC) sessions</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-rest.html"><strong>rest</strong></a></dt>
+<dd>
+<p>Low-level commands for direct interaction with Fortify SSC REST API endpoints</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-activity-feed.html"><strong>activity-feed</strong></a></dt>
+<dd>
+<p>Commands for managing the activity feed</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-alert-definition.html"><strong>alert-definition</strong></a></dt>
+<dd>
+<p>Commands for managing alert definitions</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-alert.html"><strong>alert</strong></a></dt>
+<dd>
+<p>Commands for managing alerts</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-app.html"><strong>app</strong></a></dt>
+<dd>
+<p>Commands for interacting with applications</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-appversion.html"><strong>appversion</strong></a></dt>
+<dd>
+<p>Commands for interacting with application versions</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-appversion-artifact.html"><strong>appversion-artifact</strong></a></dt>
+<dd>
+<p>Commands for interacting with application version artifacts</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-appversion-attribute.html"><strong>appversion-attribute</strong></a></dt>
+<dd>
+<p>Commands for interacting with application version attributes</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-appversion-user.html"><strong>appversion-user</strong></a></dt>
+<dd>
+<p>Commands for interacting with application version users</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-appversion-filterset.html"><strong>appversion-filterset</strong>, <strong>appversion-view</strong></a></dt>
+<dd>
+<p>Commands for interacting with application version filter sets</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-appversion-vuln.html"><strong>appversion-vuln</strong>, <strong>appversion-vulnerabilities</strong></a></dt>
+<dd>
+<p>Commands for interacting with application version vulnerabilities</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-attribute-definition.html"><strong>attribute-definition</strong></a></dt>
+<dd>
+<p>Commands for managing attribute definitions</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-user.html"><strong>user</strong></a></dt>
+<dd>
+<p>Commands for managing users</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-event.html"><strong>event</strong></a></dt>
+<dd>
+<p>Commands for interacting with system events</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-issue-template.html"><strong>issue-template</strong></a></dt>
+<dd>
+<p>Commands for interacting with issue templates</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-job.html"><strong>job</strong></a></dt>
+<dd>
+<p>Commands for interacting with jobs</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-plugin.html"><strong>plugin</strong></a></dt>
+<dd>
+<p>Commands for interacting with 3rd party parser plugins</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-report-template.html"><strong>report-template</strong>, <strong>rep-templ</strong></a></dt>
+<dd>
+<p>Commands for working with report templates</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-role.html"><strong>role</strong></a></dt>
+<dd>
+<p>Commands for interacting with user roles</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-role-permission.html"><strong>role-permission</strong>, <strong>role-perm</strong></a></dt>
+<dd>
+<p>Commands for interacting with role permissions</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-seed-bundle.html"><strong>seed-bundle</strong></a></dt>
+<dd>
+<p>Commands for interacting with seed bundles</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-token.html"><strong>token</strong></a></dt>
+<dd>
+<p>Commands for interacting with user tokens</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-token-definition.html"><strong>token-definition</strong></a></dt>
+<dd>
+<p>Commands for interacting with token definitions</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version fcli version 1.2.5, built on 2023-04-07 14 19 04<br>
+Last updated 2023-04-07 14:20:26 UTC
+</div>
+</div>
+</body>
+</html>
