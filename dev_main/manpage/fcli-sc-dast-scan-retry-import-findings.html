@@ -1,6 +1,6 @@
 ---
-title: fcli-sc-dast-scan-import-findings(1)
-fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42
+title: fcli-sc-dast-scan-retry-import-findings(1)
+fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33
 ---
 
 <!DOCTYPE html>
@@ -9,18 +9,18 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-sc-dast-scan-import-findings(1)</title>
+<title>fcli-sc-dast-scan-retry-import-findings(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230405.173107-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230407.091906-dev_main" %}
 
 
 <div id="header">
-<h1>fcli-sc-dast-scan-import-findings(1) Manual Page</h1>
+<h1>fcli-sc-dast-scan-retry-import-findings(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -34,7 +34,7 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-sc-dast-scan-import-findings - Import scan findings</p>
+<p>fcli-sc-dast-scan-retry-import-findings - Retry import of scan findings</p>
 </div>
 </div>
 <div id="content">
@@ -42,22 +42,20 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-dast scan import-findings</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                                  [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                  [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                                  [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
-                            _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                      _            <em class="=&lt;propertyNames&gt;">]
-                                  [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] <em>scan-id</em></p>
+<p><strong>fcli sc-dast scan retry import-findings</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                                        [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
+                                  _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                            _            <em class="=&lt;propertyNames&gt;">]
+                                        [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] <em>scan-id</em></p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>This command imports scan findings into ScanCentral DAST. With ScanCentral DAST, scan findings are usually imported automatically, but there may be cases where this operation needs to be triggered explicitly. Please see the ScanCentral DAST documentation for more information on this topic.</p>
-</div>
+
 </div>
 </div>
 <div class="sect1">
@@ -135,8 +133,8 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42<br>
-Last updated 2023-04-05 17:33:41 UTC
+Version fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33<br>
+Last updated 2023-04-07 09:20:41 UTC
 </div>
 </div>
 </body>

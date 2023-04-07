@@ -1,6 +1,6 @@
 ---
-title: fcli-scm(1)
-fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42
+title: fcli-config-variable(1)
+fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33
 ---
 
 <!DOCTYPE html>
@@ -9,18 +9,18 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-scm(1)</title>
+<title>fcli-config-variable(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230405.173107-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230407.091906-dev_main" %}
 
 
 <div id="header">
-<h1>fcli-scm(1) Manual Page</h1>
+<h1>fcli-config-variable(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -32,7 +32,7 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-scm - Utility commands related to Source Control Management</p>
+<p>fcli-config-variable - Manage fcli variables</p>
 </div>
 </div>
 <div id="content">
@@ -40,15 +40,17 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli scm</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [COMMAND]</p>
+<p><strong>fcli config variable</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [COMMAND]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>Commands for managing fcli variables</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -81,13 +83,13 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-scm-github-contributor.html"><strong>github-contributor</strong>, <strong>gh-contributor</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-config-variable-definition.html"><strong>definition</strong>, <strong>def</strong></a></dt>
 <dd>
-<p>View contributors to GitHub repositories</p>
+<p>Manage fcli variable definitions</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-scm-gitlab-contributor.html"><strong>gitlab-contributor</strong>, <strong>gl-contributor</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-config-variable-contents.html"><strong>contents</strong></a></dt>
 <dd>
-<p>View contributors to GitLab projects</p>
+<p>Manage fcli variable contents</p>
 </dd>
 </dl>
 </div>
@@ -96,8 +98,8 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42<br>
-Last updated 2023-04-05 17:33:41 UTC
+Version fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33<br>
+Last updated 2023-04-07 09:20:41 UTC
 </div>
 </div>
 </body>

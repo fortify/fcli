@@ -1,6 +1,6 @@
 ---
 title: fcli-ssc-appversion-artifact-purge(1)
-fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42
+fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230405.173107-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230407.091906-dev_main" %}
 
 
 <div id="header">
@@ -26,15 +26,13 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
-<li><a href="#_session_options">Session options:</a></li>
-<li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
-<li><a href="#_arguments">Arguments</a></li>
+<li><a href="#_commands">Commands</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-appversion-artifact-purge - Purge an artifact by id</p>
+<p>fcli-ssc-appversion-artifact-purge - Commands for purging artifacts</p>
 </div>
 </div>
 <div id="content">
@@ -44,11 +42,7 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <div class="paragraph">
 <p><strong>fcli ssc appversion-artifact purge</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                                   [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
-                             _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                       _            <em class="=&lt;propertyNames&gt;">]
-                                   [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] <em>artifact-id</em></p>
+                                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [COMMAND]</p>
 </div>
 </div>
 </div>
@@ -56,40 +50,6 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 
-</div>
-</div>
-<div class="sect1">
-<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options:</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
-<dd>
-<p>Session name to use</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
-<dd>
-<p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
-</dd>
-<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
-<dd>
-<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using {?variableName:property} on any subsequent command. Most commands that return a single record (get, start, create, &#8230;&#8203;) also support '?' to store the record identifier in a predefined variable, which can later be referenced using '?' on options/parameters that take the id of such records as input.</p>
-</dd>
-<dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
-<dd>
-<p>Write results to the specified files in the given output format. By default, results will be written to stdout</p>
-</dd>
-</dl>
-</div>
 </div>
 </div>
 <div class="sect1">
@@ -118,13 +78,17 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </div>
 </div>
 <div class="sect1">
-<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<h2 id="_commands"><a class="anchor" href="#_commands"></a>Commands</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><em>artifact-id</em></dt>
+<dt class="hdlist1"><a href="fcli-ssc-appversion-artifact-purge-by-id.html"><strong>by-id</strong></a></dt>
 <dd>
-<p>Id of the artifact to be purged</p>
+<p>Purge an artifact by id</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-appversion-artifact-purge-by-date.html"><strong>by-date</strong></a></dt>
+<dd>
+<p>Purge artifacts by date</p>
 </dd>
 </dl>
 </div>
@@ -133,8 +97,8 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42<br>
-Last updated 2023-04-05 17:33:41 UTC
+Version fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33<br>
+Last updated 2023-04-07 09:20:41 UTC
 </div>
 </div>
 </body>

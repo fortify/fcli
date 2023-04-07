@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-report-template(1)
+title: fcli-config-ssl(1)
 fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33
 ---
 
@@ -9,7 +9,7 @@ fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-report-template(1)</title>
+<title>fcli-config-ssl(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,7 +20,7 @@ fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19
 
 
 <div id="header">
-<h1>fcli-ssc-report-template(1) Manual Page</h1>
+<h1>fcli-config-ssl(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -32,7 +32,7 @@ fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-report-template - Commands for working with report templates</p>
+<p>fcli-config-ssl - Commands for configuring SSL connectivity</p>
 </div>
 </div>
 <div id="content">
@@ -40,9 +40,8 @@ fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc report-template</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                         [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                         [COMMAND]</p>
+<p><strong>fcli config ssl</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [COMMAND]</p>
 </div>
 </div>
 </div>
@@ -50,7 +49,7 @@ fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Commands for interacting with report template definitions on Fortify SSC.</p>
+<p>Commands for managing SSL connections</p>
 </div>
 </div>
 </div>
@@ -84,29 +83,9 @@ fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-ssc-report-template-create.html"><strong>create</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-config-ssl-truststore.html"><strong>truststore</strong></a></dt>
 <dd>
-<p>Create/upload a report template definition</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-ssc-report-template-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
-<dd>
-<p>List report template definitions</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-ssc-report-template-get.html"><strong>get</strong></a></dt>
-<dd>
-<p>Get report template details</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-ssc-report-template-download.html"><strong>download</strong></a></dt>
-<dd>
-<p>Download a report template file</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-ssc-report-template-generate-answerFile.html"><strong>generate-answerFile</strong>, <strong>gen-answer</strong></a></dt>
-<dd>
-<p>Generate a new answer file template that can be used for the creation of new report template definitions. For example, within the answer file, you can specify things like the name of the report definition, what parameters it accepts, and what are the types of those parameters.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-ssc-report-template-delete.html"><strong>delete</strong>, <strong>rm</strong></a></dt>
-<dd>
-<p>Delete a report template</p>
+<p>Commands for managing the SSL trust store</p>
 </dd>
 </dl>
 </div>
@@ -116,7 +95,7 @@ fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19
 <div id="footer">
 <div id="footer-text">
 Version fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33<br>
-Last updated 2023-04-07 09:20:42 UTC
+Last updated 2023-04-07 09:20:41 UTC
 </div>
 </div>
 </body>

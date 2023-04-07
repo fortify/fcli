@@ -1,6 +1,6 @@
 ---
 title: fcli-sc-sast-rest-call(1)
-fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42
+fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230405.173107-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230407.091906-dev_main" %}
 
 
 <div id="header">
@@ -43,11 +43,11 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-sast rest call</strong> [<strong>--[no-]transform</strong>] [<strong>-d</strong>=<em>&lt;data&gt;</em>] [<strong>-X</strong>=<em>&lt;httpMethod&gt;</em>] [[<strong>-h</strong>]
+<p><strong>fcli sc-sast rest call</strong> [<strong>-d</strong>=<em>&lt;data&gt;</em>] [<strong>-X</strong>=<em>&lt;httpMethod&gt;</em>] [[<strong>-h</strong>]
                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                       [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]
+                       [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]]
                        [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em>&lt;uri&gt;</em></p>
 </div>
 </div>
@@ -70,14 +70,6 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <dt class="hdlist1"><strong>-d</strong>, <strong>--data</strong>=<em>&lt;data&gt;</em></dt>
 <dd>
 <p>This option will read data from a file for your request.</p>
-</dd>
-<dt class="hdlist1"><strong>--[no-]transform</strong></dt>
-<dd>
-<p>By default, this command performs generic transformations on SC SAST REST responses (if any). Use --no-transform to output the original response contents.</p>
-</dd>
-<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
-<dd>
-<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true. See fcli documentation for more information.</p>
 </dd>
 </dl>
 </div>
@@ -158,8 +150,8 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42<br>
-Last updated 2023-04-05 17:33:41 UTC
+Version fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33<br>
+Last updated 2023-04-07 09:20:41 UTC
 </div>
 </div>
 </body>

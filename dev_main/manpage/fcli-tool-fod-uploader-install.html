@@ -1,6 +1,6 @@
 ---
 title: fcli-tool-fod-uploader-install(1)
-fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42
+fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230405.173107-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230407.091906-dev_main" %}
 
 
 <div id="header">
@@ -42,8 +42,7 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool fod-uploader install</strong> [<strong>-y</strong>] [<strong>-d</strong>=<em>&lt;installDir&gt;</em>]
-                               [<strong>--on-digest-mismatch</strong>=<em>&lt;onDigestMismatch&gt;</em>] [[<strong>-h</strong>]
+<p><strong>fcli tool fod-uploader install</strong> [<strong>-y</strong>] [<strong>-d</strong>=<em>&lt;installDir&gt;</em>] [[<strong>-h</strong>]
                                [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
                                <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
@@ -67,16 +66,9 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <dd>
 <p>Destination directory</p>
 </dd>
-<dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
+<dt class="hdlist1"><strong>-y</strong>, <strong>--replace-existing</strong></dt>
 <dd>
-<p>Confirm replacing existing FoD Uploader installation</p>
-<div class="paragraph">
-<p>If a non-empty destination directory exists, the installation will fail unless this option is specified.</p>
-</div>
-</dd>
-<dt class="hdlist1"><strong>--on-digest-mismatch</strong>=<em>&lt;onDigestMismatch&gt;</em></dt>
-<dd>
-<p>Action to take if there is a digest mismatch. Allowed values: fail, warn. Default action is to fail. When installing 'latest', you may consider setting this option to 'warn' to avoid failures if fcli hasn&#8217;t been updated yet with the latest digest. Please consider submitting an issue on the fcli issue tracker if digest check consistently fails.</p>
+<p>Whether to replace an existing installation. If a non-empty destination directory exists, the installation will fail unless this option is specified.</p>
 </dd>
 </dl>
 </div>
@@ -135,7 +127,7 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <dl>
 <dt class="hdlist1">[<em>&lt;version&gt;</em>]</dt>
 <dd>
-<p>Tool version to install; see output of list command to view available versions. If not specified, the default version as shown in the output of the list command will be installed.</p>
+<p>Tool version to install</p>
 </dd>
 </dl>
 </div>
@@ -144,8 +136,8 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42<br>
-Last updated 2023-04-05 17:33:41 UTC
+Version fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33<br>
+Last updated 2023-04-07 09:20:42 UTC
 </div>
 </div>
 </body>

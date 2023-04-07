@@ -1,6 +1,6 @@
 ---
 title: fcli-sc-dast-session-login(1)
-fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42
+fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230405.173107-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230407.091906-dev_main" %}
 
 
 <div id="header">
@@ -44,7 +44,7 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <div class="paragraph">
 <p><strong>fcli sc-dast session login</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                            [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                           [[<em>&lt;session&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                           [[<em>session-name</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                            [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
                            [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] (<strong>--ssc-url</strong>=<em>&lt;url&gt;</em>
                            [<strong>-k</strong>]) ((<strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>]
@@ -207,7 +207,10 @@ Option values are commonly configured through environment variables as listed in
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1">[<em>&lt;session&gt;</em>]</dt>
+<dt class="hdlist1">[<em>session-name</em>]</dt>
+<dd>
+<p>Name for this session</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -215,8 +218,8 @@ Option values are commonly configured through environment variables as listed in
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42<br>
-Last updated 2023-04-05 17:33:41 UTC
+Version fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33<br>
+Last updated 2023-04-07 09:20:41 UTC
 </div>
 </div>
 </body>

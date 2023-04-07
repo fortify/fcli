@@ -1,6 +1,6 @@
 ---
 title: fcli-ssc-appversion-update(1)
-fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42
+fcli_version: fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230405.173107-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230407.091906-dev_main" %}
 
 
 <div id="header">
@@ -45,11 +45,10 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <div class="paragraph">
 <p><strong>fcli ssc appversion update</strong> [<strong>-d</strong>=<em>&lt;description&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                            [<strong>--issue-template</strong>=<em>&lt;issueTemplateNameOrId&gt;</em>]
-                           [<strong>-n</strong>=<em>&lt;name&gt;</em>] [<strong>--add-users</strong>=<em>&lt;authEntitySpecs&gt;</em>[,
-                           <em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--attrs</strong>=<em>[CATEGORY:]</em>
-                _           ATTR=VALUE[,VALUE&#8230;&#8203;]<em>[,</em>[CATEGORY:]ATTR=VALUE[,_
-    _                       VALUE&#8230;&#8203;]<em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--rm-users</strong>=</em>&lt;authEntitySpecs&gt;_[,
-                           <em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                           [<strong>-n</strong>=<em>&lt;name&gt;</em>] [<strong>--attr</strong>[=<em>[CATEGORY:]ATTR=VALUE[,</em>
+    _                       VALUE&#8230;&#8203;]<em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--useradd</strong>
+                           [=</em>&lt;authEntitySpecs&gt;_&#8230;&#8203;]]&#8230;&#8203; [<strong>--userdel</strong>
+                           [=<em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                            [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                            [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
                            <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
@@ -77,17 +76,17 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 <dd>
 <p>Issue template name or id</p>
 </dd>
-<dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>[,<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>&#8230;&#8203;]</dt>
+<dt class="hdlist1"><strong>--attr, --attribute</strong>[=<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Set attribute values. This option accepts a comma-separated list of attribute value assignments.</p>
+<p>Set one or more attribute values</p>
 </dd>
-<dt class="hdlist1"><strong>--add-users</strong>=<em>&lt;authEntitySpecs&gt;</em>[,<em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]</dt>
+<dt class="hdlist1"><strong>--useradd</strong>[=<em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Assign one or more (comma-separated) users or LDAP groups to the application version; accepts user id, entity name or email address. Option is repeatable.</p>
+<p>Assign user or LDAP group to application version; accepts user id, entity name or email address. Option is repeatable.</p>
 </dd>
-<dt class="hdlist1"><strong>--rm-users</strong>=<em>&lt;authEntitySpecs&gt;</em>[,<em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]</dt>
+<dt class="hdlist1"><strong>--userdel</strong>[=<em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Remove one or more (comma-separated) users or LDAP groups from the application version; accepts user id, entity name or email address. Option is repeatable.</p>
+<p>Remove user or LDAP group from application version; accepts user id, entity name or email address. Option is repeatable.</p>
 </dd>
 <dt class="hdlist1"><strong>-n</strong>, <strong>--name</strong>=<em>&lt;name&gt;</em></dt>
 <dd>
@@ -176,8 +175,8 @@ fcli_version: fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230405.173107-dev_main, built on 2023-04-05 17 31 42<br>
-Last updated 2023-04-05 17:33:41 UTC
+Version fcli version 0.20230407.091906-dev_main, built on 2023-04-07 09 19 33<br>
+Last updated 2023-04-07 09:20:41 UTC
 </div>
 </div>
 </body>
