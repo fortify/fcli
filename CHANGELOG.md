@@ -5,13 +5,8 @@
 
 ### Bug Fixes
 
-* `fcli ssc appversion-artifact download`: Include externalmetadata.xml in current state FPR download by passing arbitrary clientVersion parameter to SSC (fixes [#257](https://github.com/fortify/fcli/issues/257)) ([2694ffe](https://github.com/fortify/fcli/commit/2694ffe0224d85121ea0eaadda64464a0f6f3ff5))
 * `fcli tool vuln-exporter install`: Add support for latest (2.0.1) version ([9c34f73](https://github.com/fortify/fcli/commit/9c34f73eb4b7b5474e742d138b908cff6042f438))
 
-
-### Miscellaneous Chores
-
-* release 1.2.4 ([4f23048](https://github.com/fortify/fcli/commit/4f230489e566f6e647f45b040053026909b6cb58))
 
 ## [1.2.3](https://github.com/fortify/fcli/compare/v1.2.2...v1.2.3) (2023-03-09)
 
