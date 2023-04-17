@@ -25,25 +25,25 @@
 
 package com.fortify.cli.fod.entity.scan_mobile.helper;
 
-import java.io.File;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.progress.cli.mixin.ProgressHelperMixin;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
+import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod.entity.scan.helper.FoDScanNotFoundException;
 import com.fortify.cli.fod.entity.scan.helper.FoDStartScan;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.rest.helper.FoDUploadResponse;
-
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+
+import java.io.File;
 
 public class FoDMobileScanHelper extends FoDScanHelper {
     @Getter
@@ -59,7 +59,7 @@ public class FoDMobileScanHelper extends FoDScanHelper {
     }*/
 
     // TODO Split into multiple methods
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartMobileScanRequest req,
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, ProgressHelperMixin progressHelper, String relId, FoDStartMobileScanRequest req,
                                                     File scanFile, int chunkSize) {
         FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
         HttpRequest<?> request = unirest.post(FoDUrls.MOBILE_SCANS_START).routeParam("relId", relId)
@@ -79,17 +79,14 @@ public class FoDMobileScanHelper extends FoDScanHelper {
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new RuntimeException("Unable to retrieve scan id from response when starting Static scan.");
         }
-        JsonNode node = objectMapper.createObjectNode();
-        ((ObjectNode) node).put("scanId", startScanResponse.getScanId());
-        ((ObjectNode) node).put("analysisStatusType", "Pending");
-        FoDScanDescriptor scanDescriptor = JsonHelper.treeToValue(node, FoDScanDescriptor.class);
-        try {
-            scanDescriptor = getScanDescriptor(unirest, String.valueOf(startScanResponse.getScanId()));
-        } catch (FoDScanNotFoundException ex) {
-            scanDescriptor.setStatus("Unavailable");
-        }
-        scanDescriptor.setMicroserviceName(appRelDescriptor.getMicroserviceName());
-        return scanDescriptor;
+        JsonNode node = objectMapper.createObjectNode()
+            .put("scanId", startScanResponse.getScanId())
+            .put("scanType", FoDScanFormatOptions.FoDScanType.Mobile.name())
+            .put("analysisStatusType", "Pending")
+            .put("applicationName", appRelDescriptor.getApplicationName())
+            .put("releaseName", appRelDescriptor.getReleaseName())
+            .put("microserviceName", appRelDescriptor.getMicroserviceName());
+        return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
     }
 
     public static final FoDMobileScanSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {

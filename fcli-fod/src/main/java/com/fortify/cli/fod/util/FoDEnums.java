@@ -2,7 +2,7 @@ package com.fortify.cli.fod.util;
 
 // TODO Any good reason for having one big class defining many enums? Was this somehow generated from FoD?
 // TODO Are all these enums actually used?
-// TODO Maybe better to have top-level enums in the entity packages that use them, if applicable. 
+// TODO Maybe better to have top-level enums in the entity packages that use them, if applicable.
 //      For example, most of the scan-related enums only seem to be used by the scan-related entities.
 // TODO I'm not an FoD expert, and maybe its related to how FoD API's are structured, but there seems
 //      to be some overlap between different enums; maybe we should review in more detail and restructure
@@ -169,13 +169,13 @@ public class FoDEnums {
         }
     }
 
-    public enum EntitlementFrequencyTypes {
+    public enum EntitlementFrequencyType {
         SingleScan(1),
         Subscription(2);
 
         private final int _val;
 
-        EntitlementFrequencyTypes(int val) {
+        EntitlementFrequencyType(int val) {
             this._val = val;
         }
 
@@ -193,7 +193,7 @@ public class FoDEnums {
             }
         }
 
-        public static EntitlementFrequencyTypes fromInt(int val) {
+        public static EntitlementFrequencyType fromInt(int val) {
             switch (val) {
 
                 case 1:

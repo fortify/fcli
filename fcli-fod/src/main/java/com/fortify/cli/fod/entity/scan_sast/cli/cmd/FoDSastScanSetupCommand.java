@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.progress.cli.mixin.ProgressHelperMixin;
 import com.fortify.cli.fod.entity.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.entity.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.entity.lookup.helper.FoDLookupHelper;
@@ -61,7 +62,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
 
     @Option(names = {"--entitlement-frequency", "--frequency"})
-    private FoDEnums.EntitlementFrequencyTypes entitlementFrequency;
+    private FoDEnums.EntitlementFrequencyType entitlementFrequency;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--technology-stack"}, required = true)
@@ -81,6 +82,8 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
 
     @Mixin
     private FoDAssessmentTypeOptions.RequiredOption assessmentType;
+
+    @Mixin private ProgressHelperMixin progressHelper;
 
     // TODO Split into multiple methods
     @Override
@@ -115,15 +118,15 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
             // TODO: verify entitlementId
         } else {
             FoDEnums.EntitlementPreferenceType entitlementPreferenceType = null;
-            if (entitlementFrequency == FoDEnums.EntitlementFrequencyTypes.SingleScan) {
+            if (entitlementFrequency == FoDEnums.EntitlementFrequencyType.SingleScan) {
                 entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.SingleScanOnly;
-            } else if (entitlementFrequency == FoDEnums.EntitlementFrequencyTypes.Subscription) {
+            } else if (entitlementFrequency == FoDEnums.EntitlementFrequencyType.Subscription) {
                 entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.SubscriptionOnly;
             } else {
                 throw new ValidationException("The entitlement frequency '"
                         + entitlementFrequency.name() + "' cannot be used here");
             }
-            FoDAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, relId, assessmentType.getAssessmentType(), entitlementPreferenceType, scanType);
+            FoDAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, progressHelper, relId, assessmentType.getAssessmentType(), entitlementPreferenceType, scanType);
             entitlementIdToUse = assessmentTypeDescriptor.getEntitlementId();
         }
         //System.out.println("entitlementId = " + entitlementIdToUse);
