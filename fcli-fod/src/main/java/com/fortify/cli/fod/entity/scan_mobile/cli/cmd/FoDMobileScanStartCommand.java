@@ -54,6 +54,9 @@ import picocli.CommandLine.Option;
 
 import javax.validation.ValidationException;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Properties;
@@ -171,13 +174,14 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
     }
 
     private String validateTimezone(UnirestInstance unirest, String timezone) {
+        FoDLookupDescriptor lookupDescriptor = null;
         if (timezone != null && !timezone.isEmpty()) {
             try {
-                FoDLookupDescriptor lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupTypeOptions.FoDLookupType.TimeZones, timezone, true);
+                lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupTypeOptions.FoDLookupType.TimeZones, timezone, false);
             } catch (JsonProcessingException ex) {
                 throw new ValidationException(ex.getMessage());
             }
-            return timezone;
+            return lookupDescriptor.getValue();
         } else {
             // default to UTC
             return "UTC";
