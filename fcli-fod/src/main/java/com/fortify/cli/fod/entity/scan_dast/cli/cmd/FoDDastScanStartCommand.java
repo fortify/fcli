@@ -135,7 +135,7 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
         } else if (remediationScanType.getRemediationScanPreferenceType() != null &&
                 (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
             // if requesting a remediation scan make we have one available
-            entitlementToUse = FoDDastScanHelper.validateRemediationEntitlement(unirest, relId,
+            entitlementToUse = FoDDastScanHelper.validateRemediationEntitlement(unirest, progressHelper, relId,
                     currentSetup.getEntitlementId(), FoDScanFormatOptions.FoDScanType.Dynamic);
         } else if (assessmentType.getAssessmentType() != null && entitlementType.getEntitlementPreferenceType() != null) {
             // if assessment and entitlement type are both specified, find entitlement to use

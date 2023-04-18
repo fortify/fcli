@@ -60,15 +60,13 @@ public class FoDScanHelper {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
-    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, String relId,
+    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, ProgressHelperMixin progressHelper, String relId,
                                                                                    Integer entitlementId, FoDScanFormatOptions.FoDScanType scanType) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
-            // TODO Do not use System.out.println (https://github.com/fortify/fcli/issues/91, close after fixing all occurrences in FoD module)
-            //      Status messages should preferably be written using ProgressHelper from fcli-common
-            System.out.println("Validating remediation entitlement...");
+            progressHelper.writeI18nProgress("validating-remediation-entitlement");
             // check we have an appropriate remediation scan available
             for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
                 if (atd.getEntitlementId() > 0 && atd.getEntitlementId().equals(entitlementId) && atd.getIsRemediation()
@@ -81,9 +79,7 @@ public class FoDScanHelper {
                 }
             }
             if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
-                // TODO Do not use System.out.println (https://github.com/fortify/fcli/issues/91, close after fixing all occurrences in FoD module)
-                //      Status messages should preferably be written using ProgressHelper from fcli-common
-                System.out.println("Running remediation scan using entitlement: " + entitlement.getEntitlementDescription());
+                progressHelper.writeI18nProgress("using-remediation-entitlement", entitlement.getEntitlementDescription());
             } else {
                 throw new ValidationException("No remediation scan entitlements found");
             }
