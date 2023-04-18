@@ -42,6 +42,7 @@ import com.fortify.cli.fod.entity.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.entity.scan_mobile.cli.cmd.FoDMobileScanStartCommand;
 import com.fortify.cli.fod.entity.scan_sast.helper.FoDSastScanHelper;
 import com.fortify.cli.fod.entity.scan_sast.helper.FoDSastScanSetupDescriptor;
 import com.fortify.cli.fod.entity.scan_sast.helper.FoDSetupSastScanRequest;
@@ -61,7 +62,10 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     @Mixin
     private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
 
-    @Option(names = {"--entitlement-frequency", "--frequency"})
+    private enum StaticAssessmentTypes { Static, StaticPlus }
+    @Option(names = {"--assessment-type"}, required = true)
+    private StaticAssessmentTypes staticAssessmentType;
+    @Option(names = {"--entitlement-frequency", "--frequency"}, required = true)
     private FoDEnums.EntitlementFrequencyType entitlementFrequency;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
@@ -80,8 +84,9 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
 //    @Option(names = {"--scan-binary"})
 //    private Boolean scanBinary = false;
 
-    @Mixin
-    private FoDAssessmentTypeOptions.RequiredOption assessmentType;
+    // no longer used - using specific StaticAssessmentTypes above
+    //@Mixin
+    //private FoDAssessmentTypeOptions.RequiredOption assessmentType;
 
     @Mixin private ProgressHelperMixin progressHelper;
 
@@ -100,11 +105,11 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
         FoDSastScanSetupDescriptor currentSetup = FoDSastScanHelper.getSetupDescriptor(unirest, relId);
 
         // find/check out assessment type id
-        FoDScanFormatOptions.FoDScanType scanType = assessmentType.getAssessmentType().toScanType();
+        //FoDScanFormatOptions.FoDScanType scanType = assessmentType.getAssessmentType().toScanType();
         FoDAppRelAssessmentTypeDescriptor[] appRelAssessmentTypeDescriptor = FoDAppRelHelper.getAppRelAssessmentTypes(unirest, relId,
-                scanType, true);
-
-        String assessmentTypeName = assessmentType.getAssessmentType().toString().replace("Plus", "+") + " Assessment";
+                FoDScanFormatOptions.FoDScanType.Static, true);
+        //String assessmentTypeName = assessmentType.getAssessmentType().toString().replace("Plus", "+") + " Assessment";
+        String assessmentTypeName = staticAssessmentType.name().replace("Plus", "+") + " Assessment";
         for (FoDAppRelAssessmentTypeDescriptor assessmentType : appRelAssessmentTypeDescriptor) {
             if (assessmentType.getName().equals(assessmentTypeName)) {
                 assessmentTypeId = assessmentType.getAssessmentTypeId();
@@ -126,7 +131,10 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 throw new ValidationException("The entitlement frequency '"
                         + entitlementFrequency.name() + "' cannot be used here");
             }
-            FoDAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, progressHelper, relId, assessmentType.getAssessmentType(), entitlementPreferenceType, scanType);
+            FoDAssessmentTypeOptions.FoDAssessmentType assessmentType = FoDAssessmentTypeOptions.FoDAssessmentType.valueOf(String.valueOf(staticAssessmentType));
+            FoDAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, progressHelper, relId,
+                    assessmentType, entitlementPreferenceType,
+                    FoDScanFormatOptions.FoDScanType.Mobile);
             entitlementIdToUse = assessmentTypeDescriptor.getEntitlementId();
         }
         //System.out.println("entitlementId = " + entitlementIdToUse);

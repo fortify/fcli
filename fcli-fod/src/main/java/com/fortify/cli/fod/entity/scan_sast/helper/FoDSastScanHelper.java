@@ -58,7 +58,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
         unirest.put(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", String.valueOf(relId))
                 .body(body).asObject(JsonNode.class).getBody();
-        return getSetupDescriptor(unirest, String.valueOf(relId));
+        return getSetupDescriptorWithAppRel(unirest, String.valueOf(relId));
     }
 
     // TODO Split into multiple methods
@@ -102,7 +102,19 @@ public class FoDSastScanHelper extends FoDScanHelper {
     public static final FoDSastScanSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
         GetRequest request = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", relId);
-        JsonNode setup = request.asObject(ObjectNode.class).getBody();
+        JsonNode setup = request.asObject(ObjectNode.class).getBody()
+                .put("applicationName", "test");
+        return JsonHelper.treeToValue(setup, FoDSastScanSetupDescriptor.class);
+    }
+
+    public static final FoDSastScanSetupDescriptor getSetupDescriptorWithAppRel(UnirestInstance unirest, String relId) {
+        FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
+        GetRequest request = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
+                .routeParam("relId", relId);
+        JsonNode setup = request.asObject(ObjectNode.class).getBody()
+                .put("applicationName", appRelDescriptor.getApplicationName())
+                .put("releaseName", appRelDescriptor.getReleaseName())
+                .put("microserviceName", appRelDescriptor.getMicroserviceName());
         return JsonHelper.treeToValue(setup, FoDSastScanSetupDescriptor.class);
     }
 
