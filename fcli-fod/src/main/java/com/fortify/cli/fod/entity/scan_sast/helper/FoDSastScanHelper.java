@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
+import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanNotFoundException;
@@ -57,7 +58,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
         unirest.put(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", String.valueOf(relId))
                 .body(body).asObject(JsonNode.class).getBody();
-        return getSetupDescriptor(unirest, String.valueOf(relId));
+        return getSetupDescriptorWithAppRel(unirest, String.valueOf(relId));
     }
 
     // TODO Split into multiple methods
@@ -88,23 +89,32 @@ public class FoDSastScanHelper extends FoDScanHelper {
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new RuntimeException("Unable to retrieve scan id from response when starting Static scan.");
         }
-        JsonNode node = objectMapper.createObjectNode();
-        ((ObjectNode) node).put("scanId", startScanResponse.getScanId());
-        ((ObjectNode) node).put("analysisStatusType", "Pending");
-        FoDScanDescriptor scanDescriptor = JsonHelper.treeToValue(node, FoDScanDescriptor.class);
-        try {
-            scanDescriptor = getScanDescriptor(unirest, String.valueOf(startScanResponse.getScanId()));
-        } catch (FoDScanNotFoundException ex) {
-            scanDescriptor.setStatus("Unavailable");
-        }
-        scanDescriptor.setMicroserviceName(appRelDescriptor.getMicroserviceName());
-        return scanDescriptor;
+        JsonNode node = objectMapper.createObjectNode()
+                .put("scanId", startScanResponse.getScanId())
+                .put("scanType", FoDScanFormatOptions.FoDScanType.Static.name())
+                .put("analysisStatusType", "Pending")
+                .put("applicationName", appRelDescriptor.getApplicationName())
+                .put("releaseName", appRelDescriptor.getReleaseName())
+                .put("microserviceName", appRelDescriptor.getMicroserviceName());
+        return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
     }
 
     public static final FoDSastScanSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
         GetRequest request = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", relId);
-        JsonNode setup = request.asObject(ObjectNode.class).getBody();
+        JsonNode setup = request.asObject(ObjectNode.class).getBody()
+                .put("applicationName", "test");
+        return JsonHelper.treeToValue(setup, FoDSastScanSetupDescriptor.class);
+    }
+
+    public static final FoDSastScanSetupDescriptor getSetupDescriptorWithAppRel(UnirestInstance unirest, String relId) {
+        FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
+        GetRequest request = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
+                .routeParam("relId", relId);
+        JsonNode setup = request.asObject(ObjectNode.class).getBody()
+                .put("applicationName", appRelDescriptor.getApplicationName())
+                .put("releaseName", appRelDescriptor.getReleaseName())
+                .put("microserviceName", appRelDescriptor.getMicroserviceName());
         return JsonHelper.treeToValue(setup, FoDSastScanSetupDescriptor.class);
     }
 

@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.entity.attribute.cli.mixin;
+package com.fortify.cli.fod.entity.app.attr.cli.mixin;
 
 import java.util.Map;
 
@@ -30,10 +30,6 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-// TODO Attributes are not a stand-alone entity in fcli; there are no 'fcli fod [app-]attribute' commands
-//      Looks like these classes are only used by the app commands. so consider moving to that package
-//      tree, i.e., app.cli.mixin, app.cli.mixin,attribute, or app.attribute.cli.mixin.
-//      Same applies to the helper package.
 public class FoDAttributeUpdateOptions {
     private static final String PARAM_LABEL = "[ATTR=VALUE]";
 
@@ -42,12 +38,12 @@ public class FoDAttributeUpdateOptions {
     }
 
     public static class OptionalAttrOption extends AbstractFoDAppAttributeUpdateMixin {
-        @Option(names = {"--attrs", "--attributes"}, required = false, split=",", paramLabel = PARAM_LABEL)
+        @Option(names = {"--attrs", "--attributes"}, required = false, split=",", paramLabel = PARAM_LABEL, descriptionKey = "fcli.fod.app.update.attr")
         @Getter private Map<String, String> attributes;
     }
 
     public static class RequiredPositionalParameter extends AbstractFoDAppAttributeUpdateMixin {
-        @Parameters(index = "0..*", arity = "1..*", paramLabel = PARAM_LABEL)
+        @Parameters(index = "0..*", arity = "1..*", paramLabel = PARAM_LABEL, descriptionKey = "fcli.fod.app.update.attr")
         @Getter private Map<String, String> attributes;
     }
 

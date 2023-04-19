@@ -1,25 +1,25 @@
 /*******************************************************************************
  * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the 
- * "Software"), to deal in the Software without restriction, including without 
- * limitation the rights to use, copy, modify, merge, publish, distribute, 
- * sublicense, and/or sell copies of the Software, and to permit persons to 
- * whom the Software is furnished to do so, subject to the following 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including without
+ * limitation the rights to use, copy, modify, merge, publish, distribute,
+ * sublicense, and/or sell copies of the Software, and to permit persons to
+ * whom the Software is furnished to do so, subject to the following
  * conditions:
  *
- * The above copyright notice and this permission notice shall be included 
+ * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY 
- * KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE 
- * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
- * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+ * KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
 
@@ -37,6 +37,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.common.progress.cli.mixin.ProgressHelperMixin;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelAssessmentTypeDescriptor;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
@@ -59,15 +60,13 @@ public class FoDScanHelper {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
-    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, String relId,
+    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, ProgressHelperMixin progressHelper, String relId,
                                                                                    Integer entitlementId, FoDScanFormatOptions.FoDScanType scanType) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
-            // TODO Do not use System.out.println (https://github.com/fortify/fcli/issues/91, close after fixing all occurrences in FoD module)
-            //      Status messages should preferably be written using ProgressHelper from fcli-common
-            System.out.println("Validating remediation entitlement...");
+            progressHelper.writeI18nProgress("validating-remediation-entitlement");
             // check we have an appropriate remediation scan available
             for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
                 if (atd.getEntitlementId() > 0 && atd.getEntitlementId().equals(entitlementId) && atd.getIsRemediation()
@@ -80,9 +79,7 @@ public class FoDScanHelper {
                 }
             }
             if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
-                // TODO Do not use System.out.println (https://github.com/fortify/fcli/issues/91, close after fixing all occurrences in FoD module)
-                //      Status messages should preferably be written using ProgressHelper from fcli-common
-                System.out.println("Running remediation scan using entitlement: " + entitlement.getEntitlementDescription());
+                progressHelper.writeI18nProgress("using-remediation-entitlement", entitlement.getEntitlementDescription());
             } else {
                 throw new ValidationException("No remediation scan entitlements found");
             }
@@ -90,7 +87,7 @@ public class FoDScanHelper {
         return entitlement;
     }
 
-    public static final FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, String relId,
+    public static final FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, ProgressHelperMixin progressHelper, String relId,
                                                                         FoDAssessmentTypeOptions.FoDAssessmentType assessmentType,
                                                                         FoDEnums.EntitlementPreferenceType entitlementType,
                                                                         FoDScanFormatOptions.FoDScanType scanType) {
@@ -98,38 +95,28 @@ public class FoDScanHelper {
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
-            // TODO Do not use System.out.println (https://github.com/fortify/fcli/issues/91, close after fixing all occurrences in FoD module)
-            //      Status messages should preferably be written using ProgressHelper from fcli-common
-            // TODO Remove commented statements below
-            //      If these are used for debugging, consider using the logging framework to output debug/trace messages 
-            System.out.println("Validating entitlements...");
+            progressHelper.writeI18nProgress("validating-entitlement");
             // check for an entitlement
             for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
-                //System.out.println(atd.getEntitlementId());
                 if (atd.getEntitlementId() != null && atd.getEntitlementId() > 0) {
-                    //System.out.println("  " + atd.getFrequencyType());
                     if (atd.getFrequencyType().equals(entitlementType.name().replace("Only",""))) {
-                        //System.out.println("    " + atd.getName().replace(" ", "").replace("Assessment", ""));
-                        //System.out.println("    " + assessmentType.name());
                         String atdName = atd.getName()
                                 .replace(" ", "")
                                 .replace("+", "Plus")
                                 .replace("Assessment", "");
                         if (atdName.equals(assessmentType.name())) {
-                        //if (atd.getUnitsAvailable() >= unitsRequired(assessmentType, entitlementType)) {
                             entitlement.setEntitlementDescription(atd.getEntitlementDescription());
                             entitlement.setEntitlementId(atd.getEntitlementId());
                             entitlement.setFrequencyType(atd.getFrequencyType());
                             entitlement.setAssessmentTypeId(atd.getAssessmentTypeId());
                             entitlement.setEntitlementDescription(atd.getEntitlementDescription());
                             break;
-                        //}
                         }
                     }
                 }
             }
             if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
-                System.out.println("Running scan using entitlement: " + entitlement.getEntitlementDescription());
+                progressHelper.writeI18nProgress("using-entitlement", entitlement.getEntitlementDescription());
             }
         }
         return entitlement;

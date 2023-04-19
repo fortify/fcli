@@ -34,6 +34,7 @@ import javax.validation.ValidationException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.progress.cli.mixin.ProgressHelperMixin;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelDescriptor;
@@ -81,6 +82,8 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
     private FoDEntitlementPreferenceTypeOptions.OptionalOption entitlementType;
     @Mixin
     private FoDAssessmentTypeOptions.OptionalOption assessmentType;
+
+    @Mixin private ProgressHelperMixin progressHelper;
 
     // TODO Method too long, consider splitting into multiple methods
     @Override
@@ -132,11 +135,11 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
         } else if (remediationScanType.getRemediationScanPreferenceType() != null &&
                 (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
             // if requesting a remediation scan make we have one available
-            entitlementToUse = FoDDastScanHelper.validateRemediationEntitlement(unirest, relId,
+            entitlementToUse = FoDDastScanHelper.validateRemediationEntitlement(unirest, progressHelper, relId,
                     currentSetup.getEntitlementId(), FoDScanFormatOptions.FoDScanType.Dynamic);
         } else if (assessmentType.getAssessmentType() != null && entitlementType.getEntitlementPreferenceType() != null) {
             // if assessment and entitlement type are both specified, find entitlement to use
-            entitlementToUse = FoDDastScanHelper.getEntitlementToUse(unirest, relId,
+            entitlementToUse = FoDDastScanHelper.getEntitlementToUse(unirest, progressHelper, relId,
                     assessmentType.getAssessmentType(), entitlementType.getEntitlementPreferenceType(),
                     FoDScanFormatOptions.FoDScanType.Dynamic);
         } else {

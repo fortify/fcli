@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.progress.cli.mixin.ProgressHelperMixin;
 import com.fortify.cli.fod.entity.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.entity.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.entity.lookup.helper.FoDLookupHelper;
@@ -41,6 +42,7 @@ import com.fortify.cli.fod.entity.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.entity.scan_mobile.cli.cmd.FoDMobileScanStartCommand;
 import com.fortify.cli.fod.entity.scan_sast.helper.FoDSastScanHelper;
 import com.fortify.cli.fod.entity.scan_sast.helper.FoDSastScanSetupDescriptor;
 import com.fortify.cli.fod.entity.scan_sast.helper.FoDSetupSastScanRequest;
@@ -60,8 +62,11 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     @Mixin
     private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
 
-    @Option(names = {"--entitlement-frequency", "--frequency"})
-    private FoDEnums.EntitlementFrequencyTypes entitlementFrequency;
+    private enum StaticAssessmentTypes { Static, StaticPlus }
+    @Option(names = {"--assessment-type"}, required = true)
+    private StaticAssessmentTypes staticAssessmentType;
+    @Option(names = {"--entitlement-frequency", "--frequency"}, required = true)
+    private FoDEnums.EntitlementFrequencyType entitlementFrequency;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--technology-stack"}, required = true)
@@ -79,8 +84,11 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
 //    @Option(names = {"--scan-binary"})
 //    private Boolean scanBinary = false;
 
-    @Mixin
-    private FoDAssessmentTypeOptions.RequiredOption assessmentType;
+    // no longer used - using specific StaticAssessmentTypes above
+    //@Mixin
+    //private FoDAssessmentTypeOptions.RequiredOption assessmentType;
+
+    @Mixin private ProgressHelperMixin progressHelper;
 
     // TODO Split into multiple methods
     @Override
@@ -97,11 +105,11 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
         FoDSastScanSetupDescriptor currentSetup = FoDSastScanHelper.getSetupDescriptor(unirest, relId);
 
         // find/check out assessment type id
-        FoDScanFormatOptions.FoDScanType scanType = assessmentType.getAssessmentType().toScanType();
+        //FoDScanFormatOptions.FoDScanType scanType = assessmentType.getAssessmentType().toScanType();
         FoDAppRelAssessmentTypeDescriptor[] appRelAssessmentTypeDescriptor = FoDAppRelHelper.getAppRelAssessmentTypes(unirest, relId,
-                scanType, true);
-
-        String assessmentTypeName = assessmentType.getAssessmentType().toString().replace("Plus", "+") + " Assessment";
+                FoDScanFormatOptions.FoDScanType.Static, true);
+        //String assessmentTypeName = assessmentType.getAssessmentType().toString().replace("Plus", "+") + " Assessment";
+        String assessmentTypeName = staticAssessmentType.name().replace("Plus", "+") + " Assessment";
         for (FoDAppRelAssessmentTypeDescriptor assessmentType : appRelAssessmentTypeDescriptor) {
             if (assessmentType.getName().equals(assessmentTypeName)) {
                 assessmentTypeId = assessmentType.getAssessmentTypeId();
@@ -115,15 +123,18 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
             // TODO: verify entitlementId
         } else {
             FoDEnums.EntitlementPreferenceType entitlementPreferenceType = null;
-            if (entitlementFrequency == FoDEnums.EntitlementFrequencyTypes.SingleScan) {
+            if (entitlementFrequency == FoDEnums.EntitlementFrequencyType.SingleScan) {
                 entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.SingleScanOnly;
-            } else if (entitlementFrequency == FoDEnums.EntitlementFrequencyTypes.Subscription) {
+            } else if (entitlementFrequency == FoDEnums.EntitlementFrequencyType.Subscription) {
                 entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.SubscriptionOnly;
             } else {
                 throw new ValidationException("The entitlement frequency '"
                         + entitlementFrequency.name() + "' cannot be used here");
             }
-            FoDAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, relId, assessmentType.getAssessmentType(), entitlementPreferenceType, scanType);
+            FoDAssessmentTypeOptions.FoDAssessmentType assessmentType = FoDAssessmentTypeOptions.FoDAssessmentType.valueOf(String.valueOf(staticAssessmentType));
+            FoDAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, progressHelper, relId,
+                    assessmentType, entitlementPreferenceType,
+                    FoDScanFormatOptions.FoDScanType.Mobile);
             entitlementIdToUse = assessmentTypeDescriptor.getEntitlementId();
         }
         //System.out.println("entitlementId = " + entitlementIdToUse);

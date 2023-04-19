@@ -25,10 +25,7 @@
 package com.fortify.cli.fod.entity.app.cli.cmd;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-
-import javax.validation.ValidationException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,10 +38,9 @@ import com.fortify.cli.fod.entity.app.cli.mixin.FoDCriticalityTypeOptions;
 import com.fortify.cli.fod.entity.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.entity.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.entity.app.helper.FoDAppUpdateRequest;
-import com.fortify.cli.fod.entity.attribute.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.entity.attribute.helper.FoDAttributeDescriptor;
-import com.fortify.cli.fod.entity.attribute.helper.FoDAttributeHelper;
-import com.fortify.cli.fod.entity.microservice.cli.mixin.FoDAppMicroserviceUpdateOptions;
+import com.fortify.cli.fod.entity.app.attr.cli.mixin.FoDAttributeUpdateOptions;
+import com.fortify.cli.fod.entity.app.attr.cli.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.entity.app.attr.cli.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDJsonNodeOutputCommand;
 
 import io.micronaut.core.util.StringUtils;
@@ -69,12 +65,16 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
     @DisableTest(MULTI_OPT_PLURAL_NAME)
     @Option(names = {"--notify"}, required = false, split=",")
     private ArrayList<String> notificationsUpdate;
+    // microservice commands are available via `fod app-ms` and should not be on update command
+    // descriptions for `fod app update` also updated
+    /*
     @Mixin
     FoDAppMicroserviceUpdateOptions.AddMicroserviceOption addMicroservices;
     @Mixin
     FoDAppMicroserviceUpdateOptions.DeleteMicroserviceOption deleteMicroservices;
     @Mixin
     FoDAppMicroserviceUpdateOptions.RenameMicroserviceOption renameMicroservices;
+     */
     @Mixin
     private FoDCriticalityTypeOptions.OptionalOption criticalityTypeUpdate;
     @Mixin
@@ -106,14 +106,7 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
                 .setEmailList(StringUtils.isNotEmpty(appEmailListNew) ? appEmailListNew : appDescriptor.getEmailList())
                 .setAttributes(jsonAttrs);
 
-        // TODO Compiler warns about unlikely argument to contains(); warning seems correct, you likely want to use Collections.disjoint() instead
-        // TODO As a best practice, statements in if-blocks should always be enclosed in curly braces
-        // TODO Avoid repetitive get*()-calls; assign to local variable instead
-        // TODO Avoid repetitive null-checks, potentially change mixin definitions
-        //      such that the mixin itself and the collection are initialized to non-null value
-        //      to avoid null-checks
-        // TODO Some of the checks are performed twice; i.e. if both add and delete options specified,
-        //      then we're checking twice whether they do not overlap
+        /*
         if (addMicroservices != null && addMicroservices.getMicroservices() != null) {
             if (addMicroservices.getMicroservices().contains(deleteMicroservices.getMicroservices()))
                 throw new ValidationException("The --add-microservice and --delete-microservice cannot both contain the same microservice");
@@ -131,7 +124,7 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
             if (msNames.contains(addMicroservices.getMicroservices()) || msNames.contains(deleteMicroservices.getMicroservices()))
                 throw new ValidationException("The --update-microservice and --add-microservice or --delete-microservice cannot both contain the same microservice");
             appUpdateRequest.setRenameMicroservices(renameMicroservices.getMicroservices());
-        }
+        }*/
 
         return FoDAppHelper.updateApp(unirest, appDescriptor.getApplicationId(), appUpdateRequest).asJsonNode();
     }

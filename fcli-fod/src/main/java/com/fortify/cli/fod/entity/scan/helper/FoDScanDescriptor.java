@@ -37,8 +37,10 @@ import lombok.EqualsAndHashCode;
 public class FoDScanDescriptor extends JsonNodeHolder {
     private Integer scanId;
     private String scanType;
-    private Integer releaseId;
+    private String applicationName;
+    private String releaseName;
     private Integer applicationId;
+    private Integer releaseId;
     private String microserviceName;
     private String status;
 }

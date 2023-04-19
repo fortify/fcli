@@ -111,7 +111,7 @@ public class FoDSetupDastScanRequest {
     String webServicePassword;
     String webServiceAPIKey;
     String webServiceAPIPassword;
-    FoDEnums.EntitlementFrequencyTypes entitlementFrequencyType;
+    FoDEnums.EntitlementFrequencyType entitlementFrequencyType;
     FoDEnums.UserAgentType userAgentType = FoDEnums.UserAgentType.Desktop;
     FoDEnums.ConcurrentRequestThreadsType concurrentRequestThreadsType = FoDEnums.ConcurrentRequestThreadsType.Standard;
     String postmanCollectionURL;
@@ -294,7 +294,7 @@ public class FoDSetupDastScanRequest {
         return this;
     }
 
-    public FoDSetupDastScanRequest setEntitlementFrequencyType(FoDEnums.EntitlementFrequencyTypes entitlementFrequencyType) {
+    public FoDSetupDastScanRequest setEntitlementFrequencyType(FoDEnums.EntitlementFrequencyType entitlementFrequencyType) {
         this.entitlementFrequencyType = entitlementFrequencyType;
         return this;
     }
