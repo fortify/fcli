@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.fod.entity.attribute.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.entity.app.attr.cli.helper.FoDAttributeDescriptor;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;

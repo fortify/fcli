@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.fod.entity.attribute.helper;
+package com.fortify.cli.fod.entity.app.attr.cli.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
 
@@ -30,7 +30,6 @@ import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-// TODO Same comments as FoDAttributeUpdateOptions
 @ReflectiveAccess
 @Data
 @EqualsAndHashCode(callSuper = true)
