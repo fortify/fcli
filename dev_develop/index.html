@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230419.115325-dev_develop
+fcli_version: 0.20230420.145034-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20230419.115325-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230419.115325-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230420.145034-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230419.115325-dev_develop</span>
+<span id="revnumber">version 0.20230420.145034-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -474,7 +474,7 @@ All commands that automatically generate server-side queries provide the <code>-
 <div class="sect2">
 <h3 id="_option_expressions"><a class="anchor" href="#_option_expressions"></a>Option Expressions</h3>
 <div class="paragraph">
-<p>Various fcli options take either plain expressions, like <a href="#-o--output">-o | –output expr=&#8230;&#8203;</a>, or template expressions (plain text combined with expressions embedded between curly braces), like <a href="#-q--query">-q | --query</a>. These expressions use Spring Expression Language (SpEL); general information on syntax, supported operators and more can be found in the <a href="https://docs.spring.io/spring-framework/docs/6.0.x/reference/html/core.html#expressions">SpEL Documentation</a>.</p>
+<p>Various fcli options take either plain expressions, like <a href="#-q--query">-q | --query</a>, or template expressions (plain text combined with expressions embedded between curly braces), like <a href="#-o--output">-o | –output expr=&#8230;&#8203;</a>. These expressions use Spring Expression Language (SpEL); general information on syntax, supported operators and more can be found in the <a href="https://docs.spring.io/spring-framework/docs/6.0.x/reference/html/core.html#expressions">SpEL Documentation</a>.</p>
 </div>
 <div class="paragraph">
 <p>When evaluating expressions, fcli configures SpEL for 'data binding and condition evaluation', meaning that not all SpEL features are available. In particular, query expressions cannot invoke constructors nor static methods, and write access is mostly disabled.</p>
@@ -837,8 +837,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230419.115325-dev_develop<br>
-Last updated 2023-04-19 11:55:15 UTC
+Version 0.20230420.145034-dev_develop<br>
+Last updated 2023-04-20 14:52:49 UTC
 </div>
 </div>
 </body>
