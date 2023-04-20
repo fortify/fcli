@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Developer Information
-fcli_version: none
+fcli_version: 
 ---
 
 <!DOCTYPE html>
@@ -21,9 +21,6 @@ fcli_version: none
 
 <div id="header">
 <h1>Fortify CLI (fcli) Developer Information</h1>
-<div class="details">
-<span id="revnumber">version none</span>
-</div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -34,6 +31,8 @@ fcli_version: none
 <li><a href="#_ide_setup">IDE Setup</a></li>
 <li><a href="#_incremental_compilation">Incremental Compilation</a></li>
 <li><a href="#_reflection">Reflection</a></li>
+<li><a href="#_picocli">Picocli</a></li>
+<li><a href="#_jackson">Jackson</a></li>
 </ul>
 </li>
 <li><a href="#_gradle_wrapper">Gradle Wrapper</a></li>
@@ -42,22 +41,6 @@ fcli_version: none
 <ul class="sectlevel2">
 <li><a href="#_repository_documentation">Repository Documentation</a></li>
 <li><a href="#_user_documentation">User Documentation</a></li>
-</ul>
-</li>
-<li><a href="#_code_style_structure">Code Style &amp; Structure</a>
-<ul class="sectlevel2">
-<li><a href="#_coding_conventions">Coding Conventions</a></li>
-<li><a href="#_package_structure">Package Structure</a></li>
-</ul>
-</li>
-<li><a href="#_implementing_fcli_commands">Implementing fcli Commands</a>
-<ul class="sectlevel2">
-<li><a href="#_command_structure">Command Structure</a></li>
-<li><a href="#_command_implementation">Command Implementation</a></li>
-<li><a href="#_commands_options">Commands &amp; Options</a></li>
-<li><a href="#_arggroup_annotations">ArgGroup Annotations</a></li>
-<li><a href="#_options_vs_positional_parameters">Options vs Positional Parameters</a></li>
-<li><a href="#_message_keys">Message Keys</a></li>
 </ul>
 </li>
 </ul>
@@ -99,7 +82,8 @@ feat: Some feature
 <p>See the output of <code>git log</code> to view some sample commit messages.</p>
 </div>
 <div class="paragraph">
-<p><code>release-please-action</code> invoked from the GitHub CI workflow generates pull requests containing updated <code>CHANGELOG.md</code> and <code>version.txt</code> files based on these commit messages. Merging the pull request will result in a new release version being published by creating a GitHub release describing the changes.</p>
+<p><code>release-please-action</code> invoked from the GitHub CI workflow generates pull requests containing updated <code>CHANGELOG.md</code> and <code>version.txt</code> files based on these commit messages. Merging the pull request will
+result in a new release version being published; this includes publishing the image to Docker Hub, and creating a GitHub release describing the changes.</p>
 </div>
 </div>
 </div>
@@ -112,7 +96,7 @@ feat: Some feature
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://picocli.info/">picocli</a>: Used for fcli command implementations; perform fcli actions, process command line options, generate usage information, generate command output, …</p>
+<p><a href="https://picocli.info/">picocli</a>: Process command line options, generate usage information, …</p>
 </li>
 <li>
 <p><a href="https://micronaut.io/">Micronaut</a>: Dependency injection, features for GraalVM native image generation</p>
@@ -169,81 +153,55 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 <div class="sect2">
 <h3 id="_reflection"><a class="anchor" href="#_reflection"></a>Reflection</h3>
 <div class="paragraph">
-<p>GraalVM Native Image needs to know ahead-of-time the reflectively accessed program elements; see <a href="https://www.graalvm.org/reference-manual/native-image/Reflection/">GraalVM Native Image &amp; Reflection</a> for details.</p>
+<p>GraalVM Native Image needs to know ahead-of-time the reflectively accessed program elements; see <a href="https://www.graalvm.org/reference-manual/native-image/Reflection/">GraalVM Native Image &amp; Reflection</a> for details. Micronaut allows for generating the necessary GraalVM reflection configuration using the <code>@ReflectiveAccess</code> annotation if necessary.</p>
 </div>
 <div class="paragraph">
-<p>In fcli, the following needs to be taken into account to avoid reflection issues in native fcli binaries:</p>
+<p>If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the <code>@ReflectiveAccess</code> annotation to the appropriate classes. Also see below for some reflection-related considerations specific to picocli and Jackson.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_picocli"><a class="anchor" href="#_picocli"></a>Picocli</h3>
+<div class="paragraph">
+<p>Picocli and it’s annotation processor should in theory generate the necessary reflection configuration as described above. However, the annotation processor doesn’t seem to take class hierarchies into account; see <a href="https://github.com/remkop/picocli/issues/1444">GraalVM: Options from superclass not visible</a>. As a work-around, we can complement the picocli-generated reflection configuration by using Micronaut’s <code>@ReflectiveAccess</code> annotation. In general the following classes should probably be annotated with <code>@ReflectiveAccess</code>:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Micronaut <code>@Inject</code> annotations must not be declared on private fields</p>
-<div class="ulist">
-<ul>
-<li>
-<p>To inject beans into fields, use <code>@Setter(onMethod=@__({@Inject}))</code> to have Lombok generate a setter method with <code>@Inject</code> annotation, allowing Micronaut to perform injection without requiring reflection.</p>
+<p>All classes annotated with <code>@Command</code> (this likely duplicates the reflection configuration generated by picocli, but doesn’t hurt)</p>
 </li>
 <li>
-<p>Failure to do so will often result in native fcli binaries from running altogether; this will usually be detected during the basic fcli test performed in the GitHub <code>Build &amp; release</code> workflow.</p>
-</li>
-</ul>
-</div>
+<p>All super-classes of all classes annotated with <code>@Command</code>, in particular if they contain any picocli annotations like <code>@Mixin</code>, <code>@ArgGroup</code>, or <code>@Option</code></p>
 </li>
 <li>
-<p>All classes referenced in <code>@ProductHelperClass</code> annotations, i.e. all <code>&lt;Product&gt;ProductHelper</code> classes, must be annotated with <code>@ReflectiveAccess</code>.</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Failure to do so will prevent most <code>&lt;Product&gt;</code>-specific commands from running when using the native fcli binaries.</p>
-</li>
-<li>
-<p>This may not be uncovered by the basic fcli test mentioned above, but should be fairly easy to detect, for example through product module integration tests or through manual testing of arbitrary product commands.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>All data classes that are serialized or deserialized using Jackson must be annotated with the <code>@ReflectiveAccess</code> annotation.</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Failure to do so will cause errors when serializing or deserializing data to or from classes that lack this annotation.</p>
-</li>
-<li>
-<p>Usually this only affects a small group of commands or a single command, possibly even only under certain conditions, and as such any missing annotations may be difficult to detect.</p>
-</li>
-<li>
-<p>Most notably, the following classes will need the <code>@ReflectiveAccess</code> annotation:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Most <code>*Descriptor</code> classes.</p>
-</li>
-<li>
-<p>Classes holding REST request or response data.</p>
-</li>
-<li>
-<p>Classes holding data stored in the fcli data folder, like configuration data classes.</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Picocli uses reflection internally, which in earlier fcli versions required <code>@ReflectiveAccess</code> annotations on picocli-related classes like commands and mixins. However, recent fcli versions generate a proper Graal reflect-config.json file, so <code>@ReflectiveAccess</code> is no longer needed on picocli-related classes.</p>
+<p>All classes used as an <code>@Mixin</code> or <code>@ArgGroup</code>, and their super-classes</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the <code>@ReflectiveAccess</code> annotation to the appropriate classes.</p>
+<p>The following native image runtime behavior may indicate a missing <code>@ReflectiveAccess</code> annotation:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Options and sub-commands not listed in help output, and not recognized when entered on the command line</p>
+</li>
+<li>
+<p>Exceptions related to picocli trying to access classes, methods and fields using reflection</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_jackson"><a class="anchor" href="#_jackson"></a>Jackson</h3>
+<div class="paragraph">
+<p>Jackson is heavily based on reflection to perform object serialization and deserialization. All classes that need to be (de-)serialized with Jackson therefore need to be annotated with <code>@ReflectiveAccess</code> to allow reflection-based (de-)serialization.</p>
 </div>
 <div class="paragraph">
-<p>Note that Micronaut also provides the <code>@Introspected</code> annotation that should allow for reflection-free (de-)serialization. However experience learns that there are just too many differences between reflection-based and introspection-based (de-)serialization. When running in a normal JVM these differences are often not visible as Jackson can easily fall back to reflection-based (de-)serialization. In native images, Jackson cannot fall back to reflection-based (de-)serialization unless properly configured, and even when properly configured there are still some differences in behavior.</p>
+<p>Note that Micronaut provides the <code>@Introspected</code> annotation that should allow for reflection-free (de-)serialization. However experience learns that there are just too many differences between reflection-based
+and introspection-based (de-)serialization. When running in a normal JVM these differences are often not visible as Jackson can easily fall back to reflection-based (de-)serialization. In native images, Jackson cannot fall back to reflection-based (de-)serialization unless properly configured, and even when properly configured there are still some differences in behavior.</p>
 </div>
 <div class="paragraph">
-<p>As such, it has been decided to disable Jackson introspection-based (de-)serialization using the <code>jackson.bean-introspection-module</code> configuration property in <code>application.yml</code>. This also means that we will not be using the <code>@Introspected</code> annotation on classes that need to be (de-)serialized with Jackson. The alternative is to use the <code>@ReflectiveAccess</code> annotation on such classes, as described above.</p>
+<p>As such, it has been decided to disable Jackson introspection-based (de-)serialization using the <code>jackson.bean-introspection-module</code> configuration property in <code>application.yml</code>. This also means that we will not be using the <code>@Introspected</code> annotation on classes that need to be (de-)serialized with Jackson (unless of course introspection-based access is used for non Jackson-related purposes).</p>
 </div>
 </div>
 </div>
@@ -428,7 +386,7 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 </ul>
 </div>
 <div class="paragraph">
-<p>The offline HTML documentation is supposed to be self-contained, i.e., pages should render correctly, without having to extract the full contents, if users open any HTML file from <code>docs-html.zip</code>. In particular, this means that styles and images need to be embedded inside the HTML files. Of course, links to other documentation files will not work unless the full zip-file is extracted.</p>
+<p>The offline HTML documentation is supposed to be self-contained, i.e., users can open any HTML file from <code>docs-html.zip</code> without extracting the full contents, and the page will render correctly. Of course, links to other documentation files will not work unless the full zip-file is extracted.</p>
 </div>
 <div class="paragraph">
 <p>For now, the hardcoded banner and navigation bar in the offline documentation is similar to the banner included by Jekyll. However:</p>
@@ -476,448 +434,10 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_code_style_structure"><a class="anchor" href="#_code_style_structure"></a>Code Style &amp; Structure</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_coding_conventions"><a class="anchor" href="#_coding_conventions"></a>Coding Conventions</h3>
-<div class="paragraph">
-<p>Common Java coding conventions should be used for fcli source code, taking the following into consideration:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Indentation is done using 4 spaces; fcli source code should not contain tabs.</p>
-</li>
-<li>
-<p>Use of System.out and System.err should be avoided, except for code that explicitly handles output.</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Command output should be generated through the output framework provided in the common module.</p>
-</li>
-<li>
-<p>The logging framework should be used for outputting warning messages for example.</p>
-</li>
-<li>
-<p>If you use System.out for debugging, potentially commenting out or removing these statements once done with debugging, consider using the logging framework for debug logging. If you need this information for debugging, it may be useful to permanently have this information included in debug logs.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Avoid having commented out source code.</p>
-</li>
-<li>
-<p>Use the 'Organize Imports` feature of the IDE to remove any unused imports.</p>
-</li>
-<li>
-<p>Avoid having unused variables, methods, &#8230;&#8203;</p>
-</li>
-<li>
-<p>Avoid unsafe type conversions. In particular, when using Jackson for deserializing generic types, use <code>TypeReference</code> instead of the generic type class.</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_package_structure"><a class="anchor" href="#_package_structure"></a>Package Structure</h3>
-<div class="paragraph">
-<p>Most fcli command modules use the package structure described below. Note that there may be slight variations between product-specific modules that interact with a remote system, and fcli-specific modules like <code>config</code> and <code>tool</code>.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;</code><br></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Root package for the given module</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;._main.cli.cmd</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains <code>&lt;module&gt;Commands</code> class listing all entity commands for the given module.</p>
-</li>
-<li>
-<p>May contain command implementations that operate at module-level rather than entity-level, like the <code>ConfigClearCommand</code>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.&lt;entity&gt;</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Root package for the given module entity</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.&lt;entity&gt;.cli</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Root package for Picocli-based code, like command implementations and mixins</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.&lt;entity&gt;.cli.cmd</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains the <code>&lt;module&gt;&lt;entity&gt;Commands</code> class, listing all sub-commands for the given entity</p>
-</li>
-<li>
-<p>Contains the individual entity action command classes</p>
-</li>
-<li>
-<p>Where appropriate, sub-packages may be used to group related action commands</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.&lt;entity&gt;.cli.mixin</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains classes used as Mixin classes, for example defining reusable options and parameters, which may be used by commands in the current entity but also by other entities.</p>
-</li>
-<li>
-<p>May contain classes used as ArgGroups, but these should be used sparingly as noted in <a href="_arggroup_annotations">ArgGroup Annotations</a></p>
-</li>
-<li>
-<p>Usually contains a <code>&lt;module&gt;&lt;entity&gt;ResolverMixin</code> class, containing inner classes that allow for resolving one or more <code>&lt;entity&gt;</code> instances based on command-line options and/or positional parameters. Each inner class name describes the provided functionality, like <code>RequiredOption</code>, <code>OptionalOption</code>, <code>RequiredPositionalParameter</code>, &#8230;&#8203;</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.&lt;entity&gt;.helper</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains entity-related helper classes, for example for loading entity data, deleting entities, &#8230;&#8203;</p>
-</li>
-<li>
-<p>Contains <code>*Descriptor</code> classes that hold entity-related data</p>
-</li>
-<li>
-<p>Classes in this package should not contain any picocli-related functionality; they should be designed in such a way that they could potentially be used in non-picocli applications</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.output</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Root package for generic, module-specific output functionality</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.output.cli.cmd</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains a module-specific <code>Abstract&lt;module&gt;OutputCommand</code> class extending from either <code>AbstractBasicOutputCommand</code> or <code>AbstractUnirestOutputCommand</code>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.output.cli.mixin</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains a module-specific <code>&lt;module&gt;OutputHelperMixins</code> class, containing inner classes for every action provided by the module, like <code>List</code>, <code>Get</code>, <code>Delete</code>, <code>Revoke</code>, &#8230;&#8203;</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.rest</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Root package for module-specific REST-related functionality</p>
-</li>
-<li>
-<p>Contents may vary depending on the target system</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.rest.cli.cmd</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains <code>&lt;module&gt;RestCommands</code> and <code>&lt;module&gt;RestCallCommand</code> classes that implement the <code>fcli &lt;module&gt; rest call</code> command structure</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.rest.cli.mixin</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains one or more mixin classes responsible for handling connections to the target system</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_implementing_fcli_commands"><a class="anchor" href="#_implementing_fcli_commands"></a>Implementing fcli Commands</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The following sections provide information on implementing fcli commands.</p>
-</div>
-<div class="sect2">
-<h3 id="_command_structure"><a class="anchor" href="#_command_structure"></a>Command Structure</h3>
-<div class="paragraph">
-<p>In general, we try to adhere to the following fcli command structure:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>fcli &lt;module&gt; &lt;entity&gt; &lt;action&gt;</pre>
-</div>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>&lt;module&gt;</code> represents either a product like <code>ssc</code> or <code>fod</code>, or an fcli-specific module like <code>config</code>, <code>state</code>, <code>tool</code> or <code>util</code>.</p>
-</li>
-<li>
-<p><code>&lt;entity&gt;</code> represents the entity on which the <code>&lt;action&gt;</code> sub-commands operate, like <code>app</code>, <code>appversion</code> or <code>appversion-attribute</code>. Virtually every entity should have its own top-level command inside a <code>&lt;module&gt;</code>, we usually don&#8217;t use nested entities like <code>app&#8594;version&#8594;attribute</code>.</p>
-</li>
-<li>
-<p><code>&lt;action&gt;</code> represents the action to be taken on the <code>&lt;entity&gt;</code> and is usually a verb like <code>list</code>, <code>get</code>, <code>set</code>, <code>delete</code>, <code>update</code>, &#8230;&#8203;</p>
-<div class="ulist">
-<ul>
-<li>
-<p>If there are multiple variants of a particular command, <code>&lt;action&gt;</code> may include a suffix after the verb, like <code>download-by-id</code> and <code>download-state</code>, or <code>purge-by-id</code> and <code>purge-by-date</code>.</p>
-</li>
-<li>
-<p>Aliases should be used to maintain backward compatibility if needed. For example, if there is already a <code>delete</code> command that deletes by id, and a new command for deleting by date needs to be added, the original command would be renamed to <code>delete-by-id</code> with alias <code>delete</code>.</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Fcli commands should be atomic and specific in nature. Each command should only do one thing, and do it well. A clear example are the <code>wait-for</code> commands that provide a lot of wait-related options, rather than having the wait-related options on the command that initiated the action that we&#8217;re waiting for.</p>
-</div>
-<div class="paragraph">
-<p>In general, exclusive options that influence the outcome of a command are an indication that a command is not specific enough; in such cases you may want to consider having multiple variants of the same command as described above. For example, if you are considering a single <code>purge</code> command with exclusive options <code>--id &lt;id&gt;</code> and <code>--older-than &lt;date&gt;</code>, then having more specific <code>purge-by-id</code> and <code>purge-by-date</code> or even <code>purge-older-than</code> commands would be more appropriate.</p>
-</div>
-<div class="paragraph">
-<p>As usual, there are some exceptions to this rule, in particular for commands that are consistently named across fcli modules. For example, login commands often allow for logging in with either user or token credentials; for consistency we just have a single login command that provides options for either approach.</p>
-</div>
-<div class="paragraph">
-<p>In general, each container command should contain either only leaf commands, or only container commands. For example, the top-level <code>&lt;module&gt;</code> command should usually only contain <code>&lt;entity&gt;</code> container commands and no leaf commands, whereas <code>&lt;entity&gt;</code> commands should usually only contain leaf commands. There are some exceptions to this rule though, for example if a command operates on all entities within a module, like the <code>fcli config clear</code> command.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_command_implementation"><a class="anchor" href="#_command_implementation"></a>Command Implementation</h3>
-<div class="paragraph">
-<p>Most or all product-specific leaf command implementations should have the following generic structure:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">@Command(name = [Module]OutputHelperMixins.&lt;Action&gt;.CMD_NAME)
-public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;SuperClass&gt; implements &lt;CommonInterfaces&gt; {
-    @Getter @Mixin private [Module]OutputHelperMixins.&lt;Action&gt; outputHelper;
-    // Options, positional parameters, other fields; see next sections for info on options and parameters
-
-    // Overrides for interfaces, for example methods generating the output data,
-    // record transformations, ...
-
-    @Override
-    public boolean isSingular() {
-        return &lt;false if potentially returning multiple records, true if always returning single record&gt;;
-    }
-}</code></pre>
-</div>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>&lt;Module&gt;</code>: Corresponds to the module in which this class is located; for product-specific commands this would correspond to the product name like <code>SSC</code> or <code>FoD</code>.</p>
-</li>
-<li>
-<p><code>[Module]</code>: Commands can use <code>IOutputHelper</code> implementations from either the generic <code>OutputHelperMixins</code> or the module-specific <code>[Module]OutputHelperMixins</code></p>
-</li>
-<li>
-<p><code>&lt;Entity&gt;</code> represents the entity that the command is operating on, like <code>App</code>, <code>AppVersion</code>, <code>User</code>, &#8230;&#8203;</p>
-</li>
-<li>
-<p><code>&lt;Action&gt;</code>: Represents the action performed by this command; should be one of the classes in the <code>[Module]OutputHelperMixins</code> class, like <code>Get</code>, <code>List</code>, <code>Delete</code>, &#8230;&#8203;</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Every action should have a corresponding inner class in either the generic <code>OutputHelperMixins</code> class, or the module-specific <code>[Module]OutputHelperMixins</code> class.</p>
-</li>
-<li>
-<p>In general, only concrete command implementations should declare references to <code>*OutputHelperMixins</code> classes, both in the <code>@Command</code> declaration and the <code>outputHelper</code> field. Defining an <code>outputHelper</code> field in an (abstract) superclass will result in any aliases defined on <code>*OutputHelperMixins</code> inner classes not being applied to the concrete command implementations.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>&lt;SuperClass&gt;</code> is usually <code>Abstract&lt;Module&gt;OutputCommand</code> or one of its abstract subclasses. Most modules provide <code>Abstract&lt;Module&gt;JsonNodeOutputCommand</code> and <code>Abstract&lt;Module&gt;BaseRequestOutputCommand</code> as bases classes for commands that generate <code>JsonNode</code> or <code>HttpRequest</code> instances respectively. Indirectly, virtually all leaf commands should extend from  <code>AbstractOutputCommand</code>.</p>
-</li>
-<li>
-<p><code>&lt;CommonInterfaces&gt;</code> is a list of interfaces that define how output is being generated and processed. Following are some commonly used interfaces; see JavaDoc for details on usage:</p>
-<div class="ulist">
-<ul>
-<li>
-<p><code>IBaseRequestSupplier</code>: Supply a Unirest <code>HttpRequest</code> instance for retrieving command output data.</p>
-</li>
-<li>
-<p><code>IJsonNodeSupplier</code>: Supply a <code>JsonNode</code> instance representing the command output.</p>
-</li>
-<li>
-<p><code>IActionCommandResultSupplier</code>: Supply data for a result column to be included in the output, like <code>DELETED</code>, <code>CREATED</code>, &#8230;&#8203;</p>
-</li>
-<li>
-<p><code>IInputTransformer</code>: Allows for transforming the full JSON data before it is being processed for output.</p>
-</li>
-<li>
-<p><code>IRecordTransformer</code>: Allows for transforming individual records before they are being processed for output.</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Leaf commands in non-product modules usually have a similar structure, but some details may be different. Container commands, i.e. commands that represent <code>&lt;module&gt;</code> and <code>&lt;entity&gt;</code> have a very different (easier) structure as they don&#8217;t have any actual functionality associated to them; please refer to existing fcli container commands to serve as an example.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_commands_options"><a class="anchor" href="#_commands_options"></a>Commands &amp; Options</h3>
-<div class="paragraph">
-<p>Commands (including aliases) and options should use kebab-case names, i.e., lower-case names with words separated by a dash.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Acceptable command/option names: <code>app</code>, <code>appversion-artifact</code></p>
-</li>
-<li>
-<p>Invalid command/option names: <code>App</code>, <code>appversionArtifact</code>, <code>appversion_artifact</code></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Commands may have one or more aliases, and multiple names may be defined for options. Having multiple names for a single command or option may be useful for various reasons, for example:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>For providing shorter names, resulting in less typing for the user.</p>
-</li>
-<li>
-<p>To maintain backward compatibility when renaming an existing command or option</p>
-</li>
-<li>
-<p>As a 'default' command or option name if there are multiple variants of the same command or option, for example <code>purge</code> as the an alias for <code>purge-by-id</code> to have this as the default 'purge' operation if there are also other <code>purge-*</code> commands.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>In general:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Each command and option should have at most two names; the full name and a shorter form. For options, the shorter form is usually a single-letter option.</p>
-</li>
-<li>
-<p>Having more than two names is only allowed if needed for backward compatibility; the backward-compatible name(s) should be removed on the next major release.</p>
-</li>
-<li>
-<p>Options should always have a full name to describe their meaning, short (single-letter) name is optional.</p>
-</li>
-<li>
-<p>Single-letter options are preceded by <code>-</code> (single dash), multi-letter options are preceded by <code>--</code> (double dash).</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_arggroup_annotations"><a class="anchor" href="#_arggroup_annotations"></a>ArgGroup Annotations</h3>
-<div class="paragraph">
-<p>It was decided that <code>ArgGroup</code> annotations should be used sparingly (<a href="https://github.com/fortify/fcli/issues/89">Issue #89</a>). <code>ArgGroup</code> annotations are mostly used for generic options, like logging, help, output and query options. In general, command-specific options should use <code>ArgGroup</code> annotations only for defining exclusive options, not for creating a separate section in the help output.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_options_vs_positional_parameters"><a class="anchor" href="#_options_vs_positional_parameters"></a>Options vs Positional Parameters</h3>
-<div class="paragraph">
-<p>It was decided that every fcli command should have at most one positional parameter definition to specify the primary entity id or name that the command operates on. For example, <code>&lt;entity&gt; delete</code> commands can have a positional parameter for specifying the entity name or id to be deleted, usually matching the <code>&lt;entity&gt;</code> command group that the command is located at. For example, an <code>app delete</code> command would take a positional parameter for identifying the <code>app</code> to be deleted. Potentially the positional parameter may be an array or collection, for example if the <code>app delete</code> command allows for deleting multiple apps in a single operation.</p>
-</div>
-<div class="paragraph">
-<p>For everything else, including parent entities, options should be used. As an example, the <code>fcli ssc appversion-attribute set</code> command takes the parent entity (application version) as an option named <code>--appversion</code>, whereas the attribute names and values to be set are taken as a positional parameter <code>Map</code> instance.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_message_keys"><a class="anchor" href="#_message_keys"></a>Message Keys</h3>
-<div class="paragraph">
-<p>In general, standard picocli conventions should be used for locating i18n message keys for options, positional parameters, command descriptions, and so on. In some cases, it may be necessary to configure explicit messages keys in picocli annotations, for example for options and parameters defined in command super-classes or mixins.</p>
-</div>
-<div class="paragraph">
-<p>As an example, take the <code>@Option</code> <code>descriptionKey</code> attributes in the <code>AbstractToolInstallCommand</code>, specifying a fixed description key for all sub-commands. This way, the option description only needs to be specified once in the resource bundle, whereas using the standard picocli conventions would potentially have resulted in requiring the option description to be repeated for every individual command that extends from <code>AbstractToolInstallCommand</code>.</p>
-</div>
-<div class="paragraph">
-<p>Ideally, all commands, options and positional parameters should have a proper description. The following Linux commands can be used to find missing descriptions for options and commands:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Check which options don&#8217;t have a description:<br>
-<code>./gradlew build generateManpageAsciiDoc &amp;&amp;  grep -e "^\\*-.*::" -A 1 build/generated-picocli-docs/*.adoc | grep -e "^build.*-\s*$" -B 1</code></p>
-</li>
-<li>
-<p>Check which commands don&#8217;t have a usage header (inheriting the header of the root command):<br>
-<code>./gradlew build &amp;&amp; java -jar build/libs/fcli.jar util all-commands list --include-parents | fgrep "Command-line interface for working with"</code></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Where applicable, option and positional parameter descriptions should include references to other related fcli commands, in particular when these related commands are in a separate command tree. For example, available attribute names and values that can be specified on the <code>fcli ssc appversion-attribute set</code> command can be found through the <code>fcli ssc attribute-definition *</code> commands. Being in a separate command tree, this may not be obvious to users and as such should be documented on the <code>fcli ssc appversion-attribute set</code> command.</p>
-</div>
-<div class="paragraph">
-<p>Comparing this to the 'application name or id' to be passed to the <code>fcli ssc app get</code> command; available application id&#8217;s can be found through the <code>fcli ssc app list</code> command under the same <code>app</code> parent command, so this doesn&#8217;t need to be documented as it should be obvious to users.</p>
-</div>
-</div>
-</div>
-</div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version none<br>
-Last updated 2023-04-19 11:53:25 UTC
+Last updated 2023-04-20 07:35:00 UTC
 </div>
 </div>
 </body>
