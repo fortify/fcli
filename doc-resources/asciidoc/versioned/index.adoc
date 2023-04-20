@@ -181,7 +181,7 @@ Available on virtually all commands that interact with a target system, this opt
 
 === Option Expressions
 
-Various fcli options take either plain expressions, like link:++#-o--output++[-o | –output expr=...], or template expressions (plain text combined with expressions embedded between curly braces), like link:++#-q--query++[-q | --query]. These expressions use Spring Expression Language (SpEL); general information on syntax, supported operators and more can be found in the link:https://docs.spring.io/spring-framework/docs/6.0.x/reference/html/core.html#expressions[SpEL Documentation].
+Various fcli options take either plain expressions, like link:++#-q--query++[-q | --query], or template expressions (plain text combined with expressions embedded between curly braces), like link:++#-o--output++[-o | –output expr=...]. These expressions use Spring Expression Language (SpEL); general information on syntax, supported operators and more can be found in the link:https://docs.spring.io/spring-framework/docs/6.0.x/reference/html/core.html#expressions[SpEL Documentation].
 
 When evaluating expressions, fcli configures SpEL for 'data binding and condition evaluation', meaning that not all SpEL features are available. In particular, query expressions cannot invoke constructors nor static methods, and write access is mostly disabled.
 
