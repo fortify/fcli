@@ -48,7 +48,7 @@ import org.springframework.expression.spel.ast.OpOr;
 import org.springframework.expression.spel.ast.OperatorMatches;
 
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
-import com.fortify.cli.common.spring.expression.AbstractSpelTreeVisitor;
+import com.fortify.cli.common.spring.expression.AbstractSpelNodeVisitor;
 import com.fortify.cli.common.spring.expression.SpelNodeHelper;
 import com.fortify.cli.common.util.JavaHelper;
 
@@ -73,14 +73,14 @@ public final class FoDFiltersParamGenerator implements IServerSideQueryParamValu
 
     @Override
     public final String getServerSideQueryParamValue(Expression expression) {
-        return new FoDFilterParamSpELTreeVisitor(expression).getQParamValue();
+        return new FoDFilterParamSpELNodeVisitor(expression).getQParamValue();
     }
     
-    private final class FoDFilterParamSpELTreeVisitor extends AbstractSpelTreeVisitor {
+    private final class FoDFilterParamSpELNodeVisitor extends AbstractSpelNodeVisitor {
         private StringBuffer filterParamValue = new StringBuffer();
         
-        public FoDFilterParamSpELTreeVisitor(Expression expression) {
-            process(expression);
+        public FoDFilterParamSpELNodeVisitor(Expression expression) {
+            super(expression); visit();
         }
 
         public String getQParamValue() {

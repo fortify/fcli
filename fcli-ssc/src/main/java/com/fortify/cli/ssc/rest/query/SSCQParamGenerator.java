@@ -12,7 +12,7 @@ import org.springframework.expression.spel.ast.OpAnd;
 import org.springframework.expression.spel.ast.OpEQ;
 
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
-import com.fortify.cli.common.spring.expression.AbstractSpelTreeVisitor;
+import com.fortify.cli.common.spring.expression.AbstractSpelNodeVisitor;
 import com.fortify.cli.common.spring.expression.SpelNodeHelper;
 import com.fortify.cli.common.util.JavaHelper;
 
@@ -35,14 +35,14 @@ public final class SSCQParamGenerator implements IServerSideQueryParamValueGener
     
     @Override
     public final String getServerSideQueryParamValue(Expression expression) {
-        return new SSCQParamSpELTreeVisitor(expression).getQParamValue();
+        return new SSCQParamSpELNodeVisitor(expression).getQParamValue();
     }
     
-    private final class SSCQParamSpELTreeVisitor extends AbstractSpelTreeVisitor {
+    private final class SSCQParamSpELNodeVisitor extends AbstractSpelNodeVisitor {
         private StringBuffer qParamValue = new StringBuffer();
         
-        public SSCQParamSpELTreeVisitor(Expression expression) {
-            process(expression);
+        public SSCQParamSpELNodeVisitor(Expression expression) {
+            super(expression); visit();
         }
 
         public String getQParamValue() {
