@@ -37,7 +37,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
-import com.fortify.cli.common.progress.cli.mixin.ProgressHelperMixin;
+import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelAssessmentTypeDescriptor;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
@@ -60,7 +60,7 @@ public class FoDScanHelper {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
-    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, ProgressHelperMixin progressHelper, String relId,
+    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, IProgressHelperI18n progressHelper, String relId,
                                                                                    Integer entitlementId, FoDScanFormatOptions.FoDScanType scanType) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
@@ -87,7 +87,7 @@ public class FoDScanHelper {
         return entitlement;
     }
 
-    public static final FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, ProgressHelperMixin progressHelper, String relId,
+    public static final FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressHelperI18n progressHelper, String relId,
                                                                         FoDAssessmentTypeOptions.FoDAssessmentType assessmentType,
                                                                         FoDEnums.EntitlementPreferenceType entitlementType,
                                                                         FoDScanFormatOptions.FoDScanType scanType) {

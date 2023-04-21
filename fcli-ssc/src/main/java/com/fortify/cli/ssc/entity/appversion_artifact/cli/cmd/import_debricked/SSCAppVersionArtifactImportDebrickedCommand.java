@@ -36,7 +36,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.progress.cli.mixin.ProgressHelperMixin;
+import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -59,7 +59,6 @@ import picocli.CommandLine.Option;
 public class SSCAppVersionArtifactImportDebrickedCommand extends AbstractSSCAppVersionArtifactUploadCommand {
     @Mixin @Getter private SSCOutputHelperMixins.ImportDebricked outputHelper;
     @Mixin private DebrickedLoginOptions debrickedLoginOptions; 
-    @Mixin private ProgressHelperMixin progressHelper = new ProgressHelperMixin();
     
     @Option(names = {"-e", "--engine-type"}, required = true, defaultValue = "DEBRICKED")
     @Getter private String engineType;
@@ -91,7 +90,7 @@ public class SSCAppVersionArtifactImportDebrickedCommand extends AbstractSSCAppV
     }
     
     @Override
-    protected void preUpload(UnirestInstance unirest, File file) {
+    protected void preUpload(UnirestInstance unirest, IProgressHelperI18n progressHelper, File file) {
     	progressHelper.writeProgress("Status: Generating & downloading SBOM");
     	try ( var debrickedUnirest = GenericUnirestFactory.createUnirestInstance() ) {
     	    downloadSbom(debrickedUnirest, file);
@@ -100,7 +99,7 @@ public class SSCAppVersionArtifactImportDebrickedCommand extends AbstractSSCAppV
     }
     
     @Override
-    protected void postUpload(UnirestInstance unirest, File file) {
+    protected void postUpload(UnirestInstance unirest, IProgressHelperI18n progressHelper, File file) {
     	if ( StringUtils.isBlank(fileName) ) {
     		file.delete();
     	}

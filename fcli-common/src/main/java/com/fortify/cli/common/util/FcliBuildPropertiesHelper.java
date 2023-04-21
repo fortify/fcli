@@ -10,6 +10,25 @@ public class FcliBuildPropertiesHelper {
     public static final Properties getBuildProperties() {
         return buildProperties;
     }
+    
+    public static final String getFcliProjectName() {
+        return buildProperties.getProperty("projectName", "fcli");
+    }
+    
+    public static final String getFcliVersion() {
+        return buildProperties.getProperty("projectVersion", "unknown");
+    }
+    
+    public static final String getFcliBuildDate() {
+        return buildProperties.getProperty("buildDate", "unknown");
+    }
+    
+    public static final String getFcliBuildInfo() {
+        return String.format("%s version %s, built on %s" 
+                , FcliBuildPropertiesHelper.getFcliProjectName()
+                , FcliBuildPropertiesHelper.getFcliVersion()
+                , FcliBuildPropertiesHelper.getFcliBuildDate());
+    }
 
     private static final Properties loadProperties() {
         final Properties p = new Properties();

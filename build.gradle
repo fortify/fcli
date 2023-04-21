@@ -61,9 +61,13 @@ allprojects {
 
 	// Global dependencies for all modules
     dependencies {
-        // Lombok dependency & annotation processor
+        // Lombok dependency & annotation processor.
+        // We also allow Lombok annotations in test classes;
+        // for now this is only used by fcli-util.
         compileOnly 'org.projectlombok:lombok:1.18.26'
         annotationProcessor 'org.projectlombok:lombok:1.18.26'
+        testCompileOnly 'org.projectlombok:lombok:1.18.26'
+        testAnnotationProcessor 'org.projectlombok:lombok:1.18.26'
         
         // TODO Re-enable when removing patched picocli classes from fcli-common
         //implementation("info.picocli:picocli:4.7.1")
@@ -168,7 +172,6 @@ dependencies {
     implementation project(':fcli-fod')
     implementation project(':fcli-sc-sast')
     implementation project(':fcli-sc-dast')
-    implementation project(':fcli-scm')
     implementation project(':fcli-tool')
     implementation project(':fcli-util')
 

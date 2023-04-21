@@ -54,6 +54,11 @@ public class OutputHelperMixins {
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table(); 
     }
     
+    public static class DetailsNoQuery extends Other {
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details(); 
+    }
+    
     
     public static class Add extends TableNoQuery {
         public static final String CMD_NAME = "add";
@@ -84,8 +89,12 @@ public class OutputHelperMixins {
     }
     
     
-    public static class Get extends TableNoQuery {
+    public static class Get extends DetailsNoQuery {
         public static final String CMD_NAME = "get";
+    }
+    
+    public static class GenerateConfig extends TableNoQuery {
+        public static final String CMD_NAME = "generate-config";
     }
     
     public static class Status extends TableNoQuery {

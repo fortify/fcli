@@ -49,10 +49,10 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
-    @Option(names = {"-f", "--file"}, required = true)
-    private String filePath;
+    @Option(names = {"-t", "--template"}, required = true)
+    private String templatePath;
 
-    @Option(names = {"-a", "--answer-file"}, defaultValue = "./ReportTemplateDefAnswerTemplate.yml")
+    @Option(names = {"-c", "--config"}, defaultValue = "./ReportTemplateConfig.yml")
     private String answerFile;
     
     @Override @SneakyThrows
@@ -60,7 +60,7 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutput
         ObjectNode uploadResponse = SSCFileTransferHelper.upload(
                 unirest,
                 SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
-                filePath,
+                templatePath,
                 ISSCAddUploadTokenFunction.ROUTEPARAM_UPLOADTOKEN,
                 ObjectNode.class
         );
@@ -73,7 +73,7 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutput
         );
 
         File answerFileObj = new File(answerFile);
-        File rptFileObj = new File(filePath);
+        File rptFileObj = new File(templatePath);
 
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         SSCReportTemplateDef rtd = mapper.readValue(answerFileObj, SSCReportTemplateDef.class);

@@ -25,10 +25,16 @@
 
 package com.fortify.cli.fod.entity.scan_sast.cli.cmd;
 
+import java.io.File;
+import java.util.Properties;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.progress.cli.mixin.ProgressHelperMixin;
+import com.fortify.cli.common.progress.cli.mixin.ProgressHelperFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
@@ -44,6 +50,7 @@ import com.fortify.cli.fod.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.util.FoDConstants;
 import com.fortify.cli.fod.util.FoDEnums;
+
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -51,10 +58,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import javax.validation.ValidationException;
-import java.io.File;
-import java.util.Properties;
 
 @Command(name = FoDOutputHelperMixins.StartSast.CMD_NAME)
 public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
@@ -79,43 +82,44 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
     @Mixin
     private FoDInProgressScanActionTypeOptions.OptionalOption inProgressScanActionType;
 
-    @Mixin private ProgressHelperMixin progressHelper;
+    @Mixin private ProgressHelperFactoryMixin progressHelperFactory;
 
     // TODO: refactor use of FoDEnums and use @JsonValues as per: https://github.com/fortify/fcli/issues/279
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-
-        Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
-        String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
-
-        // get current setup and check if its valid
-        FoDSastScanSetupDescriptor currentSetup = FoDSastScanHelper.getSetupDescriptor(unirest, relId);
-        if (currentSetup.getTechnologyStack() == null || StringUtils.isEmpty(currentSetup.getTechnologyStack())) {
-            throw new ValidationException("The static scan configuration for release with id '" + relId +
-                    "' has not been setup correctly - 'Technology Stack/Language Level' is missing or empty.");
+        try ( var progressHelper = progressHelperFactory.createProgressHelper() ) {
+            Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
+            String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
+    
+            // get current setup and check if its valid
+            FoDSastScanSetupDescriptor currentSetup = FoDSastScanHelper.getSetupDescriptor(unirest, relId);
+            if (currentSetup.getTechnologyStack() == null || StringUtils.isEmpty(currentSetup.getTechnologyStack())) {
+                throw new ValidationException("The static scan configuration for release with id '" + relId +
+                        "' has not been setup correctly - 'Technology Stack/Language Level' is missing or empty.");
+            }
+    
+            // get entitlement to use
+            FoDAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, progressHelper, relId, currentSetup);
+    
+            FoDStartSastScanRequest startScanRequest = new FoDStartSastScanRequest()
+                    .setPurchaseEntitlement(purchaseEntitlement)
+                    .setInProgressScanActionType(inProgressScanActionType.getInProgressScanActionType() != null ?
+                            inProgressScanActionType.getInProgressScanActionType().name() : FoDEnums.InProgressScanActionType.Queue.name())
+                    .setScanMethodType("Other")
+                    .setNotes(notes != null && !notes.isEmpty() ? notes : "")
+                    .setScanTool(fcliProperties.getProperty("projectName", "fcli"))
+                    .setScanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"));
+    
+            if (entitlementId != null && entitlementId > 0) {
+                startScanRequest.setEntitlementId(entitlementToUse.getEntitlementId());
+            } else if (entitlementType.getEntitlementPreferenceType() != null) {
+                startScanRequest.setEntitlementPreferenceType(entitlementType.getEntitlementPreferenceType().name());
+            } else {
+                startScanRequest.setEntitlementPreferenceType(String.valueOf(FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan));
+            }
+    
+            return FoDSastScanHelper.startScan(unirest, relId, startScanRequest, scanFile, chunkSize).asJsonNode();
         }
-
-        // get entitlement to use
-        FoDAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, relId, currentSetup);
-
-        FoDStartSastScanRequest startScanRequest = new FoDStartSastScanRequest()
-                .setPurchaseEntitlement(purchaseEntitlement)
-                .setInProgressScanActionType(inProgressScanActionType.getInProgressScanActionType() != null ?
-                        inProgressScanActionType.getInProgressScanActionType().name() : FoDEnums.InProgressScanActionType.Queue.name())
-                .setScanMethodType("Other")
-                .setNotes(notes != null && !notes.isEmpty() ? notes : "")
-                .setScanTool(fcliProperties.getProperty("projectName", "fcli"))
-                .setScanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"));
-
-        if (entitlementId != null && entitlementId > 0) {
-            startScanRequest.setEntitlementId(entitlementToUse.getEntitlementId());
-        } else if (entitlementType.getEntitlementPreferenceType() != null) {
-            startScanRequest.setEntitlementPreferenceType(entitlementType.getEntitlementPreferenceType().name());
-        } else {
-            startScanRequest.setEntitlementPreferenceType(String.valueOf(FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan));
-        }
-
-        return FoDSastScanHelper.startScan(unirest, relId, startScanRequest, scanFile, chunkSize).asJsonNode();
     }
 
     @Override
@@ -133,7 +137,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
         return true;
     }
 
-    private FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, String relId, FoDSastScanSetupDescriptor currentSetup) {
+    private FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressHelperI18n progressHelper, String relId, FoDSastScanSetupDescriptor currentSetup) {
         FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
 
         /**

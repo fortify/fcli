@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.common.json;
 
+import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -36,12 +37,13 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.DataBindingMethodResolver;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
+import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
+import org.springframework.format.support.DefaultFormattingConversionService;
 import org.springframework.integration.json.JsonNodeWrapperToJsonNodeConverter;
 import org.springframework.integration.json.JsonPropertyAccessor;
 
@@ -192,9 +194,13 @@ public class JsonHelper {
      * @return
      */
     private static final EvaluationContext createSpelEvaluationContext() {
-        DefaultConversionService conversionService = new DefaultConversionService();
+        DefaultFormattingConversionService  conversionService = new DefaultFormattingConversionService();
         conversionService.addConverter(new JsonNodeWrapperToJsonNodeConverter());
         conversionService.addConverter(new ObjectToJsonNodeConverter());
+        DateTimeFormatterRegistrar dateTimeRegistrar = new DateTimeFormatterRegistrar();
+        dateTimeRegistrar.setDateFormatter(DateTimeFormatter.ISO_DATE);
+        dateTimeRegistrar.setDateTimeFormatter(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        dateTimeRegistrar.registerFormatters(conversionService);
         SimpleEvaluationContext context = SimpleEvaluationContext
                 .forPropertyAccessors(new JsonPropertyAccessor())
                 .withConversionService(conversionService)

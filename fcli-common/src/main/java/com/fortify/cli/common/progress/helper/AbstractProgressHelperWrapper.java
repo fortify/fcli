@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public abstract class AbstractProgressHelperWrapper implements IProgressHelper {
+    private final boolean noProgress;
     private IProgressHelper progressHelper;
     
     @Override
@@ -17,8 +18,18 @@ public abstract class AbstractProgressHelperWrapper implements IProgressHelper {
     }
     
     @Override
+    public final void writeWarning(String message, Object... args) {
+        getProgressHelper().writeWarning(message, args);
+    }
+    
+    @Override
     public final void clearProgress() {
         getProgressHelper().clearProgress();
+    }
+    
+    @Override
+    public void close() {
+        getProgressHelper().close();
     }
     
     private final IProgressHelper getProgressHelper() {
@@ -28,5 +39,7 @@ public abstract class AbstractProgressHelperWrapper implements IProgressHelper {
         return progressHelper;
     }
 
-    protected abstract IProgressHelper createProgressHelper();
+    private final IProgressHelper createProgressHelper() {
+        return ProgressHelperFactory.createProgressHelper(noProgress);
+    }
 }
