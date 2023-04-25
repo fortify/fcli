@@ -1,0 +1,16 @@
+[
+  {
+    "commands": "ssc session login",
+    "arguments": "",
+	"waitSeconds": "2"
+  },
+  {
+    "commands": "ssc session list",
+    "arguments": "",
+	"expectOutput": "default"
+  },
+  {
+    "commands": "ssc session logout",
+    "arguments": ""
+  }  
+]
