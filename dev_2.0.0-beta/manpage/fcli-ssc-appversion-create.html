@@ -1,6 +1,6 @@
 ---
 title: fcli-ssc-appversion-create(1)
-fcli_version: fcli version 0.20230317.121109-dev_2.0.0-beta, built on 2023-03-17 12 11 35
+fcli_version: fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05 12 26 58
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230317.121109-dev_2.0.0-beta, built on 2023-03-17
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230317.121109-dev_2.0.0-beta" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230505.122628-dev_2.0.0-beta" %}
 
 
 <div id="header">
@@ -46,14 +46,15 @@ fcli_version: fcli version 0.20230317.121109-dev_2.0.0-beta, built on 2023-03-17
 <p><strong>fcli ssc appversion create</strong> [<strong>--auto-required-attrs</strong>] [<strong>--skip-if-exists</strong>]
                            [<strong>--active</strong>=<em>&lt;active&gt;</em>] [<strong>-d</strong>=<em>&lt;description&gt;</em>]
                            [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                           [<strong>--issue-template</strong>=<em>&lt;issueTemplateNameOrId&gt;</em>] [<strong>--attr</strong>[=
-                           <em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--useradd</strong>
-                           [=<em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
-                           [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                           [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
-                           <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-               _            <em class="=&lt;propertyNames&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
-                           <em>&lt;appAndVersionName&gt;</em></p>
+                           [<strong>--issue-template</strong>=<em>&lt;issueTemplateNameOrId&gt;</em>]
+                           [<strong>--add-users</strong>=<em>&lt;authEntitySpecs&gt;</em>[,
+                           <em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--attrs</strong>=<em>[CATEGORY:]</em>
+                _           ATTR=VALUE[,VALUE&#8230;&#8203;]<em>[,</em>[CATEGORY:]ATTR=VALUE[,_
+    _                       VALUE&#8230;&#8203;]<em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=</em>&lt;envPrefix&gt;_]
+                           [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                           [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                           [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                           [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] <em>&lt;appAndVersionName&gt;</em></p>
 </div>
 </div>
 </div>
@@ -76,13 +77,13 @@ fcli_version: fcli version 0.20230317.121109-dev_2.0.0-beta, built on 2023-03-17
 <dd>
 <p>Issue template name or id</p>
 </dd>
-<dt class="hdlist1"><strong>--attr, --attribute</strong>[=<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>&#8230;&#8203;]</dt>
+<dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>[,<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Set one or more attribute values</p>
+<p>Set attribute values. This option accepts a comma-separated list of attribute value assignments.</p>
 </dd>
-<dt class="hdlist1"><strong>--useradd</strong>[=<em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]</dt>
+<dt class="hdlist1"><strong>--add-users</strong>=<em>&lt;authEntitySpecs&gt;</em>[,<em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Assign user or LDAP group to application version; accepts user id, entity name or email address. Option is repeatable.</p>
+<p>Assign one or more (comma-separated) users or LDAP groups to the application version; accepts user id, entity name or email address. Option is repeatable.</p>
 </dd>
 <dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
 <dd>
@@ -179,8 +180,8 @@ fcli_version: fcli version 0.20230317.121109-dev_2.0.0-beta, built on 2023-03-17
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230317.121109-dev_2.0.0-beta, built on 2023-03-17 12 11 35<br>
-Last updated 2023-03-17 12:13:00 UTC
+Version fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05 12 26 58<br>
+Last updated 2023-05-05 12:28:26 UTC
 </div>
 </div>
 </body>
