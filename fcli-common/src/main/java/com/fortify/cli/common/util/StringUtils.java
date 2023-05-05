@@ -11,6 +11,10 @@ public class StringUtils {
         return !isBlank(s);
     }
     
+    public static String ifBlank(String s, String defaultValue) {
+        return isBlank(s) ? defaultValue : s;
+    }
+    
     public static final String substringBefore(String str, String separator) {
         final int pos = str.indexOf(separator);
         return pos==-1 ? str : str.substring(0, pos);

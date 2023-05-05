@@ -5,4 +5,70 @@
     {"name" : "systemInstall", "parameterTypes" : [ ]},
     {"name" : "systemUninstall", "parameterTypes" : [ ]}
   ]
+},{
+  "name" : "org.springframework.integration.json.JsonPropertyAccessor$ArrayNodeAsList",
+  "allPublicMethods" : true
+},{
+  "name" : "org.springframework.integration.json.JsonPropertyAccessor$ComparableJsonNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.Base",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.JsonNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.BaseJsonNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.ContainerNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.ArrayNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.ObjectNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.ValueNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.BinaryNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.BooleanNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.MissingNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.NullNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.NumericNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.BigIntegerNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.DecimalNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.DoubleNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.FloatNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.IntNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.LongNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.ShortNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.TextNode",
+  "allPublicMethods" : true
 }]

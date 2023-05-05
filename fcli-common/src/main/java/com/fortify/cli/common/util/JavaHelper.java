@@ -1,6 +1,7 @@
 package com.fortify.cli.common.util;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * This class contains various Java utility methods that don't fit
@@ -19,6 +20,14 @@ public final class JavaHelper {
      */
     public static final <T> Optional<T> as(Object obj, Class<T> type) {
         return is(obj, type) ? Optional.ofNullable(obj).map(type::cast) : Optional.empty();
+    }
+    
+    /**
+     * Return the given object of not null, otherwise create a new 
+     * object using the given supplier.
+     */
+    public static final <T> T getOrCreate(T obj, Supplier<T> supplier) {
+        return Optional.ofNullable(obj).orElseGet(supplier);
     }
     
     /**

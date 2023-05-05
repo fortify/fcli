@@ -39,9 +39,4 @@ public class SSCOutputHelperMixins {
      public static class VulnCount extends OutputHelperMixins.TableWithQuery {
         public static final String CMD_NAME = "count";
     }
-    
-    @Command(aliases = "gen-answer")
-     public static class ReportTemplateGenerateAnswerFile extends OutputHelperMixins.TableNoQuery {
-        public static final String CMD_NAME = "generate-answerfile";
-    }
 }

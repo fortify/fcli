@@ -1,5 +1,8 @@
 package com.fortify.cli.common.progress.helper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import picocli.CommandLine.Help.Ansi;
 
 public final class ProgressHelperFactory {
@@ -18,7 +21,22 @@ public final class ProgressHelperFactory {
         else { return new BasicProgressHelper(); }
     }
     
-    private static final class DummyProgressHelper implements IProgressHelper {
+    private static abstract class AbstractProgressHelper implements IProgressHelper {
+        private final List<String> warnings = new ArrayList<>();
+        
+        @Override
+        public void writeWarning(String message, Object... args) {
+            warnings.add(String.format(message, args));
+        }
+        
+        @Override
+        public void close() {
+            clearProgress();
+            warnings.forEach(System.err::println);
+        }
+    }
+    
+    private static final class DummyProgressHelper extends AbstractProgressHelper {
         @Override
         public boolean isMultiLineSupported() {
             return false;
@@ -31,7 +49,7 @@ public final class ProgressHelperFactory {
         public void clearProgress() {}
     }
     
-    private static final class BasicProgressHelper implements IProgressHelper {
+    private static final class BasicProgressHelper extends AbstractProgressHelper {
         @Override
         public boolean isMultiLineSupported() {
             return true;
@@ -51,7 +69,7 @@ public final class ProgressHelperFactory {
         public void clearProgress() {}
     }
     
-    private static final class BasicConsoleProgressHelper implements IProgressHelper {
+    private static final class BasicConsoleProgressHelper extends AbstractProgressHelper {
         private int lastNumberOfChars;
         
         @Override
@@ -74,7 +92,7 @@ public final class ProgressHelperFactory {
         }
     }
     
-    private static final class AnsiConsoleProgressHelper implements IProgressHelper {
+    private static final class AnsiConsoleProgressHelper extends AbstractProgressHelper {
         private int lastNumberOfLines = 0;
         
         @Override
