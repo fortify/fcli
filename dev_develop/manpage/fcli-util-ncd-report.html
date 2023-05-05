@@ -1,5 +1,5 @@
 ---
-title: fcli-config-proxy(1)
+title: fcli-util-ncd-report(1)
 fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12 25 59
 ---
 
@@ -9,7 +9,7 @@ fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-config-proxy(1)</title>
+<title>fcli-util-ncd-report(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,7 +20,7 @@ fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12
 
 
 <div id="header">
-<h1>fcli-config-proxy(1) Manual Page</h1>
+<h1>fcli-util-ncd-report(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -32,7 +32,7 @@ fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-config-proxy - Commands for configuring proxy servers used to connect to target systems</p>
+<p>fcli-util-ncd-report - Commands for generating a 'Number of Contributing Developers' (NCD) report</p>
 </div>
 </div>
 <div id="content">
@@ -40,17 +40,15 @@ fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli config proxy</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                  [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [COMMAND]</p>
+<p><strong>fcli util ncd-report</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [COMMAND]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>Commands for managing connectivity through proxies</p>
-</div>
+
 </div>
 </div>
 <div class="sect1">
@@ -83,25 +81,13 @@ fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-config-proxy-add.html"><strong>add</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-util-ncd-report-generate.html"><strong>generate</strong></a></dt>
 <dd>
-<p>Add a proxy configuration</p>
+<p>Generate a 'Number of Contributing Developers' (NCD) report</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-config-proxy-delete-all.html"><strong>delete-all</strong>, <strong>clear</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-util-ncd-report-generate-config.html"><strong>generate-config</strong></a></dt>
 <dd>
-<p>Clear all proxy configurations</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-config-proxy-delete.html"><strong>delete</strong>, <strong>rm</strong></a></dt>
-<dd>
-<p>Delete a proxy configuration</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-config-proxy-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
-<dd>
-<p>List proxy configurations</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-config-proxy-update.html"><strong>update</strong></a></dt>
-<dd>
-<p>Update a proxy configuration</p>
+<p>Generate a sample configuration file for use by the 'generate' command</p>
 </dd>
 </dl>
 </div>

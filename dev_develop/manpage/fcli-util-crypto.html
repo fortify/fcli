@@ -1,6 +1,6 @@
 ---
-title: fcli-scm-gitlab-contributor(1)
-fcli_version: fcli version 0.20230425.081255-dev_develop, built on 2023-04-25 08 13 25
+title: fcli-util-crypto(1)
+fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12 25 59
 ---
 
 <!DOCTYPE html>
@@ -9,18 +9,18 @@ fcli_version: fcli version 0.20230425.081255-dev_develop, built on 2023-04-25 08
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-scm-gitlab-contributor(1)</title>
+<title>fcli-util-crypto(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230425.081255-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230505.122524-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-scm-gitlab-contributor(1) Manual Page</h1>
+<h1>fcli-util-crypto(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -32,7 +32,7 @@ fcli_version: fcli version 0.20230425.081255-dev_develop, built on 2023-04-25 08
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-scm-gitlab-contributor - View contributors to GitLab projects</p>
+<p>fcli-util-crypto - Commands for encrypting and decrypting data</p>
 </div>
 </div>
 <div id="content">
@@ -40,9 +40,8 @@ fcli_version: fcli version 0.20230425.081255-dev_develop, built on 2023-04-25 08
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli scm gitlab-contributor</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                            [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                            [COMMAND]</p>
+<p><strong>fcli util crypto</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                 [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [COMMAND]</p>
 </div>
 </div>
 </div>
@@ -82,9 +81,13 @@ fcli_version: fcli version 0.20230425.081255-dev_develop, built on 2023-04-25 08
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-scm-gitlab-contributor-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-util-crypto-encrypt.html"><strong>encrypt</strong></a></dt>
 <dd>
-<p>List contributors to GitLab projects</p>
+<p>Encrypt a value</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-util-crypto-decrypt.html"><strong>decrypt</strong></a></dt>
+<dd>
+<p>Decrypt a value</p>
 </dd>
 </dl>
 </div>
@@ -93,8 +96,8 @@ fcli_version: fcli version 0.20230425.081255-dev_develop, built on 2023-04-25 08
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230425.081255-dev_develop, built on 2023-04-25 08 13 25<br>
-Last updated 2023-04-25 08:14:52 UTC
+Version fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12 25 59<br>
+Last updated 2023-05-05 12:27:31 UTC
 </div>
 </div>
 </body>

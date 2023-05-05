@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-alert-definition-list(1)
+title: fcli-util-ncd-report-generate-config(1)
 fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12 25 59
 ---
 
@@ -9,7 +9,7 @@ fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-alert-definition-list(1)</title>
+<title>fcli-util-ncd-report-generate-config(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,21 +20,20 @@ fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12
 
 
 <div id="header">
-<h1>fcli-ssc-alert-definition-list(1) Manual Page</h1>
+<h1>fcli-util-ncd-report-generate-config(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
-<li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-alert-definition-list - List alert definitions</p>
+<p>fcli-util-ncd-report-generate-config - Generate a sample configuration file for use by the 'generate' command</p>
 </div>
 </div>
 <div id="content">
@@ -42,14 +41,13 @@ fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc alert-definition list</strong> [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>] [[<strong>-h</strong>]
-                               [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                               [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                               [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format_
-                         _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                   _            <em class="=&lt;propertyNames&gt;">]
-                               [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
-                         _      expression&gt;</em>]</p>
+<p><strong>fcli util ncd-report generate-config</strong> [<strong>-y</strong>] [<strong>-c</strong>=<em>&lt;outputFileName&gt;</em>] [[<strong>-h</strong>]
+                                     [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                     [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                               _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                         _            <em class="=&lt;propertyNames&gt;">]
+                                     [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -64,26 +62,13 @@ fcli_version: fcli version 0.20230505.122524-dev_develop, built on 2023-05-05 12
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--q-param</strong>=<em>&lt;qParam&gt;</em></dt>
+<dt class="hdlist1"><strong>-c</strong>, <strong>--config</strong>=<em>&lt;outputFileName&gt;</em></dt>
 <dd>
-<p>Server-side queries are automatically generated from the -q / --query option if possible; generated queries can be viewed in the debug log. The --q-param option can be used to override the automatically generated query, for example to further optimize the request. See SSC REST API documentation for information on supported formats.</p>
+<p>Name of the sample configuration file to be generated</p>
 </dd>
-<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
+<dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
 <dd>
-<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true. See fcli documentation for more information.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options:</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
-<dd>
-<p>Session name to use</p>
+<p>Confirm overwrite of existing configuration file</p>
 </dd>
 </dl>
 </div>
