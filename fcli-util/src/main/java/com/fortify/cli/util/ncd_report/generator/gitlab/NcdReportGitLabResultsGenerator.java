@@ -65,18 +65,18 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestRes
      * the report.
      */
     private void run(UnirestInstance unirest, NcdReportGitLabGroupConfig groupConfig) {
-        String groupName = groupConfig.getName();
+        String groupId = groupConfig.getId();
         try {
             boolean includeSubgroups = groupConfig.getIncludeSubgroups().orElse(sourceConfig().getIncludeSubgroups().orElse(true));
-            resultsCollector().progressHelper().writeI18nProgress("fcli.util.ncd-report.loading.gitlab-repositories", groupName);
-            HttpRequest<?> req = unirest.get("/api/v4/groups/{path}/projects?per_page=100")
-                    .routeParam("path", groupName)
+            resultsCollector().progressHelper().writeI18nProgress("fcli.util.ncd-report.loading.gitlab-repositories", groupId);
+            HttpRequest<?> req = unirest.get("/api/v4/groups/{id}/projects?per_page=100")
+                    .routeParam("id", groupId)
                     .queryString("include_subgroups", includeSubgroups);
             GitLabPagingHelper.pagedRequest(req, ArrayNode.class)
                 .ifSuccess(r->r.getBody().forEach(project->
                     resultsCollector().repositoryProcessor().processRepository(new NcdReportCombinedRepoSelectorConfig(sourceConfig(), groupConfig), getRepoDescriptor(project), commitGenerator(unirest))));
         } catch ( Exception e ) {
-            resultsCollector().errorWriter().addReportError(String.format("Error processing group: %s (%s)", groupName, sourceConfig().getBaseUrl()), e);
+            resultsCollector().errorWriter().addReportError(String.format("Error processing group: %s (%s)", groupId, sourceConfig().getBaseUrl()), e);
         }
     }
     

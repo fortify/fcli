@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * This GitLab-specific configuration class holds a group name to be processed, 
+ * This GitLab-specific configuration class holds a group id to be processed, 
  * optionally allowing sub-groups to be processed as well, together with repository 
  * selection configuration.
  * 
@@ -16,6 +16,6 @@ import lombok.EqualsAndHashCode;
  */
 @ReflectiveAccess @Data @EqualsAndHashCode(callSuper = true)
 public class NcdReportGitLabGroupConfig extends AbstractNcdReportRepoSelectorConfig {
-    private String name;
+    private String id;
     private Optional<Boolean> includeSubgroups = Optional.empty();
 }
