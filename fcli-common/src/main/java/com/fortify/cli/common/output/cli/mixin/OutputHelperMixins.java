@@ -93,6 +93,10 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "get";
     }
     
+    public static class Generate extends DetailsNoQuery {
+        public static final String CMD_NAME = "generate";
+    }
+    
     public static class GenerateConfig extends TableNoQuery {
         public static final String CMD_NAME = "generate-config";
     }

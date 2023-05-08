@@ -30,9 +30,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fortify.cli.common.output.cli.cmd.AbstractReportOutputCommand;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.writer.report.IReportWriter;
 import com.fortify.cli.common.progress.cli.mixin.ProgressHelperFactoryMixin;
-import com.fortify.cli.util.ncd_report.cli.mixin.NcdReportOutputHelperMixins;
 import com.fortify.cli.util.ncd_report.collector.NcdReportResultsCollector;
 import com.fortify.cli.util.ncd_report.config.NcdReportConfig;
 
@@ -41,9 +41,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = NcdReportOutputHelperMixins.NcdReportGenerate.CMD_NAME)
+@Command(name = OutputHelperMixins.Generate.CMD_NAME)
 public final class NcdReportGenerateCommand extends AbstractReportOutputCommand {
-    @Getter @Mixin private NcdReportOutputHelperMixins.NcdReportGenerate outputHelper;
+    @Getter @Mixin private OutputHelperMixins.Generate outputHelper;
     @Mixin private ProgressHelperFactoryMixin progressHelperFactory;
     @Option(names = {"-c","--config"}, required = true, defaultValue = "NcdReportConfig.yml")
     private File configFile;

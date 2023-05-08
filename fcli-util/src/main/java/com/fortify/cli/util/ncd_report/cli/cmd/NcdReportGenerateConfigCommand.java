@@ -24,57 +24,19 @@
  ******************************************************************************/
 package com.fortify.cli.util.ncd_report.cli.cmd;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
-import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.cmd.AbstractGenerateConfigCommand;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 
 import lombok.Getter;
-import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-// TODO Add AbstractGenerateConfigCommand to remove code duplication between this class
-//      and SSCReportTemplateGenerateConfigCommand
 @Command(name = OutputHelperMixins.GenerateConfig.CMD_NAME)
-public class NcdReportGenerateConfigCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
-    private static final String RESOURCE_FILE = "com/fortify/cli/util/ncd_report/NcdReportConfig.yml";
+public class NcdReportGenerateConfigCommand extends AbstractGenerateConfigCommand {
     @Getter @Mixin private OutputHelperMixins.GenerateConfig outputHelper;
+    @Getter private final String resourceFileName = "com/fortify/cli/util/ncd_report/NcdReportConfig.yml";
 
     @Option(names = {"-c", "--config"}, defaultValue = "NcdReportConfig.yml") 
-    private String outputFileName;
-    @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
-    
-    @Override @SneakyThrows
-    public JsonNode getJsonNode() {
-        Path outputPath = Path.of(outputFileName).toAbsolutePath();
-        try ( InputStream internalCopy = this.getClass().getClassLoader().getResourceAsStream(RESOURCE_FILE) ) {
-            if( Files.exists(outputPath) ){
-                requireConfirmation.checkConfirmed();
-            }
-            Files.copy(internalCopy, outputPath , REPLACE_EXISTING);
-        }
-        return JsonHelper.getObjectMapper().createObjectNode()
-                .put("path", outputPath.toString());
-    }
-    
-    @Override
-    public String getActionCommandResult() {
-        return "GENERATED";
-    }
-    
-    @Override
-    public boolean isSingular() {
-        return true;
-    }
+    @Getter private String outputFileName;
 }
