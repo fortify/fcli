@@ -1,7 +1,7 @@
-package com.fortify.cli.util.ncd_report.config;
+package com.fortify.cli.util.msp_report.config;
 
 import com.fortify.cli.common.report.config.IReportSourceConfig;
-import com.fortify.cli.util.ncd_report.collector.NcdReportResultsCollector;
+import com.fortify.cli.util.msp_report.collector.MspReportResultsCollector;
 
 /**
  * Interface to be implemented by source-specific configuration classes
@@ -11,5 +11,5 @@ import com.fortify.cli.util.ncd_report.collector.NcdReportResultsCollector;
  * @author rsenden
  *
  */
-public interface INcdReportSourceConfig extends IReportSourceConfig<NcdReportResultsCollector>, INcdReportRepoSelectorConfig {
+public interface IMspReportSourceConfig extends IReportSourceConfig<MspReportResultsCollector> {
 }

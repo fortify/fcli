@@ -1,9 +1,9 @@
 package com.fortify.cli.util.ncd_report.writer;
 
-import com.fortify.cli.common.output.writer.report.IReportWriter;
-import com.fortify.cli.common.output.writer.report.entry.IReportErrorEntryWriter;
-import com.fortify.cli.common.output.writer.report.entry.ReportErrorEntryWriter;
 import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.report.writer.IReportWriter;
+import com.fortify.cli.common.report.writer.entry.IReportErrorEntryWriter;
+import com.fortify.cli.common.report.writer.entry.ReportErrorEntryWriter;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;

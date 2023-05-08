@@ -22,40 +22,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.util.ncd_report.cli.cmd;
+package com.fortify.cli.util.msp_report.cli.cmd;
 
-import java.io.File;
-
+import com.fortify.cli.common.output.cli.cmd.AbstractGenerateConfigCommand;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
-import com.fortify.cli.common.report.cli.cmd.AbstractConfigurableReportGenerateCommand;
-import com.fortify.cli.common.report.writer.IReportWriter;
-import com.fortify.cli.util.ncd_report.collector.NcdReportResultsCollector;
-import com.fortify.cli.util.ncd_report.config.NcdReportConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = OutputHelperMixins.Generate.CMD_NAME)
-public final class NcdReportGenerateCommand extends AbstractConfigurableReportGenerateCommand<NcdReportConfig, NcdReportResultsCollector> {
-    @Getter @Mixin private OutputHelperMixins.Generate outputHelper;
-    @Option(names = {"-c","--config"}, required = true, defaultValue = "NcdReportConfig.yml")
-    @Getter private File configFile;
-    
-    @Override
-    protected String getReportTitle() {
-        return "Number of Contributing Developers (NCD) Report";
-    }
-    
-    @Override
-    protected Class<NcdReportConfig> getConfigType() {
-        return NcdReportConfig.class;
-    }
-    
-    @Override
-    protected NcdReportResultsCollector createResultsCollector(NcdReportConfig config, IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
-        return new NcdReportResultsCollector(config, reportWriter, progressHelper);
-    }
+@Command(name = OutputHelperMixins.GenerateConfig.CMD_NAME)
+public class MspReportGenerateConfigCommand extends AbstractGenerateConfigCommand {
+    @Getter @Mixin private OutputHelperMixins.GenerateConfig outputHelper;
+    @Getter private final String resourceFileName = "com/fortify/cli/util/msp_report/MspReportConfig.yml";
+
+    @Option(names = {"-c", "--config"}, defaultValue = "MspReportConfig.yml") 
+    @Getter private String outputFileName;
 }

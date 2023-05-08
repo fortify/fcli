@@ -1,12 +1,12 @@
-package com.fortify.cli.common.output.writer.report.entry;
+package com.fortify.cli.common.report.writer.entry;
 
 import java.io.IOException;
 
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
-import com.fortify.cli.common.output.writer.report.IReportWriter;
 import com.fortify.cli.common.progress.helper.IProgressHelper;
+import com.fortify.cli.common.report.writer.IReportWriter;
 
 import lombok.Getter;
 

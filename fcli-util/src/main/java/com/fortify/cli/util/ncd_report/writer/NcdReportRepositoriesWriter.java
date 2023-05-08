@@ -3,7 +3,7 @@ package com.fortify.cli.util.ncd_report.writer;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.OutputFormat;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
-import com.fortify.cli.common.output.writer.report.IReportWriter;
+import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.util.ncd_report.descriptor.INcdReportRepositoryDescriptor;
 
 public final class NcdReportRepositoriesWriter implements INcdReportRepositoriesWriter {

@@ -1,4 +1,4 @@
-package com.fortify.cli.common.output.writer.report.entry;
+package com.fortify.cli.common.report.writer.entry;
 
 public interface IReportErrorEntryWriter {
     void addReportError(String operation, String message);

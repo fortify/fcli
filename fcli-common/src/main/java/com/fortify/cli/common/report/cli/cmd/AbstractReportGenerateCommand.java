@@ -1,4 +1,4 @@
-package com.fortify.cli.common.output.cli.cmd;
+package com.fortify.cli.common.report.cli.cmd;
 
 import java.io.File;
 import java.util.Date;
@@ -9,9 +9,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.writer.report.IReportWriter;
-import com.fortify.cli.common.output.writer.report.ReportDirWriter;
-import com.fortify.cli.common.output.writer.report.ReportZipWriter;
+import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
+import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.report.writer.IReportWriter;
+import com.fortify.cli.common.report.writer.ReportDirWriter;
+import com.fortify.cli.common.report.writer.ReportZipWriter;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 
 import io.micrometer.common.util.StringUtils;
@@ -19,7 +21,18 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-public abstract class AbstractReportOutputCommand extends AbstractOutputCommand implements IJsonNodeSupplier
+/**
+ * <p>Base class for commands that can generate reports. This base class provides
+ * functionality for specifying report output location through CLI options, and
+ * generating some generic report summary contents like report type and date.</p>
+ * 
+ * <p>Note that there's a more specific base class for reporting commands that
+ * take a configuration file as input; see {@link AbstractConfigurableReportGenerateCommand}.</p>
+ * 
+ * @author rsenden
+ *
+ */
+public abstract class AbstractReportGenerateCommand extends AbstractOutputCommand implements IJsonNodeSupplier
 {
     @ArgGroup(exclusive = true, multiplicity = "1") private OutputArgGroup outputArgGroup;
     private static final class OutputArgGroup {

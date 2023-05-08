@@ -1,4 +1,4 @@
-package com.fortify.cli.common.output.writer.report;
+package com.fortify.cli.common.report.writer;
 
 import java.io.BufferedWriter;
 import java.nio.file.Path;

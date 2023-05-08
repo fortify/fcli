@@ -4,6 +4,7 @@ import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.util.all_commands.cli.cmd.AllCommandsCommands;
 import com.fortify.cli.util.autocomplete.cli.cmd.AutoCompleteCommands;
 import com.fortify.cli.util.crypto.cli.cmd.CryptoCommands;
+import com.fortify.cli.util.msp_report.cli.cmd.MspReportCommands;
 import com.fortify.cli.util.ncd_report.cli.cmd.NcdReportCommands;
 
 import picocli.CommandLine.Command;
@@ -15,6 +16,7 @@ import picocli.CommandLine.Command;
             AllCommandsCommands.class,
             AutoCompleteCommands.class,
             CryptoCommands.class,
+            MspReportCommands.class,
             NcdReportCommands.class
         }
 )

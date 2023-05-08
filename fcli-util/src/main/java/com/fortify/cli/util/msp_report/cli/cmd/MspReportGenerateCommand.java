@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.util.ncd_report.cli.cmd;
+package com.fortify.cli.util.msp_report.cli.cmd;
 
 import java.io.File;
 
@@ -30,8 +30,8 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
 import com.fortify.cli.common.report.cli.cmd.AbstractConfigurableReportGenerateCommand;
 import com.fortify.cli.common.report.writer.IReportWriter;
-import com.fortify.cli.util.ncd_report.collector.NcdReportResultsCollector;
-import com.fortify.cli.util.ncd_report.config.NcdReportConfig;
+import com.fortify.cli.util.msp_report.collector.MspReportResultsCollector;
+import com.fortify.cli.util.msp_report.config.MspReportConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -39,23 +39,23 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Generate.CMD_NAME)
-public final class NcdReportGenerateCommand extends AbstractConfigurableReportGenerateCommand<NcdReportConfig, NcdReportResultsCollector> {
+public final class MspReportGenerateCommand extends AbstractConfigurableReportGenerateCommand<MspReportConfig, MspReportResultsCollector> {
     @Getter @Mixin private OutputHelperMixins.Generate outputHelper;
-    @Option(names = {"-c","--config"}, required = true, defaultValue = "NcdReportConfig.yml")
+    @Option(names = {"-c","--config"}, required = true, defaultValue = "MspReportConfig.yml")
     @Getter private File configFile;
     
     @Override
     protected String getReportTitle() {
-        return "Number of Contributing Developers (NCD) Report";
+        return "Managed Service Provider Report";
     }
     
     @Override
-    protected Class<NcdReportConfig> getConfigType() {
-        return NcdReportConfig.class;
+    protected Class<MspReportConfig> getConfigType() {
+        return MspReportConfig.class;
     }
     
     @Override
-    protected NcdReportResultsCollector createResultsCollector(NcdReportConfig config, IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
-        return new NcdReportResultsCollector(config, reportWriter, progressHelper);
+    protected MspReportResultsCollector createResultsCollector(MspReportConfig config, IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
+        return new MspReportResultsCollector(config, reportWriter, progressHelper);
     }
 }

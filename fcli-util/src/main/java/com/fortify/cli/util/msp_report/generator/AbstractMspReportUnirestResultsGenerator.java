@@ -1,8 +1,8 @@
-package com.fortify.cli.util.ncd_report.generator;
+package com.fortify.cli.util.msp_report.generator;
 
 import com.fortify.cli.common.report.generator.AbstractReportUnirestResultsGenerator;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
-import com.fortify.cli.util.ncd_report.collector.NcdReportResultsCollector;
+import com.fortify.cli.util.msp_report.collector.MspReportResultsCollector;
 
 /**
  * Base class for source-specific unirest-based generator implementations, 
@@ -12,8 +12,8 @@ import com.fortify.cli.util.ncd_report.collector.NcdReportResultsCollector;
  *  
  * @author rsenden
  */
-public abstract class AbstractNcdReportUnirestResultsGenerator<T extends IUrlConfig> extends AbstractReportUnirestResultsGenerator<T,NcdReportResultsCollector> {
-    public AbstractNcdReportUnirestResultsGenerator(T sourceConfig, NcdReportResultsCollector resultsCollector) {
+public abstract class AbstractMspReportUnirestResultsGenerator<T extends IUrlConfig> extends AbstractReportUnirestResultsGenerator<T,MspReportResultsCollector> {
+    public AbstractMspReportUnirestResultsGenerator(T sourceConfig, MspReportResultsCollector resultsCollector) {
         super(sourceConfig, resultsCollector);
     }
 }

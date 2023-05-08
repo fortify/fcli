@@ -21,15 +21,11 @@ public class NcdReportSourcesConfig {
     private Optional<NcdReportGitLabSourceConfig[]> gitlab = Optional.empty();
     
     public final List<INcdReportSourceConfig> getSourceConfigs() {
-        var result = Stream.of(github, gitlab)
+        return Stream.of(github, gitlab)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(INcdReportSourceConfig[].class::cast)
                 .flatMap(Stream::of)
                 .collect(Collectors.toList());
-        if ( result.isEmpty() ) {
-            throw new IllegalArgumentException("Configuration doesn't define any sources");
-        }
-        return result;
     }
 }
