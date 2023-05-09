@@ -1,5 +1,6 @@
 package com.fortify.cli.util.ncd_report.config;
 
+import com.fortify.cli.common.report.generator.IReportResultsGenerator;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.util.ncd_report.collector.NcdReportResultsCollector;
 import com.fortify.cli.util.ncd_report.generator.github.NcdReportGitHubResultsGenerator;
@@ -33,7 +34,7 @@ public class NcdReportGitHubSourceConfig extends AbstractNcdReportRepoSelectorCo
     private NcdReportGitHubOrganizationConfig[] organizations;
     
     @Override
-    public Runnable generator(NcdReportResultsCollector resultsCollector) {
+    public IReportResultsGenerator generator(NcdReportResultsCollector resultsCollector) {
         return new NcdReportGitHubResultsGenerator(this, resultsCollector);
     }
 }

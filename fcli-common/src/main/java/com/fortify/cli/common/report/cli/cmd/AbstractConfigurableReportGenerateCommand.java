@@ -33,6 +33,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fortify.cli.common.progress.cli.mixin.ProgressHelperFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
 import com.fortify.cli.common.report.collector.IReportResultsCollector;
+import com.fortify.cli.common.report.config.IReportSourceConfig;
 import com.fortify.cli.common.report.config.IReportSourceSupplierConfig;
 import com.fortify.cli.common.report.writer.IReportWriter;
 
@@ -69,9 +70,14 @@ public abstract class AbstractConfigurableReportGenerateCommand<C extends IRepor
                 if ( sourceConfigs==null || sourceConfigs.isEmpty() ) {
                     throw new IllegalArgumentException("Configuration file doesn't define any sources");
                 }
-                sourceConfigs
-                    .forEach(c->c.generator(resultsCollector).run());
+                sourceConfigs.forEach(c->runGenerator(c, resultsCollector));
             }
+        }
+    }
+
+    private final void runGenerator(IReportSourceConfig<R> c, R resultsCollector) {
+        try ( var generator = c.generator(resultsCollector) ) {
+            generator.run();
         }
     }
 

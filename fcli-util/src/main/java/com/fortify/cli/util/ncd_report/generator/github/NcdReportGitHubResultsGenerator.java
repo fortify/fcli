@@ -16,7 +16,6 @@ import com.fortify.cli.util.ncd_report.config.NcdReportGitHubOrganizationConfig;
 import com.fortify.cli.util.ncd_report.config.NcdReportGitHubSourceConfig;
 import com.fortify.cli.util.ncd_report.descriptor.NcdReportBranchCommitDescriptor;
 import com.fortify.cli.util.ncd_report.generator.AbstractNcdReportUnirestResultsGenerator;
-import com.fortify.cli.util.ncd_report.generator.INcdReportBranchCommitGenerator;
 
 import io.micrometer.common.util.StringUtils;
 import kong.unirest.GetRequest;
@@ -41,15 +40,14 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportUnirestRes
     }
 
     /**
-     * Primary method for running the generation process, taking the
-     * {@link UnirestInstance} provided by our superclass. This gets 
-     * the organization configurations, and for each organization, calls 
-     * the {@link #run(UnirestInstance, NcdReportGitHubOrganizationConfig)}
+     * Primary method for generating report results. This gets the 
+     * organization configurations, and for each organization, calls 
+     * the {@link #generateResults(NcdReportGitHubOrganizationConfig)}
      * method to load the repositories for that organization.
      */
     @Override
-    protected void run(UnirestInstance unirest) {
-        Stream.of(sourceConfig().getOrganizations()).forEach(orgConfig->run(unirest, orgConfig));
+    protected void generateResults() {
+        Stream.of(sourceConfig().getOrganizations()).forEach(this::generateResults);
     }
     
     /**
@@ -57,44 +55,35 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportUnirestRes
      * given {@link NcdReportGitHubOrganizationConfig}, and passes the descriptor
      * for each repository to the {@link INcdReportRepositoryProcessor} provided 
      * by our {@link NcdReportResultsCollector}. The {@link INcdReportRepositoryProcessor}
-     * will in turn call our {@link #generateCommitData(INcdReportRepositoryBranchCommitCollector, UnirestInstance, NcdReportGitHubRepositoryDescriptor)}
+     * will in turn call our {@link #generateCommitData(INcdReportRepositoryBranchCommitCollector, NcdReportGitHubRepositoryDescriptor)}
      * method to generate commit data for every repository that is not excluded from
      * the report.
      */
-    private void run(UnirestInstance unirest, NcdReportGitHubOrganizationConfig orgConfig) {
+    private void generateResults(NcdReportGitHubOrganizationConfig orgConfig) {
         String orgName = orgConfig.getName();
         try {
             resultsCollector().progressHelper().writeI18nProgress("fcli.util.ncd-report.loading.github-repositories", orgName);
-            HttpRequest<?> req = unirest.get("/orgs/{org}/repos?type=all&per_page=100").routeParam("org", orgName);
+            HttpRequest<?> req = unirest().get("/orgs/{org}/repos?type=all&per_page=100").routeParam("org", orgName);
             GitHubPagingHelper.pagedRequest(req, ArrayNode.class)
                 .ifSuccess(r->r.getBody().forEach(repo->
-                    resultsCollector().repositoryProcessor().processRepository(new NcdReportCombinedRepoSelectorConfig(sourceConfig(), orgConfig), getRepoDescriptor(repo), commitGenerator(unirest))));
+                    resultsCollector().repositoryProcessor().processRepository(new NcdReportCombinedRepoSelectorConfig(sourceConfig(), orgConfig), getRepoDescriptor(repo), this::generateCommitData)));
         } catch ( Exception e ) {
             resultsCollector().errorWriter().addReportError(String.format("Error processing organization: %s (%s)", orgName, sourceConfig().getApiUrl()), e);
         }
     }
     
     /**
-     * This method generates an {@link INcdReportBranchCommitGenerator} instance
-     * using a lambda expression, which calls our {@link #generateCommitData(INcdReportRepositoryBranchCommitCollector, UnirestInstance, NcdReportGitHubRepositoryDescriptor)}
-     * method.
-     */
-    private INcdReportBranchCommitGenerator<NcdReportGitHubRepositoryDescriptor> commitGenerator(UnirestInstance unirest) {
-        return (repoDescriptor, branchCommitCollector) -> generateCommitData(branchCommitCollector, unirest, repoDescriptor);
-    }
-    
-    /**
      * This method generates commit data for the given repository by retrieving
-     * all branches, and then invoking the {@link #generateCommitDataForBranches(INcdReportRepositoryBranchCommitCollector, UnirestInstance, NcdReportGitHubRepositoryDescriptor, List)}
+     * all branches, and then invoking the {@link #generateCommitDataForBranches(INcdReportRepositoryBranchCommitCollector, NcdReportGitHubRepositoryDescriptor, List)}
      * method to generate commit data for each branch. If no commits are found that
-     * match the date range, the {@link #generateMostRecentCommitData(INcdReportRepositoryBranchCommitCollector, UnirestInstance, NcdReportGitHubRepositoryDescriptor, List)}
+     * match the date range, the {@link #generateMostRecentCommitData(INcdReportRepositoryBranchCommitCollector, NcdReportGitHubRepositoryDescriptor, List)}
      * method is invoked to find the most recent commit older than the date range.
      */
-    private void generateCommitData(INcdReportRepositoryBranchCommitCollector branchCommitCollector, UnirestInstance unirest, NcdReportGitHubRepositoryDescriptor repoDescriptor) {
-        var branchDescriptors = getBranchDescriptors(unirest, repoDescriptor);
-        boolean commitsFound = generateCommitDataForBranches(branchCommitCollector, unirest, repoDescriptor, branchDescriptors);
+    private void generateCommitData(NcdReportGitHubRepositoryDescriptor repoDescriptor,INcdReportRepositoryBranchCommitCollector branchCommitCollector) {
+        var branchDescriptors = getBranchDescriptors(repoDescriptor);
+        boolean commitsFound = generateCommitDataForBranches(branchCommitCollector, repoDescriptor, branchDescriptors);
         if ( !commitsFound ) {
-            generateMostRecentCommitData(branchCommitCollector, unirest, repoDescriptor, branchDescriptors);
+            generateMostRecentCommitData(branchCommitCollector, repoDescriptor, branchDescriptors);
         }
     }
 
@@ -103,11 +92,11 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportUnirestRes
      * latest commit (if found) to the {@link #addCommit(INcdReportRepositoryBranchCommitCollector, NcdReportGitHubRepositoryDescriptor, NcdReportGitHubBranchDescriptor, JsonNode)}
      * method.
      */
-    private void generateMostRecentCommitData(INcdReportRepositoryBranchCommitCollector branchCommitCollector, UnirestInstance unirest, NcdReportGitHubRepositoryDescriptor repoDescriptor, List<NcdReportGitHubBranchDescriptor> branchDescriptors) {
+    private void generateMostRecentCommitData(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor, List<NcdReportGitHubBranchDescriptor> branchDescriptors) {
         NcdReportGitHubCommitDescriptor mostRecentCommitDescriptor = null;
         NcdReportGitHubBranchDescriptor mostRecentBranchDescriptor = null;
         for ( var branchDescriptor : branchDescriptors ) {
-            var currentCommitResponse = getCommitsRequest(unirest, repoDescriptor, branchDescriptor, 1)
+            var currentCommitResponse = getCommitsRequest(repoDescriptor, branchDescriptor, 1)
                 .asObject(ArrayNode.class).getBody();
             if ( currentCommitResponse.size()>0 ) {
                 var currentCommitDescriptor = JsonHelper.treeToValue(currentCommitResponse.get(0), NcdReportGitHubCommitDescriptor.class);
@@ -127,13 +116,13 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportUnirestRes
      * date/time for all branches.
      * @return true if any commits were found, false otherwise  
      */
-    private boolean generateCommitDataForBranches(INcdReportRepositoryBranchCommitCollector branchCommitCollector, UnirestInstance unirest, NcdReportGitHubRepositoryDescriptor repoDescriptor, List<NcdReportGitHubBranchDescriptor> branchDescriptors) {
+    private boolean generateCommitDataForBranches(INcdReportRepositoryBranchCommitCollector branchCommitCollector, NcdReportGitHubRepositoryDescriptor repoDescriptor, List<NcdReportGitHubBranchDescriptor> branchDescriptors) {
         String since = resultsCollector().reportConfig().getCommitOffsetDateTime()
                 .format(DateTimeFormatter.ISO_INSTANT);
         boolean commitsFound = false;
         for ( var branchDescriptor : branchDescriptors ) {
             resultsCollector().progressHelper().writeI18nProgress("fcli.util.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
-            HttpRequest<?> req = getCommitsRequest(unirest, repoDescriptor, branchDescriptor, 100)
+            HttpRequest<?> req = getCommitsRequest(repoDescriptor, branchDescriptor, 100)
                     .queryString("since", since);
             
             List<ArrayNode> bodies = GitHubPagingHelper.pagedRequest(req, ArrayNode.class).getBodies();
@@ -160,9 +149,9 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportUnirestRes
      * Get the branch descriptors for the repository described by the given
      * repository descriptor.
      */
-    private List<NcdReportGitHubBranchDescriptor> getBranchDescriptors(UnirestInstance unirest, NcdReportGitHubRepositoryDescriptor repoDescriptor) {
+    private List<NcdReportGitHubBranchDescriptor> getBranchDescriptors(NcdReportGitHubRepositoryDescriptor repoDescriptor) {
         List<NcdReportGitHubBranchDescriptor> result = new ArrayList<>(); 
-        GitHubPagingHelper.pagedRequest(getBranchesRequest(unirest, repoDescriptor), ArrayNode.class)
+        GitHubPagingHelper.pagedRequest(getBranchesRequest(repoDescriptor), ArrayNode.class)
             .ifSuccess(r->r.getBody().forEach(b->result.add(JsonHelper.treeToValue(b, NcdReportGitHubBranchDescriptor.class))));
         return result;
     }
@@ -171,8 +160,8 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportUnirestRes
      * Get the base request for loading commit data for the repository 
      * and branch described by the given descriptors.
      */
-    private GetRequest getCommitsRequest(UnirestInstance unirest, NcdReportGitHubRepositoryDescriptor descriptor, NcdReportGitHubBranchDescriptor branchDescriptor, int perPage) {
-        return unirest.get("/repos/{owner}/{repo}/commits")
+    private GetRequest getCommitsRequest(NcdReportGitHubRepositoryDescriptor descriptor, NcdReportGitHubBranchDescriptor branchDescriptor, int perPage) {
+        return unirest().get("/repos/{owner}/{repo}/commits")
                 .routeParam("owner", descriptor.getOwnerName())
                 .routeParam("repo", descriptor.getName())
                 .queryString("sha", branchDescriptor.getSha())
@@ -183,8 +172,8 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportUnirestRes
      * Get the base request for loading branch data for the repository
      * described by the given repository descriptor.
      */
-    private GetRequest getBranchesRequest(UnirestInstance unirest, NcdReportGitHubRepositoryDescriptor descriptor) {
-        return unirest.get("/repos/{owner}/{repo}/branches?per_page=100")
+    private GetRequest getBranchesRequest(NcdReportGitHubRepositoryDescriptor descriptor) {
+        return unirest().get("/repos/{owner}/{repo}/branches?per_page=100")
                 .routeParam("owner", descriptor.getOwnerName())
                 .routeParam("repo", descriptor.getName());
     }

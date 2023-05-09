@@ -11,6 +11,7 @@ import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 
 /**
@@ -22,9 +23,10 @@ import lombok.experimental.Accessors;
  * @author rsenden
  */
 @RequiredArgsConstructor @Accessors(fluent=true)
-public abstract class AbstractReportUnirestResultsGenerator<T extends IUrlConfig, R extends IReportResultsCollector> implements Runnable {
+public abstract class AbstractReportUnirestResultsGenerator<T extends IUrlConfig, R extends IReportResultsCollector> implements IReportResultsGenerator {
     @Getter private final T sourceConfig;
     @Getter private final R resultsCollector;
+    private UnirestInstance unirest;
     
     /**
      * Primary method for running the generation process. This method
@@ -35,11 +37,25 @@ public abstract class AbstractReportUnirestResultsGenerator<T extends IUrlConfig
      */
     @Override
     public final void run() {
-        try ( var unirest = createUnirestInstance() ) {
-            run(unirest);
+        try {
+            generateResults();
         } catch ( Exception e ) {
             handleSourceError(e);
         }
+    }
+    
+    @Override @SneakyThrows
+    public final void close() {
+        if ( unirest!=null ) {
+            unirest.close();
+        }
+    }
+    
+    protected final UnirestInstance unirest() {
+        if ( unirest==null ) {
+            unirest = createUnirestInstance();
+        }
+        return unirest;
     }
     
     /**
@@ -88,10 +104,10 @@ public abstract class AbstractReportUnirestResultsGenerator<T extends IUrlConfig
     protected abstract void configure(UnirestInstance unirest);
     
     /**
-     * Method to be implemented by subclasses to run the generation
-     * process using the given {@link UnirestInstance}.
+     * Method to be implemented by subclasses to generate results. Implementations
+     * can call {@link #unirest()} to access the {@link UnirestInstance}.
      */
-    protected abstract void run(UnirestInstance unirest);
+    protected abstract void generateResults();
     
     /**
      * Method to be implemented by subclasses to return the source type, for example

@@ -1,5 +1,7 @@
 package com.fortify.cli.util.msp_report.collector;
 
+import java.time.format.DateTimeFormatter;
+
 import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
 import com.fortify.cli.common.report.collector.IReportResultsCollector;
 import com.fortify.cli.common.report.writer.IReportWriter;
@@ -48,6 +50,10 @@ public final class MspReportResultsCollector implements IReportResultsCollector 
 
     @Override @SneakyThrows
     public void close() {
+        // TODO Validate configuration contains required properties when initializing,
+        //      not when closing the report.
+        reportWriter.summary().put("mspName", reportConfig.getMspName());
+        reportWriter.summary().put("contractStartDate", reportConfig.getContractStartDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
         reportWriter.summary().put("errorCount", errorWriter().getErrorCount());
     }
 }

@@ -46,7 +46,7 @@ public final class MspReportGenerateCommand extends AbstractConfigurableReportGe
     
     @Override
     protected String getReportTitle() {
-        return "Managed Service Provider Report";
+        return "Managed Service Provider (MSP) Report";
     }
     
     @Override

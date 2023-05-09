@@ -1,5 +1,6 @@
 package com.fortify.cli.util.msp_report.config;
 
+import java.time.LocalDate;
 import java.util.Collection;
 
 import com.fortify.cli.common.report.config.IReportSourceSupplierConfig;
@@ -16,6 +17,8 @@ import lombok.Data;
  */
 @ReflectiveAccess @Data
 public class MspReportConfig implements IReportSourceSupplierConfig<MspReportResultsCollector> {
+    private String mspName;
+    private LocalDate contractStartDate;
     private MspReportSourcesConfig sources;
     
     @Override

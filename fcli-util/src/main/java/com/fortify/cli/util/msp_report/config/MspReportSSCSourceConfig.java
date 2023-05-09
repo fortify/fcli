@@ -1,5 +1,6 @@
 package com.fortify.cli.util.msp_report.config;
 
+import com.fortify.cli.common.report.generator.IReportResultsGenerator;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.util.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCResultsGenerator;
@@ -30,7 +31,7 @@ public class MspReportSSCSourceConfig implements IMspReportSourceConfig, IUrlCon
     }
     
     @Override
-    public Runnable generator(MspReportResultsCollector resultsCollector) {
+    public IReportResultsGenerator generator(MspReportResultsCollector resultsCollector) {
         return new MspReportSSCResultsGenerator(this, resultsCollector);
     }
 }

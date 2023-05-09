@@ -105,6 +105,7 @@ allprojects {
         implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.2')
         implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.14.2')
         implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.2")
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.2")
         implementation('hu.webarticum:tree-printer:3.1.0')
         implementation('com.github.freva:ascii-table:1.8.0')
         
@@ -230,6 +231,7 @@ application {
     mainClass.set("com.fortify.cli.app.FortifyCLI")
 }
 shadowJar {
+	mergeServiceFiles()
     archiveBaseName.set('fcli')
     archiveClassifier.set('')
     archiveVersion.set('')

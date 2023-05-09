@@ -10,9 +10,15 @@
 # across multiple lines, and it avoids any special characters like hashes 
 # and quotes in the expression to be interpreted by the Yaml processor.
 
+# Required MSP name
+mspName: My MSP
+
+# Required MSP contract start date
+contractStartDate: 2021-01-01
+
 # Sources for the MSP report 
 sources:                       
-  # Configure configure one or more SSC sources
+  # Configure one or more SSC sources
   ssc:                              
     # SSC base URL, for example: https://ssc.mycompany.com/ssc
   - baseUrl: http://localhost:2220/ssc
