@@ -1,11 +1,12 @@
 package com.fortify.cli.common.util;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * This {@link Set} implementation stores an index for every
@@ -19,7 +20,8 @@ import java.util.Set;
  */
 public class IndexAwareSet<T> implements Set<T> {
     private int currentIndex = 0;
-    private Map<T, Integer> map = new HashMap<>();
+    // We use a LinkedHashMap to have entryStream() return entries in original order
+    private Map<T, Integer> map = new LinkedHashMap<>();
     
     public IndexAwareSet() {}
     
@@ -43,6 +45,10 @@ public class IndexAwareSet<T> implements Set<T> {
         else {
             return map.put(arg0, ++currentIndex)==null;
         }
+    }
+    
+    public int addAndGetIndex(T arg0) {
+        return map.computeIfAbsent(arg0, x->++currentIndex);
     }
 
     @Override
@@ -104,5 +110,10 @@ public class IndexAwareSet<T> implements Set<T> {
     @Override
     public <A> A[] toArray(A[] arg0) {
         return map.keySet().toArray(arg0);
+    }
+    
+    public Stream<Map.Entry<Integer,T>> entryStream() {
+        return map.entrySet().stream()
+                .map(e->Map.entry(e.getValue(), e.getKey()));
     }
 }

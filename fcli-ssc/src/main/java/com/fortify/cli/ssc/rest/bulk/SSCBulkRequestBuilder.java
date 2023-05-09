@@ -1,8 +1,10 @@
 package com.fortify.cli.ssc.rest.bulk;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +14,6 @@ import com.fasterxml.jackson.databind.util.RawValue;
 import com.fortify.cli.common.json.JsonHelper;
 
 import kong.unirest.Body;
-import kong.unirest.HttpMethod;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 
@@ -23,12 +24,57 @@ public class SSCBulkRequestBuilder {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private final ArrayNode requests = objectMapper.createArrayNode();
     private final Map<String,Integer> nameToIndexMap = new HashMap<>();
+    private final Map<String, Consumer<JsonNode>> consumers = new LinkedHashMap<>();
     
     /**
-     * Add a request to the list of bulk requests to be executed.
-     * Similar to {@link #request(HttpMethod, String)}, but this method 
-     * allows for adding data to be posted with the request.
+     * Check whether this SSCBulkRequestBuilder instance already has a request
+     * with the given name.
+     * @param name to check
+     * @return true if a request with the given name is already present, false otherwise
+     */
+    public boolean hasRequest(String name) {
+        return nameToIndexMap.containsKey(name);
+    }
+    
+    /**
+     * Add a request to the list of bulk requests to be executed. When the
+     * bulk request is executed by calling the {@link #execute(UnirestInstance)}
+     * method, the given {@link Consumer} will be invoked with the response
+     * data for the given request. Consumers are invoked in the order they were
+     * added.
      * 
+     * @param request {@link HttpRequest} to be added to the list of bulk requests
+     * @param consumer {@link Consumer} to be invoked for consuming the response of the request
+     * @return Self for chaining
+     */
+    public SSCBulkRequestBuilder request(HttpRequest<?> request, Consumer<JsonNode> consumer) {
+        return request("_consumableRequest."+consumers.size(), request, consumer);
+    }
+    
+    /**
+     * Add a request to the list of bulk requests to be executed. When the
+     * bulk request is executed by calling the {@link #execute(UnirestInstance)}
+     * method, the given {@link Consumer} will be invoked with the response
+     * data for the given request. Consumers are invoked in the order they were
+     * added.
+     * 
+     * @param name for the request
+     * @param request {@link HttpRequest} to be added to the list of bulk requests
+     * @param consumer {@link Consumer} to be invoked for consuming the response of the request
+     * @return Self for chaining
+     */
+    public SSCBulkRequestBuilder request(String name, HttpRequest<?> request, Consumer<JsonNode> consumer) {
+        consumers.put(name, consumer);
+        request(name, request);
+        return this;
+    }
+    
+    /**
+     * Add a request to the list of bulk requests to be executed, identified
+     * by the given name. If a request with the given name has already been 
+     * added, an {@link IllegalArgumentException} will be thrown.
+     * 
+     * @param name for this request
      * @param request {@link HttpRequest} to be added to the list of bulk requests
      * @return Self for chaining
      */
@@ -70,9 +116,12 @@ public class SSCBulkRequestBuilder {
     public SSCBulkResponse execute(UnirestInstance unirest) {
         ObjectNode bulkRequest = objectMapper.createObjectNode();
         bulkRequest.set("requests", this.requests);
-        return new SSCBulkResponse(nameToIndexMap, 
+        var result = new SSCBulkResponse(nameToIndexMap, 
                 unirest.post("/api/v1/bulk").body(bulkRequest)
                 .asObject(JsonNode.class).getBody().get("data"));
+        consumers.entrySet().forEach(e->
+            e.getValue().accept(result.data(e.getKey())));
+        return result;
     }
     
     public static final class SSCBulkResponse {

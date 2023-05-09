@@ -29,6 +29,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
+import com.fortify.cli.ssc.entity.appversion.cli.mixin.SSCAppVersionBulkEmbedMixin;
 import com.fortify.cli.ssc.entity.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc.rest.query.SSCQParamGenerator;
@@ -50,12 +51,13 @@ public class SSCAppVersionListCommand extends AbstractSSCBaseRequestOutputComman
                 .add("application.name", "project.name", SSCQParamValueGenerators::wrapInQuotes)
                 .add("application.id", "project.id", SSCQParamValueGenerators::plain)
                 .add("name", SSCQParamValueGenerators::wrapInQuotes);
+    @Mixin private SSCAppVersionBulkEmbedMixin bulkEmbedMixin;
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get("/api/v1/projectVersions?limit=100");
     }
-    
+
     @Override
     public JsonNode transformRecord(JsonNode record) {
         return SSCAppVersionHelper.renameFields(record);

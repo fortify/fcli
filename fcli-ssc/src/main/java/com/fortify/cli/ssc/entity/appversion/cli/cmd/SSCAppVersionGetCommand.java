@@ -27,21 +27,22 @@ package com.fortify.cli.ssc.entity.appversion.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.ssc.entity.appversion.cli.mixin.SSCAppVersionBulkEmbedMixin;
 import com.fortify.cli.ssc.entity.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.entity.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.Get.CMD_NAME)
 public class SSCAppVersionGetCommand extends AbstractSSCJsonNodeOutputCommand implements IRecordTransformer {
     @Getter @Mixin private OutputHelperMixins.Get outputHelper; 
-    @CommandLine.Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
-
+    @Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
+    @Mixin private SSCAppVersionBulkEmbedMixin bulkEmbedMixin;
+    
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return appVersionResolver.getAppVersionDescriptor(unirest).asJsonNode();

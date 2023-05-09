@@ -7,7 +7,6 @@ import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
-import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
 import com.fortify.cli.common.session.cli.mixin.AbstractSessionUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc.entity.token.helper.SSCTokenHelper;
 import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
@@ -20,8 +19,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 public class SSCProductHelperMixin extends AbstractSessionUnirestInstanceSupplierMixin<SSCSessionDescriptor>
-    implements IProductHelper, IInputTransformer, INextPageUrlProducerSupplier, 
-               IHttpRequestUpdater
+    implements IProductHelper, IInputTransformer, INextPageUrlProducerSupplier
 {
     @Getter private UnaryOperator<JsonNode> inputTransformer = SSCInputTransformer::getDataOrSelf;
     
@@ -33,17 +31,6 @@ public class SSCProductHelperMixin extends AbstractSessionUnirestInstanceSupplie
     @Override
     public JsonNode transformInput(JsonNode input) {
         return SSCInputTransformer.getDataOrSelf(input);
-    }
-    
-    @Override
-    public final HttpRequest<?> updateRequest(HttpRequest<?> request) {
-        /* TODO Re-implement this
-        ISSCQParamGeneratorSupplier qParamGeneratorSupplier = outputHelper.getCommandAs(ISSCQParamGeneratorSupplier.class);
-        if ( qParamGeneratorSupplier!=null ) {
-            request = qParamGeneratorSupplier.getQParamGenerator().addQParam(outputHelper, request);
-        }
-        */
-        return request;
     }
     
     @Override

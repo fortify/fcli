@@ -7,9 +7,12 @@ import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
 
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
@@ -30,7 +33,7 @@ public final class SSCAttributeDefinitionHelper {
     private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsByName = new HashMap<>();
     private final Map<String, SSCAttributeDefinitionDescriptor> descriptorsByGuid = new HashMap<>();
     private final Map<String, SSCAttributeOptionDefinitionHelper> attrOptionsByIdMap = new HashMap<>();
-    @Getter private final ObjectNode attributeDefinitionsBody; 
+    @Getter private final ArrayNode attributeDefinitions; 
     
     /**
      * This constructor calls the SSC attributeDefinitions endpoint to retrieve attribute definition data,
@@ -39,10 +42,22 @@ public final class SSCAttributeDefinitionHelper {
      * @param unirest
      */
     public SSCAttributeDefinitionHelper(UnirestInstance unirest) {
-        this.attributeDefinitionsBody = unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name&fields=id,guid,name,category,type,required,hidden,hasDefault,options")
-                    .asObject(ObjectNode.class).getBody();
-        
-        attributeDefinitionsBody.get("data").forEach(this::processAttributeDefinition);
+        this(getAttributeDefinitionsRequest(unirest)
+                    .asObject(ObjectNode.class).getBody());
+    }
+    
+    public SSCAttributeDefinitionHelper(JsonNode attrDefs) {
+        this.attributeDefinitions = (ArrayNode)SSCInputTransformer.getDataOrSelf(attrDefs);
+        this.attributeDefinitions.forEach(this::processAttributeDefinition);
+    }
+    
+    /**
+     * Return an {@link HttpRequest} of which the response can be passed to
+     * one of the constructors. This is useful for including the request in
+     * an SSC bulk request.
+     */
+    public static final HttpRequest<?> getAttributeDefinitionsRequest(UnirestInstance unirest) {
+        return unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name&fields=id,guid,name,category,type,required,hidden,hasDefault,options");
     }
     
     /**

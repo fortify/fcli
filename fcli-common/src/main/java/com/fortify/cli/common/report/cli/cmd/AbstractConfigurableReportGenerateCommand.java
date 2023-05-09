@@ -29,6 +29,7 @@ import java.io.File;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fortify.cli.common.progress.cli.mixin.ProgressHelperFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
 import com.fortify.cli.common.report.collector.IReportResultsCollector;
@@ -80,6 +81,7 @@ public abstract class AbstractConfigurableReportGenerateCommand<C extends IRepor
             // TODO Configure to fail on unknown properties
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             mapper.registerModule(new Jdk8Module());
+            mapper.registerModule(new JavaTimeModule());
             return mapper.readValue(configFile, getConfigType());
         } catch ( Exception e ) {
             throw new IllegalStateException(String.format("Error processing configuration file %s:\n\tMessage: %s", configFile.getAbsolutePath(), e.getMessage()));

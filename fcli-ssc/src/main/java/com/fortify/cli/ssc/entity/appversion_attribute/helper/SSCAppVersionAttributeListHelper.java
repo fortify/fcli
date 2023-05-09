@@ -24,17 +24,12 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.entity.appversion_attribute.helper;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.entity.attribute_definition.helper.SSCAttributeDefinitionHelper;
 import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder;
 import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
@@ -53,7 +48,7 @@ import kong.unirest.UnirestInstance;
  * @author rsenden
  */
 public final class SSCAppVersionAttributeListHelper {
-    private ObjectNode cachedAttributeDefinitionsBody;
+    private ArrayNode cachedAttributeDefinitions;
     private Map<String, HttpRequest<?>> requests = new LinkedHashMap<>();
     private Set<String> attrIdsToInclude = null;
     
@@ -82,7 +77,7 @@ public final class SSCAppVersionAttributeListHelper {
      * @return
      */
     public SSCAppVersionAttributeListHelper attributeDefinitionHelper(SSCAttributeDefinitionHelper attributeDefinitionHelper) {
-        this.cachedAttributeDefinitionsBody = attributeDefinitionHelper.getAttributeDefinitionsBody();
+        this.cachedAttributeDefinitions = attributeDefinitionHelper.getAttributeDefinitions();
         return this;
     }
     
@@ -102,14 +97,15 @@ public final class SSCAppVersionAttributeListHelper {
      */
     public JsonNode execute(UnirestInstance unirest, String applicationVersionId) {
         SSCBulkResponse bulkResponse = buildBulkRequest(unirest, applicationVersionId).execute(unirest);
-        if ( cachedAttributeDefinitionsBody==null ) {
-            cachedAttributeDefinitionsBody = bulkResponse.body("_defs");
+        if ( cachedAttributeDefinitions==null ) {
+            cachedAttributeDefinitions = (ArrayNode)bulkResponse.data("_attrDefs");
         }
         JsonNode attributesBody = bulkResponse.body("_attrs");
         // We use the attribute definitions as the basis, to be able to also 
         // return attributes that have no value (as SSC's application version 
         // attributes endpoint only returns attributes that have a value).
-        return combineBodies(cachedAttributeDefinitionsBody, attributesBody);
+        return new SSCAppVersionAttributeHelper(cachedAttributeDefinitions, attrIdsToInclude)
+                .mergeAttributeDefinitions(attributesBody);
     }
 
     /**
@@ -122,59 +118,10 @@ public final class SSCAppVersionAttributeListHelper {
     private SSCBulkRequestBuilder buildBulkRequest(UnirestInstance unirest, String applicationVersionId) {
         SSCBulkRequestBuilder bulkRequest = new SSCBulkRequestBuilder();
         requests.entrySet().forEach(e->bulkRequest.request(e.getKey(), e.getValue()));
-        if ( cachedAttributeDefinitionsBody==null ) {
-            bulkRequest.request("_defs", unirest.get("/api/v1/attributeDefinitions?limit=-1&fields=id,guid,name,category&orderby=category,name"));
+        if ( cachedAttributeDefinitions==null ) {
+            bulkRequest.request("_attrDefs", unirest.get("/api/v1/attributeDefinitions?limit=-1&fields=id,guid,name,category&orderby=category,name"));
         }
         bulkRequest.request("_attrs", unirest.get("/api/v1/projectVersions/{id}/attributes").routeParam("id", applicationVersionId));
         return bulkRequest;
-    }
-    
-    private JsonNode combineBodies(JsonNode attributeDefinitionsBody, JsonNode attributesBody) {
-        return new ObjectMapper().createObjectNode().set("data", 
-            JsonHelper.stream((ArrayNode)attributeDefinitionsBody.get("data"))
-            .filter(this::isIncluded)
-            .map(attrDef->combine((ObjectNode)attrDef, getAttributeNode(attributesBody, attrDef)))
-            .map(this::addValueString)
-            .collect(JsonHelper.arrayNodeCollector()));
-    }
-    
-    private boolean isIncluded(JsonNode attrDef) {
-        return attrIdsToInclude==null || attrIdsToInclude.contains(attrDef.get("id").asText());
-    }
-    
-    private ObjectNode getAttributeNode(JsonNode attributeBody, JsonNode attrDef) {
-        String guid = attrDef.get("guid").asText();
-        return JsonHelper
-                .evaluateSpelExpression(attributeBody, String.format("data?.^[guid == '%s']", guid), ObjectNode.class);
-    }
-    
-    private ObjectNode combine(ObjectNode node1, ObjectNode node2) {
-        ObjectNode result = new ObjectMapper().createObjectNode();
-        if ( node1!=null ) { result.setAll(node1); }
-        if ( node2!=null ) { result.setAll(node2); }
-        return result;
-    }
-    
-    /**
-     * Add the <code>valueString</code> property to the given {@link ObjectNode} 
-     * that contains combined attribute and attribute definition data. If the 
-     * {@link ObjectNode} contains a <code>value</code> attribute, it's value will
-     * be stored in the <code>valueString</code> property. Otherwise, if the 
-     * {@link ObjectNode} contains a <code>values</code> property, the value names
-     * from this property will be stored as a comma-separated string in the 
-     * <code>valueString</code> property.
-     * @param attr
-     */
-    private ObjectNode addValueString(ObjectNode attr) {
-        String valueString = "";
-        if ( attr.has("value") && !attr.get("value").isNull() ) {
-            valueString = attr.get("value").asText();
-        } else if ( attr.has("values") && !attr.get("values").isEmpty() ) {
-         // TODO Can we get rid of unchecked conversion warning?
-            ArrayList<String> values = JsonHelper.evaluateSpelExpression(attr, "values?.![name]", ArrayList.class);
-            valueString = values.stream().collect(Collectors.joining(", "));
-        }
-        attr.put("valueString", valueString);
-        return attr;
     }
 }

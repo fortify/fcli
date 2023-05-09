@@ -134,8 +134,11 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * This method adds input transformers to the given {@link StandardOutputConfig} by
      * calling the following methods, in this order:
      * <ul>
-     * <li>{@link #addInputTransformersFromObject(StandardOutputConfig, Object)} with the configured {@link IProductHelper}</li>
-     * <li>{@link #addInputTransformersFromObject(StandardOutputConfig, Object)} with the command being invoked</li>
+     * <li>{@link #addInputTransformersFromObject(StandardOutputConfig, Object)} with every mixin 
+     *     contained in the command being invoked, which includes any {@link IProductHelper}
+     *     mixin that implements {@link IInputTransformer}</li>
+     * <li>{@link #addInputTransformersFromObject(StandardOutputConfig, Object)} with the command 
+     *     being invoked</li>
      * <ul>
      * If a command needs to run any input transformations before the input transformations provided by
      * {@link IProductHelper}, the command should implement the {@link IBasicOutputConfigSupplier} interface
@@ -144,7 +147,9 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @param cmd
      */
     protected final void addInputTransformersForCommand(StandardOutputConfig standardOutputConfig, Object cmd) {
-        addInputTransformersFromObject(standardOutputConfig, getProductHelper());
+        for ( var mixin : commandHelper.getCommandSpec().mixins().values() ) {
+            addInputTransformersFromObject(standardOutputConfig, mixin.userObject());
+        }
         addInputTransformersFromObject(standardOutputConfig, cmd);
     }
     

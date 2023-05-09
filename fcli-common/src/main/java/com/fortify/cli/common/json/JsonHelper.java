@@ -27,6 +27,7 @@ package com.fortify.cli.common.json;
 import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -121,6 +122,10 @@ public class JsonHelper {
         return Stream.of(objects).map(TextNode::new).collect(arrayNodeCollector());
     }
     
+    public static final ArrayNode toArrayNode(JsonNode... objects) {
+        return Stream.of(objects).collect(arrayNodeCollector());
+    }
+    
     public static <T> T treeToValue(JsonNode node, Class<T> returnType) {
         if ( node==null ) { return null; }
         try {
@@ -196,6 +201,7 @@ public class JsonHelper {
     private static final EvaluationContext createSpelEvaluationContext() {
         DefaultFormattingConversionService  conversionService = new DefaultFormattingConversionService();
         conversionService.addConverter(new JsonNodeWrapperToJsonNodeConverter());
+        conversionService.addConverter(new ListToArrayNodeConverter());
         conversionService.addConverter(new ObjectToJsonNodeConverter());
         DateTimeFormatterRegistrar dateTimeRegistrar = new DateTimeFormatterRegistrar();
         dateTimeRegistrar.setDateFormatter(DateTimeFormatter.ISO_DATE);
@@ -213,6 +219,13 @@ public class JsonHelper {
     private static final class ObjectToJsonNodeConverter implements Converter<Object, JsonNode> {
         @Override
         public JsonNode convert(Object source) {
+            return objectMapper.valueToTree(source);
+        }
+    }
+    
+    private static final class ListToArrayNodeConverter implements Converter<List<?>, ArrayNode> {
+        @Override
+        public ArrayNode convert(List<?> source) {
             return objectMapper.valueToTree(source);
         }
     }
