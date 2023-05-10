@@ -1,5 +1,6 @@
 package com.fortify.cli.ssc.entity.appversion.helper;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,6 +21,8 @@ public enum SSCAppVersionEmbedderSupplier implements ISSCEntityEmbedderSupplier 
     attrs(SSCAppVersionAttributesEmbedder::new),
     attrsByName(SSCAppVersionAttributesByNameEmbedder::new),
     attrsByGuid(SSCAppVersionAttributesByGuidEmbedder::new),
+    attrValuesByName(SSCAppVersionAttributeValuesByNameEmbedder::new),
+    attrValuesByGuid(SSCAppVersionAttributeValuesByGuidEmbedder::new),
     bugtracker(SSCAppVersionBugTrackerEmbedder::new),
     customTags(SSCAppVersionCustomTagsEmbedder::new),
     filterSets(SSCAppVersionFilterSetsEmbedder::new),
@@ -151,14 +154,28 @@ public enum SSCAppVersionEmbedderSupplier implements ISSCEntityEmbedderSupplier 
     private static final class SSCAppVersionAttributesByNameEmbedder extends AbstractSSCAppVersionAttributeEmbedder {
         @Override
         protected void update(ObjectNode record, JsonNode attrs) {
-            record.set("attrsByName", getAttributeHelper().getAttributeValues(attrs, "name"));
+            record.set("attrsByName", getAttributeHelper().getAttributesBy(attrs, "name", Function.identity()));
         }
     }
     
     private static final class SSCAppVersionAttributesByGuidEmbedder extends AbstractSSCAppVersionAttributeEmbedder {
         @Override
         protected void update(ObjectNode record, JsonNode attrs) {
-            record.set("attrsByGuid", getAttributeHelper().getAttributeValues(attrs, "guid"));
+            record.set("attrsByGuid", getAttributeHelper().getAttributesBy(attrs, "guid", SSCAppVersionAttributeHelper::getValuesForAttribute));
+        }
+    }
+    
+    private static final class SSCAppVersionAttributeValuesByNameEmbedder extends AbstractSSCAppVersionAttributeEmbedder {
+        @Override
+        protected void update(ObjectNode record, JsonNode attrs) {
+            record.set("attrValuesByName", getAttributeHelper().getAttributesBy(attrs, "name", SSCAppVersionAttributeHelper::getValuesForAttribute));
+        }
+    }
+    
+    private static final class SSCAppVersionAttributeValuesByGuidEmbedder extends AbstractSSCAppVersionAttributeEmbedder {
+        @Override
+        protected void update(ObjectNode record, JsonNode attrs) {
+            record.set("attrValuesByGuid", getAttributeHelper().getAttributesBy(attrs, "guid", Function.identity()));
         }
     }
     

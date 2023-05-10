@@ -18,9 +18,11 @@ import lombok.experimental.Accessors;
 public class MspReportResultsWriters {
     private final IProgressHelperI18n progressHelper;
     private final IReportErrorEntryWriter errorWriter;
+    private final IMspReportAppVersionsWriter appVersionWriter;
     
     public MspReportResultsWriters(IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
         this.progressHelper = progressHelper;
         this.errorWriter = new ReportErrorEntryWriter(reportWriter, progressHelper);
+        this.appVersionWriter = new MspReportAppVersionsWriter(reportWriter);
     }
 }

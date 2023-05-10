@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.ssc.entity.attribute_definition.domain.SSCAttributeDefinitionType;
 import com.fortify.cli.ssc.entity.attribute_definition.helper.SSCAttributeDefinitionDescriptor;
 import com.fortify.cli.ssc.entity.attribute_definition.helper.SSCAttributeDefinitionHelper;
 
@@ -153,14 +154,14 @@ public final class SSCAppVersionAttributeUpdateBuilder {
     }
     
     private static final String getDefaultAttributeValue(SSCAttributeDefinitionDescriptor descriptor) {
-        JsonNode options = descriptor.getOptions();
+        JsonNode options = descriptor.getOptionsAsJson();
         if ( options != null && !options.isEmpty() ) {
             return options.get(0).get("guid").asText();
         } else {
             switch ( descriptor.getType() ) {
-                case "INTEGER": return null;
-                case "BOOLEAN": return "true";
-                case "DATE": return new Date().toString();
+                case INTEGER: return null;
+                case BOOLEAN: return "true";
+                case DATE: return new Date().toString();
                 default: return "fcli auto-value";
             }
         }
@@ -170,28 +171,28 @@ public final class SSCAppVersionAttributeUpdateBuilder {
         String attrNameOrId = attrEntry.getKey();
         SSCAttributeDefinitionDescriptor descriptor = helper.getAttributeDefinitionDescriptor(attrNameOrId);
         String attrId = descriptor.getId();
-        String type = descriptor.getType();
+        SSCAttributeDefinitionType type = descriptor.getType();
         String value = attrEntry.getValue();
         
         ObjectNode attrUpdateNode = objectMapper.createObjectNode();
         attrUpdateNode.put("attributeDefinitionId", attrId);
         
         switch ( type ) {
-        case "MULTIPLE": 
+        case MULTIPLE: 
             attrUpdateNode.set("values", getOptionMultiValues(helper, descriptor, value)); break;
-        case "SINGLE":   
+        case SINGLE:   
             attrUpdateNode.set("values", getOptionSingleValue(helper, descriptor, value)); break;
-        case "TEXT":     
+        case TEXT:     
             attrUpdateNode.put("value", value); break;
-        case "LONG_TEXT":
+        case LONG_TEXT:
             attrUpdateNode.put("value", value); break;
-        case "SENSITIVE_TEXT":
+        case SENSITIVE_TEXT:
             attrUpdateNode.put("value", value); break;
-        case "BOOLEAN":
+        case BOOLEAN:
             attrUpdateNode.put("value", getOptionBooleanValue(descriptor, value)); break;
-        case "INTEGER":
+        case INTEGER:
             attrUpdateNode.put("value", getOptionIntegerValue(descriptor, value)); break;
-        case "DATE":
+        case DATE:
             attrUpdateNode.put("value", getOptionDateValue(descriptor, value)); break;
         default:
             throw new IllegalStateException("Unknown attribute type "+type+" for attribute "+descriptor.getFullName());

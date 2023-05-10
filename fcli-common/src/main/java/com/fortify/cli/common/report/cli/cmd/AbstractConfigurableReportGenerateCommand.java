@@ -46,6 +46,9 @@ import picocli.CommandLine.Mixin;
  * <ol>
  *  <li>Deserializes the configuration file returned by {@link #getConfigFile()} 
  *      into an instance of the type returned by {@link #getConfigType()}</li>
+ *  <li>Calls the {@link #updateConfig(IReportSourceSupplierConfig)} method to
+ *      allow sub-classes to update the configuration, for example based on CLI
+ *      options</li>
  *  <li>Creates a results collector by calling 
  *      {@link #createResultsCollector(IReportSourceSupplierConfig, IReportWriter, IProgressHelperI18n)}</li>
  *  <li>Iterates over all sources defined in the configuration<li>
@@ -60,6 +63,10 @@ import picocli.CommandLine.Mixin;
 public abstract class AbstractConfigurableReportGenerateCommand<C extends IReportSourceSupplierConfig<R>, R extends IReportResultsCollector> extends AbstractReportGenerateCommand {
     @Mixin private ProgressHelperFactoryMixin progressHelperFactory;
     
+    /**
+     * Generate report by instantiating progress helper, report config, 
+     * results collector, and generators and running the latter.
+     */
     @Override
     protected final void generateReport(IReportWriter reportWriter) {
         try ( var progressHelper = progressHelperFactory.createProgressHelper() ) {
@@ -75,12 +82,21 @@ public abstract class AbstractConfigurableReportGenerateCommand<C extends IRepor
         }
     }
 
+    /**
+     * Run the given generator in a try-with-resources block.
+     */
     private final void runGenerator(IReportSourceConfig<R> c, R resultsCollector) {
         try ( var generator = c.generator(resultsCollector) ) {
             generator.run();
         }
     }
 
+    /**
+     * Get the report configuration by deserializing the configuration
+     * file returned by the {@link #getConfigFile()} method, and calling
+     * the {@link #updateConfig(IReportSourceSupplierConfig)} method
+     * after deserialization to allow subclasses to update the configuration.
+     */
     private final C getReportConfig() {
         File configFile = getConfigFile();
         try {
@@ -88,13 +104,40 @@ public abstract class AbstractConfigurableReportGenerateCommand<C extends IRepor
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             mapper.registerModule(new Jdk8Module());
             mapper.registerModule(new JavaTimeModule());
-            return mapper.readValue(configFile, getConfigType());
+            C result = mapper.readValue(configFile, getConfigType());
+            updateConfig(result);
+            return result;
         } catch ( Exception e ) {
             throw new IllegalStateException(String.format("Error processing configuration file %s:\n\tMessage: %s", configFile.getAbsolutePath(), e.getMessage()));
         }
     }
     
+    /**
+     * This method can optionally be overridden by subclasses to
+     * update the configuration before it is being used to generate
+     * the report, for example to set CLI option values on the
+     * configuration.
+     */
+    protected void updateConfig(C config) {}
+    
+    /**
+     * This method must be implemented by subclasses, usually by
+     * providing a CLI option field with Lombok Getter annotation.
+     * We can't provide a standard option in this class, as each
+     * command may have its own default option value.
+     */
     protected abstract File getConfigFile();
+    
+    /**
+     * This method must be implemented by subclasses to return a
+     * {@link Class} instance that matches the generic type of this
+     * class.
+     */
     protected abstract Class<C> getConfigType();
+    
+    /**
+     * This method must be implemented by subclasses to create a
+     * report-specific results processor.
+     */
     protected abstract R createResultsCollector(C config, IReportWriter reportWriter, IProgressHelperI18n progressHelper);
 }

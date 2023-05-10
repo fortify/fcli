@@ -86,7 +86,7 @@ public final class SSCAttributeDefinitionHelper {
         descriptorsByGuid.put(category+":"+guid, descriptor);
         descriptorsByName.put(name, descriptor);
         descriptorsByName.put(category+":"+name, descriptor);
-        attrOptionsByIdMap.put(id, new SSCAttributeOptionDefinitionHelper(descriptor.getOptions()));
+        attrOptionsByIdMap.put(id, new SSCAttributeOptionDefinitionHelper(descriptor.getOptionsAsJson()));
     }
     
     /**

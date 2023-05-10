@@ -25,6 +25,7 @@
 package com.fortify.cli.util.msp_report.cli.cmd;
 
 import java.io.File;
+import java.time.LocalDate;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
@@ -43,10 +44,20 @@ public final class MspReportGenerateCommand extends AbstractConfigurableReportGe
     @Getter @Mixin private OutputHelperMixins.Generate outputHelper;
     @Option(names = {"-c","--config"}, required = true, defaultValue = "MspReportConfig.yml")
     @Getter private File configFile;
+    @Option(names = {"-s","--start-date"}, required = true)
+    private LocalDate reportingStartDate;
+    @Option(names = {"-e","--end-date"}, required = true)
+    private LocalDate reportingEndDate;
     
     @Override
     protected String getReportTitle() {
         return "Managed Service Provider (MSP) Report";
+    }
+    
+    @Override
+    protected void updateConfig(MspReportConfig config) {
+        config.setReportingStartDate(reportingStartDate);
+        config.setReportingEndDate(reportingEndDate);
     }
     
     @Override

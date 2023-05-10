@@ -24,8 +24,16 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.entity.attribute_definition.helper;
 
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.ssc.entity.attribute_definition.domain.SSCAttributeDefinitionType;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
@@ -39,15 +47,61 @@ public class SSCAttributeDefinitionDescriptor extends JsonNodeHolder {
     private String guid;
     private String name;
     private String category;
-    private String type;
+    private SSCAttributeDefinitionType type;
     private boolean required;
+    private Map<String, SSCAttributeOptionDefinitionDescriptor> optionsByName = new LinkedHashMap<>();
+    private Map<String, SSCAttributeOptionDefinitionDescriptor> optionsByGuid = new LinkedHashMap<>();
     @Accessors(fluent=true) private boolean hasDefault;
     
-    public JsonNode getOptions() {
+    @JsonProperty("options")
+    public void setOptions(ArrayNode optionsNode) {
+        if ( optionsNode!=null ) {
+            JsonHelper.stream(optionsNode)
+                .map(o->JsonHelper.treeToValue(o, SSCAttributeOptionDefinitionDescriptor.class))
+                .forEach(this::addOption);
+        }
+    }
+    
+    private void addOption(SSCAttributeOptionDefinitionDescriptor descriptor) {
+        optionsByName.put(descriptor.getName(), descriptor);
+        optionsByGuid.put(descriptor.getGuid(), descriptor);
+    }
+    
+    public JsonNode getOptionsAsJson() {
         return asJsonNode().get("options");
     }
     
     public String getFullName() {
         return category+":"+name;
+    }
+    
+    public String getTypeName() {
+        return type.name();
+    }
+    
+    public void checkIsRequired() {
+        if ( !required ) {
+            throw new IllegalStateException("SSC attribute "+name+" must be configured as required attribute");
+        }
+    }
+    
+    public void checkType(SSCAttributeDefinitionType requiredType) {
+        if ( this.type!=requiredType ) {
+            throw new IllegalStateException("SSC attribute "+name+" must be configured as type "+requiredType.name());
+        }
+    }
+    
+    public void checkOptionNames(String... requiredNames) {
+        var names = optionsByName.keySet();
+        var requiredNamesList = Arrays.asList(requiredNames);
+        if ( optionsByName.keySet().size()!=requiredNames.length || !names.containsAll(requiredNamesList) ) {
+            throw new IllegalStateException("SSC attribute "+name+" must be configured to have exactly these options: "+requiredNamesList);
+        }                
+    }
+    
+    public void check(boolean required, SSCAttributeDefinitionType requiredType, String... requiredOptionNames) {
+        if ( required ) { checkIsRequired(); }
+        if ( requiredType!=null ) { checkType(requiredType); }
+        if ( requiredOptionNames!=null ) { checkOptionNames(requiredOptionNames); }
     }
 }

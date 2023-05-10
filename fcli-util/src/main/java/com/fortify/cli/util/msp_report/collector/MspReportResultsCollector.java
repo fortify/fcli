@@ -19,8 +19,7 @@ import lombok.experimental.Accessors;
  * This class is the primary entry point for collecting and outputting report data.
  * An instance of this class is created by the {@link MspReportGenerateCommand}
  * and passed to the source-specific generators. Source-specific generators can use
- * this class to access the {@link IReportErrorEntryWriter} and 
- * TODO instances.
+ * this class to access the {@link IReportErrorEntryWriter} and various result collectors.
  * 
  * @author rsenden
  *
@@ -31,12 +30,14 @@ public final class MspReportResultsCollector implements IReportResultsCollector 
     @Getter private final IProgressHelperI18n progressHelper;
     private final IReportWriter reportWriter;
     private final MspReportResultsWriters writers;
+    @Getter private final MspReportAppVersionCollector appVersionCollector;
     
     public MspReportResultsCollector(MspReportConfig reportConfig, IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
         this.reportConfig = reportConfig;
         this.progressHelper = progressHelper;
         this.reportWriter = reportWriter;
         this.writers = new MspReportResultsWriters(reportWriter, progressHelper);
+        this.appVersionCollector = new MspReportAppVersionCollector(this.writers, reportWriter.summary());
     }
     
     /**
@@ -50,10 +51,11 @@ public final class MspReportResultsCollector implements IReportResultsCollector 
 
     @Override @SneakyThrows
     public void close() {
-        // TODO Validate configuration contains required properties when initializing,
-        //      not when closing the report.
         reportWriter.summary().put("mspName", reportConfig.getMspName());
         reportWriter.summary().put("contractStartDate", reportConfig.getContractStartDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        reportWriter.summary().put("reportingStartDate", reportConfig.getReportingStartDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        reportWriter.summary().put("reportingEndDate", reportConfig.getReportingEndDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        appVersionCollector.writeResults();
         reportWriter.summary().put("errorCount", errorWriter().getErrorCount());
     }
 }
