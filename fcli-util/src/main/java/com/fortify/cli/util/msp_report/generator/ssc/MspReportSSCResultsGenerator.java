@@ -4,23 +4,25 @@ import static com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCAppVersi
 import static com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCAppVersionAttribute.MSP_End_Customer_Name;
 import static com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCAppVersionAttribute.MSP_License_Type;
 
-import java.util.Random;
-
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.entity.appversion.helper.SSCAppVersionEmbedderSupplier;
 import com.fortify.cli.ssc.entity.attribute_definition.domain.SSCAttributeDefinitionType;
 import com.fortify.cli.ssc.entity.attribute_definition.helper.SSCAttributeDefinitionHelper;
 import com.fortify.cli.ssc.entity.token.helper.SSCTokenConverter;
 import com.fortify.cli.ssc.rest.bulk.SSCBulkEmbedder;
+import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc.rest.helper.SSCPagingHelper;
-import com.fortify.cli.util.msp_report.collector.MspReportAppVersionCollector;
+import com.fortify.cli.ssc.rest.helper.SSCPagingHelper.SSCContinueNextPageSupplier;
+import com.fortify.cli.util.msp_report.collector.MspReportAppArtifactCollector;
+import com.fortify.cli.util.msp_report.collector.MspReportAppArtifactCollector.MspReportArtifactCollectorState;
 import com.fortify.cli.util.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.util.msp_report.config.MspReportSSCSourceConfig;
 import com.fortify.cli.util.msp_report.generator.AbstractMspReportUnirestResultsGenerator;
-import com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCProcessedAppVersionDescriptor.MspReportSSCAppVersionProcessingStatus;
 
 import io.micrometer.common.util.StringUtils;
+import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 
@@ -51,8 +53,8 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
     @Override
     protected void generateResults() {
         validateSSCAttributes();
-        SSCPagingHelper.pagedRequest(unirest().get("/api/v1/projectVersions?limit=100"))
-            .forEach(this::processAppVersionPage);
+        SSCPagingHelper.pagedRequest(unirest().get("/api/v1/projects?limit=100"))
+            .forEach(this::processAppPage);
     }
     
     /**
@@ -68,52 +70,84 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
             .check(false, SSCAttributeDefinitionType.TEXT);
     }
     
-    /**
-     * This method processes a single page of application versions,
-     * embedding additional data using {@link #appVersionBulkEmbedder}
-     * and then invoking {@link #processAppVersion(JsonNode)} for each
-     * application version.
-     */
-    private void processAppVersionPage(HttpResponse<JsonNode> response) {
-        appVersionBulkEmbedder.transformInput(unirest(), response.getBody())
-            .forEach(this::processAppVersion);
+    private void processAppPage(HttpResponse<JsonNode> response) {
+        var apps = ((ArrayNode)SSCInputTransformer.getDataOrSelf(response.getBody()));
+        JsonHelper.stream(apps).forEach(this::processApp);
     }
     
-    /**
-     * This method handles a single application version represented by 
-     * the given {@link JsonNode}. The node will be converted to an
-     * {@link MspReportSSCAppVersionDescriptor} instance, which is passed
-     * to the {@link #processAppVersion(MspReportSSCAppVersionDescriptor)}
-     * method for further processing. Based on processing state, a new
-     * {@link MspReportSSCProcessedAppVersionDescriptor} instance will
-     * then be created and passed to the {@link MspReportAppVersionCollector}
-     * provided by the configured {@link MspReportResultsCollector}.
-     */
-    private void processAppVersion(JsonNode appVersionNode) {
-        var descriptor = JsonHelper.treeToValue(appVersionNode, MspReportSSCAppVersionDescriptor.class);
+    private void processApp(JsonNode appNode) {
+        var descriptor = JsonHelper.treeToValue(appNode, MspReportSSCAppDescriptor.class);
+        resultsCollector().progressHelper().writeI18nProgress("processing.app", descriptor.getName());
         try {
-            var summary = processAppVersion(descriptor.check());
-            resultsCollector().appVersionCollector().report(sourceConfig(), new MspReportSSCProcessedAppVersionDescriptor(descriptor, MspReportSSCAppVersionProcessingStatus.success, "Successfully processed", summary));
+            loadVersionsForApp(descriptor);
+            descriptor.check(resultsCollector().logger());
+            var summary = processApp(descriptor);
+            var status = descriptor.getWarnCounter().getCount()>0 
+                    ? MspReportProcessingStatus.warn
+                    : MspReportProcessingStatus.success;
+            var reason = status==MspReportProcessingStatus.warn
+                    ? "Processed with warnings"
+                    : "Successfully processed";
+            resultsCollector().appCollector()
+                .report(sourceConfig(), new MspReportSSCProcessedAppDescriptor(descriptor, status, reason, summary));
         } catch ( Exception e ) {
-            resultsCollector().errorWriter().addReportError("Error loading data for application version "+descriptor.getAppAndVersionName(), e);
-            resultsCollector().appVersionCollector().report(sourceConfig(), new MspReportSSCProcessedAppVersionDescriptor(descriptor, MspReportSSCAppVersionProcessingStatus.error, e.getMessage(), createSummaryDescriptor(descriptor)));
+            resultsCollector().logger().error("Error Processing application %s", e, descriptor.getName());
+            resultsCollector().appCollector()
+                .report(sourceConfig(), new MspReportSSCProcessedAppDescriptor(descriptor, MspReportProcessingStatus.error, e.getMessage(), new MspReportSSCAppSummaryDescriptor()));
+        }
+    }
+    
+    private void loadVersionsForApp(MspReportSSCAppDescriptor descriptor) {
+        SSCPagingHelper.pagedRequest(
+            unirest().get("/api/v1/projects/{id}/versions?limit=100")
+                .routeParam("id", descriptor.getId()))
+            .forEach(r->loadAppVersionPage(descriptor, r.getBody()));
+    }
+    
+    private void loadAppVersionPage(MspReportSSCAppDescriptor appDescriptor, JsonNode body) {
+        var appVersions = appVersionBulkEmbedder.transformInput(unirest(), body);
+        JsonHelper.stream(appVersions)
+            .map(node->JsonHelper.treeToValue(node, MspReportSSCAppVersionDescriptor.class))
+            .forEach(versionDescriptor -> appDescriptor.addVersionDescriptor(resultsCollector().logger(), versionDescriptor));
+    }
+
+    private MspReportSSCAppSummaryDescriptor processApp(MspReportSSCAppDescriptor appDescriptor) {
+        try ( var artifactCollector = resultsCollector().artifactCollector(sourceConfig(), appDescriptor) ) {
+            appDescriptor.getVersionDescriptors()
+                .forEach(versionDescriptor->processAppVersion(versionDescriptor, artifactCollector));
+            return artifactCollector.summary();
+        }
+    }
+    
+    private void processAppVersion(MspReportSSCAppVersionDescriptor descriptor, MspReportAppArtifactCollector artifactCollector) {
+        try {
+            var continueNextPageSupplier = new SSCContinueNextPageSupplier();
+            HttpRequest<?> req = unirest().get("/api/v1/projectVersions/{pvId}/artifacts?limit=100")
+                    .routeParam("pvId", descriptor.getVersionId());
+            SSCPagingHelper.pagedRequest(req, continueNextPageSupplier)
+                .forEach(r->processArtifactPage(r.getBody(), artifactCollector, continueNextPageSupplier));
+            resultsCollector().appVersionCollector()
+                .report(sourceConfig(), new MspReportSSCProcessedAppVersionDescriptor(descriptor, MspReportProcessingStatus.success, "Successfully processed"));
+        } catch ( Exception e ) {
+            resultsCollector().logger().error("Error loading artifacts for application version %s", e, descriptor.getAppAndVersionName());
+            resultsCollector().appVersionCollector()
+                .report(sourceConfig(), new MspReportSSCProcessedAppVersionDescriptor(descriptor, MspReportProcessingStatus.error, e.getMessage()));
+            throw e;
         }
     }
 
-    private MspReportSSCAppVersionEntitlementSummaryDescriptor processAppVersion(MspReportSSCAppVersionDescriptor descriptor) {
-        var result = createSummaryDescriptor(descriptor);
-        // TODO - Load artifacts within reporting period
-        //      - Increase count for every artifact found
-        //      - Write artifact details to CSV file
-        int nrOfScans = new Random().nextInt(500);
-        for ( int i=0 ; i<nrOfScans ; i++ ) {
-            result.increaseNumberOfScansInReportingPeriod();
-        }
-        return result;
+    private void processArtifactPage(JsonNode body, MspReportAppArtifactCollector artifactCollector, SSCContinueNextPageSupplier continueNextPageSupplier) {
+        var done = JsonHelper.stream((ArrayNode)SSCInputTransformer.getDataOrSelf(body))
+            .map(this::createArtifactDescriptor)
+            .map(artifactCollector::report)
+            .filter(MspReportArtifactCollectorState.DONE::equals)
+            .findFirst()
+            .isPresent();
+        continueNextPageSupplier.setLoadNextPage(!done);
     }
-
-    private MspReportSSCAppVersionEntitlementSummaryDescriptor createSummaryDescriptor(MspReportSSCAppVersionDescriptor descriptor) {
-        return new MspReportSSCAppVersionEntitlementSummaryDescriptor(descriptor.getMspLicenseType());
+    
+    private MspReportSSCArtifactDescriptor createArtifactDescriptor(JsonNode artifactNode) {
+        return JsonHelper.treeToValue(artifactNode, MspReportSSCArtifactDescriptor.class);
     }
 
     /**

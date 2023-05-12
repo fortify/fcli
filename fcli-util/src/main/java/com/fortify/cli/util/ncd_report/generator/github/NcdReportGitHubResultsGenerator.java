@@ -68,7 +68,7 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportUnirestRes
                 .ifSuccess(r->r.getBody().forEach(repo->
                     resultsCollector().repositoryProcessor().processRepository(new NcdReportCombinedRepoSelectorConfig(sourceConfig(), orgConfig), getRepoDescriptor(repo), this::generateCommitData)));
         } catch ( Exception e ) {
-            resultsCollector().errorWriter().addReportError(String.format("Error processing organization: %s (%s)", orgName, sourceConfig().getApiUrl()), e);
+            resultsCollector().logger().error(String.format("Error processing organization: %s (%s)", orgName, sourceConfig().getApiUrl()), e);
         }
     }
     

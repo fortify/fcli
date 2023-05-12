@@ -74,7 +74,7 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestRes
                 .ifSuccess(r->r.getBody().forEach(project->
                     resultsCollector().repositoryProcessor().processRepository(new NcdReportCombinedRepoSelectorConfig(sourceConfig(), groupConfig), getRepoDescriptor(project), this::generateCommitData)));
         } catch ( Exception e ) {
-            resultsCollector().errorWriter().addReportError(String.format("Error processing group: %s (%s)", groupId, sourceConfig().getBaseUrl()), e);
+            resultsCollector().logger().error(String.format("Error processing group: %s (%s)", groupId, sourceConfig().getBaseUrl()), e);
         }
     }
     

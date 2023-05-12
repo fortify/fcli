@@ -1,9 +1,9 @@
 package com.fortify.cli.common.report.collector;
 
-import com.fortify.cli.common.report.writer.entry.IReportErrorEntryWriter;
+import com.fortify.cli.common.report.logger.IReportLogger;
 
 public interface IReportResultsCollector extends AutoCloseable {
-    IReportErrorEntryWriter errorWriter();
+    IReportLogger logger();
     /**
      * Override default close method to not throw any exception.
      */

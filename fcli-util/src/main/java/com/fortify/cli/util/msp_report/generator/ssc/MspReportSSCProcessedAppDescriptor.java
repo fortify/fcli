@@ -6,15 +6,17 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor @Data
-public class MspReportSSCProcessedAppVersionDescriptor {
-    private final MspReportSSCAppVersionDescriptor appVersionDescriptor;
+public class MspReportSSCProcessedAppDescriptor {
+    private final MspReportSSCAppDescriptor appDescriptor;
     private final MspReportProcessingStatus status;
     private final String reason;
-    
+    private final MspReportSSCAppSummaryDescriptor appSummaryDescriptor;
+
     public ObjectNode updateReportRecord(ObjectNode objectNode) {
-        return appVersionDescriptor.updateReportRecord(objectNode)
+        return appSummaryDescriptor.updateReportRecord(
+                appDescriptor.updateReportRecord(objectNode)
                     .put("status", status.name())
-                    .put("reson", reason)
+                    .put("reson", reason))
                 ;
     }
 }

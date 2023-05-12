@@ -1,9 +1,9 @@
 package com.fortify.cli.util.msp_report.writer;
 
 import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.report.logger.IReportLogger;
+import com.fortify.cli.common.report.logger.ReportLogger;
 import com.fortify.cli.common.report.writer.IReportWriter;
-import com.fortify.cli.common.report.writer.entry.IReportErrorEntryWriter;
-import com.fortify.cli.common.report.writer.entry.ReportErrorEntryWriter;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -17,12 +17,16 @@ import lombok.experimental.Accessors;
 @Getter @Accessors(fluent=true)
 public class MspReportResultsWriters {
     private final IProgressHelperI18n progressHelper;
-    private final IReportErrorEntryWriter errorWriter;
-    private final IMspReportAppVersionsWriter appVersionWriter;
+    private final IReportLogger logger;
+    private final IMspReportAppsWriter appsWriter;
+    private final IMspReportAppVersionsWriter appVersionsWriter;
+    private final IMspReportAppArtifactsWriter artifactsWriter;
     
     public MspReportResultsWriters(IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
         this.progressHelper = progressHelper;
-        this.errorWriter = new ReportErrorEntryWriter(reportWriter, progressHelper);
-        this.appVersionWriter = new MspReportAppVersionsWriter(reportWriter);
+        this.logger = new ReportLogger(reportWriter, progressHelper);
+        this.appsWriter = new MspReportAppsWriter(reportWriter);
+        this.appVersionsWriter = new MspReportAppVersionsWriter(reportWriter);
+        this.artifactsWriter = new MspReportAppArtifactsWriter(reportWriter);
     }
 }

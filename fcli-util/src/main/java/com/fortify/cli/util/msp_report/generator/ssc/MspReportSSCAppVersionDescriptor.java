@@ -4,6 +4,8 @@ import static com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCAppVersi
 import static com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCAppVersionAttribute.MSP_End_Customer_Name;
 import static com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCAppVersionAttribute.MSP_License_Type;
 
+import java.time.ZonedDateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -11,22 +13,26 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
 @ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
 public class MspReportSSCAppVersionDescriptor extends JsonNodeHolder {
+    // We need to exclude this field from toString, equals and hashCode to
+    // avoid endless recursion
+    @ToString.Exclude @EqualsAndHashCode.Exclude private MspReportSSCAppDescriptor appDescriptor;
     @JsonProperty("id") private String versionId;
-    private String applicationName;
     @JsonProperty("name") private String versionName;
+    @JsonProperty("creationDate") private ZonedDateTime versionCreationDate;
     private boolean active;
-    private MspReportLicenseType mspLicenseType;
-    private String mspEndCustomerName;
-    private String mspEndCustomerLocation;
-    
-    public void setProject(ObjectNode project) {
-        applicationName = project.get("name").asText();
-    }
+    // MSP attribute values should only be accessed by MspReportSSCAppDescriptor,
+    // hence access level PACKAGE
+    @Getter(AccessLevel.PACKAGE) private MspReportLicenseType mspLicenseType;
+    @Getter(AccessLevel.PACKAGE) private String mspEndCustomerName;
+    @Getter(AccessLevel.PACKAGE) private String mspEndCustomerLocation;
     
     public void setAttrValuesByName(ObjectNode attrValuesByName) {
         mspLicenseType = JsonHelper.evaluateSpelExpression(attrValuesByName, MSP_License_Type.asExpression(), MspReportLicenseType.class);
@@ -34,29 +40,20 @@ public class MspReportSSCAppVersionDescriptor extends JsonNodeHolder {
         mspEndCustomerLocation = JsonHelper.evaluateSpelExpression(attrValuesByName, MSP_End_Customer_Location.asExpression(), String.class);
     }
 
-    public MspReportSSCAppVersionDescriptor check() {
-        // Even though we have already validated the attribute definitions,
-        // attribute values may still be blank if an application version
-        // was created before the attributes were created/set to required.
-        checkNotBlankAttr("mspLicenseType", mspLicenseType);
-        return this;
+    public void setAppDescriptor(MspReportSSCAppDescriptor appDescriptor) {
+        this.appDescriptor = appDescriptor;
     }
     
     @JsonIgnore
     public String getAppAndVersionName() {
-        return applicationName+":"+versionName;
-    }
-
-    private void checkNotBlankAttr(String name, Object value) {
-        if ( value==null || (value instanceof String && ((String) value).isBlank()) ) {
-            throw new IllegalStateException(String.format("Blank value not allowed for attribute %s (%s)", name, getAppAndVersionName()));
-        }
+        return appDescriptor.getName()+":"+versionName;
     }
 
     public ObjectNode updateReportRecord(ObjectNode objectNode) {
-        return objectNode.put("applicationName", applicationName)
-                .put("versionName", versionName)
+        return appDescriptor.updateReportRecord(objectNode)
                 .put("versionId", versionId)
+                .put("versionName", versionName)
+                .put("versionCreationDate", versionCreationDate.toString())
                 .put("active", active)
                 .put("mspLicenseType", mspLicenseType.name())
                 .put("mspEndCustomerName", mspEndCustomerName)

@@ -40,7 +40,7 @@ final class NcdReportRepositoryCollector {
 
     void reportRepositoryError(INcdReportRepositoryDescriptor descriptor, Exception e) {
         // TODO Log error
-        writers.errorWriter().addReportError("Error loading repository: "+descriptor.getUrl(), e);
+        writers.logger().error("Error loading repository: "+descriptor.getUrl(), e);
         reportRepository(descriptor, NcdReportRepositoryReportingStatus.error, e.getMessage());
     }
     

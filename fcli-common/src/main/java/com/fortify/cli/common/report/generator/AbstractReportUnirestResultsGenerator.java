@@ -73,7 +73,7 @@ public abstract class AbstractReportUnirestResultsGenerator<T extends IUrlConfig
      * report output. 
      */
     private final void handleSourceError(Exception e) {
-        resultsCollector().errorWriter().addReportError(String.format("Error processing %s source: %s", getType(), sourceConfig().getUrl()), e);
+        resultsCollector().logger().error(String.format("Error processing %s source: %s", getType(), sourceConfig().getUrl()), e);
     }
     
     /**

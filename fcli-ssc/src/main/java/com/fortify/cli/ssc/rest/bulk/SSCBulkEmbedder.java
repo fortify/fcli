@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
 
@@ -30,11 +30,11 @@ public class SSCBulkEmbedder {
                 .collect(Collectors.toList());
     }
     
-    public JsonNode transformInput(UnirestInstance unirest, JsonNode input) {
-        var records = SSCInputTransformer.getDataOrSelf(input);
-        if ( records instanceof ObjectNode ) {
-            records = JsonHelper.toArrayNode(records);
-        }
+    public ArrayNode transformInput(UnirestInstance unirest, JsonNode input) {
+        var data = SSCInputTransformer.getDataOrSelf(input);
+        var records = data instanceof ArrayNode 
+                ? (ArrayNode) data
+                : JsonHelper.toArrayNode(data);
         if ( embedders!=null ) {
             SSCBulkRequestBuilder builder = new SSCBulkRequestBuilder();
             for ( var record : records ) {
