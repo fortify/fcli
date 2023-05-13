@@ -75,13 +75,13 @@ public final class MspReportAppCollector {
         } else {
             switch (mspLicenseType) {
             case Application: 
-                increaseCountByAttrStatus(MspReportSSCAppAttrStatus.applicationLicenseType);
+                increaseCountByAttrStatus(MspReportSSCAppAttrStatus.appsWithApplicationLicense);
                 break;
             case Demo:
-                increaseCountByAttrStatus(MspReportSSCAppAttrStatus.demoLicenseType);
+                increaseCountByAttrStatus(MspReportSSCAppAttrStatus.appsWithDemoLicense);
                 break;
             case Scan:
-                increaseCountByAttrStatus(MspReportSSCAppAttrStatus.scanLicenseType);
+                increaseCountByAttrStatus(MspReportSSCAppAttrStatus.appsWithScanLicense);
                 break;
             }
         }
@@ -104,6 +104,6 @@ public final class MspReportAppCollector {
     }
     
     private static enum MspReportSSCAppAttrStatus {
-        demoLicenseType, applicationLicenseType, scanLicenseType
+        appsWithDemoLicense, appsWithApplicationLicense, appsWithScanLicense
     }
 }

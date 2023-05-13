@@ -20,13 +20,13 @@ public class MspReportResultsWriters {
     private final IReportLogger logger;
     private final IMspReportAppsWriter appsWriter;
     private final IMspReportAppVersionsWriter appVersionsWriter;
-    private final IMspReportAppArtifactsWriter artifactsWriter;
+    private final IMspReportProcessedArtifactsWriter processedArtifactsWriter;
     
     public MspReportResultsWriters(IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
         this.progressHelper = progressHelper;
         this.logger = new ReportLogger(reportWriter, progressHelper);
         this.appsWriter = new MspReportAppsWriter(reportWriter);
         this.appVersionsWriter = new MspReportAppVersionsWriter(reportWriter);
-        this.artifactsWriter = new MspReportAppArtifactsWriter(reportWriter);
+        this.processedArtifactsWriter = new MspReportProcessedArtifactsWriter(reportWriter);
     }
 }

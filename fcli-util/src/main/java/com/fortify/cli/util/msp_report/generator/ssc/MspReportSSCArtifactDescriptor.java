@@ -2,7 +2,6 @@ package com.fortify.cli.util.msp_report.generator.ssc;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -65,10 +64,14 @@ public final class MspReportSSCArtifactDescriptor extends JsonNodeHolder {
         return scanTypes;
     }
     
-    public Set<MspReportSSCArtifactScanType> getMatchingFortifyScanTypes(Collection<MspReportSSCArtifactScanType> scanTypes) {
-        var result = new HashSet<>(getFortifyScanTypes());
-        result.retainAll(scanTypes);
-        return result;
+    public Set<MspReportSSCArtifactScanType> getFortifyScanTypes() {
+        if ( fortifyScanTypes==null ) {
+            fortifyScanTypes = getScanTypes()
+                    .stream()
+                    .filter(MspReportSSCArtifactScanType::isFortifyScan)
+                    .collect(Collectors.toSet());
+        }
+        return fortifyScanTypes;
     }
     
     public String getScanTypesString() {

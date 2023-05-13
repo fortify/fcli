@@ -58,6 +58,7 @@ public final class MspReportGenerateCommand extends AbstractConfigurableReportGe
     protected void updateConfig(MspReportConfig config) {
         config.setReportingStartDate(reportingStartDate);
         config.setReportingEndDate(reportingEndDate);
+        config.validate();
     }
     
     @Override

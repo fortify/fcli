@@ -99,17 +99,18 @@ public abstract class AbstractConfigurableReportGenerateCommand<C extends IRepor
      */
     private final C getReportConfig() {
         File configFile = getConfigFile();
+        C result;
         try {
             // TODO Configure to fail on unknown properties
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             mapper.registerModule(new Jdk8Module());
             mapper.registerModule(new JavaTimeModule());
-            C result = mapper.readValue(configFile, getConfigType());
-            updateConfig(result);
-            return result;
+            result = mapper.readValue(configFile, getConfigType());
         } catch ( Exception e ) {
             throw new IllegalStateException(String.format("Error processing configuration file %s:\n\tMessage: %s", configFile.getAbsolutePath(), e.getMessage()));
         }
+        updateConfig(result);
+        return result;
     }
     
     /**
