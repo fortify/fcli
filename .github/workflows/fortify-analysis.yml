@@ -22,7 +22,7 @@ name: Fortify on Demand Scan
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ develop ]
   schedule:
     - cron: '16 0 * * 5'
 
@@ -40,6 +40,8 @@ jobs:
       # Check out source code
       - name: Check Out Source Code
         uses: actions/checkout@v2
+        with:
+          ref: develop
 
       # Java is required to run the various Fortify utilities.
       # When scanning a Java application, please use the appropriate Java version for building your application.
