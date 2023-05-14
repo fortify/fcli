@@ -6,7 +6,7 @@ on:
        
 env:
   native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization
-  graal_version: 22.3.1
+  graal_version: 22.3.2
   graal_java_version: 17
           
 jobs:
