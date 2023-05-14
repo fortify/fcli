@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230505.122628-dev_2.0.0-beta
+fcli_version: 0.20230514.120151-dev_2.0.0-beta
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20230505.122628-dev_2.0.0-beta
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230505.122628-dev_2.0.0-beta" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230514.120151-dev_2.0.0-beta" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230505.122628-dev_2.0.0-beta</span>
+<span id="revnumber">version 0.20230514.120151-dev_2.0.0-beta</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -37,6 +37,7 @@ fcli_version: 0.20230505.122628-dev_2.0.0-beta
 <li><a href="#_log_file">–log-file</a></li>
 <li><a href="#_o_output">-o | –output</a></li>
 <li><a href="#_output_to_file">–output-to-file</a></li>
+<li><a href="#_progress">--progress</a></li>
 <li><a href="#_store">–store</a></li>
 <li><a href="#_q_query">-q | –query</a></li>
 <li><a href="#_session">–session</a></li>
@@ -313,7 +314,7 @@ JSON properties, except for table output, which usually outputs a predefined set
 <ul>
 <li>
 <p><code>-o 'expr=Text with {expression1} or {expression2}\n'</code><br>
-Formats the output data based on the given template expression, which is a combination of (optional) plain text and SpEL expressions; see <a href="#_option_expressions">Option Expressions</a> for details. In most cases, expressions will be simple property references, i.e., <code>{property.subProperty}</code>. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after evaluating the given expression. If necessary, the expression should explicitly include <code>\n</code> to output a newline character. To demonstrate the power of this output format, following are two examples of how <code>-o expr</code> can be used to generate a script that purges all application versions matching certain criteria:</p>
+Formats the output data based on the given template expression, which is a combination of (optional) plain text and SpEL expressions; see <a href="#_option_expressions">Option Expressions</a> for details. In most cases, expressions will be simple property references, i.e., <code>{property.subProperty}</code>. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after evaluating the given expression. If necessary, the expression should explicitly include <code>\n</code> to output a newline character. Also note that depending on your shell, the <code>expr</code> option must be properly quoted. For most shells, the <code>expr=...</code> value should be enclosed in single or double quotes. To demonstrate the power of this output format, following are two examples of how <code>-o expr</code> can be used to generate a script that purges all application versions matching certain criteria:</p>
 <div class="ulist">
 <ul>
 <li>
@@ -347,6 +348,31 @@ that changes state (delete/update/create/…). In most cases, the <code>get</cod
 <h3 id="_output_to_file"><a class="anchor" href="#_output_to_file"></a>–output-to-file</h3>
 <div class="paragraph">
 <p>Available on virtually all (leaf) commands that output data, this option can be used to write the command output data to a file, in the format specified by the <code>--output</code> option listed above. In some cases, this may be more convenient than redirecting the output to a file. For example, although currently not implemented, fcli could potentially skip creating the output file if there is no output data or if an error occurs. Also, for commands that output status updates, like <code>wait-for</code> commands, the <code>--output-to-file</code> option allows for status updates to be written to standard output while the final output of the command will be written to the file specified.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_progress"><a class="anchor" href="#_progress"></a>--progress</h3>
+<div class="paragraph">
+<p>Various commands offer a <code>--progress</code> option to specify how to output progress messages. This option supports the following values:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>auto</code>: Automatically select between <code>ansi</code>, <code>single-line</code> and <code>simple</code> depending on console capabilities.</p>
+</li>
+<li>
+<p><code>none</code>: Don&#8217;t output any progress messages.</p>
+</li>
+<li>
+<p><code>simple</code>: Output every progress message on a separate line, effectively leaving older progress messages visible. This will be used by default if no console is available, for example during pipeline runs. Supports multi-line progress messages.</p>
+</li>
+<li>
+<p><code>single-line</code>: Uses the <code>\r</code> (carriage return) character to overwrite previous progress message. This will be used by default if a non-ANSI console is detected. Supports single-line progress messages only.</p>
+</li>
+<li>
+<p><code>ansi</code>: Uses ANSI escape sequences to overwrite previous progress messages. This will be used by default if ANSI capabilities are detected. Supports multi-line progress messages.</p>
+</li>
+</ul>
 </div>
 </div>
 <div class="sect2">
@@ -837,8 +863,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230505.122628-dev_2.0.0-beta<br>
-Last updated 2023-05-05 12:28:26 UTC
+Version 0.20230514.120151-dev_2.0.0-beta<br>
+Last updated 2023-05-14 12:03:41 UTC
 </div>
 </div>
 </body>

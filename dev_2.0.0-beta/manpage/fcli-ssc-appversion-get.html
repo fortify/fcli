@@ -1,6 +1,6 @@
 ---
 title: fcli-ssc-appversion-get(1)
-fcli_version: fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05 12 26 58
+fcli_version: fcli version 0.20230514.120151-dev_2.0.0-beta, built on 2023-05-14 12 02 15
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230505.122628-dev_2.0.0-beta" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230514.120151-dev_2.0.0-beta" %}
 
 
 <div id="header">
@@ -43,11 +43,13 @@ fcli_version: fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion get</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                        [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                        [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] <em>&lt;appVersionNameOrId&gt;</em></p>
+<p><strong>fcli ssc appversion get</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,
+                        <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
+                        <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+            _            <em class="=&lt;propertyNames&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
+                        <em>&lt;appVersionNameOrId&gt;</em></p>
 </div>
 </div>
 </div>
@@ -65,6 +67,10 @@ fcli_version: fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Embed extra application version data. Allowed values: attrs, attrsByName, attrsByGuid, attrValuesByName, attrValuesByGuid, bugtracker, customTags, filterSets, folders, resultProcessingRules.</p>
 </dd>
 </dl>
 </div>
@@ -145,8 +151,8 @@ fcli_version: fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05 12 26 58<br>
-Last updated 2023-05-05 12:28:26 UTC
+Version fcli version 0.20230514.120151-dev_2.0.0-beta, built on 2023-05-14 12 02 15<br>
+Last updated 2023-05-14 12:03:41 UTC
 </div>
 </div>
 </body>

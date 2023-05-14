@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-appversion-user(1)
+title: fcli-util-msp-report(1)
 fcli_version: fcli version 0.20230514.120151-dev_2.0.0-beta, built on 2023-05-14 12 02 15
 ---
 
@@ -9,7 +9,7 @@ fcli_version: fcli version 0.20230514.120151-dev_2.0.0-beta, built on 2023-05-14
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-appversion-user(1)</title>
+<title>fcli-util-msp-report(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,7 +20,7 @@ fcli_version: fcli version 0.20230514.120151-dev_2.0.0-beta, built on 2023-05-14
 
 
 <div id="header">
-<h1>fcli-ssc-appversion-user(1) Manual Page</h1>
+<h1>fcli-util-msp-report(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -32,7 +32,7 @@ fcli_version: fcli version 0.20230514.120151-dev_2.0.0-beta, built on 2023-05-14
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-appversion-user - Commands for interacting with application version users</p>
+<p>fcli-util-msp-report - Commands for generating a 'Managed Service Provider' (MSP) report</p>
 </div>
 </div>
 <div id="content">
@@ -40,9 +40,8 @@ fcli_version: fcli version 0.20230514.120151-dev_2.0.0-beta, built on 2023-05-14
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion-user</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                         [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                         [COMMAND]</p>
+<p><strong>fcli util msp-report</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [COMMAND]</p>
 </div>
 </div>
 </div>
@@ -82,17 +81,13 @@ fcli_version: fcli version 0.20230514.120151-dev_2.0.0-beta, built on 2023-05-14
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-ssc-appversion-user-add.html"><strong>add</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-util-msp-report-generate.html"><strong>generate</strong></a></dt>
 <dd>
-<p>Add users to an application version</p>
+<p>Generate a 'Managed Service Provider' (MSP) report</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-ssc-appversion-user-delete.html"><strong>delete</strong>, <strong>rm</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-util-msp-report-generate-config.html"><strong>generate-config</strong></a></dt>
 <dd>
-<p>Delete users from an application version</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-ssc-appversion-user-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
-<dd>
-<p>List users assigned to an application version</p>
+<p>Generate a sample configuration file for use by the 'generate' command</p>
 </dd>
 </dl>
 </div>

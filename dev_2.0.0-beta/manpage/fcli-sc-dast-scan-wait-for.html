@@ -1,6 +1,6 @@
 ---
 title: fcli-sc-dast-scan-wait-for(1)
-fcli_version: fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05 12 26 58
+fcli_version: fcli version 0.20230514.120151-dev_2.0.0-beta, built on 2023-05-14 12 02 15
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230505.122628-dev_2.0.0-beta" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230514.120151-dev_2.0.0-beta" %}
 
 
 <div id="header">
@@ -43,12 +43,12 @@ fcli_version: fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-dast scan wait-for</strong> [<strong>--no-progress</strong>] [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
+<p><strong>fcli sc-dast scan wait-for</strong> [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
                            [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
                            [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
                            [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
                            [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequeste</em>
-    _                       d&gt;_] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] [[<strong>-h</strong>]
+    _                       d&gt;_] [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] [[<strong>-h</strong>]
                            [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                            [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                            [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
@@ -120,9 +120,9 @@ See fcli help output</p>
 <dd>
 <p>Wait until any of the records match any of the given states</p>
 </dd>
-<dt class="hdlist1"><strong>--no-progress</strong></dt>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
-<p>Don&#8217;t show progress information</p>
+<p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
 </dl>
 </div>
@@ -203,8 +203,8 @@ See fcli help output</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230505.122628-dev_2.0.0-beta, built on 2023-05-05 12 26 58<br>
-Last updated 2023-05-05 12:28:26 UTC
+Version fcli version 0.20230514.120151-dev_2.0.0-beta, built on 2023-05-14 12 02 15<br>
+Last updated 2023-05-14 12:03:41 UTC
 </div>
 </div>
 </body>
