@@ -1,6 +1,6 @@
 MIT License
 
-Copyright 2023 Micro Focus or one of its affiliates
+Copyright 2023 Open Text or one of its affiliates
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,4 +22,5 @@ SOFTWARE.
 
 ---
 
-*This document was auto-generated from LICENSE.MIT.template.txt; do not edit by hand*
+This document was auto-generated from LICENSE.MIT.template.txt; do not edit by hand.
+See https://github.com/fortify/shared-doc-resources/blob/main/USAGE.md for details.
