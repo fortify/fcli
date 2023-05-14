@@ -16,7 +16,7 @@ public class MspReportSSCProcessedAppDescriptor {
         return appSummaryDescriptor.updateReportRecord(
                 appDescriptor.updateReportRecord(objectNode)
                     .put("status", status.name())
-                    .put("reson", reason))
+                    .put("reason", reason))
                 ;
     }
 }
