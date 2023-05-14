@@ -106,7 +106,7 @@ JSON properties, except for table output, which usually outputs a predefined set
 There are two output formats that are somewhat special: 
 
 * `+-o 'expr=Text with {expression1} or {expression2}\n'+` +
- Formats the output data based on the given template expression, which is a combination of (optional) plain text and SpEL expressions; see link:#_option_expressions[Option Expressions] for details. In most cases, expressions will be simple property references, i.e., `+{property.subProperty}+`. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after evaluating the given expression. If necessary, the expression should explicitly include `+\n+` to output a newline character. To demonstrate the power of this output format, following are two examples of how `+-o expr+` can be used to generate a script that purges all application versions matching certain criteria: 
+ Formats the output data based on the given template expression, which is a combination of (optional) plain text and SpEL expressions; see link:#_option_expressions[Option Expressions] for details. In most cases, expressions will be simple property references, i.e., `+{property.subProperty}+`. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after evaluating the given expression. If necessary, the expression should explicitly include `+\n+` to output a newline character. Also note that depending on your shell, the `+expr+` option must be properly quoted. For most shells, the `+expr=...+` value should be enclosed in single or double quotes. To demonstrate the power of this output format, following are two examples of how `+-o expr+` can be used to generate a script that purges all application versions matching certain criteria: 
 ** `+fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr=fcli ssc appversion-artifact purge --older-than 30d --appversion {id}\n'+`
 ** `+for id in $(fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr={id} '); do echo "fcli ssc appversion-artifact purge –older-than 30d –appversion ${id}'"; done+` 
 * `+-o json-properties+` +
@@ -119,7 +119,7 @@ that changes state (delete/update/create/…). In most cases, the `+get+` or `+l
 
 Available on virtually all (leaf) commands that output data, this option can be used to write the command output data to a file, in the format specified by the `+--output+` option listed above. In some cases, this may be more convenient than redirecting the output to a file. For example, although currently not implemented, fcli could potentially skip creating the output file if there is no output data or if an error occurs. Also, for commands that output status updates, like `+wait-for+` commands, the `+--output-to-file+` option allows for status updates to be written to standard output while the final output of the command will be written to the file specified.
 
-=== -progress
+=== --progress
 
 Various commands offer a `+--progress+` option to specify how to output progress messages. This option supports the following values:
 
