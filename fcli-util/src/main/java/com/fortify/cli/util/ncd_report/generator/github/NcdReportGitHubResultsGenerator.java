@@ -62,7 +62,7 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportUnirestRes
     private void generateResults(NcdReportGitHubOrganizationConfig orgConfig) {
         String orgName = orgConfig.getName();
         try {
-            resultsCollector().progressHelper().writeI18nProgress("fcli.util.ncd-report.loading.github-repositories", orgName);
+            resultsCollector().progressWriter().writeI18nProgress("fcli.util.ncd-report.loading.github-repositories", orgName);
             HttpRequest<?> req = unirest().get("/orgs/{org}/repos?type=all&per_page=100").routeParam("org", orgName);
             GitHubPagingHelper.pagedRequest(req, ArrayNode.class)
                 .ifSuccess(r->r.getBody().forEach(repo->
@@ -121,7 +121,7 @@ public class NcdReportGitHubResultsGenerator extends AbstractNcdReportUnirestRes
                 .format(DateTimeFormatter.ISO_INSTANT);
         boolean commitsFound = false;
         for ( var branchDescriptor : branchDescriptors ) {
-            resultsCollector().progressHelper().writeI18nProgress("fcli.util.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
+            resultsCollector().progressWriter().writeI18nProgress("fcli.util.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
             HttpRequest<?> req = getCommitsRequest(repoDescriptor, branchDescriptor, 100)
                     .queryString("since", since);
             

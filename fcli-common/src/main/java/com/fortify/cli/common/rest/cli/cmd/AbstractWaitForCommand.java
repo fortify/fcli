@@ -62,7 +62,7 @@ public abstract class AbstractWaitForCommand extends AbstractFortifyCLICommand i
         configure(
                 WaitHelper.builder()
                     .controlProperties(controlOptions)
-                    .progressMonitor(progressMonitorMixin.createProgressMonitor(false))
+                    .progressMonitor(progressMonitorMixin.create(false))
                     .onFinish(WaitHelper::recordsWithActionAsArrayNode, outputHelper::write)
             ).build().wait(unirest, waitOptions);
     }

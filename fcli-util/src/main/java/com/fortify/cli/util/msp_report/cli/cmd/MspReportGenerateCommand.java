@@ -28,7 +28,7 @@ import java.io.File;
 import java.time.LocalDate;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.report.cli.cmd.AbstractConfigurableReportGenerateCommand;
 import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.util.msp_report.collector.MspReportResultsCollector;
@@ -67,7 +67,7 @@ public final class MspReportGenerateCommand extends AbstractConfigurableReportGe
     }
     
     @Override
-    protected MspReportResultsCollector createResultsCollector(MspReportConfig config, IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
-        return new MspReportResultsCollector(config, reportWriter, progressHelper);
+    protected MspReportResultsCollector createResultsCollector(MspReportConfig config, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
+        return new MspReportResultsCollector(config, reportWriter, progressWriter);
     }
 }

@@ -31,7 +31,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.progress.cli.mixin.ProgressHelperFactoryMixin;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.fod.entity.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.entity.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.entity.lookup.helper.FoDLookupHelper;
@@ -87,12 +87,12 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     //@Mixin
     //private FoDAssessmentTypeOptions.RequiredOption assessmentType;
 
-    @Mixin private ProgressHelperFactoryMixin progressHelperFactory;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
     // TODO Split into multiple methods
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        try ( var progressHelper = progressHelperFactory.createProgressHelper() ) {
+        try ( var progressWriter = progressWriterFactory.create() ) {
             String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
             Integer entitlementIdToUse = 0;
             Integer assessmentTypeId = 0;
@@ -131,7 +131,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                             + entitlementFrequency.name() + "' cannot be used here");
                 }
                 FoDAssessmentTypeOptions.FoDAssessmentType assessmentType = FoDAssessmentTypeOptions.FoDAssessmentType.valueOf(String.valueOf(staticAssessmentType));
-                FoDAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, progressHelper, relId,
+                FoDAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
                         assessmentType, entitlementPreferenceType,
                         FoDScanFormatOptions.FoDScanType.Mobile);
                 entitlementIdToUse = assessmentTypeDescriptor.getEntitlementId();

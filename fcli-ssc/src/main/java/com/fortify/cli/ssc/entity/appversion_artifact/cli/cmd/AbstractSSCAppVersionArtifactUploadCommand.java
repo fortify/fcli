@@ -29,8 +29,8 @@ import java.io.File;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
-import com.fortify.cli.common.progress.cli.mixin.ProgressHelperFactoryMixin;
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.entity.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.entity.appversion.helper.SSCAppVersionDescriptor;
@@ -43,11 +43,11 @@ import picocli.CommandLine.Mixin;
 
 public abstract class AbstractSSCAppVersionArtifactUploadCommand extends AbstractSSCAppVersionArtifactOutputCommand implements IBaseRequestSupplier {
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
-    @Mixin private ProgressHelperFactoryMixin progressHelperFactory;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
     @Override
     public final HttpRequest<?> getBaseRequest() {
-        try ( var progressHelper = progressHelperFactory.createProgressHelper() ) {
+        try ( var progressWriter = progressWriterFactory.create() ) {
             var unirest = getUnirestInstance();
         	String engineType = getEngineType();
             SSCAppVersionDescriptor av = parentResolver.getAppVersionDescriptor(unirest);
@@ -57,11 +57,11 @@ public abstract class AbstractSSCAppVersionArtifactUploadCommand extends Abstrac
             	request = request.queryString("engineType", engineType);
             }
             File file = getFile();
-            preUpload(unirest, progressHelper, file);
+            preUpload(unirest, progressWriter, file);
             JsonNode uploadResponse = request.multiPartContent()
             		.field("file", file)
             		.asObject(JsonNode.class).getBody();
-            postUpload(unirest, progressHelper, file);
+            postUpload(unirest, progressWriter, file);
             String artifactId = JsonHelper.evaluateSpelExpression(uploadResponse, "data.id", String.class);
             // TODO Do we actually show any scan data from the embedded scans?
             return unirest.get(SSCUrls.ARTIFACT(artifactId)).queryString("embed","scans");
@@ -76,6 +76,6 @@ public abstract class AbstractSSCAppVersionArtifactUploadCommand extends Abstrac
     protected abstract String getEngineType();
     protected abstract File getFile();
     
-    protected void preUpload(UnirestInstance unirest, IProgressHelperI18n progressHelper, File file) {}
-    protected void postUpload(UnirestInstance unirest, IProgressHelperI18n progressHelper, File file) {}
+    protected void preUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {}
+    protected void postUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {}
 }

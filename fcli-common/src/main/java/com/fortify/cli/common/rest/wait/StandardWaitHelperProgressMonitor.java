@@ -11,32 +11,32 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
-import com.fortify.cli.common.progress.helper.IProgressHelper;
-import com.fortify.cli.common.progress.helper.ProgressHelperFactory;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitStatus;
 
 public class StandardWaitHelperProgressMonitor implements IWaitHelperProgressMonitor {
     private static final OutputFormat outputFormat = OutputFormat.table;
-    private final IProgressHelper progressHelper = ProgressHelperFactory.createProgressHelper(false);
+    private final IProgressWriterI18n progressWriter;
     private final IMessageResolver messageResolver;
     private final boolean writeFinalStatus;
     
-    public StandardWaitHelperProgressMonitor(IMessageResolver messageResolver, boolean writeFinalStatus) {
+    public StandardWaitHelperProgressMonitor(IProgressWriterI18n progressWriter, IMessageResolver messageResolver, boolean writeFinalStatus) {
+        this.progressWriter = progressWriter;
         this.messageResolver = messageResolver;
         this.writeFinalStatus = writeFinalStatus;
     }
 
     @Override
     public void updateProgress(Map<ObjectNode, WaitStatus> recordsWithWaitStatus) {
-        if ( progressHelper!=null ) {
+        if ( progressWriter!=null ) {
             try ( StringWriter sw = new StringWriter() ) {
-                if ( progressHelper.isMultiLineSupported() ) {
+                if ( progressWriter.isMultiLineSupported() ) {
                     writeRecordsMultiLine(recordsWithWaitStatus, sw);
                 } else {
                     writeRecordsSingleLine(recordsWithWaitStatus, sw);
                 }
                 String output = sw.toString();
-                progressHelper.writeProgress(output);
+                progressWriter.writeProgress(output);
             } catch ( IOException e ) {
                 throw new RuntimeException(e);
             }
@@ -47,8 +47,8 @@ public class StandardWaitHelperProgressMonitor implements IWaitHelperProgressMon
     public void finish(Map<ObjectNode, WaitStatus> recordsWithWaitStatus) {
         if ( writeFinalStatus ) {
             updateProgress(recordsWithWaitStatus);
-        } else if ( progressHelper!=null ) {
-            progressHelper.clearProgress();
+        } else if ( progressWriter!=null ) {
+            progressWriter.clearProgress();
         }
     }
 

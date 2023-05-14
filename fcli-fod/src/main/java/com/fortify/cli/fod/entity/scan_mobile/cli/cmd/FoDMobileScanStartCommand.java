@@ -36,8 +36,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.progress.cli.mixin.ProgressHelperFactoryMixin;
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.fod.entity.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.entity.lookup.helper.FoDLookupDescriptor;
@@ -92,12 +92,12 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
     //@Mixin
     //private FoDAssessmentTypeOptions.OptionalOption assessmentType;
 
-    @Mixin private ProgressHelperFactoryMixin progressHelperFactory;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
     // TODO Split into multiple methods
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        try ( var progressHelper = progressHelperFactory.createProgressHelper() ) {
+        try ( var progressWriter = progressWriterFactory.create() ) {
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
             String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
     
@@ -108,7 +108,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
             // TODO: check if a scan is already running
     
             // get entitlement to use
-            FoDAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, progressHelper, relId);
+            FoDAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, progressWriter, relId);
     
             // validate timezone (if specified)
             String timeZoneToUse = validateTimezone(unirest, timezone);
@@ -129,7 +129,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
                     .setScanTool(fcliProperties.getProperty("projectName", "fcli"))
                     .setScanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"));
     
-            return FoDMobileScanHelper.startScan(unirest, progressHelper, relId, startScanRequest, scanFile, chunkSize).asJsonNode();
+            return FoDMobileScanHelper.startScan(unirest, progressWriter, relId, startScanRequest, scanFile, chunkSize).asJsonNode();
         }
     }
 
@@ -148,7 +148,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
         return true;
     }
 
-    private FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressHelperI18n progressHelper, String relId) {
+    private FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId) {
         FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
 
         /**
@@ -164,7 +164,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
         // if assessment and entitlement type are both specified, find entitlement to use
         FoDAssessmentTypeOptions.FoDAssessmentType assessmentType = FoDAssessmentTypeOptions.FoDAssessmentType.valueOf(String.valueOf(mobileAssessmentType));
         FoDEnums.EntitlementPreferenceType entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.fromInt(entitlementType.getEntitlementFrequencyType().getValue());
-        entitlementToUse = FoDMobileScanHelper.getEntitlementToUse(unirest, progressHelper, relId,
+        entitlementToUse = FoDMobileScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
                 assessmentType, entitlementPreferenceType,
                 FoDScanFormatOptions.FoDScanType.Mobile);
 

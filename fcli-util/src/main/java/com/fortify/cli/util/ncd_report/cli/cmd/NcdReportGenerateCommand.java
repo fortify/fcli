@@ -27,7 +27,7 @@ package com.fortify.cli.util.ncd_report.cli.cmd;
 import java.io.File;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.report.cli.cmd.AbstractConfigurableReportGenerateCommand;
 import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.util.ncd_report.collector.NcdReportResultsCollector;
@@ -55,7 +55,7 @@ public final class NcdReportGenerateCommand extends AbstractConfigurableReportGe
     }
     
     @Override
-    protected NcdReportResultsCollector createResultsCollector(NcdReportConfig config, IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
-        return new NcdReportResultsCollector(config, reportWriter, progressHelper);
+    protected NcdReportResultsCollector createResultsCollector(NcdReportConfig config, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
+        return new NcdReportResultsCollector(config, reportWriter, progressWriter);
     }
 }

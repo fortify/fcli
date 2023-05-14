@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
@@ -60,7 +60,7 @@ public class FoDMobileScanHelper extends FoDScanHelper {
     }*/
 
     // TODO Split into multiple methods
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, IProgressHelperI18n progressHelper, String relId, FoDStartMobileScanRequest req,
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId, FoDStartMobileScanRequest req,
                                                     File scanFile, int chunkSize) {
         FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
         HttpRequest<?> request = unirest.post(FoDUrls.MOBILE_SCANS_START).routeParam("relId", relId)

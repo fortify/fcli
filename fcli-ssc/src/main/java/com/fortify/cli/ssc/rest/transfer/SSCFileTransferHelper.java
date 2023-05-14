@@ -32,8 +32,8 @@ import java.util.function.Supplier;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.progress.helper.IProgressHelper;
-import com.fortify.cli.common.progress.helper.ProgressHelperFactory;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
+import com.fortify.cli.common.progress.helper.ProgressWriterType;
 
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
@@ -110,15 +110,15 @@ public class SSCFileTransferHelper {
     
     @RequiredArgsConstructor
     private static final class SSCProgressMonitor implements ProgressMonitor, AutoCloseable {
-        private final IProgressHelper progressHelper = ProgressHelperFactory.createProgressHelper(false);
+        private final IProgressWriter progressWriter = ProgressWriterType.auto.create();
         private final String action;
         
         @Override
         public void accept(String field, String fileName, Long bytesWritten, Long totalBytes) {
-            progressHelper.writeProgress(String.format("\r%s %s: %d of %d bytes complete", action, fileName, bytesWritten, totalBytes));
+            progressWriter.writeProgress(String.format("\r%s %s: %d of %d bytes complete", action, fileName, bytesWritten, totalBytes));
         }
         public void close() {
-            progressHelper.clearProgress();
+            progressWriter.clearProgress();
         }
     }
     

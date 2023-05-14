@@ -66,7 +66,7 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestRes
         String groupId = groupConfig.getId();
         try {
             boolean includeSubgroups = groupConfig.getIncludeSubgroups().orElse(sourceConfig().getIncludeSubgroups().orElse(true));
-            resultsCollector().progressHelper().writeI18nProgress("fcli.util.ncd-report.loading.gitlab-repositories", groupId);
+            resultsCollector().progressWriter().writeI18nProgress("fcli.util.ncd-report.loading.gitlab-repositories", groupId);
             HttpRequest<?> req = unirest().get("/api/v4/groups/{id}/projects?per_page=100")
                     .routeParam("id", groupId)
                     .queryString("include_subgroups", includeSubgroups);
@@ -127,7 +127,7 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestRes
                 .format(DateTimeFormatter.ISO_INSTANT);
         boolean commitsFound = false;
         for ( var branchDescriptor : branchDescriptors ) {
-            resultsCollector().progressHelper().writeI18nProgress("fcli.util.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
+            resultsCollector().progressWriter().writeI18nProgress("fcli.util.ncd-report.loading.branch-commits", repoDescriptor.getFullName(), branchDescriptor.getName());
             HttpRequest<?> req = getCommitsRequest(repoDescriptor, branchDescriptor, 100)
                     .queryString("since", since);
             

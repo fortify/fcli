@@ -37,8 +37,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.progress.helper.IProgressHelper;
-import com.fortify.cli.common.progress.helper.ProgressHelperFactory;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
+import com.fortify.cli.common.progress.helper.ProgressWriterType;
 import com.fortify.cli.fod.entity.scan.helper.FoDImportScanSessionDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
 import com.fortify.cli.fod.util.FoDConstants;
@@ -122,7 +122,7 @@ public abstract class FoDFileTransferBase {
                     // final response has 200, try to deserialize it
                     if (request.getStatus() == 200) {
                         FoDUploadResponse response = objectMapper.readValue(request.getBody(), FoDUploadResponse.class);
-                        progressMonitor.progressHelper.clearProgress();
+                        progressMonitor.progressWriter.clearProgress();
                         return response;
                     } else if (!request.isSuccess()) {
                         FoDErrorResponse errors = objectMapper.readValue(request.getBody(), FoDErrorResponse.class);
@@ -181,15 +181,15 @@ public abstract class FoDFileTransferBase {
 
     @RequiredArgsConstructor
     private static final class FoDProgressMonitor implements ProgressMonitor, AutoCloseable {
-        private final IProgressHelper progressHelper = ProgressHelperFactory.createProgressHelper(false);
+        private final IProgressWriter progressWriter = ProgressWriterType.auto.create();
         private final String action;
 
         @Override
         public void accept(String field, String fileName, Long bytesWritten, Long totalBytes) {
-            progressHelper.writeProgress(String.format("\r%s %s: %d of %d bytes complete", action, fileName, bytesWritten, totalBytes));
+            progressWriter.writeProgress(String.format("\r%s %s: %d of %d bytes complete", action, fileName, bytesWritten, totalBytes));
         }
         public void close() {
-            progressHelper.clearProgress();
+            progressWriter.clearProgress();
         }
     }
 

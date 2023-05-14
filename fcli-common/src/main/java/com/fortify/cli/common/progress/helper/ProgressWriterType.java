@@ -2,26 +2,34 @@ package com.fortify.cli.common.progress.helper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
+import lombok.RequiredArgsConstructor;
 import picocli.CommandLine.Help.Ansi;
 
-public final class ProgressHelperFactory {
-    private static final boolean hasConsole = System.console()!=null;
-    private static final boolean hasAnsiConsole = Ansi.AUTO.enabled() && hasConsole;
-    private static final String LINE_UP = "\033[1A";
-    private static final String LINE_CLEAR = "\033[2K";
-    private static final String LINE_START = "\r";
+@RequiredArgsConstructor
+public enum ProgressWriterType {
+    auto(ProgressWriterType::auto), 
+    none(NoProgressWriter::new), 
+    simple(SimpleProgressWriter::new), 
+    single_line(SingleLineProgressWriter::new), 
+    ansi(AnsiProgressWriter::new);
     
-    private ProgressHelperFactory() {}
+    private final Supplier<IProgressWriter> factory;
     
-    public static final IProgressHelper createProgressHelper(boolean noProgress) {
-        if ( noProgress ) { return new DummyProgressHelper(); }
-        else if ( hasAnsiConsole ) { return new AnsiConsoleProgressHelper(); }
-        else if ( hasConsole ) { return new BasicConsoleProgressHelper(); }
-        else { return new BasicProgressHelper(); }
+    public IProgressWriter create() {
+        return factory.get();
     }
     
-    private static abstract class AbstractProgressHelper implements IProgressHelper {
+    private static final IProgressWriter auto() {
+        var hasConsole = System.console()!=null;
+        var hasAnsiConsole = Ansi.AUTO.enabled() && hasConsole;
+        if ( hasAnsiConsole ) { return new AnsiProgressWriter(); }
+        else if ( hasConsole ) { return new SingleLineProgressWriter(); }
+        else { return new SimpleProgressWriter(); }
+    }
+    
+    private static abstract class AbstractProgressWriter implements IProgressWriter {
         private final List<String> warnings = new ArrayList<>();
         
         @Override
@@ -36,7 +44,7 @@ public final class ProgressHelperFactory {
         }
     }
     
-    private static final class DummyProgressHelper extends AbstractProgressHelper {
+    private static final class NoProgressWriter extends AbstractProgressWriter {
         @Override
         public boolean isMultiLineSupported() {
             return false;
@@ -49,7 +57,7 @@ public final class ProgressHelperFactory {
         public void clearProgress() {}
     }
     
-    private static final class BasicProgressHelper extends AbstractProgressHelper {
+    private static final class SimpleProgressWriter extends AbstractProgressWriter {
         @Override
         public boolean isMultiLineSupported() {
             return true;
@@ -69,7 +77,8 @@ public final class ProgressHelperFactory {
         public void clearProgress() {}
     }
     
-    private static final class BasicConsoleProgressHelper extends AbstractProgressHelper {
+    private static final class SingleLineProgressWriter extends AbstractProgressWriter {
+        private static final String LINE_START = "\r";
         private int lastNumberOfChars;
         
         @Override
@@ -92,7 +101,11 @@ public final class ProgressHelperFactory {
         }
     }
     
-    private static final class AnsiConsoleProgressHelper extends AbstractProgressHelper {
+    private static final class AnsiProgressWriter extends AbstractProgressWriter {
+        // TODO Can we improve this to simply clear all output written so far?
+        private static final String LINE_UP = "\033[1A";
+        private static final String LINE_CLEAR = "\033[2K";
+        private static final String LINE_START = "\r";
         private int lastNumberOfLines = 0;
         
         @Override

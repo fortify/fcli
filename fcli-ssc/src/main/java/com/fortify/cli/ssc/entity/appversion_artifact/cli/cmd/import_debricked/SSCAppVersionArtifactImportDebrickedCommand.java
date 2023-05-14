@@ -36,7 +36,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -90,21 +90,21 @@ public class SSCAppVersionArtifactImportDebrickedCommand extends AbstractSSCAppV
     }
     
     @Override
-    protected void preUpload(UnirestInstance unirest, IProgressHelperI18n progressHelper, File file) {
-    	progressHelper.writeProgress("Status: Generating & downloading SBOM");
+    protected void preUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {
+    	progressWriter.writeProgress("Status: Generating & downloading SBOM");
     	try ( var debrickedUnirest = GenericUnirestFactory.createUnirestInstance() ) {
     	    downloadSbom(debrickedUnirest, file);
     	}
-    	progressHelper.writeProgress("Status: Uploading SBOM to SSC");
+    	progressWriter.writeProgress("Status: Uploading SBOM to SSC");
     }
     
     @Override
-    protected void postUpload(UnirestInstance unirest, IProgressHelperI18n progressHelper, File file) {
+    protected void postUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {
     	if ( StringUtils.isBlank(fileName) ) {
     		file.delete();
     	}
-    	progressHelper.writeProgress("Status: SBOM uploaded to SSC");
-    	progressHelper.clearProgress();
+    	progressWriter.writeProgress("Status: SBOM uploaded to SSC");
+    	progressWriter.clearProgress();
     }
     
     private Void downloadSbom(UnirestInstance debrickedUnirest, File file) {

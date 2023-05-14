@@ -37,7 +37,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelAssessmentTypeDescriptor;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
@@ -60,13 +60,13 @@ public class FoDScanHelper {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
-    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, IProgressHelperI18n progressHelper, String relId,
+    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId,
                                                                                    Integer entitlementId, FoDScanFormatOptions.FoDScanType scanType) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
-            progressHelper.writeI18nProgress("validating-remediation-entitlement");
+            progressWriter.writeI18nProgress("validating-remediation-entitlement");
             // check we have an appropriate remediation scan available
             for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
                 if (atd.getEntitlementId() > 0 && atd.getEntitlementId().equals(entitlementId) && atd.getIsRemediation()
@@ -79,7 +79,7 @@ public class FoDScanHelper {
                 }
             }
             if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
-                progressHelper.writeI18nProgress("using-remediation-entitlement", entitlement.getEntitlementDescription());
+                progressWriter.writeI18nProgress("using-remediation-entitlement", entitlement.getEntitlementDescription());
             } else {
                 throw new ValidationException("No remediation scan entitlements found");
             }
@@ -87,7 +87,7 @@ public class FoDScanHelper {
         return entitlement;
     }
 
-    public static final FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressHelperI18n progressHelper, String relId,
+    public static final FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId,
                                                                         FoDAssessmentTypeOptions.FoDAssessmentType assessmentType,
                                                                         FoDEnums.EntitlementPreferenceType entitlementType,
                                                                         FoDScanFormatOptions.FoDScanType scanType) {
@@ -95,7 +95,7 @@ public class FoDScanHelper {
         FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
-            progressHelper.writeI18nProgress("validating-entitlement");
+            progressWriter.writeI18nProgress("validating-entitlement");
             // check for an entitlement
             for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
                 if (atd.getEntitlementId() != null && atd.getEntitlementId() > 0) {
@@ -116,7 +116,7 @@ public class FoDScanHelper {
                 }
             }
             if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
-                progressHelper.writeI18nProgress("using-entitlement", entitlement.getEntitlementDescription());
+                progressWriter.writeI18nProgress("using-entitlement", entitlement.getEntitlementDescription());
             }
         }
         return entitlement;

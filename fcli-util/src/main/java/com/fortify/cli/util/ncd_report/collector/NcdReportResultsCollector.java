@@ -1,6 +1,6 @@
 package com.fortify.cli.util.ncd_report.collector;
 
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.report.collector.IReportResultsCollector;
 import com.fortify.cli.common.report.logger.IReportLogger;
 import com.fortify.cli.common.report.logger.ReportLogger;
@@ -26,16 +26,16 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public final class NcdReportResultsCollector implements IReportResultsCollector {
     @Getter private final NcdReportConfig reportConfig;
-    @Getter private final IProgressHelperI18n progressHelper;
+    @Getter private final IProgressWriterI18n progressWriter;
     private final IReportWriter reportWriter;
     private final NcdReportResultsWriters writers;
     private final NcdReportRepositoryProcessor repositoryProcessor;
     
-    public NcdReportResultsCollector(NcdReportConfig reportConfig, IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
+    public NcdReportResultsCollector(NcdReportConfig reportConfig, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
         this.reportConfig = reportConfig;
-        this.progressHelper = progressHelper;
+        this.progressWriter = progressWriter;
         this.reportWriter = reportWriter;
-        this.writers = new NcdReportResultsWriters(reportWriter, progressHelper);
+        this.writers = new NcdReportResultsWriters(reportWriter, progressWriter);
         this.repositoryProcessor = new NcdReportRepositoryProcessor(reportConfig, writers, reportWriter.summary());
     }
     

@@ -77,7 +77,7 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
     
     private void processApp(JsonNode appNode) {
         var descriptor = JsonHelper.treeToValue(appNode, MspReportSSCAppDescriptor.class);
-        resultsCollector().progressHelper().writeI18nProgress("processing.app", descriptor.getName());
+        resultsCollector().progressWriter().writeI18nProgress("processing.app", descriptor.getName());
         try {
             loadVersionsForApp(descriptor);
             descriptor.check(resultsCollector().logger());

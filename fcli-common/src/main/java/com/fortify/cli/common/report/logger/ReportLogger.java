@@ -8,21 +8,21 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.progress.helper.IProgressHelper;
+import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.common.util.Counter;
 
 import lombok.SneakyThrows;
 
 public final class ReportLogger implements IReportLogger {
-    private final IProgressHelper progressHelper;
+    private final IProgressWriter progressWriter;
     private final BufferedWriter logWriter;
     private Counter errorCounter = new Counter();
     private Counter warnCounter = new Counter();
 
-    public ReportLogger(IReportWriter reportWriter, IProgressHelper progressHelper) {
+    public ReportLogger(IReportWriter reportWriter, IProgressWriter progressWriter) {
         this.logWriter = reportWriter.bufferedWriter("report.log");
-        this.progressHelper = progressHelper;
+        this.progressWriter = progressWriter;
     }
     
     @Override
@@ -66,7 +66,7 @@ public final class ReportLogger implements IReportLogger {
         if ( e!=null ) {
             fullMsg = String.format("%s: %s: %s", fullMsg, e.getClass().getSimpleName(), e.getMessage());
         }
-        progressHelper.writeWarning(String.format("%s: %s", level, fullMsg));
+        progressWriter.writeWarning(String.format("%s: %s", level, fullMsg));
         logWriter.append(String.format("[%s] %s %s\n", LocalDateTime.now(), level, fullMsg));
         if ( e!=null ) {
             logWriter.append(String.format("%s\n", toString(e)));

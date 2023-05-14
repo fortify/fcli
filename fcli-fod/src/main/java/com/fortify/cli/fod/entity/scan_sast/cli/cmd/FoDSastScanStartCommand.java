@@ -33,8 +33,8 @@ import javax.validation.ValidationException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.progress.cli.mixin.ProgressHelperFactoryMixin;
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
@@ -82,12 +82,12 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
     @Mixin
     private FoDInProgressScanActionTypeOptions.OptionalOption inProgressScanActionType;
 
-    @Mixin private ProgressHelperFactoryMixin progressHelperFactory;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
     // TODO: refactor use of FoDEnums and use @JsonValues as per: https://github.com/fortify/fcli/issues/279
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        try ( var progressHelper = progressHelperFactory.createProgressHelper() ) {
+        try ( var progressWriter = progressWriterFactory.create() ) {
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
             String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
     
@@ -99,7 +99,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
             }
     
             // get entitlement to use
-            FoDAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, progressHelper, relId, currentSetup);
+            FoDAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, progressWriter, relId, currentSetup);
     
             FoDStartSastScanRequest startScanRequest = new FoDStartSastScanRequest()
                     .setPurchaseEntitlement(purchaseEntitlement)
@@ -137,7 +137,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
         return true;
     }
 
-    private FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressHelperI18n progressHelper, String relId, FoDSastScanSetupDescriptor currentSetup) {
+    private FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId, FoDSastScanSetupDescriptor currentSetup) {
         FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
 
         /**
@@ -151,7 +151,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
         }
         if (remediationScanType.getRemediationScanPreferenceType() != null && (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
             // if requesting a remediation scan make we have one available
-            FoDSastScanHelper.validateRemediationEntitlement(unirest, progressHelper, relId,
+            FoDSastScanHelper.validateRemediationEntitlement(unirest, progressWriter, relId,
                     currentSetup.getEntitlementId(), FoDScanFormatOptions.FoDScanType.Static).getEntitlementId();
         }
         return entitlementToUse;

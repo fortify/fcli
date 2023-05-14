@@ -2,11 +2,11 @@ package com.fortify.cli.common.progress.helper;
 
 import com.fortify.cli.common.output.writer.IMessageResolver;
 
-public final class ProgressHelperI18n extends AbstractProgressHelperWrapper implements IProgressHelperI18n {
+public final class ProgressWriterI18n extends AbstractProgressWriterWrapper implements IProgressWriterI18n {
     private final IMessageResolver messageResolver;
    
-    public ProgressHelperI18n(IMessageResolver messageResolver, boolean noProgress) {
-        super(noProgress);
+    public ProgressWriterI18n(ProgressWriterType factory, IMessageResolver messageResolver) {
+        super(factory);
         this.messageResolver = messageResolver;
     }
     

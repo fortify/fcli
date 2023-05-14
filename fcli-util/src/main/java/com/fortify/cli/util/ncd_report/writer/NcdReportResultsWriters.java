@@ -1,6 +1,6 @@
 package com.fortify.cli.util.ncd_report.writer;
 
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.report.logger.IReportLogger;
 import com.fortify.cli.common.report.logger.ReportLogger;
 import com.fortify.cli.common.report.writer.IReportWriter;
@@ -16,7 +16,7 @@ import lombok.experimental.Accessors;
  */
 @Getter @Accessors(fluent=true)
 public class NcdReportResultsWriters {
-    private final IProgressHelperI18n progressHelper;
+    private final IProgressWriterI18n progressWriter;
     private final IReportLogger logger;
     private final INcdReportRepositoriesWriter repositoryWriter;
     private final INcdReportCommitsByBranchWriter commitsByBranchWriter;
@@ -24,9 +24,9 @@ public class NcdReportResultsWriters {
     private final INcdReportAuthorsByRepositoryWriter authorsByRepositoryWriter;
     private final INcdReportAuthorsWriter authorsWriter;
     
-    public NcdReportResultsWriters(IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
-        this.progressHelper = progressHelper;
-        this.logger = new ReportLogger(reportWriter, progressHelper);
+    public NcdReportResultsWriters(IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
+        this.progressWriter = progressWriter;
+        this.logger = new ReportLogger(reportWriter, progressWriter);
         this.repositoryWriter = new NcdReportRepositoriesWriter(reportWriter);
         this.commitsByBranchWriter = new NcdReportCommitsByBranchWriter(reportWriter);
         this.commitsByRepositoryWriter = new NcdReportCommitsByRepositoryWriter(reportWriter);

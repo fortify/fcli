@@ -2,7 +2,7 @@ package com.fortify.cli.util.msp_report.collector;
 
 import java.time.format.DateTimeFormatter;
 
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.report.collector.IReportResultsCollector;
 import com.fortify.cli.common.report.logger.IReportLogger;
 import com.fortify.cli.common.report.logger.ReportLogger;
@@ -29,17 +29,17 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public final class MspReportResultsCollector implements IReportResultsCollector {
     @Getter private final MspReportConfig reportConfig;
-    @Getter private final IProgressHelperI18n progressHelper;
+    @Getter private final IProgressWriterI18n progressWriter;
     private final IReportWriter reportWriter;
     private final MspReportResultsWriters writers;
     @Getter private final MspReportAppCollector appCollector;
     @Getter private final MspReportAppVersionCollector appVersionCollector;
     
-    public MspReportResultsCollector(MspReportConfig reportConfig, IReportWriter reportWriter, IProgressHelperI18n progressHelper) {
+    public MspReportResultsCollector(MspReportConfig reportConfig, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
         this.reportConfig = reportConfig;
-        this.progressHelper = progressHelper;
+        this.progressWriter = progressWriter;
         this.reportWriter = reportWriter;
-        this.writers = new MspReportResultsWriters(reportWriter, progressHelper);
+        this.writers = new MspReportResultsWriters(reportWriter, progressWriter);
         this.appCollector = new MspReportAppCollector(this.writers, reportWriter.summary());
         this.appVersionCollector = new MspReportAppVersionCollector(this.writers, reportWriter.summary());
     }

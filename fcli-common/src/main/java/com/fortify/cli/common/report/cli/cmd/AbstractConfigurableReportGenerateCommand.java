@@ -30,8 +30,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fortify.cli.common.progress.cli.mixin.ProgressHelperFactoryMixin;
-import com.fortify.cli.common.progress.helper.IProgressHelperI18n;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.report.collector.IReportResultsCollector;
 import com.fortify.cli.common.report.config.IReportSourceConfig;
 import com.fortify.cli.common.report.config.IReportSourceSupplierConfig;
@@ -50,7 +50,7 @@ import picocli.CommandLine.Mixin;
  *      allow sub-classes to update the configuration, for example based on CLI
  *      options</li>
  *  <li>Creates a results collector by calling 
- *      {@link #createResultsCollector(IReportSourceSupplierConfig, IReportWriter, IProgressHelperI18n)}</li>
+ *      {@link #createResultsCollector(IReportSourceSupplierConfig, IReportWriter, IProgressWriterI18n)}</li>
  *  <li>Iterates over all sources defined in the configuration<li>
  *  <li>For each source, instantiates a new generator and runs it</li>
  * </ol> 
@@ -61,7 +61,7 @@ import picocli.CommandLine.Mixin;
  * @param <R> Results collector type
  */
 public abstract class AbstractConfigurableReportGenerateCommand<C extends IReportSourceSupplierConfig<R>, R extends IReportResultsCollector> extends AbstractReportGenerateCommand {
-    @Mixin private ProgressHelperFactoryMixin progressHelperFactory;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
     /**
      * Generate report by instantiating progress helper, report config, 
@@ -69,10 +69,10 @@ public abstract class AbstractConfigurableReportGenerateCommand<C extends IRepor
      */
     @Override
     protected final void generateReport(IReportWriter reportWriter) {
-        try ( var progressHelper = progressHelperFactory.createProgressHelper() ) {
+        try ( var progressWriter = progressWriterFactory.create() ) {
             C config = getReportConfig();
             reportWriter.copyTextFile(getConfigFile().toPath(), "report-config.yaml");
-            try ( var resultsCollector = createResultsCollector(config, reportWriter, progressHelper) ) {
+            try ( var resultsCollector = createResultsCollector(config, reportWriter, progressWriter) ) {
                 var sourceConfigs = config.getSourceConfigs();
                 if ( sourceConfigs==null || sourceConfigs.isEmpty() ) {
                     throw new IllegalArgumentException("Configuration file doesn't define any sources");
@@ -140,5 +140,5 @@ public abstract class AbstractConfigurableReportGenerateCommand<C extends IRepor
      * This method must be implemented by subclasses to create a
      * report-specific results processor.
      */
-    protected abstract R createResultsCollector(C config, IReportWriter reportWriter, IProgressHelperI18n progressHelper);
+    protected abstract R createResultsCollector(C config, IReportWriter reportWriter, IProgressWriterI18n progressWriter);
 }

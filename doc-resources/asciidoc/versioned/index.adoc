@@ -119,6 +119,16 @@ that changes state (delete/update/create/…). In most cases, the `+get+` or `+l
 
 Available on virtually all (leaf) commands that output data, this option can be used to write the command output data to a file, in the format specified by the `+--output+` option listed above. In some cases, this may be more convenient than redirecting the output to a file. For example, although currently not implemented, fcli could potentially skip creating the output file if there is no output data or if an error occurs. Also, for commands that output status updates, like `+wait-for+` commands, the `+--output-to-file+` option allows for status updates to be written to standard output while the final output of the command will be written to the file specified.
 
+=== -progress
+
+Various commands offer a `+--progress+` option to specify how to output progress messages. This option supports the following values:
+
+* `+auto+`: Automatically select between `+ansi+`, `+single-line+` and `+simple+` depending on console capabilities.
+* `+none+`: Don't output any progress messages.
+* `+simple+`: Output every progress message on a separate line, effectively leaving older progress messages visible. This will be used by default if no console is available, for example during pipeline runs. Supports multi-line progress messages.
+* `+single-line+`: Uses the `+\r+` (carriage return) character to overwrite previous progress message. This will be used by default if a non-ANSI console is detected. Supports single-line progress messages only.
+* `+ansi+`: Uses ANSI escape sequences to overwrite previous progress messages. This will be used by default if ANSI capabilities are detected. Supports multi-line progress messages.
+
 === –store
 
 Available on virtually all (leaf) commands that output data, this option can be used to store command output data in an fcli variable. For more details, see the link:#_fcli_variables[Fcli Variables] section.
