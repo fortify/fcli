@@ -71,35 +71,43 @@ Function Validate_Variables {
         }
     }
 
-    if (-not(Test-Path -Path $global:FCLI_MODULE -PathType Leaf)) {
+    if (-not(Test-Path -Path "$global:FCLI_MODULE" -PathType Leaf)) {
         Write-Host "The file [$global:FCLI_MODULE] has not been found.set variable 'FCLI_MODULE' with exact path" -ForegroundColor Red
         Break
     }
 
-    if($FCLI_URL -eq $null -or $FCLI_URL -eq "") {
-        Set-LocalEnvironmentVariable "FCLI_DEFAULT_FOD_URL" "https://api.ams.fortify.com"
+    $FCLI_URL = Get-LocalEnviornmentVariable "FCLI_URL"
+    if($FCLI_URL) {
+        Set-LocalEnvironmentVariable "FCLI_DEFAULT_URL" $FCLI_URL
     }else{
-        Write-Host "Please set a enviornment varibale for different FoD URL, the Default is set as 'ams.fortify.com'" -ForegroundColor Red
-        #Set-LocalEnvironmentVariable "FCLI_DEFAULT_FOD_URL" $FCLI_URL
+        Set-LocalEnvironmentVariable "FCLI_DEFAULT_URL" "https://api.ams.fortify.com"
+        Write-Host "FCLI_URL variable empty, setting FoD URL, the Default is set as 'ams.fortify.com'" -ForegroundColor Red
     }
 
-    if($FCLI_FOD_TENANT -ne $null -or $FCLI_FOD_TENANT -ne "") {
-        Set-LocalEnvironmentVariable "FCLI_DEFAULT_FOD_TENANT" $FCLI_FOD_TENANT
-    } else {
+    $FCLI_FOD_TENANT = Get-LocalEnviornmentVariable "FCLI_FOD_TENANT"
+	if ($FCLI_FOD_TENANT) {
+        Set-LocalEnvironmentVariable "FCLI_DEFAULT_TENANT" $FCLI_FOD_TENANT
+	}else {
+		Set-LocalEnvironmentVariable "FCLI_DEFAULT_TENANT" $null
         Write-Host "Environment variable not found: FCLI_FOD_TENANT" -ForegroundColor Red
         break
     }
-    if($FCLI_FOD_USER -ne $null -or $FCLI_FOD_USER -ne "") {
-        Set-LocalEnvironmentVariable "FCLI_DEFAULT_FOD_USER" $FCLI_FOD_USER
+
+    $FCLI_FOD_USER = Get-LocalEnviornmentVariable "FCLI_FOD_USER"
+	if ($FCLI_FOD_USER) {
+        Set-LocalEnvironmentVariable "FCLI_DEFAULT_USER" $FCLI_FOD_USER
     } else {
+        Set-LocalEnvironmentVariable "FCLI_DEFAULT_USER" $null
         Write-Host "Environment variable not found: FCLI_FOD_USER" -ForegroundColor Red
         break
     }
 
-    if($FCLI_FOD_PWD -ne $null -or $FCLI_FOD_PWD -ne "") {
+    $FCLI_FOD_PWD = Get-LocalEnviornmentVariable "FCLI_FOD_PWD"
+	if ($FCLI_FOD_PWD) {
         $FCLI_FOD_PWD_UNSECURE = [System.Net.NetworkCredential]::new("", $FCLI_FOD_PWD).Password
-        Set-LocalEnvironmentVariable "FCLI_DEFAULT_FOD_PASSWORD" $FCLI_FOD_PWD_UNSECURE
+        Set-LocalEnvironmentVariable "FCLI_DEFAULT_PASSWORD" $FCLI_FOD_PWD_UNSECURE
     } else {
+        Set-LocalEnvironmentVariable "FCLI_DEFAULT_PASSWORD" $null
         Write-Host "Environment variable not found: FCLI_FOD_PWD" -ForegroundColor Red
         break
     }
@@ -113,11 +121,11 @@ Function Clear_Variables {
 	This PowerShell function clear required variables and stop the execution of the script.
 #>
     Set-Location Env:
-    Remove-Item FCLI_MODULE -ErrorAction Ignore
-    Remove-Item FCLI_DEFAULT_FOD_URL -ErrorAction Ignore
-    Remove-Item FCLI_DEFAULT_FOD_TENANT -ErrorAction Ignore
-    Remove-Item FCLI_DEFAULT_FOD_USER -ErrorAction Ignore
-    Remove-Item FCLI_DEFAULT_FOD_PASSWORD -ErrorAction Ignore
+    #Remove-Item FCLI_MODULE -ErrorAction Ignore
+    Remove-Item FCLI_DEFAULT_URL -ErrorAction Ignore
+    Remove-Item FCLI_DEFAULT_TENANT -ErrorAction Ignore
+    Remove-Item FCLI_DEFAULT_USER -ErrorAction Ignore
+    Remove-Item FCLI_DEFAULT_PASSWORD -ErrorAction Ignore
     Remove-Item FCLI_TEST_MODULES -ErrorAction Ignore
 
     if ($global:blnLinux) {
@@ -195,7 +203,7 @@ Function Run_Test($sJsonLocation) {
 #>
    Write-Host $sJsonLocation
 
-   [PSCustomObject]$json = [PSCustomObject]((Get-Content -Raw $sJsonLocation) -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/' | Out-String | ConvertFrom-Json)
+   [PSCustomObject]$json = [PSCustomObject]((Get-Content -Raw $sJsonLocation) -replace "{PATH}",$PSScriptRoot.Replace("\","\\") -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/' | Out-String | ConvertFrom-Json)
 
    foreach ($jsCmd in $json) {
     $validateOutput = $null
@@ -232,10 +240,10 @@ Function Run_Command($sCmd, $argument, $valOutput) {
 
  #$global:blnLinux = ($env:OS -eq "" -or $env:OS -eq $null)
  if ($global:blnLinux) {
-    $sCmd = "java -jar " + $global:FCLI_MODULE + " " + $sCmd + " " + $argument
+    $sCmd = "java -jar " + "$global:FCLI_MODULE" + " " + $sCmd + " " + $argument
  }else{
     #$sCmd = "./" + $global:FCLI_MODULE + " " + $sCmd + " " + $argument
-    $sCmd = $global:FCLI_MODULE + " " + $sCmd + " " + $argument
+    $sCmd =  $global:FCLI_MODULE.Replace(' ','` ') + " " + $sCmd + " " + $argument
  }
 
  Write-Host ("Running Command: $($sCmd)") -ForegroundColor Cyan
@@ -269,7 +277,7 @@ Function Run_Command($sCmd, $argument, $valOutput) {
 # Main 
 #
 Set-LocalEnvironmentVariable "FCLI_TEST_MODULES" "fod, ssc, scsast"
-$global:FCLI_MODULE="fcli-beta.exe"
+#$global:FCLI_MODULE="fcli-beta.exe"
 $global:blnLinux = ($env:OS -eq "" -or $env:OS -eq $null)
 $MODULE_INPUT_STR="Enter name and path of the command line tool along with extension[fcli.exe]"
 if ($global:blnLinux) {
