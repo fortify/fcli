@@ -25,26 +25,14 @@
 package com.fortify.cli.fod.entity.app.attr.cli.helper;
 
 import com.fortify.cli.common.json.JsonNodeHolder;
-
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.ArrayList;
-import java.util.Map;
-
 @ReflectiveAccess
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class FoDAttributeDescriptor extends JsonNodeHolder {
+public class FoDPickListDescriptor extends JsonNodeHolder {
     private Integer id;
     private String name;
-    private Integer attributeTypeId;
-    private String attributeType;
-    private Integer attributeDataTypeId;
-    private String attributeDataType;
-    private Boolean isRequired;
-    private Boolean isRestricted;
-    private ArrayList<FoDPickListDescriptor> picklistValues;
-    private String value;
 }

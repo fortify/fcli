@@ -68,6 +68,8 @@ public abstract class FoDAppCreateAppCommand extends AbstractFoDJsonNodeOutputCo
     protected String owner;
     @Option(names = {"--user-groups", "--groups"}, required = false, split=",")
     protected ArrayList<String> userGroups;
+    @Option(names={"--auto-required-attrs"}, required = false)
+    protected boolean autoRequiredAttrs = false;
 
     @Mixin
     protected FoDCriticalityTypeOptions.RequiredOption criticalityType;
@@ -94,7 +96,7 @@ public abstract class FoDAppCreateAppCommand extends AbstractFoDJsonNodeOutputCo
                 .setOwnerId(userDescriptor.getUserId())
                 .setApplicationType(FoDAppTypeOptions.FoDAppType.Web.getName())
                 .setHasMicroservices(false)
-                .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes()))
+                .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes(), autoRequiredAttrs))
                 .setUserGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups));
 
         return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();

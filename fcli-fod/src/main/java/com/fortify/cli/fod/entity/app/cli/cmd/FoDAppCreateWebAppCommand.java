@@ -60,7 +60,8 @@ public class FoDAppCreateWebAppCommand extends FoDAppCreateAppCommand {
                 .setOwnerId(userDescriptor.getUserId())
                 .setApplicationType(FoDAppTypeOptions.FoDAppType.Web.getName())
                 .setHasMicroservices(false)
-                .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes()))
+                .setAutoReqdAttrs(autoRequiredAttrs)
+                .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes(), autoRequiredAttrs))
                 .setUserGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups));
 
         return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();

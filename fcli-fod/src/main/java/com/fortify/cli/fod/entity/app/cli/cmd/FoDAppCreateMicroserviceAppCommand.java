@@ -67,9 +67,10 @@ public class FoDAppCreateMicroserviceAppCommand extends FoDAppCreateAppCommand {
                 .setOwnerId(userDescriptor.getUserId())
                 .setApplicationType(FoDAppTypeOptions.FoDAppType.Microservice.getName())
                 .setHasMicroservices(true)
+                .setAutoReqdAttrs(autoRequiredAttrs)
                 .setMicroservices(FoDAppHelper.getMicroservicesNode(microservices))
                 .setReleaseMicroserviceName(releaseMicroservice)
-                .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes()))
+                .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes(), autoRequiredAttrs))
                 .setUserGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups));
 
         return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();
