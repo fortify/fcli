@@ -202,8 +202,11 @@ Function Run_Test($sJsonLocation) {
 	This PowerShell function take json path as parameter to run the test script with given json data.
 #>
    Write-Host $sJsonLocation
+   $FCLI_FOD_USER = Get-LocalEnviornmentVariable "FCLI_FOD_USER"
+   Write-Host $FCLI_FOD_USER
+   Write-Host $Global:ENTITLE_ID
 
-   [PSCustomObject]$json = [PSCustomObject]((Get-Content -Raw $sJsonLocation) -replace "{PATH}",$PSScriptRoot.Replace("\","\\") -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/' | Out-String | ConvertFrom-Json)
+   [PSCustomObject]$json = [PSCustomObject]((Get-Content -Raw $sJsonLocation) -replace "{PATH}",$PSScriptRoot.Replace("\","\\") -replace "{FCLI_FOD_USER}",$FCLI_FOD_USER -replace "{ENTITLE_ID}",$Global:ENTITLE_ID -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/' | Out-String | ConvertFrom-Json)
 
    foreach ($jsCmd in $json) {
     $validateOutput = $null
@@ -276,6 +279,7 @@ Function Run_Command($sCmd, $argument, $valOutput) {
 #
 # Main 
 #
+$Global:ENTITLE_ID = 393
 Set-LocalEnvironmentVariable "FCLI_TEST_MODULES" "fod, ssc, scsast"
 #$global:FCLI_MODULE="fcli-beta.exe"
 $global:blnLinux = ($env:OS -eq "" -or $env:OS -eq $null)

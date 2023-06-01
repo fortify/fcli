@@ -11,7 +11,7 @@
   },  
   {
     "commands": "fod application create-web-app",
-    "arguments": "--owner=1851 --business-criticality=High --sdlc-status='Production' INT_T_App2:INT_T_App2_Release2",
+    "arguments": "--owner={FCLI_FOD_USER} --business-criticality=High --sdlc-status='Production' INT_T_App2:INT_T_App2_Release2",
 	"expectOutput": "created"
   },  
   {
@@ -121,11 +121,11 @@
 
   {
     "commands": "fod scan setup-sast",
-    "arguments": "--entitlement-frequency=Subscription --entitlement-id=393 --technology-stack='JAVA/J2EE' --language-level='11' --audit-preference=Automated --assessment-type=Static INT_T_App1:INT_T_App1_Release1"
+    "arguments": "--entitlement-frequency=Subscription --entitlement-id={ENTITLE_ID} --technology-stack='JAVA/J2EE' --language-level='11' --audit-preference=Automated --assessment-type=Static INT_T_App1:INT_T_App1_Release1"
   }, 
   {
     "commands": "fod scan start-sast",
-    "arguments": "--entitlement-id=393 --notes='notes for test cases' --file='{PATH}\\data\\sample\\package.zip' --entitlement-preference=SubscriptionFirstThenSingleScan --remediation-preference=NonRemediationScanOnly --in-progress-action=Queue INT_T_App1:INT_T_App1_Release1"
+    "arguments": "--entitlement-id={ENTITLE_ID} --notes='notes for test cases' --file='{PATH}\\data\\sample\\package.zip' --entitlement-preference=SubscriptionFirstThenSingleScan --remediation-preference=NonRemediationScanOnly --in-progress-action=Queue INT_T_App1:INT_T_App1_Release1"
   },  
   {
     "commands": "fod user list",
