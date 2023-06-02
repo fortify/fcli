@@ -12,11 +12,17 @@
   {
     "commands": "fod application create-web-app",
     "arguments": "--owner={FCLI_FOD_USER} --business-criticality=High --sdlc-status='Production' INT_T_App2:INT_T_App2_Release2",
-	"expectOutput": "created"
+	"expectOutput": "created",
+	"waitSeconds": "10"
   },  
   {
     "commands": "fod app list",
     "arguments": "",
+	"expectOutput": "INT_T_App2"
+  },  
+  {
+    "commands": "fod app list",
+    "arguments": " -q=\"applicationName.contains('{FCLI_DEFAULT_FOD_APP}')\" ",
 	"expectOutput": "INT_T_App2"
   },
   {
@@ -34,7 +40,12 @@
   },
   {
     "commands": "fod release list",
-    "arguments": "",	
+    "arguments": "--app=INT_T_App2",	
+	"expectOutput": "INT_T_App2_Release3"		
+  },  
+  {
+    "commands": "fod release list",
+    "arguments": "--app=INT_T_App2",	
 	"expectOutput": "INT_T_App2_Release3"		
   },
   {
@@ -69,12 +80,12 @@
   },
   {
     "commands": "fod app-rel list",
-    "arguments": "",	
+    "arguments": "--app=INT_T_App2",	
 	"expectOutput": "INT_T_App2_Rel3"		
   },
   {
     "commands": "fod app-rel ls",
-    "arguments": "",	
+    "arguments": "--app=INT_T_App2",	
 	"expectOutput": "INT_T_App2_Rel3"		
   },
   {
@@ -116,17 +127,14 @@
   },  
   {
     "commands": "fod scan import-sast",
-    "arguments": "--file='{PATH}\\data\\sample\\scan.fpr' INT_T_App1:INT_T_App1_Release1"
+    "arguments": "--file='{PATH}\\data\\sample\\scan.fpr' INT_T_App2:INT_T_App2_Rel3",
+	"waitSeconds": "5"
   },
 
   {
     "commands": "fod scan setup-sast",
-    "arguments": "--entitlement-frequency=Subscription --entitlement-id={ENTITLE_ID} --technology-stack='JAVA/J2EE' --language-level='11' --audit-preference=Automated --assessment-type=Static INT_T_App1:INT_T_App1_Release1"
+    "arguments": "--entitlement-frequency=Subscription --entitlement-id={ENTITLE_ID} --technology-stack='JAVA/J2EE' --language-level='11' --audit-preference=Automated --assessment-type=Static INT_T_App2:INT_T_App2_Rel3"
   }, 
-  {
-    "commands": "fod scan start-sast",
-    "arguments": "--entitlement-id={ENTITLE_ID} --notes='notes for test cases' --file='{PATH}\\data\\sample\\package.zip' --entitlement-preference=SubscriptionFirstThenSingleScan --remediation-preference=NonRemediationScanOnly --in-progress-action=Queue INT_T_App1:INT_T_App1_Release1"
-  },  
   {
     "commands": "fod user list",
     "arguments": ""
@@ -137,7 +145,7 @@
   },   
   {
     "commands": "fod user create",
-    "arguments": "--email=integration@test.com --firstname=INT_Test --lastname=User_001 --phone=555555555 --role=Demo_role INT_T_U_001",
+    "arguments": "--email=integration@test.com --firstname=INT_Test --lastname=User_001 --phone=555555555 --role=Developer INT_T_U_001",
 	"expectOutput": "created"	
   },   
   {
@@ -146,7 +154,7 @@
   },  
   {
     "commands": "fod user update",
-    "arguments": "--email=integration@test.com --phone=555555555 --suspended=true --role=Demo_role INT_T_U_001",
+    "arguments": "--email=integration@test.com --phone=555555555 --suspended=true --role=Developer INT_T_U_001",
 	"expectOutput": "updated"		
   },  
   {
@@ -163,14 +171,14 @@
     "arguments": ""
   },   
   {
-    "commands": "fod user-group get",
-    "arguments": " test_group"
-  },
-  {
     "commands": "fod user-group create",
     "arguments": " INT_T_UG_001",
 	"expectOutput": "created"	
   },   
+  {
+    "commands": "fod user-group get",
+    "arguments": " INT_T_UG_001"
+  },
   {
     "commands": "fod user-group update",
     "arguments": " --new-name=INT_T_UG_001x INT_T_UG_001",

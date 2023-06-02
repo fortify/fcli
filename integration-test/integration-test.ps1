@@ -203,10 +203,17 @@ Function Run_Test($sJsonLocation) {
 #>
    Write-Host $sJsonLocation
    $FCLI_FOD_USER = Get-LocalEnviornmentVariable "FCLI_FOD_USER"
+   $FCLI_DEFAULT_FOD_APP = Get-LocalEnviornmentVariable "FCLI_DEFAULT_FOD_APP"
    Write-Host $FCLI_FOD_USER
    Write-Host $Global:ENTITLE_ID
+   Write-Host $FCLI_DEFAULT_FOD_APP
 
-   [PSCustomObject]$json = [PSCustomObject]((Get-Content -Raw $sJsonLocation) -replace "{PATH}",$PSScriptRoot.Replace("\","\\") -replace "{FCLI_FOD_USER}",$FCLI_FOD_USER -replace "{ENTITLE_ID}",$Global:ENTITLE_ID -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' -replace '(?ms)/\*.*?\*/' | Out-String | ConvertFrom-Json)
+   [PSCustomObject]$json = [PSCustomObject]((Get-Content -Raw $sJsonLocation) -replace "{PATH}",$PSScriptRoot.Replace("\","\\") `
+                            -replace "{FCLI_FOD_USER}",$FCLI_FOD_USER `
+                            -replace "{FCLI_DEFAULT_FOD_APP}",$FCLI_DEFAULT_FOD_APP `
+                            -replace "{ENTITLE_ID}",$Global:ENTITLE_ID `
+                            -replace '(?m)(?<=^([^"]|"[^"]*")*)//.*' `
+                            -replace '(?ms)/\*.*?\*/' | Out-String | ConvertFrom-Json)
 
    foreach ($jsCmd in $json) {
     $validateOutput = $null
