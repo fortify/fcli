@@ -48,7 +48,7 @@ bin/
 samples/**/scans/**
 samples/**/logs/**
 
-*.fpr
+#*.fpr
 FortifyImportExportUtility-common/lombok.config FortifyImportExportUtility-common-from/lombok.config FortifyImportExportUtility-common-to/lombok.config FortifyImportExportUtility-from-fod-plugin/lombok.config FortifyImportExportUtility-from-mock-plugin/lombok.config FortifyImportExportUtility-from-ssc-plugin/lombok.config FortifyImportExportUtility-to-file-plugin/lombok.config FortifyImportExportUtility-to-mock-plugin/lombok.config
 lombok.config
 fcli.log
