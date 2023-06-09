@@ -50,6 +50,7 @@ public class FoDAppCreateRequest {
     private String releaseMicroserviceName;
     private JsonNode attributes;
     private JsonNode userGroupIds;
+    private Boolean autoRequiredAttrs;
 
     public FoDAppCreateRequest setApplicationName(String name) {
         this.applicationName = name;
@@ -122,6 +123,11 @@ public class FoDAppCreateRequest {
 
     public FoDAppCreateRequest setUserGroupIds(JsonNode ids) {
         this.userGroupIds = ids;
+        return this;
+    }
+
+    public FoDAppCreateRequest setAutoReqdAttrs(Boolean autoRequiredAttrs) {
+        this.autoRequiredAttrs = autoRequiredAttrs;
         return this;
     }
 
