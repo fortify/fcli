@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230609.123306-dev_develop
+fcli_version: 0.20230609.124156-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20230609.123306-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230609.123306-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230609.124156-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230609.123306-dev_develop</span>
+<span id="revnumber">version 0.20230609.124156-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -31,16 +31,16 @@ fcli_version: 0.20230609.123306-dev_develop
 <li><a href="#_command_structure">Command Structure</a></li>
 <li><a href="#_common_options">Common Options</a>
 <ul class="sectlevel2">
-<li><a href="#_h_help">-h | –help</a></li>
-<li><a href="#_env_prefix">–env-prefix</a></li>
-<li><a href="#_log_level">–log-level</a></li>
-<li><a href="#_log_file">–log-file</a></li>
-<li><a href="#_o_output">-o | –output</a></li>
-<li><a href="#_output_to_file">–output-to-file</a></li>
+<li><a href="#_h_help">-h | --help</a></li>
+<li><a href="#_env_prefix">--env-prefix</a></li>
+<li><a href="#_log_level">--log-level</a></li>
+<li><a href="#_log_file">--log-file</a></li>
+<li><a href="#_o_output">-o | --output</a></li>
+<li><a href="#_output_to_file">--output-to-file</a></li>
 <li><a href="#_progress">--progress</a></li>
-<li><a href="#_store">–store</a></li>
-<li><a href="#_q_query">-q | –query</a></li>
-<li><a href="#_session">–session</a></li>
+<li><a href="#_store">--store</a></li>
+<li><a href="#_q_query">-q | --query</a></li>
+<li><a href="#_session">--session</a></li>
 <li><a href="#_option_expressions">Option Expressions</a></li>
 </ul>
 </li>
@@ -268,13 +268,13 @@ simple wrapper script/batch file or shell alias to make it slightly easier to in
 <p>The following sections describe common options that are available on (most) fcli commands.</p>
 </div>
 <div class="sect2">
-<h3 id="_h_help"><a class="anchor" href="#_h_help"></a>-h | –help</h3>
+<h3 id="_h_help"><a class="anchor" href="#_h_help"></a>-h | --help</h3>
 <div class="paragraph">
 <p>This option can be used on every fcli (sub-)command to view usage information for that command. Usage information usually shows the command synopsis, a description of the functionality provided by the command, and a description of each command line option or parameter accepted by the command.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_env_prefix"><a class="anchor" href="#_env_prefix"></a>–env-prefix</h3>
+<h3 id="_env_prefix"><a class="anchor" href="#_env_prefix"></a>--env-prefix</h3>
 <div class="paragraph">
 <p>As described in the <a href="#_environment_variables">Environment Variables</a> section, default option and parameter values can be retrieved from environment variables starting with <code>FCLI_DEFAULT</code>. This option allows for configuring a different environment variable prefix. This may be useful if, for example, you want to login to multiple instances of the same system using environment variables. For example, when running <code>fcli ssc session login --env-prefix PROD</code>, fcli will look for environment variables like <code>PROD_SSC_URL</code> instead of <code>FCLI_DEFAULT_SSC_URL</code>.</p>
 </div>
@@ -283,21 +283,21 @@ simple wrapper script/batch file or shell alias to make it slightly easier to in
 </div>
 </div>
 <div class="sect2">
-<h3 id="_log_level"><a class="anchor" href="#_log_level"></a>–log-level</h3>
+<h3 id="_log_level"><a class="anchor" href="#_log_level"></a>--log-level</h3>
 <div class="paragraph">
 <p>This option can be used on every fcli (sub-)command to specify the fcli log level; see the help output for a list of allowed levels. Note that this option also requires the <code>--log-file</code> option to be specified,
 otherwise no log will be written.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_log_file"><a class="anchor" href="#_log_file"></a>–log-file</h3>
+<h3 id="_log_file"><a class="anchor" href="#_log_file"></a>--log-file</h3>
 <div class="paragraph">
 <p>This option can be used on every fcli (sub-)command to specify the file to which to output log data. If not specified, currently no log data will be written, although future versions may specify a default log file
 location in the fcli data folder.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_o_output"><a class="anchor" href="#_o_output"></a>-o | –output</h3>
+<h3 id="_o_output"><a class="anchor" href="#_o_output"></a>-o | --output</h3>
 <div class="paragraph">
 <p>Available on virtually all (leaf) commands that output data, this option can be used to specify the output format. Fcli supports a wide variety of output formats, like <code>table</code>, <code>csv</code>, <code>json</code>, <code>xml</code>, and <code>tree</code> formats, allowing for both human-readable output or output suitable for automations. The <code>csv-plain</code> and <code>table-plain</code> output formats produce CSV or table output without headers. The <code>*-flat</code>
 output formats produce a flattened view of the output data, potentially making it easier to process that data without having to navigate through an object tree. For a full list of output formats supported by your fcli
@@ -345,7 +345,7 @@ that changes state (delete/update/create/…). In most cases, the <code>get</cod
 </div>
 </div>
 <div class="sect2">
-<h3 id="_output_to_file"><a class="anchor" href="#_output_to_file"></a>–output-to-file</h3>
+<h3 id="_output_to_file"><a class="anchor" href="#_output_to_file"></a>--output-to-file</h3>
 <div class="paragraph">
 <p>Available on virtually all (leaf) commands that output data, this option can be used to write the command output data to a file, in the format specified by the <code>--output</code> option listed above. In some cases, this may be more convenient than redirecting the output to a file. For example, although currently not implemented, fcli could potentially skip creating the output file if there is no output data or if an error occurs. Also, for commands that output status updates, like <code>wait-for</code> commands, the <code>--output-to-file</code> option allows for status updates to be written to standard output while the final output of the command will be written to the file specified.</p>
 </div>
@@ -376,13 +376,13 @@ that changes state (delete/update/create/…). In most cases, the <code>get</cod
 </div>
 </div>
 <div class="sect2">
-<h3 id="_store"><a class="anchor" href="#_store"></a>–store</h3>
+<h3 id="_store"><a class="anchor" href="#_store"></a>--store</h3>
 <div class="paragraph">
 <p>Available on virtually all (leaf) commands that output data, this option can be used to store command output data in an fcli variable. For more details, see the <a href="#_fcli_variables">Fcli Variables</a> section.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_q_query"><a class="anchor" href="#_q_query"></a>-q | –query</h3>
+<h3 id="_q_query"><a class="anchor" href="#_q_query"></a>-q | --query</h3>
 <div class="paragraph">
 <p>Available on most <code>list</code> commands and some other commands, this option allows for querying the output data, outputting only records that match the given Spring Expression Language (SpEL) expression. See the <a href="#_option_expressions">Option Expressions</a> section for details.</p>
 </div>
@@ -492,7 +492,7 @@ All commands that automatically generate server-side queries provide the <code>-
 </div>
 </div>
 <div class="sect2">
-<h3 id="_session"><a class="anchor" href="#_session"></a>–session</h3>
+<h3 id="_session"><a class="anchor" href="#_session"></a>--session</h3>
 <div class="paragraph">
 <p>Available on virtually all commands that interact with a target system, this option allows for specifying a session name. For more details, see the <a href="#_session_management">Session Management</a> section.</p>
 </div>
@@ -863,8 +863,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230609.123306-dev_develop<br>
-Last updated 2023-06-09 12:34:56 UTC
+Version 0.20230609.124156-dev_develop<br>
+Last updated 2023-06-09 12:44:12 UTC
 </div>
 </div>
 </body>
