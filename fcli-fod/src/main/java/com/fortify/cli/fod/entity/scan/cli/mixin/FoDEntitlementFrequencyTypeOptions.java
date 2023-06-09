@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-//TODO Change description keys to be more like picocli convention
 public class FoDEntitlementFrequencyTypeOptions {
     public static final class FoDEntitlementFrequencyTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
@@ -49,14 +48,14 @@ public class FoDEntitlementFrequencyTypeOptions {
 
     public static class RequiredOption extends AbstractFoDEntitlementFrequencyType {
         @Option(names = {"--frequency", "--entitlement-frequency"}, required = true,
-                completionCandidates = FoDEntitlementFrequencyTypeIterable.class, descriptionKey = "EntitlementFrequencyTypeMixin")
+                completionCandidates = FoDEntitlementFrequencyTypeIterable.class, descriptionKey = "fcli.fod.scan.entitlement-frequency")
         @Getter
         private FoDEnums.EntitlementFrequencyType entitlementFrequencyType;
     }
 
     public static class OptionalOption extends AbstractFoDEntitlementFrequencyType {
         @Option(names = {"--frequency", "--entitlement-frequency"}, required = false,
-                completionCandidates = FoDEntitlementFrequencyTypeIterable.class, descriptionKey = "EntitlementFrequencyTypeMixin")
+                completionCandidates = FoDEntitlementFrequencyTypeIterable.class, descriptionKey = "fcli.fod.scan.entitlement-frequency")
         @Getter
         private FoDEnums.EntitlementFrequencyType entitlementFrequencyType;
     }

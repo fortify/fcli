@@ -32,7 +32,7 @@ import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.entity.rest.cli.mixin.FoDTimePeriodOptions;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDAnalysisStatusTypeOptions;
-import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
+import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDBaseRequestOutputCommand;
 import com.fortify.cli.fod.rest.FoDUrls;
@@ -69,7 +69,7 @@ public abstract class AbstractFoDScanListCommand extends AbstractFoDBaseRequestO
     private String modifiedStartDate;
 
     @Mixin private FoDAnalysisStatusTypeOptions.OptionalOption analysisStatus;
-    @Mixin private FoDScanFormatOptions.OptionalOption scanType;
+    @Mixin private FoDScanTypeOptions.OptionalOption scanType;
     @Mixin private FoDTimePeriodOptions.OptionalOption timePeriod;
 
     public String getScanType() {

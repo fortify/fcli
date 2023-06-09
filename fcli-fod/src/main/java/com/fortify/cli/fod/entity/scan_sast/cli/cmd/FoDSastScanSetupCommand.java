@@ -39,7 +39,7 @@ import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppMicroserviceRelResolve
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelAssessmentTypeDescriptor;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDAssessmentTypeOptions;
-import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
+import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.entity.scan_sast.helper.FoDSastScanHelper;
@@ -98,15 +98,15 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
             Integer assessmentTypeId = 0;
             Integer technologyStackId = 0;
             Integer languageLevelId = 0;
-    
+
             // TODO Unused variable
             // get current setup
             FoDSastScanSetupDescriptor currentSetup = FoDSastScanHelper.getSetupDescriptor(unirest, relId);
-    
+
             // find/check out assessment type id
-            //FoDScanFormatOptions.FoDScanType scanType = assessmentType.getAssessmentType().toScanType();
+            //FoDScanTypeOptions.FoDScanType scanType = assessmentType.getAssessmentType().toScanType();
             FoDAppRelAssessmentTypeDescriptor[] appRelAssessmentTypeDescriptor = FoDAppRelHelper.getAppRelAssessmentTypes(unirest, relId,
-                    FoDScanFormatOptions.FoDScanType.Static, true);
+                    FoDScanTypeOptions.FoDScanType.Static, true);
             //String assessmentTypeName = assessmentType.getAssessmentType().toString().replace("Plus", "+") + " Assessment";
             String assessmentTypeName = staticAssessmentType.name().replace("Plus", "+") + " Assessment";
             for (FoDAppRelAssessmentTypeDescriptor assessmentType : appRelAssessmentTypeDescriptor) {
@@ -115,7 +115,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 }
             }
             //System.out.println("assessmentTypeId = " + assessmentTypeId);
-    
+
             // find/check entitlement id
             if (entitlementId != null && entitlementId > 0) {
                 entitlementIdToUse = entitlementId;
@@ -133,11 +133,11 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 FoDAssessmentTypeOptions.FoDAssessmentType assessmentType = FoDAssessmentTypeOptions.FoDAssessmentType.valueOf(String.valueOf(staticAssessmentType));
                 FoDAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
                         assessmentType, entitlementPreferenceType,
-                        FoDScanFormatOptions.FoDScanType.Mobile);
+                        FoDScanTypeOptions.FoDScanType.Mobile);
                 entitlementIdToUse = assessmentTypeDescriptor.getEntitlementId();
             }
             //System.out.println("entitlementId = " + entitlementIdToUse);
-    
+
             // find/check technology stack / language level
             FoDLookupDescriptor lookupDescriptor = null;
             try {
@@ -156,7 +156,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 if (lookupDescriptor != null) languageLevelId = Integer.valueOf(lookupDescriptor.getValue());
                 //System.out.println("languageLevelId = " + languageLevelId);
             }
-    
+
             FoDSetupSastScanRequest setupSastScanRequest = new FoDSetupSastScanRequest()
                 .setEntitlementId(entitlementIdToUse)
                 .setAssessmentTypeId(assessmentTypeId)
@@ -167,7 +167,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 .setAuditPreferenceType(auditPreferenceType.name())
                 .setIncludeThirdPartyLibraries(includeThirdPartyLibraries)
                 .setUseSourceControl(useSourceControl);
-    
+
             return FoDSastScanHelper.setupScan(unirest, Integer.valueOf(relId), setupSastScanRequest).asJsonNode();
         }
     }

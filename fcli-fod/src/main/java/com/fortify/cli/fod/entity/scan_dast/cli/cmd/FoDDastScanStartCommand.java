@@ -43,7 +43,7 @@ import com.fortify.cli.fod.entity.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDRemediationScanPreferenceTypeOptions;
-import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
+import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
@@ -91,9 +91,9 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
         try ( var progressWriter = progressWriterFactory.create() ) {
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
             FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
-    
+
             String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
-    
+
             // check if scan is already running
             FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptorById(unirest, relId, true);
             if (appRelDescriptor.getDynamicAnalysisStatusType() != null && (appRelDescriptor.getDynamicAnalysisStatusType().equals("In_Progress")
@@ -103,24 +103,21 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                     if (inProgressScanActionType.getInProgressScanActionType().equals(FoDEnums.InProgressScanActionType.DoNotStartScan)) {
                         return scanDescriptor.asObjectNode().put("__action__", "SKIPPED_RUNNING");
                     } else if (inProgressScanActionType.getInProgressScanActionType().equals(FoDEnums.InProgressScanActionType.CancelScanInProgress)) {
-                        // TODO Do not use System.out.println (https://github.com/fortify/fcli/issues/91, close after fixing all occurrences in FoD module)
-                        //      If this is supposed to be an error, throw an exception
-                        //      If this is supposed to be a warning, use logging framework to output warning
-                        System.out.println("Cancelling scans automatically is not currently supported.");
+                        progressWriter.writeWarning("Cancelling scans automatically is not currently supported.");
                     }
                 } else {
                     throw new ValidationException("A dynamic scan with id '" + "" + appRelDescriptor.getCurrentDynamicScanId() +
                             "' is already in progress for release: " + appRelDescriptor.getReleaseName());
                 }
             }
-    
+
             // get current setup and check if its valid
             FoDDastScanSetupDescriptor currentSetup = FoDDastScanHelper.getSetupDescriptor(unirest, relId);
             if (currentSetup.getDynamicSiteURL() == null || StringUtils.isEmpty(currentSetup.getDynamicSiteURL())) {
                 throw new ValidationException("The dynamic scan configuration for release with id '" + relId +
                         "' has not been setup correctly - 'Dynamic Site URL' is missing or empty.");
             }
-    
+
             /**
              * Logic for finding/using "entitlement" and "remediation" scanning is as follows:
              *  - if "entitlement id" is specified directly then use it
@@ -136,21 +133,21 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                     (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
                 // if requesting a remediation scan make we have one available
                 entitlementToUse = FoDDastScanHelper.validateRemediationEntitlement(unirest, progressWriter, relId,
-                        currentSetup.getEntitlementId(), FoDScanFormatOptions.FoDScanType.Dynamic);
+                        currentSetup.getEntitlementId(), FoDScanTypeOptions.FoDScanType.Dynamic);
             } else if (assessmentType.getAssessmentType() != null && entitlementType.getEntitlementPreferenceType() != null) {
                 // if assessment and entitlement type are both specified, find entitlement to use
                 entitlementToUse = FoDDastScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
                         assessmentType.getAssessmentType(), entitlementType.getEntitlementPreferenceType(),
-                        FoDScanFormatOptions.FoDScanType.Dynamic);
+                        FoDScanTypeOptions.FoDScanType.Dynamic);
             } else {
                 // use the current scan setup
                 entitlementToUse.copyFromCurrentSetup(currentSetup);
             }
-    
+
             if (entitlementToUse.getEntitlementId() == null || entitlementToUse.getEntitlementId() <= 0) {
                 throw new ValidationException("Could not find a valid FoD entitlement to use.");
             }
-    
+
             String startDateStr = (startDate == null || startDate.isEmpty())
                     ? LocalDateTime.now().format(dtf)
                     : LocalDateTime.parse(startDate, dtf).toString();
@@ -164,7 +161,7 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                     .setScanMethodType("Other")
                     .setScanTool(fcliProperties.getProperty("projectName", "fcli"))
                     .setScanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"));
-    
+
             //System.out.println(startScanRequest);
             return FoDDastScanHelper.startScan(unirest, relId, startScanRequest).asJsonNode();
         }

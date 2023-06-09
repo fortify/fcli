@@ -34,7 +34,6 @@ import com.fortify.cli.fod.util.FoDEnums;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-//TODO Change description keys to be more like picocli convention
 public class FoDRemediationScanPreferenceTypeOptions {
     public static final class FoDRemediationScanPreferenceTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
@@ -50,14 +49,14 @@ public class FoDRemediationScanPreferenceTypeOptions {
 
     public static class RequiredOption extends AbstractFoDEntitlementType {
         @Option(names = {"--remediation", "--remediation-preference"}, required = true,
-                completionCandidates = FoDRemediationScanPreferenceTypeIterable.class, descriptionKey = "RemediationScanPreferenceTypeMixin")
+                completionCandidates = FoDRemediationScanPreferenceTypeIterable.class, descriptionKey = "fcli.fod.scan.remediation-preference")
         @Getter
         private FoDEnums.RemediationScanPreferenceType remediationScanPreferenceType;
     }
 
     public static class OptionalOption extends AbstractFoDEntitlementType {
         @Option(names = {"--remediation", "--remediation-preference"}, required = false,
-                completionCandidates = FoDRemediationScanPreferenceTypeIterable.class, descriptionKey = "RemediationScanPreferenceTypeMixin")
+                completionCandidates = FoDRemediationScanPreferenceTypeIterable.class, descriptionKey = "fcli.fod.scan.remediation-preference")
         @Getter
         private FoDEnums.RemediationScanPreferenceType remediationScanPreferenceType;
     }

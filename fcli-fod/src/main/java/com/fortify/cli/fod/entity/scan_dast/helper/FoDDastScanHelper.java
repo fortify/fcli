@@ -31,10 +31,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
-import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
+import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod.entity.scan.helper.FoDScanNotFoundException;
 import com.fortify.cli.fod.entity.scan.helper.FoDStartScanResponse;
 import com.fortify.cli.fod.rest.FoDUrls;
 
@@ -68,7 +67,7 @@ public class FoDDastScanHelper extends FoDScanHelper {
         }
         JsonNode node = objectMapper.createObjectNode()
                 .put("scanId", startScanResponse.getScanId())
-                .put("scanType", FoDScanFormatOptions.FoDScanType.Dynamic.name())
+                .put("scanType", FoDScanTypeOptions.FoDScanType.Dynamic.name())
                 .put("analysisStatusType", "Pending")
                 .put("applicationName", appRelDescriptor.getApplicationName())
                 .put("releaseName", appRelDescriptor.getReleaseName())

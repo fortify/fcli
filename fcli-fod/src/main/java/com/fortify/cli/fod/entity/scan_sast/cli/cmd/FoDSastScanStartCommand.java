@@ -40,7 +40,7 @@ import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppMicroserviceRelResolve
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDRemediationScanPreferenceTypeOptions;
-import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
+import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.entity.scan_sast.helper.FoDSastScanHelper;
@@ -90,17 +90,17 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
         try ( var progressWriter = progressWriterFactory.create() ) {
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
             String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
-    
+
             // get current setup and check if its valid
             FoDSastScanSetupDescriptor currentSetup = FoDSastScanHelper.getSetupDescriptor(unirest, relId);
             if (currentSetup.getTechnologyStack() == null || StringUtils.isEmpty(currentSetup.getTechnologyStack())) {
                 throw new ValidationException("The static scan configuration for release with id '" + relId +
                         "' has not been setup correctly - 'Technology Stack/Language Level' is missing or empty.");
             }
-    
+
             // get entitlement to use
             FoDAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, progressWriter, relId, currentSetup);
-    
+
             FoDStartSastScanRequest startScanRequest = new FoDStartSastScanRequest()
                     .setPurchaseEntitlement(purchaseEntitlement)
                     .setInProgressScanActionType(inProgressScanActionType.getInProgressScanActionType() != null ?
@@ -109,7 +109,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                     .setNotes(notes != null && !notes.isEmpty() ? notes : "")
                     .setScanTool(fcliProperties.getProperty("projectName", "fcli"))
                     .setScanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"));
-    
+
             if (entitlementId != null && entitlementId > 0) {
                 startScanRequest.setEntitlementId(entitlementToUse.getEntitlementId());
             } else if (entitlementType.getEntitlementPreferenceType() != null) {
@@ -117,7 +117,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
             } else {
                 startScanRequest.setEntitlementPreferenceType(String.valueOf(FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan));
             }
-    
+
             return FoDSastScanHelper.startScan(unirest, relId, startScanRequest, scanFile, chunkSize).asJsonNode();
         }
     }
@@ -152,7 +152,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
         if (remediationScanType.getRemediationScanPreferenceType() != null && (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
             // if requesting a remediation scan make we have one available
             FoDSastScanHelper.validateRemediationEntitlement(unirest, progressWriter, relId,
-                    currentSetup.getEntitlementId(), FoDScanFormatOptions.FoDScanType.Static).getEntitlementId();
+                    currentSetup.getEntitlementId(), FoDScanTypeOptions.FoDScanType.Static).getEntitlementId();
         }
         return entitlementToUse;
     }

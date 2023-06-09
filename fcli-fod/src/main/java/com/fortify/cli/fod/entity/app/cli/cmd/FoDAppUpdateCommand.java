@@ -80,7 +80,6 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
     @Mixin
     private FoDAttributeUpdateOptions.OptionalAttrOption appAttrsUpdate;
 
-    // TODO Method too long; separate into multiple methods.
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
 
@@ -105,26 +104,6 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
                 .setBusinessCriticalityType(appCriticalityNew != null ? String.valueOf(appCriticalityNew) : appDescriptor.getBusinessCriticalityType())
                 .setEmailList(StringUtils.isNotEmpty(appEmailListNew) ? appEmailListNew : appDescriptor.getEmailList())
                 .setAttributes(jsonAttrs);
-
-        /*
-        if (addMicroservices != null && addMicroservices.getMicroservices() != null) {
-            if (addMicroservices.getMicroservices().contains(deleteMicroservices.getMicroservices()))
-                throw new ValidationException("The --add-microservice and --delete-microservice cannot both contain the same microservice");
-            appUpdateRequest.setAddMicroservices(addMicroservices.getMicroservices());
-        }
-
-        if (deleteMicroservices != null && deleteMicroservices.getMicroservices() != null) {
-            if (deleteMicroservices.getMicroservices().contains(addMicroservices.getMicroservices()))
-                throw new ValidationException("The --add-microservice and --delete-microservice cannot both contain the same microservice");
-            appUpdateRequest.setDeleteMicroservices(deleteMicroservices.getMicroservices());
-        }
-
-        if (renameMicroservices != null && renameMicroservices.getMicroservices() != null) {
-            List<String> msNames = new ArrayList<>(renameMicroservices.getMicroservices().keySet());
-            if (msNames.contains(addMicroservices.getMicroservices()) || msNames.contains(deleteMicroservices.getMicroservices()))
-                throw new ValidationException("The --update-microservice and --add-microservice or --delete-microservice cannot both contain the same microservice");
-            appUpdateRequest.setRenameMicroservices(renameMicroservices.getMicroservices());
-        }*/
 
         return FoDAppHelper.updateApp(unirest, appDescriptor.getApplicationId(), appUpdateRequest).asJsonNode();
     }

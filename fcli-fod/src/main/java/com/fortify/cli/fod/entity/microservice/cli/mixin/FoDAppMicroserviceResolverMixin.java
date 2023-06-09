@@ -35,7 +35,6 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-//TODO Change description keys to be more like picocli convention
 public class FoDAppMicroserviceResolverMixin {
     public static abstract class AbstractFoDAppMicroserviceResolverMixin {
         @Mixin private FoDDelimiterMixin delimiterMixin;
@@ -51,12 +50,12 @@ public class FoDAppMicroserviceResolverMixin {
     }
 
     public static class RequiredOption extends AbstractFoDAppMicroserviceResolverMixin {
-        @Option(names = {"--microservice"}, required = true, descriptionKey = "ApplicationMicroserviceMixin")
+        @Option(names = {"--microservice"}, required = true, descriptionKey = "fcli.fod.microservice.microservice-name-or-id")
         @Getter private String appMicroserviceNameOrId;
     }
 
     public static class PositionalParameter extends AbstractFoDAppMicroserviceResolverMixin {
-        @Parameters(index = "0", descriptionKey = "ApplicationMicroserviceMixin")
+        @Parameters(index = "0", descriptionKey = "fcli.fod.microservice.microservice-name-or-id")
         @Getter private String AppMicroserviceNameOrId;
     }
 }

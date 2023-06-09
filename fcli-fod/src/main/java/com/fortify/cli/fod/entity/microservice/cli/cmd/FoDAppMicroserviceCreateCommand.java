@@ -46,8 +46,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class FoDAppMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
-    // TODO Mixin class 'Update' doesn't match 'Create.CMD_NAME' above
-    @Getter @Mixin private OutputHelperMixins.Update outputHelper;
+    @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Mixin private FoDAppAndMicroserviceNameResolverMixin.PositionalParameter appAndMicroserviceNameResolver;
 
     @Option(names={"--skip-if-exists"})

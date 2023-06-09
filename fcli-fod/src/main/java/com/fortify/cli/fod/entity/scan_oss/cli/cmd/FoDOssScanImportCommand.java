@@ -32,7 +32,7 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDSbomFormatOptions;
-import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
+import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDImportScan;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
@@ -83,7 +83,7 @@ public class FoDOssScanImportCommand extends AbstractFoDJsonNodeOutputCommand im
         if (response != null) {
             // get latest scan as we cannot use the referenceId from import anywhere
             FoDScanDescriptor descriptor = FoDScanHelper.getLatestScanDescriptor(unirest, relId,
-                    FoDScanFormatOptions.FoDScanType.OpenSource, true);
+                    FoDScanTypeOptions.FoDScanType.OpenSource, true);
             return descriptor.asObjectNode()
                     .put("releaseId", relId)
                     .put("scanMethod", "SBOMImport")

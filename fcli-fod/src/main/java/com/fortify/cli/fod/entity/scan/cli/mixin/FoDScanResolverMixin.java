@@ -49,12 +49,12 @@ public class FoDScanResolverMixin {
     }
 
     public static class PositionalParameter extends AbstractFoDScanResolverMixin {
-        @Parameters(index = "0", arity = "1", paramLabel="scan-id", descriptionKey = "ScanMixin")
+        @Parameters(index = "0", arity = "1", paramLabel="scan-id", descriptionKey = "fcli.fod.scan.scan-id")
         @Getter private String scanId;
     }
 
     public static class PositionalParameterMulti extends AbstractFoDMultiScanResolverMixin {
-        @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's", descriptionKey = "ScanMixin")
+        @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's", descriptionKey = "fcli.fod.scan.scan-id")
         @Getter private String[] scanIds;
     }
 

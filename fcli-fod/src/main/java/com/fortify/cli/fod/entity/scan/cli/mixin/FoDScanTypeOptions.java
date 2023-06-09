@@ -32,11 +32,8 @@ import java.util.stream.Stream;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-// TODO This class seems to be all about scan types, so why is it named 'Format'?
-// TODO Having similarly named enum FoDScanType and abstract class AbstractFodScanType can cause confusion.
 // TODO Possibly better to move FoDScanType enum to a top-level type in the helper package
-// TODO Change description keys to be more like picocli convention
-public class FoDScanFormatOptions {
+public class FoDScanTypeOptions {
     public enum FoDScanType {Static, Dynamic, Mobile, Monitoring, Network, OpenSource, Container}
 
     public static final class FoDScanTypeIterable extends ArrayList<String> {
@@ -53,14 +50,14 @@ public class FoDScanFormatOptions {
 
     public static class RequiredOption extends AbstractFoDScanType {
         @Option(names = {"--type", "--scan-type"}, required = true,
-                completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")
+                completionCandidates = FoDScanTypeIterable.class, descriptionKey = "fcli.fod.scan.scan-type")
         @Getter
         private FoDScanType scanType;
     }
 
     public static class OptionalOption extends AbstractFoDScanType {
         @Option(names = {"--type", "--scan-type"}, required = false,
-                completionCandidates = FoDScanTypeIterable.class, descriptionKey = "ScanTypeMixin")
+                completionCandidates = FoDScanTypeIterable.class, descriptionKey = "fcli.fod.scan.scan-type")
         @Getter
         private FoDScanType scanType;
     }

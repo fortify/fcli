@@ -33,9 +33,6 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-// TODO Change description keys to be more like picocli convention,
-//      for example fcli.fod.app.app-name-or-id or fcli.for.app.resolver
-//      (note that we should do the same in other modules like SSC)
 public class FoDAppResolverMixin {
     public static abstract class AbstractFoDAppResolverMixin {
         public abstract String getAppNameOrId();
@@ -50,17 +47,17 @@ public class FoDAppResolverMixin {
     }
 
     public static class RequiredOption extends AbstractFoDAppResolverMixin {
-        @Option(names = {"--app"}, required = true, descriptionKey = "ApplicationMixin")
+        @Option(names = {"--app"}, required = true, descriptionKey = "fcli.fod.app.app-name-or-id")
         @Getter private String appNameOrId;
     }
 
     public static class OptionalOption extends AbstractFoDAppResolverMixin {
-        @Option(names = {"--app"}, required = false, descriptionKey = "ApplicationMixin")
+        @Option(names = {"--app"}, required = false, descriptionKey = "fcli.fod.app.app-name-or-id")
         @Getter private String appNameOrId;
     }
 
     public static class PositionalParameter extends AbstractFoDAppResolverMixin {
-        @Parameters(index = "0", descriptionKey = "ApplicationMixin")
+        @Parameters(index = "0", descriptionKey = "fcli.fod.app.app-name-or-id")
         @Getter private String appNameOrId;
     }
 }

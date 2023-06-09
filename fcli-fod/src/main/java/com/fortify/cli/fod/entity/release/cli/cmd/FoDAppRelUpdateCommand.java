@@ -77,16 +77,9 @@ public class FoDAppRelUpdateCommand extends AbstractFoDJsonNodeOutputCommand imp
         int microServiceId = 0;
         FoDAppRelDescriptor appRelDescriptor = appRelResolver.getAppRelDescriptor(unirest);
         if (microserviceNameOrId != null && !microserviceNameOrId.isEmpty()) {
-            try {
-                FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getAppMicroserviceDescriptor(unirest,
-                        appRelDescriptor.getApplicationName(), microserviceNameOrId, true);
-                microServiceId = descriptor.getMicroserviceId();
-            } catch (JsonProcessingException e) {
-                // TODO Seems like this error is only thrown if microservice cannot be found?
-                //      In that case, reference to 'application name' in exception message is incorrect.
-                throw new CommandLine.ParameterException(spec.commandLine(),
-                        "Unable to resolve application name and microservice name.");
-            }
+            FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getAppMicroserviceDescriptor(unirest,
+                    appRelDescriptor.getApplicationName(), microserviceNameOrId, true);
+            microServiceId = descriptor.getMicroserviceId();
         }
 
         FoDSdlcStatusTypeOptions.FoDSdlcStatusType sdlcStatusTypeNew = sdlcStatus.getSdlcStatusType();

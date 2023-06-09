@@ -34,7 +34,6 @@ import com.fortify.cli.fod.util.FoDEnums;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-//TODO Change description keys to be more like picocli convention
 public class FoDInProgressScanActionTypeOptions {
     public static final class FoDInProgressScanActionTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
@@ -50,14 +49,14 @@ public class FoDInProgressScanActionTypeOptions {
 
     public static class RequiredOption extends AbstractFoDEntitlementType {
         @Option(names = {"--in-progress", "--in-progress-action"}, required = true,
-                completionCandidates = FoDInProgressScanActionTypeIterable.class, descriptionKey = "InProgressActionTypeMixin")
+                completionCandidates = FoDInProgressScanActionTypeIterable.class, descriptionKey = "fcli.fod.scan.in-progress-action")
         @Getter
         private FoDEnums.InProgressScanActionType inProgressScanActionType;
     }
 
     public static class OptionalOption extends AbstractFoDEntitlementType {
         @Option(names = {"--in-progress", "--in-progress-action"}, required = false,
-                completionCandidates = FoDInProgressScanActionTypeIterable.class, descriptionKey = "InProgressActionTypeMixin")
+                completionCandidates = FoDInProgressScanActionTypeIterable.class, descriptionKey = "fcli.fod.scan.in-progress-action")
         @Getter
         private FoDEnums.InProgressScanActionType inProgressScanActionType;
     }

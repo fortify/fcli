@@ -32,11 +32,6 @@ import java.util.stream.Stream;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-// TODO Change description keys to be more like picocli convention
-// TODO Do we even need description keys, or this class at all? At least
-//      for now, this mixin is only used by a single command, so we could
-//      consider moving the option directly into that command, and remove
-//      description keys in order to use standard picocli lookup.
 public class FoDSbomFormatOptions {
     public enum FoDSbomFormat {CycloneDX}
 
@@ -54,14 +49,14 @@ public class FoDSbomFormatOptions {
 
     public static class RequiredOption extends AbstractFoDSbomFormat {
         @Option(names = {"--sbom-format"}, required = true,
-                completionCandidates = FoDSbomFormatIterable.class, descriptionKey = "SbomFormatMixin")
+                completionCandidates = FoDSbomFormatIterable.class, descriptionKey = "fcli.fod.import.sbom-format")
         @Getter
         private FoDSbomFormat sbomFormat;
     }
 
     public static class OptionalOption extends AbstractFoDSbomFormat {
         @Option(names = {"--sbom-format"}, required = false,
-                completionCandidates = FoDSbomFormatIterable.class, descriptionKey = "SbomFormatMixin")
+                completionCandidates = FoDSbomFormatIterable.class, descriptionKey = "fcli.fod.import.sbom-format")
         @Getter
         private FoDSbomFormat sbomFormat;
     }
