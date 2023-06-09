@@ -24,22 +24,23 @@
  ******************************************************************************/
 package com.fortify.cli.fod.entity.app.attr.cli.helper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import javax.validation.ValidationException;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.fod.entity.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.SneakyThrows;
 
 public class FoDAttributeHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
@@ -59,6 +60,43 @@ public class FoDAttributeHelper {
             throw new ValidationException("Multiple attributes found for name or id: " + attrNameOrId);
         }
         return attr.size() == 0 ? null : JsonHelper.treeToValue(attr.get(0), FoDAttributeDescriptor.class);
+    }
+
+    @SneakyThrows
+    public static final Map<String, String> getRequiredAttributes(UnirestInstance unirestInstance) {
+        Map<String, String> reqAttrs = new HashMap<>();
+        GetRequest request = unirestInstance.get(FoDUrls.ATTRIBUTES)
+                .queryString("filters", "isRequired:true");
+        JsonNode items = request.asObject(ObjectNode.class).getBody().get("items");
+        List<FoDAttributeDescriptor> lookupList = objectMapper.readValue(objectMapper.writeValueAsString(items),
+                new TypeReference<List<FoDAttributeDescriptor>>() {
+                });
+        Iterator<FoDAttributeDescriptor> lookupIterator = lookupList.iterator();
+        while (lookupIterator.hasNext()) {
+            FoDAttributeDescriptor currentLookup = lookupIterator.next();
+            // currentLookup.getAttributeTypeId() == 1 is "Application" - filter above does not support querying on this yet!
+            if (currentLookup.getIsRequired() && currentLookup.getAttributeTypeId() == 1) {
+                switch (currentLookup.getAttributeDataType()) {
+                    case "Text":
+                        reqAttrs.put(currentLookup.getName(), "autofilled by fcli");
+                        break;
+                    case "Boolean":
+                        reqAttrs.put(currentLookup.getName(), String.valueOf(false));
+                        break;
+                    case "User":
+                        // use the first user in the list
+                        reqAttrs.put(currentLookup.getName(), currentLookup.getPicklistValues().get(0).getName());
+                        break;
+                    case "Picklist":
+                        // use the first value in the picklist
+                        reqAttrs.put(currentLookup.getName(), currentLookup.getPicklistValues().get(0).getName());
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        return reqAttrs;
     }
 
     public static JsonNode mergeAttributesNode(UnirestInstance unirest,
@@ -96,8 +134,13 @@ public class FoDAttributeHelper {
         return attrArray;
     }
 
-    public static JsonNode getAttributesNode(UnirestInstance unirest, Map<String, String> attributes) {
+    public static JsonNode getAttributesNode(UnirestInstance unirest, Map<String, String> attributes, Boolean autoReqdAttributes) {
         Map<String, String> attributesMap = (Map<String, String>) attributes;
+        if (autoReqdAttributes) {
+            // find any required attributes
+            Map<String, String> reqAttributesMap = getRequiredAttributes(unirest);
+            attributesMap = reqAttributesMap;
+        }
         ArrayNode attrArray = getObjectMapper().createArrayNode();
         if (attributesMap == null || attributesMap.isEmpty()) return attrArray;
         for (Map.Entry<String, String> attr : attributesMap.entrySet()) {
