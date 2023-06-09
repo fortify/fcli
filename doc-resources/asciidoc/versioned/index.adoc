@@ -74,27 +74,27 @@ If you don’t have fcli up and running yet, you can also refer to the downloada
 
 The following sections describe common options that are available on (most) fcli commands.
 
-=== -h | –help
+=== -h | --help
 
 This option can be used on every fcli (sub-)command to view usage information for that command. Usage information usually shows the command synopsis, a description of the functionality provided by the command, and a description of each command line option or parameter accepted by the command.
 
-=== –env-prefix
+=== --env-prefix
 
 As described in the link:#_environment_variables[Environment Variables] section, default option and parameter values can be retrieved from environment variables starting with `+FCLI_DEFAULT+`. This option allows for configuring a different environment variable prefix. This may be useful if, for example, you want to login to multiple instances of the same system using environment variables. For example, when running `+fcli ssc session login --env-prefix PROD+`, fcli will look for environment variables like `+PROD_SSC_URL+` instead of `+FCLI_DEFAULT_SSC_URL+`.
 
 Note that a default value for the `+--env-prefix+` option itself can be specified through an `+FCLI_DEFAULT_ENV_PREFIX+` environment variable, for example if you want to globally override the `+FCLI_DEFAULT+` prefix.
 
-=== –log-level
+=== --log-level
 
 This option can be used on every fcli (sub-)command to specify the fcli log level; see the help output for a list of allowed levels. Note that this option also requires the `+--log-file+` option to be specified,
 otherwise no log will be written.
 
-=== –log-file
+=== --log-file
 
 This option can be used on every fcli (sub-)command to specify the file to which to output log data. If not specified, currently no log data will be written, although future versions may specify a default log file
 location in the fcli data folder.
 
-=== -o | –output
+=== -o | --output
 
 Available on virtually all (leaf) commands that output data, this option can be used to specify the output format. Fcli supports a wide variety of output formats, like `+table+`, `+csv+`, `+json+`, `+xml+`, and `+tree+` formats, allowing for both human-readable output or output suitable for automations. The `+csv-plain+` and `+table-plain+` output formats produce CSV or table output without headers. The `+*-flat+`
 output formats produce a flattened view of the output data, potentially making it easier to process that data without having to navigate through an object tree. For a full list of output formats supported by your fcli
@@ -115,7 +115,7 @@ There are two output formats that are somewhat special:
 that changes state (delete/update/create/…). In most cases, the `+get+` or `+list+` operations will return a similar set of properties, so you can use those commands to view available properties.
 ** On some commands, the list of available JSON properties may vary depending on command line options. For example, when a query returns no records, then `+-o json-properties+` will not output any properties. Likewise, a command may provide options for including additional data for each record; the corresponding JSON properties will only be shown if `+-o json-properties+` is used in combination with these options that load additional data.
 
-=== –output-to-file
+=== --output-to-file
 
 Available on virtually all (leaf) commands that output data, this option can be used to write the command output data to a file, in the format specified by the `+--output+` option listed above. In some cases, this may be more convenient than redirecting the output to a file. For example, although currently not implemented, fcli could potentially skip creating the output file if there is no output data or if an error occurs. Also, for commands that output status updates, like `+wait-for+` commands, the `+--output-to-file+` option allows for status updates to be written to standard output while the final output of the command will be written to the file specified.
 
@@ -129,11 +129,11 @@ Various commands offer a `+--progress+` option to specify how to output progress
 * `+single-line+`: Uses the `+\r+` (carriage return) character to overwrite previous progress message. This will be used by default if a non-ANSI console is detected. Supports single-line progress messages only.
 * `+ansi+`: Uses ANSI escape sequences to overwrite previous progress messages. This will be used by default if ANSI capabilities are detected. Supports multi-line progress messages.
 
-=== –store
+=== --store
 
 Available on virtually all (leaf) commands that output data, this option can be used to store command output data in an fcli variable. For more details, see the link:#_fcli_variables[Fcli Variables] section.
 
-=== -q | –query
+=== -q | --query
 
 Available on most `+list+` commands and some other commands, this option allows for querying the output data, outputting only records that match the given Spring Expression Language (SpEL) expression. See the link:#_option_expressions[Option Expressions] section for details.
 
@@ -185,7 +185,7 @@ All commands that automatically generate server-side queries also provide a dedi
 ** `prop1=='value'` (simple equals expressions)
 ** `prop1=='value' && prop2=='val2'` (and-expression containing simple equals expressions)
 
-=== –session
+=== --session
 
 Available on virtually all commands that interact with a target system, this option allows for specifying a session name. For more details, see the link:#_session_management[Session Management] section.
 
