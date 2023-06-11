@@ -34,7 +34,7 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
-import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
+import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.entity.scan.helper.FoDStartScan;
@@ -82,7 +82,7 @@ public class FoDMobileScanHelper extends FoDScanHelper {
         }
         JsonNode node = objectMapper.createObjectNode()
             .put("scanId", startScanResponse.getScanId())
-            .put("scanType", FoDScanFormatOptions.FoDScanType.Mobile.name())
+            .put("scanType", FoDScanTypeOptions.FoDScanType.Mobile.name())
             .put("analysisStatusType", "Pending")
             .put("applicationName", appRelDescriptor.getApplicationName())
             .put("releaseName", appRelDescriptor.getReleaseName())

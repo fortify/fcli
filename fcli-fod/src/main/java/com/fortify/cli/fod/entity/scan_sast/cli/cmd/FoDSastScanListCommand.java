@@ -26,7 +26,7 @@
 package com.fortify.cli.fod.entity.scan_sast.cli.cmd;
 
 import com.fortify.cli.fod.entity.scan.cli.cmd.AbstractFoDScanListCommand;
-import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
+import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 
 import lombok.Getter;
@@ -36,9 +36,9 @@ import picocli.CommandLine.Mixin;
 @Command(name = FoDOutputHelperMixins.ListSast.CMD_NAME)
 public class FoDSastScanListCommand extends AbstractFoDScanListCommand {
     @Getter @Mixin FoDOutputHelperMixins.ListSast outputHelper;
-    
+
     @Override
     public String getScanType() {
-        return FoDScanFormatOptions.FoDScanType.Static.name();
+        return FoDScanTypeOptions.FoDScanType.Static.name();
     }
 }

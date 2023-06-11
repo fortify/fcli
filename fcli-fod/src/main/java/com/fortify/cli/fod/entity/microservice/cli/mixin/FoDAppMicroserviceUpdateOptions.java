@@ -31,7 +31,6 @@ import java.util.Map;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-//TODO Change description keys to be more like picocli convention
 public class FoDAppMicroserviceUpdateOptions {
 
     private static final String PARAM_LABEL = "[OLD_NAME=NEW_NAME]";
@@ -45,17 +44,17 @@ public class FoDAppMicroserviceUpdateOptions {
     }
 
     public static class AddMicroserviceOption extends AbstractFoDAppMicroserviceUpdateMixin {
-        @Option(names = {"--add-microservices", "--add-ms"}, required = false, split=",", descriptionKey = "AppMicroserviceUpdateMixin")
+        @Option(names = {"--add-microservices", "--add-ms"}, required = false, split=",", descriptionKey = "fod.fod.microservice.microservice-name")
         @Getter private List<String> microservices;
     }
 
     public static class DeleteMicroserviceOption extends AbstractFoDAppMicroserviceUpdateMixin {
-        @Option(names = {"--delete-microservices", "--delete-ms"}, required = false, split=",", descriptionKey = "AppMicroserviceUpdateMixin")
+        @Option(names = {"--delete-microservices", "--delete-ms"}, required = false, split=",", descriptionKey = "fod.fod.microservice.microservice-name")
         @Getter private List<String> microservices;
     }
 
     public static class RenameMicroserviceOption extends AbstractFoDAppMicroserviceRenameMixin {
-        @Option(names = {"--rename-microservices", "--rename-ms"}, required = false, split=",", paramLabel = PARAM_LABEL, descriptionKey = "AppMicroserviceUpdateMixin")
+        @Option(names = {"--rename-microservices", "--rename-ms"}, required = false, split=",", paramLabel = PARAM_LABEL, descriptionKey = "fod.fod.microservice.microservice-name")
         @Getter private Map<String, String> microservices;
     }
 

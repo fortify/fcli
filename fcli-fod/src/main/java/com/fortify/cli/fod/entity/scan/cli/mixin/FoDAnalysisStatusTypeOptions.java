@@ -32,7 +32,6 @@ import java.util.stream.Stream;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-//TODO Change description keys to be more like picocli convention
 public class FoDAnalysisStatusTypeOptions {
     public enum FoDAnalysisStatusType {Not_Started, In_Progress, Completed, Canceled, Waiting, Scheduled, Queued}
 
@@ -50,14 +49,14 @@ public class FoDAnalysisStatusTypeOptions {
 
     public static class RequiredOption extends AbstractFoDAnalysisStatusType {
         @Option(names = {"--status", "--analysis-status"}, required = true,
-                completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "AnalysisStatusMixin")
+                completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "fcli.fod.scan.analysis-status")
         @Getter
         private FoDAnalysisStatusType analysisStatusType;
     }
 
     public static class OptionalOption extends AbstractFoDAnalysisStatusType {
         @Option(names = {"--status", "--analysis-status"}, required = false,
-                completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "AnalysisStatusMixin")
+                completionCandidates = FoDAnalysisStatusTypeIterable.class, descriptionKey = "fcli.fod.scan.analysis-status")
         @Getter
         private FoDAnalysisStatusType analysisStatusType;
     }

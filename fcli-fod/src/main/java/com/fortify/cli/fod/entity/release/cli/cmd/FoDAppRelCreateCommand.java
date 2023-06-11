@@ -25,7 +25,6 @@
 
 package com.fortify.cli.fod.entity.release.cli.cmd;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -40,10 +39,8 @@ import com.fortify.cli.fod.entity.release.helper.FoDAppRelCreateRequest;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDJsonNodeOutputCommand;
-
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
@@ -73,8 +70,17 @@ public class FoDAppRelCreateCommand extends AbstractFoDJsonNodeOutputCommand imp
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         if (skipIfExists) {
-            FoDAppRelDescriptor descriptor = FoDAppRelHelper.getOptionalAppRelFromAppAndRelName(unirest, appAndRelNameResolver.getAppAndRelNameDescriptor());
-            if (descriptor != null) { return descriptor.asObjectNode().put("__action__", "SKIPPED_EXISTING"); }
+            FoDAppRelDescriptor descriptor;
+            if (microserviceNameOrId != null && !microserviceNameOrId.isEmpty()) {
+                descriptor = FoDAppRelHelper.getOptionalAppRelFromMicroserviceAndRelName(unirest,
+                        appAndRelNameResolver.getAppAndRelName(),
+                        microserviceNameOrId, appAndRelNameResolver.getDelimiter());
+            } else {
+                descriptor = FoDAppRelHelper.getOptionalAppRel(unirest,
+                        appAndRelNameResolver.getAppAndRelName(),
+                        appAndRelNameResolver.getDelimiter());
+            }
+            if (descriptor != null) { return descriptor.asObjectNode().put(IActionCommandResultSupplier.actionFieldName, "SKIPPED_EXISTING"); }
         }
         FoDAppAndRelNameDescriptor appAndRelNameDescriptor = FoDAppAndRelNameDescriptor.fromCombinedAppAndRelName(
                 appAndRelNameResolver.getAppAndRelName(), appAndRelNameResolver.getDelimiter());
@@ -87,13 +93,8 @@ public class FoDAppRelCreateCommand extends AbstractFoDJsonNodeOutputCommand imp
                     ":", true).getReleaseId();
         }
         if (microserviceNameOrId != null && !microserviceNameOrId.isEmpty()) {
-            try {
-                FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getAppMicroserviceDescriptor(unirest, appAndRelNameDescriptor.getAppName(), microserviceNameOrId, true);
-                microServiceId = descriptor.getMicroserviceId();
-            } catch (JsonProcessingException e) {
-                throw new CommandLine.ParameterException(spec.commandLine(),
-                        "Unable to resolve application name and microservice name.");
-            }
+            FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getAppMicroserviceDescriptor(unirest, appAndRelNameDescriptor.getAppName(), microserviceNameOrId, true);
+            microServiceId = descriptor.getMicroserviceId();
         }
         int appId = FoDAppHelper.getAppDescriptor(unirest, appAndRelNameDescriptor.getAppName(), true).getApplicationId();
 

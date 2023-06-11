@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-//TODO Change description keys to be more like picocli convention
 //TODO Enum case? See comments in FoDAppTypeOptions
 public class FoDSdlcStatusTypeOptions {
     public enum FoDSdlcStatusType {Development, QA, Production}
@@ -49,13 +48,13 @@ public class FoDSdlcStatusTypeOptions {
 
     public static class RequiredOption extends AbstractFoDSdlcStatusType {
         @Option(names = {"--status", "--sdlc-status"}, required = true,
-                completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "SdlcStatusMixin")
+                completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "fcli.fod.release.sdlc-status")
         @Getter private FoDSdlcStatusType sdlcStatusType;
     }
 
     public static class OptionalOption extends AbstractFoDSdlcStatusType {
         @Option(names = {"--status", "--sdlc-status"}, required = false,
-                completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "SdlcStatusMixin")
+                completionCandidates = FoDSdlcStatusTypeIterable.class, descriptionKey = "fcli.fod.release.sdlc-status")
         @Getter private FoDSdlcStatusType sdlcStatusType;
     }
 

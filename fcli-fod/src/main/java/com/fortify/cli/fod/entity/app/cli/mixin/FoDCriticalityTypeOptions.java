@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-//TODO Change description keys to be more like picocli convention
 // TODO Enum case? See comments in FoDAppTypeOptions
 public class FoDCriticalityTypeOptions {
     public enum FoDCriticalityType {High, Medium, Low}
@@ -49,13 +48,13 @@ public class FoDCriticalityTypeOptions {
 
     public static class RequiredOption extends AbstractFoDCriticalityType {
         @Option(names = {"--criticality", "--business-criticality"}, required = true,
-                completionCandidates = FoDCriticalityTypeIterable.class, descriptionKey = "CriticalityTypeMixin")
+                completionCandidates = FoDCriticalityTypeIterable.class, descriptionKey = "fcli.fod.app.app-criticality")
         @Getter private FoDCriticalityType criticalityType;
     }
 
     public static class OptionalOption extends AbstractFoDCriticalityType {
         @Option(names = {"--criticality", "--business-criticality"}, required = false,
-                completionCandidates = FoDCriticalityTypeIterable.class, descriptionKey = "CriticalityTypeMixin")
+                completionCandidates = FoDCriticalityTypeIterable.class, descriptionKey = "fcli.fod.app.app-criticality")
         @Getter private FoDCriticalityType criticalityType;
     }
 

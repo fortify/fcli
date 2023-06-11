@@ -45,7 +45,7 @@ import com.fortify.cli.fod.entity.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDEntitlementFrequencyTypeOptions;
-import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanFormatOptions;
+import com.fortify.cli.fod.entity.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.entity.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.entity.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.entity.scan_mobile.helper.FoDMobileScanHelper;
@@ -100,23 +100,23 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
         try ( var progressWriter = progressWriterFactory.create() ) {
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
             String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
-    
+
             // retrieve current scan setup
             // NOTE: there is currently no GET method for retrieving scan setup so the following cannot be used:
             // FoDMobileScanSetupDescriptor foDMobileScanSetupDescriptor = FoDMobileScanHelper.getSetupDescriptor(unirest, relId);
-    
+
             // TODO: check if a scan is already running
-    
+
             // get entitlement to use
             FoDAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, progressWriter, relId);
-    
+
             // validate timezone (if specified)
             String timeZoneToUse = validateTimezone(unirest, timezone);
-    
+
             String startDateStr = (startDate == null || startDate.isEmpty())
                     ? LocalDateTime.now().format(dtf)
                     : LocalDateTime.parse(startDate, dtf).toString();
-    
+
             FoDStartMobileScanRequest startScanRequest = new FoDStartMobileScanRequest()
                     .setStartDate(startDateStr)
                     .setAssessmentTypeId(entitlementToUse.getAssessmentTypeId())
@@ -128,7 +128,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
                     .setNotes(notes != null && !notes.isEmpty() ? notes : "")
                     .setScanTool(fcliProperties.getProperty("projectName", "fcli"))
                     .setScanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"));
-    
+
             return FoDMobileScanHelper.startScan(unirest, progressWriter, relId, startScanRequest, scanFile, chunkSize).asJsonNode();
         }
     }
@@ -166,7 +166,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
         FoDEnums.EntitlementPreferenceType entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.fromInt(entitlementType.getEntitlementFrequencyType().getValue());
         entitlementToUse = FoDMobileScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
                 assessmentType, entitlementPreferenceType,
-                FoDScanFormatOptions.FoDScanType.Mobile);
+                FoDScanTypeOptions.FoDScanType.Mobile);
 
         if (entitlementToUse.getEntitlementId() == null || entitlementToUse.getEntitlementId() <= 0) {
             throw new ValidationException("Could not find a valid FoD entitlement to use.");

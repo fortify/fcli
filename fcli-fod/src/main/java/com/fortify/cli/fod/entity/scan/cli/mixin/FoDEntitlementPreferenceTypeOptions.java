@@ -34,7 +34,6 @@ import com.fortify.cli.fod.util.FoDEnums;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-//TODO Change description keys to be more like picocli convention
 public class FoDEntitlementPreferenceTypeOptions {
     public static final class FoDEntitlementPreferenceTypeIterable extends ArrayList<String> {
         private static final long serialVersionUID = 1L;
@@ -50,14 +49,14 @@ public class FoDEntitlementPreferenceTypeOptions {
 
     public static class RequiredOption extends AbstractFoDEntitlementPreferenceType {
         @Option(names = {"--entitlement", "--entitlement-preference"}, required = true,
-                completionCandidates = FoDEntitlementPreferenceTypeIterable.class, descriptionKey = "EntitlementPreferenceTypeMixin")
+                completionCandidates = FoDEntitlementPreferenceTypeIterable.class, descriptionKey = "fcli.fod.scan.entitlement-preference")
         @Getter
         private FoDEnums.EntitlementPreferenceType entitlementPreferenceType;
     }
 
     public static class OptionalOption extends AbstractFoDEntitlementPreferenceType {
         @Option(names = {"--entitlement", "--entitlement-preference"}, required = false,
-                completionCandidates = FoDEntitlementPreferenceTypeIterable.class, descriptionKey = "EntitlementPreferenceTypeMixin")
+                completionCandidates = FoDEntitlementPreferenceTypeIterable.class, descriptionKey = "fcli.fod.scan.entitlement-preference")
         @Getter
         private FoDEnums.EntitlementPreferenceType entitlementPreferenceType;
     }

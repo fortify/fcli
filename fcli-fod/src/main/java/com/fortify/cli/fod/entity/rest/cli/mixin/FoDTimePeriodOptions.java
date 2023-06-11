@@ -85,14 +85,14 @@ public class FoDTimePeriodOptions {
     public static class RequiredOption extends AbstractFoDTimePeriodType {
         @Option(names = {"--period", "--time-period"}, required = true,
                 completionCandidates = FoDTimePeriodTypeIterable.class, defaultValue = "Last30",
-                descriptionKey = "TimePeriodMixin")
+                descriptionKey = "fcli.fod.scan.time-period")
         @Getter private FoDTimePeriodType timePeriodType;
     }
 
     public static class OptionalOption extends AbstractFoDTimePeriodType {
         @Option(names = {"--period", "--time-period"}, required = false,
                 completionCandidates = FoDTimePeriodTypeIterable.class, defaultValue = "Last30",
-                descriptionKey = "TimePeriodMixin")
+                descriptionKey = "fcli.fod.scan.time-period")
         @Getter private FoDTimePeriodType timePeriodType;
     }
 

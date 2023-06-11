@@ -65,18 +65,18 @@ public class FoDAssessmentTypeOptions {
             return this.subscriptionUnits;
         }
 
-        public FoDScanFormatOptions.FoDScanType toScanType() {
+        public FoDScanTypeOptions.FoDScanType toScanType() {
             switch (this) {
                 case DynamicWebsite:
                 case DynamicPlusWebsite:
                 case DynamicAPI:
                 case DynamicPlusAPI:
-                        return FoDScanFormatOptions.FoDScanType.Dynamic;
+                        return FoDScanTypeOptions.FoDScanType.Dynamic;
                 case Mobile:
                 case MobilePlus:
-                        return FoDScanFormatOptions.FoDScanType.Mobile;
+                        return FoDScanTypeOptions.FoDScanType.Mobile;
                 default:
-                    return FoDScanFormatOptions.FoDScanType.Static;
+                    return FoDScanTypeOptions.FoDScanType.Static;
             }
         }
 
@@ -96,14 +96,14 @@ public class FoDAssessmentTypeOptions {
 
     public static class RequiredOption extends AbstractFoDAssessmentType {
         @Option(names = {"--assessment", "--assessment-type"}, required = true,
-                completionCandidates = FoDAssessmentTypeIterable.class, descriptionKey = "AssessmentTypeMixin")
+                completionCandidates = FoDAssessmentTypeIterable.class, descriptionKey = "fcli.fod.scan.assessment-type")
         @Getter
         private FoDAssessmentType assessmentType;
     }
 
     public static class OptionalOption extends AbstractFoDAssessmentType {
         @Option(names = {"--assessment", "--assessment-type"}, required = false,
-                completionCandidates = FoDAssessmentTypeIterable.class, descriptionKey = "AssessmentTypeMixin")
+                completionCandidates = FoDAssessmentTypeIterable.class, descriptionKey = "fcli.fod.scan.assessment-type")
         @Getter
         private FoDAssessmentType assessmentType;
     }
