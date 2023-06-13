@@ -7,15 +7,15 @@ import lombok.Data;
 
 @Data
 public class MspReportSSCAppSummaryDescriptor {
-    private final Counter artifactsProcessedCounter = new Counter();
-    private final Counter artifactsInReportingPeriodCounter = new Counter();
+    private final Counter scansProcessedCounter = new Counter();
+    private final Counter scansInReportingPeriodCounter = new Counter();
     private final Counter consumedApplicationEntitlementsCounter = new Counter();
     private final Counter consumedScanEntitlementsCounter = new Counter();
     
     public ObjectNode updateReportRecord(ObjectNode objectNode) {
         return objectNode
-                .put("artifactsProcessed", artifactsProcessedCounter.getCount())
-                .put("artifactsInReportingPeriod", artifactsInReportingPeriodCounter.getCount())
+                .put("scansProcessed", scansProcessedCounter.getCount())
+                .put("scansInReportingPeriod", scansInReportingPeriodCounter.getCount())
                 .put("consumedApplicationEntitlements", consumedApplicationEntitlementsCounter.getCount())
                 .put("consumedScanEntitlements", consumedScanEntitlementsCounter.getCount());
     }

@@ -34,6 +34,7 @@ public final class MspReportResultsCollector implements IReportResultsCollector 
     private final MspReportResultsWriters writers;
     @Getter private final MspReportAppCollector appCollector;
     @Getter private final MspReportAppVersionCollector appVersionCollector;
+    @Getter private final MspReportArtifactCollector artifactCollector;
     
     public MspReportResultsCollector(MspReportConfig reportConfig, IReportWriter reportWriter, IProgressWriterI18n progressWriter) {
         this.reportConfig = reportConfig;
@@ -42,10 +43,11 @@ public final class MspReportResultsCollector implements IReportResultsCollector 
         this.writers = new MspReportResultsWriters(reportWriter, progressWriter);
         this.appCollector = new MspReportAppCollector(this.writers, reportWriter.summary());
         this.appVersionCollector = new MspReportAppVersionCollector(this.writers, reportWriter.summary());
+        this.artifactCollector = new MspReportArtifactCollector(this.writers, reportWriter.summary());
     }
     
-    public MspReportAppArtifactCollector artifactCollector(IUrlConfig urlConfig, MspReportSSCAppDescriptor appDescriptor) {
-        return new MspReportAppArtifactCollector(reportConfig, writers, urlConfig, appDescriptor);
+    public MspReportAppScanCollector scanCollector(IUrlConfig urlConfig, MspReportSSCAppDescriptor appDescriptor) {
+        return new MspReportAppScanCollector(reportConfig, writers, urlConfig, appDescriptor);
     }
     
     /**
@@ -56,7 +58,7 @@ public final class MspReportResultsCollector implements IReportResultsCollector 
     public final IReportLogger logger() {
         return writers.logger();
     }
-
+    
     @Override @SneakyThrows
     public void close() {
         reportWriter.summary().put("mspName", reportConfig.getMspName());
@@ -65,6 +67,7 @@ public final class MspReportResultsCollector implements IReportResultsCollector 
         reportWriter.summary().put("reportingEndDate", reportConfig.getReportingEndDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
         appCollector.writeResults();
         appVersionCollector.writeResults();
+        artifactCollector.writeResults();
         logger().updateSummary(reportWriter.summary());
     }
 }

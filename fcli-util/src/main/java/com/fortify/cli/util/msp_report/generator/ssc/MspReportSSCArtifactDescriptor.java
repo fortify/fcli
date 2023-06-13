@@ -2,113 +2,93 @@ package com.fortify.cli.util.msp_report.generator.ssc;
 
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.common.util.StringUtils;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
+/**
+ * This class describes an SSC artifact with embedded scans. 
+ */
 @ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
 public final class MspReportSSCArtifactDescriptor extends JsonNodeHolder {
     private String id;
-    private LocalDateTime lastScanDate;
     private LocalDateTime uploadDate;
     private boolean purged;
-    private MspReportSSCArtifactScanStatus scaStatus;
-    private MspReportSSCArtifactScanStatus webInspectStatus;
-    private MspReportSSCArtifactScanStatus runtimeStatus;
-    private MspReportSSCArtifactScanStatus otherStatus;
-    @JsonIgnore private Set<MspReportSSCArtifactScanType> scanTypes;
-    @JsonIgnore private Set<MspReportSSCArtifactScanType> fortifyScanTypes;
-    
-    public void setLastScanDate(ZonedDateTime zonedDateTime) {
-        this.lastScanDate = zonedDateTime==null ? null : zonedDateTime.toLocalDateTime();
-    }
+    private MspReportSSCArtifactEmbedDescriptor _embed;
+    // For now, we just write the status to the output. If we ever want to add any
+    // status-based logic, we should use a proper enum.
+    private String status;
     
     public void setUploadDate(ZonedDateTime zonedDateTime) {
         this.uploadDate = zonedDateTime==null ? null : zonedDateTime.toLocalDateTime();
     }
     
-    public boolean isFortifySastScan() {
-        return hasScan(scaStatus);
+    public final MspReportSSCArtifactScanDescriptor[] getScans() {
+        // There may not be any scans if the artifact wasn't successfully processed,
+        // for example if it requires approval or if there was an error processing.
+        MspReportSSCArtifactScanDescriptor[] result = _embed==null ? null : _embed.getScans();
+        return result!=null ? result : new MspReportSSCArtifactScanDescriptor[] {};
     }
     
-    public boolean isFortifyDastScan() {
-        return hasScan(webInspectStatus);
-    }
-    
-    public boolean isFortifyRuntimeScan() {
-        return hasScan(runtimeStatus);
-    }
-    
-    public boolean isOtherScan() {
-        return hasScan(otherStatus);
-    }
-    
-    public Set<MspReportSSCArtifactScanType> getScanTypes() {
-        if ( scanTypes==null ) {
-            scanTypes = new HashSet<>(4);
-            if ( isFortifySastScan() ) { scanTypes.add(MspReportSSCArtifactScanType.SAST); }
-            if ( isFortifyDastScan() ) { scanTypes.add(MspReportSSCArtifactScanType.DAST); }
-            if ( isFortifyRuntimeScan() ) { scanTypes.add(MspReportSSCArtifactScanType.RUNTIME); }
-            if ( isOtherScan() ) { scanTypes.add(MspReportSSCArtifactScanType.OTHER); }
-        }
-        return scanTypes;
-    }
-    
-    public Set<MspReportSSCArtifactScanType> getFortifyScanTypes() {
-        if ( fortifyScanTypes==null ) {
-            fortifyScanTypes = getScanTypes()
-                    .stream()
-                    .filter(MspReportSSCArtifactScanType::isFortifyScan)
-                    .collect(Collectors.toSet());
-        }
-        return fortifyScanTypes;
-    }
-    
-    public String getScanTypesString() {
-        var scanTypes = getScanTypes();
-        return scanTypes.isEmpty() 
-                ? "N/A" 
-                : scanTypes.stream()
-                    .map(Enum::name)
-                    .collect(Collectors.joining("+"));
-    }
-    
-    public ObjectNode updateReportRecord(ObjectNode objectNode) {
-        return objectNode
-                .put("artifactId", id)
-                .put("scanType", getScanTypesString())
-                .put("uploadDate", toString(uploadDate))
-                .put("lastScanDate", toString(lastScanDate))
-                .put("purged", purged);
-    }
-    
-    private String toString(LocalDateTime zonedDateTime) {
-        return zonedDateTime==null ? "N/A" : zonedDateTime.toString();
+    public final ObjectNode updateReportRecord(ObjectNode record) {
+        return record.put("artifactId", id)
+            .put("uploadDate", toString(uploadDate))
+            .put("purged", purged)
+            .put("status", status)
+            .put("scanTypes", getScanTypes());
     }
 
-    public static final boolean hasScan(MspReportSSCArtifactScanStatus status) {
-        return status==MspReportSSCArtifactScanStatus.IGNORED 
-                || status==MspReportSSCArtifactScanStatus.PROCESSED;
+    private String toString(LocalDateTime localDateTime) {
+        return localDateTime==null ? "N/A" : localDateTime.toString();
+    }
+
+    public final boolean hasScans() {
+        return getScans().length>0;
     }
     
-    public static enum MspReportSSCArtifactScanStatus {
-        NONE, NOT_EXIST, IGNORED, PROCESSED;
+    private final String getScanTypes() {
+        return Stream.of(getScans())
+                .map(MspReportSSCArtifactScanDescriptor::getType)
+                .map(MspReportSSCScanType::toString)
+                .collect(Collectors.joining("+"));
     }
     
-    @RequiredArgsConstructor
-    public static enum MspReportSSCArtifactScanType {
-        SAST(true), DAST(true), RUNTIME(true), OTHER(false);
+    @ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
+    private static final class MspReportSSCArtifactEmbedDescriptor {
+        private MspReportSSCArtifactScanDescriptor[] scans;
+    }
         
-        @Getter private final boolean fortifyScan;
+    @ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
+    public static final class MspReportSSCArtifactScanDescriptor extends JsonNodeHolder {
+        private String id;
+        private LocalDateTime scanDate;
+        private MspReportSSCScanType type;
+        
+        // The SSC REST API response includes a field named uploadDate,
+        // but usually this is actually the scan date so we store this
+        // in a scanDate property.
+        public void setUploadDate(ZonedDateTime zonedDateTime) {
+            this.scanDate = zonedDateTime==null ? null : zonedDateTime.toLocalDateTime();
+        }
+        
+        public void setType(String type) {
+            if ( StringUtils.isBlank(type) ) {
+                this.type = MspReportSSCScanType.OTHER;
+            } else {
+                switch (type.toUpperCase()) {
+                case "SCA": this.type = MspReportSSCScanType.SAST; break;
+                case "SECURITYSCOPE": this.type = MspReportSSCScanType.RUNTIME; break; 
+                case "WEBINSPECT": this.type = MspReportSSCScanType.DAST; break; 
+                default: this.type = MspReportSSCScanType.OTHER; break; 
+                }
+            }
+        }
     }
 }

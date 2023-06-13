@@ -15,8 +15,8 @@ import com.fortify.cli.ssc.rest.bulk.SSCBulkEmbedder;
 import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc.rest.helper.SSCPagingHelper;
 import com.fortify.cli.ssc.rest.helper.SSCPagingHelper.SSCContinueNextPageSupplier;
-import com.fortify.cli.util.msp_report.collector.MspReportAppArtifactCollector;
-import com.fortify.cli.util.msp_report.collector.MspReportAppArtifactCollector.MspReportArtifactCollectorState;
+import com.fortify.cli.util.msp_report.collector.MspReportAppScanCollector;
+import com.fortify.cli.util.msp_report.collector.MspReportAppScanCollector.MspReportScanCollectorState;
 import com.fortify.cli.util.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.util.msp_report.config.MspReportSSCSourceConfig;
 import com.fortify.cli.util.msp_report.generator.AbstractMspReportUnirestResultsGenerator;
@@ -112,35 +112,37 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
     }
 
     private MspReportSSCAppSummaryDescriptor processApp(MspReportSSCAppDescriptor appDescriptor) {
-        try ( var artifactCollector = resultsCollector().artifactCollector(sourceConfig(), appDescriptor) ) {
+        try ( var scanCollector = resultsCollector().scanCollector(sourceConfig(), appDescriptor) ) {
             appDescriptor.getVersionDescriptors()
-                .forEach(versionDescriptor->processAppVersion(versionDescriptor, artifactCollector));
-            return artifactCollector.summary();
+                .forEach(versionDescriptor->processAppVersion(versionDescriptor, scanCollector));
+            return scanCollector.summary();
         }
     }
     
-    private void processAppVersion(MspReportSSCAppVersionDescriptor descriptor, MspReportAppArtifactCollector artifactCollector) {
+    private void processAppVersion(MspReportSSCAppVersionDescriptor versionDescriptor, MspReportAppScanCollector scanCollector) {
         try {
             var continueNextPageSupplier = new SSCContinueNextPageSupplier();
-            HttpRequest<?> req = unirest().get("/api/v1/projectVersions/{pvId}/artifacts?limit=100")
-                    .routeParam("pvId", descriptor.getVersionId());
+            HttpRequest<?> req = unirest().get("/api/v1/projectVersions/{pvId}/artifacts?limit=100&embed=scans")
+                    .routeParam("pvId", versionDescriptor.getVersionId());
             SSCPagingHelper.pagedRequest(req, continueNextPageSupplier)
-                .forEach(r->processArtifactPage(r.getBody(), artifactCollector, continueNextPageSupplier));
+                .forEach(r->processArtifactPage(r.getBody(), versionDescriptor, scanCollector, continueNextPageSupplier));
             resultsCollector().appVersionCollector()
-                .report(sourceConfig(), new MspReportSSCProcessedAppVersionDescriptor(descriptor, MspReportProcessingStatus.success, "Successfully processed"));
+                .report(sourceConfig(), new MspReportSSCProcessedAppVersionDescriptor(versionDescriptor, MspReportProcessingStatus.success, "Successfully processed"));
         } catch ( Exception e ) {
-            resultsCollector().logger().error("Error loading artifacts for application version %s", e, descriptor.getAppAndVersionName());
+            resultsCollector().logger().error("Error loading artifacts for application version %s", e, versionDescriptor.getAppAndVersionName());
             resultsCollector().appVersionCollector()
-                .report(sourceConfig(), new MspReportSSCProcessedAppVersionDescriptor(descriptor, MspReportProcessingStatus.error, e.getMessage()));
+                .report(sourceConfig(), new MspReportSSCProcessedAppVersionDescriptor(versionDescriptor, MspReportProcessingStatus.error, e.getMessage()));
             throw e;
         }
     }
 
-    private void processArtifactPage(JsonNode body, MspReportAppArtifactCollector artifactCollector, SSCContinueNextPageSupplier continueNextPageSupplier) {
+    private void processArtifactPage(JsonNode body, MspReportSSCAppVersionDescriptor versionDescriptor, MspReportAppScanCollector scanCollector, SSCContinueNextPageSupplier continueNextPageSupplier) {
         var done = JsonHelper.stream((ArrayNode)SSCInputTransformer.getDataOrSelf(body))
             .map(this::createArtifactDescriptor)
-            .map(artifactCollector::report)
-            .filter(MspReportArtifactCollectorState.DONE::equals)
+            .peek(d->resultsCollector().artifactCollector().report(sourceConfig(), versionDescriptor, d))
+            .flatMap(MspReportSSCScanDescriptor::from)
+            .map(scanCollector::report)
+            .filter(MspReportScanCollectorState.DONE::equals)
             .findFirst()
             .isPresent();
         continueNextPageSupplier.setLoadNextPage(!done);

@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
@@ -15,8 +14,8 @@ import com.fortify.cli.util.msp_report.config.MspReportConfig;
 import com.fortify.cli.util.msp_report.generator.ssc.MspReportLicenseType;
 import com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCAppDescriptor;
 import com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCAppSummaryDescriptor;
-import com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCArtifactDescriptor;
-import com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCArtifactDescriptor.MspReportSSCArtifactScanType;
+import com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCScanDescriptor;
+import com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCScanType;
 import com.fortify.cli.util.msp_report.writer.MspReportResultsWriters;
 
 import lombok.Data;
@@ -26,36 +25,37 @@ import lombok.SneakyThrows;
 
 /**
  * <p>This class is responsible for collecting and outputting 
- * {@link MspReportSSCArtifactDescriptor} instances.</p>
+ * {@link MspReportSSCScanDescriptor} instances for a single 
+ * application.</p>
  * 
  * @author rsenden
  *
  */
 @RequiredArgsConstructor
-public final class MspReportAppArtifactCollector implements AutoCloseable {
+public final class MspReportAppScanCollector implements AutoCloseable {
     private final MspReportConfig reportConfig;
     private final MspReportResultsWriters writers;
     private final IUrlConfig urlConfig;
     private final MspReportSSCAppDescriptor appDescriptor;
     private final MspReportSSCAppSummaryDescriptor summaryDescriptor = new MspReportSSCAppSummaryDescriptor();
-    private final List<MspReportSSCArtifactDescriptor> processedArtifacts = new ArrayList<>();
-    private final Map<MspReportSSCArtifactScanType, MspReportSSCArtifactDescriptor> earliestArtifactByScanType = new HashMap<>();
+    private final List<MspReportSSCScanDescriptor> processedScans = new ArrayList<>();
+    private final Map<MspReportSSCScanType, MspReportSSCScanDescriptor> earliestScanByType = new HashMap<>();
     
     public MspReportSSCAppSummaryDescriptor summary() {
         return summaryDescriptor;
     }
     
     /**
-     * Report an SSC application version artifact. 
-     * @return {@link MspReportArtifactCollectorState#DONE} is we're done processing
-     *         this application version, {@link MspReportArtifactCollectorState#DONE}
+     * Report an SSC application version scan. 
+     * @return {@link MspReportScanCollectorState#DONE} is we're done processing
+     *         this application version, {@link MspReportScanCollectorState#DONE}
      *         otherwise.
      */
     @SneakyThrows
-    public MspReportArtifactCollectorState report(MspReportSSCArtifactDescriptor artifactDescriptor) {
-        processedArtifacts.add(artifactDescriptor);
-        addEarliestArtifact(artifactDescriptor);
-        return continueOrDone(artifactDescriptor);
+    public MspReportScanCollectorState report(MspReportSSCScanDescriptor scanDescriptor) {
+        processedScans.add(scanDescriptor);
+        addEarliestScan(scanDescriptor);
+        return continueOrDone(scanDescriptor);
     }
     
     /**
@@ -74,19 +74,19 @@ public final class MspReportAppArtifactCollector implements AutoCloseable {
      * <ol>
      *  <li>uploadDate within reporting period, lastScanDate older than 
      *      reporting period start date</li>
-     *  <li>Both uploadDate and lastScanDate within reporting period 
+     *  <li>Both uploadDate and lastScanDate within reporting period</li>
      * </ol> 
      */
-    private MspReportArtifactCollectorState continueOrDone(MspReportSSCArtifactDescriptor artifactDescriptor) {
+    private MspReportScanCollectorState continueOrDone(MspReportSSCScanDescriptor scanDescriptor) {
         var licenseType = appDescriptor.getMspLicenseType();
-        var uploadDateTime = artifactDescriptor.getUploadDate();
+        var uploadDateTime = scanDescriptor.getArtifactUploadDate();
         if ( isBeforeContractStartDate(uploadDateTime) ) { 
-            return MspReportArtifactCollectorState.DONE; 
+            return MspReportScanCollectorState.DONE; 
         }
         else if ( licenseType!=MspReportLicenseType.Application && isBeforeReportingStartDate(uploadDateTime) ) {
-            return MspReportArtifactCollectorState.DONE;
+            return MspReportScanCollectorState.DONE;
         }
-        return MspReportArtifactCollectorState.CONTINUE;
+        return MspReportScanCollectorState.CONTINUE;
     }
     
     private boolean isAfterReportingEndDate(LocalDateTime dateTime) {
@@ -104,31 +104,31 @@ public final class MspReportAppArtifactCollector implements AutoCloseable {
         return dateTime.isBefore(reportingStartDateTime);
     }
     
-    private void addEarliestArtifact(MspReportSSCArtifactDescriptor artifactDescriptor) {
-        artifactDescriptor.getFortifyScanTypes().forEach(
-                type->addEarliestArtifact(type, artifactDescriptor));
+    private void addEarliestScan(MspReportSSCScanDescriptor scanDescriptor) {
+        if ( scanDescriptor.getScanType().isFortifyScan() ) {
+            addEarliestScan(scanDescriptor.getScanType(), scanDescriptor);
+        }
     }
     
-    private void addEarliestArtifact(MspReportSSCArtifactScanType type, MspReportSSCArtifactDescriptor artifactDescriptor) {
-        var previousEarliestArtifactDescriptor = earliestArtifactByScanType.get(type);
-        if ( previousEarliestArtifactDescriptor==null || previousEarliestArtifactDescriptor.getLastScanDate().isAfter(artifactDescriptor.getLastScanDate()) ) {
-           earliestArtifactByScanType.put(type, artifactDescriptor);
+    private void addEarliestScan(MspReportSSCScanType type, MspReportSSCScanDescriptor scanDescriptor) {
+        var previousEarliestScanDescriptor = earliestScanByType.get(type);
+        if ( previousEarliestScanDescriptor==null || previousEarliestScanDescriptor.getScanDate().isAfter(scanDescriptor.getScanDate()) ) {
+           earliestScanByType.put(type, scanDescriptor);
         }
     }
 
     public void close() {
-        processedArtifacts.stream()
-            .map(this::getProcessedArtifactDescriptors)
-            .flatMap(List::stream)
+        processedScans.stream()
+            .map(this::getProcessedScanDescriptor)
             .forEach(this::write);
     }
     
-    private void write(MspReportProcessedArtifactDescriptor descriptor) {
-        var writer = writers.processedArtifactsWriter();
-        summaryDescriptor.getArtifactsProcessedCounter().increase();
+    private void write(MspReportProcessedScanDescriptor descriptor) {
+        var writer = writers.processedScansWriter();
+        summaryDescriptor.getScansProcessedCounter().increase();
         writer.writeProcessed(descriptor);
         if ( !descriptor.getEntitlementConsumedReason().isOutsideReportingPeriod() ) {
-            summaryDescriptor.getArtifactsInReportingPeriodCounter().increase();
+            summaryDescriptor.getScansInReportingPeriodCounter().increase();
             writer.writeInReportingPeriod(descriptor);
         }
         if ( descriptor.getEntitlementConsumed()==MspReportArtifactEntitlementConsumed.application ) {
@@ -140,27 +140,22 @@ public final class MspReportAppArtifactCollector implements AutoCloseable {
             writer.writeEntitlementConsuming(descriptor);
         }
     }
-    
-    private List<MspReportProcessedArtifactDescriptor> getProcessedArtifactDescriptors(MspReportSSCArtifactDescriptor descriptor) {
-        return descriptor.getScanTypes().stream()
-            .map(type->getProcessedArtifactDescriptor(descriptor, type))
-            .collect(Collectors.toList());
-    }
    
-    private MspReportProcessedArtifactDescriptor getProcessedArtifactDescriptor(MspReportSSCArtifactDescriptor descriptor, MspReportSSCArtifactScanType type) {
+    private MspReportProcessedScanDescriptor getProcessedScanDescriptor(MspReportSSCScanDescriptor descriptor) {
+        var type = descriptor.getScanType();
         var entitlementConsumedReason = getEntitlementConsumedReason(descriptor, type);
         var entitlementConsumptionDate = getEntitlementConsumptionDate(descriptor, type, entitlementConsumedReason);
-        return new MspReportProcessedArtifactDescriptor(urlConfig, appDescriptor, descriptor, type, entitlementConsumedReason, entitlementConsumptionDate);
+        return new MspReportProcessedScanDescriptor(urlConfig, appDescriptor, descriptor, type, entitlementConsumedReason, entitlementConsumptionDate);
     }
     
-    private MspReportArtifactEntitlementConsumedReason getEntitlementConsumedReason(MspReportSSCArtifactDescriptor descriptor, MspReportSSCArtifactScanType type) {
-        var lastScanDate = descriptor.getLastScanDate();
+    private MspReportArtifactEntitlementConsumedReason getEntitlementConsumedReason(MspReportSSCScanDescriptor descriptor, MspReportSSCScanType type) {
+        var scanDate = descriptor.getScanDate();
         
-        if ( isBeforeContractStartDate(lastScanDate) ) {
+        if ( isBeforeContractStartDate(scanDate) ) {
             return MspReportArtifactEntitlementConsumedReason.beforeContractStartDate;
-        } else if ( isBeforeReportingStartDate(lastScanDate) ) {
+        } else if ( isBeforeReportingStartDate(scanDate) ) {
             return MspReportArtifactEntitlementConsumedReason.beforeReportingPeriod;
-        } else if ( isAfterReportingEndDate(lastScanDate) ) {
+        } else if ( isAfterReportingEndDate(scanDate) ) {
             return MspReportArtifactEntitlementConsumedReason.afterReportingPeriod;
         } 
         if ( !type.isFortifyScan() ) {
@@ -172,7 +167,7 @@ public final class MspReportAppArtifactCollector implements AutoCloseable {
             case Scan: 
                 return MspReportArtifactEntitlementConsumedReason.mspScanLicenseConsumed;
             case Application:
-                if ( descriptor.equals(earliestArtifactByScanType.get(type)) ) {
+                if ( descriptor.equals(earliestScanByType.get(type)) ) {
                     return MspReportArtifactEntitlementConsumedReason.mspApplicationLicenseConsumed;
                 } else {
                     return MspReportArtifactEntitlementConsumedReason.mspApplicationLicenseConsumedEarlier;
@@ -182,22 +177,22 @@ public final class MspReportAppArtifactCollector implements AutoCloseable {
         }
     }
 
-    private LocalDateTime getEntitlementConsumptionDate(MspReportSSCArtifactDescriptor descriptor, MspReportSSCArtifactScanType type, MspReportArtifactEntitlementConsumedReason entitlementConsumedReason) {
+    private LocalDateTime getEntitlementConsumptionDate(MspReportSSCScanDescriptor descriptor, MspReportSSCScanType type, MspReportArtifactEntitlementConsumedReason entitlementConsumedReason) {
         var isApplicationLicense = appDescriptor.getMspLicenseType()==MspReportLicenseType.Application;
         switch ( entitlementConsumedReason.getEntitlementConsumed() ) {
         case none:
             if ( !isApplicationLicense || !type.isFortifyScan() ) { return null; }
             // Intentionally no break;
         case application:
-            return earliestArtifactByScanType.get(type).getLastScanDate();
+            return earliestScanByType.get(type).getScanDate();
         case scan:
-            return descriptor.getLastScanDate();
+            return descriptor.getScanDate();
         default: throw new RuntimeException("Unable to determine entitlement consumed date");
         }
     }
 
 
-    public static enum MspReportArtifactCollectorState {
+    public static enum MspReportScanCollectorState {
         CONTINUE, DONE
     }
     
@@ -222,11 +217,11 @@ public final class MspReportAppArtifactCollector implements AutoCloseable {
     }
     
     @Data
-    public static final class MspReportProcessedArtifactDescriptor {
+    public static final class MspReportProcessedScanDescriptor {
         private final IUrlConfig urlConfig; 
         private final MspReportSSCAppDescriptor appDescriptor;
-        private final MspReportSSCArtifactDescriptor artifactDescriptor;
-        private final MspReportSSCArtifactScanType entitlementScanType;
+        private final MspReportSSCScanDescriptor scanDescriptor;
+        private final MspReportSSCScanType entitlementScanType;
         private final MspReportArtifactEntitlementConsumedReason entitlementConsumedReason;
         private final LocalDateTime entitlementConsumptionDate;
         private ObjectNode reportNode;
@@ -241,7 +236,7 @@ public final class MspReportAppArtifactCollector implements AutoCloseable {
                 var entitlementConsumed = getEntitlementConsumed();
                 var entitlementConsumptionDate = getEntitlementConsumptionDate();
                 reportNode = 
-                    getArtifactDescriptor().updateReportRecord(
+                    getScanDescriptor().updateReportRecord(
                         getAppDescriptor().updateReportRecord(
                                 JsonHelper.getObjectMapper().createObjectNode()
                                     .put("url", getUrlConfig().getUrl())))
