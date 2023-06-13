@@ -7,15 +7,20 @@ The fcli utility can be used to interact with various Fortify products, like For
 Release documentation can be accessed through the drop-down menu on the top-right, or from the sections below.
 
 === Releases Versions
+
+<ul>
 {% for version in site.data.versions.release %}
-   <a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>
+   <li><a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a></li>
 {% endfor %}
+</ul>
 
 === Development Versions
 
+<ul>
 {% for version in site.data.versions.dev %}
-   <a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>
+   <li><a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a></li>
 {% endfor %}
+</ul>
 
 == Developer Documentation
 
