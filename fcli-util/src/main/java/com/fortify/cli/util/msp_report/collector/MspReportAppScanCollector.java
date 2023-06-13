@@ -40,6 +40,7 @@ public final class MspReportAppScanCollector implements AutoCloseable {
     private final MspReportSSCAppSummaryDescriptor summaryDescriptor = new MspReportSSCAppSummaryDescriptor();
     private final List<MspReportSSCScanDescriptor> processedScans = new ArrayList<>();
     private final Map<MspReportSSCScanType, MspReportSSCScanDescriptor> earliestScanByType = new HashMap<>();
+    private final Map<String, MspReportSSCScanDescriptor> earliestUploadByScanId = new HashMap<>();
     
     public MspReportSSCAppSummaryDescriptor summary() {
         return summaryDescriptor;
@@ -54,23 +55,31 @@ public final class MspReportAppScanCollector implements AutoCloseable {
     @SneakyThrows
     public MspReportScanCollectorState report(MspReportSSCScanDescriptor scanDescriptor) {
         processedScans.add(scanDescriptor);
-        addEarliestScan(scanDescriptor);
+        addEarliestScans(scanDescriptor);
         return continueOrDone(scanDescriptor);
     }
     
     /**
-     * This method returns DONE if we don't need to process any further artifacts 
-     * for this application version. We're done processing artifacts if:
+     * <p>For now, this method always returns CONTINUE, as it only provides a 
+     * performance optimalization and needs to be revisited for correct behavior 
+     * with regards to handling audit-only uploads and remediation scans (i.e., 
+     * original artifact uploaded before reporting start date or even contract 
+     * start date, and audit-only artifact or remediation scan uploaded within 
+     * reporting period).</p>
+     * 
+     * <h3>Original behavior (commented out below):</h3>
+     * <p>This method returns DONE if we don't need to process any further artifacts 
+     * for this application version. We're done processing artifacts if:</p>
      * <ul>
      *  <li>Upload date is before contract start date.</li>
      *  <li>License type is Scan or Demo, and upload date is before reporting 
      *      start date.</li>
      * <ul>
-     * Note that we need to check upload date instead of scan date as artifacts 
+     * <p>Note that we need to check upload date instead of scan date as artifacts 
      * are ordered by descending upload date, and upload date should always be
      * more recent than scan date. In the following example, we still want to 
      * process artifact #2 even if scan date for #1 is before reporting period 
-     * start date:
+     * start date:</p>
      * <ol>
      *  <li>uploadDate within reporting period, lastScanDate older than 
      *      reporting period start date</li>
@@ -78,6 +87,7 @@ public final class MspReportAppScanCollector implements AutoCloseable {
      * </ol> 
      */
     private MspReportScanCollectorState continueOrDone(MspReportSSCScanDescriptor scanDescriptor) {
+        /*
         var licenseType = appDescriptor.getMspLicenseType();
         var uploadDateTime = scanDescriptor.getArtifactUploadDate();
         if ( isBeforeContractStartDate(uploadDateTime) ) { 
@@ -86,6 +96,7 @@ public final class MspReportAppScanCollector implements AutoCloseable {
         else if ( licenseType!=MspReportLicenseType.Application && isBeforeReportingStartDate(uploadDateTime) ) {
             return MspReportScanCollectorState.DONE;
         }
+        */
         return MspReportScanCollectorState.CONTINUE;
     }
     
@@ -104,16 +115,24 @@ public final class MspReportAppScanCollector implements AutoCloseable {
         return dateTime.isBefore(reportingStartDateTime);
     }
     
-    private void addEarliestScan(MspReportSSCScanDescriptor scanDescriptor) {
+    private void addEarliestScans(MspReportSSCScanDescriptor scanDescriptor) {
         if ( scanDescriptor.getScanType().isFortifyScan() ) {
-            addEarliestScan(scanDescriptor.getScanType(), scanDescriptor);
+            addEarliestScanByType(scanDescriptor.getScanType(), scanDescriptor);
+            addEarliestUploadByScanId(scanDescriptor.getScanId(), scanDescriptor);
         }
     }
     
-    private void addEarliestScan(MspReportSSCScanType type, MspReportSSCScanDescriptor scanDescriptor) {
+    private void addEarliestScanByType(MspReportSSCScanType type, MspReportSSCScanDescriptor scanDescriptor) {
         var previousEarliestScanDescriptor = earliestScanByType.get(type);
         if ( previousEarliestScanDescriptor==null || previousEarliestScanDescriptor.getScanDate().isAfter(scanDescriptor.getScanDate()) ) {
            earliestScanByType.put(type, scanDescriptor);
+        }
+    }
+    
+    private void addEarliestUploadByScanId(String scanId, MspReportSSCScanDescriptor scanDescriptor) {
+        var previousEarliestScanDescriptor = earliestUploadByScanId.get(scanId);
+        if ( previousEarliestScanDescriptor==null || previousEarliestScanDescriptor.getArtifactUploadDate().isAfter(scanDescriptor.getArtifactUploadDate()) ) {
+            earliestUploadByScanId.put(scanId, scanDescriptor);
         }
     }
 
@@ -165,7 +184,11 @@ public final class MspReportAppScanCollector implements AutoCloseable {
             case Demo: 
                 return MspReportArtifactEntitlementConsumedReason.demoScan;
             case Scan: 
-                return MspReportArtifactEntitlementConsumedReason.mspScanLicenseConsumed;
+                if ( descriptor.equals(earliestUploadByScanId.get(descriptor.getScanId())) ) {
+                    return MspReportArtifactEntitlementConsumedReason.mspScanLicenseConsumed;
+                } else {
+                    return MspReportArtifactEntitlementConsumedReason.mspScanLicenseConsumedEarlier;
+                }
             case Application:
                 if ( descriptor.equals(earliestScanByType.get(type)) ) {
                     return MspReportArtifactEntitlementConsumedReason.mspApplicationLicenseConsumed;
@@ -178,15 +201,15 @@ public final class MspReportAppScanCollector implements AutoCloseable {
     }
 
     private LocalDateTime getEntitlementConsumptionDate(MspReportSSCScanDescriptor descriptor, MspReportSSCScanType type, MspReportArtifactEntitlementConsumedReason entitlementConsumedReason) {
-        var isApplicationLicense = appDescriptor.getMspLicenseType()==MspReportLicenseType.Application;
+        var isDemoLicense = appDescriptor.getMspLicenseType()==MspReportLicenseType.Demo;
         switch ( entitlementConsumedReason.getEntitlementConsumed() ) {
         case none:
-            if ( !isApplicationLicense || !type.isFortifyScan() ) { return null; }
+            if ( isDemoLicense || !type.isFortifyScan() ) { return null; }
             // Intentionally no break;
         case application:
             return earliestScanByType.get(type).getScanDate();
         case scan:
-            return descriptor.getScanDate();
+            return earliestUploadByScanId.get(descriptor.getScanId()).getScanDate();
         default: throw new RuntimeException("Unable to determine entitlement consumed date");
         }
     }
@@ -204,6 +227,7 @@ public final class MspReportAppScanCollector implements AutoCloseable {
         noFortifyScan(MspReportArtifactEntitlementConsumed.none, false),
         demoScan(MspReportArtifactEntitlementConsumed.none, false),
         mspScanLicenseConsumed(MspReportArtifactEntitlementConsumed.scan, false),
+        mspScanLicenseConsumedEarlier(MspReportArtifactEntitlementConsumed.none, false),
         mspApplicationLicenseConsumed(MspReportArtifactEntitlementConsumed.application, false),
         mspApplicationLicenseConsumedEarlier(MspReportArtifactEntitlementConsumed.none, false),
         ;

@@ -19,6 +19,7 @@ import lombok.EqualsAndHashCode;
 @ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
 public final class MspReportSSCArtifactDescriptor extends JsonNodeHolder {
     private String id;
+    private String originalFileName;
     private LocalDateTime uploadDate;
     private boolean purged;
     private MspReportSSCArtifactEmbedDescriptor _embed;
@@ -39,6 +40,7 @@ public final class MspReportSSCArtifactDescriptor extends JsonNodeHolder {
     
     public final ObjectNode updateReportRecord(ObjectNode record) {
         return record.put("artifactId", id)
+            .put("originalFileName", originalFileName)
             .put("uploadDate", toString(uploadDate))
             .put("purged", purged)
             .put("status", status)
