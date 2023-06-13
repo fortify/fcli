@@ -1,6 +1,21 @@
 = Fortify CLI (fcli) Documentation
 
-The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST. Please select a version from the menu on the top-right to view detailed usage documentation and manual pages for that version.
+The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST.
+
+== Release Documentation
+
+Release documentation can be accessed through the drop-down menu on the top-right, or from the sections below.
+
+=== Releases Versions
+{% for version in site.data.versions.release %}
+   <a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>
+{% endfor %}
+
+=== Development Versions
+
+{% for version in site.data.versions.dev %}
+   <a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a>
+{% endfor %}
 
 == Developer Documentation
 
