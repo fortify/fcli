@@ -8,19 +8,23 @@ Release documentation can be accessed through the drop-down menu on the top-righ
 
 === Releases Versions
 
+++++
 <ul>
 {% for version in site.data.versions.release %}
    <li><a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a></li>
 {% endfor %}
 </ul>
+++++
 
 === Development Versions
 
+++++
 <ul>
 {% for version in site.data.versions.dev %}
    <li><a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a></li>
 {% endfor %}
 </ul>
+++++
 
 == Developer Documentation
 
