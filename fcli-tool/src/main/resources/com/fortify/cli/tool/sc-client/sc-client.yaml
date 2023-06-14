@@ -1,9 +1,11 @@
 defaultDownloadUrl: https://tools.fortify.com/scancentral/Fortify_ScanCentral_Client_{toolVersion}_x64.zip
-defaultVersion: 22.2.1
+defaultVersion: 23.1.0
 versions:
   - version: latest
     downloadUrl: https://tools.fortify.com/scancentral/Fortify_ScanCentral_Client_Latest_x64.zip
-    digest: SHA-256:1b63e4e8bb0f9314d7ad1b0b925b0fbf878bfa37a1436774357de36fefbeeedf
+    digest: SHA-256:012e00fab914495ad235e8658207702869e02fffbd4d2adfcc3c2baf50fe8de9
+  - version: 23.1.0
+    digest: SHA-256:012e00fab914495ad235e8658207702869e02fffbd4d2adfcc3c2baf50fe8de9
   - version: 22.2.1
     digest: SHA-256:1b63e4e8bb0f9314d7ad1b0b925b0fbf878bfa37a1436774357de36fefbeeedf
   - version: 22.2.0
