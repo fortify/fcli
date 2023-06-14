@@ -2,16 +2,17 @@ package com.fortify.cli.util.msp_report.collector;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.util.msp_report.config.MspReportConfig;
-import com.fortify.cli.util.msp_report.generator.ssc.MspReportLicenseType;
 import com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCAppDescriptor;
 import com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCAppSummaryDescriptor;
 import com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCScanDescriptor;
@@ -41,6 +42,7 @@ public final class MspReportAppScanCollector implements AutoCloseable {
     private final List<MspReportSSCScanDescriptor> processedScans = new ArrayList<>();
     private final Map<MspReportSSCScanType, MspReportSSCScanDescriptor> earliestScanByType = new HashMap<>();
     private final Map<String, MspReportSSCScanDescriptor> earliestUploadByScanId = new HashMap<>();
+    private final Map<MspReportSSCScanType, TreeSet<MspReportSSCScanDescriptor>> sortedScansByType = new HashMap<>();
     
     public MspReportSSCAppSummaryDescriptor summary() {
         return summaryDescriptor;
@@ -54,8 +56,7 @@ public final class MspReportAppScanCollector implements AutoCloseable {
      */
     @SneakyThrows
     public MspReportScanCollectorState report(MspReportSSCScanDescriptor scanDescriptor) {
-        processedScans.add(scanDescriptor);
-        addEarliestScans(scanDescriptor);
+        addScan(scanDescriptor);
         return continueOrDone(scanDescriptor);
     }
     
@@ -100,6 +101,36 @@ public final class MspReportAppScanCollector implements AutoCloseable {
         return MspReportScanCollectorState.CONTINUE;
     }
     
+    private void addScan(MspReportSSCScanDescriptor scanDescriptor) {
+        processedScans.add(scanDescriptor);
+        if ( scanDescriptor.getScanType().isFortifyScan() ) {
+            addSortedScanByType(scanDescriptor);
+            addEarliestScanByType(scanDescriptor);
+            addEarliestUploadByScanId(scanDescriptor);
+        }
+    }
+    
+    private void addSortedScanByType(MspReportSSCScanDescriptor scanDescriptor) {
+        var type = scanDescriptor.getScanType();
+        sortedScansByType.computeIfAbsent(type, v->new TreeSet<>(this::compareScanDate)).add(scanDescriptor);
+    }
+    
+    private void addEarliestScanByType(MspReportSSCScanDescriptor scanDescriptor) {
+        var type = scanDescriptor.getScanType();
+        var previousEarliestScanDescriptor = earliestScanByType.get(type);
+        if ( previousEarliestScanDescriptor==null || previousEarliestScanDescriptor.getScanDate().isAfter(scanDescriptor.getScanDate()) ) {
+           earliestScanByType.put(type, scanDescriptor);
+        }
+    }
+    
+    private void addEarliestUploadByScanId(MspReportSSCScanDescriptor scanDescriptor) {
+        var scanId = scanDescriptor.getScanId();
+        var previousEarliestScanDescriptor = earliestUploadByScanId.get(scanId);
+        if ( previousEarliestScanDescriptor==null || previousEarliestScanDescriptor.getArtifactUploadDate().isAfter(scanDescriptor.getArtifactUploadDate()) ) {
+            earliestUploadByScanId.put(scanId, scanDescriptor);
+        }
+    }
+    
     private boolean isAfterReportingEndDate(LocalDateTime dateTime) {
         var reportingEndDateTime = reportConfig.getReportingEndDate().atTime(LocalTime.MAX);
         return dateTime.isAfter(reportingEndDateTime);
@@ -115,25 +146,11 @@ public final class MspReportAppScanCollector implements AutoCloseable {
         return dateTime.isBefore(reportingStartDateTime);
     }
     
-    private void addEarliestScans(MspReportSSCScanDescriptor scanDescriptor) {
-        if ( scanDescriptor.getScanType().isFortifyScan() ) {
-            addEarliestScanByType(scanDescriptor.getScanType(), scanDescriptor);
-            addEarliestUploadByScanId(scanDescriptor.getScanId(), scanDescriptor);
-        }
-    }
-    
-    private void addEarliestScanByType(MspReportSSCScanType type, MspReportSSCScanDescriptor scanDescriptor) {
-        var previousEarliestScanDescriptor = earliestScanByType.get(type);
-        if ( previousEarliestScanDescriptor==null || previousEarliestScanDescriptor.getScanDate().isAfter(scanDescriptor.getScanDate()) ) {
-           earliestScanByType.put(type, scanDescriptor);
-        }
-    }
-    
-    private void addEarliestUploadByScanId(String scanId, MspReportSSCScanDescriptor scanDescriptor) {
-        var previousEarliestScanDescriptor = earliestUploadByScanId.get(scanId);
-        if ( previousEarliestScanDescriptor==null || previousEarliestScanDescriptor.getArtifactUploadDate().isAfter(scanDescriptor.getArtifactUploadDate()) ) {
-            earliestUploadByScanId.put(scanId, scanDescriptor);
-        }
+    /** 
+     * Compare scan dates
+     */
+    private int compareScanDate(MspReportSSCScanDescriptor s1, MspReportSSCScanDescriptor s2) {
+        return s1.getScanDate().compareTo(s2.getScanDate());
     }
 
     public void close() {
@@ -159,61 +176,84 @@ public final class MspReportAppScanCollector implements AutoCloseable {
             writer.writeEntitlementConsuming(descriptor);
         }
     }
-   
+    
     private MspReportProcessedScanDescriptor getProcessedScanDescriptor(MspReportSSCScanDescriptor descriptor) {
         var type = descriptor.getScanType();
-        var entitlementConsumedReason = getEntitlementConsumedReason(descriptor, type);
-        var entitlementConsumptionDate = getEntitlementConsumptionDate(descriptor, type, entitlementConsumedReason);
-        return new MspReportProcessedScanDescriptor(urlConfig, appDescriptor, descriptor, type, entitlementConsumedReason, entitlementConsumptionDate);
-    }
-    
-    private MspReportArtifactEntitlementConsumedReason getEntitlementConsumedReason(MspReportSSCScanDescriptor descriptor, MspReportSSCScanType type) {
         var scanDate = descriptor.getScanDate();
+        MspReportArtifactEntitlementConsumedReason consumptionReason = null;
+        LocalDateTime consumptionDate = null;
         
         if ( isBeforeContractStartDate(scanDate) ) {
-            return MspReportArtifactEntitlementConsumedReason.beforeContractStartDate;
+            consumptionReason = MspReportArtifactEntitlementConsumedReason.beforeContractStartDate;
         } else if ( isBeforeReportingStartDate(scanDate) ) {
-            return MspReportArtifactEntitlementConsumedReason.beforeReportingPeriod;
+            consumptionReason = MspReportArtifactEntitlementConsumedReason.beforeReportingPeriod;
         } else if ( isAfterReportingEndDate(scanDate) ) {
-            return MspReportArtifactEntitlementConsumedReason.afterReportingPeriod;
-        } 
-        if ( !type.isFortifyScan() ) {
-            return MspReportArtifactEntitlementConsumedReason.noFortifyScan;
+            consumptionReason = MspReportArtifactEntitlementConsumedReason.afterReportingPeriod;
+        } else if ( !type.isFortifyScan() ) {
+            consumptionReason = MspReportArtifactEntitlementConsumedReason.noFortifyScan;
         } else {
             switch ( appDescriptor.getMspLicenseType() ) {
             case Demo: 
-                return MspReportArtifactEntitlementConsumedReason.demoScan;
+                consumptionReason = MspReportArtifactEntitlementConsumedReason.demoScan; 
+                break;
             case Scan: 
-                if ( descriptor.equals(earliestUploadByScanId.get(descriptor.getScanId())) ) {
-                    return MspReportArtifactEntitlementConsumedReason.mspScanLicenseConsumed;
+                if ( isAuditOnlyScan(descriptor) ) {
+                    consumptionReason = MspReportArtifactEntitlementConsumedReason.auditOnlyScan;
+                    consumptionDate = earliestUploadByScanId.get(descriptor.getScanId()).getScanDate();
+                } else if ( isRemediationScan(descriptor) ) {
+                    consumptionReason = MspReportArtifactEntitlementConsumedReason.remediationScan;
+                    consumptionDate = getPreviousScan(descriptor).getScanDate();
                 } else {
-                    return MspReportArtifactEntitlementConsumedReason.mspScanLicenseConsumedEarlier;
+                    consumptionReason = MspReportArtifactEntitlementConsumedReason.mspScanLicenseConsumed;
+                    consumptionDate = scanDate;
                 }
+                break;
             case Application:
                 if ( descriptor.equals(earliestScanByType.get(type)) ) {
-                    return MspReportArtifactEntitlementConsumedReason.mspApplicationLicenseConsumed;
+                    consumptionReason = MspReportArtifactEntitlementConsumedReason.mspApplicationLicenseConsumed;
+                    consumptionDate = scanDate;
                 } else {
-                    return MspReportArtifactEntitlementConsumedReason.mspApplicationLicenseConsumedEarlier;
+                    consumptionReason = MspReportArtifactEntitlementConsumedReason.mspApplicationLicenseConsumedEarlier;
+                    consumptionDate = earliestScanByType.get(type).getScanDate();
                 }
+                break;
             default: throw new RuntimeException("Unable to determine entitlement consumed reason");
             }
         }
+        return new MspReportProcessedScanDescriptor(urlConfig, appDescriptor, descriptor, type, consumptionReason, consumptionDate);
     }
 
-    private LocalDateTime getEntitlementConsumptionDate(MspReportSSCScanDescriptor descriptor, MspReportSSCScanType type, MspReportArtifactEntitlementConsumedReason entitlementConsumedReason) {
-        var isDemoLicense = appDescriptor.getMspLicenseType()==MspReportLicenseType.Demo;
-        switch ( entitlementConsumedReason.getEntitlementConsumed() ) {
-        case none:
-            if ( isDemoLicense || !type.isFortifyScan() ) { return null; }
-            // Intentionally no break;
-        case application:
-            return earliestScanByType.get(type).getScanDate();
-        case scan:
-            return earliestUploadByScanId.get(descriptor.getScanId()).getScanDate();
-        default: throw new RuntimeException("Unable to determine entitlement consumed date");
+
+    /**
+     * Check if an older scan with the same scan id was found; if so,
+     * then this is an audit-only scan.
+     */
+    private boolean isAuditOnlyScan(MspReportSSCScanDescriptor descriptor) {
+        return !descriptor.equals(earliestUploadByScanId.get(descriptor.getScanId()));
+    }
+    
+    /**
+     * Check if a scan of the same type exists that is less than 30 days older
+     * that the given scan, and which itself is not a remediation scan.
+     */
+    private boolean isRemediationScan(MspReportSSCScanDescriptor descriptor) {
+        var previousScan = getPreviousScan(descriptor);
+        return previousScan!=null 
+                && ChronoUnit.DAYS.between(previousScan.getScanDate(), descriptor.getScanDate())<30
+                && !isRemediationScan(previousScan);
+    }
+    
+    /**
+     * Return the previous scan of the same type as the given scan. If there is no previous scan,
+     * or if the previous scan is before contract start date, this method returns null. 
+     */
+    private MspReportSSCScanDescriptor getPreviousScan(MspReportSSCScanDescriptor descriptor) {
+        var previousScan = sortedScansByType.get(descriptor.getScanType()).lower(descriptor);
+        if ( previousScan==null || isBeforeContractStartDate(previousScan.getScanDate()) ) {
+            return null;
         }
+        return previousScan;
     }
-
 
     public static enum MspReportScanCollectorState {
         CONTINUE, DONE
@@ -227,7 +267,8 @@ public final class MspReportAppScanCollector implements AutoCloseable {
         noFortifyScan(MspReportArtifactEntitlementConsumed.none, false),
         demoScan(MspReportArtifactEntitlementConsumed.none, false),
         mspScanLicenseConsumed(MspReportArtifactEntitlementConsumed.scan, false),
-        mspScanLicenseConsumedEarlier(MspReportArtifactEntitlementConsumed.none, false),
+        auditOnlyScan(MspReportArtifactEntitlementConsumed.none, false),
+        remediationScan(MspReportArtifactEntitlementConsumed.none, false),
         mspApplicationLicenseConsumed(MspReportArtifactEntitlementConsumed.application, false),
         mspApplicationLicenseConsumedEarlier(MspReportArtifactEntitlementConsumed.none, false),
         ;
