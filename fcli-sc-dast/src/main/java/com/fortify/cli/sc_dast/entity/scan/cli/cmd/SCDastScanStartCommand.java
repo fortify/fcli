@@ -30,7 +30,6 @@ import java.io.IOException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -59,9 +58,6 @@ public final class SCDastScanStartCommand extends AbstractSCDastOutputCommand im
     private enum ScanModes {CrawlOnly, CrawlAndAudit, AuditOnly}
     @Option(names= {"--mode", "-M"})
     private ScanModes scanMode;
-
-    @Option(names = {"--start-urls", "-U"}, split=",")
-    private String[] startUrls;
 
     @Option(names = {"--login-macro", "-L"})
     private Integer loginMacroBinaryFileId;
@@ -107,7 +103,6 @@ public final class SCDastScanStartCommand extends AbstractSCDastOutputCommand im
             }
         }
         if ( scanMode!=null ) { overridesJson.put("scanMode", scanMode.name()); }
-        if ( startUrls!=null && startUrls.length>0) { overridesJson.set("startUrls", JsonHelper.toArrayNode(startUrls)); }
         String scanPolicyId = scanPolicyResolver.getScanPolicyId(unirest);
         if ( scanPolicyId!=null ) { overridesJson.put("policyId", scanPolicyId); }
         if ( loginMacroBinaryFileId!=null ) overridesJson.put("loginMacroBinaryFileId", loginMacroBinaryFileId);
