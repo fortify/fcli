@@ -56,10 +56,10 @@ public final class SCDastScanStartCommand extends AbstractSCDastOutputCommand im
     @Option(names = "--overrides-file") private File overridesFile;
 
     private enum ScanModes {CrawlOnly, CrawlAndAudit, AuditOnly}
-    @Option(names= {"--mode", "-M"})
+    @Option(names= {"--mode", "-m"})
     private ScanModes scanMode;
 
-    @Option(names = {"--login-macro", "-L"})
+    @Option(names = {"--login-macro", "-l"})
     private Integer loginMacroBinaryFileId;
     
     @Override

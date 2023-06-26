@@ -52,12 +52,12 @@ public class SCDastScanPolicyResolverMixin {
     }
     
     public static class RequiredOption extends AbstractSSCDastScanPolicyResolverMixin {
-        @Option(names = {"-P", "--policy"}, required = true)
+        @Option(names = {"-p", "--policy"}, required = true)
         @Getter private String scanPolicyNameOrId;
     }
     
     public static class OptionalOption extends AbstractSSCDastScanPolicyResolverMixin {
-        @Option(names = {"-P", "--policy"}, required = false)
+        @Option(names = {"-p", "--policy"}, required = false)
         @Getter private String scanPolicyNameOrId;
     }
     

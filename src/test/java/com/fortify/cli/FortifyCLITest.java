@@ -92,13 +92,28 @@ public class FortifyCLITest {
     
     private void checkOptionSpec(Results results, CommandSpec cmdSpec, OptionSpec optionSpec) {
         checkOptionNames(results, cmdSpec, optionSpec);
+        checkMultiValueOption(results, cmdSpec, optionSpec);
         checkOptionArity(results, cmdSpec, optionSpec);
         checkOptionDescription(results, cmdSpec, optionSpec);
     }
     
     private void checkOptionNames(Results results, CommandSpec cmdSpec, OptionSpec optionSpec) {
-        Stream.of(optionSpec.names()).filter(this::isInvalidOptionName).forEach(
-                name->results.add(TestType.OPT_NAME, Level.ERROR, cmdSpec, optionSpec, "Invalid option name: "+name));
+        var names = optionSpec.names();
+        Stream.of(names).filter(this::isInvalidOptionFormat).forEach(
+                name->results.add(TestType.OPT_NAME_FORMAT, Level.ERROR, cmdSpec, optionSpec, "Invalid option format: "+name));
+        if ( Stream.of(names).filter(this::isShortOption).count() > 1 ) {
+            results.add(TestType.OPT_SHORT_NAME_COUNT, Level.ERROR, cmdSpec, optionSpec, "Option must have at most 1 short name");
+        }
+        if ( Stream.of(names).filter(this::isLongOption).count() < 1 ) {
+            results.add(TestType.OPT_LONG_NAME_COUNT, Level.ERROR, cmdSpec, optionSpec, "Option must have at least 1 long name");
+        }
+        Stream.of(names).filter(this::isShortOption).filter(this::isInvalidShortOptionName).forEach(
+                name->results.add(TestType.OPT_SHORT_NAME, Level.ERROR, cmdSpec, optionSpec, "Invalid short option name: "+name));
+        Stream.of(names).filter(this::isLongOption).filter(this::isInvalidLongOptionName).forEach(
+                name->results.add(TestType.OPT_LONG_NAME, Level.ERROR, cmdSpec, optionSpec, "Invalid long option name: "+name));        
+    }
+    
+    private void checkMultiValueOption(Results results, CommandSpec cmdSpec, OptionSpec optionSpec) {
         if ( optionSpec.isMultiValue() ) {
             Stream.of(optionSpec.names()).filter(n->n.startsWith("--") && !n.endsWith("s")).forEach(
                 name->results.add(TestType.MULTI_OPT_PLURAL_NAME, Level.ERROR, cmdSpec, optionSpec, "Multi-value option should use plural option name: "+name));
@@ -135,10 +150,32 @@ public class FortifyCLITest {
         }
     }
     
-    private boolean isInvalidOptionName(String s) {
-        // Check for either single-letter option (which may be upper/lower-case or number)
-        // or long option; long options must be at least two characters after double dash
-        return !s.matches("-[a-zA-Z0-9]|--(?!-)[a-z0-9-]+[^-]");
+    private boolean isInvalidOptionFormat(String s) {
+        return !isLongOption(s) && !isShortOption(s);
+    }
+    
+    private boolean isLongOption(String s) {
+        // Long options must start with double dash, followed by any number of
+        // characters
+        return s.startsWith("--");
+    }
+    
+    private boolean isShortOption(String s) {
+        // Short options must start with single dash, followed by single other character
+        return s.startsWith("-") && s.length()==2;
+    }
+    
+    private boolean isInvalidShortOptionName(String s) {
+        // Short options must start with a single dash, followed by a single
+        // lower-case letter or number
+        return !s.matches("-[a-z0-9]");
+    }
+    
+    private boolean isInvalidLongOptionName(String s) {
+        // Long options must be at least two characters after double dash,
+        // may contain only lower-case letters and numbers, optionally 
+        // separated by dashes. but not ending with a dash 
+        return !s.matches("--(?!-)[a-z0-9-]+[^-]");
     }
     
     private void checkUsageHeader(Results results, CommandSpec spec) {

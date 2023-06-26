@@ -26,6 +26,8 @@ package com.fortify.cli.app;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.cli.util.FortifyCLIDefaultValueProvider;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.config._main.cli.cmd.ConfigCommands;
 import com.fortify.cli.fod._main.cli.cmd.FoDCommands;
 import com.fortify.cli.sc_dast._main.cli.cmd.SCDastCommands;
@@ -73,7 +75,8 @@ import picocli.CommandLine.ScopeType;
     }
 )
 public class FCLIRootCommands extends AbstractFortifyCLICommand {    
-    // We only want to have the --version option on the top-level fcli command
+    // We only want to have the --version option on the top-level fcli command,
     @Option(names = {"-V", "--version"}, versionHelp = true, description = "display version info", scope = ScopeType.LOCAL, order = -1002)
+    @DisableTest(TestType.OPT_SHORT_NAME)
     boolean versionInfoRequested;
 }

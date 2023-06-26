@@ -31,6 +31,8 @@ import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 
 import io.micronaut.core.util.StringUtils;
 import kong.unirest.HttpRequest;
@@ -43,6 +45,7 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     @Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
     
     @Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
+    @DisableTest(TestType.OPT_SHORT_NAME)
     @Getter private String httpMethod;
     
     @Option(names = {"--data", "-d"}, required = false)

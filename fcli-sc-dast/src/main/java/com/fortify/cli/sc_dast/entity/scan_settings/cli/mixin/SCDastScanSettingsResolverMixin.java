@@ -51,7 +51,7 @@ public class SCDastScanSettingsResolverMixin {
     }
     
     public static class RequiredOption extends AbstractSSCDastScanSettingsResolverMixin {
-        @Option(names = {"-S", "--settings"}, required = true)
+        @Option(names = {"-s", "--settings"}, required = true)
         @Getter private String scanSettingsCicdTokenOrId;
     }
     
