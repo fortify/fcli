@@ -8,8 +8,6 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import jakarta.inject.Qualifier;
-
 /**
  * This annotation allows for disabling particular tests on individual
  * commands and options, allowing tests defined in FortifyCLITest to
@@ -20,7 +18,6 @@ import jakarta.inject.Qualifier;
  * @author rsenden
  *
  */
-@Qualifier
 @Retention(RUNTIME)
 @Target({TYPE, FIELD})
 @Inherited
