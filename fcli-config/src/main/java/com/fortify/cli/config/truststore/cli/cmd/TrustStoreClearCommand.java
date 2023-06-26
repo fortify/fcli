@@ -14,9 +14,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name=OutputHelperMixins.DeleteAll.CMD_NAME)
+@Command(name=OutputHelperMixins.Clear.CMD_NAME)
 public class TrustStoreClearCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier, IRecordTransformer {
-    @Mixin @Getter private OutputHelperMixins.DeleteAll outputHelper;
+    @Mixin @Getter private OutputHelperMixins.Clear outputHelper;
     
     @Override
     public JsonNode getJsonNode() {

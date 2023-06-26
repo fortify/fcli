@@ -38,7 +38,7 @@ public abstract class AbstractCryptoCommand extends AbstractFortifyCLICommand im
     @Override @SneakyThrows
     public final void run() {
         initMixins();
-        String prompt = commandHelper.getMessageResolver().getMessageString("prompt")+": ";
+        String prompt = commandHelper.getMessageResolver().getMessageString("prompt")+" ";
         String value;
         if ( System.console()!=null ) {
             value = new String(System.console().readPassword(prompt));

@@ -7,6 +7,7 @@ import picocli.CommandLine;
 @CommandLine.Command(
         name = "language",
         aliases = "lang",
+        hidden = true,
         subcommands = {
                 LanguageClearCommand.class,
                 LanguageListCommand.class,

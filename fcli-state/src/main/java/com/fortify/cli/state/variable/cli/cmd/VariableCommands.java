@@ -10,7 +10,7 @@ import picocli.CommandLine.Command;
         description = "Commands for managing fcli variables",
         subcommands = {
                 VariableContentsCommand.class,
-                VariableDeleteAllCommand.class,
+                VariableClearCommand.class,
                 VariableDeleteCommand.class,
                 VariableGetCommand.class,
                 VariableListCommand.class

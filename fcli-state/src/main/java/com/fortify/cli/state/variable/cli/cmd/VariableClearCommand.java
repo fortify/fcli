@@ -35,9 +35,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.DeleteAll.CMD_NAME)
-public class VariableDeleteAllCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.DeleteAll outputHelper;
+@Command(name = OutputHelperMixins.Clear.CMD_NAME)
+public class VariableClearCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Getter @Mixin private OutputHelperMixins.Clear outputHelper;
 
     @Override
     public JsonNode getJsonNode() {

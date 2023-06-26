@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.util.all_commands.cli.cmd;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
@@ -49,8 +50,10 @@ public final class AllCommandsHelpCommand extends AbstractFortifyCLICommand impl
     
     private final void run(Map<String, CommandLine> subcommands) {
         if ( subcommands!=null && !subcommands.isEmpty() ) {
-            for (Map.Entry<String, CommandLine> entry : subcommands.entrySet()) {
-                CommandSpec spec = entry.getValue().getCommandSpec();
+            // We wrap subcommands.values() in a LinkedHashSet to remove duplicates
+            // (due to command aliases) while keeping original order
+            for (CommandLine cl : new LinkedHashSet<>(subcommands.values()) ) {
+                CommandSpec spec = cl.getCommandSpec();
                 if (spec.usageMessage().hidden() && !includeHidden) { continue; }
                 var subsubcommands = spec.subcommands();
                 if ( includeParents || subsubcommands==null || subsubcommands.isEmpty() ) {

@@ -74,9 +74,8 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "delete";
     }
     
-    @Command(aliases = {"clear"})
-    public static class DeleteAll extends TableNoQuery {
-        public static final String CMD_NAME = "delete-all";
+    public static class Clear extends TableNoQuery {
+        public static final String CMD_NAME = "clear";
     }
     
     public static class Revoke extends TableNoQuery {

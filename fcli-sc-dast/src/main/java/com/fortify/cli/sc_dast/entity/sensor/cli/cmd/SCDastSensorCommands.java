@@ -7,8 +7,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "sensor",
-        description = "Commands for interacting with Fortify ScanCentral DAST sensors (scanners).",
-        aliases = {"scanner"},
         subcommands = {
             SCDastSensorDisableCommand.class,
             SCDastSensorEnableCommand.class,

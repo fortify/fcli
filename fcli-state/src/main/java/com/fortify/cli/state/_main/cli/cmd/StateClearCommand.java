@@ -22,10 +22,10 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 // TODO Remove code duplication between this class and ConfigClearCommand
-@Command(name = OutputHelperMixins.DeleteAll.CMD_NAME)
+@Command(name = OutputHelperMixins.Clear.CMD_NAME)
 public class StateClearCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
-    @Getter @Mixin private OutputHelperMixins.DeleteAll outputHelper;
+    @Getter @Mixin private OutputHelperMixins.Clear outputHelper;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     
     @Override

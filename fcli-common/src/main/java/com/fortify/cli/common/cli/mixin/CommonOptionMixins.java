@@ -47,7 +47,7 @@ public class CommonOptionMixins {
                 if ( descriptionLines==null || descriptionLines.length<1 ) {
                     throw new RuntimeException("No proper description found for generating prompt for --confirm option");
                 }
-                promptFormat = spec.optionsMap().get("-y").description()[0]+"?";
+                promptFormat = spec.optionsMap().get("-y").description()[0].replaceAll("[. ]+$", "")+"?";
             }
             String prompt = String.format(promptFormat, promptArgs);
             String promptOptions = PicocliSpecHelper.getRequiredMessageString(spec, "confirmPromptOptions");
