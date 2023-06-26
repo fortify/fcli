@@ -7,6 +7,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "all-commands",
         subcommands = {
+            AllCommandsHelpCommand.class,
             AllCommandsListCommand.class
         }
 )

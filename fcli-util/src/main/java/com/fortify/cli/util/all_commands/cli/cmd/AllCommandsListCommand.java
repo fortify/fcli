@@ -85,6 +85,7 @@ public final class AllCommandsListCommand extends AbstractOutputCommand implemen
     private static final ObjectNode createNode(CommandSpec spec) {
         ObjectNode result = objectMapper.createObjectNode();
         result.put("command", spec.qualifiedName(" "));
+        result.put("subCommand", spec.qualifiedName(" ").substring(spec.root().name().length()+1));
         result.put("hidden", spec.usageMessage().hidden());
         result.put("usageHeader", String.join("\n", spec.usageMessage().header()));
         result.set("aliases", Stream.of(spec.aliases()).map(TextNode::new).collect(JsonHelper.arrayNodeCollector()));
