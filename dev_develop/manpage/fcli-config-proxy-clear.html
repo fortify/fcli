@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-appversion-list(1)
+title: fcli-config-proxy-clear(1)
 fcli_version: fcli version 0.20230626.194722-dev_develop, built on 2023-06-26 19 48 08
 ---
 
@@ -9,7 +9,7 @@ fcli_version: fcli version 0.20230626.194722-dev_develop, built on 2023-06-26 19
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-appversion-list(1)</title>
+<title>fcli-config-proxy-clear(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,21 +20,19 @@ fcli_version: fcli version 0.20230626.194722-dev_develop, built on 2023-06-26 19
 
 
 <div id="header">
-<h1>fcli-ssc-appversion-list(1) Manual Page</h1>
+<h1>fcli-config-proxy-clear(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
-<li><a href="#_options">Options</a></li>
-<li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options_see_fcli_documentation_for_details">Output options (see fcli documentation for details):</a></li>
 <li><a href="#_generic_fcli_options_see_fcli_documentation_for_details">Generic fcli options (see fcli documentation for details):</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-appversion-list - List and query application versions.</p>
+<p>fcli-config-proxy-clear - Clear all proxy configurations.</p>
 </div>
 </div>
 <div id="content">
@@ -42,13 +40,10 @@ fcli_version: fcli version 0.20230626.194722-dev_develop, built on 2023-06-26 19
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion list</strong> [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>] [<strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,
-                         <em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
-                         [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
-                         <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-             _            <em class="=&lt;propertyNames&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
-                         [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]</p>
+<p><strong>fcli config proxy clear</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                        [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -56,40 +51,6 @@ fcli_version: fcli version 0.20230626.194722-dev_develop, built on 2023-06-26 19
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 
-</div>
-</div>
-<div class="sect1">
-<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>--q-param</strong>=<em>&lt;qParam&gt;</em></dt>
-<dd>
-<p>Server-side queries are automatically generated from the -q / --query option if possible; generated queries can be viewed in the debug log. The --q-param option can be used to override the automatically generated query, for example to further optimize the request. See SSC REST API documentation for information on supported formats.</p>
-</dd>
-<dt class="hdlist1"><strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]</dt>
-<dd>
-<p>Embed extra application version data. Allowed values: attrs, attrsByName, attrsByGuid, attrValuesByName, attrValuesByGuid, bugtracker, customTags, filterSets, folders, resultProcessingRules. Apart from including the extra data in the output, this allows for advanced queries like the following to query application versions by application version attribute values: 'attrValuesByName["Interfaces"].contains("Interactive Console")'.</p>
-</dd>
-<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
-<dd>
-<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options:</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
-<dd>
-<p>Session name to use.</p>
-</dd>
-</dl>
-</div>
 </div>
 </div>
 <div class="sect1">

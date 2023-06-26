@@ -1,6 +1,6 @@
 ---
 title: fcli-config(1)
-fcli_version: fcli version 0.20230626.115058-dev_develop, built on 2023-06-26 11 51 38
+fcli_version: fcli version 0.20230626.194722-dev_develop, built on 2023-06-26 19 48 08
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230626.115058-dev_develop, built on 2023-06-26 11
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230626.115058-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230626.194722-dev_develop" %}
 
 
 <div id="header">
@@ -26,13 +26,13 @@ fcli_version: fcli version 0.20230626.115058-dev_develop, built on 2023-06-26 11
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
-<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_generic_fcli_options_see_fcli_documentation_for_details">Generic fcli options (see fcli documentation for details):</a></li>
 <li><a href="#_commands">Commands</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-config - Commands for configuring fcli</p>
+<p>fcli-config - Manage fcli configuration settings (proxy, trust store, ...).</p>
 </div>
 </div>
 <div id="content">
@@ -52,7 +52,7 @@ fcli_version: fcli version 0.20230626.115058-dev_develop, built on 2023-06-26 11
 </div>
 </div>
 <div class="sect1">
-<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<h2 id="_generic_fcli_options_see_fcli_documentation_for_details"><a class="anchor" href="#_generic_fcli_options_see_fcli_documentation_for_details"></a>Generic fcli options (see fcli documentation for details):</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
@@ -70,7 +70,7 @@ fcli_version: fcli version 0.20230626.115058-dev_develop, built on 2023-06-26 11
 </dd>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
-<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
 </dd>
 </dl>
 </div>
@@ -81,21 +81,17 @@ fcli_version: fcli version 0.20230626.115058-dev_develop, built on 2023-06-26 11
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-config-delete-all.html"><strong>delete-all</strong>, <strong>clear</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-config-clear.html"><strong>clear</strong></a></dt>
 <dd>
-<p>Clear full fcli configuration</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-config-language.html"><strong>language</strong>, <strong>lang</strong></a></dt>
-<dd>
-<p>Commands for listing and setting languages that FCLI&#8217;s help information can be outputted in.</p>
+<p>Clear full fcli configuration.</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-config-proxy.html"><strong>proxy</strong></a></dt>
 <dd>
-<p>Commands for configuring proxy servers used to connect to target systems</p>
+<p>Manage fcli proxy configurations.</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-config-truststore.html"><strong>truststore</strong></a></dt>
 <dd>
-<p>Commands for managing the SSL trust store</p>
+<p>Manage fcli trust store configuration.</p>
 </dd>
 </dl>
 </div>
@@ -104,8 +100,8 @@ fcli_version: fcli version 0.20230626.115058-dev_develop, built on 2023-06-26 11
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230626.115058-dev_develop, built on 2023-06-26 11 51 38<br>
-Last updated 2023-06-26 11:53:16 UTC
+Version fcli version 0.20230626.194722-dev_develop, built on 2023-06-26 19 48 08<br>
+Last updated 2023-06-26 19:49:38 UTC
 </div>
 </div>
 </body>
