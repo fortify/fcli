@@ -1,6 +1,6 @@
 ---
 title: fcli-util-all-commands-list(1)
-fcli_version: fcli version 0.20230627.101058-dev_develop, built on 2023-06-27 10 11 54
+fcli_version: fcli version 0.20230627.142202-dev_develop, built on 2023-06-27 14 22 40
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230627.101058-dev_develop, built on 2023-06-27 10
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230627.101058-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230627.142202-dev_develop" %}
 
 
 <div id="header">
@@ -27,13 +27,13 @@ fcli_version: fcli version 0.20230627.101058-dev_develop, built on 2023-06-27 10
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
-<li><a href="#_output_options_see_fcli_documentation_for_details">Output options (see fcli documentation for details):</a></li>
-<li><a href="#_generic_fcli_options_see_fcli_documentation_for_details">Generic fcli options (see fcli documentation for details):</a></li>
+<li><a href="#_output_options">Output options:</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-util-all-commands-list - List all fcli commands.</p>
+<p>fcli-util-all-commands-list - List (a subset of) all fcli commands.</p>
 </div>
 </div>
 <div id="content">
@@ -41,19 +41,20 @@ fcli_version: fcli version 0.20230627.101058-dev_develop, built on 2023-06-27 10
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli util all-commands list</strong> [<strong>--include-hidden</strong>] [<strong>--include-parents</strong>] [[<strong>-h</strong>]
+<p><strong>fcli util all-commands list</strong> [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] [[<strong>-h</strong>]
                             [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                             [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                             [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                            [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] [<strong>-q</strong>=<em>&lt;SpEL _
-                      _      expression&gt;</em>]</p>
+                            [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>By default, this command outputs a table listing all available fcli commands. The --query option can be used to output a subset of commands.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -61,24 +62,34 @@ fcli_version: fcli version 0.20230627.101058-dev_develop, built on 2023-06-27 10
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--include-hidden</strong></dt>
-<dd>
-<p>Include hidden commands.</p>
-</dd>
-<dt class="hdlist1"><strong>--include-parents</strong></dt>
-<dd>
-<p>Include parent (container) commands.</p>
-</dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
-<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true. See the output of '-o json-properties' for the list of properties that you can query on. Common queries include the following:</p>
+<div class="paragraph">
+<p>-q '!hidden' (only non-hidden commands)</p>
+</div>
+<div class="paragraph">
+<p>-q 'hidden' (only hidden commands)</p>
+</div>
+<div class="paragraph">
+<p>-q '!runnable' (only container commands)</p>
+</div>
+<div class="paragraph">
+<p>-q 'runnable' (only runnable commands)</p>
+</div>
+<div class="paragraph">
+<p>-q '!hidden &amp;&amp; runnable' (only non-hidden, runnable commands)</p>
+</div>
+<div class="paragraph">
+<p>-q 'module=="config"' (only 'config' commands)</p>
+</div>
 </dd>
 </dl>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_output_options_see_fcli_documentation_for_details"><a class="anchor" href="#_output_options_see_fcli_documentation_for_details"></a>Output options (see fcli documentation for details):</h2>
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
@@ -99,7 +110,7 @@ fcli_version: fcli version 0.20230627.101058-dev_develop, built on 2023-06-27 10
 </div>
 </div>
 <div class="sect1">
-<h2 id="_generic_fcli_options_see_fcli_documentation_for_details"><a class="anchor" href="#_generic_fcli_options_see_fcli_documentation_for_details"></a>Generic fcli options (see fcli documentation for details):</h2>
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
@@ -126,8 +137,8 @@ fcli_version: fcli version 0.20230627.101058-dev_develop, built on 2023-06-27 10
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230627.101058-dev_develop, built on 2023-06-27 10 11 54<br>
-Last updated 2023-06-27 10:13:23 UTC
+Version fcli version 0.20230627.142202-dev_develop, built on 2023-06-27 14 22 40<br>
+Last updated 2023-06-27 14:24:38 UTC
 </div>
 </div>
 </body>
