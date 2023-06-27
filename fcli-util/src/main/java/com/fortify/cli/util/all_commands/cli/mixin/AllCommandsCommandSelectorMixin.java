@@ -13,9 +13,10 @@
 package com.fortify.cli.util.all_commands.cli.mixin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -49,16 +50,16 @@ public class AllCommandsCommandSelectorMixin {
     
     public CommandSelectorResult getSelectedCommands() {
         CommandSelectorResult result = new CommandSelectorResult(queryExpression);
-        addCommands(result, commandHelper.getCommandSpec().root().subcommands());
+        addCommands(result, Arrays.asList(commandHelper.getCommandSpec().root().commandLine()));
         return result;
     }
     
-    private final void addCommands(CommandSelectorResult result, Map<String, CommandLine> subcommands) {
+    private final void addCommands(CommandSelectorResult result, Collection<CommandLine> subcommands) {
         if ( subcommands!=null && !subcommands.isEmpty() ) {
-            for (Map.Entry<String, CommandLine> entry : subcommands.entrySet()) {
-                CommandSpec spec = entry.getValue().getCommandSpec();
+            for (CommandLine cl : subcommands) {
+                CommandSpec spec = cl.getCommandSpec();
                 result.add(spec);
-                addCommands(result, spec.subcommands());
+                addCommands(result, spec.subcommands().values());
             }
         }
     }
