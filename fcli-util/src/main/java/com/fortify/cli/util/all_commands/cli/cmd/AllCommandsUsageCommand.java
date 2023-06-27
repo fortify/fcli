@@ -12,28 +12,29 @@
  *******************************************************************************/
 package com.fortify.cli.util.all_commands.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
-import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.util.all_commands.cli.mixin.AllCommandsCommandSelectorMixin;
-import com.fortify.cli.util.all_commands.cli.mixin.AllCommandsOutputHelperMixins;
 
-import lombok.Getter;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.CommandSpec;
 
-@Command(name = AllCommandsOutputHelperMixins.List.CMD_NAME)
-public final class AllCommandsListCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
-    @Getter @Mixin private AllCommandsOutputHelperMixins.List outputHelper;
+@Command(name = "usage")
+public final class AllCommandsUsageCommand extends AbstractFortifyCLICommand implements Runnable {
     @Mixin private AllCommandsCommandSelectorMixin selectorMixin;
     
     @Override
-    public JsonNode getJsonNode() {
-        return selectorMixin.getSelectedCommands().getNodes();
+    public final void run() {
+        initMixins();
+        selectorMixin.getSelectedCommands().getSpecs()
+            .forEach(this::printHelp);
+    }
+
+    private void printHelp(CommandSpec spec) {
+        System.out.print("\n==========\n");
+        CommandLine cl = spec.commandLine();
+        cl.usage(cl.getOut());
     }
     
-    @Override
-    public boolean isSingular() {
-        return false;
-    }
 }

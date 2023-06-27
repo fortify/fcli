@@ -94,7 +94,7 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "revoke";
     }
     
-     @Command(name = "list", aliases = {"ls"})
+    @Command(name = "list", aliases = {"ls"})
     public static class List extends TableWithQuery {
         public static final String CMD_NAME = "list";
     }
