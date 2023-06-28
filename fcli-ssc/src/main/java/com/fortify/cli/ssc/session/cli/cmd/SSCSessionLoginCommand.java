@@ -38,7 +38,7 @@ public class SSCSessionLoginCommand extends AbstractSessionLoginCommand<SSCSessi
     @Override
     protected SSCSessionDescriptor login(String sessionName) {
         IUrlConfig urlConfig = sessionLoginOptions.getUrlConfigOptions();
-        ISSCCredentialsConfig credentialsConfig = sessionLoginOptions.getCredentialsConfig();
+        ISSCCredentialsConfig credentialsConfig = sessionLoginOptions.getCredentialOptions();
         return new SSCSessionDescriptor(urlConfig, credentialsConfig);
     }
 }

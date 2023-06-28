@@ -33,20 +33,11 @@ public class SSCSessionLoginOptions {
     @ArgGroup(exclusive = false, multiplicity = "1", order = 1)
     @Getter private UrlConfigOptions urlConfigOptions = new UrlConfigOptions();
     
-    @ArgGroup(exclusive = false, multiplicity = "1", order = 2)
-    @Getter private SSCAuthOptions authOptions = new SSCAuthOptions();
-    
-    public ISSCCredentialsConfig getCredentialsConfig() {
-        return authOptions==null ? null : authOptions.getCredentialOptions();
-    }
+    @ArgGroup(exclusive = true, multiplicity = "1", order = 2)
+    @Getter private SSCCredentialOptions credentialOptions = new SSCCredentialOptions();
     
     public ISSCUserCredentialsConfig getUserCredentialsConfig() {
-        return getCredentialsConfig()==null ? null : getCredentialsConfig().getUserCredentialsConfig();
-    }
-    
-    public static class SSCAuthOptions {
-        @ArgGroup(exclusive = true, multiplicity = "1", order = 3)
-        @Getter private SSCCredentialOptions credentialOptions = new SSCCredentialOptions();
+        return getCredentialOptions()==null ? null : getCredentialOptions().getUserCredentialsConfig();
     }
     
     public static class SSCCredentialOptions implements ISSCCredentialsConfig {
