@@ -15,20 +15,47 @@ package com.fortify.cli.common.cli.cmd;
 import java.util.Map;
 
 import com.fortify.cli.common.cli.mixin.ICommandAware;
+import com.fortify.cli.common.cli.util.FortifyCLIDefaultValueProvider;
 
 import ch.qos.logback.classic.Level;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
+/**
+ * This abstract class should be used as the base class for all fcli commands.
+ * It is responsible for providing the following fcli features:
+ * <ul>
+ *  <li>Providing standard command configuration settings (default value provider, ...)</li>
+ *  <li>Providing standard command options (--help, --log-level, ...)</li>
+ *  <li>Injecting {@link CommandSpec} representing the current command into
+ *      any mixins that implement the {@link ICommandAware} interface</li>
+ * </ul>
+ *
+ * @author Ruud Senden
+ */
 public class AbstractFortifyCLICommand {
+    // Mix in the standard command configuration, like default value provider
+    @Mixin private StandardCommandConfiguration standardCommandConfiguration;
+    
+    // Have picocli inject the CommandSpec representing the current command
     @Spec private CommandSpec commandSpec;
+    
+    // Boolean indicating whether mixins have already been initialized by
+    // the initMixins() method
     private boolean mixinsInitialized = false;
+    
+    // ArgGroup for generic options like --help
     @ArgGroup(exclusive = false, headingKey = "fcli.genericOptions.heading", order = 50) 
     @Getter private GenericOptionsArgGroup genericOptions = new GenericOptionsArgGroup();
     
+    /**
+     * Enum defining available log levels
+     */
     public static enum LogLevel {
         TRACE(Level.TRACE),
         DEBUG(Level.DEBUG),
@@ -42,6 +69,13 @@ public class AbstractFortifyCLICommand {
         }
     }
     
+    /**
+     * This method is supposed to be invoked by all command implementations
+     * in their {@link Runnable#run()} method (after picocli has had a chance
+     * to inject our {@link CommandSpec}). It will check whether mixins have
+     * already been initialized for this command; if not, the {@link #initMixins(CommandSpec, Map)}
+     * method will be invoked to initialize the mixins.
+     */
     protected final void initMixins() {
         if ( !mixinsInitialized ) {
             initMixins(commandSpec, commandSpec.mixins());
@@ -49,6 +83,10 @@ public class AbstractFortifyCLICommand {
         }
     }
     
+    /**
+     * This method recursively iterates over all given mixins to inject our {@link CommandSpec} 
+     * into any mixins implementing the {@link ICommandAware} interface.
+     */
     private void initMixins(CommandSpec commandSpec, Map<String, CommandSpec> mixins) {
         if ( mixins != null ) {
             for ( CommandSpec mixin : mixins.values() ) {
@@ -61,6 +99,10 @@ public class AbstractFortifyCLICommand {
         }
     }
 
+    /**
+     * This class (used as an {@link ArgGroup}) defines common fcli options that 
+     * are available on every fcli command.
+     */
     public static final class GenericOptionsArgGroup {
         @Option(names = {"-h", "--help"}, usageHelp = true, description = "display this help message")
         private boolean usageHelpRequested;
@@ -74,4 +116,19 @@ public class AbstractFortifyCLICommand {
         @Option(names = "--log-level")
         @Getter private LogLevel logLevel;
     }
+    
+    /**
+     * This class (used as a {@link Mixin} defines common fcli command attributes
+     * that are applied to every fcli command. The usual approach would be to 
+     * declare these attributes on the top-level command (FCLIRootCommands) together
+     * with `scope = ScopeType.INHERIT`, however this has unintended side effects
+     * as described here: https://github.com/remkop/picocli/issues/1465#issuecomment-1611060809.
+     * As such, we use a mixin to declare these common fcli command attributes. 
+     */
+    @Command(
+            usageHelpAutoWidth = true,
+            sortOptions = false, 
+            showAtFileInUsageHelp = false,
+            defaultValueProvider = FortifyCLIDefaultValueProvider.class)
+    public static final class StandardCommandConfiguration {}
 }

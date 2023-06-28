@@ -34,7 +34,7 @@ public class SCDastSessionLoginOptions {
         
         @Override
         public char[] getPredefinedToken() {
-            return tokenOptions==null || tokenOptions.token==null ? null : SSCTokenConverter.toRestToken(tokenOptions.token);
+            return tokenOptions==null || tokenOptions.getToken()==null ? null : SSCTokenConverter.toRestToken(tokenOptions.getToken());
         }
     }
     

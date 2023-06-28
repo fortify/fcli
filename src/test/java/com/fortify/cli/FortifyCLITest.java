@@ -194,8 +194,10 @@ public class FortifyCLITest {
         if ( !spec.equals(spec.root()) ) {
             var rootHeader = spec.root().usageMessage().header();
             var cmdHeader = spec.usageMessage().header();
-            if ( Arrays.equals(rootHeader, cmdHeader) ) {
-                results.add(TestType.CMD_USAGE_HEADER, Level.WARN, spec, "Command doesn't define proper usage header: "+Arrays.asList(cmdHeader));
+            if ( cmdHeader==null 
+                    || Stream.of(cmdHeader).allMatch(StringUtils::isBlank) 
+                    || Arrays.equals(rootHeader, cmdHeader) ) {
+                results.add(TestType.CMD_USAGE_HEADER, Level.ERROR, spec, "Command doesn't define proper usage header: "+Arrays.asList(cmdHeader));
             }
         }
     }
