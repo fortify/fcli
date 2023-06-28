@@ -13061,8 +13061,8 @@ public class CommandLine {
 
                 validationResult = matches.isEmpty() ? GroupValidationResult.SUCCESS_ABSENT : GroupValidationResult.SUCCESS_PRESENT;
                 for (ArgGroupSpec missing : unmatchedSubgroups) {
-                    // PATCH Temporary fix while waiting for new picocli version; added containsRequiredOptionsOrSubgroups() call
-                    if (missing.validate() && missing.multiplicity().min > 0 && containsRequiredOptionsOrSubgroups(missing)) {
+                    // PATCH Temporary fix while waiting for new picocli version; added isRequiredArgGroup() call
+                    if (missing.validate() && missing.multiplicity().min > 0 && isRequiredArgGroup(missing)) {
                         int presentCount = 0;
                         boolean haveMissing = true;
                         boolean someButNotAllSpecified = false;
@@ -13092,32 +13092,29 @@ public class CommandLine {
                 }
             }
             
-            // PATH START Added methods
-            private boolean containsRequiredOptionsOrSubgroups(ArgGroupSpec argGroupSpec) {
-                return containsRequiredOptions(argGroupSpec) || containsRequiredSubgroups(argGroupSpec);
-            }
-                
-            private boolean containsRequiredOptions(ArgGroupSpec argGroupSpec) {
-                for ( OptionSpec option : argGroupSpec.options() ) {
-                    if ( option.required() ) { return true; }
-                }
-                return false;
-            }
-            
-            private boolean containsRequiredSubgroups(ArgGroupSpec argGroupSpec) {
-                for ( ArgGroupSpec subgroup : argGroupSpec.subgroups() ) {
-                    if ( subgroup.exclusive() ) {
-                        // Only return true if all of the subgroups contain required options or subgroups
-                        boolean result = true;
-                        for ( ArgGroupSpec subsubgroup : subgroup.subgroups() ) {
-                            result &= containsRequiredOptionsOrSubgroups(subsubgroup);
-                        }
-                        return result && containsRequiredOptions(subgroup);
-                    } else {
-                        return containsRequiredOptionsOrSubgroups(subgroup);
+            // PATCH START Added methods
+            private boolean isRequiredArgGroup(ArgGroupSpec spec) {
+                if ( spec.exclusive() ) {
+                    // Only return true if all options and subgroups are considered required
+                    boolean result = true;
+                    for ( OptionSpec option : spec.options() ) {
+                        result &= option.required();
                     }
+                    for ( ArgGroupSpec subgroup : spec.subgroups() ) {
+                        result &= isRequiredArgGroup(subgroup);
+                    }
+                    return result;
+                } else {
+                    // Return true if at least one option or subgroup is required
+                    boolean result = false;
+                    for ( OptionSpec option : spec.options() ) {
+                        result |= option.required();
+                    }
+                    for ( ArgGroupSpec subgroup : spec.subgroups() ) {
+                        result |= isRequiredArgGroup(subgroup);
+                    }
+                    return result;
                 }
-                return false;
             }
             // PATCH END
 
