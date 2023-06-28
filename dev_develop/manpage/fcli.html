@@ -1,6 +1,6 @@
 ---
 title: fcli(1)
-fcli_version: fcli version 0.20230627.144510-dev_develop, built on 2023-06-27 14 45 40
+fcli_version: fcli version 0.20230628.122209-dev_develop, built on 2023-06-28 12 22 54
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230627.144510-dev_develop, built on 2023-06-27 14
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230627.144510-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230628.122209-dev_develop" %}
 
 
 <div id="header">
@@ -49,7 +49,15 @@ fcli_version: fcli version 0.20230627.144510-dev_develop, built on 2023-06-27 14
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>As the name implies, Fortify CLI (fcli) is a general-purpose command-line utility for working with the various Fortify products.</p>
+</div>
+<div class="paragraph">
+<p>Fortify CLI is structured using sub-commands, based on the following convention: 'fcli &lt;module&gt; &lt;entity&gt; &lt;action&gt;'. Every sub-command provides its own detailed usage instructions, accessible through the -h or --help option on each sub-command. Where applicable, the usage instructions include the list of sub-commands. For example, the Commands section below displays the sub-commands representing the various fcli modules. A list of all available fcli commands can be obtained through the 'fcli util all-commands list' command.</p>
+</div>
+<div class="paragraph">
+<p>It is highly recommended to review the fcli user documentation, which both explains general fcli concepts and provides detailed instructions on particular topics like common command line options and use of environment variables and fcli variables. The link to the online documentation can be found at the bottom of the help output for every individual fcli command, as seen below.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -109,7 +117,7 @@ fcli_version: fcli version 0.20230627.144510-dev_develop, built on 2023-06-27 14
 </dd>
 <dt class="hdlist1"><a href="fcli-sc-sast.html"><strong>sc-sast</strong></a></dt>
 <dd>
-<p>Interact with Fortify ScanCentral SAST</p>
+<p>Interact with Fortify ScanCentral SAST.</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-ssc.html"><strong>ssc</strong></a></dt>
 <dd>
@@ -121,7 +129,7 @@ fcli_version: fcli version 0.20230627.144510-dev_develop, built on 2023-06-27 14
 </dd>
 <dt class="hdlist1"><a href="fcli-util.html"><strong>util</strong></a></dt>
 <dd>
-<p>Various fcli utility commands that don&#8217;t fit in any of the other modules.</p>
+<p>Utility commands that don&#8217;t fit in any of the other modules.</p>
 </dd>
 </dl>
 </div>
@@ -130,8 +138,8 @@ fcli_version: fcli version 0.20230627.144510-dev_develop, built on 2023-06-27 14
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230627.144510-dev_develop, built on 2023-06-27 14 45 40<br>
-Last updated 2023-06-27 14:47:09 UTC
+Version fcli version 0.20230628.122209-dev_develop, built on 2023-06-28 12 22 54<br>
+Last updated 2023-06-28 12:24:55 UTC
 </div>
 </div>
 </body>
