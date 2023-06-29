@@ -13096,25 +13096,39 @@ public class CommandLine {
             private boolean isRequiredArgGroup(ArgGroupSpec spec) {
                 if ( spec.exclusive() ) {
                     // Only return true if all options and subgroups are considered required
-                    boolean result = true;
-                    for ( OptionSpec option : spec.options() ) {
-                        result &= option.required();
-                    }
-                    for ( ArgGroupSpec subgroup : spec.subgroups() ) {
-                        result &= isRequiredArgGroup(subgroup);
-                    }
-                    return result;
+                    return isAllOptionsRequired(spec) && isAllSubGroupsRequired(spec);
                 } else {
                     // Return true if at least one option or subgroup is required
-                    boolean result = false;
-                    for ( OptionSpec option : spec.options() ) {
-                        result |= option.required();
-                    }
-                    for ( ArgGroupSpec subgroup : spec.subgroups() ) {
-                        result |= isRequiredArgGroup(subgroup);
-                    }
-                    return result;
+                    return isAnyOptionRequired(spec) || isAnySubGroupRequired(spec);
                 }
+            }
+            
+            private boolean isAllOptionsRequired(ArgGroupSpec spec) {
+                for ( OptionSpec option : spec.options() ) {
+                    if ( !option.required() ) { return false; }
+                }
+                return true;
+            }
+            
+            private boolean isAnyOptionRequired(ArgGroupSpec spec) {
+                for ( OptionSpec option : spec.options() ) {
+                    if ( option.required() ) { return true; }
+                }
+                return false;
+            }
+            
+            private boolean isAllSubGroupsRequired(ArgGroupSpec spec) {
+                for ( ArgGroupSpec subgroup : spec.subgroups() ) {
+                    if ( !isRequiredArgGroup(subgroup) ) { return false; }
+                }
+                return true;
+            }
+            
+            private boolean isAnySubGroupRequired(ArgGroupSpec spec) {
+                for ( ArgGroupSpec subgroup : spec.subgroups() ) {
+                    if ( isRequiredArgGroup(subgroup) ) { return true; }
+                }
+                return false;
             }
             // PATCH END
 
