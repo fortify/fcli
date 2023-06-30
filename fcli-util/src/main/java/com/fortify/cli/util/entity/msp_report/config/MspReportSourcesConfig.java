@@ -10,20 +10,26 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.state._main.cli.cmd;
+package com.fortify.cli.util.entity.msp_report.config;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.state.entity.variable.cli.cmd.VariableCommands;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import picocli.CommandLine.Command;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Data;
 
-@Command(
-        name = "state",
-        resourceBundle = "com.fortify.cli.state.i18n.StateMessages",
-        subcommands = {
-                StateClearCommand.class,
-                VariableCommands.class
-        }
-)
-public class StateCommands extends AbstractFortifyCLICommand {
+/**
+ * This class holds the various source-specific source configurations,
+ * together with a global {@link #includeForks} setting.
+ * @author rsenden
+ *
+ */
+@ReflectiveAccess @Data
+public class MspReportSourcesConfig {
+    private MspReportSSCSourceConfig[] ssc;
+    
+    public final List<IMspReportSourceConfig> getSourceConfigs() {
+        return Stream.of(ssc).collect(Collectors.toList());
+    }
 }

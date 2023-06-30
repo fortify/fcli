@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2021, 2022 Open Text.
+ * Copyright 2021, 2023 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -10,22 +10,22 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.tool._main.cli.cmd;
+package com.fortify.cli.config.entity.language.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.tool.entity.fod_uploader.cli.cmd.ToolFoDUploaderCommands;
-import com.fortify.cli.tool.entity.sc_client.cli.cmd.ToolSCClientCommands;
-import com.fortify.cli.tool.entity.vuln_exporter.cli.cmd.ToolVulnExporterCommands;
 
-import picocli.CommandLine.Command;
+import picocli.CommandLine;
 
-@Command(
-        name = "tool",
-        resourceBundle = "com.fortify.cli.tool.i18n.ToolMessages",
+@CommandLine.Command(
+        name = "language",
+        aliases = "lang",
+        hidden = true,
         subcommands = {
-            ToolFoDUploaderCommands.class,
-            ToolSCClientCommands.class,
-            ToolVulnExporterCommands.class
+                LanguageClearCommand.class,
+                LanguageListCommand.class,
+                LanguageSetCommand.class,
+                LanguageGetCommand.class
         }
 )
-public class ToolCommands extends AbstractFortifyCLICommand {}
+public class LanguageCommands extends AbstractFortifyCLICommand {
+}

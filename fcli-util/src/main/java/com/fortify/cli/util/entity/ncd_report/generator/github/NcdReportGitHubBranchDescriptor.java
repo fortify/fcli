@@ -10,20 +10,22 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.state._main.cli.cmd;
+package com.fortify.cli.util.entity.ncd_report.generator.github;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.state.entity.variable.cli.cmd.VariableCommands;
+import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.util.entity.ncd_report.descriptor.INcdReportBranchDescriptor;
 
-import picocli.CommandLine.Command;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Command(
-        name = "state",
-        resourceBundle = "com.fortify.cli.state.i18n.StateMessages",
-        subcommands = {
-                StateClearCommand.class,
-                VariableCommands.class
-        }
-)
-public class StateCommands extends AbstractFortifyCLICommand {
+/**
+ * GitHub-specific implementation of {@link INcdReportBranchDescriptor}.
+ * 
+ * @author rsenden
+ */
+@ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
+public class NcdReportGitHubBranchDescriptor extends JsonNodeHolder implements INcdReportBranchDescriptor {
+    private String sha;
+    private String name;
 }

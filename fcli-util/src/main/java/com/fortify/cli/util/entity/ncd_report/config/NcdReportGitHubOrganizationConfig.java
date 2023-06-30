@@ -10,20 +10,20 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.state._main.cli.cmd;
+package com.fortify.cli.util.entity.ncd_report.config;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.state.entity.variable.cli.cmd.VariableCommands;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import picocli.CommandLine.Command;
-
-@Command(
-        name = "state",
-        resourceBundle = "com.fortify.cli.state.i18n.StateMessages",
-        subcommands = {
-                StateClearCommand.class,
-                VariableCommands.class
-        }
-)
-public class StateCommands extends AbstractFortifyCLICommand {
+/**
+ * This GitHub-specific configuration class holds an organization name
+ * to be processed, together with repository selection configuration.
+ * 
+ * @author rsenden
+ *
+ */
+@ReflectiveAccess @Data @EqualsAndHashCode(callSuper = true)
+public class NcdReportGitHubOrganizationConfig extends AbstractNcdReportRepoSelectorConfig {
+    private String name;
 }

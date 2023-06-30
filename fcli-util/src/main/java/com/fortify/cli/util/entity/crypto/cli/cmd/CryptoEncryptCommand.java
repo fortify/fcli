@@ -10,20 +10,16 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.state._main.cli.cmd;
+package com.fortify.cli.util.entity.crypto.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.state.entity.variable.cli.cmd.VariableCommands;
+import com.fortify.cli.common.util.EncryptionHelper;
 
 import picocli.CommandLine.Command;
 
-@Command(
-        name = "state",
-        resourceBundle = "com.fortify.cli.state.i18n.StateMessages",
-        subcommands = {
-                StateClearCommand.class,
-                VariableCommands.class
-        }
-)
-public class StateCommands extends AbstractFortifyCLICommand {
+@Command(name = "encrypt")
+public final class CryptoEncryptCommand extends AbstractCryptoCommand {
+    @Override
+    protected String process(String value) {
+        return EncryptionHelper.encrypt(value);
+    }
 }

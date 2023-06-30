@@ -10,20 +10,17 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.state._main.cli.cmd;
+package com.fortify.cli.tool.entity.vuln_exporter.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.state.entity.variable.cli.cmd.VariableCommands;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.tool.common.cli.cmd.AbstractToolListCommand;
 
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
-@Command(
-        name = "state",
-        resourceBundle = "com.fortify.cli.state.i18n.StateMessages",
-        subcommands = {
-                StateClearCommand.class,
-                VariableCommands.class
-        }
-)
-public class StateCommands extends AbstractFortifyCLICommand {
+@Command(name = OutputHelperMixins.List.CMD_NAME)
+public class ToolVulnExporterListCommand extends AbstractToolListCommand {
+    @Getter @Mixin private OutputHelperMixins.List outputHelper;
+    @Getter private String toolName = ToolVulnExporterCommands.TOOL_NAME;
 }

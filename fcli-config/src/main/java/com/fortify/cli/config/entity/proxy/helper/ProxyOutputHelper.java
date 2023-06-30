@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+ * Copyright 2021, 2022 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -10,20 +10,17 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.state._main.cli.cmd;
+package com.fortify.cli.config.entity.proxy.helper;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.state.entity.variable.cli.cmd.VariableCommands;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import picocli.CommandLine.Command;
-
-@Command(
-        name = "state",
-        resourceBundle = "com.fortify.cli.state.i18n.StateMessages",
-        subcommands = {
-                StateClearCommand.class,
-                VariableCommands.class
-        }
-)
-public class StateCommands extends AbstractFortifyCLICommand {
+public class ProxyOutputHelper {
+    private ProxyOutputHelper() {}
+    
+    public static final JsonNode transformRecord(JsonNode record) {
+        ObjectNode node = ((ObjectNode)record);
+        node.put("proxyPassword", "****"); // Hide proxy password in any output
+        return node;
+    }
 }

@@ -10,20 +10,18 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.state._main.cli.cmd;
+package com.fortify.cli.util.entity.msp_report.config;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.state.entity.variable.cli.cmd.VariableCommands;
+import com.fortify.cli.common.report.config.IReportSourceConfig;
+import com.fortify.cli.util.entity.msp_report.collector.MspReportResultsCollector;
 
-import picocli.CommandLine.Command;
-
-@Command(
-        name = "state",
-        resourceBundle = "com.fortify.cli.state.i18n.StateMessages",
-        subcommands = {
-                StateClearCommand.class,
-                VariableCommands.class
-        }
-)
-public class StateCommands extends AbstractFortifyCLICommand {
+/**
+ * Interface to be implemented by source-specific configuration classes
+ * that describe a source configuration, providing a single method to
+ * retrieve a source-specific {@link Runnable} generator.
+ * 
+ * @author rsenden
+ *
+ */
+public interface IMspReportSourceConfig extends IReportSourceConfig<MspReportResultsCollector> {
 }

@@ -10,26 +10,20 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.util._main.cli.cmd;
+package com.fortify.cli.config.entity.truststore.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.util.entity.all_commands.cli.cmd.AllCommandsCommands;
-import com.fortify.cli.util.entity.autocomplete.cli.cmd.AutoCompleteCommands;
-import com.fortify.cli.util.entity.crypto.cli.cmd.CryptoCommands;
-import com.fortify.cli.util.entity.msp_report.cli.cmd.MspReportCommands;
-import com.fortify.cli.util.entity.ncd_report.cli.cmd.NcdReportCommands;
 
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "util",
-        resourceBundle = "com.fortify.cli.util.i18n.UtilMessages",
+        name = "truststore",
+        description = "Commands for managing the trust store for SSL connections",
         subcommands = {
-            AllCommandsCommands.class,
-            AutoCompleteCommands.class,
-            CryptoCommands.class,
-            MspReportCommands.class,
-            NcdReportCommands.class
+            TrustStoreClearCommand.class,
+            TrustStoreGetCommand.class,
+            TrustStoreSetCommand.class,
         }
 )
-public class UtilCommands extends AbstractFortifyCLICommand {}
+public class TrustStoreCommands extends AbstractFortifyCLICommand {
+}

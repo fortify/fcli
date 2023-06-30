@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+ * Copyright 2021, 2022 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -10,26 +10,22 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.util._main.cli.cmd;
+package com.fortify.cli.tool.entity.fod_uploader.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.util.entity.all_commands.cli.cmd.AllCommandsCommands;
-import com.fortify.cli.util.entity.autocomplete.cli.cmd.AutoCompleteCommands;
-import com.fortify.cli.util.entity.crypto.cli.cmd.CryptoCommands;
-import com.fortify.cli.util.entity.msp_report.cli.cmd.MspReportCommands;
-import com.fortify.cli.util.entity.ncd_report.cli.cmd.NcdReportCommands;
 
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "util",
-        resourceBundle = "com.fortify.cli.util.i18n.UtilMessages",
+        name = ToolFoDUploaderCommands.TOOL_NAME,
+        aliases = {"fodupload"},
         subcommands = {
-            AllCommandsCommands.class,
-            AutoCompleteCommands.class,
-            CryptoCommands.class,
-            MspReportCommands.class,
-            NcdReportCommands.class
+                ToolFoDUploaderInstallCommand.class,
+                ToolFoDUploaderListCommand.class,
+                ToolFoDUploaderUninstallCommand.class
         }
+
 )
-public class UtilCommands extends AbstractFortifyCLICommand {}
+public class ToolFoDUploaderCommands extends AbstractFortifyCLICommand {
+    static final String TOOL_NAME = "fod-uploader";
+}

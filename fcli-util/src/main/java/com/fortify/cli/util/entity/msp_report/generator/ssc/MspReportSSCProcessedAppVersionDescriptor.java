@@ -10,20 +10,23 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.state._main.cli.cmd;
+package com.fortify.cli.util.entity.msp_report.generator.ssc;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.state.entity.variable.cli.cmd.VariableCommands;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import picocli.CommandLine.Command;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
-@Command(
-        name = "state",
-        resourceBundle = "com.fortify.cli.state.i18n.StateMessages",
-        subcommands = {
-                StateClearCommand.class,
-                VariableCommands.class
-        }
-)
-public class StateCommands extends AbstractFortifyCLICommand {
+@RequiredArgsConstructor @Data
+public class MspReportSSCProcessedAppVersionDescriptor {
+    private final MspReportSSCAppVersionDescriptor appVersionDescriptor;
+    private final MspReportProcessingStatus status;
+    private final String reason;
+    
+    public ObjectNode updateReportRecord(ObjectNode objectNode) {
+        return appVersionDescriptor.updateReportRecord(objectNode)
+                    .put("status", status.name())
+                    .put("reson", reason)
+                ;
+    }
 }
