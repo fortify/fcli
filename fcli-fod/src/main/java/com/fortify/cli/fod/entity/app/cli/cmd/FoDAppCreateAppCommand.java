@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.entity.app.cli.cmd;
@@ -54,7 +54,7 @@ public abstract class FoDAppCreateAppCommand extends AbstractFoDJsonNodeOutputCo
     protected String releaseDescription;
     @Option(names = {"--owner"}, required = true)
     protected String owner;
-    @Option(names = {"--user-groups", "--groups"}, required = false, split=",")
+    @Option(names = {"--user-groups", "--groups"}, required = false, split=",", descriptionKey = "fcli.fod.group.group-name-or-id")
     protected ArrayList<String> userGroups;
     @Option(names={"--auto-required-attrs"}, required = false)
     protected boolean autoRequiredAttrs = false;
