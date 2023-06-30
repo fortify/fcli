@@ -18,7 +18,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "plugin",
-        aliases = {},
         subcommands = {
                 SSCPluginInstallCommand.class,
                 SSCPluginUninstallCommand.class,

@@ -25,10 +25,10 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
 public class FoDSessionLoginOptions {
-    @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-connection-options.heading", order = 1)
+    @ArgGroup(exclusive = false, multiplicity = "1", order = 1)
     @Getter private UrlConfigOptions urlConfigOptions = new UrlConfigOptions();
     
-    @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-authentication-options.heading", order = 2)
+    @ArgGroup(exclusive = false, multiplicity = "1", order = 2)
     @Getter private FoDAuthOptions authOptions = new FoDAuthOptions();
     
     public String[] getScopes() {
@@ -48,7 +48,7 @@ public class FoDSessionLoginOptions {
     }
     
     public static class FoDUserCredentialOptions extends UserCredentialOptions implements IFoDUserCredentials {
-        @Option(names = {"--tenant"}, required = true) 
+        @Option(names = {"-t", "--tenant"}, required = true) 
         @Getter private String tenant;
     }
     

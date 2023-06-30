@@ -18,7 +18,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "rest",
-        aliases = {},
         subcommands = {
                 SSCRestCallCommand.class
         }

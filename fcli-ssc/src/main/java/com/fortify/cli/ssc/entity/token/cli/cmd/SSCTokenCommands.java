@@ -18,7 +18,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "token",
-        aliases = {},
         subcommands = {
                 SSCTokenCreateCommand.class,
                 SSCTokenListCommand.class,

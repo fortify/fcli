@@ -30,17 +30,24 @@ import picocli.CommandLine.Command;
         resourceBundle = "com.fortify.cli.fod.i18n.FoDMessages",
         hidden = true,
         subcommands = {
-                // This list of subcommands starts with generic session and rest commands,
-                // followed by all entity commands in alphabetical order
+                // This list of product subcommands should be in alphabetical
+                // order, except for:
+                // - session command (should be the first command, as it is a 
+                //   prerequisite for all other commands)
+                // - rest command (should be the last command, as it's a low-level
+                //   command and looks better in the usage command list, as usually 
+                //   'rest' has a different header ('Interact with' compared to most 
+                //   other commands ('Manage').
                 FoDSessionCommands.class,
-                FoDRestCommands.class,
                 FoDAppCommands.class,
                 FoDAppRelCommands.class,
                 FoDAppMicroserviceCommands.class,
                 FoDLookupCommands.class,
                 FoDScanCommands.class,
                 FoDUserCommands.class,
-                FoDUserGroupCommands.class
+                FoDUserGroupCommands.class,
+                FoDRestCommands.class,
+                
         }
 )
 public class FoDCommands extends AbstractFortifyCLICommand {}

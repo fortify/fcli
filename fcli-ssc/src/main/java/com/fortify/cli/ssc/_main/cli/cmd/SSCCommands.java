@@ -44,10 +44,15 @@ import picocli.CommandLine.Command;
         name = "ssc",
         resourceBundle = "com.fortify.cli.ssc.i18n.SSCMessages",
         subcommands = {
-                // This list of subcommands starts with generic session and rest commands,
-                // followed by all entity commands in alphabetical order
+                // This list of product subcommands should be in alphabetical
+                // order, except for:
+                // - session command (should be the first command, as it is a 
+                //   prerequisite for all other commands)
+                // - rest command (should be the last command, as it's a low-level
+                //   command and looks better in the usage command list, as usually 
+                //   'rest' has a different header ('Interact with' compared to most 
+                //   other commands ('Manage').
                 SSCSessionCommands.class,
-                SSCRestCommands.class,
                 SSCActivityFeedCommands.class,
                 SSCAlertDefinitionCommands.class,
                 SSCAlertCommands.class,
@@ -69,7 +74,8 @@ import picocli.CommandLine.Command;
                 SSCRolePermissionCommands.class,
                 SSCSeedBundleCommands.class,
                 SSCTokenCommands.class,
-                SSCTokenDefinitionCommands.class
+                SSCTokenDefinitionCommands.class,
+                SSCRestCommands.class,
         }
 )
 public class SSCCommands extends AbstractFortifyCLICommand {}

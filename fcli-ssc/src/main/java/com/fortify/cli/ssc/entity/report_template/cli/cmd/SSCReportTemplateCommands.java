@@ -18,7 +18,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "report-template",
-        aliases = {"rep-templ"},
         subcommands = {
                 SSCReportTemplateCreateCommand.class,
                 SSCReportTemplateListCommand.class,

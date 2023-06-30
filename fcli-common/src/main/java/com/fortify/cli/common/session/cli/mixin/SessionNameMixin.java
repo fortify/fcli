@@ -12,49 +12,31 @@
  *******************************************************************************/
 package com.fortify.cli.common.session.cli.mixin;
 
-import com.fortify.cli.common.util.StringUtils;
-
+import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 public class SessionNameMixin {
-    private static abstract class AbstractSessionNameMixin {
-        protected abstract String getSessionNameOrNull();
-        public final String getSessionName() {
-            return hasSessionName() ? getSessionNameOrNull() : "default";
-        }
-        
-        public final boolean hasSessionName() {
-            return StringUtils.isNotBlank(getSessionNameOrNull());
-        }
-    }
-    
-    public static class OptionalOption extends AbstractSessionNameMixin {
+    public static class OptionalOption {
         @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 20)
         private SessionNameArgGroup nameOptions = new SessionNameArgGroup();
     
         static class SessionNameArgGroup {
-            @Option(names = {"--session"}, required = false)
+            @Option(names = {"--session"}, required = true, defaultValue="default")
             private String sessionName;
         }
-        @Override
-        protected String getSessionNameOrNull() {
+        protected String getSessionName() {
             return nameOptions.sessionName;
         }
     }
     
-    public static class OptionalParameter extends AbstractSessionNameMixin {
-        @ArgGroup(headingKey = "arggroup.optional.session-name.heading", order = 1000)
-        private SessionNameArgGroup nameOptions = new SessionNameArgGroup();
+    public static class OptionalLoginOption {
+        @Option(names = {"--session"}, required = true, defaultValue="default", descriptionKey = "login.session")
+        @Getter private String sessionName;
+    }
     
-        static class SessionNameArgGroup {
-            @Parameters(arity="0..1", index="0", paramLabel="<session>")
-            private String sessionName;
-        }
-        @Override
-        protected String getSessionNameOrNull() {
-            return nameOptions.sessionName;
-        }
+    public static class OptionalLogoutOption {
+        @Option(names = {"--session"}, required = true, defaultValue="default", descriptionKey = "logout.session")
+        @Getter private String sessionName;
     }
 }

@@ -17,7 +17,7 @@ import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "appversion-filterset", aliases = "appversion-view",
+        name = "appversion-filterset",
         subcommands = {
             SSCAppVersionFilterSetGetCommand.class,
             SSCAppVersionFilterSetListCommand.class,

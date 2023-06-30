@@ -25,7 +25,7 @@ import picocli.CommandLine.Mixin;
 
 public abstract class AbstractSessionLoginCommand<D extends ISessionDescriptor> extends AbstractSessionCommand<D> implements IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractSessionLoginCommand.class);
-    @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
+    @Getter @Mixin private SessionNameMixin.OptionalLoginOption sessionNameMixin;
     
     @Override
     public JsonNode getJsonNode() {

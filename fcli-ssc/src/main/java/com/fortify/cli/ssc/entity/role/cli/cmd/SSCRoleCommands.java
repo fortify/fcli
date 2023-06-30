@@ -18,7 +18,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "role",
-        aliases = {},
         subcommands = {
                 SSCRoleCreateCommand.class,
                 SSCRoleDeleteCommand.class,

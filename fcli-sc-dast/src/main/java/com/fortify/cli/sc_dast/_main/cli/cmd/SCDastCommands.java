@@ -26,14 +26,20 @@ import picocli.CommandLine.Command;
         name = "sc-dast",
         resourceBundle = "com.fortify.cli.sc_dast.i18n.SCDastMessages",
         subcommands = {
-                // This list of subcommands starts with generic session and rest commands,
-                // followed by all entity commands in alphabetical order
+                // This list of product subcommands should be in alphabetical
+                // order, except for:
+                // - session command (should be the first command, as it is a 
+                //   prerequisite for all other commands)
+                // - rest command (should be the last command, as it's a low-level
+                //   command and looks better in the usage command list, as usually 
+                //   'rest' has a different header ('Interact with' compared to most 
+                //   other commands ('Manage').
                 SCDastSessionCommands.class,
-                SCDastRestCommands.class,
                 SCDastScanCommands.class,
                 SCDastScanPolicyCommands.class,
                 SCDastScanSettingsCommands.class,
                 SCDastSensorCommands.class,
+                SCDastRestCommands.class,
         }
 )
 public class SCDastCommands extends AbstractFortifyCLICommand {}

@@ -21,7 +21,7 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractSessionLogoutCommand<D extends ISessionDescriptor> extends AbstractSessionCommand<D> implements IActionCommandResultSupplier {
-    @Getter @Mixin private SessionNameMixin.OptionalParameter sessionNameMixin;
+    @Getter @Mixin private SessionNameMixin.OptionalLogoutOption sessionNameMixin;
     
     @Override
     public JsonNode getJsonNode() {
