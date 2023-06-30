@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230629.082654-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230630.100400-dev_develop" %}
 
 
 <div id="header">
@@ -36,7 +36,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-sc-sast-scan-start - Start a ScanCentral SAST scan.</p>
+<p>fcli-sc-sast-scan-start - Start a SAST scan.</p>
 </div>
 </div>
 <div id="content">
@@ -48,7 +48,7 @@ fcli_version:
                         [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--notify</strong>=<em>&lt;email&gt;</em>]
                         [<strong>--ssc-ci-token</strong>=<em>&lt;ciToken&gt;</em>] [[<strong>-h</strong>]
                         [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
+                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                         (<strong>-m</strong>=<em>&lt;mbsFile&gt;</em> | (<strong>-v</strong>=<em>&lt;sensorVersion&gt;</em> <strong>-p</strong>=<em>&lt;packageFile&gt;</em>))
                         <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
             _            <em class="=&lt;propertyNames&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
@@ -140,7 +140,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
 <dd>
-<p>Session name to use.</p>
+<p>Name of the ScanCentral SAST session to use for executing this command. Default value: default.</p>
 </dd>
 </dl>
 </div>
@@ -182,7 +182,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
 <dd>
-<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
 </dd>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
@@ -196,7 +196,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-06-29 08:29:26 UTC
+Last updated 2023-06-30 10:06:25 UTC
 </div>
 </div>
 </body>
