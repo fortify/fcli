@@ -62,7 +62,7 @@ public class FortifyCLI {
      * @param args Command line options passed to Fortify CLI
      * @return exit code
      */
-    private static int execute(String[] args) {
+    public static int execute(String[] args) {
     	String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
         try (ApplicationContext applicationContext = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
             try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {

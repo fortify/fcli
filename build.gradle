@@ -22,10 +22,30 @@ ext {
 }
 version = ext.getVersion();
 
+// Apply micronaut plugins for root project and subprojects
 apply plugin: "io.micronaut.application"
 subprojects {
     apply plugin: "io.micronaut.library"
     apply plugin: 'eclipse'
+}
+
+// Enable Spock-based functional tests. Note that all functional tests
+// are supposed to be in the root fcli project.
+apply plugin: "groovy"
+testing {
+    suites {
+        functest(JvmTestSuite) {
+            useJUnitJupiter()
+            dependencies {
+                implementation platform('org.apache.groovy:groovy-bom:4.0.13')
+                implementation 'org.apache.groovy:groovy'
+                implementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
+                implementation "org.spockframework:spock-core"
+                implementation 'io.github.joke:spock-outputcapture:3.0.1'
+                implementation project()
+            }
+        }
+    }
 }
 
 
