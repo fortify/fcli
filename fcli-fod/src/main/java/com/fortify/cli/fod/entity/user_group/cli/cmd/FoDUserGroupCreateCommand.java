@@ -48,11 +48,11 @@ public class FoDUserGroupCreateCommand extends AbstractFoDJsonNodeOutputCommand 
     public JsonNode getJsonNode(UnirestInstance unirest) {
         validate();
 
-        FoDUserGroupCreateRequest userGroupCreateRequest = new FoDUserGroupCreateRequest()
-                .setName(groupName)
-                .setAddAllUsers(addAllUsers)
-                .setApplications(FoDAppHelper.getApplicationsNode(unirest, applications))
-                .setUsers(FoDUserHelper.getUsersNode(unirest, users));
+        FoDUserGroupCreateRequest userGroupCreateRequest = FoDUserGroupCreateRequest.builder()
+                .name(groupName)
+                .addAllUsers(addAllUsers)
+                .applications(FoDAppHelper.getApplicationsNode(unirest, applications))
+                .users(FoDUserHelper.getUsersNode(unirest, users)).build();
 
         return FoDUserGroupHelper.createUserGroup(unirest, userGroupCreateRequest).asJsonNode();
     }

@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 
@@ -139,16 +139,16 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
             String startDateStr = (startDate == null || startDate.isEmpty())
                     ? LocalDateTime.now().format(dtf)
                     : LocalDateTime.parse(startDate, dtf).toString();
-            FoDStartDastScanRequest startScanRequest = new FoDStartDastScanRequest()
-                    .setStartDate(startDateStr)
-                    .setAssessmentTypeId(entitlementToUse.getAssessmentTypeId())
-                    .setEntitlementId(entitlementToUse.getEntitlementId())
-                    .setEntitlementFrequencyType(entitlementToUse.getFrequencyType())
-                    .setRemediationScan(remediationScanType.getRemediationScanPreferenceType() != null && !remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.NonRemediationScanOnly))
-                    .setApplyPreviousScanSettings(true)
-                    .setScanMethodType("Other")
-                    .setScanTool(fcliProperties.getProperty("projectName", "fcli"))
-                    .setScanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"));
+            FoDStartDastScanRequest startScanRequest = FoDStartDastScanRequest.builder()
+                    .startDate(startDateStr)
+                    .assessmentTypeId(entitlementToUse.getAssessmentTypeId())
+                    .entitlementId(entitlementToUse.getEntitlementId())
+                    .entitlementFrequencyType(entitlementToUse.getFrequencyType())
+                    .isRemediationScan(remediationScanType.getRemediationScanPreferenceType() != null && !remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.NonRemediationScanOnly))
+                    .applyPreviousScanSettings(true)
+                    .scanMethodType("Other")
+                    .scanTool(fcliProperties.getProperty("projectName", "fcli"))
+                    .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
 
             //System.out.println(startScanRequest);
             return FoDDastScanHelper.startScan(unirest, relId, startScanRequest).asJsonNode();

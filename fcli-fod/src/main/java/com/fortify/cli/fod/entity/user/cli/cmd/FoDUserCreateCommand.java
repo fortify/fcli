@@ -56,13 +56,14 @@ public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand imple
     public JsonNode getJsonNode(UnirestInstance unirest) {
         validate();
 
-        FoDUserCreateRequest userCreateRequest = new FoDUserCreateRequest()
-                .setUserName(userName)
-                .setEmail(email)
-                .setFirstName(firstName)
-                .setLastName(lastName)
-                .setPhoneNumber(phoneNumber)
-                .setRoleId(FoDUserHelper.getRoleId(unirest, roleNameOrId));
+        FoDUserCreateRequest userCreateRequest = FoDUserCreateRequest.builder()
+                .userName(userName)
+                .email(email)
+                .firstName(firstName)
+                .lastName(lastName)
+                .phoneNumber(phoneNumber)
+                .roleId(FoDUserHelper.getRoleId(unirest, roleNameOrId))
+                .build();
 
         if (userGroups != null && userGroups.size() > 0) {
             userCreateRequest.setUserGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups));

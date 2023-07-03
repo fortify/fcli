@@ -75,15 +75,15 @@ public class FoDUserUpdateCommand extends AbstractFoDJsonNodeOutputCommand imple
             roleId = FoDUserHelper.getRoleId(unirest, roleNameOrId);
         }
 
-        FoDUserUpdateRequest userUpdateRequest = new FoDUserUpdateRequest()
-                .setEmail(email != null && StringUtils.isNotEmpty(email) ? email : userDescriptor.getUserName())
-                .setFirstName(firstName != null && StringUtils.isNotEmpty(firstName) ? firstName : userDescriptor.getFirstName())
-                .setLastName(lastName != null && StringUtils.isNotEmpty(lastName) ? lastName : userDescriptor.getLastName())
-                .setPhoneNumber(phoneNumber != null && StringUtils.isNotEmpty(phoneNumber) ? phoneNumber : userDescriptor.getPhoneNumber())
-                .setRoleId(roleId > 0 ? roleId : userDescriptor.getRoleId())
-                .setPasswordNeverExpires(passwordNeverExpires)
-                .setIsSuspended(isSuspended)
-                .setMustChange(mustChange);
+        FoDUserUpdateRequest userUpdateRequest = FoDUserUpdateRequest.builder()
+                .email(email != null && StringUtils.isNotEmpty(email) ? email : userDescriptor.getUserName())
+                .firstName(firstName != null && StringUtils.isNotEmpty(firstName) ? firstName : userDescriptor.getFirstName())
+                .lastName(lastName != null && StringUtils.isNotEmpty(lastName) ? lastName : userDescriptor.getLastName())
+                .phoneNumber(phoneNumber != null && StringUtils.isNotEmpty(phoneNumber) ? phoneNumber : userDescriptor.getPhoneNumber())
+                .roleId(roleId > 0 ? roleId : userDescriptor.getRoleId())
+                .passwordNeverExpires(passwordNeverExpires)
+                .isSuspended(isSuspended)
+                .mustChange(mustChange).build();
 
         if (password != null && StringUtils.isNotEmpty(password)) {
             userUpdateRequest.setPassword(password);

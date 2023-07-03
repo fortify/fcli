@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 
@@ -145,16 +145,16 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 //System.out.println("languageLevelId = " + languageLevelId);
             }
 
-            FoDSetupSastScanRequest setupSastScanRequest = new FoDSetupSastScanRequest()
-                .setEntitlementId(entitlementIdToUse)
-                .setAssessmentTypeId(assessmentTypeId)
-                .setEntitlementFrequencyType(entitlementFrequency.name())
-                .setTechnologyStackId(technologyStackId)
-                .setLanguageLevelId(languageLevelId)
-                .setPerformOpenSourceAnalysis(performOpenSourceAnalysis)
-                .setAuditPreferenceType(auditPreferenceType.name())
-                .setIncludeThirdPartyLibraries(includeThirdPartyLibraries)
-                .setUseSourceControl(useSourceControl);
+            FoDSetupSastScanRequest setupSastScanRequest = FoDSetupSastScanRequest.builder()
+                .entitlementId(entitlementIdToUse)
+                .assessmentTypeId(assessmentTypeId)
+                .entitlementFrequencyType(entitlementFrequency.name())
+                .technologyStackId(technologyStackId)
+                .languageLevelId(languageLevelId)
+                .performOpenSourceAnalysis(performOpenSourceAnalysis)
+                .auditPreferenceType(auditPreferenceType.name())
+                .includeThirdPartyLibraries(includeThirdPartyLibraries)
+                .useSourceControl(useSourceControl).build();
 
             return FoDSastScanHelper.setupScan(unirest, Integer.valueOf(relId), setupSastScanRequest).asJsonNode();
         }

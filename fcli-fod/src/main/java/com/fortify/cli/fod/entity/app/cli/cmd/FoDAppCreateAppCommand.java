@@ -73,19 +73,19 @@ public abstract class FoDAppCreateAppCommand extends AbstractFoDJsonNodeOutputCo
         FoDAppAndRelNameDescriptor appRelName = appRelResolver.getAppAndRelName();
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, owner, true);
 
-        FoDAppCreateRequest appCreateRequest = new FoDAppCreateRequest()
-                .setApplicationName(appRelName.getAppName())
-                .setApplicationDescription(description)
-                .setBusinessCriticalityType(String.valueOf(criticalityType.getCriticalityType()))
-                .setEmailList(FoDAppHelper.getEmailList(notifications))
-                .setReleaseName(appRelName.getRelName())
-                .setReleaseDescription(releaseDescription)
-                .setSdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
-                .setOwnerId(userDescriptor.getUserId())
-                .setApplicationType(FoDAppTypeOptions.FoDAppType.Web.getName())
-                .setHasMicroservices(false)
-                .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes(), autoRequiredAttrs))
-                .setUserGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups));
+        FoDAppCreateRequest appCreateRequest = FoDAppCreateRequest.builder()
+                .applicationName(appRelName.getAppName())
+                .applicationDescription(description)
+                .businessCriticalityType(String.valueOf(criticalityType.getCriticalityType()))
+                .emailList(FoDAppHelper.getEmailList(notifications))
+                .releaseName(appRelName.getRelName())
+                .releaseDescription(releaseDescription)
+                .sdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
+                .ownerId(userDescriptor.getUserId())
+                .applicationType(FoDAppTypeOptions.FoDAppType.Web.getName())
+                .hasMicroservices(false)
+                .attributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes(), autoRequiredAttrs))
+                .userGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups)).build();
 
         return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();
     }

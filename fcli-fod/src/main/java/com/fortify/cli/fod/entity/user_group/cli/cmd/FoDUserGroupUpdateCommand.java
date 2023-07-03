@@ -59,10 +59,10 @@ public class FoDUserGroupUpdateCommand extends AbstractFoDJsonNodeOutputCommand 
         validate();
 
         FoDUserGroupDescriptor userGroupDescriptor = userGroupResolver.getUserGroupDescriptor(unirest);
-        FoDUserGroupUpdateRequest userGroupUpdateRequest = new FoDUserGroupUpdateRequest()
-                .setName(newName != null && StringUtils.isNotEmpty(newName) ? newName : userGroupDescriptor.getName())
-                .setAddAllUsers(addAllUsers)
-                .setRemoveAllUsers(removeAllUsers);
+        FoDUserGroupUpdateRequest userGroupUpdateRequest = FoDUserGroupUpdateRequest.builder()
+                .name(newName != null && StringUtils.isNotEmpty(newName) ? newName : userGroupDescriptor.getName())
+                .addAllUsers(addAllUsers)
+                .removeAllUsers(removeAllUsers).build();
 
         if (addUsers != null && addUsers.size() > 0) {
             userGroupUpdateRequest.setAddUsers(FoDUserHelper.getUsersNode(unirest, addUsers));
