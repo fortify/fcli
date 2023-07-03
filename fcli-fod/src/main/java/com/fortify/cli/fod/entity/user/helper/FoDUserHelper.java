@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.entity.user.helper;
@@ -142,8 +142,8 @@ public class FoDUserHelper {
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, userNameOrId, true);
         FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appNameOrId, true);
         if (action.equals(FoDEnums.UserApplicationAccessAction.Add)) {
-            FoDUserAppAccessRequest appAccessRequest = new FoDUserAppAccessRequest()
-                    .setApplicationId(appDescriptor.getApplicationId());
+            FoDUserAppAccessRequest appAccessRequest = FoDUserAppAccessRequest.builder()
+                    .applicationId(appDescriptor.getApplicationId()).build();
             ObjectNode body = objectMapper.valueToTree(appAccessRequest);
             unirest.post(FoDUrls.USER_APPLICATION_ACCESS).routeParam("userId", String.valueOf(userDescriptor.getUserId()))
                     .body(body).asEmpty();

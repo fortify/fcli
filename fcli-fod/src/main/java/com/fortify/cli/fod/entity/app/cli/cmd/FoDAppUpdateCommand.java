@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.entity.app.cli.cmd;
@@ -86,12 +86,12 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
         }
         String appEmailListNew = FoDAppHelper.getEmailList(notificationsUpdate);
 
-        FoDAppUpdateRequest appUpdateRequest = new FoDAppUpdateRequest()
-                .setApplicationName(StringUtils.isNotEmpty(applicationNameUpdate) ? applicationNameUpdate : appDescriptor.getApplicationName())
-                .setApplicationDescription(StringUtils.isNotEmpty(descriptionUpdate) ? descriptionUpdate : appDescriptor.getApplicationDescription())
-                .setBusinessCriticalityType(appCriticalityNew != null ? String.valueOf(appCriticalityNew) : appDescriptor.getBusinessCriticalityType())
-                .setEmailList(StringUtils.isNotEmpty(appEmailListNew) ? appEmailListNew : appDescriptor.getEmailList())
-                .setAttributes(jsonAttrs);
+        FoDAppUpdateRequest appUpdateRequest = FoDAppUpdateRequest.builder()
+                .applicationName(StringUtils.isNotEmpty(applicationNameUpdate) ? applicationNameUpdate : appDescriptor.getApplicationName())
+                .applicationDescription(StringUtils.isNotEmpty(descriptionUpdate) ? descriptionUpdate : appDescriptor.getApplicationDescription())
+                .businessCriticalityType(appCriticalityNew != null ? String.valueOf(appCriticalityNew) : appDescriptor.getBusinessCriticalityType())
+                .emailList(StringUtils.isNotEmpty(appEmailListNew) ? appEmailListNew : appDescriptor.getEmailList())
+                .attributes(jsonAttrs).build();
 
         return FoDAppHelper.updateApp(unirest, appDescriptor.getApplicationId(), appUpdateRequest).asJsonNode();
     }

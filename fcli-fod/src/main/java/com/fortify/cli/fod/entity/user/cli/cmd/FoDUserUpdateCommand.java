@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.entity.user.cli.cmd;
@@ -56,13 +56,13 @@ public class FoDUserUpdateCommand extends AbstractFoDJsonNodeOutputCommand imple
     private Boolean isSuspended = false;
     @Option(names = {"--must-change"})
     private Boolean mustChange = false;
-    @Option(names = {"--add-groups"}, required = false, split = ",")
+    @Option(names = {"--add-groups"}, required = false, split = ",", descriptionKey = "fcli.fod.group.group-name-or-id")
     private ArrayList<String> addUserGroups;
-    @Option(names = {"--remove-groups"}, required = false, split = ",")
+    @Option(names = {"--remove-groups"}, required = false, split = ",", descriptionKey = "fcli.fod.group.group-name-or-id")
     private ArrayList<String> removeUserGroups;
-    @Option(names = {"--add-apps", "--add-applications"}, required = false, split = ",")
+    @Option(names = {"--add-apps", "--add-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app-name-or-id")
     private ArrayList<String> addApplications;
-    @Option(names = {"--remove-apps", "--remove-applications"}, required = false, split = ",")
+    @Option(names = {"--remove-apps", "--remove-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app-name-or-id")
     private ArrayList<String> removeApplications;
 
     @Override
@@ -75,15 +75,15 @@ public class FoDUserUpdateCommand extends AbstractFoDJsonNodeOutputCommand imple
             roleId = FoDUserHelper.getRoleId(unirest, roleNameOrId);
         }
 
-        FoDUserUpdateRequest userUpdateRequest = new FoDUserUpdateRequest()
-                .setEmail(email != null && StringUtils.isNotEmpty(email) ? email : userDescriptor.getUserName())
-                .setFirstName(firstName != null && StringUtils.isNotEmpty(firstName) ? firstName : userDescriptor.getFirstName())
-                .setLastName(lastName != null && StringUtils.isNotEmpty(lastName) ? lastName : userDescriptor.getLastName())
-                .setPhoneNumber(phoneNumber != null && StringUtils.isNotEmpty(phoneNumber) ? phoneNumber : userDescriptor.getPhoneNumber())
-                .setRoleId(roleId > 0 ? roleId : userDescriptor.getRoleId())
-                .setPasswordNeverExpires(passwordNeverExpires)
-                .setIsSuspended(isSuspended)
-                .setMustChange(mustChange);
+        FoDUserUpdateRequest userUpdateRequest = FoDUserUpdateRequest.builder()
+                .email(email != null && StringUtils.isNotEmpty(email) ? email : userDescriptor.getUserName())
+                .firstName(firstName != null && StringUtils.isNotEmpty(firstName) ? firstName : userDescriptor.getFirstName())
+                .lastName(lastName != null && StringUtils.isNotEmpty(lastName) ? lastName : userDescriptor.getLastName())
+                .phoneNumber(phoneNumber != null && StringUtils.isNotEmpty(phoneNumber) ? phoneNumber : userDescriptor.getPhoneNumber())
+                .roleId(roleId > 0 ? roleId : userDescriptor.getRoleId())
+                .passwordNeverExpires(passwordNeverExpires)
+                .isSuspended(isSuspended)
+                .mustChange(mustChange).build();
 
         if (password != null && StringUtils.isNotEmpty(password)) {
             userUpdateRequest.setPassword(password);

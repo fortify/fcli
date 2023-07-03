@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.entity.user_group.cli.cmd;
@@ -45,13 +45,13 @@ public class FoDUserGroupUpdateCommand extends AbstractFoDJsonNodeOutputCommand 
     private Boolean addAllUsers = false;
     @Option(names = {"--remove-all-users"})
     private Boolean removeAllUsers = false;
-    @Option(names = {"--add-users"}, required = false, split = ",")
+    @Option(names = {"--add-users"}, required = false, split = ",", descriptionKey = "fcli.fod.user.user-name-or-id")
     private ArrayList<String> addUsers;
-    @Option(names = {"--remove-users"}, required = false, split = ",")
+    @Option(names = {"--remove-users"}, required = false, split = ",", descriptionKey = "fcli.fod.user.user-name-or-id")
     private ArrayList<String> removeUsers;
-    @Option(names = {"--add-apps", "--add-applications"}, required = false, split = ",")
+    @Option(names = {"--add-apps", "--add-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app-name-or-id")
     private ArrayList<String> addApplications;
-    @Option(names = {"--remove-apps", "--remove-applications"}, required = false, split = ",")
+    @Option(names = {"--remove-apps", "--remove-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app-name-or-id")
     private ArrayList<String> removeApplications;
 
     @Override
@@ -59,10 +59,10 @@ public class FoDUserGroupUpdateCommand extends AbstractFoDJsonNodeOutputCommand 
         validate();
 
         FoDUserGroupDescriptor userGroupDescriptor = userGroupResolver.getUserGroupDescriptor(unirest);
-        FoDUserGroupUpdateRequest userGroupUpdateRequest = new FoDUserGroupUpdateRequest()
-                .setName(newName != null && StringUtils.isNotEmpty(newName) ? newName : userGroupDescriptor.getName())
-                .setAddAllUsers(addAllUsers)
-                .setRemoveAllUsers(removeAllUsers);
+        FoDUserGroupUpdateRequest userGroupUpdateRequest = FoDUserGroupUpdateRequest.builder()
+                .name(newName != null && StringUtils.isNotEmpty(newName) ? newName : userGroupDescriptor.getName())
+                .addAllUsers(addAllUsers)
+                .removeAllUsers(removeAllUsers).build();
 
         if (addUsers != null && addUsers.size() > 0) {
             userGroupUpdateRequest.setAddUsers(FoDUserHelper.getUsersNode(unirest, addUsers));

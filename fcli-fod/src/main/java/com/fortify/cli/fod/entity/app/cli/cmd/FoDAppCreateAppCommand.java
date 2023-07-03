@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.entity.app.cli.cmd;
@@ -54,7 +54,7 @@ public abstract class FoDAppCreateAppCommand extends AbstractFoDJsonNodeOutputCo
     protected String releaseDescription;
     @Option(names = {"--owner"}, required = true)
     protected String owner;
-    @Option(names = {"--user-groups", "--groups"}, required = false, split=",")
+    @Option(names = {"--user-groups", "--groups"}, required = false, split=",", descriptionKey = "fcli.fod.group.group-name-or-id")
     protected ArrayList<String> userGroups;
     @Option(names={"--auto-required-attrs"}, required = false)
     protected boolean autoRequiredAttrs = false;
@@ -73,19 +73,19 @@ public abstract class FoDAppCreateAppCommand extends AbstractFoDJsonNodeOutputCo
         FoDAppAndRelNameDescriptor appRelName = appRelResolver.getAppAndRelName();
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, owner, true);
 
-        FoDAppCreateRequest appCreateRequest = new FoDAppCreateRequest()
-                .setApplicationName(appRelName.getAppName())
-                .setApplicationDescription(description)
-                .setBusinessCriticalityType(String.valueOf(criticalityType.getCriticalityType()))
-                .setEmailList(FoDAppHelper.getEmailList(notifications))
-                .setReleaseName(appRelName.getRelName())
-                .setReleaseDescription(releaseDescription)
-                .setSdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
-                .setOwnerId(userDescriptor.getUserId())
-                .setApplicationType(FoDAppTypeOptions.FoDAppType.Web.getName())
-                .setHasMicroservices(false)
-                .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes(), autoRequiredAttrs))
-                .setUserGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups));
+        FoDAppCreateRequest appCreateRequest = FoDAppCreateRequest.builder()
+                .applicationName(appRelName.getAppName())
+                .applicationDescription(description)
+                .businessCriticalityType(String.valueOf(criticalityType.getCriticalityType()))
+                .emailList(FoDAppHelper.getEmailList(notifications))
+                .releaseName(appRelName.getRelName())
+                .releaseDescription(releaseDescription)
+                .sdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
+                .ownerId(userDescriptor.getUserId())
+                .applicationType(FoDAppTypeOptions.FoDAppType.Web.getName())
+                .hasMicroservices(false)
+                .attributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes(), autoRequiredAttrs))
+                .userGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups)).build();
 
         return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();
     }

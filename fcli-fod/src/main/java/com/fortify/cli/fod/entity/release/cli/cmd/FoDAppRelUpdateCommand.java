@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 
@@ -72,12 +72,12 @@ public class FoDAppRelUpdateCommand extends AbstractFoDJsonNodeOutputCommand imp
 
         FoDSdlcStatusTypeOptions.FoDSdlcStatusType sdlcStatusTypeNew = sdlcStatus.getSdlcStatusType();
 
-        FoDAppRelUpdateRequest appRelUpdateRequest = new FoDAppRelUpdateRequest()
-                .setReleaseName(releaseName != null && StringUtils.isNotEmpty(releaseName) ? releaseName : appRelDescriptor.getReleaseName())
-                .setReleaseDescription(description != null && StringUtils.isNotEmpty(description) ? description : appRelDescriptor.getReleaseDescription())
-                .setOwnerId(releaseOwner != null && StringUtils.isNotEmpty(releaseOwner) ? Integer.valueOf(releaseOwner) : appRelDescriptor.getOwnerId())
-                .setMicroserviceId(microServiceId)
-                .setSdlcStatusType(sdlcStatusTypeNew != null ? String.valueOf(sdlcStatusTypeNew) : appRelDescriptor.getSdlcStatusType());
+        FoDAppRelUpdateRequest appRelUpdateRequest = FoDAppRelUpdateRequest.builder()
+                .releaseName(releaseName != null && StringUtils.isNotEmpty(releaseName) ? releaseName : appRelDescriptor.getReleaseName())
+                .releaseDescription(description != null && StringUtils.isNotEmpty(description) ? description : appRelDescriptor.getReleaseDescription())
+                .ownerId(releaseOwner != null && StringUtils.isNotEmpty(releaseOwner) ? Integer.valueOf(releaseOwner) : appRelDescriptor.getOwnerId())
+                .microserviceId(microServiceId)
+                .sdlcStatusType(sdlcStatusTypeNew != null ? String.valueOf(sdlcStatusTypeNew) : appRelDescriptor.getSdlcStatusType()).build();
 
         return FoDAppRelHelper.updateAppRel(unirest, appRelDescriptor.getReleaseId(), appRelUpdateRequest).asJsonNode();
     }

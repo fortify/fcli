@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.entity.user_group.helper;
@@ -134,7 +134,7 @@ public class FoDUserGroupHelper {
         FoDUserGroupDescriptor userGroupDescriptor = FoDUserGroupHelper.getUserGroupDescriptor(unirest, userGroupNameOrId, true);
         ArrayList<Integer> userIds = new ArrayList<>();
         userIds.add(userDescriptor.getUserId());
-        FoDUserGroupMembersRequest userGroupMembersRequest = new FoDUserGroupMembersRequest();
+        FoDUserGroupMembersRequest userGroupMembersRequest = FoDUserGroupMembersRequest.builder().build();
         if (action.equals(FoDEnums.UserGroupMembershipAction.Add)) {
             userGroupMembersRequest.setRemoveUsers(new ArrayList<>());
             userGroupMembersRequest.setAddUsers(userIds);
@@ -155,8 +155,8 @@ public class FoDUserGroupHelper {
         FoDUserGroupDescriptor userGroupDescriptor = FoDUserGroupHelper.getUserGroupDescriptor(unirest, userGroupOrId, true);
         FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appNameOrId, true);
         if (action.equals(FoDEnums.UserGroupApplicationAccessAction.Add)) {
-            FoDUserGroupAppAccessRequest appAccessRequest = new FoDUserGroupAppAccessRequest()
-                    .setApplicationId(appDescriptor.getApplicationId());
+            FoDUserGroupAppAccessRequest appAccessRequest = FoDUserGroupAppAccessRequest.builder()
+                    .applicationId(appDescriptor.getApplicationId()).build();
             ObjectNode body = objectMapper.valueToTree(appAccessRequest);
             unirest.post(FoDUrls.USER_GROUP_APPLICATION_ACCESS).routeParam("userGroupId", String.valueOf(userGroupDescriptor.getId()))
                     .body(body).asEmpty();
