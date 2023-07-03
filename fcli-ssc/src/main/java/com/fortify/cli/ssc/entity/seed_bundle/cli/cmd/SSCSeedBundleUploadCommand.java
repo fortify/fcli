@@ -30,7 +30,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Upload.CMD_NAME)
 public class SSCSeedBundleUploadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Upload outputHelper;
-    @Parameters(index = "0", arity = "1", descriptionKey = "seedBundle")
+    @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.rseed-bundle.upload.seedBundle")
     private String seedBundle;
     
     @Override

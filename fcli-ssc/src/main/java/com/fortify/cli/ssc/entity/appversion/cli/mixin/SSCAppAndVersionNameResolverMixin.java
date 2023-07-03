@@ -16,7 +16,6 @@ import com.fortify.cli.ssc.entity.appversion.helper.SSCAppAndVersionNameDescript
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCAppAndVersionNameResolverMixin {
@@ -35,13 +34,8 @@ public class SSCAppAndVersionNameResolverMixin {
         }
     }
     
-    public static class RequiredOption extends AbstractSSCAppAndVersionNameResolverMixin {
-        @Option(names = {"--appversion"}, required = true, descriptionKey = "ApplicationVersionMixin")
-        @Getter private String appAndVersionName;
-    }
-    
     public static class PositionalParameter extends AbstractSSCAppAndVersionNameResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationVersionMixin")
+        @Parameters(index = "0", arity = "1", paramLabel="<app>:<version>", descriptionKey = "fcli.ssc.appversion.resolver.name")
         @Getter private String appAndVersionName;
     }
 }

@@ -22,7 +22,6 @@ import com.fortify.cli.ssc.entity.appversion_artifact.helper.SSCAppVersionArtifa
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionArtifactResolverMixin {
@@ -54,18 +53,13 @@ public class SSCAppVersionArtifactResolverMixin {
         }
     }
     
-    public static class RequiredOption extends AbstractSSCAppVersionArtifactResolverMixin {
-        @Option(names = {"--artifact"}, required = true)
-        @Getter private String artifactId;
-    }
-    
     public static class PositionalParameter extends AbstractSSCAppVersionArtifactResolverMixin {
-        @Parameters(index = "0", arity = "1", paramLabel="artifact-id")
+        @Parameters(index = "0", arity = "1", paramLabel="artifact-id", descriptionKey = "fcli.ssc.appversion-artifact.resolver.id")
         @Getter private String artifactId;
     }
     
     public static class PositionalParameterMulti extends AbstractSSCAppVersionMultiArtifactResolverMixin {
-        @Parameters(index = "0", arity = "1..", paramLabel = "artifact-id's")
+        @Parameters(index = "0", arity = "1..", paramLabel = "artifact-id's", descriptionKey = "fcli.ssc.appversion-artifact.resolver.ids")
         @Getter private String[] artifactIds;
     }
 }

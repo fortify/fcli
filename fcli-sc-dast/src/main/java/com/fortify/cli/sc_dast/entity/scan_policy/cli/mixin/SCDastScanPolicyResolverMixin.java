@@ -39,18 +39,13 @@ public class SCDastScanPolicyResolverMixin {
         }
     }
     
-    public static class RequiredOption extends AbstractSSCDastScanPolicyResolverMixin {
-        @Option(names = {"-p", "--policy"}, required = true)
-        @Getter private String scanPolicyNameOrId;
-    }
-    
     public static class OptionalOption extends AbstractSSCDastScanPolicyResolverMixin {
-        @Option(names = {"-p", "--policy"}, required = false)
+        @Option(names = {"-p", "--policy"}, required = false, descriptionKey = "fcli.sc-dast.scan-policy.resolver.nameOrId")
         @Getter private String scanPolicyNameOrId;
     }
     
     public static class PositionalParameter extends AbstractSSCDastScanPolicyResolverMixin {
-        @Parameters(index = "0", arity = "1")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.sc-dast.scan-policy.resolver.nameOrId")
         @Getter private String scanPolicyNameOrId;
     }
 }

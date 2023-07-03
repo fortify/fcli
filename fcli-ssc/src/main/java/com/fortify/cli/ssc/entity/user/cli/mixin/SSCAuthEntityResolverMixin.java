@@ -17,7 +17,6 @@ import com.fortify.cli.ssc.entity.user.helper.SSCAuthEntitiesHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCAuthEntityResolverMixin {
@@ -29,13 +28,8 @@ public class SSCAuthEntityResolverMixin {
         }
     }
     
-    public static class RequiredOption extends AbstractSSCAuthEntityResolverMixin {
-        @Option(names="--user", required = true)
-        @Getter private String authEntitySpec;
-    }
-    
     public static class PositionalParameterSingle extends AbstractSSCAuthEntityResolverMixin {
-        @Parameters(index = "0", arity = "1")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.user.resolver.spec")
         @Getter private String authEntitySpec;
     }
 }

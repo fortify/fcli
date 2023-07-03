@@ -13,6 +13,8 @@
 package com.fortify.cli;
 
 import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Member;
+import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,8 +34,10 @@ import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.util.StringUtils;
 
 import picocli.CommandLine;
+import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
+import picocli.CommandLine.Model.PositionalParamSpec;
 import picocli.CommandLine.Spec;
 
 public class FortifyCLITest {
@@ -59,6 +63,7 @@ public class FortifyCLITest {
     private void checkCommand(Results results, CommandLine cl) {
         CommandSpec spec = cl.getCommandSpec();
         checkOptions(results, spec);
+        checkParameters(results, spec);
         checkCommandNamingConvention(results, spec);
         checkUsageHeader(results, spec);
         checkMaxCommandDepth(results, spec);
@@ -84,7 +89,7 @@ public class FortifyCLITest {
         if ( spec.mixins().containsKey("outputHelper") ) {
             var tableOptions = new CommandSpecMessageResolver(spec).getMessageString("output.table.options");
             if ( StringUtils.isBlank(tableOptions) ) {
-                results.add(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT, Level.WARN, spec, "No *.output.table.options defined to specify default table output columns");
+                results.add(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT, Level.WARN, spec, getBundleName(spec)+": No *.output.table.options defined to specify default table output columns");
             }
         }
     }
@@ -158,8 +163,16 @@ public class FortifyCLITest {
         var descriptionArray = optionSpec.description();
         if ( descriptionArray.length==0 || Stream.of(descriptionArray).allMatch(StringUtils::isBlank) ) {
             String descriptionKey = StringUtils.isBlank(optionSpec.descriptionKey()) ? "<default>" : optionSpec.descriptionKey();
-            results.add(TestType.OPT_EMPTY_DESCRIPTION, Level.WARN, cmdSpec, optionSpec, String.format("Option has an empty description (descriptionKey=%s)", descriptionKey));
+            results.add(TestType.OPT_EMPTY_DESCRIPTION, Level.WARN, cmdSpec, optionSpec, String.format("%s: Option has an empty description (descriptionKey=%s)", getBundleName(cmdSpec), descriptionKey));
         }
+    }
+
+    /**
+     * @param cmdSpec
+     * @return
+     */
+    private String getBundleName(CommandSpec cmdSpec) {
+        return StringUtils.substringAfterLast(cmdSpec.resourceBundleBaseName(), ".");
     }
     
     private boolean isInvalidOptionFormat(String s) {
@@ -190,6 +203,22 @@ public class FortifyCLITest {
         return !s.matches("--(?!-)[a-z0-9-]+[^-]");
     }
     
+    private void checkParameters(Results results, CommandSpec cmdSpec) {
+        cmdSpec.positionalParameters().forEach(paramSpec->checkParameterSpec(results, cmdSpec, paramSpec));
+    }
+    
+    private void checkParameterSpec(Results results, CommandSpec cmdSpec, PositionalParamSpec paramSpec) {
+        checkParameterDescription(results, cmdSpec, paramSpec);
+    }
+    
+    private void checkParameterDescription(Results results, CommandSpec cmdSpec, PositionalParamSpec paramSpec) {
+        var descriptionArray = paramSpec.description();
+        if ( descriptionArray.length==0 || Stream.of(descriptionArray).allMatch(StringUtils::isBlank) ) {
+            String descriptionKey = StringUtils.isBlank(paramSpec.descriptionKey()) ? "<default>" : paramSpec.descriptionKey();
+            results.add(TestType.PARAM_EMPTY_DESCRIPTION, Level.WARN, cmdSpec, paramSpec, String.format("%s: Positional parameter has an empty description (descriptionKey=%s)", getBundleName(cmdSpec), descriptionKey));
+        }
+    }
+
     private void checkUsageHeader(Results results, CommandSpec spec) {
         if ( !spec.equals(spec.root()) ) {
             var rootHeader = spec.root().usageMessage().header();
@@ -197,7 +226,7 @@ public class FortifyCLITest {
             if ( cmdHeader==null 
                     || Stream.of(cmdHeader).allMatch(StringUtils::isBlank) 
                     || Arrays.equals(rootHeader, cmdHeader) ) {
-                results.add(TestType.CMD_USAGE_HEADER, Level.ERROR, spec, "Command doesn't define proper usage header: "+Arrays.asList(cmdHeader));
+                results.add(TestType.CMD_USAGE_HEADER, Level.ERROR, spec, getBundleName(spec)+": Command doesn't define proper usage header: "+Arrays.asList(cmdHeader));
             }
         }
     }
@@ -255,26 +284,47 @@ public class FortifyCLITest {
     private static class Results {
         private final Map<Level, Set<String>> results = new HashMap<>();
         
-        private void add(TestType type, Level level, CommandSpec cmdSpec, OptionSpec optionSpec, String msg) {
-            if ( isDisabled(type, cmdSpec, optionSpec) ) {
+        private void add(TestType type, Level level, CommandSpec cmdSpec, ArgSpec argSpec, String msg) {
+            if ( isDisabled(type, cmdSpec, argSpec) ) {
                 level = Level.INFO;
                 msg = type.name()+ " test disabled";
             }
-            add(level, cmdSpec.qualifiedName()+" "+optionSpec.longestName()+": "+msg);
+            var argUserObject = argSpec.userObject();
+            String name = null;
+            Class<?> clazz;
+            if ( argUserObject instanceof Parameter ) {
+                var param = (Parameter)argUserObject;
+                clazz = param.getDeclaringExecutable().getDeclaringClass();
+                name = param.getDeclaringExecutable().getName() + "() - " + param.getName();
+            } else {
+                var member = (Member)argUserObject;
+                clazz = member.getDeclaringClass();
+                name = member.getName();
+            }
+            add(level, getClazzName(clazz) + "::" + name+": "+msg);
         }
-        
+
         private void add(TestType type, Level level, CommandSpec cmdSpec, String msg) {
             if ( isDisabled(type, cmdSpec, null) ) {
                 level = Level.INFO;
                 msg = type.name()+ " test disabled";
             }
-            add(level, cmdSpec.qualifiedName()+": "+msg);
+            add(level, getClazzName(cmdSpec.userObject().getClass())+ ": "+msg);
         }
         
         private void add(Level level, String msg) {
             var set = results.computeIfAbsent(level, t->new TreeSet<String>());
             set.add(level.name().toUpperCase()+": "+msg);
             results.put(level, set);
+        }
+        
+        private String getClazzName(Class<?> clazz) {
+            var clazzName = clazz.getSimpleName();
+            while ( clazz.getDeclaringClass()!=null ) {
+                clazz = clazz.getDeclaringClass();
+                clazzName = clazz.getSimpleName() + "." + clazzName;
+            }
+            return clazzName;
         }
         
         private void process() {
@@ -293,7 +343,7 @@ public class FortifyCLITest {
             }
         }
         
-        private boolean isDisabled(TestType type, CommandSpec cmdSpec, OptionSpec optionSpec) {
+        private boolean isDisabled(TestType type, CommandSpec cmdSpec, ArgSpec optionSpec) {
             return isDisabled(type, PicocliSpecHelper.getAnnotation(cmdSpec, DisableTest.class))
                     || isDisabled(type, PicocliSpecHelper.getAnnotation(optionSpec, DisableTest.class));
         }

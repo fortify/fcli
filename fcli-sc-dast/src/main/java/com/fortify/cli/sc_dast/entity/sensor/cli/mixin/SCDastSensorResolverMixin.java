@@ -17,7 +17,6 @@ import com.fortify.cli.sc_dast.entity.sensor.helper.SCDastSensorHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SCDastSensorResolverMixin {
@@ -34,13 +33,8 @@ public class SCDastSensorResolverMixin {
         }
     }
     
-    public static class RequiredOption extends AbstractSSCDastSensorResolverMixin {
-        @Option(names = {"--sensor"}, required = true)
-        @Getter private String sensorNameOrId;
-    }
-    
     public static class PositionalParameter extends AbstractSSCDastSensorResolverMixin {
-        @Parameters(index = "0", arity = "1")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.sc-dast.sensor.resolver.nameOrId")
         @Getter private String sensorNameOrId;
     }
 }

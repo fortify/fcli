@@ -34,12 +34,12 @@ public class SSCJobResolverMixin {
     }
     
     public static class RequiredOption extends AbstractSSCJobResolverMixin {
-        @Option(names="--job", required = true)
+        @Option(names="--job", required = true, descriptionKey = "fcli.ssc.job.resolver.name")
         @Getter private String jobName;
     }
     
     public static class PositionalParameter extends AbstractSSCJobResolverMixin {
-        @Parameters(index = "0", arity = "1")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.job.resolver.name")
         @Getter private String jobName;
     }
 }

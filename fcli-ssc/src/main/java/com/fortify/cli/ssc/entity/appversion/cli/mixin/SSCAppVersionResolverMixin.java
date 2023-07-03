@@ -38,19 +38,19 @@ public class SSCAppVersionResolverMixin {
     }
     
     public static class RequiredOption extends AbstractSSCAppVersionResolverMixin {
-        @Option(names = {"--appversion"}, required = true, descriptionKey = "ApplicationVersionMixin")
+        @Option(names = {"--appversion"}, required = true, descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
         @Getter private String appVersionNameOrId;
     }
     
     public static class OptionalOption extends AbstractSSCAppVersionResolverMixin {
-        @Option(names = {"--appversion"}, required = false, descriptionKey = "ApplicationVersionMixin")
+        @Option(names = {"--appversion"}, required = false, descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
         @Getter private String appVersionNameOrId;
         public final boolean hasValue() { return StringUtils.isNotBlank(appVersionNameOrId); }
     }
     
     @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCAppVersionResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationVersionMixin")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
         @Getter private String appVersionNameOrId;
     }
 }

@@ -25,7 +25,8 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Upload.CMD_NAME)
 public class SSCAppVersionArtifactUploadCommand extends AbstractSSCAppVersionArtifactUploadCommand {
     @Getter @Mixin private OutputHelperMixins.Upload outputHelper; 
-    @Getter @Parameters(arity="1") private File file;
+    @Getter @Parameters(arity="1", descriptionKey = "fcli.ssc.appversion-artifact.upload.file") 
+    private File file;
     
     @Option(names = {"-e", "--engine-type"})
     @Getter private String engineType;

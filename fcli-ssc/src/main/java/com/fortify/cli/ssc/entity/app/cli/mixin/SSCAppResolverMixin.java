@@ -34,13 +34,13 @@ public class SSCAppResolverMixin {
     }
     
     public static class RequiredOption extends AbstractSSCAppResolverMixin {
-        @Option(names = {"--app"}, required = true, descriptionKey = "ApplicationMixin")
+        @Option(names = {"--app"}, required = true, descriptionKey = "fcli.ssc.app.resolver.nameOrId")
         @Getter private String appNameOrId;
     }
     
     // delete|update <app>
     public static class PositionalParameter extends AbstractSSCAppResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "ApplicationMixin")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.app.resolver.nameOrId")
         @Getter private String appNameOrId;
     }
 }

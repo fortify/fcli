@@ -23,15 +23,14 @@ import com.fortify.cli.sc_sast.entity.scan.helper.SCSastControllerScanJobHelper.
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SCSastScanJobResolverMixin {
     public static abstract class AbstractSCSastScanJobResolverMixin {
-        protected abstract String getNonResolvedScanJobToken();
+        protected abstract String getScanJobToken();
         
         public SCSastControllerScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest, StatusEndpointVersion minStatusEndpointVersion) {
-            return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, getNonResolvedScanJobToken(), minStatusEndpointVersion);
+            return SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, getScanJobToken(), minStatusEndpointVersion);
         }
 
         public SCSastControllerScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest) {
@@ -40,10 +39,10 @@ public class SCSastScanJobResolverMixin {
     }
     
     public static abstract class AbstractSCSastMultiScanJobResolverMixin {
-        protected abstract String[] getNonResolvedScanJobTokens();
+        protected abstract String[] getScanJobTokens();
         
         public SCSastControllerScanJobDescriptor[] getScanJobDescriptors(UnirestInstance unirest, StatusEndpointVersion minStatusEndpointVersion) {
-            return Stream.of(getNonResolvedScanJobTokens()).map(id->SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, id, minStatusEndpointVersion)).toArray(SCSastControllerScanJobDescriptor[]::new);
+            return Stream.of(getScanJobTokens()).map(id->SCSastControllerScanJobHelper.getScanJobDescriptor(unirest, id, minStatusEndpointVersion)).toArray(SCSastControllerScanJobDescriptor[]::new);
         }
 
         public SCSastControllerScanJobDescriptor[] getScanJobDescriptors(UnirestInstance unirest) {
@@ -59,18 +58,13 @@ public class SCSastScanJobResolverMixin {
         }
     }
     
-    public static class RequiredOption extends AbstractSCSastScanJobResolverMixin {
-        @Option(names = {"--job", "--job-token"}, required = true)
-        @Getter private String nonResolvedScanJobToken;
-    }
-    
     public static class PositionalParameter extends AbstractSCSastScanJobResolverMixin {
-        @Parameters(index = "0", arity = "1", paramLabel="scan-job-token")
-        @Getter private String nonResolvedScanJobToken;
+        @Parameters(index = "0", arity = "1", paramLabel="scan-job-token", descriptionKey = "fcli.sc-sast.scan-job.resolver.jobToken")
+        @Getter private String scanJobToken;
     }
     
     public static class PositionalParameterMulti extends AbstractSCSastMultiScanJobResolverMixin {
-        @Parameters(index = "0", arity = "1..", paramLabel = "scan-job-tokens")
-        @Getter private String[] nonResolvedScanJobTokens;
+        @Parameters(index = "0", arity = "1..", paramLabel = "scan-job-tokens", descriptionKey = "fcli.sc-sast.scan-job.resolver.jobToken")
+        @Getter private String[] scanJobTokens;
     }
 }

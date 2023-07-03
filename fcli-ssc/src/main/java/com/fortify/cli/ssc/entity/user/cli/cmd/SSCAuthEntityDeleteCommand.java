@@ -34,7 +34,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
 public class SSCAuthEntityDeleteCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
-    @Parameters(index = "0..*", arity = "1..*")
+    @Parameters(index = "0..*", arity = "1..*", descriptionKey = "fcli.ssc.user.rm.spec")
     private String[] authEntitySpecs;
     @Option(names="--allow-multi-match", defaultValue = "false")
     private boolean allowMultiMatch;

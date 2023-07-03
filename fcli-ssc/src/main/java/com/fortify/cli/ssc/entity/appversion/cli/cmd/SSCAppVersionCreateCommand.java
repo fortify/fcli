@@ -50,7 +50,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     @Getter @Mixin private OutputHelperMixins.Create outputHelper; 
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mixin private SSCAppAndVersionNameResolverMixin.PositionalParameter sscAppAndVersionNameResolver;
-    @Mixin private SSCIssueTemplateResolverMixin.OptionalFilterSetOption issueTemplateResolver;
+    @Mixin private SSCIssueTemplateResolverMixin.OptionalOption issueTemplateResolver;
     @Mixin private SSCAppVersionAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
     @Mixin private SSCAppVersionAuthEntityMixin.OptionalUserAddOption userAddMixin;
     @Option(names={"--description","-d"}, required = false)

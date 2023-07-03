@@ -32,7 +32,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class SSCIssueTemplateCreateCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper; 
-    @Parameters(index = "0", arity = "1", descriptionKey = "issueTemplateName")
+    @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.issue-template.name")
     private String issueTemplateName;
     @Option(names={"--issue-template-file","-f"}, required = true)
     private String fileName;

@@ -30,12 +30,12 @@ public class SSCAppVersionFilterSetResolverMixin {
     }
     
     public static class FilterSetOption extends AbstractSSCFilterSetResolverMixin {
-        @Option(names="--filterset")
+        @Option(names="--filterset", descriptionKey = "fcli.ssc.appversion-filter-set.resolver.titleOrId")
         @Getter private String filterSetTitleOrId;
     }
     
     public static class PositionalParameterSingle extends AbstractSSCFilterSetResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "filterSetTitleOrId")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.appversion-filter-set.resolver.titleOrId")
         @Getter private String filterSetTitleOrId;
     }
 }

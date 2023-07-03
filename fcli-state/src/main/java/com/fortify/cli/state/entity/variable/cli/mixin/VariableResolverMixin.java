@@ -17,7 +17,6 @@ import com.fortify.cli.common.variable.FcliVariableHelper;
 import com.fortify.cli.common.variable.FcliVariableHelper.VariableDescriptor;
 
 import lombok.Getter;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class VariableResolverMixin {
@@ -39,13 +38,8 @@ public class VariableResolverMixin {
         @Getter private boolean required = true; 
     }
     
-    public static class RequiredOption extends AbstractRequiredVariableResolverMixin {
-        @Option(names = {"--variable"}, required = true)
-        @Getter private String variableName;
-    }
-    
     public static class PositionalParameter extends AbstractRequiredVariableResolverMixin {
-        @Parameters(index = "0", arity = "1")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.state.variable.name")
         @Getter private String variableName;
     }
 }

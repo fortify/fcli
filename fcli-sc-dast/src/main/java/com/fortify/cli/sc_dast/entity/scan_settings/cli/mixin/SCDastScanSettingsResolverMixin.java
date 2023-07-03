@@ -39,12 +39,12 @@ public class SCDastScanSettingsResolverMixin {
     }
     
     public static class RequiredOption extends AbstractSSCDastScanSettingsResolverMixin {
-        @Option(names = {"-s", "--settings"}, required = true)
+        @Option(names = {"-s", "--settings"}, required = true, descriptionKey = "fcli.sc-dast.scan-settings.resolver.cicdTokenOrId")
         @Getter private String scanSettingsCicdTokenOrId;
     }
     
     public static class PositionalParameter extends AbstractSSCDastScanSettingsResolverMixin {
-        @Parameters(index = "0", arity = "1")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.sc-dast.scan-settings.resolver.cicdTokenOrId")
         @Getter private String scanSettingsCicdTokenOrId;
     }
 }

@@ -36,15 +36,15 @@ public class SSCRolePermissionResolverMixin {
         }
     }
 
-    public static class Role extends AbstractSSCRolePermissionMixin {
+    public static class RequiredOption extends AbstractSSCRolePermissionMixin {
         @Getter
-        @Option(names = {"--permission"}, required = true, descriptionKey = "SSCRolePermissionMixin")
+        @Option(names = {"--permission"}, required = true, descriptionKey = "fcli.ssc.role-permission.resolver.nameOrId")
         private String rolePermissionNameOrId;
     }
 
     public static class PositionalParameter extends AbstractSSCRolePermissionMixin {
         @Getter
-        @Parameters(index = "0", arity = "1", descriptionKey = "SSCRolePermissionMixin")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.role-permission.resolver.nameOrId")
         private String rolePermissionNameOrId;
     }
 }

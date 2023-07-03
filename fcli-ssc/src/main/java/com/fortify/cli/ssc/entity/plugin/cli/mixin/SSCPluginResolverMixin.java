@@ -13,7 +13,6 @@
 package com.fortify.cli.ssc.entity.plugin.cli.mixin;
 
 import lombok.Getter;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCPluginResolverMixin {
@@ -21,13 +20,8 @@ public class SSCPluginResolverMixin {
         public abstract String getNumericPluginId();
     }
     
-    public static class RequiredOption extends AbstractSSCPluginResolverMixin {
-        @Option(names="--plugin", required = true)
-        @Getter private String numericPluginId;
-    }
-    
     public static class PositionalParameter extends AbstractSSCPluginResolverMixin {
-        @Parameters(index = "0", arity = "1")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.plugin.resolver.numericId")
         @Getter private String numericPluginId;
     }
 }

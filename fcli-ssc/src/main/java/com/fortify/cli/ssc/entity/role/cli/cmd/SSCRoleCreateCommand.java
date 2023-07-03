@@ -38,7 +38,7 @@ public class SSCRoleCreateCommand extends AbstractSSCBaseRequestOutputCommand im
  */
 
     @Getter
-    @Parameters(index = "0", paramLabel = "role-name")
+    @Parameters(index = "0", descriptionKey = "fcli.ssc.role.name")
     private String name;
 
     @Getter

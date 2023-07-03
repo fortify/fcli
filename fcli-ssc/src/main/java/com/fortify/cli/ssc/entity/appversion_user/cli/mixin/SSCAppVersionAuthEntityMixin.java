@@ -22,17 +22,17 @@ public class SSCAppVersionAuthEntityMixin {
     }
     
     public static class OptionalUserAddOption extends AbstractSSCAppVersionAuthEntityMixin {
-        @Option(names = {"--add-users"}, required = false, split = ",")
+        @Option(names = {"--add-users"}, required = false, split = ",", descriptionKey = "fcli.ssc.appversion-auth-entity.add.specs")
         @Getter private String[] authEntitySpecs;
     }
     
-    public static class OptionalUserDelOption extends AbstractSSCAppVersionAuthEntityMixin {
-        @Option(names = {"--rm-users"}, required = false, split = ",")
+    public static class OptionalUserRemoveOption extends AbstractSSCAppVersionAuthEntityMixin {
+        @Option(names = {"--rm-users"}, required = false, split = ",", descriptionKey = "fcli.ssc.appversion-auth-entity.rm.specs")
         @Getter private String[] authEntitySpecs;
     }
     
     public static class RequiredPositionalParameter extends AbstractSSCAppVersionAuthEntityMixin {
-        @Parameters(index = "0..*", arity = "1..*")
+        @Parameters(index = "0..*", arity = "1..*", descriptionKey = "fcli.ssc.appversion-auth-entity.specs")
         @Getter private String[] authEntitySpecs;
     }
     

@@ -45,10 +45,10 @@ import picocli.CommandLine.Option;
 public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
-    @Mixin private SSCIssueTemplateResolverMixin.OptionalFilterSetOption issueTemplateResolver;
+    @Mixin private SSCIssueTemplateResolverMixin.OptionalOption issueTemplateResolver;
     @Mixin private SSCAppVersionAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
     @Mixin private SSCAppVersionAuthEntityMixin.OptionalUserAddOption userAddMixin;
-    @Mixin private SSCAppVersionAuthEntityMixin.OptionalUserDelOption userDelMixin;
+    @Mixin private SSCAppVersionAuthEntityMixin.OptionalUserRemoveOption userDelMixin;
     @Option(names={"--name","-n"}, required = false)
     private String name;
     @Option(names={"--description","-d"}, required = false)

@@ -38,13 +38,13 @@ public class SSCIssueTemplateResolverMixin {
         }
     }
     
-    public static class OptionalFilterSetOption extends AbstractSSCIssueTemplateResolverMixin {
-        @Option(names="--issue-template", descriptionKey = "issueTemplateNameOrId", required = false)
+    public static class OptionalOption extends AbstractSSCIssueTemplateResolverMixin {
+        @Option(names="--issue-template", required = false, descriptionKey = "fcli.ssc.issue-template.resolver.nameOrId")
         @Getter private String issueTemplateNameOrId;
     }
     
     public static class PositionalParameterSingle extends AbstractSSCIssueTemplateResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "issueTemplateNameOrId")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.issue-template.resolver.nameOrId")
         @Getter private String issueTemplateNameOrId;
     }
 }

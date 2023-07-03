@@ -29,7 +29,7 @@ public class SSCAttributeDefinitionResolverMixin {
     }
     
     public static class PositionalParameterSingle extends AbstractSSCAttributeDefinitionResolverMixin {
-        @Parameters(index = "0", arity = "1", paramLabel = "[CATEGORY:]ATTR")
+        @Parameters(index = "0", arity = "1", paramLabel = "[CATEGORY:]ATTR", descriptionKey = "fcli.ssc.attribute-definition.resolver.nameOrId")
         @Getter private String attributeDefinitionNameOrId;
     }
 }

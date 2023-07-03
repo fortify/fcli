@@ -22,7 +22,6 @@ import com.fortify.cli.sc_dast.entity.scan.helper.SCDastScanHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SCDastScanResolverMixin {
@@ -52,11 +51,6 @@ public class SCDastScanResolverMixin {
         public String[] getScanIds(UnirestInstance unirest) {
             return Stream.of(getScanDescriptors(unirest)).map(SCDastScanDescriptor::getId).toArray(String[]::new);
         }
-    }
-    
-    public static class RequiredOption extends AbstractSSCDastScanResolverMixin {
-        @Option(names = {"--scan"}, required = true)
-        @Getter private String scanId;
     }
     
     public static class PositionalParameter extends AbstractSSCDastScanResolverMixin {

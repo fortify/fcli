@@ -91,6 +91,9 @@ public @interface DisableTest {
         // Check option doesn't have an empty description
         OPT_EMPTY_DESCRIPTION,
         
+        // Check positional parameter doesn't have an empty description
+        PARAM_EMPTY_DESCRIPTION,
+        
         // Check that mixins don't have @Spec(MIXEE)
         INJECT_MIXEE 
     } 
