@@ -1,1 +1,1 @@
-com.fortify.cli.functest.util.FcliGlobalExtension
+com.fortify.cli.functest.common.extension.FcliGlobalExtension

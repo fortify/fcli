@@ -1,8 +1,8 @@
-package com.fortify.cli.functest.fcli;
+package com.fortify.cli.functest.fcli.root;
 
-import com.fortify.cli.functest.util.BaseFcliSpec
+import com.fortify.cli.functest.common.spec.BaseFcliSpec
 
-class FcliRootSpec extends BaseFcliSpec {
+class RootSpec extends BaseFcliSpec {
     def "root.help"(String[] args, boolean success) {
         expect:
         fcli(args)==success
