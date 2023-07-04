@@ -10,8 +10,9 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.app;
+package com.fortify.cli.app._main.cli.cmd;
 
+import com.fortify.cli.app.FortifyCLIVersionProvider;
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;

@@ -1,14 +1,14 @@
 package com.fortify.cli.functest.fcli;
 
-import com.fortify.cli.functest.util.FcliSpec
+import com.fortify.cli.functest.util.BaseFcliSpec
 
-class FcliRootSpec extends FcliSpec {
-    def "fcli"(String[] args, boolean success) {
+class FcliRootSpec extends BaseFcliSpec {
+    def "root.help"(String[] args, boolean success) {
         expect:
         fcli(args)==success
         out.lines
         verifyAll(out.lines) {
-            it.any { it ==~ /.*Command-line interface for working with various Fortify products..*/ }
+            it.any { it ==~ /.*Command-line interface for working with various Fortify products.*/ }
             it.any { it.contains 'config' }
             it.any { it.contains 'state' }
             it.any { it.contains 'ssc' }
@@ -23,13 +23,13 @@ class FcliRootSpec extends FcliSpec {
         []     | false   // Invoke fcli without args, resulting in a 'missing required subcommand' error
     }
 
-    def "fcli -V"() {
+    def "root.version"() {
         expect:
         fcli "-V"
         out.lines
         verifyAll(out.lines) {
             size()==1
-            it.any { it ==~ /.*fcli version \d+\.\d+\.\d+, built on.*/ }
+            it.any { it ==~ /.*fcli version \d+\.\d+\.\d+.*, built on.*/ }
         }
     }
 }

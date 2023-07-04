@@ -34,7 +34,7 @@ subprojects {
 apply plugin: "groovy"
 testing {
     suites {
-        functest(JvmTestSuite) {
+        ftest(JvmTestSuite) {
             useJUnitJupiter()
             dependencies {
                 implementation platform('org.apache.groovy:groovy-bom:4.0.13')
@@ -42,7 +42,24 @@ testing {
                 implementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
                 implementation "org.spockframework:spock-core"
                 implementation 'io.github.joke:spock-outputcapture:3.0.1'
-                implementation project()
+                if ( !project.hasProperty("ftest.fcli") || project.property('ftest.fcli')=='build' ) {
+                    implementation project()
+                }
+            }
+            targets {
+                all {
+                    testTask.configure {
+                        // Pass all ftest.* properties to tests as system properties
+                        systemProperties project.properties.findAll { 
+                            it.key.startsWith("ftest.")
+                        }
+                        options {
+                            testLogging {
+                                showStandardStreams = true
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -154,6 +171,7 @@ allprojects {
 	    testLogging {
 	        showStandardStreams = true
 	    }
+        systemProperties project.properties.subMap(["ftest.fcli", "ftest.java", "ftest.run"])
 	}
     
     // Micronaut is supposed to generate a resource-config.json file that includes all resources,

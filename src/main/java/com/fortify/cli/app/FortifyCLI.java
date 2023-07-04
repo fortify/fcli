@@ -21,27 +21,15 @@ import org.jasypt.normalization.Normalizer;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
-import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner;
-import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
-import com.fortify.cli.common.variable.FcliVariableHelper;
+import com.fortify.cli.app.runner.DefaultFortifyCLIRunner;
 import com.oracle.svm.core.annotate.AutomaticFeature;
 
-import io.micronaut.configuration.picocli.MicronautFactory;
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.TypeHint;
-import picocli.CommandLine;
 
 /**
- * <p>This class provides the {@link #main(String[])} entrypoint into the application. 
- * It first configures logging and then loads the {@link PicocliRunner} class to
- * actually execute commands based on provided command line arguments.</p>
- * 
- * <p>This class is also responsible for registering some GraalVM features, allowing
- * the application to run properly as GraalVM native images.</p>
+ * <p>This class provides the {@link #main(String[])} entrypoint into the application,
+ * and also registers some GraalVM features, allowing the application to run properly 
+ * as GraalVM native images.</p>
  * 
  * @author Ruud Senden
  */
@@ -52,30 +40,16 @@ public class FortifyCLI {
      * This is the main entry point for executing the Fortify CLI.
      * @param args Command line options passed to Fortify CLI
      */
-    public static void main(String[] args) {
+    public static final void main(String[] args) {
         System.exit(execute(args));
     }
 
-    /**
-     * This method starts the Micronaut {@link ApplicationContext}, then invokes all beans that implement the
-     * {@link IFortifyCLIInitializer} interface prior to executing {@link CommandLine#execute(String...)}.
-     * @param args Command line options passed to Fortify CLI
-     * @return exit code
-     */
-    public static int execute(String[] args) {
-    	String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
-        try (ApplicationContext applicationContext = ApplicationContext.builder(FortifyCLI.class, Environment.CLI).start()) {
-            try ( MicronautFactory micronautFactory = new MicronautFactory(applicationContext) ) {
-            	installAnsiConsole();
-                FortifyCLIInitializerRunner.initialize(resolvedArgs, micronautFactory);
-                CommandLine commandLine = new CommandLine(FCLIRootCommands.class, micronautFactory);
-                return commandLine
-                    .setParameterExceptionHandler(new I18nParameterExceptionHandler(commandLine.getParameterExceptionHandler()))
-                    .execute(resolvedArgs);
-            } finally {
-                GenericUnirestFactory.shutdown();
-            	uninstallAnsiConsole();
-            }
+    private static final int execute(String[] args) {
+        try ( var runner = new DefaultFortifyCLIRunner() ) {
+            installAnsiConsole();
+            return runner.run(args);
+        } finally {
+            uninstallAnsiConsole();
         }
     }
     

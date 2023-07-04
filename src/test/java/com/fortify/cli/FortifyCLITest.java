@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.fortify.cli.app.FCLIRootCommands;
+import com.fortify.cli.app._main.cli.cmd.FCLIRootCommands;
 import com.fortify.cli.common.output.writer.CommandSpecMessageResolver;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
