@@ -13,6 +13,7 @@ class FcliGlobalExtension implements IGlobalExtension {
     
     @Override
     public void start() {
+         System.setProperty("picocli.ansi", "false")
          this.runner = createRunner();
     }
     

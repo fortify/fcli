@@ -93,7 +93,7 @@ allprojects {
     	micronautVersion = "3.8.7"
     	// Define the top-level fcli command class, used
     	// for generating manual pages, reflect-config.json, ...
-    	rootCommandsClassName = "com.fortify.cli.app.FCLIRootCommands"
+    	rootCommandsClassName = "com.fortify.cli.app._main.cli.cmd.FCLIRootCommands"
     }
 
 	// Global dependencies for all modules
