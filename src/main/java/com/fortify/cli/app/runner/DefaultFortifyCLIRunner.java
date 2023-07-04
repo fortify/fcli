@@ -53,12 +53,19 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
 	    //      running multi-threaded functional tests. 
 	    initialize(args);
 	    commandLine.clearExecutionResults();
-	    return commandLine.execute(resolvedArgs);
+	    try {
+	        return commandLine.execute(resolvedArgs);
+	    } finally {
+	        // TODO For now, we shut down the unirest factory after every run,
+	        // as apparently every run adds new headers, eventually resulting
+	        // in Tomcat complaining that more than the maximum number of allowed
+	        // headers were detected
+	        GenericUnirestFactory.shutdown();
+	    }
 	}
 	
 	@Override
 	public void close() {
-	    GenericUnirestFactory.shutdown();
 	    if ( this.initialized ) {
 	        micronautFactory.close();
 	        applicationContext.close();
