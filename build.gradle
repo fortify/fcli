@@ -94,6 +94,8 @@ allprojects {
     	// Define the top-level fcli command class, used
     	// for generating manual pages, reflect-config.json, ...
     	rootCommandsClassName = "com.fortify.cli.app._main.cli.cmd.FCLIRootCommands"
+        // Define main class name
+        mainClassName = "com.fortify.cli.app.FortifyCLI"
     }
 
 	// Global dependencies for all modules
@@ -171,7 +173,8 @@ allprojects {
 	    testLogging {
 	        showStandardStreams = true
 	    }
-        systemProperties project.properties.subMap(["ftest.fcli", "ftest.java", "ftest.run"])
+        // Pass system properties to GradlePropertiesTest
+        systemProperties['gradle.expectedClassNames']=[rootCommandsClassName, mainClassName].join(",")
 	}
     
     // Micronaut is supposed to generate a resource-config.json file that includes all resources,
@@ -266,7 +269,7 @@ task generatePicocliReflectConfig(type: JavaExec) {
 
 // Generate shadow jar
 application {
-    mainClass.set("com.fortify.cli.app.FortifyCLI")
+    mainClass.set(mainClassName)
 }
 shadowJar {
 	mergeServiceFiles()
