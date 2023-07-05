@@ -13,6 +13,7 @@
 package com.fortify.cli.app;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.util.FortifyCLIDefaultValueProvider;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.config._main.cli.cmd.ConfigCommands;
@@ -42,7 +43,12 @@ import picocli.CommandLine.ScopeType;
  */
 @Singleton
 @ReflectiveAccess
-@Command(name = "fcli", 
+@Command(name = "fcli",
+    scope = ScopeType.INHERIT,
+    usageHelpAutoWidth = true,
+    sortOptions = false, 
+    showAtFileInUsageHelp = false,
+    defaultValueProvider = FortifyCLIDefaultValueProvider.class,
     resourceBundle = "com.fortify.cli.common.i18n.FortifyCLIMessages",
     versionProvider = FortifyCLIVersionProvider.class,
     subcommands = {
