@@ -38,7 +38,7 @@ public abstract class AbstractSpelNodeVisitor {
             var spelExpression = (SpelExpression)expression;
             visit(spelExpression.getAST());
         } else if ( expression instanceof LiteralExpression ) {
-            var value = ((LiteralExpression)expression).getValue();
+            var value = '"'+((LiteralExpression)expression).getValue()+'"';
             visit(new StringLiteral(value, 0, value.length(), value));
         } else {
             throw new RuntimeException("Expression type not supported: "+expression.getClass().getSimpleName()); 
