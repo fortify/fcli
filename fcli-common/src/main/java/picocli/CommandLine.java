@@ -13096,23 +13096,36 @@ public class CommandLine {
             private boolean isRequiredArgGroup(ArgGroupSpec spec) {
                 if ( spec.exclusive() ) {
                     // Only return true if all options and subgroups are considered required
-                    return isAllOptionsRequired(spec) && isAllSubGroupsRequired(spec);
+                    return isAllOptionsRequired(spec) && isAllSubGroupsRequired(spec) && isAllParamsRequired(spec);
                 } else {
                     // Return true if at least one option or subgroup is required
-                    return isAnyOptionRequired(spec) || isAnySubGroupRequired(spec);
+                    return isAnyOptionRequired(spec) || isAnySubGroupRequired(spec) || isAnyParamRequired(spec);
                 }
             }
-            
+
             private boolean isAllOptionsRequired(ArgGroupSpec spec) {
                 for ( OptionSpec option : spec.options() ) {
                     if ( !option.required() ) { return false; }
                 }
                 return true;
             }
-            
+
             private boolean isAnyOptionRequired(ArgGroupSpec spec) {
                 for ( OptionSpec option : spec.options() ) {
                     if ( option.required() ) { return true; }
+                }
+                return false;
+            }
+
+            public boolean isAllParamsRequired(ArgGroupSpec spec) {
+                for ( PositionalParamSpec param : spec.positionalParameters() ){
+                    if( !param.required() ){return false;}
+                }
+                return true;
+            }
+            public boolean isAnyParamRequired(ArgGroupSpec spec) {
+                for ( PositionalParamSpec param : spec.positionalParameters() ){
+                    if( param.required() ){return true;}
                 }
                 return false;
             }
