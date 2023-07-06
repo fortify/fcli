@@ -39,8 +39,6 @@ public enum FcliSessionType {
                 if ( isEnabled() ) {login(); invocation.proceed()}
             }
         }
-        
-        @Override public boolean isEnabled() { hasProperty(defaultPropertyName()) }
 
         @Override
         public synchronized final void login() {
@@ -68,56 +66,43 @@ public enum FcliSessionType {
         abstract String[] loginOptions()
         abstract String[] logoutOptions()
         
-        String defaultPropertyName() {
+        String basePropertyName() {
             "ftest."+module()
         }
-        boolean hasProperty(String propertyName) {
-            StringUtils.isNotBlank(System.properties[propertyName])
+        String get(String subPropertyName) {
+            System.properties[basePropertyName()+"."+subPropertyName]
         }
-        String property(String propertyName) {
-            System.properties[propertyName]
+        boolean has(String subPropertyName) {
+            get(subPropertyName)
         }
-        URI uri(String propertyName) {
-            new URI(property(propertyName))
+        String[] option(String optName) {
+            has(optName) ? ["--"+optName, get(optName)] : []
         }
-        String baseUrl(URI uri) {
-            return new URI(uri.scheme, uri.authority, uri.path, uri.query, uri.fragment)
-        }
-        String[] userInfo(URI uri) {
-            def userInfo = uri?.userInfo
-            def idx = userInfo?.lastIndexOf(':')
-            if ( idx ) {
-                return [userInfo.substring(0, idx), userInfo.substring(idx+1)]
-            } 
-        }
+        String[] options(String ... optNames) {
+            return optNames.every { has(it) } 
+                ? optNames.stream().map(this.&option).collect().flatten()
+                : [] 
+        } 
     }
     
     private static class SSCSessionHandler extends AbstractSessionHandler {
         @Override public String friendlyName() { "SSC" }
         @Override public String module() { "ssc" }
+        
+        @Override
+        public boolean isEnabled() {
+            has("url")
+        }
 
         @Override
         public String[] loginOptions() {
-            def uri = uri(defaultPropertyName())
-            return urlOptions(uri)+credentialOptions(uri)
+            option("url")+options("user", "password")+options("token")+options("ci-token")
         }
 
         @Override
         public String[] logoutOptions() {
-            def uri = uri(defaultPropertyName())
-            return credentialOptions(uri)
-        }
-        
-        private String[] urlOptions(URI uri) {
-            return ["--url", baseUrl(uri)]
-        }
-        
-        private String[] credentialOptions(URI uri) {
-            def userInfo = userInfo(uri)
-            return [
-                "--user", userInfo[0],
-                "--password", userInfo[1],
-            ]
+            def result = options("user", "password")
+            return result.length==0 ? "--no-revoke-token" : result
         }
     } 
     
@@ -126,68 +111,60 @@ public enum FcliSessionType {
         @Override public String module() { "fod" }
         
         @Override
+        public boolean isEnabled() {
+            has("url")
+        }
+        
+        @Override
         public String[] loginOptions() {
-            def uri = uri(defaultPropertyName())
-            return urlOptions(uri)+credentialOptions(uri)
+            option("url")+options("tenant", "user", "password")+options("client-id", "client-secret")
         }
 
         @Override
         public String[] logoutOptions() {
             return []
         }
-        
-        private String[] urlOptions(URI uri) {
-            return ["--url", baseUrl(uri)]
-        }
-        
-        private String[] credentialOptions(URI uri) {
-            def userInfo = userInfo(uri)
-            if ( userInfo[0].contains(':') ) {
-                def user = userInfo[0].split(':')
-                return [
-                    "--tenant", user[0],
-                    "--user", user[1],
-                    "--password", userInfo[1]
-                ]
-            } else {
-              return [
-                "--client-id", userInfo[0],
-                "--client-secret", userInfo[1],
-              ]
-            }
-        }
     }
 
     private static class SCSastSessionHandler extends AbstractSessionHandler {
         @Override public String friendlyName() { "ScanCentral SAST" }
-        @Override public boolean isEnabled() { false }
         @Override public String module() { "sc-sast" }
         
         @Override
+        public boolean isEnabled() {
+            has("ssc-url")
+        }
+
+        @Override
         public String[] loginOptions() {
-            []
+            option("ssc-url")+options("ssc-user", "ssc-password", "client-auth-token")+options("ssc-ci-token", "client-auth-token")
         }
 
         @Override
         public String[] logoutOptions() {
-            []
+            def result = options("ssc-user", "ssc-password")
+            return result.length==0 ? "--no-revoke-token" : result
         }
-        
     }
     
     private static class SCDastSessionHandler extends AbstractSessionHandler {
         @Override public String friendlyName() { "ScanCentral DAST" }
-        @Override public boolean isEnabled() { false }
         @Override public String module() { "sc-dast" }
         
         @Override
+        public boolean isEnabled() {
+            has("ssc-url")
+        }
+
+        @Override
         public String[] loginOptions() {
-            []
+            options("ssc-url")+options("ssc-user", "ssc-password")+options("ssc-ci-token")
         }
 
         @Override
         public String[] logoutOptions() {
-            []
+            def result = options("ssc-user", "ssc-password")
+            return result.length==0 ? "--no-revoke-token" : result
         }
     }
 

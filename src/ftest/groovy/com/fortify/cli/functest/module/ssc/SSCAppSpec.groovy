@@ -1,4 +1,4 @@
-package com.fortify.cli.functest.fcli.ssc;
+package com.fortify.cli.functest.module.ssc;
 
 import static com.fortify.cli.functest.common.spec.FcliSessionType.SSC
 
