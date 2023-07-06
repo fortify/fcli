@@ -35,6 +35,6 @@ public class SCSastUnirestHelper {
         UnirestUrlConfigConfigurer.configure(unirest, sessionData.getSscUrlConfig());
         ProxyHelper.configureProxy(unirest, "sc-sast", sessionData.getSscUrlConfig().getUrl());
         unirest.config().requestCompression(false); // For some reason, larger SSC requests fail when compression is enabled
-        unirest.config().addDefaultHeader("Authorization", "FortifyToken "+new String(sessionData.getActiveSSCToken()));
+        unirest.config().setDefaultHeader("Authorization", "FortifyToken "+new String(sessionData.getActiveSSCToken()));
     }
 }

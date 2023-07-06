@@ -55,6 +55,6 @@ public class FoDProductHelperMixin extends AbstractSessionUnirestInstanceSupplie
         UnirestUrlConfigConfigurer.configure(unirest, sessionDescriptor.getUrlConfig());
         ProxyHelper.configureProxy(unirest, "fod", sessionDescriptor.getUrlConfig().getUrl());
         final String authHeader = String.format("Bearer %s", sessionDescriptor.getActiveBearerToken());
-        unirest.config().addDefaultHeader("Authorization", authHeader);
+        unirest.config().setDefaultHeader("Authorization", authHeader);
     }
 }

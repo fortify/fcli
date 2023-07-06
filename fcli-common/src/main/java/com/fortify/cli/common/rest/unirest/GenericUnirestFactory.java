@@ -14,6 +14,7 @@ package com.fortify.cli.common.rest.unirest;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,15 @@ public final class GenericUnirestFactory {
     }
     
     /**
+     * Check whether a {@link UnirestInstance} for the given key already exists.
+     * @param key
+     * @return
+     */
+    public static final boolean hasUnirestInstance(String key) {
+        return instances.containsKey(key);
+    }
+    
+    /**
      * Get a {@link UnirestInstance} instance for the given key. If an instance
      * for the given key doesn't exist yet, a new instance will be created.
      * All previously created instances can be shut down by calling the {@link #shutdown()}
@@ -47,10 +57,11 @@ public final class GenericUnirestFactory {
      * method.
      * @return
      */
-    public static final UnirestInstance getUnirestInstance(String key) {
+    public static final UnirestInstance getUnirestInstance(String key, Consumer<UnirestInstance> configurer) {
         UnirestInstance instance = instances.get(key);
         if ( instance==null ) {
             instance = createUnirestInstance();
+            if ( configurer!=null ) { configurer.accept(instance); }
             instances.put(key, instance);
         }
         return instance;

@@ -182,7 +182,7 @@ public class MspReportSSCResultsGenerator extends AbstractMspReportUnirestResult
         if ( StringUtils.isBlank(token) ) {
             throw new IllegalStateException("No token found from expression: "+tokenExpression);
         } else {
-            unirest.config().addDefaultHeader("Authorization", "FortifyToken "+SSCTokenConverter.toRestToken(token));
+            unirest.config().setDefaultHeader("Authorization", "FortifyToken "+SSCTokenConverter.toRestToken(token));
         }
     }
     

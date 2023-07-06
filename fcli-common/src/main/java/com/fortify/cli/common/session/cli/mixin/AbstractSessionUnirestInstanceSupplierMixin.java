@@ -26,9 +26,8 @@ public abstract class AbstractSessionUnirestInstanceSupplierMixin<D extends ISes
     public UnirestInstance getUnirestInstance() {
         D sessionDescriptor = getSessionDescriptor();
         String key = this.getClass().getName()+"/"+getSessionName();
-        UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance(key);
-        configure(unirest, sessionDescriptor);
-        return unirest;
+        return GenericUnirestFactory.getUnirestInstance(key, 
+                u->configure(u, sessionDescriptor));
     }
     
     protected abstract void configure(UnirestInstance unirest, D sessionDescriptor);

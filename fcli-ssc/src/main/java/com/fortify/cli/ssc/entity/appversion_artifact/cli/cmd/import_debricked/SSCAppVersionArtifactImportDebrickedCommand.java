@@ -110,7 +110,7 @@ public class SSCAppVersionArtifactImportDebrickedCommand extends AbstractSSCAppV
         String debrickedJwtToken = getDebrickedJwtToken(debrickedUnirest);
         UnirestJsonHeaderConfigurer.configure(debrickedUnirest);
 		String authHeader = String.format("Bearer %s", debrickedJwtToken);
-        debrickedUnirest.config().addDefaultHeader("Authorization", authHeader);
+        debrickedUnirest.config().setDefaultHeader("Authorization", authHeader);
 	}
 
 	private String getDebrickedJwtToken(UnirestInstance debrickedUnirest) {

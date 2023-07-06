@@ -59,7 +59,7 @@ public class SCDastProductHelperMixin extends AbstractSessionUnirestInstanceSupp
         UnirestUrlConfigConfigurer.configure(unirest, sessionDescriptor.getScDastUrlConfig());
         ProxyHelper.configureProxy(unirest, "sc-dast", sessionDescriptor.getScDastUrlConfig().getUrl());
         unirest.config().requestCompression(false); // TODO Check whether SC DAST suffers from the same issue as SSC, with some requests failing if compression is enabled
-        unirest.config().addDefaultHeader("Authorization", "FortifyToken "+new String(sessionDescriptor.getActiveToken()));
+        unirest.config().setDefaultHeader("Authorization", "FortifyToken "+new String(sessionDescriptor.getActiveToken()));
     }
     
     @Override

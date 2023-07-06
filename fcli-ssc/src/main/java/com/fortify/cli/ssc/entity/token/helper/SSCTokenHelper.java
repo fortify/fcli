@@ -150,6 +150,6 @@ public class SSCTokenHelper {
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
         ProxyHelper.configureProxy(unirest, "ssc", urlConfig.getUrl());
         unirest.config().requestCompression(false); // TODO For some reason, in native binaries, compression may cause issues
-        unirest.config().addDefaultHeader("Authorization", "FortifyToken "+new String(activeToken));
+        unirest.config().setDefaultHeader("Authorization", "FortifyToken "+new String(activeToken));
     }
 }

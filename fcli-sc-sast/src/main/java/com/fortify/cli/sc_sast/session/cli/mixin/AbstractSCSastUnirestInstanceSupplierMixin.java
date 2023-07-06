@@ -27,14 +27,12 @@ public abstract class AbstractSCSastUnirestInstanceSupplierMixin extends Abstrac
     }
     
     public final UnirestInstance getSscUnirestInstance() {
-        UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance("sc-sast/ssc/"+getSessionName());
-        SCSastUnirestHelper.configureSscUnirestInstance(unirest, getSessionDescriptor());
-        return unirest;
+        return GenericUnirestFactory.getUnirestInstance("sc-sast/ssc/"+getSessionName(),
+                u->SCSastUnirestHelper.configureSscUnirestInstance(u, getSessionDescriptor()));
     }
 
     public final UnirestInstance getControllerUnirestInstance() {
-        UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance("sc-sast/cntrl/"+getSessionName());
-        SCSastUnirestHelper.configureScSastControllerUnirestInstance(unirest, getSessionDescriptor());
-        return unirest;
+        return GenericUnirestFactory.getUnirestInstance("sc-sast/ctrl/"+getSessionName(),
+                u->SCSastUnirestHelper.configureSscUnirestInstance(u, getSessionDescriptor()));
     }
 }

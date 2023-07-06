@@ -217,7 +217,7 @@ public class NcdReportGitLabResultsGenerator extends AbstractNcdReportUnirestRes
             if ( StringUtils.isBlank(token) ) {
                 throw new IllegalStateException("No token found from expression: "+tokenExpression);
             } else {
-                unirest.config().addDefaultHeader("PRIVATE-TOKEN", token);
+                unirest.config().setDefaultHeader("PRIVATE-TOKEN", token);
             }
         }
     }

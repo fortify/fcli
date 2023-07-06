@@ -106,8 +106,8 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     }
     
     private final Void download(String downloadUrl, File destFile) {
-        UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance("tool");
-        ProxyHelper.configureProxy(unirest, "tool", downloadUrl);
+        UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance("tool",
+                u->ProxyHelper.configureProxy(u, "tool", downloadUrl));
         unirest.get(downloadUrl).asFile(destFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
         return null;
     }
