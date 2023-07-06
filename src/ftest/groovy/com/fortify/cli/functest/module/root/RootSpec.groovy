@@ -1,9 +1,11 @@
 package com.fortify.cli.functest.module.root;
 
 import com.fortify.cli.functest.common.spec.BaseFcliSpec
+import com.fortify.cli.functest.common.spec.Prefix
 
+@Prefix("root")
 class RootSpec extends BaseFcliSpec {
-    def "root.help"(String[] args, boolean success) {
+    def "help"(String[] args, boolean success) {
         expect:
             fcli(args)==success
             out.lines
@@ -23,7 +25,7 @@ class RootSpec extends BaseFcliSpec {
             []     | false   // Invoke fcli without args, resulting in a 'missing required subcommand' error
     }
 
-    def "root.version"() {
+    def "version"() {
         expect:
             fcli "-V"
             out.lines

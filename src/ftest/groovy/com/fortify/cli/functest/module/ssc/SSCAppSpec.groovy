@@ -4,15 +4,16 @@ import static com.fortify.cli.functest.common.spec.FcliSessionType.SSC
 
 import com.fortify.cli.functest.common.spec.BaseFcliSpec
 import com.fortify.cli.functest.common.spec.FcliSession
+import com.fortify.cli.functest.common.spec.Prefix
 
 import spock.lang.Unroll
 
-@FcliSession(SSC)
+@Prefix("ssc.app") @FcliSession(SSC)
 class SSCAppSpec extends BaseFcliSpec {
-    @Unroll("fcli.ssc.list (#i)")
-    def "ssc.app.list"() {
+    @Unroll
+    def "list"() {
         expect:
-        fcli "ssc", "appversion", "list"
+        fcli "ssc", "app", "list"
         where:
         i << (1..20)
     }

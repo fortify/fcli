@@ -4,10 +4,11 @@ import static com.fortify.cli.functest.common.spec.FcliSessionType.SCSAST
 
 import com.fortify.cli.functest.common.spec.BaseFcliSpec
 import com.fortify.cli.functest.common.spec.FcliSession
+import com.fortify.cli.functest.common.spec.Prefix
 
-@FcliSession(SCSAST)
+@Prefix("sc-sast.scan") @FcliSession(SCSAST)
 class SCSastSensorSpec extends BaseFcliSpec {
-    def "sc-sast.scan.help"() {
+    def "help"() {
         expect:
             fcli "sc-sast", "scan", "-h"
     }
