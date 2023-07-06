@@ -4,14 +4,12 @@ import org.spockframework.runtime.extension.IGlobalExtension
 import org.spockframework.runtime.model.FieldInfo
 import org.spockframework.runtime.model.SpecInfo
 
-import com.fortify.cli.common.util.StringUtils
 import com.fortify.cli.functest.common.runner.FcliRunner
 import com.fortify.cli.functest.common.spec.Fcli
 import com.fortify.cli.functest.common.spec.FcliSessionType
 import com.fortify.cli.functest.common.spec.Prefix
 
 import groovy.transform.CompileStatic
-import spock.lang.Unroll
 
 @CompileStatic
 class FcliGlobalExtension implements IGlobalExtension {
