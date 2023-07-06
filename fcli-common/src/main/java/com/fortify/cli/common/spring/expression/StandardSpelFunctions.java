@@ -17,6 +17,7 @@ import java.time.OffsetDateTime;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.EncryptionHelper;
+import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
@@ -49,7 +50,7 @@ public class StandardSpelFunctions {
     }
     
     public static final String env(String name) {
-        return System.getenv(name);
+        return EnvHelper.env(name);
     }
     
     public static final String encrypt(String s) {

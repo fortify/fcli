@@ -45,28 +45,28 @@ public class FcliDataHelper {
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     
     public static final Path getFortifyHomePath() {
-        String fortifyData = System.getenv(ENVNAME_FORTIFY_DATA_DIR);
+        String fortifyData = EnvHelper.env(ENVNAME_FORTIFY_DATA_DIR);
         return StringUtils.isNotBlank(fortifyData) 
                 ? Path.of(fortifyData).toAbsolutePath()
                 : Path.of(System.getProperty("user.home"), DEFAULT_FORTIFY_DIR_NAME).toAbsolutePath();
     }
 
     public static final Path getFcliHomePath() {
-        String fcliData = System.getenv(ENVNAME_FCLI_DATA_DIR);
+        String fcliData = EnvHelper.env(ENVNAME_FCLI_DATA_DIR);
         return StringUtils.isNotBlank(fcliData) 
                 ? Path.of(fcliData).toAbsolutePath()
                 : getFortifyHomePath().resolve(DEFAULT_FCLI_DIR_NAME).toAbsolutePath();
     }
     
     public static final Path getFcliConfigPath() {
-        String fcliConfig = System.getenv(ENVNAME_FCLI_CONFIG_DIR);
+        String fcliConfig = EnvHelper.env(ENVNAME_FCLI_CONFIG_DIR);
         return StringUtils.isNotBlank(fcliConfig) 
                 ? Path.of(fcliConfig).toAbsolutePath()
                 : getFcliHomePath().resolve(DEFAULT_FCLI_CONFIG_DIR_NAME).toAbsolutePath();
     }
     
     public static final Path getFcliStatePath() {
-        String fcliState = System.getenv(ENVNAME_FCLI_STATE_DIR);
+        String fcliState = EnvHelper.env(ENVNAME_FCLI_STATE_DIR);
         return StringUtils.isNotBlank(fcliState) 
                 ? Path.of(fcliState).toAbsolutePath()
                 : getFcliHomePath().resolve(DEFAULT_FCLI_STATE_DIR_NAME).toAbsolutePath();

@@ -42,7 +42,7 @@ public class EncryptionHelper {
     }
     
     private static final String getEncryptPassword() {
-        String userPassword = System.getenv("FCLI_ENCRYPT_KEY");
+        String userPassword = EnvHelper.env("FCLI_ENCRYPT_KEY");
         userPassword = StringUtils.isBlank(userPassword) ? "" : userPassword;
         return userPassword+"ds$%YTjdwaf#$47672dfdsGVFDa";
     }

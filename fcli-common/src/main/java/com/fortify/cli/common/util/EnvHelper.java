@@ -51,8 +51,15 @@ public final class EnvHelper {
                 : String.format("%s_%s_%s", PFX, productEnvId, suffix);
     }
     
+    /**
+     * Get the value of the environment variable with the given name.
+     * This method allows environment variables to be overridden through
+     * system properties named 'fcli.env.VAR_NAME', which is mainly 
+     * useful for unit/functional testing, but may also be useful for
+     * other purposes.
+     */
     public static final String env(String name) {
-        return System.getenv(name);
+        return System.getProperty("fcli.env."+name, System.getenv(name));
     }
 
     public static final Boolean asBoolean(String s) {

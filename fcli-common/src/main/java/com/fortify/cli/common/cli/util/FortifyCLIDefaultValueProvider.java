@@ -14,6 +14,7 @@ package com.fortify.cli.common.cli.util;
 
 import java.lang.reflect.AnnotatedElement;
 
+import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Setter;
@@ -40,7 +41,7 @@ public class FortifyCLIDefaultValueProvider implements CommandLine.IDefaultValue
     private String resolve(CommandSpec command, String suffix) {
         if ( command!=null && suffix!=null ) {
             var envVarName = getEnvVarName(command, suffix);
-            String value = System.getenv(envVarName);
+            String value = EnvHelper.env(envVarName);
             if ( StringUtils.isNotBlank(value) ) { return value; }
             return resolve(command.parent(), suffix);
         }
