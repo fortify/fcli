@@ -127,12 +127,34 @@ public enum FcliSessionType {
         
         @Override
         public String[] loginOptions() {
-            []
+            def uri = uri(defaultPropertyName())
+            return urlOptions(uri)+credentialOptions(uri)
         }
 
         @Override
         public String[] logoutOptions() {
-            []
+            return []
+        }
+        
+        private String[] urlOptions(URI uri) {
+            return ["--url", baseUrl(uri)]
+        }
+        
+        private String[] credentialOptions(URI uri) {
+            def userInfo = userInfo(uri)
+            if ( userInfo[0].contains(':') ) {
+                def user = userInfo[0].split(':')
+                return [
+                    "--tenant", user[0],
+                    "--user", user[1],
+                    "--password", userInfo[1]
+                ]
+            } else {
+              return [
+                "--client-id", userInfo[0],
+                "--client-secret", userInfo[1],
+              ]
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-package com.fortify.cli.functest.fcli.ssc.app;
+package com.fortify.cli.functest.fcli.ssc;
 
 import static com.fortify.cli.functest.common.spec.FcliSessionType.SSC
 
@@ -9,7 +9,7 @@ import spock.lang.Unroll
 
 @FcliSession(SSC)
 class SSCAppSpec extends BaseFcliSpec {
-    @Unroll("test repeated #i time")
+    @Unroll("fcli.ssc.list (#i)")
     def "ssc.app.list"() {
         expect:
         fcli "ssc", "appversion", "list"
