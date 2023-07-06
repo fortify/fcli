@@ -16,7 +16,7 @@ import java.net.URI;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
-import com.fortify.cli.common.rest.paging.LinkHeaderPagingHelper;
+import com.fortify.cli.common.rest.paging.PagingHelper;
 
 import io.micronaut.http.uri.UriBuilder;
 import kong.unirest.HttpRequest;
@@ -24,7 +24,7 @@ import kong.unirest.PagedList;
 
 public class SCDastPagingHelper {
     public static final PagedList<JsonNode> pagedRequest(HttpRequest<?> request) {
-        return LinkHeaderPagingHelper.pagedRequest(request, nextPageUrlProducer(request));
+        return PagingHelper.pagedRequest(request, nextPageUrlProducer(request));
     }
     public static final INextPageUrlProducer nextPageUrlProducer(HttpRequest<?> originalRequest) {
         return nextPageUrlProducer(originalRequest.getUrl());

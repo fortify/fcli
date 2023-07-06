@@ -60,13 +60,14 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
 	        // as apparently every run adds new headers, eventually resulting
 	        // in Tomcat complaining that more than the maximum number of allowed
 	        // headers were detected
-	        GenericUnirestFactory.shutdown();
+	        //GenericUnirestFactory.shutdown();
 	    }
 	}
 	
 	@Override
 	public void close() {
 	    if ( this.initialized ) {
+	        GenericUnirestFactory.shutdown();
 	        micronautFactory.close();
 	        applicationContext.close();
 	    }

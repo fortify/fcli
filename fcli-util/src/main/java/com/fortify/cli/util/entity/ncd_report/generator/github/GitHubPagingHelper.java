@@ -14,7 +14,8 @@ package com.fortify.cli.util.entity.ncd_report.generator.github;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
-import com.fortify.cli.common.rest.paging.LinkHeaderPagingHelper;
+import com.fortify.cli.common.rest.paging.LinkHeaderNextPageUrlProducerFactory;
+import com.fortify.cli.common.rest.paging.PagingHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.PagedList;
@@ -28,10 +29,10 @@ public class GitHubPagingHelper {
     private GitHubPagingHelper() {}
     
     public static final <R extends JsonNode> PagedList<R> pagedRequest(HttpRequest<?> request, Class<R> returnType) {
-        return LinkHeaderPagingHelper.pagedRequest(request, nextPageUrlProducer(), returnType);
+        return PagingHelper.pagedRequest(request, nextPageUrlProducer(), returnType);
     }
     
     public static final INextPageUrlProducer nextPageUrlProducer() {
-        return LinkHeaderPagingHelper.linkHeaderNextPageUrlProducer("Link", "next");
+        return LinkHeaderNextPageUrlProducerFactory.nextPageUrlProducer("Link", "next");
     }
 }

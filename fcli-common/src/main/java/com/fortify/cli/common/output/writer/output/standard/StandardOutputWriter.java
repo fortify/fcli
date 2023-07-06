@@ -37,7 +37,7 @@ import com.fortify.cli.common.output.writer.record.IRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig.RecordWriterConfigBuilder;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
-import com.fortify.cli.common.rest.paging.LinkHeaderPagingHelper;
+import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.IfFailureHandler;
 import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
@@ -135,7 +135,7 @@ public class StandardOutputWriter implements IOutputWriter {
      * @param nextPageUrlProducer
      */
     private final void writeRecords(IRecordWriter recordWriter, HttpRequest<?> httpRequest, INextPageUrlProducer nextPageUrlProducer) {
-        LinkHeaderPagingHelper.pagedRequest(httpRequest, nextPageUrlProducer)
+        PagingHelper.pagedRequest(httpRequest, nextPageUrlProducer)
             .ifSuccess(r->writeRecords(recordWriter, r))
             .ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
     }
