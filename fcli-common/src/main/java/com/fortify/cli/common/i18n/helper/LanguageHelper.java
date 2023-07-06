@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.util.FcliHomeHelper;
+import com.fortify.cli.common.util.FcliDataHelper;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
@@ -38,15 +38,15 @@ public final class LanguageHelper {
     
     public static final LanguageDescriptor getConfiguredLanguageDescriptor() {
         Path languageConfigPath = getLanguageConfigPath();
-        LanguageConfigDescriptor configDescriptor = !FcliHomeHelper.exists(languageConfigPath) 
+        LanguageConfigDescriptor configDescriptor = !FcliDataHelper.exists(languageConfigPath) 
                 ? new LanguageConfigDescriptor() 
-                : FcliHomeHelper.readFile(languageConfigPath, LanguageConfigDescriptor.class, true);
+                : FcliDataHelper.readFile(languageConfigPath, LanguageConfigDescriptor.class, true);
         return configDescriptor.getLanguageDescriptor();
     }
     
     public static final LanguageDescriptor setConfiguredLanguage(LanguageDescriptor descriptor) {
         Path languageConfigPath = getLanguageConfigPath();
-        FcliHomeHelper.saveFile(languageConfigPath, new LanguageConfigDescriptor(descriptor), true);
+        FcliDataHelper.saveFile(languageConfigPath, new LanguageConfigDescriptor(descriptor), true);
         return descriptor;
     }
     
@@ -55,11 +55,11 @@ public final class LanguageHelper {
     }
     
     public static final void clearLanguageConfig() {
-        FcliHomeHelper.deleteFile(getLanguageConfigPath(), true);
+        FcliDataHelper.deleteFile(getLanguageConfigPath(), true);
     }
     
     private static final Path getLanguageConfigPath() {
-        return FcliHomeHelper.getFcliConfigPath().resolve("i18n/language.json");
+        return FcliDataHelper.getFcliConfigPath().resolve("i18n/language.json");
     }
     
     @Data @EqualsAndHashCode(callSuper = false) 

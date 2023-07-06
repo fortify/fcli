@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fortify.cli.common.util.FcliHomeHelper;
+import com.fortify.cli.common.util.FcliDataHelper;
 
 public final class ToolHelper {
     private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
@@ -36,12 +36,12 @@ public final class ToolHelper {
     
     public static final ToolVersionCombinedDescriptor saveToolVersionInstallDescriptor(String toolName, ToolVersionInstallDescriptor installDescriptor) {
         ToolVersionDownloadDescriptor downloadDescriptor = installDescriptor.getOriginalDownloadDescriptor();
-        FcliHomeHelper.saveFile(getInstallDescriptorPath(toolName, downloadDescriptor.getVersion()), installDescriptor, true);
+        FcliDataHelper.saveFile(getInstallDescriptorPath(toolName, downloadDescriptor.getVersion()), installDescriptor, true);
         return new ToolVersionCombinedDescriptor(toolName, downloadDescriptor, installDescriptor);
     }
     
     public static final ToolVersionInstallDescriptor loadToolVersionInstallDescriptor(String toolName, String version) {
-        return FcliHomeHelper.readFile(getInstallDescriptorPath(toolName, version), ToolVersionInstallDescriptor.class, false);
+        return FcliDataHelper.readFile(getInstallDescriptorPath(toolName, version), ToolVersionInstallDescriptor.class, false);
     }
     
     public static final ToolVersionCombinedDescriptor loadToolVersionCombinedDescriptor(String toolName, String version) {
@@ -50,7 +50,7 @@ public final class ToolHelper {
     }
     
     public static final void deleteToolVersionInstallDescriptor(String toolName, String version) {
-        FcliHomeHelper.deleteFile(getInstallDescriptorPath(toolName, version), true);
+        FcliDataHelper.deleteFile(getInstallDescriptorPath(toolName, version), true);
     }
     
     public static final ToolVersionCombinedDescriptor[] getToolVersionCombinedDescriptors(String toolName) {
@@ -72,6 +72,6 @@ public final class ToolHelper {
     }
     
     private static final Path getInstallDescriptorPath(String toolName, String version) {
-        return FcliHomeHelper.getFcliStatePath().resolve("tools").resolve(toolName).resolve(version);
+        return FcliDataHelper.getFcliStatePath().resolve("tools").resolve(toolName).resolve(version);
     }
 }

@@ -27,7 +27,7 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.util.FcliHomeHelper;
+import com.fortify.cli.common.util.FcliDataHelper;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -45,8 +45,8 @@ public class ConfigClearCommand extends AbstractOutputCommand implements IJsonNo
         requireConfirmation.checkConfirmed();
         ArrayNode result = objectMapper.createArrayNode();
         try {
-            if ( FcliHomeHelper.getFcliConfigPath().toFile().exists() ) {
-                Files.walk(FcliHomeHelper.getFcliConfigPath())
+            if ( FcliDataHelper.getFcliConfigPath().toFile().exists() ) {
+                Files.walk(FcliDataHelper.getFcliConfigPath())
                     .sorted(Comparator.reverseOrder())
                     .map(Path::toFile)
                     .peek(f->addResult(result,f))

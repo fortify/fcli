@@ -35,7 +35,7 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
-import com.fortify.cli.common.util.FcliHomeHelper;
+import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool.common.helper.ToolHelper;
 import com.fortify.cli.tool.common.helper.ToolVersionCombinedDescriptor;
@@ -130,7 +130,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     protected String getInstallDirOrDefault(ToolVersionDownloadDescriptor descriptor) {
         String installDir = getInstallDir();
         if ( StringUtils.isBlank(installDir) ) {
-            installDir = FcliHomeHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", getToolName(), descriptor.getVersion())).toString();
+            installDir = FcliDataHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", getToolName(), descriptor.getVersion())).toString();
         }
         return installDir;
     }

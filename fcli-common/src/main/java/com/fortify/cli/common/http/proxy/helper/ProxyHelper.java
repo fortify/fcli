@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import com.fortify.cli.common.util.FcliHomeHelper;
+import com.fortify.cli.common.util.FcliDataHelper;
 
 import kong.unirest.UnirestInstance;
 
@@ -35,7 +35,7 @@ public final class ProxyHelper {
     
     public static final ProxyDescriptor getProxy(String name) {
         Path proxyConfigPath = getProxyConfigPath(name);
-        if ( !FcliHomeHelper.exists(proxyConfigPath) ) {
+        if ( !FcliDataHelper.exists(proxyConfigPath) ) {
             throw new IllegalArgumentException("No proxy configuration found with name: "+name);
         }
         return getProxy(proxyConfigPath);
@@ -43,24 +43,24 @@ public final class ProxyHelper {
     
     public static final ProxyDescriptor addProxy(ProxyDescriptor descriptor) {
         Path proxyConfigPath = getProxyConfigPath(descriptor);
-        if ( FcliHomeHelper.exists(proxyConfigPath) ) {
+        if ( FcliDataHelper.exists(proxyConfigPath) ) {
             throw new IllegalArgumentException("proxy configuration with name "+descriptor.getName()+" already exists");
         }
-        FcliHomeHelper.saveSecuredFile(proxyConfigPath, descriptor, true);
+        FcliDataHelper.saveSecuredFile(proxyConfigPath, descriptor, true);
         return descriptor;
     }
     
     public static final ProxyDescriptor updateProxy(ProxyDescriptor descriptor) {
-        FcliHomeHelper.saveSecuredFile(getProxyConfigPath(descriptor), descriptor, true);
+        FcliDataHelper.saveSecuredFile(getProxyConfigPath(descriptor), descriptor, true);
         return descriptor;
     }
     
     private static final ProxyDescriptor getProxy(Path proxyDescriptorPath) {
-        return FcliHomeHelper.readSecuredFile(proxyDescriptorPath, ProxyDescriptor.class, true);
+        return FcliDataHelper.readSecuredFile(proxyDescriptorPath, ProxyDescriptor.class, true);
     }
     
     public static final ProxyDescriptor deleteProxy(ProxyDescriptor descriptor) {
-        FcliHomeHelper.deleteFile(getProxyConfigPath(descriptor), true);
+        FcliDataHelper.deleteFile(getProxyConfigPath(descriptor), true);
         return descriptor;
     }
     
@@ -70,13 +70,13 @@ public final class ProxyHelper {
     }
     
     public static final Stream<ProxyDescriptor> getProxiesStream() {
-        return FcliHomeHelper.exists(getProxiesConfigPath())
-                ? FcliHomeHelper.listFilesInDir(getProxiesConfigPath(), true).map(ProxyHelper::getProxy)
+        return FcliDataHelper.exists(getProxiesConfigPath())
+                ? FcliDataHelper.listFilesInDir(getProxiesConfigPath(), true).map(ProxyHelper::getProxy)
                 : Stream.empty();
     }
     
     private static final Path getProxiesConfigPath() {
-        return FcliHomeHelper.getFcliConfigPath().resolve("proxies");
+        return FcliDataHelper.getFcliConfigPath().resolve("proxies");
     }
     
     private static final Path getProxyConfigPath(ProxyDescriptor descriptor) {

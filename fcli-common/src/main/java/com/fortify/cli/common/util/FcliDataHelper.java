@@ -32,7 +32,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.json.JsonHelper;
 
-public class FcliHomeHelper {
+public class FcliDataHelper {
     private static final String ENVNAME_FORTIFY_DATA_DIR     = "FORTIFY_DATA_DIR";
     private static final String ENVNAME_FCLI_DATA_DIR        = "FCLI_DATA_DIR";
     private static final String ENVNAME_FCLI_CONFIG_DIR      = "FCLI_CONFIG_DIR";
@@ -41,7 +41,7 @@ public class FcliHomeHelper {
     private static final String DEFAULT_FCLI_DIR_NAME        = "fcli";
     private static final String DEFAULT_FCLI_CONFIG_DIR_NAME = "config";
     private static final String DEFAULT_FCLI_STATE_DIR_NAME  = "state";
-    private static final Logger LOG = LoggerFactory.getLogger(FcliHomeHelper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FcliDataHelper.class);
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     
     public static final Path getFortifyHomePath() {
