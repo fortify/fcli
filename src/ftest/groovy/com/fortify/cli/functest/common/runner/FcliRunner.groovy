@@ -1,14 +1,21 @@
 package com.fortify.cli.functest.common.runner;
 
+import java.nio.file.Files
+import java.nio.file.Path
+
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 
 @CompileStatic
 public class FcliRunner {
+    private static Path fcliDataDir;
     private static IRunner runner
     
     static void initialize() {
         System.setProperty("picocli.ansi", "false")
+        fcliDataDir = Files.createTempDirectory("fcli").toAbsolutePath()
+        System.setProperty("fcli.env.FORTIFY_DATA_DIR", fcliDataDir.toString())
+        println("Using fcli data directory "+fcliDataDir)
         runner = createRunner()
     }
     
@@ -27,6 +34,19 @@ public class FcliRunner {
     static void close() {
         if ( runner ) { 
             runner.close()
+        }
+        try {
+            Files.walk(fcliDataDir)
+                .sorted(Comparator.reverseOrder())
+                .map(Path.&toFile)
+                .forEach(File.&delete); // For some reason this throws an exception on the
+                                        // top-level directory, but the full directory tree
+                                        // is being deleted anyway. As such, we just swallow
+                                        // any exceptions, and print an error if the directory 
+                                        // still exists afterwards. 
+        } catch ( IOException e ) {}
+        if ( fcliDataDir.toFile().exists() ) {
+            println "Error deleting directory "+fcliDataDir+", please clean up manually";
         }
     }
     
