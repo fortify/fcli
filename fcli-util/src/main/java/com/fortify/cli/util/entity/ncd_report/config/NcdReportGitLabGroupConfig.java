@@ -14,9 +14,11 @@ package com.fortify.cli.util.entity.ncd_report.config;
 
 import java.util.Optional;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 /**
  * This GitLab-specific configuration class holds a group id to be processed, 
@@ -26,7 +28,8 @@ import lombok.EqualsAndHashCode;
  * @author rsenden
  *
  */
-@ReflectiveAccess @Data @EqualsAndHashCode(callSuper = true)
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper = true)
 public class NcdReportGitLabGroupConfig extends AbstractNcdReportRepoSelectorConfig {
     private String id;
     private Optional<Boolean> includeSubgroups = Optional.empty();

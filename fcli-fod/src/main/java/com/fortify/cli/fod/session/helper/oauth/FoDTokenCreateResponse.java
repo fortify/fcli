@@ -17,11 +17,13 @@ import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.formkiq.graalvm.annotations.Reflectable;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @JsonIgnoreProperties(ignoreUnknown = true)
+@Reflectable @NoArgsConstructor 
 public final class FoDTokenCreateResponse {
     @JsonProperty("access_token") private String accessToken;
     @JsonProperty("expires_at") private long expiresAt;

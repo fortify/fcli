@@ -16,11 +16,12 @@ import java.time.LocalDate;
 import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.report.config.IReportSourceSupplierConfig;
 import com.fortify.cli.util.entity.msp_report.collector.MspReportResultsCollector;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Top-level configuration class defining TODO
@@ -28,7 +29,8 @@ import lombok.Data;
  * @author rsenden
  *
  */
-@ReflectiveAccess @Data
+@Reflectable @NoArgsConstructor 
+@Data
 public class MspReportConfig implements IReportSourceSupplierConfig<MspReportResultsCollector> {
     private String mspName;
     private LocalDate contractStartDate;

@@ -18,9 +18,6 @@ import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner.FortifyCLIIni
 import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
 import com.fortify.cli.common.i18n.helper.LanguageHelper;
 
-import jakarta.inject.Singleton;
-
-@Singleton
 public class LanguageInitializer implements IFortifyCLIInitializer {
     @Override
     public void initializeFortifyCLI(FortifyCLIInitializerCommand cmd) {

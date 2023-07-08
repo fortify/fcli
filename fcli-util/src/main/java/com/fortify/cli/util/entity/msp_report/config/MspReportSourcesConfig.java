@@ -16,8 +16,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * This class holds the various source-specific source configurations,
@@ -25,7 +27,8 @@ import lombok.Data;
  * @author rsenden
  *
  */
-@ReflectiveAccess @Data
+@Reflectable @NoArgsConstructor 
+@Data
 public class MspReportSourcesConfig {
     private MspReportSSCSourceConfig[] ssc;
     

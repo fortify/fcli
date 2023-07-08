@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.util.entity.msp_report.generator.ssc.MspReportSSCArtifactDescriptor.MspReportSSCArtifactScanDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -29,7 +28,7 @@ import lombok.EqualsAndHashCode;
  * @author rsenden
  *
  */
-@ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
+@Data @EqualsAndHashCode(callSuper = false)
 public final class MspReportSSCScanDescriptor extends JsonNodeHolder {
     private final String artifactId;
     private final LocalDateTime artifactUploadDate;

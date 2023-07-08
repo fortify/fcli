@@ -14,21 +14,21 @@ package com.fortify.cli.common.session.helper;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfigSupplier;
 import com.fortify.cli.common.rest.unirest.config.UrlConfig;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Data @EqualsAndHashCode(callSuper = true) @ToString(callSuper = true) @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @EqualsAndHashCode(callSuper = true) @ToString(callSuper = true) 
+@Reflectable @NoArgsConstructor 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractSessionDescriptorWithSingleUrlConfig extends AbstractSessionDescriptor implements ISessionDescriptor, IUrlConfigSupplier {
     @JsonDeserialize(as = UrlConfig.class) private IUrlConfig urlConfig;
-    
-    // No-arg constructor required for Jackson deserialization
-    protected AbstractSessionDescriptorWithSingleUrlConfig() {}
     
     public AbstractSessionDescriptorWithSingleUrlConfig(IUrlConfig urlConfig) {
         this.urlConfig = urlConfig;

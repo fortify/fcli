@@ -14,10 +14,9 @@ package com.fortify.cli.ssc.entity.appversion.helper;
 
 import javax.validation.ValidationException;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 
-@Data @ReflectiveAccess
+@Data
 public final class SSCAppAndVersionNameDescriptor {
     private final String appName, versionName;
     

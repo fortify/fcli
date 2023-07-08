@@ -16,10 +16,10 @@ import java.net.URI;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.util.StringUtils;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,7 +27,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data @EqualsAndHashCode(callSuper = false) 
-@Builder @NoArgsConstructor @AllArgsConstructor @ReflectiveAccess
+@Builder
+@Reflectable @NoArgsConstructor @AllArgsConstructor 
 public class ProxyDescriptor extends JsonNodeHolder {
     private String name;
     private int priority;

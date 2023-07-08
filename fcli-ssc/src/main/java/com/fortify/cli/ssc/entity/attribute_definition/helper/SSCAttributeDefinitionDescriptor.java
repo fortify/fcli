@@ -19,16 +19,17 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.ssc.entity.attribute_definition.domain.SSCAttributeDefinitionType;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-@ReflectiveAccess
+@Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=true)
 public class SSCAttributeDefinitionDescriptor extends JsonNodeHolder {
     private String id;

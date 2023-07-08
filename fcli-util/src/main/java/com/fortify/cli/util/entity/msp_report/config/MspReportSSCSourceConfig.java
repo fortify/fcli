@@ -12,13 +12,14 @@
  *******************************************************************************/
 package com.fortify.cli.util.entity.msp_report.config;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.report.generator.IReportResultsGenerator;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.util.entity.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.util.entity.msp_report.generator.ssc.MspReportSSCResultsGenerator;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * This SSC-specific configuration class defines an SSC source configuration,
@@ -27,7 +28,8 @@ import lombok.Data;
  * 
  * @author rsenden
  */
-@ReflectiveAccess @Data
+@Reflectable @NoArgsConstructor 
+@Data
 public class MspReportSSCSourceConfig implements IMspReportSourceConfig, IUrlConfig {
     private String baseUrl;
     private String tokenExpression;

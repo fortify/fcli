@@ -13,11 +13,11 @@
 
 package com.fortify.cli.fod.entity.release.cli.cmd;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.entity.microservice.helper.FoDAppMicroserviceDescriptor;
 import com.fortify.cli.fod.entity.microservice.helper.FoDAppMicroserviceHelper;
@@ -27,10 +27,8 @@ import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelUpdateRequest;
 import com.fortify.cli.fod.output.cli.AbstractFoDJsonNodeOutputCommand;
 
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
@@ -73,9 +71,9 @@ public class FoDAppRelUpdateCommand extends AbstractFoDJsonNodeOutputCommand imp
         FoDSdlcStatusTypeOptions.FoDSdlcStatusType sdlcStatusTypeNew = sdlcStatus.getSdlcStatusType();
 
         FoDAppRelUpdateRequest appRelUpdateRequest = new FoDAppRelUpdateRequest()
-                .setReleaseName(releaseName != null && StringUtils.isNotEmpty(releaseName) ? releaseName : appRelDescriptor.getReleaseName())
-                .setReleaseDescription(description != null && StringUtils.isNotEmpty(description) ? description : appRelDescriptor.getReleaseDescription())
-                .setOwnerId(releaseOwner != null && StringUtils.isNotEmpty(releaseOwner) ? Integer.valueOf(releaseOwner) : appRelDescriptor.getOwnerId())
+                .setReleaseName(releaseName != null && StringUtils.isNotBlank(releaseName) ? releaseName : appRelDescriptor.getReleaseName())
+                .setReleaseDescription(description != null && StringUtils.isNotBlank(description) ? description : appRelDescriptor.getReleaseDescription())
+                .setOwnerId(releaseOwner != null && StringUtils.isNotBlank(releaseOwner) ? Integer.valueOf(releaseOwner) : appRelDescriptor.getOwnerId())
                 .setMicroserviceId(microServiceId)
                 .setSdlcStatusType(sdlcStatusTypeNew != null ? String.valueOf(sdlcStatusTypeNew) : appRelDescriptor.getSdlcStatusType());
 

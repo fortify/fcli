@@ -21,8 +21,8 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
+import com.fortify.cli.common.util.StringUtils;
 
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -75,7 +75,7 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     }
     
     protected final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
-        if ( StringUtils.isEmpty(uri) ) {
+        if ( StringUtils.isBlank(uri) ) {
             throw new IllegalArgumentException("Uri must be specified");
         }
         var request = unirest.request(httpMethod, uri);

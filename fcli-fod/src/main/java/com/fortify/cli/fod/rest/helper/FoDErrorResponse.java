@@ -14,15 +14,15 @@ package com.fortify.cli.fod.rest.helper;
 
 import java.util.ArrayList;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper=false)
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper=false)
 public class FoDErrorResponse extends JsonNodeHolder {
     ArrayList<FoDError> errors;
     @Data

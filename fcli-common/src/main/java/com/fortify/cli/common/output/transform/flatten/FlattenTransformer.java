@@ -23,8 +23,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.AbstractJsonNodeTransformer;
+import com.fortify.cli.common.util.StringUtils;
 
-import io.micronaut.core.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 
 public class FlattenTransformer extends AbstractJsonNodeTransformer {
@@ -95,13 +95,13 @@ public class FlattenTransformer extends AbstractJsonNodeTransformer {
         }
 
         private String getPrefix(String prefix, String key) {
-            return StringUtils.isEmpty(prefix) 
+            return StringUtils.isBlank(prefix) 
                     ? key
                     : (prefix + separator + key);
         }
         
         private String getPrefix(String prefix, int count) {
-            return StringUtils.isEmpty(prefix) 
+            return StringUtils.isBlank(prefix) 
                     ? String.valueOf(count)
                     : (prefix + separator + count);
         }

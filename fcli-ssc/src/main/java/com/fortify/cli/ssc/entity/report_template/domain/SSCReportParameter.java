@@ -14,11 +14,12 @@ package com.fortify.cli.ssc.entity.report_template.domain;
 
 import java.util.ArrayList;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.formkiq.graalvm.annotations.Reflectable;
 
-@ReflectiveAccess
+import lombok.NoArgsConstructor;
+
+@Reflectable @NoArgsConstructor
 public class SSCReportParameter {
-    public SSCReportParameter(){}
     public int index;
     public String name;
     public String description;

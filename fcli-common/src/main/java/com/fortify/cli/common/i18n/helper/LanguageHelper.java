@@ -16,10 +16,10 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.util.FcliDataHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -63,7 +63,7 @@ public final class LanguageHelper {
     }
     
     @Data @EqualsAndHashCode(callSuper = false) 
-    @NoArgsConstructor @AllArgsConstructor @ReflectiveAccess
+    @Reflectable @NoArgsConstructor @AllArgsConstructor
     private static final class LanguageConfigDescriptor extends JsonNodeHolder {
         private String language = "en";
         

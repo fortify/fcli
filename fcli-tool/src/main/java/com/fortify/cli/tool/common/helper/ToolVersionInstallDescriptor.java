@@ -16,12 +16,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.formkiq.graalvm.annotations.Reflectable;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@ReflectiveAccess @Data @NoArgsConstructor
+@Reflectable @NoArgsConstructor 
+@Data
 public class ToolVersionInstallDescriptor {
     private ToolVersionDownloadDescriptor originalDownloadDescriptor;
     private String installDir;

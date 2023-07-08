@@ -12,7 +12,11 @@
  *******************************************************************************/
 package com.fortify.cli.fod.entity.app.attr.cli.helper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import javax.validation.ValidationException;
 
@@ -22,7 +26,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.fod.entity.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
 
 import kong.unirest.GetRequest;

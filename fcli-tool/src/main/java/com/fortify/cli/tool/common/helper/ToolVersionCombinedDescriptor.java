@@ -20,10 +20,9 @@ import java.util.function.Function;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fortify.cli.common.util.StringUtils;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 
-@ReflectiveAccess @Data
+@Data
 public class ToolVersionCombinedDescriptor {
     private final String name;
     @JsonIgnore private final ToolVersionDownloadDescriptor downloadDescriptor;

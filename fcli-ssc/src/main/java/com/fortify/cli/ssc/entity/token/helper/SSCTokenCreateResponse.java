@@ -15,14 +15,18 @@ package com.fortify.cli.ssc.entity.token.helper;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.formkiq.graalvm.annotations.Reflectable;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Data @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+@Data
+@Reflectable @NoArgsConstructor 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public final class SSCTokenCreateResponse {
     private SSCTokenCreateResponse.SSCTokenData data;
-    @Data @ReflectiveAccess
+    @Data 
+    @Reflectable @NoArgsConstructor
     public static final class SSCTokenData {
         private String id;
         private Date terminalDate;

@@ -12,13 +12,14 @@
  *******************************************************************************/
 package com.fortify.cli.fod.entity.user.helper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@ReflectiveAccess
-@Getter
-@ToString
+@Reflectable @NoArgsConstructor
+@Getter @ToString
 public class FoDUserAppAccessRequest {
     private Integer applicationId;
 

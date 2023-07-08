@@ -16,6 +16,7 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
 import com.fortify.cli.common.session.helper.AbstractSessionDescriptorWithSingleUrlConfig;
@@ -26,16 +27,15 @@ import com.fortify.cli.ssc.entity.token.helper.SSCTokenCreateResponse;
 import com.fortify.cli.ssc.entity.token.helper.SSCTokenCreateResponse.SSCTokenData;
 import com.fortify.cli.ssc.entity.token.helper.SSCTokenHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@Data @EqualsAndHashCode(callSuper = true)  @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @EqualsAndHashCode(callSuper = true) @JsonIgnoreProperties(ignoreUnknown = true)
+@Reflectable @NoArgsConstructor
 public class SSCSessionDescriptor extends AbstractSessionDescriptorWithSingleUrlConfig {
     private char[] predefinedToken;
     private SSCTokenCreateResponse cachedTokenResponse;
-    
-    protected SSCSessionDescriptor() {}
     
     public SSCSessionDescriptor(IUrlConfig urlConfig, ISSCCredentialsConfig credentialsConfig) {
         super(urlConfig);

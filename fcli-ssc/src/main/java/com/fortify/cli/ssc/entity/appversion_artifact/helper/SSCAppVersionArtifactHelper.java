@@ -20,10 +20,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc.rest.SSCUrls;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -82,12 +82,14 @@ public final class SSCAppVersionArtifactHelper {
         );
     }
     
-    @Data @ReflectiveAccess @AllArgsConstructor
+    @Data 
+    @Reflectable @NoArgsConstructor @AllArgsConstructor
     private static final class SSCAppVersionArtifactPurgeByIdRequest {
         private String[] artifactIds;
     }
     
-    @Data @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
+    @Data @Builder
+    @Reflectable @NoArgsConstructor @AllArgsConstructor
     public static final class SSCAppVersionArtifactPurgeByDateRequest {
         private String[] projectVersionIds;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") 

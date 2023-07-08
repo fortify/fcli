@@ -12,15 +12,15 @@
  *******************************************************************************/
 package com.fortify.cli.fod.entity.lookup.helper;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper = true)
 public class FoDLookupDescriptor extends JsonNodeHolder {
     private String value;
     private String text;

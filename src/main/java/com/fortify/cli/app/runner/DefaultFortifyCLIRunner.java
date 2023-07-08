@@ -14,27 +14,19 @@ package com.fortify.cli.app.runner;
 
 import com.fortify.cli.app._main.cli.cmd.FCLIRootCommands;
 import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
-import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
-import io.micronaut.configuration.picocli.MicronautFactory;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
 import picocli.CommandLine;
 
 public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
     private boolean initialized = false;
-	private ApplicationContext applicationContext;
-	private MicronautFactory micronautFactory;
 	private CommandLine commandLine;
 	
 	private synchronized void initialize(String[] args) {
 	    if ( !initialized ) {
-	        this.applicationContext = ApplicationContext.builder(DefaultFortifyCLIRunner.class, Environment.CLI).start();
-	        this.micronautFactory = new MicronautFactory(applicationContext);
-	        FortifyCLIInitializerRunner.initialize(args, micronautFactory);
-	        this.commandLine = new CommandLine(FCLIRootCommands.class, micronautFactory);
+	        //FortifyCLIInitializerRunner.initialize(args);
+	        this.commandLine = new CommandLine(FCLIRootCommands.class);
 	        this.commandLine = commandLine.setParameterExceptionHandler(new I18nParameterExceptionHandler(commandLine.getParameterExceptionHandler()));
 	        this.initialized = true;
 	    }
@@ -60,8 +52,6 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
 	public void close() {
 	    if ( this.initialized ) {
 	        GenericUnirestFactory.shutdown();
-	        micronautFactory.close();
-	        applicationContext.close();
 	    }
 	}
 }

@@ -2,11 +2,12 @@ plugins {
     id('com.github.jk1.dependency-license-report') version '2.1'
     id "org.kordamp.gradle.markdown" version "2.2.0"
     id("com.github.johnrengelman.shadow") version "8.1.0"
-    id("io.micronaut.application") version "3.7.5" apply false
-    id("io.micronaut.library") version "3.7.5" apply false
+    //id("io.micronaut.application") version "3.7.5" apply false
+    //id("io.micronaut.library") version "3.7.5" apply false
     id 'eclipse'
     id "com.github.ben-manes.versions" version "0.46.0"
     id "org.asciidoctor.jvm.convert" version "3.3.2"
+    id "io.freefair.lombok" version "8.1.0"
 }
 
 group = "com.fortify.cli"
@@ -21,13 +22,6 @@ ext {
 	releaseAssetsDir = layout.buildDirectory.dir("dist/release-assets")
 }
 version = ext.getVersion();
-
-// Apply micronaut plugins for root project and subprojects
-apply plugin: "io.micronaut.application"
-subprojects {
-    apply plugin: "io.micronaut.library"
-    apply plugin: 'eclipse'
-}
 
 // Enable Spock-based functional tests. Note that all functional tests
 // are supposed to be in the root fcli project.
@@ -65,8 +59,12 @@ testing {
     }
 }
 
-
-allprojects {
+// Replace with allprojects once patch module can be removed
+configure(allprojects.findAll {it.name != 'graalvm-annotations-processor-patch'}) {
+    apply plugin: "java"
+    apply plugin: "io.freefair.lombok"
+    apply plugin: 'eclipse'
+    
 	// Define Java version
     java {
         sourceCompatibility = JavaVersion.toVersion("17")
@@ -76,15 +74,6 @@ allprojects {
     // Define Maven Central repository
     repositories {
         mavenCentral()
-    }
-    
-    // Define Micronaut properties
-    micronaut {
-        testRuntime("junit5")
-        processing {
-            incremental(true)
-            annotations("com.fortify.cli.*")
-        }
     }
     
     ext {
@@ -100,29 +89,18 @@ allprojects {
 
 	// Global dependencies for all modules
     dependencies {
-        // Lombok dependency & annotation processor.
-        // We also allow Lombok annotations in test classes;
-        // for now this is only used by fcli-util.
-        compileOnly 'org.projectlombok:lombok:1.18.26'
-        annotationProcessor 'org.projectlombok:lombok:1.18.26'
-        testCompileOnly 'org.projectlombok:lombok:1.18.26'
-        testAnnotationProcessor 'org.projectlombok:lombok:1.18.26'
-        
         // TODO Re-enable when removing patched picocli classes from fcli-common
         //implementation("info.picocli:picocli:4.7.1")
         annotationProcessor("info.picocli:picocli-codegen:4.7.1")
         
-        implementation("org.fusesource.jansi:jansi:2.4.0");     
-
-        annotationProcessor("io.micronaut:micronaut-inject-java:${micronautVersion}")
-        annotationProcessor("io.micronaut:micronaut-graal:${micronautVersion}")
-
-        // Micronaut dependencies
-        implementation("io.micronaut:micronaut-runtime:${micronautVersion}")
-        implementation("io.micronaut.picocli:micronaut-picocli:4.3.0") {
-            exclude group: 'info.picocli'
-        }
-        implementation("javax.annotation:javax.annotation-api")
+        // Generate GraalVM reflect-config.json using annotations
+        implementation('com.formkiq:graalvm-annotations:1.2.0')
+        //annotationProcessor 'com.formkiq:graalvm-annotations-processor:1.4.0'
+        // TODO Remove once patch is available for 
+        // https://github.com/formkiq/graalvm-annotations-processor/issues/9
+        annotationProcessor project(':graalvm-annotations-processor-patch')
+        
+        implementation("org.fusesource.jansi:jansi:2.4.0");
 
         // Logback dependency to allow us to configure logging programmatically
         implementation("ch.qos.logback:logback-classic:1.4.6")
@@ -145,8 +123,12 @@ allprojects {
         implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.14.2')
         implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.2")
         implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.2")
+        implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.14.2'
         implementation('hu.webarticum:tree-printer:3.1.0')
         implementation('com.github.freva:ascii-table:1.8.0')
+        
+        implementation 'javax.validation:validation-api:2.0.1.Final'
+        
         
         // Encryption library
         implementation('org.jasypt:jasypt:1.9.3:lite')
@@ -199,7 +181,8 @@ allprojects {
 }
 
 // Add fcli-common dependency to all modules except fcli-common itself
-configure(allprojects.findAll {it.name != 'fcli-common'}) {
+// TODO Remove graalvm-annotations-processor-patch condition once patched
+configure(allprojects.findAll {it.name != 'fcli-common' && it.name != 'graalvm-annotations-processor-patch'}) {
     dependencies {
         implementation project(':fcli-common')
     }
@@ -222,7 +205,7 @@ dependencies {
     runtimeOnly('org.slf4j:jcl-over-slf4j:2.0.6')
 
     // GraalVM dependency
-    compileOnly("org.graalvm.nativeimage:svm")
+    compileOnly("org.graalvm.nativeimage:svm:22.3.2")
 }
 
 // Apply shared gradle helpers
@@ -268,6 +251,7 @@ task generatePicocliReflectConfig(type: JavaExec) {
 }
 
 // Generate shadow jar
+apply plugin: 'application'
 application {
     mainClass.set(mainClassName)
 }

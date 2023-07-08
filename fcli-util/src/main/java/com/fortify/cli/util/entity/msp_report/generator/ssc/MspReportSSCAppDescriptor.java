@@ -23,16 +23,18 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.report.logger.IReportLogger;
 import com.fortify.cli.common.util.Counter;
 
 import io.micrometer.common.util.StringUtils;
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
+@Reflectable @NoArgsConstructor 
+@Data @EqualsAndHashCode(callSuper = false)
 public class MspReportSSCAppDescriptor extends JsonNodeHolder {
     private String id;
     private String name;

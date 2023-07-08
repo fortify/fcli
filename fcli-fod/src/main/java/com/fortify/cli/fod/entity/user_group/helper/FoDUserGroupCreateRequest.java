@@ -13,15 +13,15 @@
 package com.fortify.cli.fod.entity.user_group.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 //TODO Consider using @Builder instead of manual setters
-@ReflectiveAccess
-@Getter
-@ToString
+@Reflectable @NoArgsConstructor
+@Getter @ToString
 public class FoDUserGroupCreateRequest {
     private String name;
     private Boolean addAllUsers = false;

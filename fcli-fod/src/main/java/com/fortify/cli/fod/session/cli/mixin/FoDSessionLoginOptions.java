@@ -16,10 +16,10 @@ import java.util.Optional;
 
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.session.helper.oauth.IFoDClientCredentials;
 import com.fortify.cli.fod.session.helper.oauth.IFoDUserCredentials;
 
-import io.micronaut.core.util.StringUtils;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
@@ -70,15 +70,15 @@ public class FoDSessionLoginOptions {
     public final boolean hasUserCredentialsConfig() {
         FoDUserCredentialOptions userCredentialOptions = getUserCredentialOptions();
         return userCredentialOptions!=null 
-                && StringUtils.isNotEmpty(userCredentialOptions.getTenant())
-                && StringUtils.isNotEmpty(userCredentialOptions.getUser())
+                && StringUtils.isNotBlank(userCredentialOptions.getTenant())
+                && StringUtils.isNotBlank(userCredentialOptions.getUser())
                 && userCredentialOptions.getPassword()!=null;
     }
     
     public final boolean hasClientCredentials() {
         FoDClientCredentialOptions clientCredentialOptions = getClientCredentialOptions();
         return clientCredentialOptions!=null
-                && StringUtils.isNotEmpty(clientCredentialOptions.getClientId())
-                && StringUtils.isNotEmpty(clientCredentialOptions.getClientSecret());
+                && StringUtils.isNotBlank(clientCredentialOptions.getClientId())
+                && StringUtils.isNotBlank(clientCredentialOptions.getClientSecret());
     }
 }

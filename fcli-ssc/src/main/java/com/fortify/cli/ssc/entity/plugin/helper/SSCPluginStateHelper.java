@@ -13,12 +13,13 @@
 package com.fortify.cli.ssc.entity.plugin.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.ssc.rest.SSCUrls;
 import com.fortify.cli.ssc.rest.bulk.SSCBulkRequestBuilder;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 public final class SSCPluginStateHelper {
     public static final JsonNode enablePlugin(UnirestInstance unirest, String pluginId) {
@@ -37,9 +38,10 @@ public final class SSCPluginStateHelper {
             .body("pluginData");
     }
     
-    @Data @ReflectiveAccess
+    @Data 
+    @Reflectable @NoArgsConstructor
     private static final class PluginIdsData {
-        private final int[] pluginIds;
+        private int[] pluginIds = {};
         
         // Even though SSC expects an array of plugin id's, it only accepts a single plugin id
         private PluginIdsData(String pluginId) {

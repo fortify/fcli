@@ -13,12 +13,14 @@
 package com.fortify.cli.tool.common.helper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.util.StringUtils;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@ReflectiveAccess @Data
+@Reflectable @NoArgsConstructor 
+@Data
 public final class ToolVersionDownloadDescriptor {
     private String version;
     private String downloadUrl;

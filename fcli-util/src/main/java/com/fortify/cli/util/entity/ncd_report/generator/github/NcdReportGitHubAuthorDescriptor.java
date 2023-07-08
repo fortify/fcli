@@ -14,20 +14,22 @@ package com.fortify.cli.util.entity.ncd_report.generator.github;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.util.entity.ncd_report.descriptor.INcdReportAuthorDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 /**
  * GitHub-specific implementation of {@link INcdReportAuthorDescriptor}.
  * 
  * @author rsenden
  */
-@ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper = false)
 public class NcdReportGitHubAuthorDescriptor extends JsonNodeHolder implements INcdReportAuthorDescriptor {
     private String name;
     private String email;

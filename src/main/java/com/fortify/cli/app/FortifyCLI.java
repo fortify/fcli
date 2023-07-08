@@ -12,19 +12,11 @@
  *******************************************************************************/
 package com.fortify.cli.app;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-
 import org.graalvm.nativeimage.hosted.Feature;
 import org.jasypt.normalization.Normalizer;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.app.runner.DefaultFortifyCLIRunner;
 import com.oracle.svm.core.annotate.AutomaticFeature;
-
-import io.micronaut.core.annotation.TypeHint;
 
 /**
  * <p>This class provides the {@link #main(String[])} entrypoint into the application,
@@ -79,31 +71,6 @@ public class FortifyCLI {
     	}
     }
     
-/**
- * Register classes for runtime reflection in GraalVM native images. The
- * {@link TypeHint} annotation is used to generate reflect-config.json 
- * for some standard Java data classes on which we may want to reflectively 
- * invoke methods from SpEL expressions. Alternatively, we could look into 
- * creating a custom MethodResolver that covers all of these classes and 
- * potentially doesn't require reflective access.
- */
- @TypeHint(
-         value = {
-             Boolean.class,
-             Double.class,
-             Float.class,
-             Integer.class,
-             Long.class,
-             Short.class,
-             String.class,
-             ObjectNode.class,
-             ArrayNode.class,
-             ArrayList.class,
-             LinkedHashMap.class,
-             HashSet.class
-         },
-         accessType = TypeHint.AccessType.ALL_PUBLIC_METHODS
-     )
     @AutomaticFeature
     public static final class RuntimeReflectionRegistrationFeature implements Feature {
         public void beforeAnalysis(BeforeAnalysisAccess access) {

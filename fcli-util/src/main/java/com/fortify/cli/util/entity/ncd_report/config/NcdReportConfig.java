@@ -16,13 +16,14 @@ import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Optional;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.report.config.IReportSourceSupplierConfig;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.util.entity.ncd_report.collector.NcdReportResultsCollector;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Top-level configuration class defining report sources and contributor settings.
@@ -30,7 +31,8 @@ import lombok.Data;
  * @author rsenden
  *
  */
-@ReflectiveAccess @Data
+@Reflectable @NoArgsConstructor 
+@Data
 public class NcdReportConfig implements IReportSourceSupplierConfig<NcdReportResultsCollector> {
     private static final DateTimePeriodHelper PERIOD_HELPER = new DateTimePeriodHelper(Period.DAYS);
     private NcdReportSourcesConfig sources;

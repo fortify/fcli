@@ -28,8 +28,8 @@ import com.fortify.cli.ssc.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc.rest.helper.SSCPagingHelper;
 import com.fortify.cli.ssc.rest.helper.SSCPagingHelper.SSCContinueNextPageSupplier;
 import com.fortify.cli.util.entity.msp_report.collector.MspReportAppScanCollector;
-import com.fortify.cli.util.entity.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.util.entity.msp_report.collector.MspReportAppScanCollector.MspReportScanCollectorState;
+import com.fortify.cli.util.entity.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.util.entity.msp_report.config.MspReportSSCSourceConfig;
 import com.fortify.cli.util.entity.msp_report.generator.AbstractMspReportUnirestResultsGenerator;
 

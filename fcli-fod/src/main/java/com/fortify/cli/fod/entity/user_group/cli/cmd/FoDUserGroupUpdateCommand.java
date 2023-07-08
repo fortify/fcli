@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.entity.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.entity.user.helper.FoDUserHelper;
 import com.fortify.cli.fod.entity.user_group.cli.mixin.FoDUserGroupResolverMixin;
@@ -26,7 +27,6 @@ import com.fortify.cli.fod.entity.user_group.helper.FoDUserGroupHelper;
 import com.fortify.cli.fod.entity.user_group.helper.FoDUserGroupUpdateRequest;
 import com.fortify.cli.fod.output.cli.AbstractFoDJsonNodeOutputCommand;
 
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -60,7 +60,7 @@ public class FoDUserGroupUpdateCommand extends AbstractFoDJsonNodeOutputCommand 
 
         FoDUserGroupDescriptor userGroupDescriptor = userGroupResolver.getUserGroupDescriptor(unirest);
         FoDUserGroupUpdateRequest userGroupUpdateRequest = new FoDUserGroupUpdateRequest()
-                .setName(newName != null && StringUtils.isNotEmpty(newName) ? newName : userGroupDescriptor.getName())
+                .setName(StringUtils.isNotBlank(newName) ? newName : userGroupDescriptor.getName())
                 .setAddAllUsers(addAllUsers)
                 .setRemoveAllUsers(removeAllUsers);
 

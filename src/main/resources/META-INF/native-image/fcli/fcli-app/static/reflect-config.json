@@ -71,4 +71,35 @@
 },{
   "name" : "com.fasterxml.jackson.databind.node.TextNode",
   "allPublicMethods" : true
-}]
+},{
+  "name" : "java.lang.Boolean",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Double",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Float",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Integer",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Long",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Short",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.String",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.ArrayList",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.LinkedHashMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.HashSet",
+  "allPublicMethods" : true
+}
+]

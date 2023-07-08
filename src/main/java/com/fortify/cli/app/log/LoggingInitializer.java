@@ -27,7 +27,6 @@ import ch.qos.logback.classic.layout.TTLLLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
-import jakarta.inject.Singleton;
 import picocli.CommandLine;
 
 /**
@@ -42,7 +41,6 @@ import picocli.CommandLine;
  * 
  * @author Ruud Senden
  */
-@Singleton
 public class LoggingInitializer implements IFortifyCLIInitializer {
     @Override
     public void initializeFortifyCLI(FortifyCLIInitializerCommand cmd) {

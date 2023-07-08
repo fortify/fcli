@@ -18,9 +18,6 @@ import java.util.stream.Stream;
 import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner.FortifyCLIInitializerCommand;
 import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
 
-import jakarta.inject.Singleton;
-
-@Singleton
 public class FoDScanStateStatePropertiesInitializer implements IFortifyCLIInitializer {
     @Override
     public void initializeFortifyCLI(FortifyCLIInitializerCommand cmd) {

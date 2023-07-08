@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.rest.unirest.config.IUserCredentialsConfig;
@@ -37,19 +38,18 @@ import com.fortify.cli.ssc.entity.token.helper.SSCTokenHelper;
 import com.fortify.cli.ssc.session.helper.ISSCCredentialsConfig;
 import com.fortify.cli.ssc.session.helper.ISSCUserCredentialsConfig;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@Data @EqualsAndHashCode(callSuper = true)  @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @EqualsAndHashCode(callSuper = true) @JsonIgnoreProperties(ignoreUnknown = true)
+@Reflectable @NoArgsConstructor 
 public class SCDastSessionDescriptor extends AbstractSessionDescriptor {
     @JsonDeserialize(as = UrlConfig.class) private IUrlConfig sscUrlConfig;
     @JsonDeserialize(as = UrlConfig.class) private IUrlConfig scDastUrlConfig;
     private char[] predefinedToken;
     private SSCTokenCreateResponse cachedTokenResponse;
-    
-    protected SCDastSessionDescriptor() {}
     
     public SCDastSessionDescriptor(IUrlConfig sscUrlConfig, ISSCCredentialsConfig credentialsConfig) {
         this(sscUrlConfig, null, credentialsConfig);

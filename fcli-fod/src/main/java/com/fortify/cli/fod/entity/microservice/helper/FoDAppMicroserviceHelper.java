@@ -13,6 +13,10 @@
 
 package com.fortify.cli.fod.entity.microservice.helper;
 
+import static com.fortify.cli.fod.entity.app.helper.FoDAppHelper.getAppDescriptor;
+
+import javax.validation.ValidationException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -21,13 +25,10 @@ import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod.entity.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.entity.microservice.cli.mixin.FoDAppAndMicroserviceNameDescriptor;
 import com.fortify.cli.fod.rest.FoDUrls;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import javax.validation.ValidationException;
-
-import static com.fortify.cli.fod.entity.app.helper.FoDAppHelper.getAppDescriptor;
 
 public class FoDAppMicroserviceHelper {
     @Getter

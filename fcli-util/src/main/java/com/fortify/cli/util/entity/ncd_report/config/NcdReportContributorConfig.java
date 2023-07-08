@@ -14,8 +14,10 @@ package com.fortify.cli.util.entity.ncd_report.config;
 
 import java.util.Optional;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * This configuration class holds contributor configuration settings
@@ -25,7 +27,8 @@ import lombok.Data;
  * @author rsenden
  *
  */
-@ReflectiveAccess @Data
+@Reflectable @NoArgsConstructor 
+@Data
 public class NcdReportContributorConfig {
     private Optional<String> ignoreExpression;
     private Optional<String> duplicateExpression;

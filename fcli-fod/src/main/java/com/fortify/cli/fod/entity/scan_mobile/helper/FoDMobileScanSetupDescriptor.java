@@ -13,15 +13,15 @@
 
 package com.fortify.cli.fod.entity.scan_mobile.helper;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper=false)
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper=false)
 public class FoDMobileScanSetupDescriptor extends JsonNodeHolder {
     private Integer releaseId;
     private Integer assessmentTypeId;

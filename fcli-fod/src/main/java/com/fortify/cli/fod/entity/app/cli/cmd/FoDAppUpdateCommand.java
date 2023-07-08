@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.fod.entity.app.cli.cmd;
 
+import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_NAME;
+
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -21,24 +23,22 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.fod.entity.app.attr.cli.helper.FoDAttributeDescriptor;
+import com.fortify.cli.fod.entity.app.attr.cli.helper.FoDAttributeHelper;
+import com.fortify.cli.fod.entity.app.attr.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDCriticalityTypeOptions;
 import com.fortify.cli.fod.entity.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.entity.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.entity.app.helper.FoDAppUpdateRequest;
-import com.fortify.cli.fod.entity.app.attr.cli.mixin.FoDAttributeUpdateOptions;
-import com.fortify.cli.fod.entity.app.attr.cli.helper.FoDAttributeDescriptor;
-import com.fortify.cli.fod.entity.app.attr.cli.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDJsonNodeOutputCommand;
 
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_NAME;
 
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
@@ -87,10 +87,10 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
         String appEmailListNew = FoDAppHelper.getEmailList(notificationsUpdate);
 
         FoDAppUpdateRequest appUpdateRequest = new FoDAppUpdateRequest()
-                .setApplicationName(StringUtils.isNotEmpty(applicationNameUpdate) ? applicationNameUpdate : appDescriptor.getApplicationName())
-                .setApplicationDescription(StringUtils.isNotEmpty(descriptionUpdate) ? descriptionUpdate : appDescriptor.getApplicationDescription())
+                .setApplicationName(StringUtils.isNotBlank(applicationNameUpdate) ? applicationNameUpdate : appDescriptor.getApplicationName())
+                .setApplicationDescription(StringUtils.isNotBlank(descriptionUpdate) ? descriptionUpdate : appDescriptor.getApplicationDescription())
                 .setBusinessCriticalityType(appCriticalityNew != null ? String.valueOf(appCriticalityNew) : appDescriptor.getBusinessCriticalityType())
-                .setEmailList(StringUtils.isNotEmpty(appEmailListNew) ? appEmailListNew : appDescriptor.getEmailList())
+                .setEmailList(StringUtils.isNotBlank(appEmailListNew) ? appEmailListNew : appDescriptor.getEmailList())
                 .setAttributes(jsonAttrs);
 
         return FoDAppHelper.updateApp(unirest, appDescriptor.getApplicationId(), appUpdateRequest).asJsonNode();

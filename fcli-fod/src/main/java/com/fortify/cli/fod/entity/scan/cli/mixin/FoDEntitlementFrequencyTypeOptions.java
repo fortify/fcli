@@ -13,13 +13,14 @@
 
 package com.fortify.cli.fod.entity.scan.cli.mixin;
 
-import com.fortify.cli.fod.util.FoDEnums;
-import lombok.Getter;
-import picocli.CommandLine.Option;
-
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.fortify.cli.fod.util.FoDEnums;
+
+import lombok.Getter;
+import picocli.CommandLine.Option;
 
 public class FoDEntitlementFrequencyTypeOptions {
     public static final class FoDEntitlementFrequencyTypeIterable extends ArrayList<String> {

@@ -14,11 +14,12 @@ package com.fortify.cli.ssc.entity.report_template.domain;
 
 import java.util.ArrayList;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.formkiq.graalvm.annotations.Reflectable;
 
-@ReflectiveAccess
+import lombok.NoArgsConstructor;
+
+@Reflectable @NoArgsConstructor
 public class SSCReportTemplateDef {
-    public SSCReportTemplateDef(){}
     public boolean crossApp;
     public String description;
     public String fileName;

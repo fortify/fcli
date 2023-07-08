@@ -15,14 +15,15 @@ package com.fortify.cli.ssc.entity.token.helper;
 import java.time.OffsetDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.formkiq.graalvm.annotations.Reflectable;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
+@Data @Builder
+@Reflectable @NoArgsConstructor @AllArgsConstructor
 public final class SSCTokenUpdateRequest {
     private String description;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") 

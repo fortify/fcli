@@ -13,14 +13,15 @@
 package com.fortify.cli.fod.entity.app.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDAppTypeOptions;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 // TODO Use @Builder instead of manually defining setter methods?
-@ReflectiveAccess
+@Reflectable @NoArgsConstructor
 @Getter
 @ToString
 public class FoDAppCreateRequest {

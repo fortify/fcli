@@ -24,6 +24,7 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
 import com.fortify.cli.fod.entity.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
@@ -39,7 +40,6 @@ import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.util.FoDConstants;
 import com.fortify.cli.fod.util.FoDEnums;
 
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine;
@@ -81,7 +81,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
 
             // get current setup and check if its valid
             FoDSastScanSetupDescriptor currentSetup = FoDSastScanHelper.getSetupDescriptor(unirest, relId);
-            if (currentSetup.getTechnologyStack() == null || StringUtils.isEmpty(currentSetup.getTechnologyStack())) {
+            if (StringUtils.isBlank(currentSetup.getTechnologyStack())) {
                 throw new ValidationException("The static scan configuration for release with id '" + relId +
                         "' has not been setup correctly - 'Technology Stack/Language Level' is missing or empty.");
             }

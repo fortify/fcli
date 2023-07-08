@@ -16,19 +16,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fortify.cli.common.cli.util.FortifyCLIInitializerRunner.FortifyCLIInitializerCommand;
+import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
-import com.fortify.cli.common.cli.util.IFortifyCLIInitializer;
 import com.fortify.cli.common.util.StringUtils;
-
-import jakarta.inject.Singleton;
 
 /**
  * This class is responsible for setting up the Java SSL trust store configuration.
  * 
  * @author Ruud Senden
  */
-@Singleton
 public class SSLTrustStoreInitializer implements IFortifyCLIInitializer {
     @Override
     public void initializeFortifyCLI(FortifyCLIInitializerCommand cmd) {

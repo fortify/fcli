@@ -17,13 +17,13 @@ import java.util.Locale;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Data @ReflectiveAccess @AllArgsConstructor
+@Data @AllArgsConstructor @NoArgsConstructor
 public final class LanguageDescriptor {
-    private final Locale locale;
+    private Locale locale;
     
     public LanguageDescriptor(String languageCode) {
         this(new Locale(languageCode));

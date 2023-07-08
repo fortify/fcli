@@ -25,8 +25,6 @@ import com.fortify.cli.state._main.cli.cmd.StateCommands;
 import com.fortify.cli.tool._main.cli.cmd.ToolCommands;
 import com.fortify.cli.util._main.cli.cmd.UtilCommands;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
-import jakarta.inject.Singleton;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ScopeType;
@@ -41,8 +39,6 @@ import picocli.CommandLine.ScopeType;
  * 
  * @author Ruud Senden
  */
-@Singleton
-@ReflectiveAccess
 @Command(name = "fcli", 
     resourceBundle = "com.fortify.cli.common.i18n.FortifyCLIMessages",
     versionProvider = FortifyCLIVersionProvider.class,

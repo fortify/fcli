@@ -13,15 +13,15 @@
 package com.fortify.cli.ssc.entity.role_permission.helper;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@ReflectiveAccess
-@EqualsAndHashCode(callSuper=true)
-@Data
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper=true)
 public class SSCRolePermissionDescriptor extends JsonNodeHolder {
     @JsonProperty("id") private String permissionId;
     @JsonProperty("name") private String name;

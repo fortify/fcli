@@ -29,13 +29,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.util.EncryptionHelper;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.StringUtils;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -50,7 +50,8 @@ public final class FcliVariableHelper {
     private static final Pattern variableReferencePattern = Pattern.compile("^::([a-zA-Z0-9_]+)::(.*)$");
     private FcliVariableHelper() {}
     
-    @Data @EqualsAndHashCode(callSuper = true) @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
+    @Data @EqualsAndHashCode(callSuper = true) @Builder 
+    @Reflectable @NoArgsConstructor @AllArgsConstructor
     public static class VariableDescriptor extends JsonNodeHolder {
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd@HH:mm:ss.SSSZ")
         private Date created;

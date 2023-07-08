@@ -12,14 +12,15 @@
  *******************************************************************************/
 package com.fortify.cli.util.entity.ncd_report.config;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.report.generator.IReportResultsGenerator;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.util.entity.ncd_report.collector.NcdReportResultsCollector;
 import com.fortify.cli.util.entity.ncd_report.generator.github.NcdReportGitHubResultsGenerator;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 /**
  * This GitHub-specific configuration class defines a GitHub source configuration,
@@ -29,7 +30,8 @@ import lombok.EqualsAndHashCode;
  * 
  * @author rsenden
  */
-@ReflectiveAccess @Data @EqualsAndHashCode(callSuper = true)
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper = true)
 public class NcdReportGitHubSourceConfig extends AbstractNcdReportRepoSelectorConfig implements INcdReportSourceConfig, IUrlConfig {
     private String apiUrl = "https://api.github.com/";
     private String tokenExpression;

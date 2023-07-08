@@ -13,14 +13,15 @@
 
 package com.fortify.cli.fod.entity.release.helper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 // TODO Consider using @Builder instead of manual setters
-@ReflectiveAccess
-@Getter
-@ToString
+@Reflectable @NoArgsConstructor
+@Getter @ToString
 public class FoDAppRelCreateRequest {
     private Integer applicationId;
     private String releaseName;

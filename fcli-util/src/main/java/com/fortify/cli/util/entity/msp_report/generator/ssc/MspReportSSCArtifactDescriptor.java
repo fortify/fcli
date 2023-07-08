@@ -18,17 +18,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.util.StringUtils;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 /**
  * This class describes an SSC artifact with embedded scans. 
  */
-@ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
+@Reflectable @NoArgsConstructor 
+@Data @EqualsAndHashCode(callSuper = false)
 public final class MspReportSSCArtifactDescriptor extends JsonNodeHolder {
     private String id;
     private String originalFileName;
@@ -74,12 +76,14 @@ public final class MspReportSSCArtifactDescriptor extends JsonNodeHolder {
                 .collect(Collectors.joining("+"));
     }
     
-    @ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
+    @Reflectable @NoArgsConstructor 
+    @Data @EqualsAndHashCode(callSuper = false)
     private static final class MspReportSSCArtifactEmbedDescriptor {
         private MspReportSSCArtifactScanDescriptor[] scans;
     }
         
-    @ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
+    @Reflectable @NoArgsConstructor 
+    @Data @EqualsAndHashCode(callSuper = false)
     public static final class MspReportSSCArtifactScanDescriptor extends JsonNodeHolder {
         private String id;
         private LocalDateTime scanDate;

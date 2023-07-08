@@ -24,13 +24,13 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDAppTypeOptions;
 import com.fortify.cli.fod.entity.microservice.helper.FoDAppMicroserviceDescriptor;
 import com.fortify.cli.fod.entity.microservice.helper.FoDAppMicroserviceHelper;
 import com.fortify.cli.fod.entity.microservice.helper.FoDAppMicroserviceUpdateRequest;
 import com.fortify.cli.fod.rest.FoDUrls;
 
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -65,7 +65,7 @@ public class FoDAppHelper {
         // if microservice, remove applicationType field and set releaseMicroserviceName if not already set
         if (appCreateRequest.getHasMicroservices()) {
             body.remove("applicationType");
-            if (StringUtils.isEmpty(appCreateRequest.getReleaseMicroserviceName()))
+            if (StringUtils.isBlank(appCreateRequest.getReleaseMicroserviceName()))
                 body.replace("releaseMicroserviceName", appCreateRequest.getMicroservices()).get(0).asText();
         }
         JsonNode response = unirest.post(FoDUrls.APPLICATIONS)

@@ -24,6 +24,7 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.entity.release.helper.FoDAppRelHelper;
@@ -42,7 +43,6 @@ import com.fortify.cli.fod.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod.util.FoDEnums;
 
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -101,7 +101,7 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
 
             // get current setup and check if its valid
             FoDDastScanSetupDescriptor currentSetup = FoDDastScanHelper.getSetupDescriptor(unirest, relId);
-            if (currentSetup.getDynamicSiteURL() == null || StringUtils.isEmpty(currentSetup.getDynamicSiteURL())) {
+            if (StringUtils.isBlank(currentSetup.getDynamicSiteURL())) {
                 throw new ValidationException("The dynamic scan configuration for release with id '" + relId +
                         "' has not been setup correctly - 'Dynamic Site URL' is missing or empty.");
             }

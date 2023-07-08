@@ -15,14 +15,15 @@ package com.fortify.cli.common.session.helper;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.formkiq.graalvm.annotations.Reflectable;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data @ReflectiveAccess @Builder @NoArgsConstructor @AllArgsConstructor
+@Data @Builder
+@Reflectable @NoArgsConstructor @AllArgsConstructor
 public class SessionSummary {
     public static final Date EXPIRES_UNKNOWN = null;
     public static final Date EXPIRES_NEVER = new Date(Long.MAX_VALUE);

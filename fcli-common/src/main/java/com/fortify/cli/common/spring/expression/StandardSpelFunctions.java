@@ -15,15 +15,16 @@ package com.fortify.cli.common.spring.expression;
 import java.time.OffsetDateTime;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.EncryptionHelper;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import lombok.NoArgsConstructor;
 
-@ReflectiveAccess
+@Reflectable @NoArgsConstructor
 public class StandardSpelFunctions {
     private static final DateTimePeriodHelper PeriodHelper = DateTimePeriodHelper.all();
 

@@ -8,5 +8,6 @@ include 'fcli-sc-sast'
 include 'fcli-sc-dast'
 include 'fcli-tool'
 include 'fcli-util'
-
-
+// TODO Remove once patch is available for
+// https://github.com/formkiq/graalvm-annotations-processor/issues/9
+include 'graalvm-annotations-processor-patch'

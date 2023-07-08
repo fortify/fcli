@@ -16,16 +16,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.fod.entity.app.attr.cli.helper.FoDAttributeDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@ReflectiveAccess
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper = true)
 public class FoDAppDescriptor extends JsonNodeHolder {
     private Integer applicationId;
     private String applicationName;

@@ -13,16 +13,16 @@
 
 package com.fortify.cli.fod.entity.scan.helper;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@ReflectiveAccess
-@Data
-@ToString
+@Reflectable @NoArgsConstructor
+@Data @ToString
 @EqualsAndHashCode(callSuper=false)
 public class FoDImportScanSessionDescriptor extends JsonNodeHolder {
     private String importScanSessionId;

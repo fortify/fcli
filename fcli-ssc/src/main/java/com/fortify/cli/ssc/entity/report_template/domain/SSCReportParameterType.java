@@ -12,9 +12,11 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.entity.report_template.domain;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.formkiq.graalvm.annotations.Reflectable;
 
-@ReflectiveAccess
+import lombok.NoArgsConstructor;
+
+@Reflectable @NoArgsConstructor
 public enum SSCReportParameterType {
     BOOLEAN,
     MULTI_PROJECT,

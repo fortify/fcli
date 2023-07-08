@@ -16,20 +16,20 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.common.session.helper.AbstractSessionDescriptorWithSingleUrlConfig;
 import com.fortify.cli.common.session.helper.SessionSummary;
 import com.fortify.cli.fod.session.helper.oauth.FoDTokenCreateResponse;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@Data @EqualsAndHashCode(callSuper = true) @ReflectiveAccess @JsonIgnoreProperties(ignoreUnknown = true)
+@Data @EqualsAndHashCode(callSuper = true) @JsonIgnoreProperties(ignoreUnknown = true)
+@Reflectable @NoArgsConstructor
 public class FoDSessionDescriptor extends AbstractSessionDescriptorWithSingleUrlConfig {
     private FoDTokenCreateResponse cachedTokenResponse;
-    
-    public FoDSessionDescriptor() {}
     
     public FoDSessionDescriptor(IUrlConfig urlConfig, FoDTokenCreateResponse tokenResponse) {
         super(urlConfig);

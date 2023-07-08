@@ -14,14 +14,15 @@ package com.fortify.cli.util.entity.ncd_report.config;
 
 import java.util.Optional;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.report.generator.IReportResultsGenerator;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.util.entity.ncd_report.collector.NcdReportResultsCollector;
 import com.fortify.cli.util.entity.ncd_report.generator.gitlab.NcdReportGitLabResultsGenerator;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 /**
  * This GitLab-specific configuration class defines a GitLab source configuration,
@@ -30,7 +31,8 @@ import lombok.EqualsAndHashCode;
  * 
  * @author rsenden
  */
-@ReflectiveAccess @Data @EqualsAndHashCode(callSuper = true)
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper = true)
 public class NcdReportGitLabSourceConfig extends AbstractNcdReportRepoSelectorConfig implements INcdReportSourceConfig, IUrlConfig {
     private String baseUrl;
     private String tokenExpression;

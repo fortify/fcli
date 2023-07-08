@@ -16,20 +16,22 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.util.entity.ncd_report.descriptor.INcdReportCommitDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 /**
  * GitLab-specific implementation of {@link INcdReportCommitDescriptor}.
  * 
  * @author rsenden
  */
-@ReflectiveAccess @Data @EqualsAndHashCode(callSuper = false)
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper = false)
 public class NcdReportGitLabCommitDescriptor extends JsonNodeHolder implements INcdReportCommitDescriptor {
     private String id;
     @JsonProperty("authored_date")

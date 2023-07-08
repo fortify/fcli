@@ -14,8 +14,10 @@ package com.fortify.cli.util.entity.ncd_report.config;
 
 import java.util.Optional;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Abstract base class for source-specific repository selection configuration
@@ -24,7 +26,8 @@ import lombok.Data;
  * @author rsenden
  *
  */
-@ReflectiveAccess @Data
+@Reflectable @NoArgsConstructor 
+@Data
 public abstract class AbstractNcdReportRepoSelectorConfig implements INcdReportRepoSelectorConfig {
     private Optional<String> repositoryIncludeExpression = Optional.empty();
     private Optional<Boolean> includeForks = Optional.empty();

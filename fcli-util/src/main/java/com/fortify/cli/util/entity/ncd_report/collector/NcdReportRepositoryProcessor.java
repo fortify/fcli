@@ -19,8 +19,8 @@ import com.fortify.cli.util.entity.ncd_report.config.INcdReportRepoSelectorConfi
 import com.fortify.cli.util.entity.ncd_report.config.NcdReportConfig;
 import com.fortify.cli.util.entity.ncd_report.descriptor.INcdReportRepositoryDescriptor;
 import com.fortify.cli.util.entity.ncd_report.generator.INcdReportBranchCommitGenerator;
-import com.fortify.cli.util.entity.ncd_report.writer.NcdReportResultsWriters;
 import com.fortify.cli.util.entity.ncd_report.writer.NcdReportRepositoriesWriter.NcdReportRepositoryReportingStatus;
+import com.fortify.cli.util.entity.ncd_report.writer.NcdReportResultsWriters;
 
 /**
  * <p>This class is responsible for processing repositories passed to 

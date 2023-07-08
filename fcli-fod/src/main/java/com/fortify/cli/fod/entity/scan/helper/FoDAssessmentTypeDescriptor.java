@@ -13,16 +13,16 @@
 
 package com.fortify.cli.fod.entity.scan.helper;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.fod.entity.scan_dast.helper.FoDDastScanSetupDescriptor;
 import com.fortify.cli.fod.entity.scan_sast.helper.FoDSastScanSetupDescriptor;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@ReflectiveAccess
-@Data
-@ToString
+@Reflectable @NoArgsConstructor
+@Data @ToString
 public class FoDAssessmentTypeDescriptor {
     private Integer assessmentTypeId;
     private String name;

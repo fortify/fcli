@@ -12,13 +12,10 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast.rest.helper;
 
-import java.net.URI;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 
-import io.micronaut.http.uri.UriBuilder;
 import kong.unirest.HttpRequest;
 import kong.unirest.PagedList;
 
@@ -29,7 +26,7 @@ public class SCDastPagingHelper {
     public static final INextPageUrlProducer nextPageUrlProducer(HttpRequest<?> originalRequest) {
         return nextPageUrlProducer(originalRequest.getUrl());
     }
-    public static final INextPageUrlProducer nextPageUrlProducer(String uri) {
+    public static final INextPageUrlProducer nextPageUrlProducer(String uriString) {
         return r -> {
             JsonNode body = r.getBody();
             if ( body.has("offset") && body.has("totalItems") && body.has("limit") ) {
@@ -38,9 +35,8 @@ public class SCDastPagingHelper {
                 int limit = body.get("limit").asInt();
                 int newOffset = offset + limit;
                 if (newOffset < totalCount) {
-                    // UriBuilder supports parsing a String directly but doesn't properly recognize existing request parameters,
-                    // so we use an URI instance instead.
-                    return UriBuilder.of(URI.create(uri)).replaceQueryParam("offset", newOffset).build().toString();
+                    // TODO FIX THIS!
+                    return null;
                 }
             }
             return null;

@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.entity.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.entity.user.cli.mixin.FoDUserResolverMixin;
 import com.fortify.cli.fod.entity.user.helper.FoDUserDescriptor;
@@ -26,7 +27,6 @@ import com.fortify.cli.fod.entity.user.helper.FoDUserUpdateRequest;
 import com.fortify.cli.fod.entity.user_group.helper.FoDUserGroupHelper;
 import com.fortify.cli.fod.output.cli.AbstractFoDJsonNodeOutputCommand;
 
-import io.micronaut.core.util.StringUtils;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -76,16 +76,16 @@ public class FoDUserUpdateCommand extends AbstractFoDJsonNodeOutputCommand imple
         }
 
         FoDUserUpdateRequest userUpdateRequest = new FoDUserUpdateRequest()
-                .setEmail(email != null && StringUtils.isNotEmpty(email) ? email : userDescriptor.getUserName())
-                .setFirstName(firstName != null && StringUtils.isNotEmpty(firstName) ? firstName : userDescriptor.getFirstName())
-                .setLastName(lastName != null && StringUtils.isNotEmpty(lastName) ? lastName : userDescriptor.getLastName())
-                .setPhoneNumber(phoneNumber != null && StringUtils.isNotEmpty(phoneNumber) ? phoneNumber : userDescriptor.getPhoneNumber())
+                .setEmail(StringUtils.isNotBlank(email) ? email : userDescriptor.getUserName())
+                .setFirstName(StringUtils.isNotBlank(firstName) ? firstName : userDescriptor.getFirstName())
+                .setLastName(StringUtils.isNotBlank(lastName) ? lastName : userDescriptor.getLastName())
+                .setPhoneNumber(StringUtils.isNotBlank(phoneNumber) ? phoneNumber : userDescriptor.getPhoneNumber())
                 .setRoleId(roleId > 0 ? roleId : userDescriptor.getRoleId())
                 .setPasswordNeverExpires(passwordNeverExpires)
                 .setIsSuspended(isSuspended)
                 .setMustChange(mustChange);
 
-        if (password != null && StringUtils.isNotEmpty(password)) {
+        if (StringUtils.isNotBlank(password)) {
             userUpdateRequest.setPassword(password);
         }
         if (addUserGroups != null && addUserGroups.size() > 0) {

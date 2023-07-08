@@ -16,13 +16,14 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@ReflectiveAccess
+@Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=true)
 public class SSCAppVersionDescriptor extends JsonNodeHolder {
     private String applicationId;

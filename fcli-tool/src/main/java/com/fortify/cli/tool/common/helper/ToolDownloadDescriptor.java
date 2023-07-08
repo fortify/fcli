@@ -14,12 +14,14 @@ package com.fortify.cli.tool.common.helper;
 
 import java.util.stream.Stream;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.util.StringUtils;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@ReflectiveAccess @Data
+@Reflectable @NoArgsConstructor
+@Data
 public class ToolDownloadDescriptor {
     private String defaultDownloadUrl;
     private String defaultVersion;

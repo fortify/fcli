@@ -12,13 +12,14 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.entity.appversion_artifact.helper;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@ReflectiveAccess
+@Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=true)
 public class SSCAppVersionArtifactDescriptor extends JsonNodeHolder {
     private String id;

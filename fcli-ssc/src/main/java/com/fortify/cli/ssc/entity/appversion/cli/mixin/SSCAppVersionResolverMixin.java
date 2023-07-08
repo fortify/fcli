@@ -16,7 +16,6 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.entity.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.entity.appversion.helper.SSCAppVersionHelper;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
@@ -48,7 +47,6 @@ public class SSCAppVersionResolverMixin {
         public final boolean hasValue() { return StringUtils.isNotBlank(appVersionNameOrId); }
     }
     
-    @ReflectiveAccess
     public static class PositionalParameter extends AbstractSSCAppVersionResolverMixin {
         @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
         @Getter private String appVersionNameOrId;

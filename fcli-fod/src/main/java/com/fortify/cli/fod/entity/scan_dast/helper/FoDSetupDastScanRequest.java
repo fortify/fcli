@@ -15,21 +15,20 @@ package com.fortify.cli.fod.entity.scan_dast.helper;
 
 import java.util.ArrayList;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.fod.util.FoDEnums;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 // TODO Consider using @Builder instead of manually implementing setter methods
-@ReflectiveAccess
-@Getter
-@ToString
+@Reflectable @NoArgsConstructor
+@Getter @ToString
 public class FoDSetupDastScanRequest {
 
-    @ReflectiveAccess
-    @Getter
-    @ToString
+    @Reflectable @NoArgsConstructor
+    @Getter @ToString
     public static class BlackoutDay {
         FoDEnums.Day day;
         ArrayList<BlackoutHour> hourBlocks;
@@ -40,9 +39,8 @@ public class FoDSetupDastScanRequest {
         }
     }
 
-    @ReflectiveAccess
-    @Getter
-    @ToString
+    @Reflectable @NoArgsConstructor
+    @Getter @ToString
     public static class BlackoutHour {
         Integer hour;
         Boolean checked;

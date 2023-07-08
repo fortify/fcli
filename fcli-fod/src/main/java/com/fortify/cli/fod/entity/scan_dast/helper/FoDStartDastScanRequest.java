@@ -14,15 +14,15 @@
 package com.fortify.cli.fod.entity.scan_dast.helper;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.formkiq.graalvm.annotations.Reflectable;
 
-import io.micronaut.core.annotation.ReflectiveAccess;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 //TODO Consider using @Builder instead of manually implementing setter methods
-@ReflectiveAccess
-@Getter
-@ToString
+@Reflectable @NoArgsConstructor
+@Getter @ToString
 public class FoDStartDastScanRequest {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MM/dd/yyyy HH:mm")
 

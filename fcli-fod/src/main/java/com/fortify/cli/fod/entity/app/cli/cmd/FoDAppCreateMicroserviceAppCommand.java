@@ -15,10 +15,10 @@ package com.fortify.cli.fod.entity.app.cli.cmd;
 import java.util.ArrayList;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.fod.entity.app.attr.cli.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.entity.app.cli.mixin.FoDAppTypeOptions;
 import com.fortify.cli.fod.entity.app.helper.FoDAppCreateRequest;
 import com.fortify.cli.fod.entity.app.helper.FoDAppHelper;
-import com.fortify.cli.fod.entity.app.attr.cli.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.entity.release.cli.mixin.FoDAppAndRelNameDescriptor;
 import com.fortify.cli.fod.entity.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.entity.user.helper.FoDUserHelper;
