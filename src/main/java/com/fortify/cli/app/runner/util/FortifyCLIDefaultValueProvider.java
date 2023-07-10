@@ -10,21 +10,28 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.cli.util;
+package com.fortify.cli.app.runner.util;
 
 import java.lang.reflect.AnnotatedElement;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.StringUtils;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import picocli.CommandLine;
+import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
-public class FortifyCLIDefaultValueProvider implements CommandLine.IDefaultValueProvider {
-    @Setter private static String envPrefix = "FCLI_DEFAULT";
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class FortifyCLIDefaultValueProvider implements IDefaultValueProvider {
+    @Getter private static final FortifyCLIDefaultValueProvider instance = new FortifyCLIDefaultValueProvider();
+    
+    @Setter private String envPrefix = "FCLI_DEFAULT";
 
     @Override
     public String defaultValue(ArgSpec argSpec) {

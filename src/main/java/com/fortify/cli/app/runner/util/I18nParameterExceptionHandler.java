@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.app.i18n;
+package com.fortify.cli.app.runner.util;
 
 import java.util.ResourceBundle;
 

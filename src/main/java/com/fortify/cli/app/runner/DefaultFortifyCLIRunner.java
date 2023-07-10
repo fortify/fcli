@@ -13,45 +13,40 @@
 package com.fortify.cli.app.runner;
 
 import com.fortify.cli.app._main.cli.cmd.FCLIRootCommands;
-import com.fortify.cli.app.i18n.I18nParameterExceptionHandler;
+import com.fortify.cli.app.runner.util.FortifyCLIDefaultValueProvider;
+import com.fortify.cli.app.runner.util.FortifyCLIDynamicInitializer;
+import com.fortify.cli.app.runner.util.FortifyCLIStaticInitializer;
+import com.fortify.cli.app.runner.util.I18nParameterExceptionHandler;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
+import lombok.AccessLevel;
+import lombok.Getter;
 import picocli.CommandLine;
 
 public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
-    private boolean initialized = false;
-	private CommandLine commandLine;
+    @Getter(value = AccessLevel.PRIVATE, lazy = true)
+	private final CommandLine commandLine = createCommandLine();
 	
-	private synchronized void initialize(String[] args) {
-	    if ( !initialized ) {
-	        //FortifyCLIInitializerRunner.initialize(args);
-	        this.commandLine = new CommandLine(FCLIRootCommands.class);
-	        this.commandLine = commandLine.setParameterExceptionHandler(new I18nParameterExceptionHandler(commandLine.getParameterExceptionHandler()));
-	        this.initialized = true;
-	    }
+	private CommandLine createCommandLine() {
+	    FortifyCLIStaticInitializer.getInstance().initialize();
+	    CommandLine cl = new CommandLine(FCLIRootCommands.class);
+	    cl.setParameterExceptionHandler(new I18nParameterExceptionHandler(cl.getParameterExceptionHandler()));
+	    cl.setDefaultValueProvider(FortifyCLIDefaultValueProvider.getInstance());
+	    return cl;
     }
 	
 	@Override
 	public int run(String... args) {
 	    String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
-	    // TODO We only initialize once even though args may vary if this instance
-	    //      is used for multiple fcli invocations. Check whether we can use
-	    //      https://picocli.info/#_initialization_before_execution instead.
-	    //      To optimize, potentially we can have two types of initializers;
-	    //      static initializers that don't depend on args, and execution strategy
-	    //      based initializers that do per-command initialization. Note that those
-	    //      dynamic initializers preferably should be thread-safe, to allow for
-	    //      running multi-threaded functional tests. 
-	    initialize(args);
-	    commandLine.clearExecutionResults();
-	    return commandLine.execute(resolvedArgs);
+	    FortifyCLIDynamicInitializer.getInstance().initialize(resolvedArgs);
+	    CommandLine cl = getCommandLine();
+	    cl.clearExecutionResults();
+	    return cl.execute(resolvedArgs);
 	}
 	
 	@Override
 	public void close() {
-	    if ( this.initialized ) {
-	        GenericUnirestFactory.shutdown();
-	    }
+	    GenericUnirestFactory.shutdown();
 	}
 }

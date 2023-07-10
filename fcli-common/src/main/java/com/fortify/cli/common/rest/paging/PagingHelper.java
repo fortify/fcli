@@ -26,4 +26,11 @@ public class PagingHelper {
     public static final <R extends JsonNode> PagedList<R> pagedRequest(HttpRequest<?> request, INextPageUrlProducer nextPageUrlProducer, Class<R> returnType) {
         return request.asPaged(r->r.asObject(returnType), nextPageUrlProducer::getNextPageUrl);
     }
+    
+    public static final String addOrReplaceParam(String uri, String param, Object newValue) {
+        var pattern = String.format("([&?])(%s=)([^&]*)", param);
+        var newUri = uri.replaceAll(pattern, "");
+        // TODO
+        return newUri;
+    }
 }
