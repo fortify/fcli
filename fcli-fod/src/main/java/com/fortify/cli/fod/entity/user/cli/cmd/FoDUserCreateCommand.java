@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.entity.user.cli.cmd;
@@ -47,22 +47,23 @@ public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand imple
     private String phoneNumber;
     @Option(names = {"--role"}, required = true)
     private String roleNameOrId;
-    @Option(names = {"--groups"}, required = false, split = ",")
+    @Option(names = {"--groups"}, required = false, split = ",", descriptionKey = "fcli.fod.group.group-name-or-id")
     private ArrayList<String> userGroups;
-    @Option(names = {"--applications"}, required = false, split=",")
+    @Option(names = {"--applications"}, required = false, split=",", descriptionKey = "fcli.fod.app-name-or-id")
     private ArrayList<String> applications;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         validate();
 
-        FoDUserCreateRequest userCreateRequest = new FoDUserCreateRequest()
-                .setUserName(userName)
-                .setEmail(email)
-                .setFirstName(firstName)
-                .setLastName(lastName)
-                .setPhoneNumber(phoneNumber)
-                .setRoleId(FoDUserHelper.getRoleId(unirest, roleNameOrId));
+        FoDUserCreateRequest userCreateRequest = FoDUserCreateRequest.builder()
+                .userName(userName)
+                .email(email)
+                .firstName(firstName)
+                .lastName(lastName)
+                .phoneNumber(phoneNumber)
+                .roleId(FoDUserHelper.getRoleId(unirest, roleNameOrId))
+                .build();
 
         if (userGroups != null && userGroups.size() > 0) {
             userCreateRequest.setUserGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups));

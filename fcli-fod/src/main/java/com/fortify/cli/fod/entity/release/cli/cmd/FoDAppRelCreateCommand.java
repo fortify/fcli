@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 
@@ -87,14 +87,14 @@ public class FoDAppRelCreateCommand extends AbstractFoDJsonNodeOutputCommand imp
         }
         int appId = FoDAppHelper.getAppDescriptor(unirest, appAndRelNameDescriptor.getAppName(), true).getApplicationId();
 
-        FoDAppRelCreateRequest relCreateRequest = new FoDAppRelCreateRequest()
-                .setApplicationId(appId)
-                .setReleaseName(appAndRelNameDescriptor.getRelName())
-                .setReleaseDescription(description)
-                .setCopyState(copyState)
-                .setCopyStateReleaseId(copyReleaseId)
-                .setSdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
-                .setMicroserviceId(microServiceId);
+        FoDAppRelCreateRequest relCreateRequest = FoDAppRelCreateRequest.builder()
+                .applicationId(appId)
+                .releaseName(appAndRelNameDescriptor.getRelName())
+                .releaseDescription(description)
+                .copyState(copyState)
+                .copyStateReleaseId(copyReleaseId)
+                .sdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
+                .microserviceId(microServiceId).build();
 
         return FoDAppRelHelper.createAppRel(unirest, relCreateRequest).asJsonNode();
     }

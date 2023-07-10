@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.entity.app.helper;
@@ -91,8 +91,8 @@ public class FoDAppHelper {
         if (appUpdateRequest != null && appUpdateRequest.getAddMicroservices() != null) {
             for (String ms: appUpdateRequest.getAddMicroservices()) {
                 //System.out.println("Adding microservice: " + ms);
-                FoDAppMicroserviceUpdateRequest msUpdateRequest = new FoDAppMicroserviceUpdateRequest()
-                        .setMicroserviceName(ms);
+                FoDAppMicroserviceUpdateRequest msUpdateRequest = FoDAppMicroserviceUpdateRequest.builder()
+                        .microserviceName(ms).build();
                 FoDAppMicroserviceHelper.createAppMicroservice(unirest, appId, msUpdateRequest);
             }
         }
@@ -111,8 +111,8 @@ public class FoDAppHelper {
                 //System.out.println("Renaming microservice " + ms.getKey() + " to " + ms.getValue());
                 FoDAppMicroserviceDescriptor appMicroserviceDescriptor = FoDAppMicroserviceHelper
                         .getRequiredAppMicroservice(unirest, appUpdateRequest.getApplicationName() + ":" + ms.getKey(), ":");
-                FoDAppMicroserviceUpdateRequest msUpdateRequest = new FoDAppMicroserviceUpdateRequest()
-                        .setMicroserviceName(ms.getValue());
+                FoDAppMicroserviceUpdateRequest msUpdateRequest = FoDAppMicroserviceUpdateRequest.builder()
+                        .microserviceName(ms.getValue()).build();
                 FoDAppMicroserviceHelper.updateAppMicroservice(unirest, appMicroserviceDescriptor, msUpdateRequest);
             }
         }

@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 
@@ -105,17 +105,17 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
                     ? LocalDateTime.now().format(dtf)
                     : LocalDateTime.parse(startDate, dtf).toString();
 
-            FoDStartMobileScanRequest startScanRequest = new FoDStartMobileScanRequest()
-                    .setStartDate(startDateStr)
-                    .setAssessmentTypeId(entitlementToUse.getAssessmentTypeId())
-                    .setEntitlementId(entitlementToUse.getEntitlementId())
-                    .setEntitlementFrequencyType(entitlementToUse.getFrequencyType())
-                    .setTimeZone(timeZoneToUse)
-                    .setFrameworkType(mobileFramework.name())
-                    .setScanMethodType("Other")
-                    .setNotes(notes != null && !notes.isEmpty() ? notes : "")
-                    .setScanTool(fcliProperties.getProperty("projectName", "fcli"))
-                    .setScanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"));
+            FoDStartMobileScanRequest startScanRequest = FoDStartMobileScanRequest.builder()
+                    .startDate(startDateStr)
+                    .assessmentTypeId(entitlementToUse.getAssessmentTypeId())
+                    .entitlementId(entitlementToUse.getEntitlementId())
+                    .entitlementFrequencyType(entitlementToUse.getFrequencyType())
+                    .timeZone(timeZoneToUse)
+                    .frameworkType(mobileFramework.name())
+                    .scanMethodType("Other")
+                    .notes(notes != null && !notes.isEmpty() ? notes : "")
+                    .scanTool(fcliProperties.getProperty("projectName", "fcli"))
+                    .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
 
             return FoDMobileScanHelper.startScan(unirest, progressWriter, relId, startScanRequest, scanFile, chunkSize).asJsonNode();
         }

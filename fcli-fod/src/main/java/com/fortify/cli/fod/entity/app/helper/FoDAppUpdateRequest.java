@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.entity.app.helper;
@@ -18,13 +18,15 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 //TODO Use @Builder instead of manually defining setter methods?
-@Reflectable @NoArgsConstructor
-@Getter @ToString
+@Reflectable @NoArgsConstructor @AllArgsConstructor
+@Getter @Builder @ToString
 public class FoDAppUpdateRequest {
     private String applicationName;
     private String applicationDescription;
@@ -34,45 +36,4 @@ public class FoDAppUpdateRequest {
     private List<String> addMicroservices;
     private List<String> deleteMicroservices;
     private Map<String,String> renameMicroservices;
-
-    public FoDAppUpdateRequest setApplicationName(String name) {
-        this.applicationName = name;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setApplicationDescription(String description) {
-        this.applicationDescription = description;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setBusinessCriticalityType(String type) {
-        this.businessCriticalityType = type;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setEmailList(String list) {
-        this.emailList = list;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setAttributes(JsonNode attributes) {
-        this.attributes = attributes;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setAddMicroservices(List<String> addMicroservices) {
-        this.addMicroservices = addMicroservices;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setDeleteMicroservices(List<String> deleteMicroservices) {
-        this.deleteMicroservices = deleteMicroservices;
-        return this;
-    }
-
-    public FoDAppUpdateRequest setRenameMicroservices(Map<String, String> renameMicroservices) {
-        this.renameMicroservices = renameMicroservices;
-        return this;
-    }
-
 }

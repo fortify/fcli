@@ -15,13 +15,10 @@ package com.fortify.cli.common.cli.cmd;
 import java.util.Map;
 
 import com.fortify.cli.common.cli.mixin.ICommandAware;
-import com.fortify.cli.common.cli.util.FortifyCLIDefaultValueProvider;
 
 import ch.qos.logback.classic.Level;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
@@ -39,9 +36,6 @@ import picocli.CommandLine.Spec;
  * @author Ruud Senden
  */
 public class AbstractFortifyCLICommand {
-    // Mix in the standard command configuration, like default value provider
-    @Mixin private StandardCommandConfiguration standardCommandConfiguration;
-    
     // Have picocli inject the CommandSpec representing the current command
     @Spec private CommandSpec commandSpec;
     
@@ -116,19 +110,4 @@ public class AbstractFortifyCLICommand {
         @Option(names = "--log-level")
         @Getter private LogLevel logLevel;
     }
-    
-    /**
-     * This class (used as a {@link Mixin} defines common fcli command attributes
-     * that are applied to every fcli command. The usual approach would be to 
-     * declare these attributes on the top-level command (FCLIRootCommands) together
-     * with `scope = ScopeType.INHERIT`, however this has unintended side effects
-     * as described here: https://github.com/remkop/picocli/issues/1465#issuecomment-1611060809.
-     * As such, we use a mixin to declare these common fcli command attributes. 
-     */
-    @Command(
-            usageHelpAutoWidth = true,
-            sortOptions = false, 
-            showAtFileInUsageHelp = false,
-            defaultValueProvider = FortifyCLIDefaultValueProvider.class)
-    public static final class StandardCommandConfiguration {}
 }

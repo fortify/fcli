@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.entity.app.cli.cmd;
@@ -37,20 +37,20 @@ public class FoDAppCreateMobileAppCommand extends FoDAppCreateAppCommand {
         FoDAppAndRelNameDescriptor appRelName = appRelResolver.getAppAndRelName();
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, owner, true);
 
-        FoDAppCreateRequest appCreateRequest = new FoDAppCreateRequest()
-                .setApplicationName(appRelName.getAppName())
-                .setApplicationDescription(description)
-                .setBusinessCriticalityType(String.valueOf(criticalityType.getCriticalityType()))
-                .setEmailList(FoDAppHelper.getEmailList(notifications))
-                .setReleaseName(appRelName.getRelName())
-                .setReleaseDescription(releaseDescription)
-                .setSdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
-                .setOwnerId(userDescriptor.getUserId())
-                .setApplicationType(FoDAppTypeOptions.FoDAppType.Mobile.getName())
-                .setHasMicroservices(false)
-                .setAutoReqdAttrs(autoRequiredAttrs)
-                .setAttributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes(), autoRequiredAttrs))
-                .setUserGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups));
+        FoDAppCreateRequest appCreateRequest = FoDAppCreateRequest.builder()
+                .applicationName(appRelName.getAppName())
+                .applicationDescription(description)
+                .businessCriticalityType(String.valueOf(criticalityType.getCriticalityType()))
+                .emailList(FoDAppHelper.getEmailList(notifications))
+                .releaseName(appRelName.getRelName())
+                .releaseDescription(releaseDescription)
+                .sdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
+                .ownerId(userDescriptor.getUserId())
+                .applicationType(FoDAppTypeOptions.FoDAppType.Mobile.getName())
+                .hasMicroservices(false)
+                .autoRequiredAttrs(autoRequiredAttrs)
+                .attributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes(), autoRequiredAttrs))
+                .userGroupIds(FoDUserGroupHelper.getUserGroupsNode(unirest, userGroups)).build();
 
         return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();
     }

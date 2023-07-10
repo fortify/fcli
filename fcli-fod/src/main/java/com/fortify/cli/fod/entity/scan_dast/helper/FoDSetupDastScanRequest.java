@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 
@@ -18,13 +18,14 @@ import java.util.ArrayList;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.fod.util.FoDEnums;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-// TODO Consider using @Builder instead of manually implementing setter methods
-@Reflectable @NoArgsConstructor
-@Getter @ToString
+@Reflectable @NoArgsConstructor @AllArgsConstructor
+@Getter @ToString @Builder
 public class FoDSetupDastScanRequest {
 
     @Reflectable @NoArgsConstructor
@@ -51,7 +52,9 @@ public class FoDSetupDastScanRequest {
         }
     }
 
+    @Builder.Default
     Integer geoLocationId = 1;
+    @Builder.Default
     FoDEnums.DynamicScanEnvironmentFacingType dynamicScanEnvironmentFacingType = FoDEnums.DynamicScanEnvironmentFacingType.External;
     // DEPRECATED
     // String exclusions;
@@ -59,6 +62,7 @@ public class FoDSetupDastScanRequest {
     ArrayList<String> exclusionsList;
     // OBSOLETE
     // String dynamicScanAuthenticationType
+    @Builder.Default
     Boolean hasFormsAuthentication = false;
     String primaryUserName;
     String primaryUserPassword;
@@ -73,6 +77,7 @@ public class FoDSetupDastScanRequest {
     Boolean requiresNetworkAuthentication;
     String networkUserName;
     String networkPassword;
+    @Builder.Default
     Boolean multiFactorAuth = false;
     String multiFactorAuthText;
     String notes;
@@ -83,13 +88,19 @@ public class FoDSetupDastScanRequest {
     String dynamicSiteURL;
     String timeZone;
     ArrayList<BlackoutDay> blockout;
+    @Builder.Default
     FoDEnums.RepeatScheduleType repeatScheduleType = FoDEnums.RepeatScheduleType.NoRepeat;
     Integer assessmentTypeId;
     Integer entitlementId;
+    @Builder.Default
     Boolean allowFormSubmissions = true;
+    @Builder.Default
     Boolean allowSameHostRedirects = true;
+    @Builder.Default
     Boolean restrictToDirectoryAndSubdirectories = false;
+    @Builder.Default
     Boolean generateWAFVirtualPatch = false;
+    @Builder.Default
     Boolean isWebService = false;
     FoDEnums.WebServiceType webServiceType;
     String webServiceDescriptorURL;
@@ -98,220 +109,12 @@ public class FoDSetupDastScanRequest {
     String webServiceAPIKey;
     String webServiceAPIPassword;
     FoDEnums.EntitlementFrequencyType entitlementFrequencyType;
+    @Builder.Default
     FoDEnums.UserAgentType userAgentType = FoDEnums.UserAgentType.Desktop;
+    @Builder.Default
     FoDEnums.ConcurrentRequestThreadsType concurrentRequestThreadsType = FoDEnums.ConcurrentRequestThreadsType.Standard;
     String postmanCollectionURL;
     String openApiURL;
     String remoteManifestAuthorizationHeaderName;
     String remoteManifestAuthorizationHeaderValue;
-
-    public FoDSetupDastScanRequest setGeoLocationId(Integer geoLocationId) {
-        this.geoLocationId = geoLocationId;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setDynamicScanEnvironmentFacingType(FoDEnums.DynamicScanEnvironmentFacingType dynamicScanEnvironmentFacingType) {
-        this.dynamicScanEnvironmentFacingType = dynamicScanEnvironmentFacingType;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setIncludeUrls(ArrayList<String> includeUrls) {
-        this.includeUrls = includeUrls;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setExclusionsList(ArrayList<String> exclusionsList) {
-        this.exclusionsList = exclusionsList;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setHasFormsAuthentication(Boolean hasFormsAuthentication) {
-        this.hasFormsAuthentication = hasFormsAuthentication;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setPrimaryUserName(String primaryUserName) {
-        this.primaryUserName = primaryUserName;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setPrimaryUserPassword(String primaryUserPassword) {
-        this.primaryUserPassword = primaryUserPassword;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setSecondaryUserName(String secondaryUserName) {
-        this.secondaryUserName = secondaryUserName;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setSecondaryUserPassword(String secondaryUserPassword) {
-        this.secondaryUserPassword = secondaryUserPassword;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setOtherUserName(String otherUserName) {
-        this.otherUserName = otherUserName;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setOtherUserPassword(String otherUserPassword) {
-        this.otherUserPassword = otherUserPassword;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setRequiresNetworkAuthentication(Boolean requiresNetworkAuthentication) {
-        this.requiresNetworkAuthentication = requiresNetworkAuthentication;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setNetworkUserName(String networkUserName) {
-        this.networkUserName = networkUserName;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setNetworkPassword(String networkPassword) {
-        this.networkPassword = networkPassword;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setMultiFactorAuth(Boolean multiFactorAuth) {
-        this.multiFactorAuth = multiFactorAuth;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setMultiFactorAuthText(String multiFactorAuthText) {
-        this.multiFactorAuthText = multiFactorAuthText;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setNotes(String notes) {
-        this.notes = notes;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setRequestCall(Boolean requestCall) {
-        this.requestCall = requestCall;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setDynamicSiteURL(String dynamicSiteURL) {
-        this.dynamicSiteURL = dynamicSiteURL;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setTimeZone(String timeZone) {
-        this.timeZone = timeZone;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setBlockout(ArrayList<BlackoutDay> blockout) {
-        this.blockout = blockout;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setRepeatScheduleType(FoDEnums.RepeatScheduleType repeatScheduleType) {
-        this.repeatScheduleType = repeatScheduleType;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setAssessmentTypeId(Integer assessmentTypeId) {
-        this.assessmentTypeId = assessmentTypeId;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setEntitlementId(Integer entitlementId) {
-        this.entitlementId = entitlementId;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setAllowFormSubmissions(Boolean allowFormSubmissions) {
-        this.allowFormSubmissions = allowFormSubmissions;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setAllowSameHostRedirects(Boolean allowSameHostRedirects) {
-        this.allowSameHostRedirects = allowSameHostRedirects;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setRestrictToDirectoryAndSubdirectories(Boolean restrictToDirectoryAndSubdirectories) {
-        this.restrictToDirectoryAndSubdirectories = restrictToDirectoryAndSubdirectories;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setGenerateWAFVirtualPatch(Boolean generateWAFVirtualPatch) {
-        this.generateWAFVirtualPatch = generateWAFVirtualPatch;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setWebService(Boolean webService) {
-        isWebService = webService;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setWebServiceType(FoDEnums.WebServiceType webServiceType) {
-        this.webServiceType = webServiceType;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setWebServiceDescriptorURL(String webServiceDescriptorURL) {
-        this.webServiceDescriptorURL = webServiceDescriptorURL;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setWebServiceUserName(String webServiceUserName) {
-        this.webServiceUserName = webServiceUserName;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setWebServicePassword(String webServicePassword) {
-        this.webServicePassword = webServicePassword;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setWebServiceAPIKey(String webServiceAPIKey) {
-        this.webServiceAPIKey = webServiceAPIKey;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setWebServiceAPIPassword(String webServiceAPIPassword) {
-        this.webServiceAPIPassword = webServiceAPIPassword;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setEntitlementFrequencyType(FoDEnums.EntitlementFrequencyType entitlementFrequencyType) {
-        this.entitlementFrequencyType = entitlementFrequencyType;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setUserAgentType(FoDEnums.UserAgentType userAgentType) {
-        this.userAgentType = userAgentType;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setConcurrentRequestThreadsType(FoDEnums.ConcurrentRequestThreadsType concurrentRequestThreadsType) {
-        this.concurrentRequestThreadsType = concurrentRequestThreadsType;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setPostmanCollectionURL(String postmanCollectionURL) {
-        this.postmanCollectionURL = postmanCollectionURL;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setOpenApiURL(String openApiURL) {
-        this.openApiURL = openApiURL;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setRemoteManifestAuthorizationHeaderName(String remoteManifestAuthorizationHeaderName) {
-        this.remoteManifestAuthorizationHeaderName = remoteManifestAuthorizationHeaderName;
-        return this;
-    }
-
-    public FoDSetupDastScanRequest setRemoteManifestAuthorizationHeaderValue(String remoteManifestAuthorizationHeaderValue) {
-        this.remoteManifestAuthorizationHeaderValue = remoteManifestAuthorizationHeaderValue;
-        return this;
-    }
 }
