@@ -179,7 +179,8 @@
     },
     {
         "name": "ch.qos.logback.classic.filter.ThresholdFilter",
-        "allDeclaredConstructors": true
+        "allDeclaredConstructors": true,
+        "allPublicMethods":true
     }
     
 ]
