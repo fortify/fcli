@@ -12,9 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.fod.rest.helper;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
@@ -38,31 +35,11 @@ public class FoDPagingHelper {
                 int limit = body.get("limit").asInt();
                 int newOffset = offset + limit;
                 if (newOffset < totalCount) {
-                    // UriBuilder was only appending parameters with ? not &
-                    // return UriBuilder.of(uri).replaceQueryParam("offset", newOffset).build().toString();
-                    try {
-                        return appendUri(uri, "offset=" + newOffset).toString();
-                    } catch (URISyntaxException e) {
-                        throw new RuntimeException(e);
-                    }
+                    return PagingHelper.addOrReplaceParam(uri, "offset", newOffset);
                 }
                 return null;
             }
             return null;
         };
-    }
-    
-    private static final URI appendUri(String uri, String appendQuery) throws URISyntaxException {
-        URI oldUri = new URI(uri);
-
-        String newQuery = oldUri.getQuery();
-        if (newQuery == null) {
-            newQuery = appendQuery;
-        } else {
-            newQuery += "&" + appendQuery;
-        }
-
-        return new URI(oldUri.getScheme(), oldUri.getAuthority(),
-                oldUri.getPath(), newQuery, oldUri.getFragment());
     }
 }

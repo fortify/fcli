@@ -35,8 +35,7 @@ public class SCDastPagingHelper {
                 int limit = body.get("limit").asInt();
                 int newOffset = offset + limit;
                 if (newOffset < totalCount) {
-                    // TODO FIX THIS!
-                    return null;
+                    return PagingHelper.addOrReplaceParam(uriString, "offset", newOffset);
                 }
             }
             return null;

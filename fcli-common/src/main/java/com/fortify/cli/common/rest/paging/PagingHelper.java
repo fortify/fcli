@@ -12,10 +12,16 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.paging;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.micrometer.common.util.StringUtils;
 import kong.unirest.HttpRequest;
 import kong.unirest.PagedList;
+import lombok.SneakyThrows;
 
 public class PagingHelper {
     public static final PagedList<JsonNode> pagedRequest(HttpRequest<?> request, INextPageUrlProducer nextPageUrlProducer) {
@@ -27,10 +33,18 @@ public class PagingHelper {
         return request.asPaged(r->r.asObject(returnType), nextPageUrlProducer::getNextPageUrl);
     }
     
-    public static final String addOrReplaceParam(String uri, String param, Object newValue) {
+    @SneakyThrows
+    public static final String addOrReplaceParam(String uriString, String param, Object newValue) {
+        return addOrReplaceParam(new URI(uriString), param, newValue).toString();
+    }
+    
+    @SneakyThrows
+    public static final URI addOrReplaceParam(URI uri, String param, Object newValue) {
         var pattern = String.format("([&?])(%s=)([^&]*)", param);
-        var newUri = uri.replaceAll(pattern, "");
-        // TODO
-        return newUri;
+        var query = uri.getQuery().replaceAll(pattern, "");
+        var newParamAndValue = String.format("%s=%s", param, URLEncoder.encode(newValue.toString(), StandardCharsets.UTF_8));
+        query = (StringUtils.isBlank(query) ? "" : "&") + newParamAndValue;
+        return new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), 
+                uri.getPath(), query, uri.getFragment());
     }
 }
