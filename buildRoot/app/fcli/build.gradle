@@ -15,9 +15,6 @@ dependencies {
 
     // Logging dependencies
     runtimeOnly('org.slf4j:jcl-over-slf4j')
-
-    // GraalVM dependency
-    compileOnly("org.graalvm.nativeimage:svm")
 	
 	// Enable ANSI support
 	runtimeOnly("org.fusesource.jansi:jansi")

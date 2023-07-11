@@ -21,9 +21,6 @@ dependencies {
 		// Annotation-based reflect-config.json generation
 		api('com.formkiq:graalvm-annotations:1.2.0')
         api('com.formkiq:graalvm-annotations-processor:1.4.0')
-
-		// GraalVM dependency
-		api("org.graalvm.nativeimage:svm:22.3.2")
         
         // ANSI support
         api("org.fusesource.jansi:jansi:2.4.0")
