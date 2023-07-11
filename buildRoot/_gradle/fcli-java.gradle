@@ -17,7 +17,7 @@ dependencies {
 	annotationProcessor("info.picocli:picocli-codegen")
 	
 	// Generate GraalVM reflect-config.json using annotations
-	implementation('com.formkiq:graalvm-annotations')
+	compileOnly('com.formkiq:graalvm-annotations')
 	// TODO Use original once patch is available for issue:
 	// https://github.com/formkiq/graalvm-annotations-processor/issues/9
 	// annotationProcessor 'com.formkiq:graalvm-annotations-processor'

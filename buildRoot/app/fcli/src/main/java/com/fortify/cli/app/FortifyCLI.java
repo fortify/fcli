@@ -12,11 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.app;
 
-import org.graalvm.nativeimage.hosted.Feature;
-import org.jasypt.normalization.Normalizer;
-
 import com.fortify.cli.app.runner.DefaultFortifyCLIRunner;
-import com.oracle.svm.core.annotate.AutomaticFeature;
 
 /**
  * <p>This class provides the {@link #main(String[])} entrypoint into the application,
@@ -69,13 +65,5 @@ public class FortifyCLI {
 	    		t.printStackTrace();
 	    	}
     	}
-    }
-    
-    @AutomaticFeature
-    public static final class RuntimeReflectionRegistrationFeature implements Feature {
-        public void beforeAnalysis(BeforeAnalysisAccess access) {
-            // This jasypt class uses reflection, so we perform a dummy operation to have GraalVM native image generation detect this
-            Normalizer.normalizeToNfc("dummy");
-        }
     }
 }
