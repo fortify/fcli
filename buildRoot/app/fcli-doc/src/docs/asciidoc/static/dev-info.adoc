@@ -32,7 +32,6 @@ See the output of `+git log+` to view some sample commit messages.
 Following is a list of the main frameworks and technologies used by fcli: 
 
 * https://picocli.info/[picocli]: Used for fcli command implementations; perform fcli actions, process command line options, generate usage information, generate command output, … 
-* https://micronaut.io/[Micronaut]: Dependency injection, features for GraalVM native image generation 
 * https://github.com/FasterXML/jackson[Jackson]: Parse and generate data in JSON and other formats 
 * https://www.graalvm.org/[GraalVM]: Generate native images (native executables)
 
@@ -45,7 +44,7 @@ As can be seen in the link:#_technologies_frameworks[Technologies & frameworks] 
 This project uses the following frameworks that may require some special setup in order to have your IDE compile this project without errors:
 
 * Lombok: Please see https://projectlombok.org/setup/overview for more information on how to add Lombok support to your IDE
-* Micronaut & picocli: These frameworks require annotation processors to be run during builds; please see your IDE documentation on how to enable annotation processing
+* Annotation processors: This project requires various annotation processors to be run, like the picocli annotation processor. Please see your IDE documentation on how to enable annotation processing
 
 === Incremental Compilation
 
@@ -66,29 +65,15 @@ GraalVM Native Image needs to know ahead-of-time the reflectively accessed progr
 
 In fcli, the following needs to be taken into account to avoid reflection issues in native fcli binaries:
 
-* Micronaut `@Inject` annotations must not be declared on private fields
-** To inject beans into fields, use `@Setter(onMethod=@__({@Inject}))` to have Lombok generate a setter method with `@Inject` annotation, allowing Micronaut to perform injection without requiring reflection.
-** Failure to do so will often result in native fcli binaries from running altogether; this will usually be detected during the basic fcli test performed in the GitHub `Build & release` workflow.
-
-* All classes referenced in `@ProductHelperClass` annotations, i.e. all `<Product>ProductHelper` classes, must be annotated with `+@ReflectiveAccess+`. 
-** Failure to do so will prevent most `<Product>`-specific commands from running when using the native fcli binaries. 
-** This may not be uncovered by the basic fcli test mentioned above, but should be fairly easy to detect, for example through product module integration tests or through manual testing of arbitrary product commands.
-
-* All data classes that are serialized or deserialized using Jackson must be annotated with the `+@ReflectiveAccess+` annotation.
+* All data classes that are serialized or deserialized using Jackson must be annotated with the `+@Reflectable+` annotation. For de-serialization, a public no-args constructor is required as well. To avoid any potential issues, it is highly recommend to have both `@Reflectable` and `@NoArgsConstructor` annotations on such classes, preferably on the same line for easy identification.
 ** Failure to do so will cause errors when serializing or deserializing data to or from classes that lack this annotation.
 ** Usually this only affects a small group of commands or a single command, possibly even only under certain conditions, and as such any missing annotations may be difficult to detect.
-** Most notably, the following classes will need the `+@ReflectiveAccess+` annotation:
+** Most notably, the following classes will need the `+@Reflectable+` annotation:
 *** Most `*Descriptor` classes.
 *** Classes holding REST request or response data.
 *** Classes holding data stored in the fcli data folder, like configuration data classes.
 
-* Picocli uses reflection internally, which in earlier fcli versions required `+@ReflectiveAccess+` annotations on picocli-related classes like commands and mixins. However, recent fcli versions generate a proper Graal reflect-config.json file, so `+@ReflectiveAccess+` is no longer needed on picocli-related classes.
-
-If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the `+@ReflectiveAccess+` annotation to the appropriate classes.
-
-Note that Micronaut also provides the `+@Introspected+` annotation that should allow for reflection-free (de-)serialization. However experience learns that there are just too many differences between reflection-based and introspection-based (de-)serialization. When running in a normal JVM these differences are often not visible as Jackson can easily fall back to reflection-based (de-)serialization. In native images, Jackson cannot fall back to reflection-based (de-)serialization unless properly configured, and even when properly configured there are still some differences in behavior.
-
-As such, it has been decided to disable Jackson introspection-based (de-)serialization using the `+jackson.bean-introspection-module+` configuration property in `+application.yml+`. This also means that we will not be using the `+@Introspected+` annotation on classes that need to be (de-)serialized with Jackson. The alternative is to use the `+@ReflectiveAccess+` annotation on such classes, as described above.
+If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the `+@Reflectable+` annotation to the appropriate classes.
 
 == Gradle Wrapper
 
@@ -116,26 +101,10 @@ Most or all of the `+*.md+` and `LICENSE.txt` files located in the repository ro
 
 === User Documentation
 
-User documentation is generated automatically from the following three locations:
+User documentation is generated automatically by the `+buildRoot/app/fcli-doc+` project. Part of the documentation consists of manual pages in various formats, generated using picocli. Other user documentation is generated from the `+src/docs/asciidoc+` directory in the before-mentioned project. This consists of static AsciiDoc files, used to generate the top-level contents of the fcli GitHub Pages site, and 'versioned' AsciiDoc files that describe the functionality provided by a particular fcli version.
 
-* AsciiDoc located in the repository `+doc-resources/asciidoc/gh-pages+` directory
-** Published to the root directory of the GitHub Pages site
-* AsciiDoc located in the repository `+doc-resources/asciidoc/versioned+` directory
-** Published to a version-specific directory on the GitHub Pages site
-** Published to docs-html.zip in release assets
-* Manual pages generated from the fcli code
-** Published to a version-specific directory on the GitHub Pages site
-** Published to docs-html.zip in release assets
-** Published to docs-manpage.zip in release assets
+Documentation can be generated using the Gradle `distDocs` task, ending up in the `dist` directory of the aforementioned project. The global `dist` task includes the `distDocs` task.
 
-The Gradle build includes various tasks for generating this documentation, following are the main tasks:
-
-* `+generateManpageAsciiDoc+`: Generate man-page style AsciiDoc documentation from fcli code
-* `+asciiDoctorManPage+`: Convert man-page style AsciiDoc to Linux man-page format
-* `+asciiDoctorHtml+`: Convert both man-page style AsciiDoc and versioned user documentation to offline HTML format
-* `+asciidoctorJekyll+`: Convert both man-page style AsciiDoc and versioned user documentation to Jekyll HTML format for publishing on the GitHub Pages site
-* `+asciidoctorGHPages+`: Convert AsciiDoc files from `+doc-resources/asciidoc/gh-pages+` to Jekyll HTML format for publishing on the GitHub Pages site
-* `+distDocs+`: Calls of the tasks above and packages the output from these tasks into separate `+docs-*.zip+` files in the `+build/dist+` directory
 
 The GitHub Actions workflow defined in `+.github/workflows/ci.yml+` is responsible for publishing the documentation:
 
@@ -173,6 +142,8 @@ This command iterates over the given version numbers, regenerates the documentat
 * Current directory is a clone of the fcli repository
 * `+../fcli-fork+` would contain the latest version of `+doc-resources+` and `+build.gradle+`
 * `+../fcli-pages+` would be a clone of the fcli repository with the gh-pages branch checked out
+
+Note that project directory structure may change beteen fcli versions, possibly requiring extra work to make the above work without issues.
 
 == Code Style & Structure 
 
@@ -215,20 +186,8 @@ Most fcli command modules use the package structure described below. Note that t
 ** Contains entity-related helper classes, for example for loading entity data, deleting entities, ...
 ** Contains `*Descriptor` classes that hold entity-related data
 ** Classes in this package should not contain any picocli-related functionality; they should be designed in such a way that they could potentially be used in non-picocli applications
-* `com.fortify.cli.<module>.output`
-** Root package for generic, module-specific output functionality
-* `com.fortify.cli.<module>.output.cli.cmd`
-** Contains a module-specific `Abstract<module>OutputCommand` class extending from either `AbstractBasicOutputCommand` or `AbstractUnirestOutputCommand`.
-* `com.fortify.cli.<module>.output.cli.mixin`
-** Contains a module-specific `<module>OutputHelperMixins` class, containing inner classes for every action provided by the module, like `List`, `Get`, `Delete`, `Revoke`, ...
-* `com.fortify.cli.<module>.rest`
-** Root package for module-specific REST-related functionality
-** Contents may vary depending on the target system
-* `com.fortify.cli.<module>.rest.cli.cmd`
-** Contains `<module>RestCommands` and `<module>RestCallCommand` classes that implement the `fcli <module> rest call` command structure
-* `com.fortify.cli.<module>.rest.cli.mixin`
-** Contains one or more mixin classes responsible for handling connections to the target system
-
+* `com.fortify.cli.<module>._common.*`
+** Root package for module-specific generic functionality, like connecting to, and authenticating with, the remote system, generic request/response transformations, ... Please see existing modules for example structure and contents.
 
 == Implementing fcli Commands
 
