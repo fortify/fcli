@@ -13,7 +13,7 @@
 package com.fortify.cli.state._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.state.entity.variable.cli.cmd.VariableCommands;
+import com.fortify.cli.state.variable.cli.cmd.VariableCommands;
 
 import picocli.CommandLine.Command;
 

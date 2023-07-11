@@ -13,15 +13,15 @@
 package com.fortify.cli.fod._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.fod.entity.app.cli.cmd.FoDAppCommands;
-import com.fortify.cli.fod.entity.lookup.cli.cmd.FoDLookupCommands;
-import com.fortify.cli.fod.entity.microservice.cli.cmd.FoDAppMicroserviceCommands;
-import com.fortify.cli.fod.entity.release.cli.cmd.FoDAppRelCommands;
-import com.fortify.cli.fod.entity.rest.cli.cmd.FoDRestCommands;
-import com.fortify.cli.fod.entity.scan.cli.cmd.FoDScanCommands;
-import com.fortify.cli.fod.entity.user.cli.cmd.FoDUserCommands;
-import com.fortify.cli.fod.entity.user_group.cli.cmd.FoDUserGroupCommands;
-import com.fortify.cli.fod.session.cli.cmd.FoDSessionCommands;
+import com.fortify.cli.fod._common.session.cli.cmd.FoDSessionCommands;
+import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
+import com.fortify.cli.fod.lookup.cli.cmd.FoDLookupCommands;
+import com.fortify.cli.fod.microservice.cli.cmd.FoDAppMicroserviceCommands;
+import com.fortify.cli.fod.release.cli.cmd.FoDAppRelCommands;
+import com.fortify.cli.fod.rest.cli.cmd.FoDRestCommands;
+import com.fortify.cli.fod.scan.cli.cmd.FoDScanCommands;
+import com.fortify.cli.fod.user.cli.cmd.FoDUserCommands;
+import com.fortify.cli.fod.user_group.cli.cmd.FoDUserGroupCommands;
 
 import picocli.CommandLine.Command;
 

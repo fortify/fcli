@@ -13,9 +13,9 @@
 package com.fortify.cli.config._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.config.entity.language.cli.cmd.LanguageCommands;
-import com.fortify.cli.config.entity.proxy.cli.cmd.ProxyCommands;
-import com.fortify.cli.config.entity.truststore.cli.cmd.TrustStoreCommands;
+import com.fortify.cli.config.language.cli.cmd.LanguageCommands;
+import com.fortify.cli.config.proxy.cli.cmd.ProxyCommands;
+import com.fortify.cli.config.truststore.cli.cmd.TrustStoreCommands;
 
 import picocli.CommandLine.Command;
 
