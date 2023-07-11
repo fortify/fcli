@@ -9,14 +9,14 @@ javaPlatform {
 }
 
 dependencies {
-	api platform('com.fasterxml.jackson:jackson-bom:2.14.2')
+	api platform('com.fasterxml.jackson:jackson-bom:2.15.2')
 	// TODO Use this instead of declarations below? 
 	// api platform('org.springframework:spring-framework-bom:5.3.26')
 		
 	constraints {
 		// Picocli
-		api("info.picocli:picocli:4.7.1")
-		api("info.picocli:picocli-codegen:4.7.1")
+		api("info.picocli:picocli:4.7.4")
+		api("info.picocli:picocli-codegen:4.7.4")
 		
 		// Annotation-based reflect-config.json generation
 		api('com.formkiq:graalvm-annotations:1.2.0')
@@ -29,13 +29,13 @@ dependencies {
         api("org.fusesource.jansi:jansi:2.4.0")
 		
 		// Logging
-		api('org.slf4j:slf4j-api:2.0.6')
-		api('org.slf4j:jcl-over-slf4j:2.0.6')
-        api("ch.qos.logback:logback-classic:1.4.6")
+		api('org.slf4j:slf4j-api:2.0.7')
+		api('org.slf4j:jcl-over-slf4j:2.0.7')
+        api("ch.qos.logback:logback-classic:1.4.8")
 		
 		// REST client
-        api('com.konghq:unirest-java:3.13.11')
-        api('com.konghq:unirest-objectmapper-jackson:3.14.2')
+        api('com.konghq:unirest-java:3.14.5')
+        api('com.konghq:unirest-objectmapper-jackson:3.14.5')
         
         // Spring expression language (SpEL)
         api('org.springframework:spring-expression:6.0.10')
@@ -58,8 +58,8 @@ dependencies {
         api('org.jasypt:jasypt:1.9.3:lite')
         
         // Test dependencies
-        api 'org.junit.jupiter:junit-jupiter-api:5.9.2'
-        api 'org.junit.jupiter:junit-jupiter-params:5.9.2'
-    	api 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+        api 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+        api 'org.junit.jupiter:junit-jupiter-params:5.9.3'
+    	api 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
 	}
 }
