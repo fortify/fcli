@@ -65,7 +65,7 @@ jobs:
       
       - name: Build release ${{env.RELEASE_VERSION}}
         if: env.DO_BUILD
-        run: ./gradlew clean build dist distThirdPartyReleaseAsset -Pversion=${{env.RELEASE_VERSION}}
+        run: ./gradlew clean build dist distThirdParty -Pversion=${{env.RELEASE_VERSION}}
         
       - name: Check fcli version
         if: env.DO_BUILD
