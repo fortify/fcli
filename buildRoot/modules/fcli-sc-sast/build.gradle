@@ -1,0 +1,3 @@
+dependencies {
+    implementation project("$buildRootProject:modules:fcli-ssc")
+}

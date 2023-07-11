@@ -1,13 +1,19 @@
 rootProject.name="fcli"
-include 'fcli-common'
-include 'fcli-config'
-include 'fcli-state'
-include 'fcli-ssc'
-include 'fcli-fod'
-include 'fcli-sc-sast'
-include 'fcli-sc-dast'
-include 'fcli-tool'
-include 'fcli-util'
+include "$buildRootProject:common:fcli-bom"
+include "$buildRootProject:common:fcli-common"
+include "$buildRootProject:modules:fcli-config"
+include "$buildRootProject:modules:fcli-state"
+include "$buildRootProject:modules:fcli-ssc"
+include "$buildRootProject:modules:fcli-fod"
+include "$buildRootProject:modules:fcli-sc-sast"
+include "$buildRootProject:modules:fcli-sc-dast"
+include "$buildRootProject:modules:fcli-tool"
+include "$buildRootProject:modules:fcli-util"
+include "$buildRootProject:app:fcli"
+include "$buildRootProject:app:fcli-functional-test"
+include "$buildRootProject:app:fcli-autocomplete"
+include "$buildRootProject:app:fcli-doc"
+
 // TODO Remove once patch is available for
 // https://github.com/formkiq/graalvm-annotations-processor/issues/9
-include 'graalvm-annotations-processor-patch'
+include "$buildRootProject:patches:graalvm-annotations-processor-patch"

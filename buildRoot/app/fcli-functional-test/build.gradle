@@ -1,0 +1,34 @@
+// Enable Spock-based functional tests.
+apply plugin: "groovy"
+testing {
+    suites {
+        ftest(JvmTestSuite) {
+            useJUnitJupiter()
+            dependencies {
+                implementation platform('org.apache.groovy:groovy-bom:4.0.13')
+                implementation 'org.apache.groovy:groovy'
+                implementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
+                implementation "org.spockframework:spock-core"
+                implementation 'io.github.joke:spock-outputcapture:3.0.1'
+                if ( !project.hasProperty('ftest.fcli') || project.property('ftest.fcli')=='build' ) {
+                    implementation project("$buildRootProject:app:fcli")
+                }
+            }
+            targets {
+                all {
+                    testTask.configure {
+                        // Pass all ftest.* properties to tests as system properties
+                        systemProperties project.properties.findAll { 
+                            it.key.startsWith("ftest.")
+                        }
+                        options {
+                            testLogging {
+                                showStandardStreams = true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

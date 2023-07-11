@@ -1,0 +1,15 @@
+apply plugin: 'java'
+
+dependencies {
+	runtimeOnly project("$buildRootProject:app:fcli")
+	runtimeOnly 'info.picocli:picocli-codegen'
+}
+
+task distLocal(type: JavaExec) {
+    dependsOn(createDistDir)
+    description = "Generate fcli autocomplete"
+    classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
+    main 'picocli.AutoComplete'
+    args fcliRootCommandsClassName, "-f", "--completionScript=${distDir}/fcli_completion"
+}
+rootProject.dist.dependsOn(distLocal)
