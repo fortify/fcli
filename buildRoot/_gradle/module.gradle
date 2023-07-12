@@ -1,5 +1,5 @@
-apply from: "$buildRootDir/_gradle/fcli-java.gradle"
+apply from: "${sharedGradleScriptsDir}/fcli-java.gradle"
 
 dependencies {
-	implementation project("$buildRootProject:common:fcli-common")
+	implementation project("${fcliCommonRef}")
 }

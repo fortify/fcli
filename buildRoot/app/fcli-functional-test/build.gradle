@@ -11,7 +11,7 @@ testing {
                 implementation "org.spockframework:spock-core"
                 implementation 'io.github.joke:spock-outputcapture:3.0.1'
                 if ( !project.hasProperty('ftest.fcli') || project.property('ftest.fcli')=='build' ) {
-                    implementation project("$buildRootProject:app:fcli")
+                    implementation project("${fcliAppRef}")
                 }
             }
             targets {

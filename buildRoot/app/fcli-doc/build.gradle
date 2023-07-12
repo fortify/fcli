@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'org.asciidoctor.jvm.convert'
 
 dependencies {
-	runtimeOnly project("$buildRootProject:app:fcli")
+	runtimeOnly project("${fcliAppRef}")
 	runtimeOnly 'info.picocli:picocli-codegen'
 }
 

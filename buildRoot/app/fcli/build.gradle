@@ -1,17 +1,17 @@
-apply from: "$buildRootDir/_gradle/fcli-java.gradle"
+apply from: "${sharedGradleScriptsDir}/fcli-java.gradle"
 apply plugin: 'com.github.johnrengelman.shadow'
 
 // Define dependencies on all fcli Gradle projects
 dependencies {
-	implementation project("$buildRootProject:common:fcli-common")
-    implementation project("$buildRootProject:modules:fcli-config")
-    implementation project("$buildRootProject:modules:fcli-state")
-    implementation project("$buildRootProject:modules:fcli-ssc")
-    implementation project("$buildRootProject:modules:fcli-fod")
-    implementation project("$buildRootProject:modules:fcli-sc-sast")
-    implementation project("$buildRootProject:modules:fcli-sc-dast")
-    implementation project("$buildRootProject:modules:fcli-tool")
-    implementation project("$buildRootProject:modules:fcli-util")
+	implementation project("${fcliCommonRef}")
+    implementation project("${fcliConfigRef}")
+    implementation project("${fcliStateRef}")
+    implementation project("${fcliSSCRef}")
+    implementation project("${fcliFoDRef}")
+    implementation project("${fcliSCSastRef}")
+    implementation project("${fcliSCDastRef}")
+    implementation project("${fcliToolRef}")
+    implementation project("${fcliUtilRef}")
 
     // Logging dependencies
     runtimeOnly('org.slf4j:jcl-over-slf4j')
@@ -56,6 +56,7 @@ task generatePicocliReflectConfig(type: JavaExec) {
 // Generate shadow jar
 apply plugin: 'application'
 application {
+    // fcliMainClassName is defined in top-level gradle.properties
     mainClass.set(fcliMainClassName)
 }
 shadowJar {

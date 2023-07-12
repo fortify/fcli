@@ -1,1 +1,1 @@
-apply from: "$buildRootDir/_gradle/fcli-java.gradle"
+apply from: "${sharedGradleScriptsDir}/fcli-java.gradle"

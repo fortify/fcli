@@ -19,10 +19,17 @@ allprojects {
 	apply plugin: 'eclipse'
 	version = rootProject.ext.getVersion();
 	ext {
-		buildRootDir = "$rootDir/buildRoot"
 		distDir = "${buildDir}/dist"
 		releaseAssetsDir = "${distDir}/release-assets"
+		sharedGradleScriptsDir = "$rootDir/$sharedGradleScriptsRelativeDir"
 		gradleHelpersLocation = "https://raw.githubusercontent.com/fortify/shared-gradle-helpers/1.8"
+	}
+	// Define *RefDir properties for each *Ref property defined in gradle.properties,
+	// based on the refPatterns property defined in the same gradle.properties
+	properties.each { p->
+		if ( "$refPatterns".split(',').any { p.key.matches(it) } ) {
+			ext[p.key+"Dir"] = "$rootDir" + p.value.replaceAll(':', '/')
+		}
 	}
 	
 	// Define Maven Central repository
@@ -43,15 +50,15 @@ subprojects {
 	task dist {}
 }
 
-configure(allprojects.findAll {it.path.startsWith "$buildRootProject:modules:"}) {
-	apply from: "$buildRootDir/_gradle/module.gradle"
+configure(allprojects.findAll {it.path.startsWith "$fcliModulePathPrefix"}) {
+	apply from: "${sharedGradleScriptsDir}/module.gradle"
 }
 task clean(type: Delete) {
     delete "build"
 }
 task build(type: Copy) {
-	dependsOn("${buildRootProject}:app:fcli:build")
-	from "${buildRootDir}/app/fcli/build/libs/fcli.jar"
+	dependsOn("${fcliAppRef}:build")
+	from "${fcliAppRefDir}/build/libs/fcli.jar"
 	into "build/libs"
 }
 task dist(type: Copy) {
@@ -67,7 +74,7 @@ task dist(type: Copy) {
 }
 task distThirdParty(type: Copy) {
 	dependsOn(createDistDir)
-	dependsOn("${buildRootProject}:app:fcli:distThirdPartyReleaseAsset")
-	from "${buildRootDir}/app/fcli/build/dist-thirdparty"
+	dependsOn("${fcliAppRef}:distThirdPartyReleaseAsset")
+	from "${fcliAppRefDir}/build/dist-thirdparty"
 	into "${distDir}"
 }

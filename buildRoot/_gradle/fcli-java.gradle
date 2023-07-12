@@ -8,8 +8,8 @@ java {
 }
 
 dependencies {
-	implementation platform(project("$buildRootProject:common:fcli-bom"))
-	annotationProcessor platform(project("$buildRootProject:common:fcli-bom"))
+	implementation platform(project("${fcliBomRef}"))
+	annotationProcessor platform(project("${fcliBomRef}"))
 	
 	// Picocli dependency & annotation processor
 	// TODO Re-enable when removing patched picocli classes from fcli-common
@@ -21,7 +21,7 @@ dependencies {
 	// TODO Use original once patch is available for issue:
 	// https://github.com/formkiq/graalvm-annotations-processor/issues/9
 	// annotationProcessor 'com.formkiq:graalvm-annotations-processor'
-	annotationProcessor project("$buildRootProject:patches:graalvm-annotations-processor-patch")
+	annotationProcessor project("${patchGraalVMAnnotationsProcessorRef}")
 
 	// REST client
 	implementation('com.konghq:unirest-java') {

@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 dependencies {
-	runtimeOnly project("$buildRootProject:app:fcli")
+	runtimeOnly project("${fcliAppRef}")
 	runtimeOnly 'info.picocli:picocli-codegen'
 }
 
