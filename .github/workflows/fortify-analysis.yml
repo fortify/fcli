@@ -48,7 +48,7 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v1
         with:
-          java-version: 11
+          java-version: 17
 
       # Prepare source+dependencies for upload. The default example is for a Maven project that uses pom.xml.
       # TODO: Update PACKAGE_OPTS based on the ScanCentral Client documentation for your project's included tech stack(s). Helpful hints:
