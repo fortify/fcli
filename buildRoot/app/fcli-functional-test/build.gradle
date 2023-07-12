@@ -18,8 +18,8 @@ testing {
                 all {
                     testTask.configure {
                         // Pass all ftest.* properties to tests as system properties
-                        systemProperties project.properties.findAll { 
-                            it.key.startsWith("ftest.")
+                        systemProperties System.properties.findAll { 
+                            it.key.startsWith("ft.")
                         }
                         options {
                             testLogging {

@@ -3,8 +3,8 @@ package com.fortify.cli.ftest.core;
 import com.fortify.cli.ftest._common.spec.BaseFcliSpec
 import com.fortify.cli.ftest._common.spec.Prefix
 
-@Prefix("root")
-class RootSpec extends BaseFcliSpec {
+@Prefix("core.basic-info")
+class BasicInfoSpec extends BaseFcliSpec {
     def "help"(String[] args, boolean success) {
         expect:
             fcli(args)==success

@@ -2,6 +2,9 @@ package com.fortify.cli.ftest._common.spec;
 
 import org.spockframework.runtime.extension.IMethodInterceptor
 
+import com.fortify.cli.ftest._common.Input
+import com.fortify.cli.ftest._common.runner.FcliRunner
+
 public enum FcliSessionType {
     SSC(new SSCSessionHandler()),
     FOD(new FoDSessionHandler()),
@@ -64,7 +67,7 @@ public enum FcliSessionType {
         abstract String[] logoutOptions()
         
         String basePropertyName() {
-            "ftest."+module()
+            Input.addPropertyPrefix(module())
         }
         String get(String subPropertyName) {
             System.properties[basePropertyName()+"."+subPropertyName]

@@ -3,6 +3,8 @@ package com.fortify.cli.ftest._common.runner;
 import java.nio.file.Files
 import java.nio.file.Path
 
+import com.fortify.cli.ftest._common.Input
+
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 
@@ -51,8 +53,8 @@ public class FcliRunner {
     }
     
     private static IRunner createRunner() {
-        String fcli = System.properties["ftest.fcli"]
-        String java = System.properties["ftest.java"] ?: "java"
+        String fcli = Input.FcliCommand.get()
+        String java = Input.JavaCommand.get() ?: "java"
         if ( !fcli || fcli=="build" ) {
             return new ReflectiveRunner()
         } else {

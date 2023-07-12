@@ -4,6 +4,7 @@ import org.spockframework.runtime.extension.IGlobalExtension
 import org.spockframework.runtime.model.FieldInfo
 import org.spockframework.runtime.model.SpecInfo
 
+import com.fortify.cli.ftest._common.Input
 import com.fortify.cli.ftest._common.runner.FcliRunner
 import com.fortify.cli.ftest._common.spec.Fcli
 import com.fortify.cli.ftest._common.spec.FcliSessionType
@@ -60,14 +61,14 @@ class FcliGlobalExtension implements IGlobalExtension {
     private void skipFeatures(SpecInfo spec) {
         // Exclude any features not matching any of the feature names
         // listed in the fcli.run property
-        def run = ((String)System.properties["ftest.run"])?.split(",")
+        def run = Input.TestsToRun.get()?.split(",")
         if (run) {
             if ( !run.any { spec.name.startsWith(it) } ) {
-                spec.skip "Not included in ftest.run property"
+                spec.skip "Not included in "+Input.TestsToRun.propertyName()+" property"
             }
             spec.allFeatures.each({ feature ->
                 if ( !run.any {feature.name.startsWith(it)} ) {
-                    feature.skip "Not included in ftest.run property"
+                    feature.skip "Not included in "+Input.TestsToRun.propertyName()+" property"
                 }
             })
         }
