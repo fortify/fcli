@@ -77,17 +77,14 @@ apply from: "${gradleHelpersLocation}/thirdparty-helper.gradle"
 task distThirdPartyReleaseAsset {
 	dependsOn 'distThirdParty'
 	doLast {
-		file("$buildDir/dist-thirdparty/release-assets").mkdirs()
-		file("$buildDir/dist/fcli-thirdparty.zip").renameTo(file("$buildDir/dist-thirdparty/release-assets/fcli-thirdparty.zip"))
+		file("$buildDir/dist/fcli-thirdparty.zip").renameTo(file("${releaseAssetsDir}/fcli-thirdparty.zip"))
 	}
 }
 
-
-task distLocal(type: Copy) {
+task dist(type: Copy) {
 	dependsOn 'shadowJar'
 	into "${releaseAssetsDir}"
 	from("${buildDir}/libs") {
         include "fcli.jar"
     }
 }
-rootProject.dist.dependsOn(distLocal)

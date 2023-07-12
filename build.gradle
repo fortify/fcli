@@ -19,9 +19,9 @@ allprojects {
 	apply plugin: 'eclipse'
 	version = rootProject.ext.getVersion();
 	ext {
-		distDir = "${buildDir}/dist"
+		distDir = "${rootProject.buildDir}/dist"
 		releaseAssetsDir = "${distDir}/release-assets"
-		sharedGradleScriptsDir = "$rootDir/$sharedGradleScriptsRelativeDir"
+		sharedGradleScriptsDir = "${rootDir}/$sharedGradleScriptsRelativeDir"
 		gradleHelpersLocation = "https://raw.githubusercontent.com/fortify/shared-gradle-helpers/1.8"
 	}
 	// Define *RefDir properties for each *Ref property defined in gradle.properties,
@@ -36,18 +36,13 @@ allprojects {
 	repositories {
 		mavenCentral()
 	}
-	tasks.register('createDistDir') {
-		doLast {
-			mkdir "${distDir}"
-			mkdir "${releaseAssetsDir}"
-		}
-	}
-}
-
-subprojects {
-	// Disallow sub-projects from having a dist task;
-	// they should have a distLocal task instead.
-	task dist {}
+    
+    task createDistDir {
+        doFirst {
+            mkdir "${distDir}"
+            mkdir "${releaseAssetsDir}"
+        }
+    }
 }
 
 configure(allprojects.findAll {it.path.startsWith "$fcliModulePathPrefix"}) {
@@ -62,19 +57,9 @@ task build(type: Copy) {
 	into "build/libs"
 }
 task dist(type: Copy) {
-	dependsOn(createDistDir)
-	// For now, this tasks assumes that any subproject that needs to add anything to the dist
-	// directory implements a distLocal task, and adds this distLocal task as a dependency for
-	// this dist task, using: rootProject.dist.dependsOn(distLocal).
-	from { subprojects.collect { it.ext.distDir } }
-	from("${projectDir}") {
+    dependsOn(createDistDir)
+    from("${projectDir}") {
         include "LICENSE.txt"
     }
-	into "${distDir}"
-}
-task distThirdParty(type: Copy) {
-	dependsOn(createDistDir)
-	dependsOn("${fcliAppRef}:distThirdPartyReleaseAsset")
-	from "${fcliAppRefDir}/build/dist-thirdparty"
-	into "${distDir}"
+    into "${releaseAssetsDir}"
 }

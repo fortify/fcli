@@ -25,12 +25,7 @@ public class FcliRunner {
         if ( !runner ) {
             throw new IllegalStateException("Runner not initialized")
         } 
-        try {
-            return runner.run(args)
-        } catch ( Exception e ) {
-            e.printStackTrace()
-            return false
-        }
+        return runner.run(args)
     }
     
     static void close() {

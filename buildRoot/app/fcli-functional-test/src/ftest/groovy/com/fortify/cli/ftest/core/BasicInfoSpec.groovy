@@ -5,9 +5,9 @@ import com.fortify.cli.ftest._common.spec.Prefix
 
 @Prefix("core.basic-info")
 class BasicInfoSpec extends BaseFcliSpec {
-    def "help"(String[] args, boolean success) {
+    def "help"(String[] args, boolean expectSuccess) {
         expect:
-            fcli(args)==success
+            fcli(args)==expectSuccess
             out.lines
             verifyAll(out.lines) {
                 it.any { it ==~ /.*Command-line interface for working with various Fortify products.*/ }
@@ -20,7 +20,7 @@ class BasicInfoSpec extends BaseFcliSpec {
         }
         
         where:
-            args   | success
+            args   | expectSuccess
             ["-h"] | true    // Explicitly invoke fcli -h
             []     | false   // Invoke fcli without args, resulting in a 'missing required subcommand' error
     }

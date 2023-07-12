@@ -169,7 +169,6 @@ task distDocsStaticJekyll(type: Zip) {
 }
 
 // Task to combine all distDocs* tasks
-task distLocal {
+task dist {
     dependsOn 'distDocsVersionedHtml', 'distDocsManpage', 'distDocsVersionedJekyll', 'distDocsStaticJekyll'
 }
-rootProject.dist.dependsOn(distLocal)
