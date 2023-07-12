@@ -1,11 +1,11 @@
-package com.fortify.cli.functest.common.extension;
+package com.fortify.cli.ftest._common.extension;
 
 import org.spockframework.runtime.extension.IAnnotationDrivenExtension
 import org.spockframework.runtime.model.FeatureInfo
 import org.spockframework.runtime.model.SpecElementInfo
 import org.spockframework.runtime.model.SpecInfo
 
-import com.fortify.cli.functest.common.spec.FcliSession
+import com.fortify.cli.ftest._common.spec.FcliSession
 
 public class FcliSessionExtension implements IAnnotationDrivenExtension<FcliSession> {
     @Override

@@ -1,4 +1,4 @@
-package com.fortify.cli.functest.common.runner;
+package com.fortify.cli.ftest._common.runner;
 
 import java.nio.file.Files
 import java.nio.file.Path

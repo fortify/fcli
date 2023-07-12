@@ -1,9 +1,6 @@
-package com.fortify.cli.functest.common.spec;
+package com.fortify.cli.ftest._common.spec;
 
-import org.junit.platform.commons.util.StringUtils
 import org.spockframework.runtime.extension.IMethodInterceptor
-
-import com.fortify.cli.functest.common.runner.FcliRunner
 
 public enum FcliSessionType {
     SSC(new SSCSessionHandler()),

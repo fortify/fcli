@@ -1,7 +1,7 @@
-package com.fortify.cli.functest.module.root;
+package com.fortify.cli.ftest.core;
 
-import com.fortify.cli.functest.common.spec.BaseFcliSpec
-import com.fortify.cli.functest.common.spec.Prefix
+import com.fortify.cli.ftest._common.spec.BaseFcliSpec
+import com.fortify.cli.ftest._common.spec.Prefix
 
 @Prefix("root")
 class RootSpec extends BaseFcliSpec {

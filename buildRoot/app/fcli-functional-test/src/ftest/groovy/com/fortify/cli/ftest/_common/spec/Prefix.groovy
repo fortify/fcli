@@ -1,6 +1,5 @@
-package com.fortify.cli.functest.common.spec;
+package com.fortify.cli.ftest._common.spec;
 
-import static java.lang.annotation.ElementType.FIELD
 import static java.lang.annotation.ElementType.TYPE
 import static java.lang.annotation.RetentionPolicy.RUNTIME
 
