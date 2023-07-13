@@ -1,11 +1,11 @@
 package com.fortify.cli.ftest._common.spec;
 
-import com.fortify.cli.ftest._common.extension.FcliOutputExtension.FcliOutputCapturer
-
+import io.github.joke.spockoutputcapture.CapturedOutput
+import io.github.joke.spockoutputcapture.OutputCapture
 import spock.lang.Specification
 
 class BaseFcliSpec extends Specification {
-    @FcliOutput FcliOutputCapturer out
+    @OutputCapture CapturedOutput out
     @Fcli fcli
 }
 
