@@ -49,22 +49,24 @@ jobs:
       - name: Run Tests
         shell: bash
         run: |
+          mv artifact/release-assets/* .
+          mv artifact/fcli-ftest.jar .
           case "${{ matrix.type }}" in
             "java" )
               java -jar -Dft.fcli=build fcli-ftest.jar ;;
             "jar" )
-              java -jar -Dft.fcli=$(pwd)/release-assets/fcli.jar fcli-ftest.jar ;;
+              java -jar -Dft.fcli=fcli.jar fcli-ftest.jar ;;
             "native" )
               case "${{ matrix.os }}" in
                 "ubuntu-latest" ) 
-                  tar -zxvf release-assets/fcli-linux.tgz
-                  java -jar -Dft.fcli=$(pwd)/fcli fcli-ftest.jar ;;
+                  tar -zxvf fcli-linux.tgz
+                  java -jar -Dft.fcli=./fcli fcli-ftest.jar ;;
                 "windows-latest" )
-                  7z e release-assets/fcli-windows.zip
-                  java -jar -Dft.fcli=$(pwd)/fcli.exe fcli-ftest.jar ;;
+                  7z e fcli-windows.zip
+                  java -jar -Dft.fcli=fcli.exe fcli-ftest.jar ;;
                 "macos-latest" )
-                  tar -zxvf release-assets/fcli-mac.tgz
-                  ./gradlew ftest -Dft.fcli=$(pwd)/fcli ;;
+                  tar -zxvf fcli-mac.tgz
+                  ./gradlew ftest -Dft.fcli=./fcli ;;
               esac ;;
           esac 
           
