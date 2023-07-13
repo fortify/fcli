@@ -70,12 +70,13 @@ jobs:
                   java -jar -Dft.fcli=./fcli fcli-ftest.jar ;;
               esac ;;
           esac 
+          mv test.log "test-${{ matrix.os }}-${{ matrix.type }}.log"
           
       - name: Publish test logs
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: test-log
-          path: test.log
+          path: test-*.log
           
           
