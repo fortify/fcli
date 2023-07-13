@@ -1,6 +1,6 @@
 ---
 title: fcli-ssc-attribute-definition-get(1)
-fcli_version: fcli version 0.20230705.143428-dev_develop, built on 2023-07-05 14 35 02
+fcli_version: 
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230705.143428-dev_develop, built on 2023-07-05 14
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230705.143428-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230713.095825-dev_develop" %}
 
 
 <div id="header">
@@ -81,13 +81,13 @@ fcli_version: fcli version 0.20230705.143428-dev_develop, built on 2023-07-05 14
 <dd>
 <p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
 </dd>
-<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
-<dd>
-<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
-</dd>
 <dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
 <p>Write command output to the specified file instead of stdout.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
 </dd>
 </dl>
 </div>
@@ -98,13 +98,13 @@ fcli_version: fcli version 0.20230705.143428-dev_develop, built on 2023-07-05 14
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
-<dd>
-<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
-</dd>
 <dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
 <dd>
 <p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
 </dd>
 <dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
 <dd>
@@ -134,8 +134,8 @@ fcli_version: fcli version 0.20230705.143428-dev_develop, built on 2023-07-05 14
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230705.143428-dev_develop, built on 2023-07-05 14 35 02<br>
-Last updated 2023-07-05 14:36:31 UTC
+Version <br>
+Last updated 2023-07-13 10:00:14 UTC
 </div>
 </div>
 </body>

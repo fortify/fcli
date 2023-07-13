@@ -115,9 +115,6 @@ feat: Some feature
 <p><a href="https://picocli.info/">picocli</a>: Used for fcli command implementations; perform fcli actions, process command line options, generate usage information, generate command output, …</p>
 </li>
 <li>
-<p><a href="https://micronaut.io/">Micronaut</a>: Dependency injection, features for GraalVM native image generation</p>
-</li>
-<li>
 <p><a href="https://github.com/FasterXML/jackson">Jackson</a>: Parse and generate data in JSON and other formats</p>
 </li>
 <li>
@@ -144,7 +141,7 @@ feat: Some feature
 <p>Lombok: Please see <a href="https://projectlombok.org/setup/overview" class="bare">https://projectlombok.org/setup/overview</a> for more information on how to add Lombok support to your IDE</p>
 </li>
 <li>
-<p>Micronaut &amp; picocli: These frameworks require annotation processors to be run during builds; please see your IDE documentation on how to enable annotation processing</p>
+<p>Annotation processors: This project requires various annotation processors to be run, like the picocli annotation processor. Please see your IDE documentation on how to enable annotation processing</p>
 </li>
 </ul>
 </div>
@@ -177,33 +174,7 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 <div class="ulist">
 <ul>
 <li>
-<p>Micronaut <code>@Inject</code> annotations must not be declared on private fields</p>
-<div class="ulist">
-<ul>
-<li>
-<p>To inject beans into fields, use <code>@Setter(onMethod=@__({@Inject}))</code> to have Lombok generate a setter method with <code>@Inject</code> annotation, allowing Micronaut to perform injection without requiring reflection.</p>
-</li>
-<li>
-<p>Failure to do so will often result in native fcli binaries from running altogether; this will usually be detected during the basic fcli test performed in the GitHub <code>Build &amp; release</code> workflow.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>All classes referenced in <code>@ProductHelperClass</code> annotations, i.e. all <code>&lt;Product&gt;ProductHelper</code> classes, must be annotated with <code>@ReflectiveAccess</code>.</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Failure to do so will prevent most <code>&lt;Product&gt;</code>-specific commands from running when using the native fcli binaries.</p>
-</li>
-<li>
-<p>This may not be uncovered by the basic fcli test mentioned above, but should be fairly easy to detect, for example through product module integration tests or through manual testing of arbitrary product commands.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>All data classes that are serialized or deserialized using Jackson must be annotated with the <code>@ReflectiveAccess</code> annotation.</p>
+<p>All data classes that are serialized or deserialized using Jackson must be annotated with the <code>@Reflectable</code> annotation. For de-serialization, a public no-args constructor is required as well. To avoid any potential issues, it is highly recommend to have both <code>@Reflectable</code> and <code>@NoArgsConstructor</code> annotations on such classes, preferably on the same line for easy identification.</p>
 <div class="ulist">
 <ul>
 <li>
@@ -213,7 +184,7 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 <p>Usually this only affects a small group of commands or a single command, possibly even only under certain conditions, and as such any missing annotations may be difficult to detect.</p>
 </li>
 <li>
-<p>Most notably, the following classes will need the <code>@ReflectiveAccess</code> annotation:</p>
+<p>Most notably, the following classes will need the <code>@Reflectable</code> annotation:</p>
 <div class="ulist">
 <ul>
 <li>
@@ -231,19 +202,10 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 </ul>
 </div>
 </li>
-<li>
-<p>Picocli uses reflection internally, which in earlier fcli versions required <code>@ReflectiveAccess</code> annotations on picocli-related classes like commands and mixins. However, recent fcli versions generate a proper Graal reflect-config.json file, so <code>@ReflectiveAccess</code> is no longer needed on picocli-related classes.</p>
-</li>
 </ul>
 </div>
 <div class="paragraph">
-<p>If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the <code>@ReflectiveAccess</code> annotation to the appropriate classes.</p>
-</div>
-<div class="paragraph">
-<p>Note that Micronaut also provides the <code>@Introspected</code> annotation that should allow for reflection-free (de-)serialization. However experience learns that there are just too many differences between reflection-based and introspection-based (de-)serialization. When running in a normal JVM these differences are often not visible as Jackson can easily fall back to reflection-based (de-)serialization. In native images, Jackson cannot fall back to reflection-based (de-)serialization unless properly configured, and even when properly configured there are still some differences in behavior.</p>
-</div>
-<div class="paragraph">
-<p>As such, it has been decided to disable Jackson introspection-based (de-)serialization using the <code>jackson.bean-introspection-module</code> configuration property in <code>application.yml</code>. This also means that we will not be using the <code>@Introspected</code> annotation on classes that need to be (de-)serialized with Jackson. The alternative is to use the <code>@ReflectiveAccess</code> annotation on such classes, as described above.</p>
+<p>If a command runs fine on a regular JVM but not when running as a native image, then quite likely this is caused by missing reflection configuration which may be fixed by adding the <code>@Reflectable</code> annotation to the appropriate classes.</p>
 </div>
 </div>
 </div>
@@ -305,75 +267,10 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 <div class="sect2">
 <h3 id="_user_documentation"><a class="anchor" href="#_user_documentation"></a>User Documentation</h3>
 <div class="paragraph">
-<p>User documentation is generated automatically from the following three locations:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>AsciiDoc located in the repository <code>doc-resources/asciidoc/gh-pages</code> directory</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Published to the root directory of the GitHub Pages site</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>AsciiDoc located in the repository <code>doc-resources/asciidoc/versioned</code> directory</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Published to a version-specific directory on the GitHub Pages site</p>
-</li>
-<li>
-<p>Published to docs-html.zip in release assets</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Manual pages generated from the fcli code</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Published to a version-specific directory on the GitHub Pages site</p>
-</li>
-<li>
-<p>Published to docs-html.zip in release assets</p>
-</li>
-<li>
-<p>Published to docs-manpage.zip in release assets</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
+<p>User documentation is generated automatically by the <code>buildRoot/app/fcli-doc</code> project. Part of the documentation consists of manual pages in various formats, generated using picocli. Other user documentation is generated from the <code>src/docs/asciidoc</code> directory in the before-mentioned project. This consists of static AsciiDoc files, used to generate the top-level contents of the fcli GitHub Pages site, and 'versioned' AsciiDoc files that describe the functionality provided by a particular fcli version.</p>
 </div>
 <div class="paragraph">
-<p>The Gradle build includes various tasks for generating this documentation, following are the main tasks:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>generateManpageAsciiDoc</code>: Generate man-page style AsciiDoc documentation from fcli code</p>
-</li>
-<li>
-<p><code>asciiDoctorManPage</code>: Convert man-page style AsciiDoc to Linux man-page format</p>
-</li>
-<li>
-<p><code>asciiDoctorHtml</code>: Convert both man-page style AsciiDoc and versioned user documentation to offline HTML format</p>
-</li>
-<li>
-<p><code>asciidoctorJekyll</code>: Convert both man-page style AsciiDoc and versioned user documentation to Jekyll HTML format for publishing on the GitHub Pages site</p>
-</li>
-<li>
-<p><code>asciidoctorGHPages</code>: Convert AsciiDoc files from <code>doc-resources/asciidoc/gh-pages</code> to Jekyll HTML format for publishing on the GitHub Pages site</p>
-</li>
-<li>
-<p><code>distDocs</code>: Calls of the tasks above and packages the output from these tasks into separate <code>docs-*.zip</code> files in the <code>build/dist</code> directory</p>
-</li>
-</ul>
+<p>Documentation can be generated using the Gradle <code>distDocs</code> task, ending up in the <code>dist</code> directory of the aforementioned project. The global <code>dist</code> task includes the <code>distDocs</code> task.</p>
 </div>
 <div class="paragraph">
 <p>The GitHub Actions workflow defined in <code>.github/workflows/ci.yml</code> is responsible for publishing the documentation:</p>
@@ -472,6 +369,9 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 <p><code>../fcli-pages</code> would be a clone of the fcli repository with the gh-pages branch checked out</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>Note that project directory structure may change beteen fcli versions, possibly requiring extra work to make the above work without issues.</p>
 </div>
 </div>
 </div>
@@ -619,64 +519,11 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 </div>
 </li>
 <li>
-<p><code>com.fortify.cli.&lt;module&gt;.output</code></p>
+<p><code>com.fortify.cli.&lt;module&gt;._common.*</code></p>
 <div class="ulist">
 <ul>
 <li>
-<p>Root package for generic, module-specific output functionality</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.output.cli.cmd</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains a module-specific <code>Abstract&lt;module&gt;OutputCommand</code> class extending from either <code>AbstractBasicOutputCommand</code> or <code>AbstractUnirestOutputCommand</code>.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.output.cli.mixin</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains a module-specific <code>&lt;module&gt;OutputHelperMixins</code> class, containing inner classes for every action provided by the module, like <code>List</code>, <code>Get</code>, <code>Delete</code>, <code>Revoke</code>, &#8230;&#8203;</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.rest</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Root package for module-specific REST-related functionality</p>
-</li>
-<li>
-<p>Contents may vary depending on the target system</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.rest.cli.cmd</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains <code>&lt;module&gt;RestCommands</code> and <code>&lt;module&gt;RestCallCommand</code> classes that implement the <code>fcli &lt;module&gt; rest call</code> command structure</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p><code>com.fortify.cli.&lt;module&gt;.rest.cli.mixin</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Contains one or more mixin classes responsible for handling connections to the target system</p>
+<p>Root package for module-specific generic functionality, like connecting to, and authenticating with, the remote system, generic request/response transformations, &#8230;&#8203; Please see existing modules for example structure and contents.</p>
 </li>
 </ul>
 </div>
@@ -917,7 +764,7 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 <div id="footer">
 <div id="footer-text">
 Version none<br>
-Last updated 2023-07-05 14:34:28 UTC
+Last updated 2023-07-13 09:58:25 UTC
 </div>
 </div>
 </body>
