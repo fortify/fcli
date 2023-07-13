@@ -19,8 +19,8 @@ public class TestRunner {
     static def orgOut = System.out
     static def orgErr = System.err
     public static void main(String[] args) {
-        new PrintStream(new File("test.log")).withCloseable
-        { log ->
+        def exitCode = 0
+        new PrintStream(new File("test.log")).withCloseable { log ->
             final LauncherDiscoveryRequest request = 
             LauncherDiscoveryRequestBuilder.request()
                                        .selectors(DiscoverySelectors.selectPackage("com.fortify.cli.ftest"))
@@ -35,11 +35,13 @@ public class TestRunner {
                 TestExecutionSummary summary = summaryListener.getSummary();
                 new PrintWriter(log).withCloseable { summary.printTo it }
                 new PrintWriter(orgOut).withCloseable { summary.printTo it }
+                exitCode = summary.totalFailureCount>0 ? 1 : 0
             } finally {
                 System.out = orgOut
                 System.err = orgErr
             }
-        } 
+        }
+        System.exit(exitCode) 
     }
     
     private static class FcliTestExecutionListener implements TestExecutionListener {

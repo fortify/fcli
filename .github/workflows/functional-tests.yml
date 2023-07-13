@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs: 
       runNumber: # Accessible through ${{ inputs.runNumber }}
-        description: 'Optional workflow run number for which to perform functional tests'
+        description: 'Required "Build and release"" workflow run number from which to get artifacts to be tested'
         required: true
         type: number
   workflow_run:
@@ -66,7 +66,7 @@ jobs:
                   java -jar -Dft.fcli=fcli.exe fcli-ftest.jar ;;
                 "macos-latest" )
                   tar -zxvf fcli-mac.tgz
-                  ./gradlew ftest -Dft.fcli=./fcli ;;
+                  java -jar -Dft.fcli=./fcli fcli-ftest.jar ;;
               esac ;;
           esac 
           
