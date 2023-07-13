@@ -73,8 +73,12 @@ public class FcliRunner {
             def argsList = args as List
             def fullCmd = fcliCmd+argsList
             def proc = fullCmd.execute()
-            proc.consumeProcessOutput(System.out, System.err)
-            proc.waitForOrKill(60000)
+            // TODO This is the only method that works for properly
+            //      getting all process output, however potentially
+            //      this could wait indefinitely, for example if
+            //      the process is waiting for input. So, we should
+            //      implement some time-out mechanism. 
+            proc.waitForProcessOutput(System.out, System.err)
             proc.exitValue()==0
         }
         
