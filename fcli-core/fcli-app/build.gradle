@@ -27,7 +27,7 @@ task generateFcliBuildProperties {
         def outputDir = "${buildPropertiesDir}/com/fortify/cli/app"
         mkdir "${outputDir}"
         ant.propertyfile(file: "${outputDir}/fcli-build.properties") {
-            entry(key: "projectName", value: project.name)
+            entry(key: "projectName", value: "fcli")
             entry(key: "projectVersion", value: project.version)
             entry(key: "buildDate", value: buildTime.format('yyyy-MM-dd HH:mm:ss'))
         }

@@ -5,11 +5,6 @@ import com.fortify.cli.ftest._common.spec.Prefix
 
 @Prefix("core.basic-info")
 class BasicInfoSpec extends BaseFcliSpec {
-    def "testGitHubFailure"() {
-        expect:
-            true==false
-    }
-    
     def "help"(String[] args, boolean expectSuccess) {
         expect:
             fcli(args)==expectSuccess
