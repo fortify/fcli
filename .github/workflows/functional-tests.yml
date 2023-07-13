@@ -70,4 +70,10 @@ jobs:
               esac ;;
           esac 
           
+      - name: Publish test logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-log
+          path: test.log
+          
           
