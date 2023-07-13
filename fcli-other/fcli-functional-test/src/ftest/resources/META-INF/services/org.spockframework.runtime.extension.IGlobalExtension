@@ -1,1 +1,2 @@
 com.fortify.cli.ftest._common.extension.FcliGlobalExtension
+com.fortify.cli.ftest._common.extension.FcliOutputExtension

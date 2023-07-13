@@ -5,6 +5,16 @@ import com.fortify.cli.ftest._common.spec.Prefix
 
 @Prefix("core.basic-info")
 class BasicInfoSpec extends BaseFcliSpec {
+    def "version"() {
+        expect:
+            fcli "-V"
+            out.lines
+            verifyAll(out.lines) {
+                size()==1
+                it.any { it ==~ /.*fcli version \d+\.\d+\.\d+.*, built on.*/ }
+            }
+    }
+    
     def "help"(String[] args, boolean expectSuccess) {
         expect:
             fcli(args)==expectSuccess
@@ -25,13 +35,5 @@ class BasicInfoSpec extends BaseFcliSpec {
             []     | false   // Invoke fcli without args, resulting in a 'missing required subcommand' error
     }
 
-    def "version"() {
-        expect:
-            fcli "-V"
-            out.lines
-            verifyAll(out.lines) {
-                size()==1
-                it.any { it ==~ /.*fcli version \d+\.\d+\.\d+.*, built on.*/ }
-            }
-    }
+    
 }

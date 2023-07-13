@@ -9,7 +9,6 @@ testing {
                 implementation 'org.apache.groovy:groovy'
                 implementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
                 implementation "org.spockframework:spock-core"
-                implementation 'io.github.joke:spock-outputcapture:3.0.1'
                 implementation 'org.junit.platform:junit-platform-launcher:1.9.3'
                 if ( !project.hasProperty('ftest.fcli') || project.property('ftest.fcli')=='build' ) {
                     implementation project("${fcliAppRef}")
