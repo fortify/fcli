@@ -45,9 +45,6 @@ allprojects {
     }
 }
 
-configure(allprojects.findAll {it.path.startsWith "$fcliModulePathPrefix"}) {
-	apply from: "${sharedGradleScriptsDir}/module.gradle"
-}
 task clean(type: Delete) {
     delete "build"
 }
