@@ -25,11 +25,7 @@ public class FcliRunner {
         if ( !runner ) {
             throw new IllegalStateException("Runner not initialized")
         } 
-        try {
-            return runner.run(args)
-        } finally {
-            System.out.flush(); System.err.flush();
-        }
+        return runner.run(args)
     }
     
     static void close() {
