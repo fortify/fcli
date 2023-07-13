@@ -1,12 +1,19 @@
 rootProject.name="fcli"
-include 'fcli-common'
-include 'fcli-config'
-include 'fcli-state'
-include 'fcli-ssc'
-include 'fcli-fod'
-include 'fcli-sc-sast'
-include 'fcli-sc-dast'
-include 'fcli-tool'
-include 'fcli-util'
-
-
+// Include references are defined in gradle.properties
+include "$fcliBomRef"
+include "$fcliCommonRef"
+include "$fcliConfigRef"
+include "$fcliStateRef"
+include "$fcliSSCRef"
+include "$fcliFoDRef"
+include "$fcliSCSastRef"
+include "$fcliSCDastRef"
+include "$fcliToolRef"
+include "$fcliUtilRef"
+include "$fcliAppRef"
+include "$fcliFunctionalTestRef"
+include "$fcliAutoCompleteRef"
+include "$fcliDocRef"
+// TODO Remove once patch is available for
+// https://github.com/formkiq/graalvm-annotations-processor/issues/9
+include "$patchGraalVMAnnotationsProcessorRef"

@@ -1,0 +1,62 @@
+plugins {
+    id 'java-platform'
+}
+
+description = 'Bill Of Materials for fcli'
+
+javaPlatform {
+    allowDependencies()
+}
+
+dependencies {
+	api platform('com.fasterxml.jackson:jackson-bom:2.15.2')
+	// TODO Use this instead of declarations below? 
+	// api platform('org.springframework:spring-framework-bom:5.3.26')
+		
+	constraints {
+		// Picocli
+		api("info.picocli:picocli:4.7.4")
+		api("info.picocli:picocli-codegen:4.7.4")
+		
+		// Annotation-based reflect-config.json generation
+		api('com.formkiq:graalvm-annotations:1.2.0')
+        api('com.formkiq:graalvm-annotations-processor:1.4.0')
+        
+        // ANSI support
+        api("org.fusesource.jansi:jansi:2.4.0")
+		
+		// Logging
+		api('org.slf4j:slf4j-api:2.0.7')
+		api('org.slf4j:jcl-over-slf4j:2.0.7')
+        api("ch.qos.logback:logback-classic:1.4.8")
+		
+		// REST client
+        api('com.konghq:unirest-java:3.14.5')
+        api('com.konghq:unirest-objectmapper-jackson:3.14.5')
+        
+        // Spring expression language (SpEL)
+        api('org.springframework:spring-expression:6.0.10')
+		
+        // Support for handling Jackson JsonNode objects with SpEL 
+        api('org.springframework.integration:spring-integration-core:6.1.1')
+		
+		// Output formatting
+        api('hu.webarticum:tree-printer:3.1.0')
+        api('com.github.freva:ascii-table:1.8.0')
+        
+		// TODO This seems to be used by SSC & FoD modules only to throw ValidationExceptions;
+		//      we should define fcli-specific functionality for handling validation errors
+		//      and then likely remove this dependency.
+        api('javax.validation:validation-api:2.0.1.Final')
+		// Remove annotation processor warning. TODO Is this still needed?
+        api('com.google.code.findbugs:jsr305:3.0.2')
+        
+        // Encryption
+        api('org.jasypt:jasypt:1.9.3:lite')
+        
+        // Test dependencies
+        api 'org.junit.jupiter:junit-jupiter-api:5.9.3'
+        api 'org.junit.jupiter:junit-jupiter-params:5.9.3'
+    	api 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
+	}
+}

@@ -1,12 +1,14 @@
 name: Build and release
 on:
+  workflow_dispatch:
+  
   push:
     branches:
       - '**'
        
 env:
   native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization
-  graal_version: 22.3.2
+  graal_distribution: graalvm-community
   graal_java_version: 17
           
 jobs:
@@ -65,7 +67,7 @@ jobs:
       
       - name: Build release ${{env.RELEASE_VERSION}}
         if: env.DO_BUILD
-        run: ./gradlew clean build dist distThirdPartyReleaseAsset -Pversion=${{env.RELEASE_VERSION}}
+        run: ./gradlew clean build dist distThirdPartyReleaseAsset distFtest -Pversion=${{env.RELEASE_VERSION}}
         
       - name: Check fcli version
         if: env.DO_BUILD
@@ -95,7 +97,7 @@ jobs:
 
       - uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ env.graal_version }}
+          distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
           components: 'native-image'
           native-image-musl: true
@@ -143,7 +145,7 @@ jobs:
 
       - uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ env.graal_version }}
+          distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
           components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -180,7 +182,7 @@ jobs:
     steps:
       - uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ env.graal_version }}
+          distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
           components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}

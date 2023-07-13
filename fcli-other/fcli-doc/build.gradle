@@ -1,0 +1,174 @@
+apply plugin: 'java'
+apply plugin: 'org.asciidoctor.jvm.convert'
+
+dependencies {
+	runtimeOnly project("${fcliAppRef}")
+	runtimeOnly 'info.picocli:picocli-codegen'
+}
+
+ext {
+    docsSrcDir                = "${projectDir}/src/docs"
+	staticAsciiDocSrcDir      = "${docsSrcDir}/asciidoc/static"
+    versionedAsciiDocSrcDir   = "${docsSrcDir}/asciidoc/versioned"
+	asciiDocTemplatesSrcDir   = "${docsSrcDir}/asciidoc/templates"
+	docsBuildDir              = "${buildDir}/generated-docs"
+	manpageAsciiDocDir        = "${docsBuildDir}/manpage/asciidoc"
+	manpageOutputDir          = "${docsBuildDir}/manpage/output"
+	htmlAsciiDocDir           = "${docsBuildDir}/html/asciidoc"
+	htmlOutputDir             = "${docsBuildDir}/html/output"
+	ghPagesStaticOutputDir    = "${docsBuildDir}/gh-pages/static/output"
+	ghPagesVersionedOutputDir = "${docsBuildDir}/gh-pages/versioned/output"
+}
+
+task generateManpageAsciiDoc(type: JavaExec) {
+    group = "Documentation"
+    description = "Generate AsciiDoc manpage"
+    classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
+    main 'picocli.codegen.docgen.manpage.ManPageGenerator'
+    args fcliRootCommandsClassName, "--outdir=${manpageAsciiDocDir}", "-v"
+}
+
+task generateManpageOutput(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+	dependsOn(generateManpageAsciiDoc)
+	inProcess = JAVA_EXEC
+	forkOptions {
+        jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
+    }
+    sourceDir = file("${manpageAsciiDocDir}")  
+    outputDir = file("${manpageOutputDir}")
+    logDocuments = true
+    outputOptions {
+        backends = ['manpage']
+    }
+}
+
+task prepareAsciiDocForVersionedHtml(type: Copy) {
+	dependsOn 'generateManpageAsciiDoc'
+	into "${htmlAsciiDocDir}"
+	from("${versionedAsciiDocSrcDir}") {
+        include "*.adoc"
+    }
+    from("${manpageAsciiDocDir}") {
+        include "*.adoc"
+		into "manpage"
+    }
+}
+
+// Generate HTML documentation from AsciiDoc prepared by prepareAsciiDocForVersionedHtml
+task asciiDoctorVersionedHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+    dependsOn(prepareAsciiDocForVersionedHtml)
+    inProcess = JAVA_EXEC
+	forkOptions {
+        jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
+    }
+    sourceDir = file("${htmlAsciiDocDir}")
+    outputDir = file("${htmlOutputDir}")
+    logDocuments = true
+    outputOptions {
+        backends = ['html5']
+    }
+    attributes = [
+            'toc'         : 'left',
+            'sectanchors' : 'true',
+            'docinfo'     : 'shared',
+            'jekyll'      : false,
+            'bannertitle' : 'FCLI: The Universal Fortify CLI',
+            'docversion'  : "${project.version}"
+    ]
+    options = [
+    	'template_dirs': [new File("${asciiDocTemplatesSrcDir}").absolutePath]
+    ]
+}
+
+// Generate Jekyll HTML documentation from AsciiDoc prepared by prepareAsciiDocForVersionedHtml,
+// to be deployed to a version-specific directory on the fcli gh-pages site
+task asciiDoctorVersionedJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+	dependsOn(prepareAsciiDocForVersionedHtml)
+	inProcess = JAVA_EXEC
+	forkOptions {
+        jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
+    }
+    sourceDir = file("${htmlAsciiDocDir}")
+    outputDir = file("${ghPagesVersionedOutputDir}")
+    logDocuments = true
+    outputOptions {
+        backends = ['html5']
+    }
+    attributes = [
+            'toc'         : 'left',
+            'sectanchors' : 'true',
+            'docinfo'     : 'shared',
+            'jekyll'      : true,
+            'stylesheet'  : false,
+            'bannertitle' : 'FCLI: The Universal Fortify CLI',
+            'docversion'  : "${project.version}"
+    ]
+    options = [
+    	'template_dirs': [new File("${asciiDocTemplatesSrcDir}").absolutePath]
+    ]
+}
+
+// Generate Jekyll HTML documentation from AsciiDoc files in ${staticAsciiDocSrcDir}
+// to be deployed to the root directory on the fcli gh-pages site
+task asciiDoctorStaticJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+	inProcess = JAVA_EXEC
+	forkOptions {
+        jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
+    }
+    sourceDir = file("${staticAsciiDocSrcDir}")
+    outputDir = file("${ghPagesStaticOutputDir}")
+    logDocuments = true
+    outputOptions {
+        backends = ['html5']
+    }
+    attributes = [
+            'toc'         : 'left',
+            'sectanchors' : 'true',
+            'docinfo'     : 'shared',
+            'jekyll'      : true,
+            'stylesheet'  : false,
+            'bannertitle' : 'FCLI: The Universal Fortify CLI',
+            'docversion'  : "[select]",
+            'revnumber'   : "none"
+    ]
+    options = [
+    	'template_dirs': [new File("${asciiDocTemplatesSrcDir}").absolutePath]
+    ]
+}
+
+// Zip the output of the asciiDoctorHtml task into ${releaseAssetsDir}
+task distDocsVersionedHtml(type: Zip) {
+    dependsOn 'asciiDoctorVersionedHtml'
+    archiveFileName = "docs-html.zip"
+    destinationDirectory = file("$releaseAssetsDir")
+    from layout.buildDirectory.dir("${htmlOutputDir}")
+}
+
+// Zip the output of the generateManpageOutput task into ${releaseAssetsDir}
+task distDocsManpage(type: Zip) {
+    dependsOn 'generateManpageOutput'
+    archiveFileName = "docs-manpage.zip"
+    destinationDirectory = file("$releaseAssetsDir")
+    from layout.buildDirectory.dir("${manpageOutputDir}")
+}
+
+// Zip the output of the asciiDoctorVersionJekyll task into ${releaseAssetsDir}
+task distDocsVersionedJekyll(type: Zip) {
+    dependsOn 'asciiDoctorVersionedJekyll'
+    archiveFileName = "docs-jekyll.zip"
+    destinationDirectory = file("$distDir")
+    from layout.buildDirectory.dir("${ghPagesVersionedOutputDir}")
+}
+
+// Zip the output of the asciiDoctorStaticJekyl task into ${releaseAssetsDir}
+task distDocsStaticJekyll(type: Zip) {
+    dependsOn 'asciiDoctorStaticJekyll'
+    archiveFileName = "docs-gh-pages.zip"
+    destinationDirectory = file("$distDir")
+    from layout.buildDirectory.dir("${ghPagesStaticOutputDir}")
+}
+
+// Task to combine all distDocs* tasks
+task dist {
+    dependsOn 'distDocsVersionedHtml', 'distDocsManpage', 'distDocsVersionedJekyll', 'distDocsStaticJekyll'
+}

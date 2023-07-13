@@ -1,0 +1,28 @@
+plugins {
+	id 'java'
+}
+
+group 'com.formkiq'
+version '1.4.1'
+
+dependencies {
+	annotationProcessor group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'
+	compileOnly group: 'com.google.auto.service', name: 'auto-service', version: '1.0.1'
+	compileOnly group: 'com.google.auto.service', name: 'auto-service-annotations', version: '1.0.1'
+
+    implementation group: 'com.formkiq', name: 'graalvm-annotations', version: '1.2.0'
+	implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+}
+
+compileJava {
+    options.annotationProcessorPath = configurations.annotationProcessor
+}
+
+repositories {
+	mavenLocal()
+    mavenCentral()
+}
+
+artifacts {
+    archives jar
+}

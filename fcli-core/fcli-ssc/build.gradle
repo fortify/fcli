@@ -1,0 +1,5 @@
+apply from: "${sharedGradleScriptsDir}/fcli-module.gradle"
+
+dependencies {
+    implementation 'javax.validation:validation-api'
+}

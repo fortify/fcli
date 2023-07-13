@@ -1,0 +1,71 @@
+name: Functional Tests
+
+on:
+  workflow_dispatch:
+    inputs: 
+      runNumber: # Accessible through ${{ inputs.runNumber }}
+        description: 'Optional workflow run number for which to perform functional tests'
+        required: true
+        type: number
+  workflow_run:
+    workflows: [Build and release]
+    types: [completed]
+        
+
+jobs:
+  functional-test:
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        type: [java, jar, native]
+    
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # Java is required for running the functional tests
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 17
+          
+      - name: Get artifacts from triggering workflow
+        if: github.event_name == 'workflow_run'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+      - name: Get artifacts from specified workflow
+        if: github.event_name == 'workflow_dispatch'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          run_number: ${{ inputs.runNumber }}
+          workflow: ci.yml
+          
+      - name: List artifact contents
+        shell: bash
+        run: ls -lR
+          
+      - name: Run Tests
+        shell: bash
+        run: |
+          case "${{ matrix.type }}" in
+            "java" )
+              java -jar -Dft.fcli=build fcli-ftest.jar ;;
+            "jar" )
+              java -jar -Dft.fcli=$(pwd)/release-assets/fcli.jar fcli-ftest.jar ;;
+            "native" )
+              case "${{ matrix.os }}" in
+                "ubuntu-latest" ) 
+                  tar -zxvf release-assets/fcli-linux.tgz
+                  java -jar -Dft.fcli=$(pwd)/fcli fcli-ftest.jar ;;
+                "windows-latest" )
+                  7z e release-assets/fcli-windows.zip
+                  java -jar -Dft.fcli=$(pwd)/fcli.exe fcli-ftest.jar ;;
+                "macos-latest" )
+                  tar -zxvf release-assets/fcli-mac.tgz
+                  ./gradlew ftest -Dft.fcli=$(pwd)/fcli ;;
+              esac ;;
+          esac 
+          
+          

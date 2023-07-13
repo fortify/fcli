@@ -1,0 +1,90 @@
+apply from: "${sharedGradleScriptsDir}/fcli-java.gradle"
+apply plugin: 'com.github.johnrengelman.shadow'
+
+// Define dependencies on all fcli Gradle projects
+dependencies {
+	implementation project("${fcliCommonRef}")
+    implementation project("${fcliConfigRef}")
+    implementation project("${fcliStateRef}")
+    implementation project("${fcliSSCRef}")
+    implementation project("${fcliFoDRef}")
+    implementation project("${fcliSCSastRef}")
+    implementation project("${fcliSCDastRef}")
+    implementation project("${fcliToolRef}")
+    implementation project("${fcliUtilRef}")
+
+    // Logging dependencies
+    runtimeOnly('org.slf4j:jcl-over-slf4j')
+	
+	// Enable ANSI support
+	runtimeOnly("org.fusesource.jansi:jansi")
+}
+
+// Generate build properties and associated resource-config.json file
+ext.buildPropertiesDir = "${buildDir}/generated-build-properties"
+task generateFcliBuildProperties {
+    doLast {
+        def outputDir = "${buildPropertiesDir}/com/fortify/cli/app"
+        mkdir "${outputDir}"
+        ant.propertyfile(file: "${outputDir}/fcli-build.properties") {
+            entry(key: "projectName", value: project.name)
+            entry(key: "projectVersion", value: project.version)
+            entry(key: "buildDate", value: buildTime.format('yyyy-MM-dd HH:mm:ss'))
+        }
+        def resourceConfigOutputDir = "${buildPropertiesDir}/META-INF/native-image/fcli-build-properties"
+        mkdir "${resourceConfigOutputDir}"
+        def contents = 
+        	'{"resources":[\n' +
+  			'  {"pattern":"com/fortify/cli/app/fcli-build.properties"}\n' +
+			']}\n'
+        file("${resourceConfigOutputDir}/resource-config.json").text = contents;
+        println contents
+    }
+}
+sourceSets.main.output.dir buildPropertiesDir, builtBy: generateFcliBuildProperties
+
+// Generate reflect-config.json for picocli-related classes
+ext.generatedPicocliReflectConfigDir = "${buildDir}/generated-reflect-config"
+task generatePicocliReflectConfig(type: JavaExec) {
+    group = "GeneratePicocliReflectConfig"
+    description = "Generate picocli reflect-config.json"
+    classpath(configurations.runtimeClasspath, configurations.annotationProcessor, sourceSets.main.runtimeClasspath)
+    main 'picocli.codegen.aot.graalvm.ReflectionConfigGenerator'
+    args fcliRootCommandsClassName, "-o", "${generatedPicocliReflectConfigDir}/META-INF/native-image/picocli-reflect-config/reflect-config.json"
+}
+
+// Generate shadow jar
+apply plugin: 'application'
+application {
+    // fcliMainClassName is defined in top-level gradle.properties
+    mainClass.set(fcliMainClassName)
+}
+shadowJar {
+	mergeServiceFiles()
+    archiveBaseName.set('fcli')
+    archiveClassifier.set('')
+    archiveVersion.set('')
+    from(["$generatedPicocliReflectConfigDir"])
+}
+shadowJar.dependsOn generatePicocliReflectConfig
+
+ext {
+	thirdPartyBaseName = "${project.name}"
+}
+apply plugin: 'com.github.jk1.dependency-license-report'
+apply from: "${gradleHelpersLocation}/thirdparty-helper.gradle"
+
+task distThirdPartyReleaseAsset {
+	dependsOn 'distThirdParty'
+	doLast {
+		file("$buildDir/dist/fcli-thirdparty.zip").renameTo(file("${releaseAssetsDir}/fcli-thirdparty.zip"))
+	}
+}
+
+task dist(type: Copy) {
+	dependsOn 'shadowJar'
+	into "${releaseAssetsDir}"
+	from("${buildDir}/libs") {
+        include "fcli.jar"
+    }
+}

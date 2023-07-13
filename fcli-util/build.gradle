@@ -1,4 +1,0 @@
-dependencies {
-	// We require fcli-ssc as dependency for 'fcli util msp-report generate' command 
-    implementation project(":fcli-ssc")
-}
