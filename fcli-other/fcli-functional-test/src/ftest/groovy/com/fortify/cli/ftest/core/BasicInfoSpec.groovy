@@ -1,10 +1,10 @@
 package com.fortify.cli.ftest.core;
 
-import com.fortify.cli.ftest._common.spec.BaseFcliSpec
+import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.Prefix
 
 @Prefix("core.basic-info")
-class BasicInfoSpec extends BaseFcliSpec {
+class BasicInfoSpec extends FcliBaseSpec {
     def "help"(String[] args, boolean expectSuccess) {
         expect:
             fcli(args)==expectSuccess

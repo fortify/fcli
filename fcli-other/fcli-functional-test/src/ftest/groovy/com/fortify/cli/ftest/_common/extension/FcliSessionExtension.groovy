@@ -22,7 +22,9 @@ public class FcliSessionExtension implements IAnnotationDrivenExtension<FcliSess
         def handler = annotation.value().handler
         if ( !elt.excluded && !elt.skipped ) {
             if (handler.isEnabled() ) {
-                elt.addInterceptor(handler.interceptor())
+                if ( !handler.login() ) { 
+                    elt.skip "Skipped due to "+handler.friendlyName()+" login failure"
+                }
             } else {
                 elt.skip "No "+handler.friendlyName()+ " session available";
             }

@@ -1,5 +1,6 @@
 package com.fortify.cli.ftest._common.runner;
 
+import java.lang.reflect.InvocationTargetException
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -24,8 +25,14 @@ public class FcliRunner {
     static boolean run(String[] args) {
         if ( !runner ) {
             throw new IllegalStateException("Runner not initialized")
-        } 
-        return runner.run(args)
+        }
+        return runner.run(args)==0
+    }
+    
+    static void runOrFail(String msg, String[] args) {
+        if ( !run(args) ) {
+            throw new IllegalStateException(msg)
+        }
     }
     
     static void close() {
@@ -61,7 +68,7 @@ public class FcliRunner {
     }
     
     private static interface IRunner extends AutoCloseable {
-        boolean run(String... args);
+        int run(String... args);
     }
     
     @Immutable
@@ -69,7 +76,7 @@ public class FcliRunner {
         List fcliCmd
         
         @Override
-        boolean run(String... args) {
+        int run(String... args) {
             def argsList = args as List
             def fullCmd = fcliCmd+argsList
             def proc = fullCmd.execute()
@@ -79,7 +86,7 @@ public class FcliRunner {
             //      the process is waiting for input. So, we should
             //      implement some time-out mechanism. 
             proc.waitForProcessOutput(System.out, System.err)
-            proc.exitValue()==0
+            return proc.exitValue()
         }
         
         @Override
@@ -93,11 +100,11 @@ public class FcliRunner {
         private Object obj;
         
         @Override
-        boolean run(String... args) {
+        int run(String... args) {
             if ( obj==null ) {
                 obj = Class.forName("com.fortify.cli.app.runner.DefaultFortifyCLIRunner").newInstance()
             }
-            0==(int)obj.invokeMethod("run", args)
+            return (int)obj.invokeMethod("run", args)
         }
         
         @Override

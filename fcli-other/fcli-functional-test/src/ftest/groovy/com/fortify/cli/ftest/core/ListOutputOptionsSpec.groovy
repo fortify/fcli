@@ -1,10 +1,10 @@
 package com.fortify.cli.ftest.core;
 
-import com.fortify.cli.ftest._common.spec.BaseFcliSpec
+import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.Prefix
 
 @Prefix("core.output.list")
-class ListOutputOptionsSpec extends BaseFcliSpec {
+class ListOutputOptionsSpec extends FcliBaseSpec {
     private boolean generate(String outputArg) {
         def args = ["util", "sample-data", "list"] as String[]
         if ( outputArg!=null ) { args+=["-o", outputArg] } 

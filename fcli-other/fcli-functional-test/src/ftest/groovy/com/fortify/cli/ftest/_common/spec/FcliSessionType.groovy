@@ -24,8 +24,7 @@ public enum FcliSessionType {
     private interface ISessionHandler {
         String friendlyName();
         boolean isEnabled();
-        IMethodInterceptor interceptor();
-        void login();
+        boolean login();
         void logout();
     }   
     
@@ -34,24 +33,20 @@ public enum FcliSessionType {
         String[] STD_LOGOUT_ARGS = [module(), "session","logout"]
         private boolean loggedIn = false;
         private boolean failed = false;
-        public IMethodInterceptor interceptor() {
-            return {invocation->
-                if ( isEnabled() ) {login(); invocation.proceed()}
-            }
-        }
 
         @Override
-        public synchronized final void login() {
-            if ( failed ) {
-                throw new IllegalStateException("Skipped due to earlier "+friendlyName()+" login failure")
-            } else if ( !loggedIn ) {
+        public final boolean login() {
+            if ( !loggedIn && !failed ) {
                 println("Logging in to "+friendlyName())
-                if ( !FcliRunner.run(STD_LOGIN_ARGS+loginOptions()) ) {
-                     failed = true
-                     throw new IllegalStateException("Error logging in to "+friendlyName())
-                }
-                loggedIn = true
+                try {
+                    loggedIn = FcliRunner.run(STD_LOGIN_ARGS+loginOptions())
+                    failed = !loggedIn
+                } catch ( Exception e ) {
+                    e.printStackTrace()
+                    failed = true
+                } 
             }
+            return !failed;
         }
 
         @Override
