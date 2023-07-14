@@ -55,7 +55,8 @@ public class ExprRecordWriter extends AbstractRecordWriter {
 
     private String getFormattedRecord(ObjectNode record) {
         try {
-            return JsonHelper.evaluateSpelExpression(record, expression, String.class);
+            var result = JsonHelper.evaluateSpelExpression(record, expression, String.class);
+            return result==null ? "" : result;
         } catch ( Exception e ) {
             throw new IllegalStateException(String.format("Error evaluating output expression:\n\tMessage: %s\n\tExpression: %s\n\tRecord: %s", e.getMessage(), getConfig().getOptions(), record.toPrettyString().replace("\n", "\n\t\t")));
         }
