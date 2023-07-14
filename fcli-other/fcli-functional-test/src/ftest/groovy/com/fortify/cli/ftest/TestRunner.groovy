@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.engine.discovery.DiscoverySelectors
 import org.junit.platform.launcher.LauncherDiscoveryRequest
+import org.junit.platform.launcher.TagFilter
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
@@ -13,6 +14,17 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener
 import org.junit.platform.launcher.listeners.TestExecutionSummary
 
 /**
+ * Simple class for running functional tests. Potentially, we could use JUnit's
+ * ConsoleLauncher instead (provided in org.junit.platform:junit-platform-console), 
+ * for example as follows:
+ * ConsoleLauncher.main("-p", "com.fortify.cli.ftest", "-n", "^.+Spec\$","--reports-dir","testReport");
+ * 
+ * Although this provides a nicer test execution overview, it doesn't seem to provide
+ * options for redirecting stdout/stderr output from tests to a log file. Due to the 
+ * amount of output, it's not useful to have this on the console, and it causes issues 
+ * when running on GitHub. So, for now we provide our own 'console launcher' that is 
+ * fully customizable according to our needs.
+ * 
  * @author Ruud Senden
  */
 public class TestRunner {
@@ -21,10 +33,13 @@ public class TestRunner {
     public static void main(String[] args) {
         def exitCode = 0
         new PrintStream(new File("test.log")).withCloseable { log ->
-            final LauncherDiscoveryRequest request = 
-            LauncherDiscoveryRequestBuilder.request()
-                                       .selectors(DiscoverySelectors.selectPackage("com.fortify.cli.ftest"))
-                                       .build();
+            final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                .selectors(DiscoverySelectors.selectPackage("com.fortify.cli.ftest"))
+                // Potentially we could add tag-based filter support here using TagFilter,
+                // but probably better to handle this in FcliGlobalExtension to skip
+                // tests based on tags, such that features not matching any tags will 
+                // get listed as SKIPPED, instead of not being listed at all.
+                .build();
             def fcliListener = new FcliTestExecutionListener(log);
             def summaryListener = new SummaryGeneratingListener();
 
@@ -52,6 +67,7 @@ public class TestRunner {
         private FcliTestExecutionListener(PrintStream log) {
             this.log = log;
         }
+        
         @Override
         public void executionSkipped(TestIdentifier testIdentifier, String reason) {
             logStatus("SKIPPED: "+testIdentifier.displayName+": "+reason)

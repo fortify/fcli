@@ -40,15 +40,14 @@ class FcliGlobalExtension implements IGlobalExtension {
     }
     
     private void skipFeatures(SpecInfo spec) {
-        // Exclude any features not matching any of the feature names
-        // listed in the fcli.run property
+        // Exclude any features not matching any of the feature names listed in 
+        // the fcli.run property
+        // TODO Add support for skipping features based on tag include/exclude
+        //      expressions
         def run = Input.TestsToRun.get()?.split(",")
         if (run) {
-            if ( !run.any { spec.name.startsWith(it) } ) {
-                spec.skip "Not included in "+Input.TestsToRun.propertyName()+" property"
-            }
             spec.allFeatures.each({ feature ->
-                if ( !run.any {feature.name.startsWith(it)} ) {
+                if ( !run.any {feature.name.startsWith(it) && !feature.skipped } ) {
                     feature.skip "Not included in "+Input.TestsToRun.propertyName()+" property"
                 }
             })
