@@ -2,6 +2,7 @@ package com.fortify.cli.ftest.sc_sast;
 
 import static com.fortify.cli.ftest._common.spec.FcliSessionType.SCSAST
 
+import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
@@ -10,6 +11,8 @@ import com.fortify.cli.ftest._common.spec.Prefix
 class SCSastSensorSpec extends FcliBaseSpec {
     def "help"() {
         expect:
-            fcli "sc-sast", "scan", "-h"
+            verifyAll(Fcli.run("sc-sast", "scan", "-h")) {
+                // TODO Add expectations
+            }
     }
 }

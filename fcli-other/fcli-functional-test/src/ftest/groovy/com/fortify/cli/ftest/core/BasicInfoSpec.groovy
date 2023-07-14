@@ -1,5 +1,6 @@
 package com.fortify.cli.ftest.core;
 
+import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.Prefix
 
@@ -7,17 +8,18 @@ import com.fortify.cli.ftest._common.spec.Prefix
 class BasicInfoSpec extends FcliBaseSpec {
     def "help"(String[] args, boolean expectSuccess) {
         expect:
-            fcli(args)==expectSuccess
-            out.lines
-            verifyAll(out.lines) {
-                it.any { it ==~ /.*Command-line interface for working with various Fortify products.*/ }
-                it.any { it.contains 'config' }
-                it.any { it.contains 'state' }
-                it.any { it.contains 'ssc' }
-                it.any { it.contains 'sc-dast' }
-                it.any { it.contains 'sc-sast' }
-                it.any { it.contains 'util' }
-        }
+            verifyAll(Fcli.run(args)) {
+                success==expectSuccess
+                verifyAll(expectSuccess ? stdout : stderr) {
+                    it.any { it ==~ /.*Command-line interface for working with various Fortify products.*/ }
+                    it.any { it.contains 'config' }
+                    it.any { it.contains 'state' }
+                    it.any { it.contains 'ssc' }
+                    it.any { it.contains 'sc-dast' }
+                    it.any { it.contains 'sc-sast' }
+                    it.any { it.contains 'util' }
+                }
+            }
         
         where:
             args   | expectSuccess
@@ -27,11 +29,12 @@ class BasicInfoSpec extends FcliBaseSpec {
 
     def "version"() {
         expect:
-            fcli "-V"
-            out.lines
-            verifyAll(out.lines) {
-                size()==1
-                it.any { it ==~ /.*fcli version \d+\.\d+\.\d+.*, built on.*/ }
+            verifyAll(Fcli.run("-V")) {
+                success
+                verifyAll(stdout) {
+                    size()==1
+                    it[0] ==~ /.*fcli version \d+\.\d+\.\d+.*, built on.*/
+                }
             }
     }
 }

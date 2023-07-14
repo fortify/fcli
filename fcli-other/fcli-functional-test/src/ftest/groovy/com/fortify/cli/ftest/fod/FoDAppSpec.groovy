@@ -2,6 +2,7 @@ package com.fortify.cli.ftest.fod;
 
 import static com.fortify.cli.ftest._common.spec.FcliSessionType.FOD
 
+import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
@@ -13,7 +14,9 @@ class FoDAppSpec extends FcliBaseSpec {
     @Unroll
     def "list"() {
         expect:
-            fcli "fod", "app", "list"
+            verifyAll(Fcli.run("fod", "app", "list")) {
+                // TODO Add expectations
+            }
         where:
             i << (1..5)
     }

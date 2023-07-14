@@ -14,6 +14,7 @@ package com.fortify.cli.ftest.ssc
 
 import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
 
+import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
@@ -28,13 +29,14 @@ class SSCEventSpec extends FcliBaseSpec {
     
     def "list"() {
         expect:
-            fcli("ssc", "event", "list")
-            out.lines
-            verifyAll(out.lines) { 
-                size()>0
-                it.any { it =~ "PROJECT_VERSION_CREATED" }
-                it.any { it =~ "Application: "+version.appName }
-                it.any { it =~ "Version: "+version.versionName }
+            verifyAll(Fcli.run("ssc", "event", "list")) {
+                success
+                verifyAll(stdout) { 
+                    size()>0
+                    it.any { it =~ "PROJECT_VERSION_CREATED" }
+                    it.any { it =~ "Application: "+version.appName }
+                    it.any { it =~ "Version: "+version.versionName }
+                }
             }
     }
 }

@@ -2,8 +2,8 @@ package com.fortify.cli.ftest._common.spec;
 
 import org.spockframework.runtime.extension.IMethodInterceptor
 
+import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.Input
-import com.fortify.cli.ftest._common.runner.FcliRunner
 
 public enum FcliSessionType {
     SSC(new SSCSessionHandler()),
@@ -39,7 +39,7 @@ public enum FcliSessionType {
             if ( !loggedIn && !failed ) {
                 println("Logging in to "+friendlyName())
                 try {
-                    loggedIn = FcliRunner.run(STD_LOGIN_ARGS+loginOptions())
+                    loggedIn = Fcli.run(STD_LOGIN_ARGS+loginOptions())
                     failed = !loggedIn
                 } catch ( Exception e ) {
                     e.printStackTrace()
@@ -52,7 +52,7 @@ public enum FcliSessionType {
         @Override
         public synchronized final void logout() {
             if ( loggedIn ) {
-                FcliRunner.run(STD_LOGOUT_ARGS+logoutOptions())
+                Fcli.run(STD_LOGOUT_ARGS+logoutOptions())
                 loggedIn = false
             }
         }

@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.ftest.ssc._common
 
-import com.fortify.cli.ftest._common.runner.FcliRunner
+import com.fortify.cli.ftest._common.Fcli
 
 import groovy.transform.builder.Builder
 
@@ -23,7 +23,7 @@ public class SSCAppVersion implements Closeable, AutoCloseable {
     private final String versionName = "v"+random
     
     public SSCAppVersion create() {
-        FcliRunner.runOrFail("Unable to create application version", 
+        Fcli.runOrFail("Unable to create application version", 
             "ssc", "appversion", "create", appName+":"+versionName, 
             "--issue-template", "Prioritized High Risk Issue Template",
             "--auto-required-attrs", "--store", fcliVariableName)
@@ -31,7 +31,7 @@ public class SSCAppVersion implements Closeable, AutoCloseable {
     }
     
     public void close() {
-        FcliRunner.runOrFail("Unable to delete application version",
+        Fcli.runOrFail("Unable to delete application version",
             "ssc", "appversion", "delete", "::"+fcliVariableName+"::")
     }
 }

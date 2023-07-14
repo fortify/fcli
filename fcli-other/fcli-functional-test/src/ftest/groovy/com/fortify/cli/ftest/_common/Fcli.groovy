@@ -1,16 +1,17 @@
-package com.fortify.cli.ftest._common.runner;
+package com.fortify.cli.ftest._common;
 
-import java.lang.reflect.InvocationTargetException
 import java.nio.file.Files
 import java.nio.file.Path
 
-import com.fortify.cli.ftest._common.Input
+import org.spockframework.runtime.IStandardStreamsListener
+import org.spockframework.runtime.StandardStreamsCapturer
 
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
+import groovy.transform.TupleConstructor
 
 @CompileStatic
-public class FcliRunner {
+public class Fcli {
     private static Path fcliDataDir;
     private static IRunner runner
     
@@ -22,15 +23,36 @@ public class FcliRunner {
         runner = createRunner()
     }
     
-    static boolean run(String[] args) {
+    /**
+     * This method allows for running fcli with the given arguments,
+     * returning execution results in an FcliResult object. The
+     * returned object can be used by feature specs to define
+     * expectations on properties like 'success' status, exit code,
+     * and stdout/stderr contents.
+     * @param args Arguments to pass to fcli
+     * @return FcliResult describing fcli execution result
+     */
+    static FcliResult run(String[] args) {
         if ( !runner ) {
             throw new IllegalStateException("Runner not initialized")
         }
-        return runner.run(args)==0
+        new FcliOutputCapturer().start().withCloseable {
+            int exitCode = runner.run(args)
+            return new FcliResult(exitCode, it.stdout, it.stderr)
+        }
     }
     
+    /**
+     * This method allows for running fcli with the given arguments,
+     * throwing an exception with the given message if the fcli 
+     * invocation was not successful. This method shouldn't be used 
+     * by feature specs; these should call the run() method and
+     * define proper expectations like expected success. 
+     * @param msg Exception message to use in case of failure 
+     * @param args Arguments to pass to fcli
+     */
     static void runOrFail(String msg, String[] args) {
-        if ( !run(args) ) {
+        if ( !run(args).success ) {
             throw new IllegalStateException(msg)
         }
     }
@@ -64,6 +86,16 @@ public class FcliRunner {
                 ? [java, "-jar", fcli]
                 : [fcli]
             return new ExternalRunner(cmd)
+        }
+    }
+    
+    @Immutable
+    static class FcliResult {
+        int exitCode;
+        List<String> stdout;
+        List<String> stderr;
+        final boolean isSuccess() {
+            exitCode==0
         }
     }
     
@@ -112,6 +144,50 @@ public class FcliRunner {
             if ( obj!=null ) {
                 obj.invokeMethod("close", [])
             }
+        }
+    }
+    
+    private static class FcliOutputCapturer implements IStandardStreamsListener, Closeable, AutoCloseable {
+        @Lazy private static final StandardStreamsCapturer capturer = createCapturer();
+        private StringBuffer stdoutBuffer = null;
+        private StringBuffer stderrBuffer = null;
+
+        @Override
+        void standardOut(String message) {
+            stdoutBuffer.append(message)
+        }
+
+        @Override
+        void standardErr(String message) {
+            stderrBuffer.append(message)
+        }
+        
+        List<String> getStdout() {
+            return getLines(stdoutBuffer)
+        }
+        
+        List<String> getStderr() {
+            return getLines(stderrBuffer)
+        }
+
+        private List<String> getLines(StringBuffer sb) {
+            return sb.toString().split("(\\r\\n|\\n|\\r)").toList()
+        }
+        
+        private static final StandardStreamsCapturer createCapturer() {
+            def capturer = new StandardStreamsCapturer()
+            capturer.start()
+            return capturer
+        }
+
+        FcliOutputCapturer start() {
+            this.stdoutBuffer = new StringBuffer()
+            this.stderrBuffer = new StringBuffer()
+            capturer.addStandardStreamsListener(this);
+            return this;
+        }
+        void close() {
+            capturer.removeStandardStreamsListener(this);
         }
     }
 }
