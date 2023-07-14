@@ -14,8 +14,6 @@ package com.fortify.cli.ftest.ssc._common
 
 import com.fortify.cli.ftest._common.Fcli
 
-import groovy.transform.builder.Builder
-
 public class SSCAppVersion implements Closeable, AutoCloseable {
     private final String random = System.currentTimeMillis()
     private final String fcliVariableName = "ssc_appversion_"+random
@@ -28,6 +26,13 @@ public class SSCAppVersion implements Closeable, AutoCloseable {
             "--issue-template", "Prioritized High Risk Issue Template",
             "--auto-required-attrs", "--store", fcliVariableName)
         return this
+    }
+    
+    public String get(String propertyPath) {
+        Fcli.run("state", "var", "contents", fcliVariableName, "-o", "expr={"+propertyPath+"}").with {
+            if ( !success || stdout.empty ) { throw new IllegalStateException("Error getting application version property "+propertyPath) }
+            return stdout[0]
+        }
     }
     
     public void close() {
