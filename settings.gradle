@@ -14,6 +14,3 @@ include "$fcliAppRef"
 include "$fcliFunctionalTestRef"
 include "$fcliAutoCompleteRef"
 include "$fcliDocRef"
-// TODO Remove once patch is available for
-// https://github.com/formkiq/graalvm-annotations-processor/issues/9
-include "$patchGraalVMAnnotationsProcessorRef"

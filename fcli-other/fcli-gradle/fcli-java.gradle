@@ -18,10 +18,7 @@ dependencies {
 	
 	// Generate GraalVM reflect-config.json using annotations
 	compileOnly('com.formkiq:graalvm-annotations')
-	// TODO Use original once patch is available for issue:
-	// https://github.com/formkiq/graalvm-annotations-processor/issues/9
-	// annotationProcessor 'com.formkiq:graalvm-annotations-processor'
-	annotationProcessor project("${patchGraalVMAnnotationsProcessorRef}")
+	annotationProcessor('com.formkiq:graalvm-annotations-processor')
 
 	// REST client
 	implementation('com.konghq:unirest-java') {
