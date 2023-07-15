@@ -10,8 +10,11 @@ import com.fortify.cli.ftest._common.spec.Prefix
 @Prefix("sc-sast.scan") @FcliSession(SCSAST)
 class SCSastSensorSpec extends FcliBaseSpec {
     def "help"() {
-        expect:
-            verifyAll(Fcli.run("sc-sast", "scan", "-h")) {
+        def args = ["sc-sast", "scan", "-h"]
+        when:
+            def result = Fcli.runOrFail(args)
+        then:
+            verifyAll(result.stdout) {
                 // TODO Add expectations
             }
     }

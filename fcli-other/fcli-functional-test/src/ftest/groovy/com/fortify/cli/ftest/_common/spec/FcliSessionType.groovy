@@ -39,8 +39,9 @@ public enum FcliSessionType {
             if ( !loggedIn && !failed ) {
                 println("Logging in to "+friendlyName())
                 try {
-                    loggedIn = Fcli.run(STD_LOGIN_ARGS+loginOptions())
-                    failed = !loggedIn
+                    Fcli.run(STD_LOGIN_ARGS+loginOptions())
+                        .expectSuccess(true, "Error logging in to "+friendlyName()+", tests will be skipped")
+                    loggedIn = true
                 } catch ( Exception e ) {
                     e.printStackTrace()
                     failed = true
@@ -52,7 +53,10 @@ public enum FcliSessionType {
         @Override
         public synchronized final void logout() {
             if ( loggedIn ) {
-                Fcli.run(STD_LOGOUT_ARGS+logoutOptions())
+                def result = Fcli.run(STD_LOGOUT_ARGS+logoutOptions())
+                if ( !result.success ) {
+                    err.println("Error logging out from "+friendlyName()+"\n"+result.stderr.join("\n   "))
+                }
                 loggedIn = false
             }
         }

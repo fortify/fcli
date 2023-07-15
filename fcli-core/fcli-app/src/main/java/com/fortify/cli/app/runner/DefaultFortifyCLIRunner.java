@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.app.runner;
 
+import java.util.List;
+
 import com.fortify.cli.app._main.cli.cmd.FCLIRootCommands;
 import com.fortify.cli.app.runner.util.FortifyCLIDefaultValueProvider;
 import com.fortify.cli.app.runner.util.FortifyCLIDynamicInitializer;
@@ -43,6 +45,11 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
 	    CommandLine cl = getCommandLine();
 	    cl.clearExecutionResults();
 	    return cl.execute(resolvedArgs);
+	}
+	
+	@Override
+	public int run(List<String> args) {
+	    return run(args.toArray(new String[] {}));
 	}
 	
 	@Override

@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.app.runner;
 
+import java.util.List;
+
 public interface IFortifyCLIRunner extends AutoCloseable {
     int run(String... args);
+    int run(List<String> args);
 }

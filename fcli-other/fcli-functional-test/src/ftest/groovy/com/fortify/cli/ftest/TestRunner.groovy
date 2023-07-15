@@ -1,11 +1,11 @@
 package com.fortify.cli.ftest;
 
 import java.text.SimpleDateFormat
+import java.util.regex.Matcher
 
 import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.engine.discovery.DiscoverySelectors
 import org.junit.platform.launcher.LauncherDiscoveryRequest
-import org.junit.platform.launcher.TagFilter
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
@@ -31,6 +31,7 @@ public class TestRunner {
     static def orgOut = System.out
     static def orgErr = System.err
     public static void main(String[] args) {
+        setSystemProperties(args)
         def exitCode = 0
         new PrintStream(new File("test.log")).withCloseable { log ->
             final LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
@@ -57,6 +58,24 @@ public class TestRunner {
             }
         }
         System.exit(exitCode) 
+    }
+    
+    private static void setSystemProperties(String[] args) {
+        if ( args!=null ) {
+            args.each {
+                def parsed = false
+                if ( it.startsWith("-D") && it.length()>2 ) {
+                    Matcher parseResult = (it =~ /-D(.+)=(.+)/)
+                    if ( parseResult.size()==1 && parseResult[0].size()==3 ) {
+                        System.setProperty(parseResult[0][1], parseResult[0][2])
+                        parsed = true
+                    }
+                }
+                if ( !parsed ) {
+                    System.err.println("WARN: Unknown argument: "+it)
+                }
+            }
+        }
     }
     
     private static class FcliTestExecutionListener implements TestExecutionListener {

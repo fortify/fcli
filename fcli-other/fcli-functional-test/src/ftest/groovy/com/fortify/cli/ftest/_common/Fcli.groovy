@@ -25,14 +25,16 @@ public class Fcli {
     
     /**
      * This method allows for running fcli with the given arguments,
-     * returning execution results in an FcliResult object. The
-     * returned object can be used by feature specs to define
-     * expectations on properties like 'success' status, exit code,
-     * and stdout/stderr contents.
+     * returning execution results in an FcliResult object. This
+     * method throws an exception if there was an error trying to
+     * execute fcli, but will return normally independent of fcli
+     * exist status. Optionally, this method can be chained with
+     * FcliResult.expectSuccess() or FcliResult.expectFailure() 
+     * methods to throw an exception based on fcli exit code.
      * @param args Arguments to pass to fcli
      * @return FcliResult describing fcli execution result
      */
-    static FcliResult run(String[] args) {
+    static FcliResult run(List<String> args) {
         if ( !runner ) {
             throw new IllegalStateException("Runner not initialized")
         }
@@ -43,19 +45,37 @@ public class Fcli {
     }
     
     /**
+     * Varargs variant of the run(args) method
+     * @param args Arguments to pass to fcli
+     * @return FcliResult describing fcli execution result
+     */
+    static FcliResult run(String... args) {
+        return run(args.toList())
+    }
+    
+    /**
      * This method allows for running fcli with the given arguments,
-     * throwing an exception with the given message if the fcli 
-     * invocation was not successful. This method shouldn't be used 
-     * by feature specs; these should call the run() method and
-     * define proper expectations like expected success. 
-     * @param msg Exception message to use in case of failure 
+     * throwing an exception if the fcli invocation returns a non-zero
+     * exit code or has unexpected output on stderr. This is the primary
+     * method to use if successful fcli execution is expected. If 
+     * unsuccessful execution is expected, the run(args) method should
+     * be used, potentially chained with the FcliResult.expectSuccess() 
+     * or FcliResult.expectFailure() methods.
      * @param args Arguments to pass to fcli
      */
-    static void runOrFail(String msg, String[] args) {
-        if ( !run(args).success ) {
-            throw new IllegalStateException(msg)
-        }
+    static FcliResult runOrFail(List<String> args) {
+        return run(args).expectSuccess()
     }
+    
+    /**
+     * Varargs variant of the runOrFail(args) method
+     * @param args Arguments to pass to fcli
+     * @return FcliResult describing fcli execution result
+     */
+    static FcliResult runOrFail(String... args) {
+        return runOrFail(args.toList())
+    }
+    
     
     static void close() {
         if ( runner ) { 
@@ -94,13 +114,34 @@ public class Fcli {
         int exitCode;
         List<String> stdout;
         List<String> stderr;
-        final boolean isSuccess() {
+        final boolean isZeroExitCode() {
             exitCode==0
+        }
+        final boolean isNonZeroExitCode() {
+            exitCode!=0
+        }
+        final boolean isUnexpectedStderrOutput() {
+            zeroExitCode && stderr!=null && stderr.size()>0
+        }
+        final boolean isSuccess() {
+            zeroExitCode && !unexpectedStderrOutput
+        }
+        final FcliResult expectSuccess(boolean expectedSuccess=true, String msg="") {
+            if ( expectedSuccess!=success ) {
+                def pfx = msg.isBlank() ? "" : (msg+":\n   ")
+                if ( success ) {
+                    throw new IllegalStateException(pfx+"Fcli unexpectedly terminated successfully")
+                } else {
+                    throw new IllegalStateException(pfx+"Fcli unexpectedly terminated unsuccessfully\n   "
+                        +stderr.join("\n   "))
+                }
+            }
+            return this
         }
     }
     
     private static interface IRunner extends AutoCloseable {
-        int run(String... args);
+        int run(List<String> args);
     }
     
     @Immutable
@@ -108,9 +149,8 @@ public class Fcli {
         List fcliCmd
         
         @Override
-        int run(String... args) {
-            def argsList = args as List
-            def fullCmd = fcliCmd+argsList
+        int run(List<String> args) {
+            def fullCmd = fcliCmd+args
             def proc = fullCmd.execute()
             // TODO This is the only method that works for properly
             //      getting all process output, however potentially
@@ -132,7 +172,7 @@ public class Fcli {
         private Object obj;
         
         @Override
-        int run(String... args) {
+        int run(List<String> args) {
             if ( obj==null ) {
                 obj = Class.forName("com.fortify.cli.app.runner.DefaultFortifyCLIRunner").newInstance()
             }
@@ -171,7 +211,9 @@ public class Fcli {
         }
 
         private List<String> getLines(StringBuffer sb) {
-            return sb.toString().split("(\\r\\n|\\n|\\r)").toList()
+            return sb.isBlank()
+                ? Collections.emptyList()
+                : sb.toString().split("(\\r\\n|\\n|\\r)").toList()
         }
         
         private static final StandardStreamsCapturer createCapturer() {

@@ -28,15 +28,15 @@ class SSCEventSpec extends FcliBaseSpec {
     @Shared @AutoCleanup def SSCAppVersion version = new SSCAppVersion().create()
     
     def "list"() {
-        expect:
-            verifyAll(Fcli.run("ssc", "event", "list")) {
-                success
-                verifyAll(stdout) { 
-                    size()>0
-                    it.any { it =~ "PROJECT_VERSION_CREATED" }
-                    it.any { it =~ "Application: "+version.appName }
-                    it.any { it =~ "Version: "+version.versionName }
-                }
+        def args = ["ssc", "event", "list"]
+        when:
+            def result = Fcli.runOrFail(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it.any { it =~ "PROJECT_VERSION_CREATED" }
+                it.any { it =~ "Application: "+version.appName }
+                it.any { it =~ "Version: "+version.versionName }
             }
     }
 }

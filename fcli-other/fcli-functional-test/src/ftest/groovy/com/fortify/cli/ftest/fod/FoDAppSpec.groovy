@@ -13,8 +13,11 @@ import spock.lang.Unroll
 class FoDAppSpec extends FcliBaseSpec {
     @Unroll
     def "list"() {
-        expect:
-            verifyAll(Fcli.run("fod", "app", "list")) {
+        def args = ["fod", "app", "list"]
+        when:
+            def result = Fcli.runOrFail(args)
+        then:
+            verifyAll(result.stdout) {
                 // TODO Add expectations
             }
         where:
