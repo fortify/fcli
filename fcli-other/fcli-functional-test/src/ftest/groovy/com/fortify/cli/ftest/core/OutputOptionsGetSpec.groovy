@@ -5,28 +5,31 @@ import com.fortify.cli.ftest._common.Fcli.FcliResult
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.Prefix
 
-@Prefix("core.output.list")
-class ListOutputOptionsSpec extends FcliBaseSpec {
-    private FcliResult generate(String outputArg) {
-        def args = ["util", "sample-data", "list"] as String[]
-        if ( outputArg!=null ) { args+=["-o", outputArg] } 
+// TODO Add/improve tests, and reduce duplication between OutputOptionsGetSpec/OutputOptionsListSpec. 
+// Some ideas, in particular for table/csv-based tests:
+// - Check for array of expected words on each line, i.e. splitting the input on spaces/comma's
+// - Define expected array of words for headers and particular records in fields, i.e. 
+//   expectedWordsRecordId0, expectedWordsLastRecord, expectedWordsTableHeader, expectedWordsCsvHeader
+// - Define methods for performing certain checks, i.e. hasAllWords(line, expectedWords), ... 
+// - Share all of the above between List/GetSpecs, for example through helper class, abstract base class,
+//   or combining both get and list tests in single spec? 
+@Prefix("core.output.get")
+class OutputOptionsGetSpec extends FcliBaseSpec {
+    private static final FcliResult generate(String outputFormat) {
+        def args = ["util", "sample-data", "get", "0"]
+        if ( outputFormat!=null ) { args+=["-o", outputFormat] } 
         return Fcli.runOrFail(args)
     }
     
-    def "table.no-opts"(String outputArg) {
+    def "table.no-opts"() {
         when:
-            def result = generate(outputArg)
+            def result = generate("table")
         then:
             verifyAll(result.stdout) {
-                size()==23329
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[23328].contains('23327  N/A           N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A')
+                size()==2
+                it[0].contains('Id  String value  Long value  Double value  Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
+                it[1].contains('0   value1        1000        0.7           true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
             }
-        where:
-            outputArg | _
-            "table"   | _
-            null      | _
     }
     
     def "table-plain.no-opts"() {
@@ -35,9 +38,8 @@ class ListOutputOptionsSpec extends FcliBaseSpec {
             def result = generate(outputArg)
         then:
             verifyAll(result.stdout) {
-                size()==23328
-                it[0].contains('0      value1  1000                 0.7                     true   2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1  true  nestedArrayValue3, nestedArrayValue4')
-                it[23327].contains('23327  N/A     N/A                  N/A                     N/A    N/A         N/A                        N/A                 N/A   N/A')
+                size()==1
+                it[0].contains('0  value1  1000  0.7  true  2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1  true  nestedArrayValue3, nestedArrayValue4')
             }
     }
     
@@ -47,10 +49,9 @@ class ListOutputOptionsSpec extends FcliBaseSpec {
             def result = generate(outputArg)
         then:
             verifyAll(result.stdout) {
-                size()==23329
+                size()==2
                 it[0] == 'id,stringValue,longValue,doubleValue,booleanValue,dateValue,dateTimeValue,nestedObjectStringValue,nestedObjectBooleanValue,nestedStringAray'
                 it[1] == '0,value1,1000,0.7,true,2000-01-01,"2000-01-01T00:00:00+00:00",nestedObjectValue1,true,"nestedArrayValue3, nestedArrayValue4"'
-                it[23328] == '23327,,,,,,,,,'
             }
     }
     
@@ -60,9 +61,8 @@ class ListOutputOptionsSpec extends FcliBaseSpec {
             def result = generate(outputArg)
         then:
             verifyAll(result.stdout) {
-                size()==23328
+                size()==1
                 it[0] == '0,value1,1000,0.7,true,2000-01-01,"2000-01-01T00:00:00+00:00",nestedObjectValue1,true,"nestedArrayValue3, nestedArrayValue4"'
-                it[23327] == '23327,,,,,,,,,'
             }
     }
     
@@ -126,14 +126,20 @@ class ListOutputOptionsSpec extends FcliBaseSpec {
             }
     }
     
-    def "yaml.no-opts"() {
-        def outputArg = "yaml"
+    def "yaml.no-opts"(String outputArg) {
+        // For now, Yaml is the default output for get operations; if this is ever 
+        // changed (see comment at StandardOutputConfig#details), the where-block
+        // below will need to be moved to the appropriate method in this spec.
         when:
             def result = generate(outputArg)
         then:
             verifyAll(result.stdout) {
                 // TODO Add expectations
             }
+        where: 
+            outputArg | _
+            "yaml"    | _
+            null      | _
     }
     
     def "yaml-flat.no-opts"() {
@@ -147,14 +153,13 @@ class ListOutputOptionsSpec extends FcliBaseSpec {
     }
     
     def "expr"() {
-        def outputArg = "expr={id}: {stringValue}\n"
+        def outputArg = "expr={id}: {stringValue}"
         when:
             def result = generate(outputArg)
         then:
             verifyAll(result.stdout) {
-                size()==23328
+                size()==1
                 it[0] == '0: value1'
-                it[23327] == '23327: '
             }
     }
     
@@ -164,7 +169,7 @@ class ListOutputOptionsSpec extends FcliBaseSpec {
             def result = generate(outputArg)
         then:
             verifyAll(result.stdout) {
-                size()==29
+                size()==20
                 // TODO Add expectations
             }
     }

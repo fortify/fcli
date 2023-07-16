@@ -22,13 +22,12 @@ import com.fortify.cli.app.runner.util.I18nParameterExceptionHandler;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
-import lombok.AccessLevel;
-import lombok.Getter;
 import picocli.CommandLine;
 
 public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
-    @Getter(value = AccessLevel.PRIVATE, lazy = true)
-	private final CommandLine commandLine = createCommandLine();
+    // TODO See https://github.com/remkop/picocli/issues/2066
+    //@Getter(value = AccessLevel.PRIVATE, lazy = true)
+	//private final CommandLine commandLine = createCommandLine();
 	
 	private CommandLine createCommandLine() {
 	    FortifyCLIStaticInitializer.getInstance().initialize();
@@ -42,7 +41,8 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
 	public int run(String... args) {
 	    String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
 	    FortifyCLIDynamicInitializer.getInstance().initialize(resolvedArgs);
-	    CommandLine cl = getCommandLine();
+	    //CommandLine cl = getCommandLine(); // TODO See https://github.com/remkop/picocli/issues/2066
+	    CommandLine cl = createCommandLine();
 	    cl.clearExecutionResults();
 	    return cl.execute(resolvedArgs);
 	}

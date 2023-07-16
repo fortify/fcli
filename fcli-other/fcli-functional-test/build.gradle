@@ -23,7 +23,7 @@ testing {
                         }
                         options {
                             testLogging {
-                                showStandardStreams = true
+                                showStandardStreams = false
                             }
                         }
                     }
