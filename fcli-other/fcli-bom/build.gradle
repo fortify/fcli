@@ -10,6 +10,7 @@ javaPlatform {
 
 dependencies {
 	api platform('com.fasterxml.jackson:jackson-bom:2.15.2')
+	api platform('org.springframework:spring-framework-bom:6.0.11')
 		
 	constraints {
 		// Picocli
@@ -31,12 +32,11 @@ dependencies {
 		// REST client
         api('com.konghq:unirest-java:3.14.5')
         api('com.konghq:unirest-objectmapper-jackson:3.14.5')
-        
-        // Spring expression language (SpEL)
-        api('org.springframework:spring-expression:6.0.11')
 		
-        // Support for handling Jackson JsonNode objects with SpEL 
-        api('org.springframework.integration:spring-integration-core:6.1.1')
+        // Support for handling Jackson JsonNode objects with SpEL
+        // As we're only using two classes of this dependency, we've copied
+        // them into our source tree instead. 
+        //api('org.springframework.integration:spring-integration-core:6.1.1')
 		
 		// Output formatting
         api('hu.webarticum:tree-printer:3.1.0')

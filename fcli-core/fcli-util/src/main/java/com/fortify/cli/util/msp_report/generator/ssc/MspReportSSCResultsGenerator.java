@@ -19,6 +19,7 @@ import static com.fortify.cli.util.msp_report.generator.ssc.MspReportSSCAppVersi
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc._common.rest.bulk.SSCBulkEmbedder;
 import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc._common.rest.helper.SSCPagingHelper;
@@ -28,12 +29,11 @@ import com.fortify.cli.ssc.attribute_definition.domain.SSCAttributeDefinitionTyp
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 import com.fortify.cli.util.msp_report.collector.MspReportAppScanCollector;
-import com.fortify.cli.util.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.util.msp_report.collector.MspReportAppScanCollector.MspReportScanCollectorState;
+import com.fortify.cli.util.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.util.msp_report.config.MspReportSSCSourceConfig;
 import com.fortify.cli.util.msp_report.generator.AbstractMspReportUnirestResultsGenerator;
 
-import io.micrometer.common.util.StringUtils;
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;

@@ -27,8 +27,8 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.report.logger.IReportLogger;
 import com.fortify.cli.common.util.Counter;
+import com.fortify.cli.common.util.StringUtils;
 
-import io.micrometer.common.util.StringUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

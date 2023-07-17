@@ -29,8 +29,9 @@ dependencies {
 	
 	// Spring expression language (SpEL)
 	implementation('org.springframework:spring-expression')
-	// Support for handling Jackson JsonNode objects with SpEL 
-	implementation('org.springframework.integration:spring-integration-core')
+    // Support for JSON/SpEL date/time formatting
+    implementation('org.springframework:spring-context')
+        
 	// Remove annotation processor warning
 	compileOnly('com.google.code.findbugs:jsr305')
 	

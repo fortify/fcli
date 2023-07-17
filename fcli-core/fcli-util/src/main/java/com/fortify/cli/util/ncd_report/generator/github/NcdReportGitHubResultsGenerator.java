@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.util.ncd_report.collector.INcdReportRepositoryBranchCommitCollector;
 import com.fortify.cli.util.ncd_report.collector.INcdReportRepositoryProcessor;
 import com.fortify.cli.util.ncd_report.collector.NcdReportResultsCollector;
@@ -29,7 +30,6 @@ import com.fortify.cli.util.ncd_report.config.NcdReportGitHubSourceConfig;
 import com.fortify.cli.util.ncd_report.descriptor.NcdReportBranchCommitDescriptor;
 import com.fortify.cli.util.ncd_report.generator.AbstractNcdReportUnirestResultsGenerator;
 
-import io.micrometer.common.util.StringUtils;
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;

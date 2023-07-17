@@ -27,8 +27,8 @@ import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.common.report.writer.ReportDirWriter;
 import com.fortify.cli.common.report.writer.ReportZipWriter;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.common.util.StringUtils;
 
-import io.micrometer.common.util.StringUtils;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;

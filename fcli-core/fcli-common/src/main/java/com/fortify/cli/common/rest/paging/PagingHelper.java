@@ -17,8 +17,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.util.StringUtils;
 
-import io.micrometer.common.util.StringUtils;
 import kong.unirest.HttpRequest;
 import kong.unirest.PagedList;
 import lombok.SneakyThrows;
