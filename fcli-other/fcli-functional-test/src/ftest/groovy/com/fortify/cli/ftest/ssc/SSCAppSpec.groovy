@@ -44,4 +44,18 @@ class SSCAppSpec extends FcliBaseSpec {
                 it.any { it =~ version.appName }
             }
     }
+    
+    /*
+    def "delete-all"() {
+        when:
+            def SSCAppVersion version1 = new SSCAppVersion().create()
+            def SSCAppVersion version2 = new SSCAppVersion().create(v1.appName)
+            def deleteResult = Fcli.run(["ssc", "app", "rm", version.appName, "--confirm"])
+            def listResult = Fcli.run(["ssc", "app", "list"])
+        then:
+            verifyAll(deleteResult.stdout) {
+                it.any { it =~ version.appName }
+            }
+    }
+    */
 }

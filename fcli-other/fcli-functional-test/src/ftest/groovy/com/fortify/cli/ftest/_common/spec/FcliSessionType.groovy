@@ -26,6 +26,7 @@ public enum FcliSessionType {
         boolean isEnabled();
         boolean login();
         void logout();
+        List<String> getMaskedProperties();
     }   
     
     private static abstract class AbstractSessionHandler implements ISessionHandler {
@@ -39,6 +40,8 @@ public enum FcliSessionType {
             if ( !loggedIn && !failed ) {
                 println("Logging in to "+friendlyName())
                 try {
+                    def valuesToMask = values(maskedProperties)
+                    Fcli.stringsToMask += valuesToMask
                     Fcli.run(
                         STD_LOGIN_ARGS+loginOptions(),
                         {it.expectSuccess(true, "Error logging in to "+friendlyName()+", tests will be skipped")}
@@ -56,6 +59,7 @@ public enum FcliSessionType {
         @Override
         public synchronized final void logout() {
             if ( loggedIn ) {
+                Fcli.stringsToMask += values(maskedProperties)
                 def result = Fcli.run(
                     STD_LOGOUT_ARGS+logoutOptions(),
                     {
@@ -88,6 +92,9 @@ public enum FcliSessionType {
                 ? optNames.stream().map(this.&option).collect().flatten()
                 : [] 
         } 
+        List<String> values(List<String> optNames) {
+            return optNames.stream().map(this.&get).filter({it!=null}).collect().flatten();
+        }
     }
     
     private static class SSCSessionHandler extends AbstractSessionHandler {
@@ -109,6 +116,12 @@ public enum FcliSessionType {
             def result = options("user", "password")
             return result.size()==0 ? ["--no-revoke-token"] : result
         }
+        
+        @Override
+        public List<String> getMaskedProperties() {
+            ["url", "user", "password", "token", "ci-token"]
+        }
+        
     } 
     
     private static class FoDSessionHandler extends AbstractSessionHandler {
@@ -129,6 +142,11 @@ public enum FcliSessionType {
         public List<String> logoutOptions() {
             return []
         }
+        
+        @Override
+        public List<String> getMaskedProperties() {
+            ["url", "tenant", "user", "password", "client-id", "client-secret"]
+        }
     }
 
     private static class SCSastSessionHandler extends AbstractSessionHandler {
@@ -148,7 +166,12 @@ public enum FcliSessionType {
         @Override
         public List<String> logoutOptions() {
             def result = options("ssc-user", "ssc-password")
-            return result.length==0 ? "--no-revoke-token" : result
+            return result.size()==0 ? "--no-revoke-token" : result
+        }
+        
+        @Override
+        public List<String> getMaskedProperties() {
+            ["ssc-url", "ssc-user", "ssc-password", "ssc-ci-token", "client-auth-token"]
         }
     }
     
@@ -169,7 +192,12 @@ public enum FcliSessionType {
         @Override
         public List<String> logoutOptions() {
             def result = options("ssc-user", "ssc-password")
-            return result.length==0 ? "--no-revoke-token" : result
+            return result.size()==0 ? "--no-revoke-token" : result
+        }
+        
+        @Override
+        public List<String> getMaskedProperties() {
+            ["ssc-url", "ssc-user", "ssc-password", "ssc-ci-token"]
         }
     }
 

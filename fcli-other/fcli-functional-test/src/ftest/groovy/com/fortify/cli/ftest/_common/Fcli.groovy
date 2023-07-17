@@ -11,8 +11,9 @@ import groovy.transform.Immutable
 
 @CompileStatic
 public class Fcli {
-    private static Path fcliDataDir;
+    private static Path fcliDataDir
     private static IRunner runner
+    private static Set<String> stringsToMask = []
     
     static void initialize() {
         System.setProperty("picocli.ansi", "false")
@@ -57,10 +58,18 @@ public class Fcli {
         if ( !runner ) {
             throw new IllegalStateException("Runner not initialized")
         }
+        println "==> fcli "+args.collect({mask(it)}).join(" ")
         new FcliOutputCapturer().start().withCloseable {
             int exitCode = runner.run(args)
             return new FcliResult(exitCode, it.stdout, it.stderr)
         }
+    }
+    
+    private static final String mask(String input) {
+        if ( stringsToMask && stringsToMask.size()>0 ) {
+            stringsToMask.each { input = input.replace(it, "*****")}
+        }
+        return input
     }
     
     static void close() {
