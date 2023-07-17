@@ -35,11 +35,12 @@ dependencies {
 	// Remove annotation processor warning
 	compileOnly('com.google.code.findbugs:jsr305')
 	
+    // Logging dependencies
 	implementation('org.slf4j:slf4j-api')
 	implementation('org.slf4j:jcl-over-slf4j')
 	implementation('ch.qos.logback:logback-classic')
 
-	// Jackason data formats & types
+	// Jackson data formats & types
 	implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml')
 	implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-csv')
 	implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
