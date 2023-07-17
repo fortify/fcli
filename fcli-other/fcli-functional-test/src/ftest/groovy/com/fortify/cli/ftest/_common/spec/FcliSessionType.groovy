@@ -40,10 +40,14 @@ public enum FcliSessionType {
             if ( !loggedIn && !failed ) {
                 println("Logging in to "+friendlyName())
                 try {
+                    def loginCredentialOptions = loginCredentialOptions()
+                    if ( loginCredentialOptions==null || loginCredentialOptions.size()==0 ) {
+                        throw new IllegalArgumentException("No or incomplete "+friendlyName()+" credentials provided, tests will be skipped")
+                    }
                     def valuesToMask = values(maskedProperties)
                     Fcli.stringsToMask += valuesToMask
                     Fcli.run(
-                        STD_LOGIN_ARGS+loginOptions(),
+                        STD_LOGIN_ARGS+loginOptions()+loginCredentialOptions,
                         {it.expectSuccess(true, "Error logging in to "+friendlyName()+", tests will be skipped")}
                     )
                         
@@ -73,6 +77,7 @@ public enum FcliSessionType {
         
         abstract String module()
         abstract List<String> loginOptions()
+        abstract List<String> loginCredentialOptions()
         abstract List<String> logoutOptions()
         
         String basePropertyName() {
@@ -108,7 +113,12 @@ public enum FcliSessionType {
 
         @Override
         public List<String> loginOptions() {
-            option("url")+options("user", "password")+options("token")+options("ci-token")
+            option("url")
+        }
+        
+        @Override
+        public List<String> loginCredentialOptions() {
+            options("user", "password")+options("token")+options("ci-token")
         }
 
         @Override
@@ -135,7 +145,12 @@ public enum FcliSessionType {
         
         @Override
         public List<String> loginOptions() {
-            option("url")+options("tenant", "user", "password")+options("client-id", "client-secret")
+            option("url")
+        }
+        
+        @Override
+        public List<String> loginCredentialOptions() {
+            options("tenant", "user", "password")+options("client-id", "client-secret")
         }
 
         @Override
@@ -160,7 +175,12 @@ public enum FcliSessionType {
 
         @Override
         public List<String> loginOptions() {
-            option("ssc-url")+options("ssc-user", "ssc-password", "client-auth-token")+options("ssc-ci-token", "client-auth-token")
+            option("ssc-url")
+        }
+        
+        @Override
+        public List<String> loginCredentialOptions() {
+            options("ssc-user", "ssc-password", "client-auth-token")+options("ssc-ci-token", "client-auth-token")
         }
 
         @Override
@@ -186,7 +206,12 @@ public enum FcliSessionType {
 
         @Override
         public List<String> loginOptions() {
-            options("ssc-url")+options("ssc-user", "ssc-password")+options("ssc-ci-token")
+            options("ssc-url")
+        }
+        
+        @Override
+        public List<String> loginCredentialOptions() {
+            options("ssc-user", "ssc-password")+options("ssc-ci-token")
         }
 
         @Override
