@@ -16,11 +16,15 @@ import javax.validation.ValidationException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
+import com.fortify.cli.ssc._common.rest.SSCUrls;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 public class SSCAppVersionHelper {
     public static final JsonNode renameFields(JsonNode record) {
@@ -69,5 +73,27 @@ public class SSCAppVersionHelper {
             throw new ValidationException("Multiple application versions found");
         }
         return versions.size()==0 ? null : JsonHelper.treeToValue(versions.get(0), SSCAppVersionDescriptor.class);
+    }
+    
+    public static final String refreshMetrics(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
+        if ( !descriptor.isRefreshRequired() ) {
+            return "NO_REFRESH_REQUIRED";
+        } else {
+            unirest.post(SSCUrls.PROJECT_VERSIONS_ACTION_REFRESH)
+                .body(new SSCAppVersionRefreshRequest(descriptor.getVersionId()))
+                .asObject(ObjectNode.class)
+                .getBody();
+            return "REFRESH_REQUESTED";
+        }
+    }
+    
+    @Data
+    @Reflectable @AllArgsConstructor
+    private static final class SSCAppVersionRefreshRequest {
+        private final String[] projectVersionIds;
+        
+        public SSCAppVersionRefreshRequest(String appVersionId) {
+            this.projectVersionIds = new String[] {appVersionId};
+        }
     }
 }

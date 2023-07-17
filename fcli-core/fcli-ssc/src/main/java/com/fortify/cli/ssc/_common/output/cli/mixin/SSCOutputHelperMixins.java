@@ -23,6 +23,10 @@ import picocli.CommandLine.Command;
  * @author rsenden
  */
 public class SSCOutputHelperMixins {
+    public static class AppVersionRefreshMettrics extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "refresh-metrics";
+    }
+    
     public static class ArtifactApprove extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "approve";
     }

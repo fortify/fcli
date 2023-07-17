@@ -30,6 +30,7 @@ public class SSCAppVersionDescriptor extends JsonNodeHolder {
     private String applicationName;
     @JsonProperty("id") private String versionId;
     @JsonProperty("name") private String versionName;
+    private boolean refreshRequired;
     
     @JsonProperty("project")
     public void unpackProject(Map<String, String> project) {

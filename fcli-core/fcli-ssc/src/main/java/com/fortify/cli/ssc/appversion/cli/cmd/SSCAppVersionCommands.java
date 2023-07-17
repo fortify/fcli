@@ -24,6 +24,7 @@ import picocli.CommandLine.Command;
             SSCAppVersionDeleteCommand.class,
             SSCAppVersionGetCommand.class,
             SSCAppVersionListCommand.class,
+            SSCAppVersionRefreshMetricsCommand.class,
             SSCAppVersionUpdateCommand.class
         }
 )
