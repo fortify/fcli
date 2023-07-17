@@ -44,7 +44,7 @@ Each release comes with a list of assets:
 * `+fcli.jar+`: Java version of fcli, which should be runnable on any platform that has Java 11+ installed 
 ** Note that in general, the native binaries are easier to invoke, offer better performance, and have the benefit of auto-completion capabilities on Linux & Mac
 ** If you experience any unexpected behavior with native binaries, like commands or command line options not being listed or recognized, or technical error messages about methods, constructors or serializers not being
-found, please try with the Java version a s it may be an issue specific to the native binaries. See the link:#_troubleshooting[Troubleshooting] section for details. 
+found, please try with the Java version as it may be an issue specific to the native binaries. See the link:#_troubleshooting[Troubleshooting] section for details. 
 * `+fcli-thirdparty.zip+`: Third-party licenses and sources for license purposes; usually no need to download 
 * `+LICENSE.TXT+` & `+README.md+`: Some generic information and license for fcli
 
@@ -246,7 +246,7 @@ To keep session state between fcli invocations, fcli stores session data like UR
 
 By default, fcli stores configuration and state data like session files (see link:#_session_management[Session Management]), fcli variable contents (see link:#_fcli_variables[Fcli Variables]) and proxy settings in its data folder. Future versions of fcli may also automatically generated log files in this data directory, if no `+--log-file+` option is provided.
 
-The locations of these files can be controller through the following environment variables:
+The locations of these files can be controlled through the following environment variables:
 
 * `+FCLI_STATE_DIR+`: Location of fcli state like session and variable data. +
   Default: `+<FCLI_DATA_DIR>/state+`
@@ -314,7 +314,7 @@ Following are some examples, assuming the necessary login sessions are available
 
 [source,bash]
 ----
-fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion
+fcli ssc appversion create myApp:1.0 --auto-required-attrs --skip-if-exists --store myVersion
 fcli ssc appversion-artifact upload myScan.fpr --appversion ::myVersion::
 
 fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion:id,name
