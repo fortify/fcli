@@ -12,6 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.cli.cmd;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
@@ -24,8 +27,10 @@ import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequest;
+import kong.unirest.HttpRequestWithBody;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -74,13 +79,23 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
         return input;
     }
     
+    @SneakyThrows
     protected final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
         if ( StringUtils.isBlank(uri) ) {
             throw new IllegalArgumentException("Uri must be specified");
         }
-        var request = unirest.request(httpMethod, uri);
-        // TODO Add Content-Type & accept headers
-        return data==null ? request : request.body(data);
+        HttpRequest<?> request = unirest.request(httpMethod, uri);
+        if ( StringUtils.isNotBlank(data) ) {
+            if ( "GET".equals(httpMethod) || !(request instanceof HttpRequestWithBody) ) {
+                throw new IllegalArgumentException("Request body not supported for "+httpMethod+" requests");
+            } else if ( data.startsWith("@") ) {
+                var path = Path.of(data.replaceAll("^@+", ""));
+                request = ((HttpRequestWithBody)request).body(Files.readString(path));
+            } else {
+                request = ((HttpRequestWithBody)request).body(data);
+            }
+        }
+        return request;
     }
     
 }
