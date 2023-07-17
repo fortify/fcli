@@ -1,11 +1,4 @@
 [{
-  "name" : "org.fusesource.jansi.AnsiConsole",
-  "methods" : [ 
-    {"name" : "<init>", "parameterTypes" : [ ]},
-    {"name" : "systemInstall", "parameterTypes" : [ ]},
-    {"name" : "systemUninstall", "parameterTypes" : [ ]}
-  ]
-},{
   "name" : "org.springframework.integration.json.JsonPropertyAccessor$ArrayNodeAsList",
   "allPublicMethods" : true
 },{
@@ -100,6 +93,63 @@
   "allPublicMethods" : true
 },{
   "name" : "java.util.HashSet",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableCollection",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableSet",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableSortedSet",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableNavigableSet",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableList",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableRandomAccessList",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableSortedMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableNavigableMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptyEnumeration",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptyIterator",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptyList",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptyListIterator",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptyMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptySet",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$SetFromMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$SingletonList",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$SingletonMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$SingletonSet",
   "allPublicMethods" : true
 }
 ]
