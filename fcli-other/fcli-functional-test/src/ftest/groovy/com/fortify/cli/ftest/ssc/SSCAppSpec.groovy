@@ -25,8 +25,18 @@ class SSCAppSpec extends FcliBaseSpec {
             }
     }
     
-    def "get"() {
+    def "get.byId"() {
         def args = ["ssc", "app", "get", version.get("application.id")]
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                it.any { it =~ version.appName }
+            }
+    }
+    
+    def "get.byName"() {
+        def args = ["ssc", "app", "get", version.appName]
         when:
             def result = Fcli.run(args)
         then:
