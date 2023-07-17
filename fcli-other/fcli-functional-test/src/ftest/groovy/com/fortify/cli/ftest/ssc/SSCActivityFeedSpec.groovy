@@ -30,7 +30,7 @@ class SSCActivityFeedSpec extends FcliBaseSpec {
     def "list"() {
         def args = ["ssc", "activity-feed", "list"]
         when:
-            def result = Fcli.runOrFail(args)
+            def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) { 
                 size()>0

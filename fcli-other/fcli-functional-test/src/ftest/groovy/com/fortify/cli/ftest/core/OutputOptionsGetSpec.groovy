@@ -18,7 +18,7 @@ class OutputOptionsGetSpec extends FcliBaseSpec {
     private static final FcliResult generate(String outputFormat) {
         def args = ["util", "sample-data", "get", "0"]
         if ( outputFormat!=null ) { args+=["-o", outputFormat] } 
-        return Fcli.runOrFail(args)
+        return Fcli.run(args)
     }
     
     def "table.no-opts"() {

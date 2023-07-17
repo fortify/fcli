@@ -29,8 +29,8 @@ public enum FcliSessionType {
     }   
     
     private static abstract class AbstractSessionHandler implements ISessionHandler {
-        String[] STD_LOGIN_ARGS = [module(), "session","login"] 
-        String[] STD_LOGOUT_ARGS = [module(), "session","logout"]
+        def STD_LOGIN_ARGS = [module(), "session","login"] 
+        def STD_LOGOUT_ARGS = [module(), "session","logout"]
         private boolean loggedIn = false;
         private boolean failed = false;
 
@@ -39,8 +39,11 @@ public enum FcliSessionType {
             if ( !loggedIn && !failed ) {
                 println("Logging in to "+friendlyName())
                 try {
-                    Fcli.run(STD_LOGIN_ARGS+loginOptions())
-                        .expectSuccess(true, "Error logging in to "+friendlyName()+", tests will be skipped")
+                    Fcli.run(
+                        STD_LOGIN_ARGS+loginOptions(),
+                        {it.expectSuccess(true, "Error logging in to "+friendlyName()+", tests will be skipped")}
+                    )
+                        
                     loggedIn = true
                 } catch ( Exception e ) {
                     e.printStackTrace()
@@ -53,17 +56,20 @@ public enum FcliSessionType {
         @Override
         public synchronized final void logout() {
             if ( loggedIn ) {
-                def result = Fcli.run(STD_LOGOUT_ARGS+logoutOptions())
-                if ( !result.success ) {
-                    err.println("Error logging out from "+friendlyName()+"\n"+result.stderr.join("\n   "))
-                }
+                def result = Fcli.run(
+                    STD_LOGOUT_ARGS+logoutOptions(),
+                    {
+                        if ( !it.success ) {
+                            err.println("Error logging out from "+friendlyName()+"\n"+it.stderr.join("\n   "))
+                        }
+                    })
                 loggedIn = false
             }
         }
         
         abstract String module()
-        abstract String[] loginOptions()
-        abstract String[] logoutOptions()
+        abstract List<String> loginOptions()
+        abstract List<String> logoutOptions()
         
         String basePropertyName() {
             Input.addPropertyPrefix(module())
@@ -74,10 +80,10 @@ public enum FcliSessionType {
         boolean has(String subPropertyName) {
             get(subPropertyName)
         }
-        String[] option(String optName) {
+        List<String> option(String optName) {
             has(optName) ? ["--"+optName, get(optName)] : []
         }
-        String[] options(String ... optNames) {
+        List<String> options(String ... optNames) {
             return optNames.every { has(it) } 
                 ? optNames.stream().map(this.&option).collect().flatten()
                 : [] 
@@ -94,14 +100,14 @@ public enum FcliSessionType {
         }
 
         @Override
-        public String[] loginOptions() {
+        public List<String> loginOptions() {
             option("url")+options("user", "password")+options("token")+options("ci-token")
         }
 
         @Override
-        public String[] logoutOptions() {
+        public List<String> logoutOptions() {
             def result = options("user", "password")
-            return result.length==0 ? "--no-revoke-token" : result
+            return result.size()==0 ? ["--no-revoke-token"] : result
         }
     } 
     
@@ -115,12 +121,12 @@ public enum FcliSessionType {
         }
         
         @Override
-        public String[] loginOptions() {
+        public List<String> loginOptions() {
             option("url")+options("tenant", "user", "password")+options("client-id", "client-secret")
         }
 
         @Override
-        public String[] logoutOptions() {
+        public List<String> logoutOptions() {
             return []
         }
     }
@@ -135,12 +141,12 @@ public enum FcliSessionType {
         }
 
         @Override
-        public String[] loginOptions() {
+        public List<String> loginOptions() {
             option("ssc-url")+options("ssc-user", "ssc-password", "client-auth-token")+options("ssc-ci-token", "client-auth-token")
         }
 
         @Override
-        public String[] logoutOptions() {
+        public List<String> logoutOptions() {
             def result = options("ssc-user", "ssc-password")
             return result.length==0 ? "--no-revoke-token" : result
         }
@@ -156,12 +162,12 @@ public enum FcliSessionType {
         }
 
         @Override
-        public String[] loginOptions() {
+        public List<String> loginOptions() {
             options("ssc-url")+options("ssc-user", "ssc-password")+options("ssc-ci-token")
         }
 
         @Override
-        public String[] logoutOptions() {
+        public List<String> logoutOptions() {
             def result = options("ssc-user", "ssc-password")
             return result.length==0 ? "--no-revoke-token" : result
         }

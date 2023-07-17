@@ -10,7 +10,7 @@ class QuerySpec extends FcliBaseSpec {
     private static final FcliResult generate(String query) {
         def args = ["util", "sample-data", "list"]
         if ( query!=null ) { args+=["-q", query] }
-        return Fcli.runOrFail(args)
+        return Fcli.run(args)
     }
     
     def "contains"() {

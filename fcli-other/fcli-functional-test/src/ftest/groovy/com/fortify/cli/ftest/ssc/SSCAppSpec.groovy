@@ -18,7 +18,7 @@ class SSCAppSpec extends FcliBaseSpec {
     def "list"() {
         def args = ["ssc", "app", "list"]
         when:
-            def result = Fcli.runOrFail(args)
+            def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 it.any { it =~ version.appName }
@@ -28,7 +28,7 @@ class SSCAppSpec extends FcliBaseSpec {
     def "get"() {
         def args = ["ssc", "app", "get", version.get("application.id")]
         when:
-            def result = Fcli.runOrFail(args)
+            def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 it.any { it =~ version.appName }

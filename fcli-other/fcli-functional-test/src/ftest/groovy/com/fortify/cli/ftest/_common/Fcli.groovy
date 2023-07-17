@@ -8,7 +8,6 @@ import org.spockframework.runtime.StandardStreamsCapturer
 
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
-import groovy.transform.TupleConstructor
 
 @CompileStatic
 public class Fcli {
@@ -24,17 +23,37 @@ public class Fcli {
     }
     
     /**
-     * This method allows for running fcli with the given arguments,
-     * returning execution results in an FcliResult object. This
-     * method throws an exception if there was an error trying to
-     * execute fcli, but will return normally independent of fcli
-     * exist status. Optionally, this method can be chained with
-     * FcliResult.expectSuccess() or FcliResult.expectFailure() 
-     * methods to throw an exception based on fcli exit code.
+     * This method runs fcli with the arguments provided and returns an FcliResult
+     * instance representing fcli execution result. By default, this method will
+     * throw an exception if fcli returned a non-zero exit code, or if there was
+     * any output on stderr. If needed, callers can provide a custom validator 
+     * closure as the second argument to override this behavior.
+     * @param args Arguments to pass to fcli
+     * @param validate Optional closure to override validation of the fcli execution
+     *        result; by default, an exception will be thrown if fcli execution was
+     *        unsuccessful.
+     * @return FcliResult describing fcli execution result
+     */
+    static FcliResult run(
+        List<String> args,
+        FcliResultValidator validator = {it.expectSuccess()}) 
+    {
+        def result = _run(args)
+        validator.validate(result)
+        return result
+    }
+    
+    /**
+     * This method runs fcli with the arguments provided and returns an FcliResult
+     * instance representing fcli execution result. This method throws an exception 
+     * if there was an error trying to execute fcli, for example if the configured
+     * fcli executable cannot be found. Being private, this method can only be
+     * invoked by the two run-methods above, essentially requiring callers to
+     * provide a validation closure.
      * @param args Arguments to pass to fcli
      * @return FcliResult describing fcli execution result
      */
-    static FcliResult run(List<String> args) {
+    private static final FcliResult _run(List<String> args) {
         if ( !runner ) {
             throw new IllegalStateException("Runner not initialized")
         }
@@ -43,39 +62,6 @@ public class Fcli {
             return new FcliResult(exitCode, it.stdout, it.stderr)
         }
     }
-    
-    /**
-     * Varargs variant of the run(args) method
-     * @param args Arguments to pass to fcli
-     * @return FcliResult describing fcli execution result
-     */
-    static FcliResult run(String... args) {
-        return run(args.toList())
-    }
-    
-    /**
-     * This method allows for running fcli with the given arguments,
-     * throwing an exception if the fcli invocation returns a non-zero
-     * exit code or has unexpected output on stderr. This is the primary
-     * method to use if successful fcli execution is expected. If 
-     * unsuccessful execution is expected, the run(args) method should
-     * be used, potentially chained with the FcliResult.expectSuccess() 
-     * or FcliResult.expectFailure() methods.
-     * @param args Arguments to pass to fcli
-     */
-    static FcliResult runOrFail(List<String> args) {
-        return run(args).expectSuccess()
-    }
-    
-    /**
-     * Varargs variant of the runOrFail(args) method
-     * @param args Arguments to pass to fcli
-     * @return FcliResult describing fcli execution result
-     */
-    static FcliResult runOrFail(String... args) {
-        return runOrFail(args.toList())
-    }
-    
     
     static void close() {
         if ( runner ) { 
@@ -138,6 +124,11 @@ public class Fcli {
             }
             return this
         }
+    }
+    
+    @CompileStatic
+    static interface FcliResultValidator {
+        void validate(FcliResult result);
     }
     
     private static interface IRunner extends AutoCloseable {

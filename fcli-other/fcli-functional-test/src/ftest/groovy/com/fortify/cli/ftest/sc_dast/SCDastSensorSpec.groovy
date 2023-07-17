@@ -12,7 +12,7 @@ class SCDastSensorSpec extends FcliBaseSpec {
     def "list"() {
         def args = ["sc-dast", "sensor", "list"]
         when:
-            def result = Fcli.runOrFail(args)
+            def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 // TODO Add expectations

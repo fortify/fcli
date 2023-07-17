@@ -15,7 +15,7 @@ class FoDAppSpec extends FcliBaseSpec {
     def "list"() {
         def args = ["fod", "app", "list"]
         when:
-            def result = Fcli.runOrFail(args)
+            def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 // TODO Add expectations
