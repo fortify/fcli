@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230717.192830-dev_develop
+fcli_version: 0.20230717.193143-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20230717.192830-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230717.192830-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230717.193143-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230717.192830-dev_develop</span>
+<span id="revnumber">version 0.20230717.193143-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -204,7 +204,7 @@ man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p
 </li>
 <li>
 <p>If you experience any unexpected behavior with native binaries, like commands or command line options not being listed or recognized, or technical error messages about methods, constructors or serializers not being
-found, please try with the Java version a s it may be an issue specific to the native binaries. See the <a href="#_troubleshooting">Troubleshooting</a> section for details.</p>
+found, please try with the Java version as it may be an issue specific to the native binaries. See the <a href="#_troubleshooting">Troubleshooting</a> section for details.</p>
 </li>
 </ul>
 </div>
@@ -608,7 +608,7 @@ fcli ssc session logout --user &lt;user&gt; --password &lt;password&gt;</code></
 <p>By default, fcli stores configuration and state data like session files (see <a href="#_session_management">Session Management</a>), fcli variable contents (see <a href="#_fcli_variables">Fcli Variables</a>) and proxy settings in its data folder. Future versions of fcli may also automatically generated log files in this data directory, if no <code>--log-file</code> option is provided.</p>
 </div>
 <div class="paragraph">
-<p>The locations of these files can be controller through the following environment variables:</p>
+<p>The locations of these files can be controlled through the following environment variables:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -745,7 +745,7 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion
+<pre class="highlight"><code class="language-bash" data-lang="bash">fcli ssc appversion create myApp:1.0 --auto-required-attrs --skip-if-exists --store myVersion
 fcli ssc appversion-artifact upload myScan.fpr --appversion ::myVersion::
 
 fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion:id,name
@@ -863,8 +863,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230717.192830-dev_develop<br>
-Last updated 2023-07-17 19:30:14 UTC
+Version 0.20230717.193143-dev_develop<br>
+Last updated 2023-07-17 19:33:35 UTC
 </div>
 </div>
 </body>
