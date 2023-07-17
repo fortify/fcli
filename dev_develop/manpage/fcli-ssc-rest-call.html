@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230717.161936-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230717.192830-dev_develop" %}
 
 
 <div id="header">
@@ -65,7 +65,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>-d</strong>, <strong>--data</strong>=<em>&lt;data&gt;</em></dt>
 <dd>
-<p>Data to send in the request body.</p>
+<p>Data to send in the request body. This option takes either a string to be sent as request body, or @@&lt;file&gt; to send the contents of the given file as the request body (note the double at-sign). This option is not available for GET requests.</p>
 </dd>
 <dt class="hdlist1"><strong>--[no-]transform</strong></dt>
 <dd>
@@ -159,7 +159,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-07-17 16:21:23 UTC
+Last updated 2023-07-17 19:30:14 UTC
 </div>
 </div>
 </body>
