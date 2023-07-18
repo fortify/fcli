@@ -33,8 +33,8 @@ import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateBuilder;
-import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionAuthEntityMixin;
-import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionAuthEntitiesUpdateBuilder;
+import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionUserMixin;
+import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionUserUpdateBuilder;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 
@@ -52,7 +52,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     @Mixin private SSCAppAndVersionNameResolverMixin.PositionalParameter sscAppAndVersionNameResolver;
     @Mixin private SSCIssueTemplateResolverMixin.OptionalOption issueTemplateResolver;
     @Mixin private SSCAppVersionAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
-    @Mixin private SSCAppVersionAuthEntityMixin.OptionalUserAddOption userAddMixin;
+    @Mixin private SSCAppVersionUserMixin.OptionalUserAddOption userAddMixin;
     @Option(names={"--description","-d"}, required = false)
     private String description;
     @Option(names={"--active"}, required = false, defaultValue="true", arity="1")
@@ -70,7 +70,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
             if ( descriptor!=null ) { return descriptor.asObjectNode().put(IActionCommandResultSupplier.actionFieldName, "SKIPPED_EXISTING"); }
         }
         SSCAppVersionAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
-        SSCAppVersionAuthEntitiesUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);
+        SSCAppVersionUserUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);
         
         SSCAppVersionDescriptor descriptor = createUncommittedAppVersion(unirest);
         SSCBulkResponse bulkResponse = new SSCBulkRequestBuilder()
@@ -97,8 +97,8 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         return true;
     }
     
-    private final SSCAppVersionAuthEntitiesUpdateBuilder getAuthUpdateBuilder(UnirestInstance unirest) {
-        return new SSCAppVersionAuthEntitiesUpdateBuilder(unirest)
+    private final SSCAppVersionUserUpdateBuilder getAuthUpdateBuilder(UnirestInstance unirest) {
+        return new SSCAppVersionUserUpdateBuilder(unirest)
                 .add(false, userAddMixin.getAuthEntitySpecs());
     }
     

@@ -29,8 +29,8 @@ import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateBuilder;
-import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionAuthEntityMixin;
-import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionAuthEntitiesUpdateBuilder;
+import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionUserMixin;
+import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionUserUpdateBuilder;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 
@@ -47,8 +47,8 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     @Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
     @Mixin private SSCIssueTemplateResolverMixin.OptionalOption issueTemplateResolver;
     @Mixin private SSCAppVersionAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
-    @Mixin private SSCAppVersionAuthEntityMixin.OptionalUserAddOption userAddMixin;
-    @Mixin private SSCAppVersionAuthEntityMixin.OptionalUserRemoveOption userDelMixin;
+    @Mixin private SSCAppVersionUserMixin.OptionalUserAddOption userAddMixin;
+    @Mixin private SSCAppVersionUserMixin.OptionalUserRemoveOption userDelMixin;
     @Option(names={"--name","-n"}, required = false)
     private String name;
     @Option(names={"--description","-d"}, required = false)
@@ -82,7 +82,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     }
     
     private final HttpRequest<?> getUserUpdateRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
-        return new SSCAppVersionAuthEntitiesUpdateBuilder(unirest)
+        return new SSCAppVersionUserUpdateBuilder(unirest)
                 .add(false, userAddMixin.getAuthEntitySpecs())
                 .remove(false, userDelMixin.getAuthEntitySpecs())
                 .buildRequest(descriptor.getVersionId());

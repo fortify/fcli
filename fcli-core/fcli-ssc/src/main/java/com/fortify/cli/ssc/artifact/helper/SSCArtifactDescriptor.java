@@ -10,18 +10,17 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.appversion.cli.mixin;
+package com.fortify.cli.ssc.artifact.helper;
 
-import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.ssc._common.output.cli.mixin.AbstractSSCBulkEmbedMixin;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionEmbedderSupplier;
+import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.json.JsonNodeHolder;
 
-import lombok.Getter;
-import picocli.CommandLine.Option;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-public class SSCAppVersionBulkEmbedMixin extends AbstractSSCBulkEmbedMixin {
-    @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
-    @Option(names = "--embed", required = false, split = ",", descriptionKey = "fcli.ssc.appversion.get.embed" )
-    @Getter private SSCAppVersionEmbedderSupplier[] embedSuppliers;
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper=true)
+public class SSCArtifactDescriptor extends JsonNodeHolder {
+    private String id;
 }

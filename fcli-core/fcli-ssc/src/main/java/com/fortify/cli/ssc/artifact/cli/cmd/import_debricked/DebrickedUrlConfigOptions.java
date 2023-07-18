@@ -10,18 +10,22 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.appversion.cli.mixin;
+package com.fortify.cli.ssc.artifact.cli.cmd.import_debricked;
 
-import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.ssc._common.output.cli.mixin.AbstractSSCBulkEmbedMixin;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionEmbedderSupplier;
+import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-public class SSCAppVersionBulkEmbedMixin extends AbstractSSCBulkEmbedMixin {
-    @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
-    @Option(names = "--embed", required = false, split = ",", descriptionKey = "fcli.ssc.appversion.get.embed" )
-    @Getter private SSCAppVersionEmbedderSupplier[] embedSuppliers;
+public class DebrickedUrlConfigOptions implements IUrlConfig {
+	// For now, this option is hidden as there is only the single debricked.com SaaS instance
+    @Option(names = {"--debricked-url"}, required = true, order=1, defaultValue = "https://debricked.com", hidden = true)
+    @Getter private String url;
+    
+    @Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
+    @Getter private Boolean insecureModeEnabled;
+    
+    public boolean hasUrlConfig() {
+        return url!=null;
+    }
 }

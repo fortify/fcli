@@ -10,18 +10,29 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.appversion.cli.mixin;
+package com.fortify.cli.ssc.artifact.cli.cmd;
 
-import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.ssc._common.output.cli.mixin.AbstractSSCBulkEmbedMixin;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionEmbedderSupplier;
+import java.io.File;
+
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
 import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-public class SSCAppVersionBulkEmbedMixin extends AbstractSSCBulkEmbedMixin {
-    @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
-    @Option(names = "--embed", required = false, split = ",", descriptionKey = "fcli.ssc.appversion.get.embed" )
-    @Getter private SSCAppVersionEmbedderSupplier[] embedSuppliers;
+@Command(name = OutputHelperMixins.Upload.CMD_NAME)
+public class SSCArtifactUploadCommand extends AbstractSSCArtifactUploadCommand {
+    @Getter @Mixin private OutputHelperMixins.Upload outputHelper; 
+    @Getter @Parameters(arity="1", descriptionKey = "fcli.ssc.artifact.upload.file") 
+    private File file;
+    
+    @Option(names = {"-e", "--engine-type"})
+    @Getter private String engineType;
+    
+    @Override
+    public boolean isSingular() {
+        return true;
+    }
 }

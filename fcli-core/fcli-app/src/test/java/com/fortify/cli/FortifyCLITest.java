@@ -163,7 +163,7 @@ public class FortifyCLITest {
         var descriptionArray = optionSpec.description();
         if ( descriptionArray.length==0 || Stream.of(descriptionArray).allMatch(StringUtils::isBlank) ) {
             String descriptionKey = StringUtils.isBlank(optionSpec.descriptionKey()) ? "<default>" : optionSpec.descriptionKey();
-            results.add(TestType.OPT_EMPTY_DESCRIPTION, Level.WARN, cmdSpec, optionSpec, String.format("%s: Option has an empty description (descriptionKey=%s)", getBundleName(cmdSpec), descriptionKey));
+            results.add(TestType.OPT_EMPTY_DESCRIPTION, Level.ERROR, cmdSpec, optionSpec, String.format("%s: Option has an empty description (descriptionKey=%s)", getBundleName(cmdSpec), descriptionKey));
         }
     }
 
@@ -215,7 +215,7 @@ public class FortifyCLITest {
         var descriptionArray = paramSpec.description();
         if ( descriptionArray.length==0 || Stream.of(descriptionArray).allMatch(StringUtils::isBlank) ) {
             String descriptionKey = StringUtils.isBlank(paramSpec.descriptionKey()) ? "<default>" : paramSpec.descriptionKey();
-            results.add(TestType.PARAM_EMPTY_DESCRIPTION, Level.WARN, cmdSpec, paramSpec, String.format("%s: Positional parameter has an empty description (descriptionKey=%s)", getBundleName(cmdSpec), descriptionKey));
+            results.add(TestType.PARAM_EMPTY_DESCRIPTION, Level.ERROR, cmdSpec, paramSpec, String.format("%s: Positional parameter has an empty description (descriptionKey=%s)", getBundleName(cmdSpec), descriptionKey));
         }
     }
 

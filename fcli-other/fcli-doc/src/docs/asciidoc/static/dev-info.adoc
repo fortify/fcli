@@ -256,8 +256,8 @@ Leaf commands in non-product modules usually have a similar structure, but some 
 
 Commands (including aliases) and options should use kebab-case names, i.e., lower-case names with words separated by a dash.
 
-* Acceptable command/option names: `app`, `appversion-artifact`
-* Invalid command/option names: `App`, `appversionArtifact`, `appversion_artifact`
+* Acceptable command/option names: `app`, `appversion-attribute`
+* Invalid command/option names: `App`, `appversionAttribute`, `appversion_attribute`
 
 Commands may have one or more aliases, and multiple names may be defined for options. Having multiple names for a single command or option may be useful for various reasons, for example:
 

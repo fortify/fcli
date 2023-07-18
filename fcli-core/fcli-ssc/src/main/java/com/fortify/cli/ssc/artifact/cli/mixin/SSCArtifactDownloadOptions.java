@@ -10,18 +10,14 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.appversion.cli.mixin;
-
-import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.ssc._common.output.cli.mixin.AbstractSSCBulkEmbedMixin;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionEmbedderSupplier;
+package com.fortify.cli.ssc.artifact.cli.mixin;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-public class SSCAppVersionBulkEmbedMixin extends AbstractSSCBulkEmbedMixin {
-    @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
-    @Option(names = "--embed", required = false, split = ",", descriptionKey = "fcli.ssc.appversion.get.embed" )
-    @Getter private SSCAppVersionEmbedderSupplier[] embedSuppliers;
+@Getter
+public class SSCArtifactDownloadOptions {
+    @Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
+    private String destination;
+    @Option(names = "--no-include-sources", negatable = true, descriptionKey = "download.no-include-sources") private boolean includeSources = true;
 }

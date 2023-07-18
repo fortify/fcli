@@ -62,7 +62,7 @@ runTestCommands() {
     appName="fcli-test $(date +%s)" 
     sscCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --store currentAppVersion:id
     newAppVersionId="::currentAppVersion::id"
-    checkOutput=(fgrep "No data"); sscCmd appversion-artifact list --appversion ${newAppVersionId}
+    checkOutput=(fgrep "No data"); sscCmd artifact list --appversion ${newAppVersionId}
     sscCmd appversion-attribute set "DevPhase=Active Development" --appversion ${newAppVersionId}
     sscCmd appversion-attribute list --appversion ${newAppVersionId}
     checkOutput=(fgrep "SKIPPED_EXISTING"); sscCmd appversion create "${appName}:v1" -d "Test fcli appversion create" --issue-template "Prioritized High Risk Issue Template" --auto-required-attrs --skip-if-exists

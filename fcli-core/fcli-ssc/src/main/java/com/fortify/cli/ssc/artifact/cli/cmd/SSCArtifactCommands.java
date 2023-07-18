@@ -10,26 +10,28 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.appversion.cli.cmd;
+package com.fortify.cli.ssc.artifact.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
+import com.fortify.cli.ssc.artifact.cli.cmd.import_debricked.SSCArtifactImportDebrickedCommand;
 
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "appversion",
+        name = "artifact",
         subcommands = {
-            SSCAppVersionCreateCommand.class,
-            SSCAppVersionDeleteCommand.class,
-            SSCAppVersionDownloadStateCommand.class,
-            SSCAppVersionGetCommand.class,
-            SSCAppVersionListCommand.class,
-            SSCAppVersionPurgeArtifactsCommand.class,
-            SSCAppVersionRefreshMetricsCommand.class,
-            SSCAppVersionUpdateCommand.class
+            SSCArtifactApproveCommand.class,
+            SSCArtifactDeleteCommand.class,
+            SSCArtifactDownloadCommand.class,
+            SSCArtifactGetCommand.class,
+            SSCArtifactImportDebrickedCommand.class,
+            SSCArtifactListCommand.class,
+            SSCArtifactPurgeCommand.class,
+            SSCArtifactUploadCommand.class,
+            SSCArtifactWaitForCommand.class
         }
 )
 @DefaultVariablePropertyName("id")
-public class SSCAppVersionCommands extends AbstractFortifyCLICommand {
+public class SSCArtifactCommands extends AbstractFortifyCLICommand {
 }

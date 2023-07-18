@@ -26,7 +26,7 @@ import com.fortify.cli.fod.scan.helper.FoDScanStatus;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobArtifactState;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobState;
-import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactStatus;
+import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -70,8 +70,8 @@ public final class FortifyCLIStaticInitializer {
     }
     
     private void initializeSSCProperties() {
-        System.setProperty("fcli.ssc.appversion-artifact.states", getValuesString(SSCAppVersionArtifactStatus.values()));
-        System.setProperty("fcli.ssc.appversion-artifact.states.complete", getValuesString(SSCAppVersionArtifactStatus.getDefaultCompleteStates()));
+        System.setProperty("fcli.ssc.artifact.states", getValuesString(SSCArtifactStatus.values()));
+        System.setProperty("fcli.ssc.artifact.states.complete", getValuesString(SSCArtifactStatus.getDefaultCompleteStates()));
     }
     
     private void initializeTrustStore() {

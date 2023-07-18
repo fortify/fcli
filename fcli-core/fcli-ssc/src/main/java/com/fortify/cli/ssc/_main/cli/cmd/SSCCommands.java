@@ -19,11 +19,10 @@ import com.fortify.cli.ssc.alert.cli.cmd.SSCAlertCommands;
 import com.fortify.cli.ssc.alert_definition.cli.cmd.SSCAlertDefinitionCommands;
 import com.fortify.cli.ssc.app.cli.cmd.SSCAppCommands;
 import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
-import com.fortify.cli.ssc.appversion_artifact.cli.cmd.SSCAppVersionArtifactCommands;
 import com.fortify.cli.ssc.appversion_attribute.cli.cmd.SSCAppVersionAttributeCommands;
 import com.fortify.cli.ssc.appversion_filterset.cli.cmd.SSCAppVersionFilterSetCommands;
-import com.fortify.cli.ssc.appversion_user.cli.cmd.SSCAppVersionAuthEntityCommands;
-import com.fortify.cli.ssc.appversion_vuln.cli.cmd.SSCAppVersionVulnCommands;
+import com.fortify.cli.ssc.appversion_user.cli.cmd.SSCAppVersionUserCommands;
+import com.fortify.cli.ssc.artifact.cli.cmd.SSCArtifactCommands;
 import com.fortify.cli.ssc.attribute_definition.cli.cmd.SSCAttributeDefinitionCommands;
 import com.fortify.cli.ssc.event.cli.cmd.SSCEventCommands;
 import com.fortify.cli.ssc.issue_template.cli.cmd.SSCIssueTemplateCommands;
@@ -36,7 +35,8 @@ import com.fortify.cli.ssc.role_permission.cli.cmd.SSCRolePermissionCommands;
 import com.fortify.cli.ssc.seed_bundle.cli.cmd.SSCSeedBundleCommands;
 import com.fortify.cli.ssc.token.cli.cmd.SSCTokenCommands;
 import com.fortify.cli.ssc.token_definition.cli.cmd.SSCTokenDefinitionCommands;
-import com.fortify.cli.ssc.user.cli.cmd.SSCAuthEntityCommands;
+import com.fortify.cli.ssc.user.cli.cmd.SSCUserCommands;
+import com.fortify.cli.ssc.vulnerability.cli.cmd.SSCVulnerabilityCommands;
 
 import picocli.CommandLine.Command;
 
@@ -54,17 +54,15 @@ import picocli.CommandLine.Command;
                 //   other commands ('Manage').
                 SSCSessionCommands.class,
                 SSCActivityFeedCommands.class,
-                SSCAlertDefinitionCommands.class,
                 SSCAlertCommands.class,
+                SSCAlertDefinitionCommands.class,
                 SSCAppCommands.class,
                 SSCAppVersionCommands.class,
-                SSCAppVersionArtifactCommands.class,
                 SSCAppVersionAttributeCommands.class,
-                SSCAppVersionAuthEntityCommands.class,
                 SSCAppVersionFilterSetCommands.class,
-                SSCAppVersionVulnCommands.class,
+                SSCAppVersionUserCommands.class,
+                SSCArtifactCommands.class,
                 SSCAttributeDefinitionCommands.class,
-                SSCAuthEntityCommands.class,
                 SSCEventCommands.class,
                 SSCIssueTemplateCommands.class,
                 SSCJobCommands.class,
@@ -75,6 +73,8 @@ import picocli.CommandLine.Command;
                 SSCSeedBundleCommands.class,
                 SSCTokenCommands.class,
                 SSCTokenDefinitionCommands.class,
+                SSCUserCommands.class,
+                SSCVulnerabilityCommands.class,
                 SSCRestCommands.class,
         }
 )

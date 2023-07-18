@@ -108,8 +108,8 @@ There are two output formats that are somewhat special:
 
 * `+-o 'expr=Text with {expression1} or {expression2}\n'+` +
  Formats the output data based on the given template expression, which is a combination of (optional) plain text and SpEL expressions; see link:#_option_expressions[Option Expressions] for details. In most cases, expressions will be simple property references, i.e., `+{property.subProperty}+`. This can be used for a variety of purposes, for example generating output in a human-readable format, or for generating a list of commands to be run at a later stage. Note that by default, no newline character will be inserted after evaluating the given expression. If necessary, the expression should explicitly include `+\n+` to output a newline character. Also note that depending on your shell, the `+expr+` option must be properly quoted. For most shells, the `+expr=...+` value should be enclosed in single or double quotes. To demonstrate the power of this output format, following are two examples of how `+-o expr+` can be used to generate a script that purges all application versions matching certain criteria: 
-** `+fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr=fcli ssc appversion-artifact purge --older-than 30d --appversion {id}\n'+`
-** `+for id in $(fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr={id} '); do echo "fcli ssc appversion-artifact purge –older-than 30d –appversion ${id}'"; done+` 
+** `+fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr=fcli ssc appversion purge-artifacts --older-than 30d {id}\n'+`
+** `+for id in $(fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr={id} '); do echo "fcli ssc appversion purge-artifacts –older-than 30d ${id}'"; done+` 
 * `+-o json-properties+` +
  List all JSON properties returned by the current command, which can be used on options that take JSON properties as input, like output expressions (`+-o expr={prop}+`), properties to include in the output (`+-o table=prop1,prop2+`), queries (`+-q 'prop1=="value1"'+`), and fcli variables (`+--store var:prop1,prop2+` & `+::var::prop1}+`). Two important notes about this output format: 
 ** The command will be executed as specified, so be careful when using this output option on any command
@@ -154,11 +154,11 @@ Following are some examples using bash syntax, assuming the record contains `p1`
   Only output records if the value of property `p2` either equals 25 or is less than 5
 * `+-q 'p1=="v1" && (p2=="v2" || p3=="v2")'+` +
   Only output records if the value of property `p1` equals `v1` and the value of either property `p2` or `p3` is `v2`
-* `+fcli ssc appversion-artifact list --appversion MyApp:main -q 'scanTypes matches "\bSCA\b"'+` +
+* `+fcli ssc artifact list --appversion MyApp:main -q 'scanTypes matches "\bSCA\b"'+` +
   Only output artifacts containing a Fortify SCA scan (matching the whole word `SCA` against `scanTypes` property)
-* `+fcli ssc appversion-artifact list --appversion MyApp:main -q '_embed.scans.![buildLabel].contains("myLabel")'+` +
+* `+fcli ssc artifact list --appversion MyApp:main -q '_embed.scans.![buildLabel].contains("myLabel")'+` +
   Only output artifacts for which any of the scans included in the artifact has a `buildLabel` that equals `myLabel`
-* `+fcli ssc appversion-artifact list --appversion MyApp:main -q '#now("-90d") < #date(uploadDate)'+` +
+* `+fcli ssc artifact list --appversion MyApp:main -q '#now("-90d") < #date(uploadDate)'+` +
   Only output artifacts that were uploaded less than 90 days ago. 
 
 ==== Server-side queries
@@ -303,7 +303,7 @@ Note that as described in the link:#_env_prefix[–env-prefix] section, you can 
 
 == Fcli Variables
 
-Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding `+wait-for+` command, or for creating an SSC application version, and passing the SSC application version id to the `+appversion-artifact upload+` command.
+Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding `+wait-for+` command, or for creating an SSC application version, and passing the SSC application version id to the `+artifact upload+` command.
 
 Variables can be stored using the `+--store myVarName[:prop1,prop2]+` option on data output commands. If property names are specified, then only these property names will be stored. If no property names are provided, all available JSON properties will be stored.
 
@@ -316,10 +316,10 @@ Following are some examples, assuming the necessary login sessions are available
 [source,bash]
 ----
 fcli ssc appversion create myApp:1.0 --auto-required-attrs --skip-if-exists --store myVersion
-fcli ssc appversion-artifact upload myScan.fpr --appversion ::myVersion::
+fcli ssc artifact upload myScan.fpr --appversion ::myVersion::
 
 fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion:id,name
-fcli ssc appversion-artifact upload myScan.fpr --appversion ::myVersion::id
+fcli ssc artifact upload myScan.fpr --appversion ::myVersion::id
 
 fcli sc-sast scan start -p package.zip -v 22.2 --appversion test:1.0 --store x
 fcli sc-sast scan wait-for ::x::

@@ -10,18 +10,16 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.appversion.cli.mixin;
+package com.fortify.cli.ssc.artifact.cli.cmd;
 
-import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.ssc._common.output.cli.mixin.AbstractSSCBulkEmbedMixin;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionEmbedderSupplier;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCOutputCommand;
+import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 
-import lombok.Getter;
-import picocli.CommandLine.Option;
-
-public class SSCAppVersionBulkEmbedMixin extends AbstractSSCBulkEmbedMixin {
-    @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
-    @Option(names = "--embed", required = false, split = ",", descriptionKey = "fcli.ssc.appversion.get.embed" )
-    @Getter private SSCAppVersionEmbedderSupplier[] embedSuppliers;
+public abstract class AbstractSSCArtifactOutputCommand extends AbstractSSCOutputCommand implements IRecordTransformer {
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return SSCArtifactHelper.addScanTypes(record);
+    }
 }

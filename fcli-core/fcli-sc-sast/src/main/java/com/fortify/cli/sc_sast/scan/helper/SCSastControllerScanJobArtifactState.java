@@ -15,10 +15,10 @@ package com.fortify.cli.sc_sast.scan.helper;
 
 import java.util.stream.Stream;
 
-import com.fortify.cli.ssc.appversion_artifact.helper.SSCAppVersionArtifactStatus;
+import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
 
 /**
- * This is a copy of {@link SSCAppVersionArtifactStatus}, but adds states from 
+ * This is a copy of {@link SSCArtifactStatus}, but adds states from 
  * {@link SCSastControllerScanJobState} so we can copy scanState/sscUploadState
  * to sscArtifactState where needed.
  */
