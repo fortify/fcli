@@ -17,6 +17,9 @@ build/
 !**/src/test/**
 !**/resource-config.json
 
+# We want to include everything in our functional test resources
+!**/ftest/resources/runtime/**/*
+
 ### STS ###
 .apt_generated
 .classpath

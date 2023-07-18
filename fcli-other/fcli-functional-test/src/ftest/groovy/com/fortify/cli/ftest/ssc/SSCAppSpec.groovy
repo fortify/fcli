@@ -13,7 +13,7 @@ import spock.lang.Shared
 
 @Prefix("ssc.app") @FcliSession(SSC)
 class SSCAppSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup def SSCAppVersion version = new SSCAppVersion().create()
+    @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     
     def "list"() {
         def args = ["ssc", "app", "list"]

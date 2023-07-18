@@ -25,7 +25,7 @@ import spock.lang.Shared
 
 @Prefix("ssc.activity-feed") @FcliSession(SSC)
 class SSCActivityFeedSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup def SSCAppVersion version = new SSCAppVersion().create()
+    @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     
     def "list"() {
         def args = ["ssc", "activity-feed", "list"]

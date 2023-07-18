@@ -6,6 +6,8 @@ import java.nio.file.Path
 import org.spockframework.runtime.IStandardStreamsListener
 import org.spockframework.runtime.StandardStreamsCapturer
 
+import com.fortify.cli.ftest._common.util.TempDirHelper
+
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 
@@ -17,7 +19,7 @@ public class Fcli {
     
     static void initialize() {
         System.setProperty("picocli.ansi", "false")
-        fcliDataDir = Files.createTempDirectory("fcli").toAbsolutePath()
+        fcliDataDir = TempDirHelper.create()
         System.setProperty("fcli.env.FORTIFY_DATA_DIR", fcliDataDir.toString())
         println("Using fcli data directory "+fcliDataDir)
         runner = createRunner()
@@ -67,7 +69,7 @@ public class Fcli {
     
     private static final String mask(String input) {
         if ( stringsToMask && stringsToMask.size()>0 ) {
-            stringsToMask.each { input = input.replace(it, "*****")}
+            stringsToMask.each { input = input==null ? "" : input.replace(it, "*****")}
         }
         return input
     }
@@ -76,19 +78,7 @@ public class Fcli {
         if ( runner ) { 
             runner.close()
         }
-        try {
-            Files.walk(fcliDataDir)
-                .sorted(Comparator.reverseOrder())
-                .map(Path.&toFile)
-                .forEach(File.&delete); // For some reason this throws an exception on the
-                                        // top-level directory, but the full directory tree
-                                        // is being deleted anyway. As such, we just swallow
-                                        // any exceptions, and print an error if the directory 
-                                        // still exists afterwards. 
-        } catch ( IOException e ) {}
-        if ( fcliDataDir.toFile().exists() ) {
-            println "Error deleting directory "+fcliDataDir+", please clean up manually";
-        }
+        TempDirHelper.rm(fcliDataDir)
     }
     
     private static IRunner createRunner() {

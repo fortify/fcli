@@ -1,1 +1,4 @@
-com.fortify.cli.ftest._common.extension.FcliGlobalExtension
+com.fortify.cli.ftest._common.extension.FcliInitializerExtension
+com.fortify.cli.ftest._common.extension.TestResourceExtension
+com.fortify.cli.ftest._common.extension.DisplayNameExtension
+com.fortify.cli.ftest._common.extension.SkipFeaturesExtension

@@ -25,7 +25,7 @@ import spock.lang.Shared
 
 @Prefix("ssc.event") @FcliSession(SSC)
 class SSCEventSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup def SSCAppVersion version = new SSCAppVersion().create()
+    @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     
     def "list"() {
         def args = ["ssc", "event", "list"]

@@ -31,8 +31,15 @@ public class SSCAppVersion implements Closeable, AutoCloseable {
     public String get(String propertyPath) {
         Fcli.run(["state", "var", "contents", fcliVariableName, "-o", "expr={"+propertyPath+"}"],
             {it.expectSuccess(true, "Error getting application version property "+propertyPath)})
-            .stdout[0]
-            
+            .stdout[0]  
+    }
+    
+    public String getVariableName() {
+        return fcliVariableName
+    }
+    
+    public String getVariableRef() {
+        return "::"+fcliVariableName+"::"
     }
     
     public void close() {
