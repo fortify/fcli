@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230717.222527-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230718.085837-dev_develop" %}
 
 
 <div id="header">
@@ -27,6 +27,7 @@ fcli_version:
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
+<li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
 <li><a href="#_arguments">Arguments</a></li>
@@ -75,8 +76,17 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--embed</strong>=<em>&lt;embedSuppliers&gt;</em>[,<em>&lt;embedSuppliers&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>== Session options:</p>
+<p>Embed extra application version data. Allowed values: attrs, attrsByName, attrsByGuid, attrValuesByName, attrValuesByGuid, bugtracker, customTags, filterSets, folders, resultProcessingRules.</p>
 </dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
 <dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
 <dd>
 <p>Name of the SSC session to use for executing this command. Default value: default.</p>
@@ -148,7 +158,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-07-17 22:27:40 UTC
+Last updated 2023-07-18 09:00:26 UTC
 </div>
 </div>
 </body>

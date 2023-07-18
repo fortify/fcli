@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-appversion-artifact-purge-older-than(1)
+title: fcli-ssc-artifact-import-debricked(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-appversion-artifact-purge-older-than(1)</title>
+<title>fcli-ssc-artifact-import-debricked(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230717.222527-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230718.085837-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-ssc-appversion-artifact-purge-older-than(1) Manual Page</h1>
+<h1>fcli-ssc-artifact-import-debricked(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -30,12 +30,11 @@ fcli_version:
 <li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
-<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-appversion-artifact-purge-older-than - Purge artifacts older than given period.</p>
+<p>fcli-ssc-artifact-import-debricked - Import results from Debricked as SSC application version artifact.</p>
 </div>
 </div>
 <div id="content">
@@ -43,11 +42,19 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion-artifact purge-older-than</strong> <strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em>
-[<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-[<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-[<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>] [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]]
-<em>older-than</em></p>
+<p><strong>fcli ssc artifact import-debricked</strong> <strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em>
+                                   <strong>-b</strong>=<em>&lt;branch&gt;</em> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+                                   [<strong>-e</strong>=<em>&lt;engineType&gt;</em>] [<strong>-f</strong>=<em>&lt;fileName&gt;</em>]
+                                   [<strong>--progress</strong>=<em>&lt;type&gt;</em>] <strong>-r</strong>=<em>&lt;repository&gt;</em> [[<strong>-h</strong>]
+                                   [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                   [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                                   [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                             _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                       _            <em class="=&lt;propertyNames&gt;">]
+                                   [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]] ([<strong>-k</strong>])
+                                   ((<strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>]) | <strong>-t</strong>
+                                   [=<em>&lt;accessToken&gt;</em>])</p>
 </div>
 </div>
 </div>
@@ -66,9 +73,45 @@ fcli_version:
 <dd>
 <p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
 </dd>
+<dt class="hdlist1"><strong>-b</strong>, <strong>--branch</strong>=<em>&lt;branch&gt;</em></dt>
+<dd>
+<p>Branch in the given repository for which to retrieve 	he SBOM.</p>
+</dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accepts "application:version" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>-e</strong>, <strong>--engine-type</strong>=<em>&lt;engineType&gt;</em></dt>
+<dd>
+<p>SSC engine type. Default value: DEBRICKED.</p>
+</dd>
+<dt class="hdlist1"><strong>-f</strong>, <strong>--save-sbom-as</strong>=<em>&lt;fileName&gt;</em></dt>
+<dd>
+<p>Save a copy of the SBOM file downloaded from Debricked to the given file.</p>
+</dd>
+<dt class="hdlist1"><strong>-k</strong>, <strong>--insecure</strong></dt>
+<dd>
+<p>Disable SSC checks when connecting to Debricked.</p>
+</dd>
+<dt class="hdlist1"><strong>-p</strong>, <strong>--debricked-password</strong>[=<em>&lt;password&gt;</em>]</dt>
+<dd>
+<p>Password for the given debricked user.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+</dd>
+<dt class="hdlist1"><strong>-r</strong>, <strong>--repository</strong>=<em>&lt;repository&gt;</em></dt>
+<dd>
+<p>Debricked repository name or id.</p>
+</dd>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--debricked-access-token</strong>[=<em>&lt;accessToken&gt;</em>]</dt>
+<dd>
+<p>Debricked long-lived access token.</p>
+</dd>
+<dt class="hdlist1"><strong>-u</strong>, <strong>--debricked-user</strong>=<em>&lt;user&gt;</em></dt>
+<dd>
+<p>Debricked user name / email address.</p>
 </dd>
 </dl>
 </div>
@@ -133,24 +176,11 @@ fcli_version:
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><em>older-than</em></dt>
-<dd>
-<p>Purge artifacts older than the specified value, in the format 30d (5 days), 1y (1 year).</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-07-17 22:27:40 UTC
+Last updated 2023-07-18 09:00:26 UTC
 </div>
 </div>
 </body>

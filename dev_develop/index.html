@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230717.222527-dev_develop
+fcli_version: 0.20230718.085837-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20230717.222527-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230717.222527-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230718.085837-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230717.222527-dev_develop</span>
+<span id="revnumber">version 0.20230718.085837-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -319,10 +319,10 @@ Formats the output data based on the given template expression, which is a combi
 <div class="ulist">
 <ul>
 <li>
-<p><code>fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr=fcli ssc appversion-artifact purge --older-than 30d --appversion {id}\n'</code></p>
+<p><code>fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr=fcli ssc appversion purge-artifacts --older-than 30d {id}\n'</code></p>
 </li>
 <li>
-<p><code>for id in $(fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr={id} '); do echo "fcli ssc appversion-artifact purge –older-than 30d –appversion ${id}'"; done</code></p>
+<p><code>for id in $(fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr={id} '); do echo "fcli ssc appversion purge-artifacts –older-than 30d ${id}'"; done</code></p>
 </li>
 </ul>
 </div>
@@ -420,15 +420,15 @@ Only output records if the value of property <code>p2</code> either equals 25 or
 Only output records if the value of property <code>p1</code> equals <code>v1</code> and the value of either property <code>p2</code> or <code>p3</code> is <code>v2</code></p>
 </li>
 <li>
-<p><code>fcli ssc appversion-artifact list --appversion MyApp:main -q 'scanTypes matches "\bSCA\b"'</code><br>
+<p><code>fcli ssc artifact list --appversion MyApp:main -q 'scanTypes matches "\bSCA\b"'</code><br>
 Only output artifacts containing a Fortify SCA scan (matching the whole word <code>SCA</code> against <code>scanTypes</code> property)</p>
 </li>
 <li>
-<p><code>fcli ssc appversion-artifact list --appversion MyApp:main -q '_embed.scans.![buildLabel].contains("myLabel")'</code><br>
+<p><code>fcli ssc artifact list --appversion MyApp:main -q '_embed.scans.![buildLabel].contains("myLabel")'</code><br>
 Only output artifacts for which any of the scans included in the artifact has a <code>buildLabel</code> that equals <code>myLabel</code></p>
 </li>
 <li>
-<p><code>fcli ssc appversion-artifact list --appversion MyApp:main -q '#now("-90d") &lt; #date(uploadDate)'</code><br>
+<p><code>fcli ssc artifact list --appversion MyApp:main -q '#now("-90d") &lt; #date(uploadDate)'</code><br>
 Only output artifacts that were uploaded less than 90 days ago.</p>
 </li>
 </ul>
@@ -730,7 +730,7 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 <h2 id="_fcli_variables"><a class="anchor" href="#_fcli_variables"></a>Fcli Variables</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding <code>wait-for</code> command, or for creating an SSC application version, and passing the SSC application version id to the <code>appversion-artifact upload</code> command.</p>
+<p>Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding <code>wait-for</code> command, or for creating an SSC application version, and passing the SSC application version id to the <code>artifact upload</code> command.</p>
 </div>
 <div class="paragraph">
 <p>Variables can be stored using the <code>--store myVarName[:prop1,prop2]</code> option on data output commands. If property names are specified, then only these property names will be stored. If no property names are provided, all available JSON properties will be stored.</p>
@@ -747,10 +747,10 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-bash" data-lang="bash">fcli ssc appversion create myApp:1.0 --auto-required-attrs --skip-if-exists --store myVersion
-fcli ssc appversion-artifact upload myScan.fpr --appversion ::myVersion::
+fcli ssc artifact upload myScan.fpr --appversion ::myVersion::
 
 fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion:id,name
-fcli ssc appversion-artifact upload myScan.fpr --appversion ::myVersion::id
+fcli ssc artifact upload myScan.fpr --appversion ::myVersion::id
 
 fcli sc-sast scan start -p package.zip -v 22.2 --appversion test:1.0 --store x
 fcli sc-sast scan wait-for ::x::
@@ -864,8 +864,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230717.222527-dev_develop<br>
-Last updated 2023-07-17 22:27:40 UTC
+Version 0.20230718.085837-dev_develop<br>
+Last updated 2023-07-18 09:00:26 UTC
 </div>
 </div>
 </body>
