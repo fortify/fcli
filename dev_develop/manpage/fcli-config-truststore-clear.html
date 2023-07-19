@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230719.100252-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230719.121512-dev_develop" %}
 
 
 <div id="header">
@@ -43,8 +43,7 @@ fcli_version:
 <p><strong>fcli config truststore clear</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                              [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
                              <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                 _            <em class="=&lt;propertyNames&gt;">]
-                             [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+                 _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -63,13 +62,13 @@ fcli_version:
 <dd>
 <p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
 </dd>
-<dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
-<dd>
-<p>Write command output to the specified file instead of stdout.</p>
-</dd>
 <dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
 <dd>
 <p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write command output to the specified file instead of stdout.</p>
 </dd>
 </dl>
 </div>
@@ -104,7 +103,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-07-19 10:04:52 UTC
+Last updated 2023-07-19 12:17:19 UTC
 </div>
 </div>
 </body>
