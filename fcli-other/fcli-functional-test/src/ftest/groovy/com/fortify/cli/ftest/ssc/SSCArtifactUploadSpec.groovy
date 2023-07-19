@@ -33,6 +33,8 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     }
     
     def "wait-for"() {
+        // Depending on externalmetadata versions in FPR and on SSC, approval
+        // may be required
         def args = ["ssc", "artifact", "wait-for", uploadVariableRef, "-i", "2s",
             "--until", "PROCESS_COMPLETE|REQUIRE_AUTH"]
         when:
