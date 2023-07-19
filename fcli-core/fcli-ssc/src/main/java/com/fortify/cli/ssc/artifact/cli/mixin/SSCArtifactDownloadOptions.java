@@ -12,12 +12,14 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.artifact.cli.mixin;
 
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+
 import lombok.Getter;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Getter
 public class SSCArtifactDownloadOptions {
-    @Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
-    private String destination;
+    @Mixin private CommonOptionMixins.OptionalOutputFile destination;
     @Option(names = "--no-include-sources", negatable = true, descriptionKey = "download.no-include-sources") private boolean includeSources = true;
 }

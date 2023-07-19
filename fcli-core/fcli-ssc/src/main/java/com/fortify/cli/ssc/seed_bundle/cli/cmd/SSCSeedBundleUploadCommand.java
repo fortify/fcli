@@ -30,18 +30,18 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Upload.CMD_NAME)
 public class SSCSeedBundleUploadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Upload outputHelper;
-    @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.rseed-bundle.upload.seedBundle")
-    private String seedBundle;
+    @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.seed-bundle.upload.seedBundle")
+    private File seedBundle;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         unirest.post(SSCUrls.SEED_BUNDLES)
             .multiPartContent()
-            .field("file", new File(seedBundle))
+            .field("file", seedBundle)
             .asObject(JsonNode.class).getBody();
         return new ObjectMapper().createObjectNode()
                 .put("type", "SeedBundle")
-                .put("file", seedBundle);
+                .put("file", seedBundle.getAbsolutePath());
     }
     
     @Override

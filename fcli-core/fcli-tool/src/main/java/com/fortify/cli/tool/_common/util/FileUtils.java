@@ -72,7 +72,7 @@ public final class FileUtils {
         try (FileInputStream fis = new FileInputStream(zipFile); ZipInputStream zipIn = new ZipInputStream(fis)) {
             for (ZipEntry ze; (ze = zipIn.getNextEntry()) != null; ) {
                 Path resolvedPath = targetDir.resolve(ze.getName()).normalize();
-                if (!resolvedPath.startsWith(targetDir)) {
+                if (!resolvedPath.startsWith(targetDir.normalize())) {
                     // see: https://snyk.io/research/zip-slip-vulnerability
                     throw new RuntimeException("Entry with an illegal path: " + ze.getName());
                 }

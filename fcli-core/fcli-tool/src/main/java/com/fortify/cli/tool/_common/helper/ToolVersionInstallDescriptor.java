@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,23 +31,23 @@ public class ToolVersionInstallDescriptor {
     @JsonIgnore Path installPath;
     @JsonIgnore Path binPath;
     
-    public ToolVersionInstallDescriptor(ToolVersionDownloadDescriptor originalDownloadDescriptor, String installDir, String binDir) {
+    public ToolVersionInstallDescriptor(ToolVersionDownloadDescriptor originalDownloadDescriptor, Path installPath, Path binPath) {
         this.originalDownloadDescriptor = originalDownloadDescriptor;
-        this.installPath = Paths.get(installDir).toAbsolutePath();
+        this.installPath = installPath.toAbsolutePath();
         this.installDir = installPath.toString();
-        this.binPath = Paths.get(binDir).toAbsolutePath();
+        this.binPath = binPath.toAbsolutePath();
         this.binDir = binPath.toString();
     }
     
     public Path getInstallPath() {
-        if ( installPath==null ) {
+        if ( installPath==null && StringUtils.isNotBlank(installDir) ) {
             installPath = Paths.get(installDir).toAbsolutePath();
         }
         return installPath;
     }
     
     public Path getBinPath() {
-        if ( binPath==null ) {
+        if ( binPath==null && StringUtils.isNotBlank(binDir) ) {
             binPath = Paths.get(binDir).toAbsolutePath();
         }
         return binPath;

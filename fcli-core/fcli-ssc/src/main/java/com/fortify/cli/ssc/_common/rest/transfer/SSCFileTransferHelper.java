@@ -37,22 +37,20 @@ public class SSCFileTransferHelper {
     private static final JacksonObjectMapper XMLMAPPER = new JacksonObjectMapper(new XmlMapper());
 
     @SneakyThrows
-    public static final File download(UnirestInstance unirest, String endpoint, String downloadPath, ISSCAddDownloadTokenFunction addTokenFunction) {
+    public static final File download(UnirestInstance unirest, String endpoint, File downloadPath, ISSCAddDownloadTokenFunction addTokenFunction) {
         try ( SSCFileTransferTokenSupplier tokenSupplier = new SSCFileTransferTokenSupplier(unirest, SSCFileTransferTokenType.DOWNLOAD); ) {
             try ( SSCProgressMonitor downloadMonitor = new SSCProgressMonitor("Download") ) {
                 return addTokenFunction.apply(tokenSupplier.get(), unirest.get(endpoint))
                     .downloadMonitor(downloadMonitor)
-                    .asFile(downloadPath, StandardCopyOption.REPLACE_EXISTING)
+                    .asFile(downloadPath.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING)
                     .getBody();
             }
         }
     }
 
     @SneakyThrows
-    public static final <T> T upload(UnirestInstance unirest, String endpoint, String filePath, ISSCAddUploadTokenFunction addTokenFunction, Class<T> returnType) {
+    public static final <T> T upload(UnirestInstance unirest, String endpoint, File filePath, ISSCAddUploadTokenFunction addTokenFunction, Class<T> returnType) {
         try ( SSCFileTransferTokenSupplier tokenSupplier = new SSCFileTransferTokenSupplier(unirest, SSCFileTransferTokenType.UPLOAD); ) {
-            File f = new File(filePath);
-            
             String acceptHeaderValue = unirest.config().getDefaultHeaders().getFirst("Accept");
             ObjectMapper objectMapper = unirest.config().getObjectMapper();
             if ( endpoint.startsWith("/upload") ) {
@@ -64,7 +62,7 @@ public class SSCFileTransferHelper {
             try ( SSCProgressMonitor uploadMonitor = new SSCProgressMonitor("Upload") ) {
                 return addTokenFunction.apply(tokenSupplier.get(), unirest.post(endpoint))
                     .multiPartContent() // Force multipart request with correct Content-Type header
-                    .field("file", f)
+                    .field("file", filePath)
                     .uploadMonitor(uploadMonitor)
                     .headerReplace("Accept", acceptHeaderValue) 
                     .withObjectMapper(objectMapper)

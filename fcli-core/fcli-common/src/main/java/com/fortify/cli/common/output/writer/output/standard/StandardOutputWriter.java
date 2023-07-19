@@ -13,6 +13,7 @@
 package com.fortify.cli.common.output.writer.output.standard;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -414,9 +415,9 @@ public class StandardOutputWriter implements IOutputWriter {
          * @return
          */
         private Writer createWriter() {
-            String outputFile = outputOptions.getOutputFile();
+            File outputFile = outputOptions.getOutputFile();
             try {
-                return outputFile == null || "-".equals(outputFile)
+                return outputFile == null
                         ? new PrintWriter(System.out)
                         : new BufferedWriter(new FileWriter(outputFile, false));
             } catch ( IOException e) {

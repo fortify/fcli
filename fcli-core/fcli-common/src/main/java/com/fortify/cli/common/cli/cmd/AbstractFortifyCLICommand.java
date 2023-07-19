@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.cli.cmd;
 
+import java.io.File;
 import java.util.Map;
 
 import com.fortify.cli.common.cli.mixin.ICommandAware;
@@ -105,7 +106,7 @@ public class AbstractFortifyCLICommand {
         @Getter private String envPrefix;
         
         @Option(names = "--log-file")
-        @Getter private String logFile;
+        @Getter private File logFile;
         
         @Option(names = "--log-level")
         @Getter private LogLevel logLevel;

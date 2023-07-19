@@ -36,7 +36,7 @@ public class TrustStoreSetCommand extends AbstractOutputCommand implements IJson
     @Mixin @Getter private OutputHelperMixins.Set outputHelper;
     
     @Parameters(index = "0", arity = "1", descriptionKey = "fcli.config.truststore.set.trustStorePath")
-    private String trustStorePath;
+    private Path trustStorePath;
     
     @Option(names = {"-p", "--truststore-password"})
     private String trustStorePassword;
@@ -46,7 +46,7 @@ public class TrustStoreSetCommand extends AbstractOutputCommand implements IJson
     
     @Override
     public JsonNode getJsonNode() {
-    	Path absolutePath = Path.of(trustStorePath).toAbsolutePath();
+    	Path absolutePath = trustStorePath.toAbsolutePath();
     	if ( !Files.exists(absolutePath) ) {
     		throw new IllegalArgumentException("Trust store cannot be found: "+absolutePath);
     	}

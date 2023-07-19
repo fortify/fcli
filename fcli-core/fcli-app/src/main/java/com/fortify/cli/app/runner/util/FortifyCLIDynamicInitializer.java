@@ -68,7 +68,7 @@ public final class FortifyCLIDynamicInitializer {
     }
         
     public void initializeLogging(GenericOptionsArgGroup genericOptions) {
-        String logFile = genericOptions.getLogFile();
+        String logFile = genericOptions.getLogFile().getAbsolutePath();
         LogLevel logLevel = genericOptions.getLogLevel();
         if ( logFile!=null || logLevel!=null ) {
             LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();

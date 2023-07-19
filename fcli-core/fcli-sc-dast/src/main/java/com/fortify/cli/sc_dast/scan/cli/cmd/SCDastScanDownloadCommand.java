@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast.scan.cli.cmd;
 
+import java.io.File;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +39,7 @@ import picocli.CommandLine.Option;
 public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Download outputHelper;
     @Mixin private SCDastScanResolverMixin.PositionalParameter scanResolver;
-    @Mixin private CommonOptionMixins.OptionalDestinationFile optionalDestination;
+    @Mixin private CommonOptionMixins.OptionalOutputFile optionalDestination;
     @Option(names = {"-t", "--type"}, required=true, converter = DownloadTypeConverter.class, completionCandidates = DownloadTypeIterable.class)
     @Getter private DownloadType type;
     
@@ -46,18 +47,18 @@ public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand imple
     public JsonNode getJsonNode() {
         var unirest = getUnirestInstance();
         SCDastScanDescriptor descriptor = scanResolver.getScanDescriptor(unirest);
-        String downloadPath = optionalDestination.getDestination();
-        if ( StringUtils.isBlank(downloadPath) ) {
+        File downloadPath = optionalDestination.getOutputFile();
+        if ( downloadPath==null ) {
             String identifier = StringUtils.isBlank(descriptor.getName()) 
                     ? String.format("scan-%s", descriptor.getId())
                     : descriptor.getName().replaceAll("\\s", "-");
-            downloadPath = String.format("scdast-%s-%s.%s", identifier, type.formattedName(), type.getExtension());
+            downloadPath = new File(String.format("scdast-%s-%s.%s", identifier, type.formattedName(), type.getExtension()));
         }
         unirest.get("/api/v2/scans/{id}/{endpoint}")
             .routeParam("id", scanResolver.getScanId())
             .routeParam("endpoint", type.getEndpoint())
             //.downloadMonitor(new SSCProgressMonitor("Download"))
-            .asFile(downloadPath, StandardCopyOption.REPLACE_EXISTING)
+            .asFile(downloadPath.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING)
             .getBody();
         return descriptor.asJsonNode();
     }

@@ -45,7 +45,7 @@ public class SSCPluginInstallCommand extends AbstractSSCJsonNodeOutputCommand im
         JsonNode pluginBody = SSCFileTransferHelper.upload(
                 unirest,
                 SSCUrls.PLUGINS,
-                pluginJarFile.getPath().toString(),
+                pluginJarFile,
                 ISSCAddUploadTokenFunction.QUERYSTRING_MAT,
                 JsonNode.class
         );

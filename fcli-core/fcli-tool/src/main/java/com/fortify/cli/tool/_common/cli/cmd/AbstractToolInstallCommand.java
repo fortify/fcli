@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -56,7 +55,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     @Getter @Parameters(index="0", arity="0..1", descriptionKey="fcli.tool.install.version", defaultValue = "default") 
     private String version;
     @Getter @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
-    private String installDir;
+    private File installDir;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Getter @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
     private DigestMismatchAction onDigestMismatch;
@@ -84,9 +83,9 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     
     private final JsonNode downloadAndInstall(String toolName, ToolVersionDownloadDescriptor downloadDescriptor) {
         try {
-            String installDir = getInstallDirOrDefault(downloadDescriptor);
-            String binDir = getBinDir(downloadDescriptor);
-            ToolVersionInstallDescriptor installDescriptor = new ToolVersionInstallDescriptor(downloadDescriptor, installDir, binDir);
+            Path installPath = getInstallPathOrDefault(downloadDescriptor);
+            Path binPath = getBinPath(downloadDescriptor);
+            ToolVersionInstallDescriptor installDescriptor = new ToolVersionInstallDescriptor(downloadDescriptor, installPath, binPath);
             emptyExistingInstallPath(installDescriptor.getInstallPath());
             File downloadedFile = download(downloadDescriptor);
             checkDigest(downloadDescriptor, downloadedFile);
@@ -113,7 +112,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     }
     
     protected void install(ToolVersionInstallDescriptor descriptor, File downloadedFile) throws IOException {
-        Path installPath = Paths.get(descriptor.getInstallDir());
+        Path installPath = descriptor.getInstallPath();
         Files.createDirectories(installPath);
         InstallType installType = getInstallType();
         switch (installType) {
@@ -124,19 +123,20 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         }
         downloadedFile.delete();
         postInstall(descriptor);
-        updateBinPermissions(Paths.get(descriptor.getBinDir()));
+        updateBinPermissions(descriptor.getBinPath());
     }
 
-    protected String getInstallDirOrDefault(ToolVersionDownloadDescriptor descriptor) {
-        String installDir = getInstallDir();
-        if ( StringUtils.isBlank(installDir) ) {
-            installDir = FcliDataHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", getToolName(), descriptor.getVersion())).toString();
+    @SneakyThrows
+    protected Path getInstallPathOrDefault(ToolVersionDownloadDescriptor descriptor) {
+        var installPath = installDir.getCanonicalFile().toPath();
+        if ( installPath==null ) {
+            installPath = FcliDataHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", getToolName(), descriptor.getVersion()));
         }
-        return installDir;
+        return installPath;
     }
     
-    protected String getBinDir(ToolVersionDownloadDescriptor descriptor) {
-        return Paths.get(getInstallDirOrDefault(descriptor), "bin").toString();
+    protected Path getBinPath(ToolVersionDownloadDescriptor descriptor) {
+        return getInstallPathOrDefault(descriptor).resolve("bin");
     }
     
     protected abstract String getToolName();

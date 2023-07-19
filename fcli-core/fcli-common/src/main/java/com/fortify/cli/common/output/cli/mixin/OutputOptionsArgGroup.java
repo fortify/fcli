@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.common.output.cli.mixin;
 
+import java.io.File;
+
 import com.fortify.cli.common.output.writer.output.standard.IOutputOptions;
 import com.fortify.cli.common.output.writer.output.standard.OutputFormatConfig;
 import com.fortify.cli.common.output.writer.output.standard.OutputFormatConfigConverter;
@@ -29,7 +31,6 @@ public final class OutputOptionsArgGroup implements IOutputOptions {
     @Option(names = {"--store"}, order=1, converter = VariableStoreConfigConverter.class, paramLabel = "variableName[=<propertyNames>]")
     @Getter private VariableStoreConfig variableStoreConfig;
     
-    @Option(names = {"--output-to-file"}, order=7)
-
-    @Getter private String outputFile; 
+    @Option(names = {"--to-file"}, order=7)
+    @Getter private File outputFile; 
 }

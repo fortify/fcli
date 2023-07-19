@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
+import java.io.File;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -40,8 +42,10 @@ public class SSCAppVersionDownloadStateCommand extends AbstractSSCOutputCommand 
     public JsonNode getJsonNode() {
         var unirest = getUnirestInstance();
         SSCAppVersionDescriptor av = parentResolver.getAppVersionDescriptor(unirest);
-        String destination = downloadOptions.getDestination();
-        destination = destination != null ? destination : String.format("./%s_%s.fpr", av.getApplicationName(), av.getVersionName());
+        File destination = downloadOptions.getDestination().getOutputFile();
+        if ( destination==null ) {
+            destination = new File(String.format("./%s_%s.fpr", av.getApplicationName(), av.getVersionName()));
+        }
         SSCFileTransferHelper.download(
                 unirest,
                 SSCUrls.DOWNLOAD_CURRENT_FPR(av.getVersionId(), downloadOptions.isIncludeSources()),

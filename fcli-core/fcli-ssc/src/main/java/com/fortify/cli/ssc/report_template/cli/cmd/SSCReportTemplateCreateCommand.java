@@ -38,10 +38,10 @@ import picocli.CommandLine.Option;
 public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Option(names = {"-t", "--template"}, required = true)
-    private String templatePath;
+    private File templatePath;
 
     @Option(names = {"-c", "--config"}, defaultValue = "./ReportTemplateConfig.yml")
-    private String answerFile;
+    private File answerFile;
     
     @Override @SneakyThrows
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
@@ -60,12 +60,9 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutput
                         .replaceAll("\"","")
         );
 
-        File answerFileObj = new File(answerFile);
-        File rptFileObj = new File(templatePath);
-
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        SSCReportTemplateDef rtd = mapper.readValue(answerFileObj, SSCReportTemplateDef.class);
-        rtd = processAnswerFile(rtd, rptFileObj.getName(), uploadedDocId);
+        SSCReportTemplateDef rtd = mapper.readValue(answerFile, SSCReportTemplateDef.class);
+        rtd = processAnswerFile(rtd, templatePath.getAbsolutePath(), uploadedDocId);
 
         return unirest.post(SSCUrls.REPORT_DEFINITIONS).body(rtd);
     }

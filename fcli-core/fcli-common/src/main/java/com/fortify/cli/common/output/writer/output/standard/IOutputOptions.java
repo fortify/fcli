@@ -12,8 +12,10 @@
  *******************************************************************************/
 package com.fortify.cli.common.output.writer.output.standard;
 
+import java.io.File;
+
 public interface IOutputOptions {
     OutputFormatConfig getOutputFormatConfig();
     VariableStoreConfig getVariableStoreConfig();
-    String getOutputFile(); 
+    File getOutputFile(); 
 }

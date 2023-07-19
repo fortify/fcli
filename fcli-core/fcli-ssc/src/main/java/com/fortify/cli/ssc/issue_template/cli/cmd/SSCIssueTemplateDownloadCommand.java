@@ -12,7 +12,10 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.issue_template.cli.cmd;
 
+import java.io.File;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
@@ -30,8 +33,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Download.CMD_NAME)
 public class SSCIssueTemplateDownloadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Download outputHelper;
-    @CommandLine.Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
-    private String destination;
+    @Mixin private CommonOptionMixins.OptionalOutputFile outputFileMixin;
 
     @CommandLine.Mixin
     private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
@@ -40,7 +42,10 @@ public class SSCIssueTemplateDownloadCommand extends AbstractSSCJsonNodeOutputCo
     public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCIssueTemplateDescriptor descriptor = issueTemplateResolver.getIssueTemplateDescriptor(unirest);
         String issueTemplateId = descriptor.getId();
-        destination = destination != null ? destination : String.format("./%s", descriptor.getOriginalFileName());
+        File destination = outputFileMixin.getOutputFile();
+        if (destination==null ) {
+            destination = new File(String.format("./%s", descriptor.getOriginalFileName()));
+        }
         SSCFileTransferHelper.download(
                 unirest,
                 String.format("/download/projectTemplateDownload.html?guid=%s", issueTemplateId),

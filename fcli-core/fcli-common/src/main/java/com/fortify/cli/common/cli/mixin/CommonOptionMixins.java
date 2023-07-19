@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.common.cli.mixin;
 
+import java.io.File;
+
 import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -24,9 +26,9 @@ import picocli.CommandLine.ParameterException;
 public class CommonOptionMixins {
     private CommonOptionMixins() {}
     
-    public static class OptionalDestinationFile {
-        @Option(names = {"-f", "--dest"}, descriptionKey = "fcli.destination-file")
-        @Getter private String destination;
+    public static class OptionalOutputFile {
+        @Option(names = {"-f", "--output-file"})
+        @Getter private File outputFile;
     }
     
     public static class RequireConfirmation {

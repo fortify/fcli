@@ -12,7 +12,10 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
+import java.io.File;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
@@ -26,19 +29,20 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Download.CMD_NAME)
 public class SSCReportTemplateDownloadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Download outputHelper;
     @Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
-    @Option(names = {"-f", "--dest"}, descriptionKey = "download.destination")
-    private String destination;
+    @Mixin private CommonOptionMixins.OptionalOutputFile outputFileMixin;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCReportTemplateDescriptor descriptor = reportTemplateResolver.getReportTemplateDescriptor(unirest);
-        destination = destination != null ? destination : String.format("./%s", descriptor.getFileName());
+        var destination = outputFileMixin.getOutputFile();
+        if ( destination==null ) {
+            destination = new File(String.format("./%s", descriptor.getFileName()));
+        }
         SSCFileTransferHelper.download(
                 unirest,
                 SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(descriptor.getId()),

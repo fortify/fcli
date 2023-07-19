@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.artifact.cli.cmd;
 
+import java.io.File;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -37,8 +39,10 @@ public class SSCArtifactDownloadCommand extends AbstractSSCArtifactOutputCommand
     public JsonNode getJsonNode() {
         var unirest = getUnirestInstance();
         SSCArtifactDescriptor descriptor = artifactResolver.getArtifactDescriptor(unirest);
-        String destination = downloadOptions.getDestination();
-        destination = destination != null ? destination : String.format("./artifact_%s.fpr", descriptor.getId());
+        File destination = downloadOptions.getDestination().getOutputFile();
+        if ( destination==null ) {
+            destination = new File(String.format("./artifact_%s.fpr", descriptor.getId()));
+        }
         SSCFileTransferHelper.download(
                 unirest,
                 SSCUrls.DOWNLOAD_ARTIFACT(descriptor.getId(), downloadOptions.isIncludeSources()),
