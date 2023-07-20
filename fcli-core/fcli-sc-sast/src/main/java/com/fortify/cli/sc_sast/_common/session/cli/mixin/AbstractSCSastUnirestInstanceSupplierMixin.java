@@ -33,6 +33,6 @@ public abstract class AbstractSCSastUnirestInstanceSupplierMixin extends Abstrac
 
     public final UnirestInstance getControllerUnirestInstance() {
         return GenericUnirestFactory.getUnirestInstance("sc-sast/ctrl/"+getSessionName(),
-                u->SCSastUnirestHelper.configureSscUnirestInstance(u, getSessionDescriptor()));
+                u->SCSastUnirestHelper.configureScSastControllerUnirestInstance(u, getSessionDescriptor()));
     }
 }
