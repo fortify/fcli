@@ -122,7 +122,7 @@ jobs:
             -Dft.$x.url=$url -Dft.$x.ssc-url=$url \
             -Dft.$x.user=$user -Dft.$x.ssc-user=$user \
             -Dft.$x.password=$pwd -Dft.$x.ssc-password=$pwd \
-            -Dft.$x.client-auth-token=$sctoken \
+            -Dft.$x.client-auth-token=$sctoken
         env:
           x: ${{ matrix.type }}
           url: ${{ secrets.FCLI_FT_SSC_URL }}
