@@ -10,27 +10,19 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.sc_sast._common.output.cli.cmd;
+package com.fortify.cli.sc_sast._common.output.cli.mixin;
 
-import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
-import com.fortify.cli.common.output.product.IProductHelperSupplier;
+import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
-import com.fortify.cli.sc_sast._common.output.cli.mixin.SCSastControllerProductHelperStandardMixin;
+import com.fortify.cli.sc_sast._common.session.cli.mixin.AbstractSCSastUnirestInstanceSupplierMixin;
 
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import picocli.CommandLine.Mixin;
 
-public abstract class AbstractSCSastControllerOutputCommand extends AbstractOutputCommand 
-    implements IProductHelperSupplier, IUnirestInstanceSupplier
+public class SCSastControllerProductHelperBasicMixin extends AbstractSCSastUnirestInstanceSupplierMixin
+    implements IProductHelper, IUnirestInstanceSupplier
 {
-    @Getter @Mixin SCSastControllerProductHelperStandardMixin productHelper;
-    
+    @Override
     public final UnirestInstance getUnirestInstance() {
-        return productHelper.getUnirestInstance();
-    }
-    
-    protected final UnirestInstance getSscUnirestInstance() {
-        return productHelper.getSscUnirestInstance();
+        return getControllerUnirestInstance();
     }
 }

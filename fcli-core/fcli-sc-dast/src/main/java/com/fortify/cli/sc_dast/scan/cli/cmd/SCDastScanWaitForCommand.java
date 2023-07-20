@@ -15,7 +15,7 @@ package com.fortify.cli.sc_dast.scan.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.sc_dast._common.output.cli.mixin.SCDastProductHelperMixin;
+import com.fortify.cli.sc_dast._common.output.cli.mixin.SCDastProductHelperStandardMixin;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
 
@@ -25,7 +25,7 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.WaitFor.CMD_NAME)
 public class SCDastScanWaitForCommand extends AbstractWaitForCommand {
-    @Getter @Mixin SCDastProductHelperMixin productHelper;
+    @Getter @Mixin SCDastProductHelperStandardMixin productHelper;
     @Mixin private SCDastScanResolverMixin.PositionalParameterMulti scansResolver;
     
     @Override

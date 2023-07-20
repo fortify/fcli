@@ -17,7 +17,7 @@ import java.util.function.BiFunction;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.sc_sast._common.output.cli.mixin.SCSastControllerProductHelperMixin;
+import com.fortify.cli.sc_sast._common.output.cli.mixin.SCSastControllerProductHelperStandardMixin;
 import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanJobResolverMixin;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobArtifactState;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobState;
@@ -31,7 +31,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.WaitFor.CMD_NAME)
 public class SCSastControllerScanWaitForCommand extends AbstractWaitForCommand {
-    @Getter @Mixin SCSastControllerProductHelperMixin productHelper;
+    @Getter @Mixin SCSastControllerProductHelperStandardMixin productHelper;
     @Mixin private SCSastScanJobResolverMixin.PositionalParameterMulti scanJobsResolver;
     @Option(names={"-s", "--status-type"}, defaultValue="processing", required=true) private WaitType waitType;
     

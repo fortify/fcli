@@ -13,24 +13,24 @@
 package com.fortify.cli.sc_sast._common.output.cli.mixin;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.transform.IInputTransformer;
-import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
-import com.fortify.cli.sc_sast._common.rest.helper.SCSastInputTransformer;
-import com.fortify.cli.sc_sast._common.session.cli.mixin.AbstractSCSastUnirestInstanceSupplierMixin;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
+import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
+import com.fortify.cli.ssc._common.rest.helper.SSCPagingHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.HttpRequest;
 
-public class SCSastControllerProductHelperMixin extends AbstractSCSastUnirestInstanceSupplierMixin
-    implements IProductHelper, IInputTransformer, IUnirestInstanceSupplier
+public class SCSastSSCProductHelperStandardMixin extends SCSastSSCProductHelperBasicMixin
+    implements IInputTransformer, INextPageUrlProducerSupplier
 {
     @Override
     public JsonNode transformInput(JsonNode input) {
-        return SCSastInputTransformer.getItems(input);
+        return SSCInputTransformer.getDataOrSelf(input);
     }
     
     @Override
-    public UnirestInstance getUnirestInstance() {
-        return getControllerUnirestInstance();
+    public INextPageUrlProducer getNextPageUrlProducer(HttpRequest<?> originalRequest) {
+        return SSCPagingHelper.nextPageUrlProducer();
     }
 }

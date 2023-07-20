@@ -16,7 +16,7 @@ package com.fortify.cli.fod.scan.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.fod._common.output.mixin.FoDProductHelperMixin;
+import com.fortify.cli.fod._common.output.mixin.FoDProductHelperStandardMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanResolverMixin;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanStatus;
@@ -27,7 +27,7 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.WaitFor.CMD_NAME)
 public class FoDScanWaitForCommand extends AbstractWaitForCommand {
-    @Getter @Mixin FoDProductHelperMixin productHelper;
+    @Getter @Mixin FoDProductHelperStandardMixin productHelper;
     @Mixin private FoDScanResolverMixin.PositionalParameterMulti scansResolver;
 
     @Override

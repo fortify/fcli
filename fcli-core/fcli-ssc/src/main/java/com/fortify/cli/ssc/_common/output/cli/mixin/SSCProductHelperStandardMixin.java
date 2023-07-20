@@ -12,29 +12,20 @@
  *******************************************************************************/
 package com.fortify.cli.ssc._common.output.cli.mixin;
 
-import java.util.function.UnaryOperator;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
-import com.fortify.cli.common.session.cli.mixin.AbstractSessionUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc._common.rest.helper.SSCPagingHelper;
-import com.fortify.cli.ssc._common.session.helper.SSCSessionDescriptor;
-import com.fortify.cli.ssc._common.session.helper.SSCSessionHelper;
-import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
 import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
 
-public class SSCProductHelperMixin extends AbstractSessionUnirestInstanceSupplierMixin<SSCSessionDescriptor>
-    implements IProductHelper, IInputTransformer, INextPageUrlProducerSupplier
+//IMPORTANT: When updating/adding any methods in this class, SSCRestCallCommand
+//also likely needs to be updated
+public class SSCProductHelperStandardMixin extends SSCProductHelperBasicMixin
+    implements IInputTransformer, INextPageUrlProducerSupplier
 {
-    @Getter private UnaryOperator<JsonNode> inputTransformer = SSCInputTransformer::getDataOrSelf;
-    
     @Override
     public INextPageUrlProducer getNextPageUrlProducer(HttpRequest<?> originalRequest) {
         return SSCPagingHelper.nextPageUrlProducer();
@@ -43,15 +34,5 @@ public class SSCProductHelperMixin extends AbstractSessionUnirestInstanceSupplie
     @Override
     public JsonNode transformInput(JsonNode input) {
         return SSCInputTransformer.getDataOrSelf(input);
-    }
-    
-    @Override
-    public final SSCSessionDescriptor getSessionDescriptor(String sessionName) {
-        return SSCSessionHelper.instance().get(sessionName, true);
-    }
-    
-    @Override
-    public final void configure(UnirestInstance unirest, SSCSessionDescriptor sessionDescriptor) {
-        SSCTokenHelper.configureUnirest(unirest, sessionDescriptor.getUrlConfig(), sessionDescriptor.getActiveToken());
     }
 }

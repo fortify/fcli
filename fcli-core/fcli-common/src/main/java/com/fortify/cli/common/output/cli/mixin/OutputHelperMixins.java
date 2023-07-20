@@ -71,6 +71,11 @@ public class OutputHelperMixins {
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details(); 
     }
     
+    public static class DetailsWithQuery extends Other {
+        @Getter @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details(); 
+    }
+    
     
     public static class Add extends TableNoQuery {
         public static final String CMD_NAME = "add";
@@ -204,9 +209,7 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "logout";
     }
     
-    public static class RestCall extends Other {
+    public static class RestCall extends DetailsWithQuery {
         public static final String CMD_NAME = "call";
-        @Getter @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
-        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table();
     }
 }

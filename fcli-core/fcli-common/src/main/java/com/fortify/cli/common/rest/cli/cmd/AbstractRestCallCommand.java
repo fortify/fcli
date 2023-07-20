@@ -16,11 +16,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
@@ -31,10 +34,23 @@ import kong.unirest.HttpRequestWithBody;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-public abstract class AbstractRestCallCommand extends AbstractOutputCommand implements IBaseRequestSupplier, IProductHelperSupplier, IInputTransformer, IRecordTransformer {
+/**
+ * Abstract base class for 'fcli <product> rest call' commands. Concrete implementations must 
+ * implement the various abstract methods. As dictated by the {@link IProductHelperSupplier},
+ * implementations must implement the {@link IProductHelperSupplier#getProductHelper()} method,
+ * but please note that the provided product helper may not implement any of the 
+ * {@link IInputTransformer}, {@link IRecordTransformer}, {@link INextPageUrlProducerSupplier}
+ * or {@link INextPageUrlProducer} as this would break the --no-transform and --no-paging options.
+ * Instead, subclasses should implement the corresponding _* methods defined in this class,
+ * to enable/disable paging and transformations on demand.
+ * 
+ * @author Ruud Senden
+ */
+public abstract class AbstractRestCallCommand extends AbstractOutputCommand implements IBaseRequestSupplier, IProductHelperSupplier, IInputTransformer, IRecordTransformer, INextPageUrlProducerSupplier {
     @Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
     
     @Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
@@ -42,10 +58,19 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     @Getter private String httpMethod;
     
     @Option(names = {"--data", "-d"}, required = false)
-    @Getter private String data; // TODO Add ability to read data from file
+    @Getter private String data;
     
-    @Option(names="--no-transform", negatable = true, defaultValue = "false") 
-    private boolean noTransform;
+    @Option(names="--no-paging", negatable = false, defaultValue = "false") 
+    private boolean noPaging;
+    
+    @ArgGroup(exclusive = true) private TransformArgGroup transform = new TransformArgGroup();
+    private static class TransformArgGroup {
+        @Option(names="--no-transform", negatable = false, defaultValue = "false") 
+        private boolean noTransform;
+    
+        @Option(names={"-t", "--transform"}, paramLabel = "<expr>") 
+        private String transformExpression;
+    }
     
     // TODO Add options for content-type, arbitrary headers, ...?
     
@@ -64,21 +89,36 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     }
     
     @Override
-    public JsonNode transformInput(JsonNode input) {
-        if ( !noTransform && getProductHelper() instanceof IInputTransformer ) {
-            input = ((IInputTransformer)getProductHelper()).transformInput(input);
+    public final JsonNode transformInput(JsonNode input) {
+        if ( StringUtils.isNotBlank(transform.transformExpression) ) {
+            input = JsonHelper.evaluateSpelExpression(input, transform.transformExpression, JsonNode.class);
+        } else if ( !transform.noTransform ) {
+            input = _transformInput(input);
         }
         return input;
     }
-    
+
     @Override
-    public JsonNode transformRecord(JsonNode input) {
-        if ( !noTransform && getProductHelper() instanceof IRecordTransformer ) {
-            input = ((IRecordTransformer)getProductHelper()).transformRecord(input);
+    public final JsonNode transformRecord(JsonNode input) {
+        if ( !transform.noTransform ) {
+            input = _transformRecord(input);
         }
         return input;
     }
-    
+
+    @Override
+    public final INextPageUrlProducer getNextPageUrlProducer(HttpRequest<?> originalRequest) {
+        INextPageUrlProducer result = null;
+        if ( !noPaging ) {
+            result = _getNextPageUrlProducer(originalRequest);
+        }
+        return result;
+    }
+
+    protected abstract JsonNode _transformRecord(JsonNode input);
+    protected abstract JsonNode _transformInput(JsonNode input);
+    protected abstract INextPageUrlProducer _getNextPageUrlProducer(HttpRequest<?> originalRequest);
+
     @SneakyThrows
     protected final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
         if ( StringUtils.isBlank(uri) ) {

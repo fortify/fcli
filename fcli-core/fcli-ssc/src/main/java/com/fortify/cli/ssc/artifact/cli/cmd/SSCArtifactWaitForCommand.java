@@ -15,7 +15,7 @@ package com.fortify.cli.ssc.artifact.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCProductHelperMixin;
+import com.fortify.cli.ssc._common.output.cli.mixin.SSCProductHelperStandardMixin;
 import com.fortify.cli.ssc.artifact.cli.mixin.SSCArtifactResolverMixin;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
@@ -26,7 +26,7 @@ import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.WaitFor.CMD_NAME)
 public class SSCArtifactWaitForCommand extends AbstractWaitForCommand {
-    @Getter @Mixin SSCProductHelperMixin productHelper;
+    @Getter @Mixin SSCProductHelperStandardMixin productHelper;
     @Mixin private SSCArtifactResolverMixin.PositionalParameterMulti artifactsResolver;
     
     @Override

@@ -34,7 +34,9 @@ public class SCDastPagingHelper {
                 int totalCount = body.get("totalItems").asInt();
                 int limit = body.get("limit").asInt();
                 int newOffset = offset + limit;
-                if (newOffset < totalCount) {
+                // In exceptional cases, SC-DAST may return MAXINT for limit, in which case
+                // newOffset will become negative, hence we check whether newOffset > 0
+                if (newOffset>0 && newOffset < totalCount) {
                     return PagingHelper.addOrReplaceParam(uriString, "offset", newOffset);
                 }
             }

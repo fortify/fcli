@@ -10,41 +10,29 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.fod.rest.cli.cmd;
+package com.fortify.cli.fod._common.output.mixin;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
+import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
-import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.fod._common.output.mixin.FoDProductHelperBasicMixin;
+import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 
 import kong.unirest.HttpRequest;
-import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.RestCall.CMD_NAME)
-@DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT) // Output columns depend on response contents
-public final class FoDRestCallCommand extends AbstractRestCallCommand {
-    @Getter @Mixin private OutputHelperMixins.RestCall outputHelper;
-    @Getter @Mixin private FoDProductHelperBasicMixin productHelper;
-    
+// IMPORTANT: When updating/adding any methods in this class, FoDRestCallCommand
+// also likely needs to be updated
+public class FoDProductHelperStandardMixin extends FoDProductHelperBasicMixin 
+    implements IInputTransformer, INextPageUrlProducerSupplier 
+{
     @Override
-    protected INextPageUrlProducer _getNextPageUrlProducer(HttpRequest<?> originalRequest) {
+    public INextPageUrlProducer getNextPageUrlProducer(HttpRequest<?> originalRequest) {
         return FoDPagingHelper.nextPageUrlProducer(originalRequest);
     }
     
     @Override
-    protected JsonNode _transformInput(JsonNode input) {
+    public JsonNode transformInput(JsonNode input) {
         return FoDInputTransformer.getItems(input);
-    }
-    
-    @Override
-    protected JsonNode _transformRecord(JsonNode input) {
-        return input;
     }
 }
