@@ -15,5 +15,5 @@ import com.fortify.cli.ftest._common.extension.FcliSessionExtension
 @Retention(RUNTIME)
 @ExtensionAnnotation(FcliSessionExtension.class)
 @interface FcliSession {
-    FcliSessionType value()
+    FcliSessionType[] value()
 }

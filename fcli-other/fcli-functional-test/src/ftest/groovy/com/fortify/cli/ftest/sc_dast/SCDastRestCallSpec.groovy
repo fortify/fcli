@@ -10,9 +10,10 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.ftest.ssc
+package com.fortify.cli.ftest.sc_dast
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSessionType.SCDAST
+import static com.fortify.cli.ftest._common.spec.FcliSessionType.SCSAST
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
@@ -23,26 +24,24 @@ import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 
-@Prefix("ssc.rest.call") @FcliSession(SSC)
-class SSCRestCallSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
-    
-    def "session-info"() {
-        def args = ["ssc", "rest", "call", "-X", "POST", "/api/v1/userSession/info", "-d", "ignored"]
+@Prefix("sc-sast.rest.call") @FcliSession(SCDAST)
+class SCDastRestCallSpec extends FcliBaseSpec {
+    def "user-permissions"() {
+        def args = ["sc-dast", "rest", "call", "/api/v2/auth/user-permissions"]
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
                 it[0] == '---'
-                it[1].startsWith '- '
+                it[1].startsWith '-'
                 it.any { it =~ 'username' }
                 it.any { it =~ 'permissions' }
             }
     }
     
     def "transform-no-paging"() {
-        def args = ["ssc", "rest", "call", "-X", "GET", "/api/v1/events?limit=1", "--no-paging", '-t', 'data.![{x: id}]']
+        def args = ["sc-dast", "rest", "call", "-X", "GET", "/api/v2/applications?limit=1", "--no-paging", '-t', 'items.![{x: id}]']
         when:
             def result = Fcli.run(args)
         then:
