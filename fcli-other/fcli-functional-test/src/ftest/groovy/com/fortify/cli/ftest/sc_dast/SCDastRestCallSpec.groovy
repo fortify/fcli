@@ -24,7 +24,7 @@ import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 
-@Prefix("sc-sast.rest.call") @FcliSession(SCDAST)
+@Prefix("sc-dast.rest.call") @FcliSession(SCDAST)
 class SCDastRestCallSpec extends FcliBaseSpec {
     def "user-permissions"() {
         def args = ["sc-dast", "rest", "call", "/api/v2/auth/user-permissions"]
