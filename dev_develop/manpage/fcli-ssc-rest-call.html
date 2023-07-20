@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230720.122120-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230720.131725-dev_develop" %}
 
 
 <div id="header">
@@ -81,7 +81,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>-t</strong>, <strong>--transform</strong>=<em>&lt;expr&gt;</em></dt>
 <dd>
-<p>This option allows for performing custom transformations on the response data based on a Spring Expression Language (SpEL) expression. For example, this allows for retrieving data from sub-properties, or using project selection/projection.</p>
+<p>This option allows for performing custom transformations on the response data based on a Spring Expression Language (SpEL) expression. For example, this allows for retrieving data from sub-properties, or using project selection/projection. Note that the expression operates on the raw response, as if --no-transform was specified before evaluating the expression.</p>
 </dd>
 <dt class="hdlist1"><strong>-X</strong>, <strong>--request</strong>=<em>&lt;httpMethod&gt;</em></dt>
 <dd>
@@ -167,7 +167,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-07-20 12:23:48 UTC
+Last updated 2023-07-20 13:19:41 UTC
 </div>
 </div>
 </body>
