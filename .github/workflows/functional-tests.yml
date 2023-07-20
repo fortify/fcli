@@ -118,13 +118,16 @@ jobs:
           mv artifact/release-assets/* .
           mv artifact/fcli-ftest.jar .
           tar -zxvf fcli-linux.tgz
-          java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=$x \
-            -Dft.$x.url=$url -Dft.$x.ssc-url=$url \
-            -Dft.$x.user=$user -Dft.$x.ssc-user=$user \
-            -Dft.$x.password=$pwd -Dft.$x.ssc-password=$pwd \
-            -Dft.$x.client-auth-token=$sctoken
+          # Although we only run the current matrix entry type, we pass connection
+          # options for all session types, as some SC-SAST/SC-DAST tests may also
+          # require an SSC session. 
+          java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=$type \
+            -Dft.ssc.url=$url -Dft.ssc.user=$user -Dft.ssc.password=$pwd \
+            -Dft.sc-sast.ssc-url=$url -Dft.sc-sast.ssc-user=$user -Dft.sc-sast.ssc-password=$pwd \
+            -Dft.sc-dast.ssc-url=$url -Dft.sc-dast.ssc-user=$user -Dft.sc-dast.ssc-password=$pwd \
+            -Dft.sc-sast.client-auth-token=$sctoken
         env:
-          x: ${{ matrix.type }}
+          type: ${{ matrix.type }}
           url: ${{ secrets.FCLI_FT_SSC_URL }}
           user: ${{ secrets.FCLI_FT_SSC_USER }}
           pwd: ${{ secrets.FCLI_FT_SSC_PWD }}
