@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230720.082044-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230720.122120-dev_develop" %}
 
 
 <div id="header">
@@ -43,12 +43,12 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-dast rest call</strong> [<strong>--[no-]transform</strong>] [<strong>-d</strong>=<em>&lt;data&gt;</em>] [<strong>-X</strong>=<em>&lt;httpMethod&gt;</em>] [[<strong>-h</strong>]
+<p><strong>fcli sc-dast rest call</strong> [<strong>--no-paging</strong>] [<strong>-d</strong>=<em>&lt;data&gt;</em>] [<strong>-X</strong>=<em>&lt;httpMethod&gt;</em>] [[<strong>-h</strong>]
                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                       [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                       [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]
-                       [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em>&lt;uri&gt;</em></p>
+                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--no-transform</strong>] | <strong>-t</strong>=<em>&lt;expr&gt;</em>]
+                       <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+           _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
+                 _      expression&gt;</em>] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em>&lt;uri&gt;</em></p>
 </div>
 </div>
 </div>
@@ -67,13 +67,21 @@ fcli_version:
 <dd>
 <p>Data to send in the request body. This option takes either a string to be sent as request body, or @@&lt;file&gt; to send the contents of the given file as the request body (note the double at-sign). This option is not available for GET requests.</p>
 </dd>
-<dt class="hdlist1"><strong>--[no-]transform</strong></dt>
+<dt class="hdlist1"><strong>--no-paging</strong></dt>
+<dd>
+<p>By default, this command will load all pages of data from ScanCentral DAST (from the given offset if specified as a request parameter). Use this option to return only a single page.</p>
+</dd>
+<dt class="hdlist1"><strong>--no-transform</strong></dt>
 <dd>
 <p>By default, this command performs generic transformations on ScanCentral DAST REST responses, like only outputting the actual response data (contents of the 'item' or 'items' property). Use this option to output the original response contents without transformations.</p>
 </dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
 <p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+</dd>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--transform</strong>=<em>&lt;expr&gt;</em></dt>
+<dd>
+<p>This option allows for performing custom transformations on the response data based on a Spring Expression Language (SpEL) expression. For example, this allows for retrieving data from sub-properties, or using project selection/projection.</p>
 </dd>
 <dt class="hdlist1"><strong>-X</strong>, <strong>--request</strong>=<em>&lt;httpMethod&gt;</em></dt>
 <dd>
@@ -159,7 +167,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-07-20 08:22:30 UTC
+Last updated 2023-07-20 12:23:48 UTC
 </div>
 </div>
 </body>
