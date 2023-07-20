@@ -13,7 +13,7 @@ on:
         
 
 jobs:
-  functional-test:
+  ft-core:
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
@@ -54,22 +54,81 @@ jobs:
           mv artifact/fcli-ftest.jar .
           case "${{ matrix.type }}" in
             "java" )
-              java -jar -Dft.fcli=build fcli-ftest.jar ;;
+              java -jar fcli-ftest.jar -Dft.fcli=build ;;
             "jar" )
-              java -jar -Dft.fcli=fcli.jar fcli-ftest.jar ;;
+              java -jar fcli-ftest.jar -Dft.fcli=fcli.jar ;;
             "native" )
               case "${{ matrix.os }}" in
                 "ubuntu-latest" ) 
                   tar -zxvf fcli-linux.tgz
-                  java -jar -Dft.fcli=./fcli fcli-ftest.jar ;;
+                  java -jar fcli-ftest.jar -Dft.fcli=./fcli ;;
                 "windows-latest" )
                   7z e fcli-windows.zip
-                  java -jar -Dft.fcli=fcli.exe fcli-ftest.jar ;;
+                  java -jar fcli-ftest.jar -Dft.fcli=fcli.exe ;;
                 "macos-latest" )
                   tar -zxvf fcli-mac.tgz
-                  java -jar -Dft.fcli=./fcli fcli-ftest.jar ;;
+                  java -jar fcli-ftest.jar -Dft.fcli=./fcli ;;
               esac ;;
           esac 
+            
+      - name: Rename test log
+        if: always()
+        shell: bash
+        run: mv test.log "test-${{ matrix.os }}-${{ matrix.type }}.log"
+        
+      - name: Publish test logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-log
+          path: test-*.log
+          
+  ft-product:
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        args: [ssc, sc-dast, sc-dast]
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      # Java is required for running the functional tests
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          
+      - name: Get artifacts from triggering workflow
+        if: github.event_name == 'workflow_run'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+      - name: Get artifacts from specified workflow
+        if: github.event_name == 'workflow_dispatch'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          run_number: ${{ inputs.runNumber }}
+          workflow: ci.yml
+          
+      - name: Run Tests
+        shell: bash
+        run: |
+          mv artifact/release-assets/* .
+          mv artifact/fcli-ftest.jar .
+          tar -zxvf fcli-linux.tgz
+          java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=$x \
+            -Dft.$x.url=$url -Dft.$x.ssc-url=$url \
+            -Dft.$x.user=$user -Dft.$x.ssc-user=$user \
+            -Dft.$x.password=$pwd -Dft.$x.ssc-password=$pwd \
+            -Dft.$x.client-auth-token=$sctoken \
+        env:
+          x: ${{ matrix.type }}
+          url: ${{ secrets.FCLI_FT_SSC_URL }}
+          user: ${{ secrets.FCLI_FT_SSC_USER }}
+          pwd: ${{ secrets.FCLI_FT_SSC_PWD }}
+          sctoken: ${{ secrets.FCLI_FT_SCSAST_TOKEN }}
             
       - name: Rename test log
         if: always()
@@ -83,4 +142,4 @@ jobs:
           name: test-log
           path: test-*.log
           
-          
+                   
