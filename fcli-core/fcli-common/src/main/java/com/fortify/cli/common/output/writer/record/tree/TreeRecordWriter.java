@@ -45,18 +45,15 @@ public class TreeRecordWriter extends AbstractFormattedRecordWriter {
         if( inputNode.getNodeType() == JsonNodeType.ARRAY){
             int cnt = 0;
             for (JsonNode n: inputNode) {
-                SimpleTreeNode childNode = new SimpleTreeNode(String.format("#%d:%s", cnt, firstLevelLabelSuffix) );
-                treeBuilder(childNode, n, null);
-                treeNode.addChild(childNode);
-                cnt++;
+                treeBuilder(treeNode, n, null);
             }
         }else if(inputNode.getNodeType() == JsonNodeType.OBJECT){
             for (Iterator<Map.Entry<String, JsonNode>> it = inputNode.fields(); it.hasNext(); ) {
                 Map.Entry<String, JsonNode> n = it.next();
-                if(n.getValue().getNodeType() != JsonNodeType.OBJECT){
+                if(n.getValue().getNodeType() != JsonNodeType.OBJECT && n.getValue().getNodeType() != JsonNodeType.ARRAY){
                     SimpleTreeNode childNode = new SimpleTreeNode( n.getKey() + ": " + n.getValue().asText());
                     treeNode.addChild(childNode);
-                }else if(n.getValue().getNodeType() == JsonNodeType.OBJECT){
+                }else if(n.getValue().getNodeType() == JsonNodeType.OBJECT || n.getValue().getNodeType() == JsonNodeType.ARRAY){
                     SimpleTreeNode childNode = new SimpleTreeNode(n.getKey());
                     treeBuilder(childNode, n.getValue(), null);
                     treeNode.addChild(childNode);
