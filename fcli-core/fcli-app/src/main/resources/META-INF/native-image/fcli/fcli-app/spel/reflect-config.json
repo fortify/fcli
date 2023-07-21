@@ -93,7 +93,8 @@
   "allPublicMethods" : true
 },{
   "name" : "java.util.HashSet",
-  "allPublicMethods" : true
+  "allPublicMethods" : true,
+  "allPublicConstructors" : true
 },{
   "name" : "java.util.Collections$UnmodifiableCollection",
   "allPublicMethods" : true
