@@ -46,8 +46,8 @@ public class TreeRecordWriter extends AbstractFormattedRecordWriter {
         case NUMBER:
         case STRING:
         case BOOLEAN:
-        	addPrimitiveChildNode(treeNode, inputNode.asText());
-        	break;
+            addPrimitiveChildNode(treeNode, inputNode.asText());
+            break;
         case OBJECT:
             addObjectChildNode(treeNode, inputNode);
             break;
@@ -56,14 +56,14 @@ public class TreeRecordWriter extends AbstractFormattedRecordWriter {
                 treeBuilder(treeNode, n);
             }
             break;
-		default:
-			break;
+        default:
+            break;
         }
 
     }
     
     private static void addPrimitiveChildNode(SimpleTreeNode treeNode, String text) {
-    	SimpleTreeNode childNode = new SimpleTreeNode( text );
+        SimpleTreeNode childNode = new SimpleTreeNode( text );
         treeNode.addChild(childNode);
     }
     
@@ -72,11 +72,11 @@ public class TreeRecordWriter extends AbstractFormattedRecordWriter {
         for (Iterator<Map.Entry<String, JsonNode>> it = inputNode.fields(); it.hasNext(); ) {
             Map.Entry<String, JsonNode> n = it.next();
             if(n.getValue().isContainerNode()) {
-            	SimpleTreeNode childNode = new SimpleTreeNode(n.getKey());
+                SimpleTreeNode childNode = new SimpleTreeNode(n.getKey());
                 treeBuilder(childNode, n.getValue());
                 treeNode.addChild(childNode);
             } else {
-            	addPrimitiveChildNode(treeNode, n.getKey() + ": " + n.getValue().asText());
+                addPrimitiveChildNode(treeNode, n.getKey() + ": " + n.getValue().asText());
             }
         }
     }
