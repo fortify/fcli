@@ -21,9 +21,11 @@ import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 
 import spock.lang.AutoCleanup
+import spock.lang.Requires
 import spock.lang.Shared
 
-@Prefix("ssc.event") @FcliSession(SSC)
+@Prefix("ssc.event") @FcliSession(SSC) 
+@Requires({System.getProperty('ft.include.long-running')})
 class SSCEventSpec extends FcliBaseSpec {
     @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     
