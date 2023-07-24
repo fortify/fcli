@@ -54,20 +54,20 @@ jobs:
           mv artifact/fcli-ftest.jar .
           case "${{ matrix.type }}" in
             "java" )
-              java -jar fcli-ftest.jar -Dft.fcli=build ;;
+              java -jar fcli-ftest.jar -Dft.fcli=build -Dft.run=core ;;
             "jar" )
-              java -jar fcli-ftest.jar -Dft.fcli=fcli.jar ;;
+              java -jar fcli-ftest.jar -Dft.fcli=fcli.jar -Dft.run=core ;;
             "native" )
               case "${{ matrix.os }}" in
                 "ubuntu-latest" ) 
                   tar -zxvf fcli-linux.tgz
-                  java -jar fcli-ftest.jar -Dft.fcli=./fcli ;;
+                  java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=core ;;
                 "windows-latest" )
                   7z e fcli-windows.zip
-                  java -jar fcli-ftest.jar -Dft.fcli=fcli.exe ;;
+                  java -jar fcli-ftest.jar -Dft.fcli=fcli.exe -Dft.run=core ;;
                 "macos-latest" )
                   tar -zxvf fcli-mac.tgz
-                  java -jar fcli-ftest.jar -Dft.fcli=./fcli ;;
+                  java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=core ;;
               esac ;;
           esac 
             

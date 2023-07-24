@@ -30,13 +30,14 @@ class NcdReportSpec extends FcliBaseSpec {
     @Shared @TempFile("ncd-report.zip") String reportOutputZip;
     
     def "generate-config"() {
-        def args = "util ncd-report generate-config -y -c ${sampleConfigOutputFile}"
+        def args = "util ncd-report generate-config -y -c ${sampleConfigOutputFile} -o yaml"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) { 
-                size() == 2
-                it[1] ==~ /^\s*$sampleConfigOutputFile\s+GENERATED\s*$/
+                size() == 3
+                it[1] ==~ /^path: "$sampleConfigOutputFile"$/
+                it[2] ==~ /^__action__: "GENERATED"$/
             }
             new File(sampleConfigOutputFile).exists()
     }
