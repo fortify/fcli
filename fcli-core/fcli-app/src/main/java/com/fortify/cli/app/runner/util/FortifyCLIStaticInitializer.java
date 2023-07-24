@@ -18,6 +18,9 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.i18n.helper.LanguageHelper;
@@ -40,6 +43,7 @@ import lombok.NoArgsConstructor;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class FortifyCLIStaticInitializer {
+    private final Log log = LogFactory.getLog(getClass());
     @Getter(lazy = true)
     private static final FortifyCLIStaticInitializer instance = new FortifyCLIStaticInitializer(); 
     
@@ -79,7 +83,7 @@ public final class FortifyCLIStaticInitializer {
         if ( descriptor!=null && StringUtils.isNotBlank(descriptor.getPath()) ) {
             Path absolutePath = Path.of(descriptor.getPath()).toAbsolutePath();
             if ( !Files.exists(absolutePath) ) {
-                throw new IllegalArgumentException("Trust store cannot be found: "+absolutePath);
+                log.warn("WARN: Trust store cannot be found: "+absolutePath);
             }
             System.setProperty("javax.net.ssl.trustStore", descriptor.getPath());
             if ( StringUtils.isNotBlank(descriptor.getType()) ) {
