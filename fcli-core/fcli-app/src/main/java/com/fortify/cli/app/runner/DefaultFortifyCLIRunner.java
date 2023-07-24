@@ -39,12 +39,19 @@ public final class DefaultFortifyCLIRunner implements IFortifyCLIRunner {
 	
 	@Override
 	public int run(String... args) {
-	    String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
-	    FortifyCLIDynamicInitializer.getInstance().initialize(resolvedArgs);
-	    //CommandLine cl = getCommandLine(); // TODO See https://github.com/remkop/picocli/issues/2066
-	    CommandLine cl = createCommandLine();
-	    cl.clearExecutionResults();
-	    return cl.execute(resolvedArgs);
+	    try {
+    	    String[] resolvedArgs = FcliVariableHelper.resolveVariables(args);
+    	    FortifyCLIDynamicInitializer.getInstance().initialize(resolvedArgs);
+    	    //CommandLine cl = getCommandLine(); // TODO See https://github.com/remkop/picocli/issues/2066
+    	    CommandLine cl = createCommandLine();
+    	    cl.clearExecutionResults();
+    	    return cl.execute(resolvedArgs);
+	    } finally {
+	        // TODO For now, this is required to ensure new connections are used for 
+	        // every fcli invocation, as otherwise we may be using older proxy settings
+	        // after proxy has been reconfigured.
+	        GenericUnirestFactory.shutdown();
+	    }
 	}
 	
 	@Override

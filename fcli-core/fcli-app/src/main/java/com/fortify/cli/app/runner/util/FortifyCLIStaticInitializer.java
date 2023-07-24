@@ -79,6 +79,9 @@ public final class FortifyCLIStaticInitializer {
     }
     
     private void initializeTrustStore() {
+        // First clear existing configuration
+        System.clearProperty("javax.net.ssl.trustStore");
+        System.clearProperty("avax.net.ssl.trustStorePassword");
         TrustStoreConfigDescriptor descriptor = TrustStoreConfigHelper.getTrustStoreConfig();
         if ( descriptor!=null && StringUtils.isNotBlank(descriptor.getPath()) ) {
             Path absolutePath = Path.of(descriptor.getPath()).toAbsolutePath();
