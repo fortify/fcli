@@ -88,7 +88,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        type: [ssc, sc-sast, sc-dast]
+        type: [ssc, sc-sast, sc-dast, report]
     
     runs-on: ubuntu-latest
 
@@ -120,7 +120,7 @@ jobs:
           tar -zxvf fcli-linux.tgz
           # Although we only run the current matrix entry type, we pass connection
           # options for all session types, as some SC-SAST/SC-DAST tests may also
-          # require an SSC session. 
+          # require an SSC session.
           java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=$type \
             -Dft.ssc.url=$url -Dft.ssc.user=$user -Dft.ssc.password=$pwd \
             -Dft.sc-sast.ssc-url=$url -Dft.sc-sast.ssc-user=$user -Dft.sc-sast.ssc-password=$pwd \
@@ -132,6 +132,9 @@ jobs:
           user: ${{ secrets.FCLI_FT_SSC_USER }}
           pwd: ${{ secrets.FCLI_FT_SSC_PWD }}
           sctoken: ${{ secrets.FCLI_FT_SCSAST_TOKEN }}
+          # Pass GitHub and GitLab tokens for use by NCD license report tests
+          FCLI_FT_GITHUB_TOKEN: ${{ secrets.FCLI_FT_GITHUB_TOKEN }}
+          FCLI_FT_GITLAB_TOKEN: ${{ secrets.FCLI_FT_GITLAB_TOKEN }}
             
       - name: Rename test log
         if: always()

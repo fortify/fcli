@@ -8,6 +8,6 @@ import java.lang.annotation.Target
 
 @Target([FIELD])
 @Retention(RUNTIME)
-@interface TestResource {
+@interface TempDir {
     String value()
 }
