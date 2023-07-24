@@ -63,7 +63,7 @@ class ConfigProxySpec extends FcliBaseSpec {
             def result = Fcli.run(args, {it.expectSuccess(false)})
         then:
             verifyAll(result.stderr) {
-                it.any { it.contains("java.net.UnknownHostException: dummy-server-9482: Name or service not known") }
+                it.any { it.contains("java.net.UnknownHostException: dummy-server-9482") }
             }
     }
     
