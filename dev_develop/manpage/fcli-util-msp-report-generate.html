@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230724.084314-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230724.111846-dev_develop" %}
 
 
 <div id="header">
@@ -44,7 +44,7 @@ fcli_version:
 <p><strong>fcli util msp-report generate</strong> [<strong>-y</strong>] [<strong>-c</strong>=<em>&lt;configFile&gt;</em>] <strong>-e</strong>=<em>&lt;reportingEndDate&gt;</em>
                               [<strong>--progress</strong>=<em>&lt;type&gt;</em>] <strong>-s</strong>=<em>&lt;reportingStartDate&gt;</em> [[<strong>-h</strong>]
                               [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                              [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] (<strong>-f</strong>=<em>&lt;reportZipName&gt;</em> |
+                              [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] (<strong>-z</strong>=<em>&lt;reportZipName&gt;</em> |
                               <strong>-d</strong>=<em>&lt;reportDirName&gt;</em>) <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                               [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
                               [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
@@ -94,10 +94,6 @@ fcli_version:
 <dd>
 <p>Reporting period start date. Format: yyyy-MM-dd, for example 2023-03-31.</p>
 </dd>
-<dt class="hdlist1"><strong>-f</strong>, <strong>--report-zip</strong>=<em>&lt;reportZipName&gt;</em></dt>
-<dd>
-<p>Write report output to the given zip-file.</p>
-</dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
 <p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
@@ -109,6 +105,10 @@ fcli_version:
 <dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
 <dd>
 <p>Confirm delete of existing report output location.</p>
+</dd>
+<dt class="hdlist1"><strong>-z</strong>, <strong>--report-zip</strong>=<em>&lt;reportZipName&gt;</em></dt>
+<dd>
+<p>Write report output to the given zip-file.</p>
 </dd>
 </dl>
 </div>
@@ -164,7 +164,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-07-24 08:45:03 UTC
+Last updated 2023-07-24 11:20:33 UTC
 </div>
 </div>
 </body>
