@@ -41,7 +41,8 @@ public class PagingHelper {
     @SneakyThrows
     public static final URI addOrReplaceParam(URI uri, String param, Object newValue) {
         var pattern = String.format("([&?])(%s=)([^&]*)", param);
-        var query = uri.getQuery().replaceAll(pattern, "");
+        var query = uri.getQuery();
+        if (StringUtils.isNotBlank(query)) { query = query.replaceAll(pattern, ""); }
         var newParamAndValue = String.format("%s=%s", param, URLEncoder.encode(newValue.toString(), StandardCharsets.UTF_8));
         query = (StringUtils.isBlank(query) ? "" : query+"&") + newParamAndValue;
         return new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), 
