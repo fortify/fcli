@@ -66,4 +66,14 @@ class ConfigTrustStoreSpec extends FcliBaseSpec {
                 it.any { it.contains("javax.net.ssl.SSLException") }
             }
     }
+    
+    def "clear"() {
+        def args = "config truststore clear"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                // TODO
+            }
+    }
 }
