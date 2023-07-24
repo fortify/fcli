@@ -48,7 +48,7 @@ public abstract class AbstractReportGenerateCommand extends AbstractOutputComman
 {
     @ArgGroup(exclusive = true, multiplicity = "1") private OutputArgGroup outputArgGroup;
     private static final class OutputArgGroup {
-        @Option(names = {"-f", "--report-zip"}, required = true) private String reportZipName;   
+        @Option(names = {"-z", "--report-zip"}, required = true) private String reportZipName;   
         @Option(names = {"-d", "--report-dir"}, required = true) private String reportDirName;
     }
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
