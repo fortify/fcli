@@ -13,7 +13,7 @@ import spock.lang.Unroll
 class FoDAppSpec extends FcliBaseSpec {
     @Unroll
     def "list"() {
-        def args = ["fod", "app", "list"]
+        def args = "fod app list"
         when:
             def result = Fcli.run(args)
         then:

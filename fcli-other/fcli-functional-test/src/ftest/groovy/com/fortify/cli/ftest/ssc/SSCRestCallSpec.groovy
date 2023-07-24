@@ -28,7 +28,7 @@ class SSCRestCallSpec extends FcliBaseSpec {
     @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     
     def "session-info"() {
-        def args = ["ssc", "rest", "call", "-X", "POST", "/api/v1/userSession/info", "-d", "ignored"]
+        def args = "ssc rest call -X POST /api/v1/userSession/info -d ignored"
         when:
             def result = Fcli.run(args)
         then:
@@ -42,7 +42,7 @@ class SSCRestCallSpec extends FcliBaseSpec {
     }
     
     def "transform-no-paging"() {
-        def args = ["ssc", "rest", "call", "-X", "GET", "/api/v1/events?limit=1", "--no-paging", '-t', 'data.![{x: id}]']
+        def args = "ssc rest call -X GET /api/v1/events?limit=1 --no-paging -t data.![{x:\\ id}]"
         when:
             def result = Fcli.run(args)
         then:

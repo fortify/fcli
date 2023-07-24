@@ -10,7 +10,7 @@ import com.fortify.cli.ftest._common.spec.Prefix
 @Prefix("sc-dast.sensor") @FcliSession(SCDAST)
 class SCDastSensorSpec extends FcliBaseSpec {
     def "list"() {
-        def args = ["sc-dast", "sensor", "list"]
+        def args = "sc-dast sensor list"
         when:
             def result = Fcli.run(args)
         then:

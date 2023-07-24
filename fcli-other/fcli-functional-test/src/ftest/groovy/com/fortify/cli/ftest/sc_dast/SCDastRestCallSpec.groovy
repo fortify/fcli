@@ -27,7 +27,7 @@ import spock.lang.Shared
 @Prefix("sc-dast.rest.call") @FcliSession(SCDAST)
 class SCDastRestCallSpec extends FcliBaseSpec {
     def "user-permissions"() {
-        def args = ["sc-dast", "rest", "call", "/api/v2/auth/user-permissions"]
+        def args = "sc-dast rest call /api/v2/auth/user-permissions"
         when:
             def result = Fcli.run(args)
         then:
@@ -41,7 +41,7 @@ class SCDastRestCallSpec extends FcliBaseSpec {
     }
     
     def "transform-no-paging"() {
-        def args = ["sc-dast", "rest", "call", "-X", "GET", "/api/v2/applications?limit=1", "--no-paging", '-t', 'items.![{x: id}]']
+        def args = "sc-dast rest call -X GET /api/v2/applications?limit=1 --no-paging -t items.![{x:\\ id}]"
         when:
             def result = Fcli.run(args)
         then:

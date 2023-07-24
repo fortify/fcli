@@ -21,8 +21,8 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     @Shared String uploadVariableRef = "::$uploadVariableName::"
     
     def "upload"() {
-        def args = ["ssc", "artifact", "upload", fpr, "--appversion", 
-            version.variableRef, "--store", uploadVariableName]
+        def args = "ssc artifact upload $fpr --appversion "+ 
+            "${version.variableRef} --store $uploadVariableName"
         when:
             def result = Fcli.run(args)
         then:
@@ -35,8 +35,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     def "wait-for"() {
         // Depending on externalmetadata versions in FPR and on SSC, approval
         // may be required
-        def args = ["ssc", "artifact", "wait-for", uploadVariableRef, "-i", "2s",
-            "--until", "PROCESS_COMPLETE|REQUIRE_AUTH"]
+        def args = "ssc artifact wait-for $uploadVariableRef -i 2s --until PROCESS_COMPLETE|REQUIRE_AUTH"
         when:
             def result = Fcli.run(args)
         then:
@@ -46,7 +45,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     }
     
     def "list"() {
-        def args = ["ssc", "artifact", "list", "--appversion", version.variableRef]
+        def args = "ssc artifact list --appversion ${version.variableRef}"
         when:
             def result = Fcli.run(args)
         then:
@@ -56,7 +55,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     }
     
     def "get"() {
-        def args = ["ssc", "artifact", "get", uploadVariableRef]
+        def args = "ssc artifact get $uploadVariableRef"
         when:
             def result = Fcli.run(args)
         then:

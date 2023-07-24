@@ -21,15 +21,15 @@ public class SSCAppVersion implements Closeable, AutoCloseable {
     private final String versionName = "v"+random
     
     public SSCAppVersion create() {
-        Fcli.run(["ssc", "appversion", "create", appName+":"+versionName, 
-            "--issue-template", "Prioritized High Risk Issue Template",
-            "--auto-required-attrs", "--store", fcliVariableName],
+        Fcli.run("ssc appversion create $appName:$versionName "+ 
+            "--issue-template Prioritized\\ High\\ Risk\\ Issue\\ Template "+
+            "--auto-required-attrs --store $fcliVariableName",
             {it.expectSuccess(true, "Unable to create application version")})
         return this
     }
     
     public String get(String propertyPath) {
-        Fcli.run(["state", "var", "contents", fcliVariableName, "-o", "expr={"+propertyPath+"}"],
+        Fcli.run("state var contents $fcliVariableName -o expr={$propertyPath}",
             {it.expectSuccess(true, "Error getting application version property "+propertyPath)})
             .stdout[0]  
     }
@@ -43,7 +43,7 @@ public class SSCAppVersion implements Closeable, AutoCloseable {
     }
     
     public void close() {
-        Fcli.run(["ssc", "appversion", "delete", "::"+fcliVariableName+"::"],
+        Fcli.run("ssc appversion delete ::$fcliVariableName::",
             {it.expectSuccess(true, "Unable to delete application version")}) 
     }
 }

@@ -30,7 +30,7 @@ class SSCEventSpec extends FcliBaseSpec {
     @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     
     def "list"() {
-        def args = ["ssc", "event", "list"]
+        def args = "ssc event list"
         when:
             def result = Fcli.run(args)
         then:

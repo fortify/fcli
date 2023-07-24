@@ -8,8 +8,8 @@ import com.fortify.cli.ftest._common.spec.Prefix
 @Prefix("core.query")
 class QuerySpec extends FcliBaseSpec {
     private static final FcliResult generate(String query) {
-        def args = ["util", "sample-data", "list"]
-        if ( query!=null ) { args+=["-q", query] }
+        def args = "util sample-data list"
+        if ( query!=null ) { args+=" -q "+query.replace(" ", "\\ ") }
         return Fcli.run(args)
     }
     

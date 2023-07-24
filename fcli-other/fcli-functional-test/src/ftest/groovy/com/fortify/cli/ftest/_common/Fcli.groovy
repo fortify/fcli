@@ -48,6 +48,33 @@ public class Fcli {
     
     /**
      * This method runs fcli with the arguments provided and returns an FcliResult
+     * instance representing fcli execution result. The given arguments string should
+     * contain the individual fcli arguments separated by spaces. To keep a space
+     * inside an individual argument, it can be escaped with a backslash. By default, 
+     * this method will throw an exception if fcli returned a non-zero exit code, or 
+     * if there was any output on stderr. If needed, callers can provide a custom 
+     * validator closure as the second argument to override this behavior.
+     * @param argsString Arguments to pass to fcli
+     * @param validate Optional closure to override validation of the fcli execution
+     *        result; by default, an exception will be thrown if fcli execution was
+     *        unsuccessful.
+     * @return FcliResult describing fcli execution result
+     */
+    static FcliResult run(
+        String argsString,
+        FcliResultValidator validator = {it.expectSuccess()})
+    {
+        return run(toArgsList(argsString), validator)
+    }
+    
+    private static final List<String> toArgsList(String argsString) {
+        argsString.replace("\\ ", "KEEPSPACE")
+            .split(" ")
+            .collect { it.replace("KEEPSPACE", " ") }
+    }
+    
+    /**
+     * This method runs fcli with the arguments provided and returns an FcliResult
      * instance representing fcli execution result. This method throws an exception 
      * if there was an error trying to execute fcli, for example if the configured
      * fcli executable cannot be found. Being private, this method can only be

@@ -9,8 +9,8 @@ import com.fortify.cli.ftest._common.spec.Prefix
 @Prefix("core.output.list")
 class OutputOptionsListSpec extends FcliBaseSpec {
     private static final FcliResult generate(String outputFormat) {
-        def args = ["util", "sample-data", "list"]
-        if ( outputFormat!=null ) { args+=["-o", outputFormat] } 
+        def args = "util sample-data list"
+        if ( outputFormat!=null ) { args+=" -o "+outputFormat.replace(" ", "\\ ") } 
         return Fcli.run(args)
     }
     

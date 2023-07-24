@@ -16,7 +16,7 @@ class SSCAppSpec extends FcliBaseSpec {
     @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     
     def "list"() {
-        def args = ["ssc", "app", "list"]
+        def args = "ssc app list"
         when:
             def result = Fcli.run(args)
         then:
@@ -26,7 +26,7 @@ class SSCAppSpec extends FcliBaseSpec {
     }
     
     def "get.byId"() {
-        def args = ["ssc", "app", "get", version.get("application.id")]
+        def args = "ssc app get "+version.get("application.id")
         when:
             def result = Fcli.run(args)
         then:
@@ -36,7 +36,7 @@ class SSCAppSpec extends FcliBaseSpec {
     }
     
     def "get.byName"() {
-        def args = ["ssc", "app", "get", version.appName]
+        def args = "ssc app get "+version.appName
         when:
             def result = Fcli.run(args)
         then:

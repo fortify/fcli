@@ -28,7 +28,7 @@ class SSCActivityFeedSpec extends FcliBaseSpec {
     @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     
     def "list"() {
-        def args = ["ssc", "activity-feed", "list"]
+        def args = "ssc activity-feed list"
         when:
             def result = Fcli.run(args)
         then:
