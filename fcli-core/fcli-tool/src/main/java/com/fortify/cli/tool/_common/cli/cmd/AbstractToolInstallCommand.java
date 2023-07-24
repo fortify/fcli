@@ -128,11 +128,10 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
 
     @SneakyThrows
     protected Path getInstallPathOrDefault(ToolVersionDownloadDescriptor descriptor) {
-        var installPath = installDir.getCanonicalFile().toPath();
-        if ( installPath==null ) {
-            installPath = FcliDataHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", getToolName(), descriptor.getVersion()));
+        if ( installDir == null ) {
+            installDir = FcliDataHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", getToolName(), descriptor.getVersion())).toFile();
         }
-        return installPath;
+        return installDir.getCanonicalFile().toPath();
     }
     
     protected Path getBinPath(ToolVersionDownloadDescriptor descriptor) {
