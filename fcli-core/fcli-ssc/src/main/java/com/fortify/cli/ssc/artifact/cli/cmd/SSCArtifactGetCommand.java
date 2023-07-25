@@ -25,7 +25,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Get.CMD_NAME)
 public class SSCArtifactGetCommand extends AbstractSSCArtifactOutputCommand implements IBaseRequestSupplier {
     @Getter @Mixin private OutputHelperMixins.Get outputHelper; 
-    @Parameters(arity="1", description = "Id of the artifact to be retrieved")
+    @Parameters(arity="1", descriptionKey="fcli.ssc.artifact.get.id")
     private String artifactId;
     
     @Override

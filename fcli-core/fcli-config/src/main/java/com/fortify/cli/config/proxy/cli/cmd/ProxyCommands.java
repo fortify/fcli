@@ -18,7 +18,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "proxy",
-        description = "Commands for managing connectivity through proxies",
         subcommands = {
             ProxyAddCommand.class,
             ProxyClearCommand.class,

@@ -55,7 +55,7 @@ import picocli.CommandLine.ScopeType;
 )
 public class FCLIRootCommands extends AbstractFortifyCLICommand {    
     // We only want to have the --version option on the top-level fcli command,
-    @Option(names = {"-V", "--version"}, versionHelp = true, description = "display version info", scope = ScopeType.LOCAL, order = -1002)
+    @Option(names = {"-V", "--version"}, versionHelp = true, scope = ScopeType.LOCAL, order = -1002)
     @DisableTest(TestType.OPT_SHORT_NAME)
     boolean versionInfoRequested;
 }

@@ -25,8 +25,7 @@ import picocli.CommandLine.Command;
                 SSCReportTemplateDownloadCommand.class,
                 SSCReportTemplateGenerateConfigCommand.class,
                 SSCReportTemplateDeleteCommand.class
-        },
-        description = "Commands for interacting with report template definitions on Fortify SSC."
+        }
 )
 public class SSCReportTemplateCommands extends AbstractFortifyCLICommand {
 }

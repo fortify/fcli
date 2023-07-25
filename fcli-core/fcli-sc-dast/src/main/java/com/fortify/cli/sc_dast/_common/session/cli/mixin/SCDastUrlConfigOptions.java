@@ -21,7 +21,7 @@ public class SCDastUrlConfigOptions implements IUrlConfig {
     @Option(names = {"--ssc-url"}, required = true, order=1)
     @Getter private String url;
     
-    @Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
+    @Option(names = {"--insecure", "-k"}, required = false, defaultValue = "false", order=6)
     @Getter private Boolean insecureModeEnabled;
     
     public boolean hasUrlConfig() {
