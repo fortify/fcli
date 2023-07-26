@@ -81,6 +81,7 @@ public class FoDSetupDastScanRequest {
     Boolean multiFactorAuth = false;
     String multiFactorAuthText;
     String notes;
+    @Builder.Default
     Boolean requestCall = false;
     // DEPRECATED
     // Boolean whitelistRequired;

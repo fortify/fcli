@@ -1,16 +1,16 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.fod.lookup.cli.cmd;
+package com.fortify.cli.fod.rest.lookup.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -21,18 +21,17 @@ import com.fortify.cli.fod._common.output.cli.AbstractFoDBaseRequestOutputComman
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
 import com.fortify.cli.fod._common.rest.query.cli.mixin.FoDFiltersParamMixin;
-import com.fortify.cli.fod.lookup.cli.mixin.FoDLookupTypeOptions;
-import com.fortify.cli.fod.lookup.helper.FoDLookupHelper;
-
+import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
+import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.List.CMD_NAME)
-public class FoDLookupListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
-    @Getter @Mixin private OutputHelperMixins.List outputHelper;
+@Command(name = OutputHelperMixins.LookupItems.CMD_NAME)
+public class FoDLookupCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
+    @Getter @Mixin private OutputHelperMixins.LookupItems outputHelper;
 
     @Mixin private FoDLookupTypeOptions.OptionalLookupOption lookupType;
     @Mixin private FoDFiltersParamMixin filterParamMixin;
