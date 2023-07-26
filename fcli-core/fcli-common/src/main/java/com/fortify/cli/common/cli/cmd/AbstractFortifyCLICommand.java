@@ -99,7 +99,7 @@ public class AbstractFortifyCLICommand {
      * are available on every fcli command.
      */
     public static final class GenericOptionsArgGroup {
-        @Option(names = {"-h", "--help"}, usageHelp = true, description = "display this help message")
+        @Option(names = {"-h", "--help"}, usageHelp = true)
         private boolean usageHelpRequested;
         
         @Option(names = "--env-prefix", defaultValue = "FCLI_DEFAULT")

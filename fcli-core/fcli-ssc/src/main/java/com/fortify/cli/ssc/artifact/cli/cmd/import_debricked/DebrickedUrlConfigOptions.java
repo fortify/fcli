@@ -22,7 +22,7 @@ public class DebrickedUrlConfigOptions implements IUrlConfig {
     @Option(names = {"--debricked-url"}, required = true, order=1, defaultValue = "https://debricked.com", hidden = true)
     @Getter private String url;
     
-    @Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
+    @Option(names = {"--insecure", "-k"}, required = false, defaultValue = "false", order=6)
     @Getter private Boolean insecureModeEnabled;
     
     public boolean hasUrlConfig() {

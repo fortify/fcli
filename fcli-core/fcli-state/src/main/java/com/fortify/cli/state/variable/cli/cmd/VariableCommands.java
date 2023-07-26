@@ -19,7 +19,6 @@ import picocli.CommandLine.Command;
 @Command(
         name = "variable",
         aliases = "var",
-        description = "Commands for managing fcli variables",
         subcommands = {
                 VariableContentsCommand.class,
                 VariableClearCommand.class,

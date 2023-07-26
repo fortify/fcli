@@ -27,7 +27,7 @@ import picocli.CommandLine.Parameters;
 public class SSCAlertDefinitionGetCommand extends AbstractSSCBaseRequestOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Get outputHelper; 
     // TODO Add support for resolving alert definitions by name (if unique) using a ResolverMixin
-    @Parameters(arity="1", description = "Id of alert definition to be retrieved")
+    @Parameters(arity="1", descriptionKey="fcli.ssc.alert-definition.get.id")
     private String alertDefinitionId;
     
     @Override

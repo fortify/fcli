@@ -18,7 +18,6 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "truststore",
-        description = "Commands for managing the trust store for SSL connections",
         subcommands = {
             TrustStoreClearCommand.class,
             TrustStoreGetCommand.class,
