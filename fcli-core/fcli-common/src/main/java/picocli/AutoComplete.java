@@ -663,6 +663,7 @@ public class AutoComplete {
                 "  local curr_word=${COMP_WORDS[COMP_CWORD]}\n" +
                 "%s" +
                 "\n" +
+                "  local extraCompGenOpts=()" + // PATCH for #2068: Add extraCompGenOpts array
                 "  local commands=\"%s\"\n" +  // local commands="gettingstarted tool"
                 "  local flag_opts=\"%s\"\n" + // local flag_opts="--verbose -V -x --extract -t --list"
                 "  local arg_opts=\"%s\"\n";   // local arg_opts="--host --option --file -f -u --timeUnit"
@@ -674,7 +675,8 @@ public class AutoComplete {
                 "    local positionals=\"\"\n" +
                 "%s" +
                 "    local IFS=$'\\n'\n" +
-                "    COMPREPLY=( $(compgen -W \"${commands// /$'\\n'}${IFS}${positionals}\" -- \"${curr_word}\") )\n" +
+                // PATCH for #2068: Add extraCompGenOpts reference to compgen invocation
+                "    COMPREPLY=( $(compgen ${extraCompGenOpts[@]} -W \"${commands// /$'\\n'}${IFS}${positionals}\" -- \"${curr_word}\") )\n" +
                 "  fi\n" +
                 "}\n";
 
@@ -785,6 +787,8 @@ public class AutoComplete {
                 buff.append(format("%s      positionals=$( compReplyArray \"${%s_pos_param_args[@]}\" )\n", indent, paramName, currWord));
             } else if (type.equals(File.class) || "java.nio.file.Path".equals(type.getName())) {
                 buff.append(format("%s    %s (( currIndex >= %d && currIndex <= %d )); then\n", indent, ifOrElif, min, max));
+                // PATCH for #2068: Add '-f' option to extraCompGenOpts
+                buff.append(format("%s      extraCompGenOpts+=('-f')\n", indent));
                 buff.append(format("%s      local IFS=$'\\n'\n", indent));
                 buff.append(format("%s      type compopt &>/dev/null && compopt -o filenames\n", indent)); // #1464 workaround for old bash
                 buff.append(format("%s      positionals=$( compgen -f -- \"%s\" ) # files\n", indent, currWord));
