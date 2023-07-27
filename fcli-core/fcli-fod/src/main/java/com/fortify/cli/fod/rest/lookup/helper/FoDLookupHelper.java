@@ -16,7 +16,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -28,75 +27,13 @@ import lombok.Getter;
 import javax.validation.ValidationException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FoDLookupHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final String[] lookupItems = new String[]{
-            "MobileScanPlatformTypes",
-            "MobileScanFrameworkTypes",
-            "MobileScanEnvironmentTypes",
-            "MobileScanRoleTypes",
-            "MobileScanExternalDeviceTypes",
-            "DynamicScanEnvironmentFacingTypes",
-            "DynamicScanAuthenticationTypes",
-            "TimeZones",
-            "RepeatScheduleTypes",
-            "GeoLocations",
-            "SDLCStatusTypes",
-            "DayOfWeekTypes",
-            "BusinessCriticalityTypes",
-            "ReportTemplateTypes",
-            "AnalysisStatusTypes",
-            "ScanStatusTypes",
-            "ReportFormats",
-            "Roles",
-            "ScanPreferenceTypes",
-            "AuditPreferenceTypes",
-            "EntitlementFrequencyTypes",
-            "ApplicationTypes",
-            "ScanTypes",
-            "AttributeTypes",
-            "AttributeDataTypes",
-            "MultiFactorAuthorizationTypes",
-            "ReportTypes",
-            "ReportStatusTypes",
-            "PassFailReasonTypes",
-            "DynamicScanWebServiceTypes",
-            "VulnerabilitySeverityTypes",
-            "TechnologyTypes",
-            "LanguageLevels",
-            "AuditActionTypes",
-            "NotificationTriggerTypes",
-            "ConcurrentRequestThreadsTypes",
-            "MobileScanAuditPreferenceTypes",
-            "DataExportTypes",
-            "ScanMethodTypes",
-            "StartScanMethodTypes",
-            "AuditTemplateConditionTypes",
-            "OpenSourceScanTypeAuditTemplateFieldTypes",
-            "StaticScanTypeAuditTemplateFieldTypes",
-            "DynamicMobileScanTypeAuditTemplateFieldTypes"
-    };
-
     public static final JsonNode renameFields(JsonNode record) {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
-    }
-
-    public static final ArrayNode getLookupTypes() {
-
-        //String[] lookups = Stream.of(FoDLookupType.values()).map(FoDLookupType::name).toArray();
-        List<String> lookups = Stream.of(FoDLookupTypeOptions.FoDLookupType.values())
-                .map(FoDLookupTypeOptions.FoDLookupType::name)
-                .collect(Collectors.toList());
-        System.out.println(lookups);
-        ArrayNode n = objectMapper.valueToTree(lookups);
-        System.out.println(n.toPrettyString());
-        return n;
-//        return JsonHelper.toArrayNode(lookups.toArray(String[]::new));
     }
 
     public static final FoDLookupDescriptor getDescriptor(UnirestInstance unirestInstance, FoDLookupTypeOptions.FoDLookupType type,

@@ -213,7 +213,4 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "call";
     }
 
-    public static class LookupItems extends TableWithQuery {
-        public static final String CMD_NAME = "lookup";
-    }
 }

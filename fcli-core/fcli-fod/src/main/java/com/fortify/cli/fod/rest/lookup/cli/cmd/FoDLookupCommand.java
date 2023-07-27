@@ -13,11 +13,11 @@
 package com.fortify.cli.fod.rest.lookup.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDBaseRequestOutputCommand;
+import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
 import com.fortify.cli.fod._common.rest.query.cli.mixin.FoDFiltersParamMixin;
@@ -29,9 +29,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.LookupItems.CMD_NAME)
+@Command(name = FoDOutputHelperMixins.Lookup.CMD_NAME)
 public class FoDLookupCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
-    @Getter @Mixin private OutputHelperMixins.LookupItems outputHelper;
+    @Getter @Mixin private FoDOutputHelperMixins.Lookup outputHelper;
 
     @Mixin private FoDLookupTypeOptions.OptionalLookupOption lookupType;
     @Mixin private FoDFiltersParamMixin filterParamMixin;
