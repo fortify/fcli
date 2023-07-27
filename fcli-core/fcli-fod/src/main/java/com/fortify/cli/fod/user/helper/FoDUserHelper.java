@@ -28,9 +28,9 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
-import com.fortify.cli.fod.lookup.cli.mixin.FoDLookupTypeOptions;
-import com.fortify.cli.fod.lookup.helper.FoDLookupDescriptor;
-import com.fortify.cli.fod.lookup.helper.FoDLookupHelper;
+import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
+import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
+import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
 import kong.unirest.GetRequest;
