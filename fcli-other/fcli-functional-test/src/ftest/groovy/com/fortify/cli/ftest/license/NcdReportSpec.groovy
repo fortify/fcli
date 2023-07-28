@@ -69,7 +69,7 @@ class NcdReportSpec extends FcliBaseSpec {
     
     @Requires({env.FCLI_FT_GITHUB_TOKEN && env.FCLI_FT_GITLAB_TOKEN})
     def "generate-zip"() {
-        def args = "util ncd-report generate -y -c ${configFile} -z ${reportOutputZip}"
+        def args = "license ncd-report generate -y -c ${configFile} -z ${reportOutputZip}"
         when:
             def result = Fcli.run(args)
         then:

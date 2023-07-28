@@ -80,7 +80,7 @@ final class NcdReportRepositoryProcessor implements INcdReportRepositoryProcesso
 
     private <R extends INcdReportRepositoryDescriptor> void processRepository(R repoDescriptor, INcdReportBranchCommitGenerator<R> branchCommitGenerator) {
         var branchCommitsCollector = new NcdReportRepositoryBranchCommitCollector(authorCollector, repoDescriptor);
-        writers.progressWriter().writeI18nProgress("fcli.util.ncd-report.loading.commits", repoDescriptor.getFullName());
+        writers.progressWriter().writeI18nProgress("fcli.license.ncd-report.loading.commits", repoDescriptor.getFullName());
         branchCommitGenerator.generateBranchCommitData(repoDescriptor, branchCommitsCollector);
         if ( branchCommitsCollector.isEmpty() ) {
             repositoryCollector.reportRepository(repoDescriptor, NcdReportRepositoryReportingStatus.empty, "No commits found");
