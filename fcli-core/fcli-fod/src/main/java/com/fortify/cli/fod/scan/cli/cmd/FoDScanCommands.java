@@ -13,7 +13,7 @@
 
 package com.fortify.cli.fod.scan.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.fod.scan.cli.cmd.dast.FoDDastScanImportCommand;
 import com.fortify.cli.fod.scan.cli.cmd.dast.FoDDastScanStartCommand;
@@ -48,5 +48,5 @@ import picocli.CommandLine;
         }
 )
 @DefaultVariablePropertyName("scanId")
-public class FoDScanCommands extends AbstractFortifyCLICommand {
+public class FoDScanCommands extends AbstractContainerCommand {
 }

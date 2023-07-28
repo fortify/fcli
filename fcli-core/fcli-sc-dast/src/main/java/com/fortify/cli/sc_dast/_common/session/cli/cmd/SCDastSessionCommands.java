@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast._common.session.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -24,5 +24,5 @@ import picocli.CommandLine.Command;
                 SCDastSessionLogoutCommand.class 
         }
 )
-public class SCDastSessionCommands extends AbstractFortifyCLICommand {
+public class SCDastSessionCommands extends AbstractContainerCommand {
 }

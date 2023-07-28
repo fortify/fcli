@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast._main.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.sc_dast._common.session.cli.cmd.SCDastSessionCommands;
 import com.fortify.cli.sc_dast.rest.cli.cmd.SCDastRestCommands;
 import com.fortify.cli.sc_dast.scan.cli.cmd.SCDastScanCommands;
@@ -42,4 +42,4 @@ import picocli.CommandLine.Command;
                 SCDastRestCommands.class,
         }
 )
-public class SCDastCommands extends AbstractFortifyCLICommand {}
+public class SCDastCommands extends AbstractContainerCommand {}

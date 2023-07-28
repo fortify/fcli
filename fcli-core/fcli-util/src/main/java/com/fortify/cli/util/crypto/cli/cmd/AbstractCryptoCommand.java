@@ -14,13 +14,13 @@ package com.fortify.cli.util.crypto.cli.cmd;
 
 import java.util.Scanner;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractCryptoCommand extends AbstractFortifyCLICommand implements Runnable {
+public abstract class AbstractCryptoCommand extends AbstractRunnableCommand implements Runnable {
     @Mixin private CommandHelperMixin commandHelper;
     
     @Override @SneakyThrows

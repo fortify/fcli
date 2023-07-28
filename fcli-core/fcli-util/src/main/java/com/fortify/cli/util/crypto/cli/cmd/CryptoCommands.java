@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.util.crypto.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -23,4 +23,4 @@ import picocli.CommandLine.Command;
             CryptoDecryptCommand.class
         }
 )
-public class CryptoCommands extends AbstractFortifyCLICommand {}
+public class CryptoCommands extends AbstractContainerCommand {}

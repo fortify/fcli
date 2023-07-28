@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.config.language.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine;
 
@@ -27,5 +27,5 @@ import picocli.CommandLine;
                 LanguageGetCommand.class
         }
 )
-public class LanguageCommands extends AbstractFortifyCLICommand {
+public class LanguageCommands extends AbstractContainerCommand {
 }

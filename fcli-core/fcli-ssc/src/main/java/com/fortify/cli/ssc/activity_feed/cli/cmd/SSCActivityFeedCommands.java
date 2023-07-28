@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.activity_feed.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -22,5 +22,5 @@ import picocli.CommandLine.Command;
                 SSCActivityFeedListCommand.class
         }
 )
-public class SSCActivityFeedCommands extends AbstractFortifyCLICommand {
+public class SSCActivityFeedCommands extends AbstractContainerCommand {
 }

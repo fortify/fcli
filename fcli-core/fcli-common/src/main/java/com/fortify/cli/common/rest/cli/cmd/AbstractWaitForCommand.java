@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -28,7 +28,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractWaitForCommand extends AbstractFortifyCLICommand implements IActionCommandResultSupplier, IProductHelperSupplier, ISingularSupplier, Runnable {
+public abstract class AbstractWaitForCommand extends AbstractRunnableCommand implements IActionCommandResultSupplier, IProductHelperSupplier, ISingularSupplier, Runnable {
     @Getter @Mixin private OutputHelperMixins.WaitFor outputHelper;
     @Mixin private WaitHelperControlOptions controlOptions;
     @Mixin private WaitHelperWaitOptions waitOptions;

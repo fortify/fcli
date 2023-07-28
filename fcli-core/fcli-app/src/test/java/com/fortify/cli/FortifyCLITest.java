@@ -101,7 +101,9 @@ public class FortifyCLITest {
 
     private void checkStandardOptions(Results results, CommandSpec spec) {
         var optionNames = spec.optionsMap().keySet();
-        var expectedOptionNames = Arrays.asList("-h", "--help", "--log-level", "--log-file", "--env-prefix");
+        var expectedOptionNames = spec.userObject() instanceof Runnable
+                ? Arrays.asList("-h", "--help", "--log-level", "--log-file", "--env-prefix")
+                : Arrays.asList("-h", "--help");
         if ( !optionNames.containsAll(expectedOptionNames) ) {
             results.add(TestType.CMD_STD_OPTS, Level.ERROR, spec, "Missing one or more standard option names: "+expectedOptionNames);
         }

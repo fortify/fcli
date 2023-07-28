@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.util.all_commands.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -23,4 +23,4 @@ import picocli.CommandLine.Command;
             AllCommandsListCommand.class
         }
 )
-public class AllCommandsCommands extends AbstractFortifyCLICommand {}
+public class AllCommandsCommands extends AbstractContainerCommand {}

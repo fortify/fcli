@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.fod.user_group.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine;
@@ -27,5 +27,5 @@ import picocli.CommandLine;
         }
 )
 @DefaultVariablePropertyName("id")
-public class FoDUserGroupCommands extends AbstractFortifyCLICommand {
+public class FoDUserGroupCommands extends AbstractContainerCommand {
 }

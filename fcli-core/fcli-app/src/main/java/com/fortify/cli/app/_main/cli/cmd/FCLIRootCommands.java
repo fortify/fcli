@@ -13,15 +13,15 @@
 package com.fortify.cli.app._main.cli.cmd;
 
 import com.fortify.cli.app.FortifyCLIVersionProvider;
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.config._main.cli.cmd.ConfigCommands;
 import com.fortify.cli.fod._main.cli.cmd.FoDCommands;
+import com.fortify.cli.license._main.cli.cmd.LicenseCommands;
 import com.fortify.cli.sc_dast._main.cli.cmd.SCDastCommands;
 import com.fortify.cli.sc_sast._main.cli.cmd.SCSastCommands;
 import com.fortify.cli.ssc._main.cli.cmd.SSCCommands;
-import com.fortify.cli.state._main.cli.cmd.StateCommands;
 import com.fortify.cli.tool._main.cli.cmd.ToolCommands;
 import com.fortify.cli.util._main.cli.cmd.UtilCommands;
 
@@ -44,16 +44,16 @@ import picocli.CommandLine.ScopeType;
     versionProvider = FortifyCLIVersionProvider.class,
     subcommands = {
             ConfigCommands.class,
-            StateCommands.class,
             FoDCommands.class,
             SCDastCommands.class,
             SCSastCommands.class,
             SSCCommands.class,
             ToolCommands.class,
+            LicenseCommands.class,
             UtilCommands.class
     }
 )
-public class FCLIRootCommands extends AbstractFortifyCLICommand {    
+public class FCLIRootCommands extends AbstractContainerCommand {    
     // We only want to have the --version option on the top-level fcli command,
     @Option(names = {"-V", "--version"}, versionHelp = true, scope = ScopeType.LOCAL, order = -1002)
     @DisableTest(TestType.OPT_SHORT_NAME)

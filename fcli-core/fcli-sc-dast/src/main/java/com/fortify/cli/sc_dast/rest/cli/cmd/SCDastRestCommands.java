@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast.rest.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -23,5 +23,5 @@ import picocli.CommandLine.Command;
         }
 
 )
-public class SCDastRestCommands extends AbstractFortifyCLICommand {
+public class SCDastRestCommands extends AbstractContainerCommand {
 }

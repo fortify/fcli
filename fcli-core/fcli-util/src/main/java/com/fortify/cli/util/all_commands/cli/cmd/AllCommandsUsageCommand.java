@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.util.all_commands.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.util.all_commands.cli.mixin.AllCommandsCommandSelectorMixin;
 
 import picocli.CommandLine;
@@ -21,7 +21,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 
 @Command(name = "usage")
-public final class AllCommandsUsageCommand extends AbstractFortifyCLICommand implements Runnable {
+public final class AllCommandsUsageCommand extends AbstractRunnableCommand implements Runnable {
     @Mixin private AllCommandsCommandSelectorMixin selectorMixin;
     
     @Override

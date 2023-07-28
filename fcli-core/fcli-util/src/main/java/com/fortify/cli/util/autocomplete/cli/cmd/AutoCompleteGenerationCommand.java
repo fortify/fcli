@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.util.autocomplete.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 
 import picocli.AutoComplete;
 import picocli.CommandLine.Command;
@@ -27,7 +27,7 @@ import picocli.CommandLine.Spec;
  * 
  */
 @Command(name = "generate")
-public final class AutoCompleteGenerationCommand extends AbstractFortifyCLICommand implements Runnable {
+public final class AutoCompleteGenerationCommand extends AbstractRunnableCommand implements Runnable {
     @Spec CommandSpec spec;
 
     public void run() {

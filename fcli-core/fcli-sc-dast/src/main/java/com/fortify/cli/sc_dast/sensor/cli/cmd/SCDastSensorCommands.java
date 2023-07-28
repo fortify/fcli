@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast.sensor.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine.Command;
@@ -27,5 +27,5 @@ import picocli.CommandLine.Command;
         }
 )
 @DefaultVariablePropertyName("id")
-public class SCDastSensorCommands extends AbstractFortifyCLICommand {
+public class SCDastSensorCommands extends AbstractContainerCommand {
 }

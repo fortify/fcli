@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.role.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -26,5 +26,5 @@ import picocli.CommandLine.Command;
         }
 
 )
-public class SSCRoleCommands extends AbstractFortifyCLICommand {
+public class SSCRoleCommands extends AbstractContainerCommand {
 }

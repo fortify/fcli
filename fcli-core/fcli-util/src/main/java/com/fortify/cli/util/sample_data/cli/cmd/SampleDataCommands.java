@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.util.sample_data.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -24,4 +24,4 @@ import picocli.CommandLine.Command;
                 SampleDataListCommand.class
         }
 )
-public class SampleDataCommands extends AbstractFortifyCLICommand {}
+public class SampleDataCommands extends AbstractContainerCommand {}

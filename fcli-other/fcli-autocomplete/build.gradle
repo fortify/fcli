@@ -2,7 +2,10 @@ apply plugin: 'java'
 
 dependencies {
 	runtimeOnly project("${fcliAppRef}")
-	runtimeOnly 'info.picocli:picocli-codegen'
+    // TODO May need to re-enable once patch for #2068 has been released,
+    //      but potentially the necessary dependency for picocli.AutoComplete 
+    //      is already available through the project dependency above. 
+	//runtimeOnly 'info.picocli:picocli-codegen'
 }
 
 task dist(type: JavaExec) {
