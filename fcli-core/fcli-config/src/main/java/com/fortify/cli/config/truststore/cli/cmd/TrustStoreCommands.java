@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.config.truststore.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -24,5 +24,5 @@ import picocli.CommandLine.Command;
             TrustStoreSetCommand.class,
         }
 )
-public class TrustStoreCommands extends AbstractFortifyCLICommand {
+public class TrustStoreCommands extends AbstractContainerCommand {
 }

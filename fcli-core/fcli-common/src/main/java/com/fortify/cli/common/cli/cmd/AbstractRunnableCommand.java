@@ -25,7 +25,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 /**
- * This abstract class should be used as the base class for all fcli commands.
+ * This abstract class should be used as the base class for all runnable fcli commands.
  * It is responsible for providing the following fcli features:
  * <ul>
  *  <li>Providing standard command configuration settings (default value provider, ...)</li>
@@ -36,7 +36,7 @@ import picocli.CommandLine.Spec;
  *
  * @author Ruud Senden
  */
-public class AbstractFortifyCLICommand {
+public abstract class AbstractRunnableCommand implements Runnable {
     // Have picocli inject the CommandSpec representing the current command
     @Spec private CommandSpec commandSpec;
     

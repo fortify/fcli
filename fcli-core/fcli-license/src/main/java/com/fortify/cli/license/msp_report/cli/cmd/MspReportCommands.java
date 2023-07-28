@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.license.msp_report.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -23,4 +23,4 @@ import picocli.CommandLine.Command;
             MspReportGenerateConfigCommand.class
         }
 )
-public class MspReportCommands extends AbstractFortifyCLICommand {}
+public class MspReportCommands extends AbstractContainerCommand {}

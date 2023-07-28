@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.job.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -25,5 +25,5 @@ import picocli.CommandLine.Command;
                 SSCJobUpdateCommand.class
         }
 )
-public class SSCJobCommands extends AbstractFortifyCLICommand {
+public class SSCJobCommands extends AbstractContainerCommand {
 }

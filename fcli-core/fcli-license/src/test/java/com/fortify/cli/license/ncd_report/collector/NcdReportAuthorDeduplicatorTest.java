@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.license.ncd_report.collector.NcdReportAuthorDeduplicator;
 import com.fortify.cli.license.ncd_report.config.NcdReportContributorConfig;
 import com.fortify.cli.license.ncd_report.descriptor.INcdReportAuthorDescriptor;
 import com.fortify.cli.license.ncd_report.descriptor.NcdReportProcessedAuthorDescriptor;

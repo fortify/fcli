@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.util.variable.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -28,5 +28,5 @@ import picocli.CommandLine.Command;
                 
         }
 )
-public class VariableCommands extends AbstractFortifyCLICommand {
+public class VariableCommands extends AbstractContainerCommand {
 }

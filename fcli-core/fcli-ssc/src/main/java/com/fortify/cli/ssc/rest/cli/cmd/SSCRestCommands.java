@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.rest.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -23,5 +23,5 @@ import picocli.CommandLine.Command;
         }
 
 )
-public class SSCRestCommands extends AbstractFortifyCLICommand {
+public class SSCRestCommands extends AbstractContainerCommand {
 }

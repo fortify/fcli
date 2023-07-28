@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.fod._main.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.fod._common.session.cli.cmd.FoDSessionCommands;
 import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
 import com.fortify.cli.fod.microservice.cli.cmd.FoDAppMicroserviceCommands;
@@ -48,4 +48,4 @@ import picocli.CommandLine.Command;
 
         }
 )
-public class FoDCommands extends AbstractFortifyCLICommand {}
+public class FoDCommands extends AbstractContainerCommand {}

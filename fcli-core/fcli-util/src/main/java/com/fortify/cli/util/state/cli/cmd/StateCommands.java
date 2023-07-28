@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.util.state.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -22,5 +22,5 @@ import picocli.CommandLine.Command;
             StateClearCommand.class,
         }
 )
-public class StateCommands extends AbstractFortifyCLICommand {
+public class StateCommands extends AbstractContainerCommand {
 }

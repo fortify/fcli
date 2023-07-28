@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.fod.app.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine;
@@ -29,5 +29,5 @@ import picocli.CommandLine;
         }
 )
 @DefaultVariablePropertyName("applicationId")
-public class FoDAppCommands extends AbstractFortifyCLICommand {
+public class FoDAppCommands extends AbstractContainerCommand {
 }

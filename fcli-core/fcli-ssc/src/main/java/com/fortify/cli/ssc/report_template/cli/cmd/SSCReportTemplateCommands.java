@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -27,5 +27,5 @@ import picocli.CommandLine.Command;
                 SSCReportTemplateDeleteCommand.class
         }
 )
-public class SSCReportTemplateCommands extends AbstractFortifyCLICommand {
+public class SSCReportTemplateCommands extends AbstractContainerCommand {
 }

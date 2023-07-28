@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.license.ncd_report.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -23,4 +23,4 @@ import picocli.CommandLine.Command;
             NcdReportGenerateConfigCommand.class
         }
 )
-public class NcdReportCommands extends AbstractFortifyCLICommand {}
+public class NcdReportCommands extends AbstractContainerCommand {}

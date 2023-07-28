@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.tool.sc_client.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -26,6 +26,6 @@ import picocli.CommandLine.Command;
         }
 
 )
-public class ToolSCClientCommands extends AbstractFortifyCLICommand {
+public class ToolSCClientCommands extends AbstractContainerCommand {
     static final String TOOL_NAME = "sc-client";
 }

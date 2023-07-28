@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine.Command;
@@ -31,5 +31,5 @@ import picocli.CommandLine.Command;
         }
 )
 @DefaultVariablePropertyName("id")
-public class SSCAppVersionCommands extends AbstractFortifyCLICommand {
+public class SSCAppVersionCommands extends AbstractContainerCommand {
 }

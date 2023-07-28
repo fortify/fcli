@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc._main.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.ssc._common.session.cli.cmd.SSCSessionCommands;
 import com.fortify.cli.ssc.activity_feed.cli.cmd.SSCActivityFeedCommands;
 import com.fortify.cli.ssc.alert.cli.cmd.SSCAlertCommands;
@@ -78,4 +78,4 @@ import picocli.CommandLine.Command;
                 SSCRestCommands.class,
         }
 )
-public class SSCCommands extends AbstractFortifyCLICommand {}
+public class SSCCommands extends AbstractContainerCommand {}

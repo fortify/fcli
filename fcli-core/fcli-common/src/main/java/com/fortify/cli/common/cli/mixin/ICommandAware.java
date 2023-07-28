@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.cli.mixin;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
@@ -28,7 +28,7 @@ import picocli.CommandLine.Spec;
  * <p>Mixins usually wouldn't implement this interface directly, but instead
  * utilize {@link CommandHelperMixin} as it provides some useful utility methods
  * related to the the injected {@link CommandSpec}. Injection is handled 
- * by {@link AbstractFortifyCLICommand}.</p>
+ * by {@link AbstractRunnableCommand}.</p>
  * 
  * @author rsenden
  *

@@ -13,7 +13,7 @@
 
 package com.fortify.cli.fod.microservice.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine;
@@ -28,5 +28,5 @@ import picocli.CommandLine;
         }
 )
 @DefaultVariablePropertyName("microserviceId")
-public class FoDAppMicroserviceCommands extends AbstractFortifyCLICommand {
+public class FoDAppMicroserviceCommands extends AbstractContainerCommand {
 }

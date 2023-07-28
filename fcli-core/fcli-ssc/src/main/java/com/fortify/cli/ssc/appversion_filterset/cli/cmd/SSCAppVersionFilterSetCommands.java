@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion_filterset.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -23,5 +23,5 @@ import picocli.CommandLine.Command;
             SSCAppVersionFilterSetListCommand.class,
         }
 )
-public class SSCAppVersionFilterSetCommands extends AbstractFortifyCLICommand {
+public class SSCAppVersionFilterSetCommands extends AbstractContainerCommand {
 }

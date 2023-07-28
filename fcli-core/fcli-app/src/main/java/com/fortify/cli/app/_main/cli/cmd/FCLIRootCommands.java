@@ -13,7 +13,7 @@
 package com.fortify.cli.app._main.cli.cmd;
 
 import com.fortify.cli.app.FortifyCLIVersionProvider;
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.config._main.cli.cmd.ConfigCommands;
@@ -53,7 +53,7 @@ import picocli.CommandLine.ScopeType;
             UtilCommands.class
     }
 )
-public class FCLIRootCommands extends AbstractFortifyCLICommand {    
+public class FCLIRootCommands extends AbstractContainerCommand {    
     // We only want to have the --version option on the top-level fcli command,
     @Option(names = {"-V", "--version"}, versionHelp = true, scope = ScopeType.LOCAL, order = -1002)
     @DisableTest(TestType.OPT_SHORT_NAME)

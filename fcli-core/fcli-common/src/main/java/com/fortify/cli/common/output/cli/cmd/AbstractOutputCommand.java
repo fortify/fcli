@@ -15,11 +15,11 @@ package com.fortify.cli.common.output.cli.cmd;
 import java.util.Arrays;
 import java.util.List;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 
-public abstract class AbstractOutputCommand extends AbstractFortifyCLICommand implements Runnable, ISingularSupplier {
+public abstract class AbstractOutputCommand extends AbstractRunnableCommand implements Runnable, ISingularSupplier {
     private static final List<Class<?>> supportedInterfaces = Arrays.asList(
             IBaseRequestSupplier.class, 
             IJsonNodeSupplier.class);

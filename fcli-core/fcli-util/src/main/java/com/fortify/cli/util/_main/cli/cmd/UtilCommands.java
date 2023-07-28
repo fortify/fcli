@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.util._main.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.util.all_commands.cli.cmd.AllCommandsCommands;
 import com.fortify.cli.util.autocomplete.cli.cmd.AutoCompleteCommands;
 import com.fortify.cli.util.crypto.cli.cmd.CryptoCommands;
@@ -34,4 +34,4 @@ import picocli.CommandLine.Command;
             VariableCommands.class
         }
 )
-public class UtilCommands extends AbstractFortifyCLICommand {}
+public class UtilCommands extends AbstractContainerCommand {}

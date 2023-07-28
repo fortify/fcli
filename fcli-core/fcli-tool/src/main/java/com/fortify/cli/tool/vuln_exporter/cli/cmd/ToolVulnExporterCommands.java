@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.tool.vuln_exporter.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -26,6 +26,6 @@ import picocli.CommandLine.Command;
         }
 
 )
-public class ToolVulnExporterCommands extends AbstractFortifyCLICommand {
+public class ToolVulnExporterCommands extends AbstractContainerCommand {
     static final String TOOL_NAME = "vuln-exporter";
 }

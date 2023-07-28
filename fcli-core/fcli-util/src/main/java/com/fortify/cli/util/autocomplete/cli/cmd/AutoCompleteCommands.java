@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.util.autocomplete.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
@@ -22,4 +22,4 @@ import picocli.CommandLine.Command;
             AutoCompleteGenerationCommand.class
         }
 )
-public class AutoCompleteCommands extends AbstractFortifyCLICommand {}
+public class AutoCompleteCommands extends AbstractContainerCommand {}

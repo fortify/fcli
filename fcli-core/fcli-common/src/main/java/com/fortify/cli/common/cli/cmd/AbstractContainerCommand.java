@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2021, 2022 Open Text.
+ * Copyright 2021, 2023 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -10,19 +10,17 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc._common.session.cli.cmd;
+package com.fortify.cli.common.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import picocli.CommandLine.Option;
 
-import picocli.CommandLine.Command;
-
-@Command(
-        name = "session",
-        subcommands = {
-                SSCSessionListCommand.class,
-                SSCSessionLoginCommand.class,
-                SSCSessionLogoutCommand.class 
-        }
-)
-public class SSCSessionCommands extends AbstractContainerCommand {
+/**
+ * This abstract class should be used as the base class for all fcli container commands.
+ * It is responsible for providing the standard help option.
+ *
+ * @author Ruud Senden
+ */
+public abstract class AbstractContainerCommand {
+    @Option(names = {"-h", "--help"}, usageHelp = true)
+    private boolean usageHelpRequested;
 }

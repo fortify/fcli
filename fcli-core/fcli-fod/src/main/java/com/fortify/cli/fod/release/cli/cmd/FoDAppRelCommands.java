@@ -13,7 +13,7 @@
 
 package com.fortify.cli.fod.release.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine;
@@ -28,5 +28,5 @@ import picocli.CommandLine;
         }
 )
 @DefaultVariablePropertyName("releaseId")
-public class FoDAppRelCommands extends AbstractFortifyCLICommand {
+public class FoDAppRelCommands extends AbstractContainerCommand {
 }

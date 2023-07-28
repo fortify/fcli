@@ -12,9 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.fod.rest.cli.cmd;
 
-import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.fod.rest.lookup.cli.cmd.FoDLookupCommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
@@ -26,5 +26,5 @@ import picocli.CommandLine.Command;
         }
 
 )
-public class FoDRestCommands extends AbstractFortifyCLICommand {
+public class FoDRestCommands extends AbstractContainerCommand {
 }
