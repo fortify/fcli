@@ -8,18 +8,18 @@
     "commands": "fod session list",
     "arguments": "",
 	"expectOutput": "default"
-  },  
+  },
   {
-    "commands": "fod application create-web-app",
-    "arguments": "--owner={FCLI_FOD_USER} --business-criticality=High --sdlc-status='Production' INT_T_App2:INT_T_App2_Release2",
+    "commands": "fod application create",
+    "arguments": "--type Web --owner={FCLI_FOD_USER} --business-criticality=High --sdlc-status='Production' INT_T_App2:INT_T_App2_Release2",
 	"expectOutput": "created",
 	"waitSeconds": "10"
-  },  
+  },
   {
     "commands": "fod app list",
     "arguments": "",
 	"expectOutput": "INT_T_App2"
-  },  
+  },
   {
     "commands": "fod app list",
     "arguments": " -q=\"applicationName.contains('{FCLI_DEFAULT_FOD_APP}')\" ",
@@ -36,95 +36,95 @@
   {
     "commands": "fod release create",
     "arguments": "--description='New Release created by Integration test' --skip-if-exists --sdlc-status='Production' INT_T_App2:INT_T_App2_Release3",
-	"expectOutput": "INT_T_App2_Release3"	
+	"expectOutput": "INT_T_App2_Release3"
   },
   {
     "commands": "fod release list",
-    "arguments": "--app=INT_T_App2",	
-	"expectOutput": "INT_T_App2_Release3"		
-  },  
+    "arguments": "--app=INT_T_App2",
+	"expectOutput": "INT_T_App2_Release3"
+  },
   {
     "commands": "fod release list",
-    "arguments": "--app=INT_T_App2",	
-	"expectOutput": "INT_T_App2_Release3"		
+    "arguments": "--app=INT_T_App2",
+	"expectOutput": "INT_T_App2_Release3"
   },
   {
     "commands": "fod release ls",
-    "arguments": "",	
-	"expectOutput": "INT_T_App2_Release3"		
+    "arguments": "",
+	"expectOutput": "INT_T_App2_Release3"
   },
   {
     "commands": "fod release get",
-    "arguments": "INT_T_App2:INT_T_App2_Release3",	  
+    "arguments": "INT_T_App2:INT_T_App2_Release3",
 	"expectOutput": "INT_T_App2_Release3"
   },
   {
     "commands": "fod release update",
-    "arguments": "--description='Updated Release created by Integration test' --sdlc-status='QA' INT_T_App2:INT_T_App2_Release3",	  
-	"expectOutput": "Updated Release"		
+    "arguments": "--description='Updated Release created by Integration test' --sdlc-status='QA' INT_T_App2:INT_T_App2_Release3",
+	"expectOutput": "Updated Release"
   },
    {
     "commands": "fod release get",
-    "arguments": "INT_T_App2:INT_T_App2_Release3",	  
-	"expectOutput": "QA"		
-  }, 
+    "arguments": "INT_T_App2:INT_T_App2_Release3",
+	"expectOutput": "QA"
+  },
   {
     "commands": "fod release delete",
-    "arguments": "INT_T_App2:INT_T_App2_Release3"  	
-  },  
+    "arguments": "INT_T_App2:INT_T_App2_Release3"
+  },
   {
-    "commands": "fod app-rel create",
+    "commands": "fod release create",
     "arguments": "--description='New app-rel created by Integration test' --skip-if-exists --sdlc-status='Production' INT_T_App2:INT_T_App2_Rel3",
 	"expectOutput": "INT_T_App2_Rel3",
-	"waitSeconds": "5"	
+	"waitSeconds": "5"
   },
   {
-    "commands": "fod app-rel list",
-    "arguments": "--app=INT_T_App2",	
-	"expectOutput": "INT_T_App2_Rel3"		
+    "commands": "fod release list",
+    "arguments": "--app=INT_T_App2",
+	"expectOutput": "INT_T_App2_Rel3"
   },
   {
-    "commands": "fod app-rel ls",
-    "arguments": "--app=INT_T_App2",	
-	"expectOutput": "INT_T_App2_Rel3"		
+    "commands": "fod release ls",
+    "arguments": "--app=INT_T_App2",
+	"expectOutput": "INT_T_App2_Rel3"
   },
   {
-    "commands": "fod app-rel get",
-    "arguments": "INT_T_App2:INT_T_App2_Rel3",	  
-	"expectOutput": "INT_T_App2_Rel3"		
+    "commands": "fod release get",
+    "arguments": "INT_T_App2:INT_T_App2_Rel3",
+	"expectOutput": "INT_T_App2_Rel3"
   },
   {
-    "commands": "fod app-rel update",
-    "arguments": "--description='Updated Release using app-rel param' --sdlc-status='QA' INT_T_App2:INT_T_App2_Rel3",	  
+    "commands": "fod release update",
+    "arguments": "--description='Updated Release using app-rel param' --sdlc-status='QA' INT_T_App2:INT_T_App2_Rel3",
 	"expectOutput": "using app-rel",
 	"waitSeconds": "15"
   },
    {
-    "commands": "fod app-rel get",
-    "arguments": "INT_T_App2:INT_T_App2_Rel3",	  
-	"expectOutput": "QA"		
-  }, 
+    "commands": "fod release get",
+    "arguments": "INT_T_App2:INT_T_App2_Rel3",
+	"expectOutput": "QA"
+  },
   {
     "commands": "fod scan list",
     "arguments": "--scan-type=Dynamic"
   },
   {
     "commands": "fod scan get",
-    "arguments": "3356",	  
-	"expectOutput": "Dynamic"		
-  },  
+    "arguments": "3356",
+	"expectOutput": "Dynamic"
+  },
   {
-    "commands": "fod lookup list",
+    "commands": "fod rest lookup",
     "arguments": "--type TechnologyTypes"
-  },    
+  },
   {
-    "commands": "fod lookup list",
+    "commands": "fod rest lookup",
     "arguments": "--type LanguageLevels"
-  },   
+  },
   {
     "commands": "fod scan list",
     "arguments": "--scan-type=Static"
-  },  
+  },
   {
     "commands": "fod scan import-sast",
     "arguments": "--file='{PATH}\\data\\sample\\scan.fpr' INT_T_App2:INT_T_App2_Rel3",
@@ -134,47 +134,47 @@
   {
     "commands": "fod scan setup-sast",
     "arguments": "--entitlement-frequency=Subscription --entitlement-id={ENTITLE_ID} --technology-stack='JAVA/J2EE' --language-level='11' --audit-preference=Automated --assessment-type=Static INT_T_App2:INT_T_App2_Rel3"
-  }, 
+  },
   {
     "commands": "fod user list",
     "arguments": ""
-  },   
+  },
   {
     "commands": "fod user ls",
     "arguments": ""
-  },   
+  },
   {
     "commands": "fod user create",
     "arguments": "--email=integration@test.com --firstname=INT_Test --lastname=User_001 --phone=555555555 --role=Developer INT_T_U_001",
-	"expectOutput": "created"	
-  },   
+	"expectOutput": "created"
+  },
   {
     "commands": "fod user get",
     "arguments": " INT_T_U_001"
-  },  
+  },
   {
     "commands": "fod user update",
     "arguments": "--email=integration@test.com --phone=555555555 --suspended=true --role=Developer INT_T_U_001",
-	"expectOutput": "updated"		
-  },  
+	"expectOutput": "updated"
+  },
   {
     "commands": "fod user delete",
     "arguments": " INT_T_U_001",
-	"expectOutput": "deleted"	
-  },     
+	"expectOutput": "deleted"
+  },
   {
     "commands": "fod user-group list",
     "arguments": ""
-  },   
+  },
   {
     "commands": "fod user-group ls",
     "arguments": ""
-  },   
+  },
   {
     "commands": "fod user-group create",
     "arguments": " INT_T_UG_001",
-	"expectOutput": "created"	
-  },   
+	"expectOutput": "created"
+  },
   {
     "commands": "fod user-group get",
     "arguments": " INT_T_UG_001"
@@ -182,42 +182,42 @@
   {
     "commands": "fod user-group update",
     "arguments": " --new-name=INT_T_UG_001x INT_T_UG_001",
-	"expectOutput": "updated"		
-  },  
+	"expectOutput": "updated"
+  },
   {
     "commands": "fod user-group delete",
     "arguments": " INT_T_UG_001x",
-	"expectOutput": "deleted"	
+	"expectOutput": "deleted"
   },
   {
     "commands": "fod microservice create",
-    "arguments": "--skip-if-exists INT_T_App2:INT_T_App2_MicroService_Test1",	  
-	"expectOutput": "Production"		
-  }, 
+    "arguments": "--skip-if-exists INT_T_App2:INT_T_App2_MicroService_Test1",
+	"expectOutput": "Production"
+  },
   {
     "commands": "fod microservice list",
-    "arguments": "--app=INT_T_App2 --include-releases",	
-	"expectOutput": "INT_T_App2_MicroService_Test1"		
+    "arguments": "--app=INT_T_App2 --include-releases",
+	"expectOutput": "INT_T_App2_MicroService_Test1"
   },
   {
     "commands": "fod microservice ls",
-    "arguments": "--app=INT_T_App2 --include-releases",	
-	"expectOutput": "INT_T_App2_MicroService_Test1"		
+    "arguments": "--app=INT_T_App2 --include-releases",
+	"expectOutput": "INT_T_App2_MicroService_Test1"
   },
   {
     "commands": "fod microservice update",
-    "arguments": "--name=INT_T_App2_MicroService_Test1_upd INT_T_App2:INT_T_App2_MicroService_Test1",	
-	"expectOutput": "INT_T_App2_MicroService_Test1_upd"		
+    "arguments": "--name=INT_T_App2_MicroService_Test1_upd INT_T_App2:INT_T_App2_MicroService_Test1",
+	"expectOutput": "INT_T_App2_MicroService_Test1_upd"
   },
   {
     "commands": "fod microservice delete",
-    "arguments": "INT_T_App2:INT_T_App2_MicroService_Test1",	
-	"expectOutput": "deleted"		
+    "arguments": "INT_T_App2:INT_T_App2_MicroService_Test1",
+	"expectOutput": "deleted"
   },
   {
-    "commands": "fod app-rel delete",
-    "arguments": "INT_T_App2:INT_T_App2_Rel3"  	
-  },  
+    "commands": "fod release delete",
+    "arguments": "INT_T_App2:INT_T_App2_Rel3"
+  },
   {
     "commands": "fod app delete",
     "arguments": "INT_T_App2"
@@ -225,5 +225,5 @@
   {
     "commands": "fod session logout",
     "arguments": ""
-  }  
+  }
 ]

@@ -21,7 +21,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-// TODO Use @Builder instead of manually defining setter methods?
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Getter
 @ToString
