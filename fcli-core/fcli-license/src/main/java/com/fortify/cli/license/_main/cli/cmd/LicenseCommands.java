@@ -10,28 +10,20 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.util._main.cli.cmd;
+package com.fortify.cli.license._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
-import com.fortify.cli.util.all_commands.cli.cmd.AllCommandsCommands;
-import com.fortify.cli.util.autocomplete.cli.cmd.AutoCompleteCommands;
-import com.fortify.cli.util.crypto.cli.cmd.CryptoCommands;
-import com.fortify.cli.util.sample_data.cli.cmd.SampleDataCommands;
-import com.fortify.cli.util.state.cli.cmd.StateCommands;
-import com.fortify.cli.util.variable.cli.cmd.VariableCommands;
+import com.fortify.cli.license.msp_report.cli.cmd.MspReportCommands;
+import com.fortify.cli.license.ncd_report.cli.cmd.NcdReportCommands;
 
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "util",
-        resourceBundle = "com.fortify.cli.util.i18n.UtilMessages",
+        name = "license",
+        resourceBundle = "com.fortify.cli.license.i18n.LicenseMessages",
         subcommands = {
-            AllCommandsCommands.class,
-            AutoCompleteCommands.class,
-            CryptoCommands.class,
-            SampleDataCommands.class,
-            StateCommands.class,
-            VariableCommands.class
+            MspReportCommands.class,
+            NcdReportCommands.class
         }
 )
-public class UtilCommands extends AbstractFortifyCLICommand {}
+public class LicenseCommands extends AbstractFortifyCLICommand {}
