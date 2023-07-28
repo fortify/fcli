@@ -12,10 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.common.json;
 
-import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -25,16 +23,9 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.DataBindingMethodResolver;
-import org.springframework.expression.spel.support.SimpleEvaluationContext;
-import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
-import org.springframework.format.support.DefaultFormattingConversionService;
-import org.springframework.integration.json.JsonNodeWrapperToJsonNodeConverter;
-import org.springframework.integration.json.JsonPropertyAccessor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -44,8 +35,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fortify.cli.common.spring.expression.SpelHelper;
-import com.fortify.cli.common.spring.expression.StandardSpelFunctions;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Getter;
@@ -60,7 +49,7 @@ public class JsonHelper {
     private static final SpelExpressionParser spelParser = new SpelExpressionParser();
     @Getter private static final ObjectMapper objectMapper = _createObjectMapper();
     //private static final Logger LOG = LoggerFactory.getLogger(JsonHelper.class);
-    private static final EvaluationContext spelEvaluationContext = createSpelEvaluationContext();
+    private static final EvaluationContext spelEvaluationContext = new JsonEvaluationContext();
     
     private static final ObjectMapper _createObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -175,47 +164,5 @@ public class JsonHelper {
         public Set<Characteristics> characteristics() {
             return EnumSet.of(Characteristics.UNORDERED);
         }
-    }
-    
-    /**
-     * Create an SpEL {@link EvaluationContext} for data binding and condition evaluation
-     * that can resolve properties on {@link JsonNode} instances. We allow reflective
-     * using {@link DataBindingMethodResolver}. Note that native binaries will only be
-     * able to access methods declared in reflect-config.json; reflective access is 
-     * being enabled for some common Java types through an annotation on the 
-     * RuntimeReflectionRegistrationFeature inner class in the main FortifyCLI class.
-     * @return
-     */
-    private static final EvaluationContext createSpelEvaluationContext() {
-        DefaultFormattingConversionService  conversionService = new DefaultFormattingConversionService();
-        conversionService.addConverter(new JsonNodeWrapperToJsonNodeConverter());
-        conversionService.addConverter(new ListToArrayNodeConverter());
-        conversionService.addConverter(new ObjectToJsonNodeConverter());
-        DateTimeFormatterRegistrar dateTimeRegistrar = new DateTimeFormatterRegistrar();
-        dateTimeRegistrar.setDateFormatter(DateTimeFormatter.ISO_DATE);
-        dateTimeRegistrar.setDateTimeFormatter(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-        dateTimeRegistrar.registerFormatters(conversionService);
-        SimpleEvaluationContext context = SimpleEvaluationContext
-                .forPropertyAccessors(new JsonPropertyAccessor())
-                .withConversionService(conversionService)
-                .withInstanceMethods()
-                .build();
-        SpelHelper.registerFunctions(context, StandardSpelFunctions.class);
-        return context;
-    }
-    
-    private static final class ObjectToJsonNodeConverter implements Converter<Object, JsonNode> {
-        @Override
-        public JsonNode convert(Object source) {
-            return objectMapper.valueToTree(source);
-        }
-    }
-    
-    private static final class ListToArrayNodeConverter implements Converter<List<?>, ArrayNode> {
-        @Override
-        public ArrayNode convert(List<?> source) {
-            return objectMapper.valueToTree(source);
-        }
-    }
-    
+    }    
 }
