@@ -10,12 +10,17 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.state.variable.cli.mixin;
+package com.fortify.cli.util.state.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.cli.cmd.AbstractFortifyCLICommand;
 
-public class VariableOutputHelperMixins {
-    public static class Contents extends OutputHelperMixins.TableWithQuery {
-        public static final String CMD_NAME = "contents";
-    }
+import picocli.CommandLine.Command;
+
+@Command(
+        name = "state",
+        subcommands = {
+            StateClearCommand.class,
+        }
+)
+public class StateCommands extends AbstractFortifyCLICommand {
 }

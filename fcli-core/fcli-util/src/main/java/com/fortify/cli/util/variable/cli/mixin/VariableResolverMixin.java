@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.state.variable.cli.mixin;
+package com.fortify.cli.util.variable.cli.mixin;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.variable.FcliVariableHelper;
@@ -39,7 +39,7 @@ public class VariableResolverMixin {
     }
     
     public static class PositionalParameter extends AbstractRequiredVariableResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.state.variable.name")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.util.variable.name")
         @Getter private String variableName;
     }
 }

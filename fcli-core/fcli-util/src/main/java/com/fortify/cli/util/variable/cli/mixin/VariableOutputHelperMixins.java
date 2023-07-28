@@ -10,9 +10,12 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-/**
- * This package defines the 'state' top-level command, some generic sub-commands, and any accompanying 
- * classes like mixins and (abstract) base classes.
- */
-package com.fortify.cli.state._main.cli.cmd;
+package com.fortify.cli.util.variable.cli.mixin;
 
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+
+public class VariableOutputHelperMixins {
+    public static class Contents extends OutputHelperMixins.TableWithQuery {
+        public static final String CMD_NAME = "contents";
+    }
+}

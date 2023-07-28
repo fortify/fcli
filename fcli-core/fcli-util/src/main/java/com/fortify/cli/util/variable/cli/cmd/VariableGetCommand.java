@@ -10,13 +10,13 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.state.variable.cli.cmd;
+package com.fortify.cli.util.variable.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.state.variable.cli.mixin.VariableResolverMixin;
+import com.fortify.cli.util.variable.cli.mixin.VariableResolverMixin;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;

@@ -29,7 +29,7 @@ public class SSCAppVersion implements Closeable, AutoCloseable {
     }
     
     public String get(String propertyPath) {
-        Fcli.run("state var contents $fcliVariableName -o expr={$propertyPath}",
+        Fcli.run("util var contents $fcliVariableName -o expr={$propertyPath}",
             {it.expectSuccess(true, "Error getting application version property "+propertyPath)})
             .stdout[0]  
     }

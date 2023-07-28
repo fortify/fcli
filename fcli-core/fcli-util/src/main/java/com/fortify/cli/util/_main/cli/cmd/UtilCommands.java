@@ -19,6 +19,8 @@ import com.fortify.cli.util.crypto.cli.cmd.CryptoCommands;
 import com.fortify.cli.util.msp_report.cli.cmd.MspReportCommands;
 import com.fortify.cli.util.ncd_report.cli.cmd.NcdReportCommands;
 import com.fortify.cli.util.sample_data.cli.cmd.SampleDataCommands;
+import com.fortify.cli.util.state.cli.cmd.StateCommands;
+import com.fortify.cli.util.variable.cli.cmd.VariableCommands;
 
 import picocli.CommandLine.Command;
 
@@ -31,7 +33,9 @@ import picocli.CommandLine.Command;
             CryptoCommands.class,
             MspReportCommands.class,
             NcdReportCommands.class,
-            SampleDataCommands.class
+            SampleDataCommands.class,
+            StateCommands.class,
+            VariableCommands.class
         }
 )
 public class UtilCommands extends AbstractFortifyCLICommand {}

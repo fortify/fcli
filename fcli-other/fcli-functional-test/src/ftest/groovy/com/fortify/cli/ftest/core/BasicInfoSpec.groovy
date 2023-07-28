@@ -13,7 +13,6 @@ class BasicInfoSpec extends FcliBaseSpec {
             verifyAll(expectedSuccess ? result.stdout : result.stderr) {
                 it.any { it ==~ /.*Command-line interface for working with various Fortify products.*/ }
                 it.any { it.contains 'config' }
-                it.any { it.contains 'state' }
                 it.any { it.contains 'ssc' }
                 it.any { it.contains 'sc-dast' }
                 it.any { it.contains 'sc-sast' }

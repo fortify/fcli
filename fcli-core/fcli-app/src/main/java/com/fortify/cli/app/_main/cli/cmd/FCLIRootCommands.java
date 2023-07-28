@@ -21,7 +21,6 @@ import com.fortify.cli.fod._main.cli.cmd.FoDCommands;
 import com.fortify.cli.sc_dast._main.cli.cmd.SCDastCommands;
 import com.fortify.cli.sc_sast._main.cli.cmd.SCSastCommands;
 import com.fortify.cli.ssc._main.cli.cmd.SSCCommands;
-import com.fortify.cli.state._main.cli.cmd.StateCommands;
 import com.fortify.cli.tool._main.cli.cmd.ToolCommands;
 import com.fortify.cli.util._main.cli.cmd.UtilCommands;
 
@@ -44,7 +43,6 @@ import picocli.CommandLine.ScopeType;
     versionProvider = FortifyCLIVersionProvider.class,
     subcommands = {
             ConfigCommands.class,
-            StateCommands.class,
             FoDCommands.class,
             SCDastCommands.class,
             SCSastCommands.class,
