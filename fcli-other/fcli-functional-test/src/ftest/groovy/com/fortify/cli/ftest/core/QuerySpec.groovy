@@ -363,10 +363,10 @@ class QuerySpec extends FcliBaseSpec {
             def result = generate("stringValue != null && stringValue matches 'value1|value2'")
         then:
             verifyAll(result.stdout) {
-                size()==15552
+                size()==15553
                 it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
                 it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[1].contains('15551  value2        N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[15552].contains('15551  value2        N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
             }
     }
     
