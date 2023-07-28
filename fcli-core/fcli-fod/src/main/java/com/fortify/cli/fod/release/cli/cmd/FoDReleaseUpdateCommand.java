@@ -22,7 +22,7 @@ import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
 import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppRelResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
 import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.release.helper.FoDAppRelUpdateRequest;
@@ -37,9 +37,9 @@ import picocli.CommandLine.Spec;
 
 
 @Command(name = OutputHelperMixins.Update.CMD_NAME)
-public class FoDAppRelUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
-    @Mixin private FoDAppRelResolverMixin.PositionalParameter appRelResolver;
+    @Mixin private FoDReleaseResolverMixin.PositionalParameter appRelResolver;
     @Spec CommandSpec spec;
     //ResourceBundle bundle = ResourceBundle.getBundle("com.fortify.cli.fod.i18n.FoDMessages");
     @Option(names = {"--name", "-n"})

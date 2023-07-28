@@ -11,48 +11,45 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.microservice.cli.cmd;
+package com.fortify.cli.fod.release.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
-import com.fortify.cli.fod.microservice.cli.mixin.FoDAppMicroserviceResolverMixin;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceUpdateRequest;
+import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseResolverMixin;
+import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
+import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
-@Command(name = OutputHelperMixins.Update.CMD_NAME)
-public class FoDAppMicroserviceUpdateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.Update outputHelper;
-    @Mixin private FoDAppMicroserviceResolverMixin.PositionalParameter appMicroserviceResolver;
-
-    @Option(names = {"--name", "-n"}, required = true)
-    private String microserviceName;
+@Command(name = OutputHelperMixins.Delete.CMD_NAME)
+public class FoDReleaseDeleteCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+    @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
+    @Mixin private FoDReleaseResolverMixin.PositionalParameter appRelResolver;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        FoDAppMicroserviceDescriptor appMicroserviceDescriptor = appMicroserviceResolver.getAppMicroserviceDescriptor(unirest);
-        FoDAppMicroserviceUpdateRequest msUpdateRequest = FoDAppMicroserviceUpdateRequest.builder()
-                .microserviceName(microserviceName).build();
-        return FoDAppMicroserviceHelper.updateAppMicroservice(unirest, appMicroserviceDescriptor, msUpdateRequest);
+        FoDAppRelDescriptor appRelDescriptor = appRelResolver.getAppRelDescriptor(unirest);
+        unirest.delete(FoDUrls.RELEASE)
+                .routeParam("relId", String.valueOf(appRelDescriptor.getReleaseId()))
+                .asObject(JsonNode.class).getBody();
+        return appRelDescriptor.asObjectNode();
     }
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDAppMicroserviceHelper.renameFields(record);
+        return FoDAppRelHelper.renameFields(record);
     }
 
     @Override
     public String getActionCommandResult() {
-        return "UPDATED";
+        return "DELETED";
     }
 
     @Override
