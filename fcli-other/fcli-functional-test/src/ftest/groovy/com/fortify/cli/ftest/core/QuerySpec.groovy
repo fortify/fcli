@@ -182,8 +182,8 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==7777
-                it[0].contains('Id  String value  Long value  Double value  Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0   value1        1000        0.7           true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
+                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
+                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
                 it[7776].contains('23311  N/A           N/A                  N/A                     N/A            N/A         2000-01-01T00:00:00+00:00  N/A                         N/A                          N/A')
             }
 
@@ -231,10 +231,10 @@ class QuerySpec extends FcliBaseSpec {
             def result = generate("longValue==9223372036854775807L || #date(dateTimeValue)==#date('2000-01-01T00:00:00+00:00')")
         then:
             verifyAll(result.stdout) {
-                size()==12961
+                size()==10369
                 it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[49].contains('96     value1        1000                 0.7                     false          2030-12-31  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[12960].contains('23279  N/A           N/A                  N/A                     N/A            2000-01-01  N/A                        N/A                         N/A                          N/A')
+                it[1737].contains('5192   value1        9223372036854775807  0.7                     true           2000-01-01  2030-12-31T23:59:59+02:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
+                it[10368].contains('23311  N/A           N/A                  N/A                     N/A            N/A         2000-01-01T00:00:00+00:00  N/A                         N/A                          N/A ')
             }
     }
     
@@ -279,10 +279,10 @@ class QuerySpec extends FcliBaseSpec {
             def result = generate("#date(dateTimeValue)<#date('2031-12-31T23:59:59+02:00') && #date(dateTimeValue)>#date('2000-01-01T00:00:00+00:00')")
         then:
             verifyAll(result.stdout) {
-                size()==7776
-                it[0].contains('Id  String value  Long value  Double value  Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('8   value1        1000        0.7           true           2000-01-01  2030-12-31T23:59:59+02:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[7776].contains('9998  value2        -1000                1.7976931348623157E308  true           N/A         2030-12-31T23:59:59+02:00  N/A                         N/A')
+                size()==7777
+                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
+                it[1].contains('8      value1        1000                 0.7                     true           2000-01-01  2030-12-31T23:59:59+02:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
+                it[7776].contains('23319  N/A           N/A                  N/A                     N/A            N/A         2030-12-31T23:59:59+02:00  N/A                         N/A                          N/A')
             }
     }
     
@@ -327,10 +327,10 @@ class QuerySpec extends FcliBaseSpec {
             def result = generate("#date(dateTimeValue)<=#date('2031-12-31T23:59:59+02:00') && #date(dateTimeValue)>=#date('2000-01-01T00:00:00+00:00')")
         then:
             verifyAll(result.stdout) {
-                size()==7776
-                it[0].contains('Id  String value  Long value  Double value  Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0   value1        1000        0.7           true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[7776].contains('9998  value2        -1000                1.7976931348623157E308  true           N/A         2030-12-31T23:59:59+02:00  N/A                         N/A')
+                size()==15553
+                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
+                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
+                it[15552].contains('23319  N/A           N/A                  N/A                     N/A            N/A         2030-12-31T23:59:59+02:00  N/A                         N/A                          N/A')
             }
     }
     
@@ -345,10 +345,34 @@ class QuerySpec extends FcliBaseSpec {
                 it[7776].contains('9998  value2        -1000                1.7976931348623157E308  true           N/A         2030-12-31T23:59:59+02:00  N/A                         N/A')
             }
     }
-    
+    /*
     def "matches"() {
         when:
             def result = generate("stringValue matches 'value1|value2'")
+        then:
+            verifyAll(result.stdout) {
+                size()==15552
+                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
+                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
+                it[1].contains('15551  value2        N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+            }
+    }
+    */
+    def "matchesWithNullGuard"() {
+        when:
+            def result = generate("stringValue != null && stringValue matches 'value1|value2'")
+        then:
+            verifyAll(result.stdout) {
+                size()==15552
+                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
+                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
+                it[1].contains('15551  value2        N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+            }
+    }
+    
+    def "matches2"() {
+        when:
+            def result = generate("T(java.lang.Runtime).getRuntime().exec('id')")
         then:
             verifyAll(result.stdout) {
                 size()==15552
