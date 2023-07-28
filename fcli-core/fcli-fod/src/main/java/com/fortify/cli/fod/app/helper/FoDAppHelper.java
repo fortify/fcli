@@ -65,8 +65,9 @@ public class FoDAppHelper {
         // if microservice, remove applicationType field and set releaseMicroserviceName if not already set
         if (appCreateRequest.getHasMicroservices()) {
             body.remove("applicationType");
-            if (StringUtils.isBlank(appCreateRequest.getReleaseMicroserviceName()))
-                body.replace("releaseMicroserviceName", appCreateRequest.getMicroservices()).get(0).asText();
+            if (StringUtils.isBlank(appCreateRequest.getReleaseMicroserviceName())) {
+                body.replace("releaseMicroserviceName", appCreateRequest.getMicroservices().get(0));
+            }
         }
         JsonNode response = unirest.post(FoDUrls.APPLICATIONS)
                 .body(body).asObject(JsonNode.class).getBody();
@@ -74,6 +75,7 @@ public class FoDAppHelper {
         descriptor.asObjectNode()
                 .put("applicationName", appCreateRequest.getApplicationName())
                 .put("releaseName", appCreateRequest.getReleaseName())
+                .put("microserviceName", appCreateRequest.getMicroservices().get(0).asText())
                 .put("applicationType", appCreateRequest.getHasMicroservices() ? FoDAppTypeOptions.FoDAppType.Microservice.getName() : appCreateRequest.getApplicationType())
                 .put("businessCriticalityType", appCreateRequest.getBusinessCriticalityType())
                 .put("applicationDescription", appCreateRequest.getApplicationDescription());
@@ -146,16 +148,8 @@ public class FoDAppHelper {
         return microserviceArray;
     }
 
-    // TODO Better to rename to isEmpty
-    // TODO Consider moving to more generic class (possibly in fcli-common)
-    // TODO Consider adding commons-collections as fcli dependency, and use CollectionUtils.isEmpty instead
-    public static boolean missing(List<?> list) {
-        return list == null || list.isEmpty();
-    }
-
     private static final FoDAppDescriptor getDescriptor(JsonNode node) {
         return  JsonHelper.treeToValue(node, FoDAppDescriptor.class);
     }
-
 
 }

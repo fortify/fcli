@@ -19,9 +19,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "app",
         subcommands = {
-                FoDAppCreateWebAppCommand.class,
-                FoDAppCreateMicroserviceAppCommand.class,
-                FoDAppCreateMobileAppCommand.class,
+                FoDAppCreateCommand.class,
                 FoDAppListCommand.class,
                 FoDAppGetCommand.class,
                 FoDAppUpdateCommand.class,

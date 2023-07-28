@@ -57,11 +57,11 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
     // descriptions for `fod app update` also updated
     /*
     @Mixin
-    FoDAppMicroserviceUpdateOptions.AddMicroserviceOption addMicroservices;
+    FoDMicroserviceUpdateOptions.AddMicroserviceOption addMicroservices;
     @Mixin
-    FoDAppMicroserviceUpdateOptions.DeleteMicroserviceOption deleteMicroservices;
+    FoDMicroserviceUpdateOptions.DeleteMicroserviceOption deleteMicroservices;
     @Mixin
-    FoDAppMicroserviceUpdateOptions.RenameMicroserviceOption renameMicroservices;
+    FoDMicroserviceUpdateOptions.RenameMicroserviceOption renameMicroservices;
      */
     @Mixin
     private FoDCriticalityTypeOptions.OptionalOption criticalityTypeUpdate;

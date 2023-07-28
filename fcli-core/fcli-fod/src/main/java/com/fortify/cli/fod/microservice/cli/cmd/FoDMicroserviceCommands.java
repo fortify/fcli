@@ -11,22 +11,22 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.release.cli.cmd;
+package com.fortify.cli.fod.microservice.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "release",
+@CommandLine.Command(name = "microservice",
         subcommands = {
-                FoDAppRelCreateCommand.class,
-                FoDAppRelListCommand.class,
-                FoDAppRelGetCommand.class,
-                FoDAppRelUpdateCommand.class,
-                FoDAppRelDeleteCommand.class
+                FoDMicroserviceCreateCommand.class,
+                FoDMicroserviceListCommand.class,
+                //FoDAppMicroserviceGetCommand.class,
+                FoDMicroserviceUpdateCommand.class,
+                FoDMicroserviceDeleteCommand.class
         }
 )
-@DefaultVariablePropertyName("releaseId")
-public class FoDAppRelCommands extends AbstractContainerCommand {
+@DefaultVariablePropertyName("microserviceId")
+public class FoDMicroserviceCommands extends AbstractContainerCommand {
 }

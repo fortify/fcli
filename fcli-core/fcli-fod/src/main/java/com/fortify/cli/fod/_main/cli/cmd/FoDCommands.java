@@ -15,8 +15,8 @@ package com.fortify.cli.fod._main.cli.cmd;
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.fod._common.session.cli.cmd.FoDSessionCommands;
 import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
-import com.fortify.cli.fod.microservice.cli.cmd.FoDAppMicroserviceCommands;
-import com.fortify.cli.fod.release.cli.cmd.FoDAppRelCommands;
+import com.fortify.cli.fod.microservice.cli.cmd.FoDMicroserviceCommands;
+import com.fortify.cli.fod.release.cli.cmd.FoDReleaseCommands;
 import com.fortify.cli.fod.rest.cli.cmd.FoDRestCommands;
 import com.fortify.cli.fod.scan.cli.cmd.FoDScanCommands;
 import com.fortify.cli.fod.user.cli.cmd.FoDUserCommands;
@@ -39,8 +39,8 @@ import picocli.CommandLine.Command;
                 //   other commands ('Manage').
                 FoDSessionCommands.class,
                 FoDAppCommands.class,
-                FoDAppRelCommands.class,
-                FoDAppMicroserviceCommands.class,
+                FoDReleaseCommands.class,
+                FoDMicroserviceCommands.class,
                 FoDScanCommands.class,
                 FoDUserCommands.class,
                 FoDUserGroupCommands.class,
