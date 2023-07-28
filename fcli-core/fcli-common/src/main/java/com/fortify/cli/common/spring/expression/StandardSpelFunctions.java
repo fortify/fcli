@@ -29,7 +29,17 @@ public class StandardSpelFunctions {
     private static final DateTimePeriodHelper PeriodHelper = DateTimePeriodHelper.all();
 
     public static final OffsetDateTime date(String s) {
-        return OffsetDateTime.parse(s);
+        if(s == null) { return null; }
+        
+        OffsetDateTime dt = null;
+        try {
+            dt= OffsetDateTime.parse(s);
+        } catch(DateTimeParseException e) {
+            LocalDate d = LocalDate.parse(s);
+            dt = OffsetDateTime.of(d.atStartOfDay(), ZoneOffset.UTC);
+        }
+
+        return dt;
     }
     
     public static final OffsetDateTime now(String... s) {
