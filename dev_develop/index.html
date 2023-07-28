@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230727.090828-dev_develop
+fcli_version: 0.20230728.074657-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20230727.090828-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230727.090828-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230728.074657-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230727.090828-dev_develop</span>
+<span id="revnumber">version 0.20230728.074657-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -739,7 +739,7 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 <p>Variables can be referenced in subsequent fcli commands using the <code>::myVarName::prop</code> syntax anywhere on the command line; such occurrences will be substituted with the value of the given property name.</p>
 </div>
 <div class="paragraph">
-<p>Many (but not all) fcli commands will also store an entity-specific default property name when using the <code>--store</code> option. Whether a default property name has been stored can be seen in the output of the <code>fcli state var list</code> command. If a default property name was stored, the <code>::myVarName::</code> syntax can be used to reference the value of the default property name, thereby avoiding the need to manually specify the appropriate property name.</p>
+<p>Many (but not all) fcli commands will also store an entity-specific default property name when using the <code>--store</code> option. Whether a default property name has been stored can be seen in the output of the <code>fcli util variable list</code> command. If a default property name was stored, the <code>::myVarName::</code> syntax can be used to reference the value of the default property name, thereby avoiding the need to manually specify the appropriate property name.</p>
 </div>
 <div class="paragraph">
 <p>Following are some examples, assuming the necessary login sessions are available:</p>
@@ -760,17 +760,17 @@ fcli sc-sast scan wait-for ::x::jobToken</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Fcli provides the regular <code>get</code>, <code>list</code> and <code>delete</code> operations on the <code>+fcli state variable</code> command tree, and actual variable contents can be retrieved using the <code>fcli state variable contents</code> command. Please see help output or manual pages for more information on these commands.</p>
+<p>Fcli provides the regular <code>get</code>, <code>list</code> and <code>delete</code> operations on the <code>+fcli util variable</code> command tree, and actual variable contents can be retrieved using the <code>fcli util variable contents</code> command. Please see help output or manual pages for more information on these commands.</p>
 </div>
 <div class="paragraph">
-<p>The <code>fcli state variable contents</code> command supports the regular fcli output options and query capabilities. This allows for advanced us cases, like retrieving server data once and then outputting it in multiple formats, potentially even applying separate filters. As an example:</p>
+<p>The <code>fcli util variable contents</code> command supports the regular fcli output options and query capabilities. This allows for advanced us cases, like retrieving server data once and then outputting it in multiple formats, potentially even applying separate filters. As an example:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-bash" data-lang="bash">fcli ssc appversion list --store myVersions
-fcli state variable contents myVersions -o csv --output-to-file myVersions.csv
-fcli state variable contents myVersions -o json -q createdBy=admin --output-to-file myAdminVersions.json
-fcli state variable contents myVersions -o 'expr={id}\n' --output-to-file myVersionIds.txt</code></pre>
+fcli util variable contents myVersions -o csv --output-to-file myVersions.csv
+fcli util variable contents myVersions -o json -q createdBy=admin --output-to-file myAdminVersions.json
+fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersionIds.txt</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -864,8 +864,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230727.090828-dev_develop<br>
-Last updated 2023-07-27 09:10:59 UTC
+Version 0.20230728.074657-dev_develop<br>
+Last updated 2023-07-28 07:48:36 UTC
 </div>
 </div>
 </body>

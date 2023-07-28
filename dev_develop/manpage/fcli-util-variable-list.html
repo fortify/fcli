@@ -1,5 +1,5 @@
 ---
-title: fcli-state-variable-contents(1)
+title: fcli-util-variable-list(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-state-variable-contents(1)</title>
+<title>fcli-util-variable-list(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230727.090828-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230728.074657-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-state-variable-contents(1) Manual Page</h1>
+<h1>fcli-util-variable-list(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -29,12 +29,11 @@ fcli_version:
 <li><a href="#_options">Options</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
-<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-state-variable-contents - Get fcli variable contents.</p>
+<p>fcli-util-variable-list - List fcli variables.</p>
 </div>
 </div>
 <div id="content">
@@ -42,11 +41,10 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli state variable contents</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                             [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                             <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                 _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                             [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>] <em>&lt;variableName&gt;</em></p>
+<p><strong>fcli util variable list</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                        [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]</p>
 </div>
 </div>
 </div>
@@ -115,24 +113,11 @@ fcli_version:
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><em>&lt;variableName&gt;</em></dt>
-<dd>
-<p>Variable name.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-07-27 09:10:59 UTC
+Last updated 2023-07-28 07:48:36 UTC
 </div>
 </div>
 </body>
