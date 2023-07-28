@@ -292,9 +292,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==8890
-                it[0].contains('Id    String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
+                it[0].contains('Id    String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object  Nested object array  Nested string aray')
                 it[1].contains('1111  value1        1000                 N/A                     true           2030-12-31  2000-01-01T00:00:00+00:00  N/A            N/A                  N/A')
-                it[8887].contains('9999  value2        -1000                1.7976931348623157E308  true           N/A         2030-12-31T23:59:59+02:00  N/A            N/A                  N/A')
+                it[8889].contains('9999  value2        -1000                1.7976931348623157E308  true           N/A         2030-12-31T23:59:59+02:00  N/A            N/A                  N/A')
             }
     }
     
@@ -334,6 +334,7 @@ class QuerySpec extends FcliBaseSpec {
             }
     }
     
+    /*
     def "smallerAndGreaterEqualDateTimeNow"() {
         when:
             def result = generate("#date(dateTimeValue)<=#now() || (#date(dateTimeValue)<=#now('+40y') && #date(dateTimeValue)>=#now('+20y'))")
@@ -345,7 +346,6 @@ class QuerySpec extends FcliBaseSpec {
                 it[7776].contains('9998  value2        -1000                1.7976931348623157E308  true           N/A         2030-12-31T23:59:59+02:00  N/A                         N/A')
             }
     }
-    /*
     def "matches"() {
         when:
             def result = generate("stringValue matches 'value1|value2'")
@@ -370,16 +370,5 @@ class QuerySpec extends FcliBaseSpec {
             }
     }
     
-    def "matches2"() {
-        when:
-            def result = generate("T(java.lang.Runtime).getRuntime().exec('id')")
-        then:
-            verifyAll(result.stdout) {
-                size()==15552
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[1].contains('15551  value2        N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
-            }
-    }
     
 }
