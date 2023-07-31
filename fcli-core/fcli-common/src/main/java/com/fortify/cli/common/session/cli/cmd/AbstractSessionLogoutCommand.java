@@ -30,8 +30,7 @@ public abstract class AbstractSessionLogoutCommand<D extends ISessionDescriptor>
         var sessionHelper = getSessionHelper();
         if ( sessionHelper.exists(sessionName) ) {
         	result = sessionHelper.sessionSummaryAsObjectNode(sessionName);
-            logout(sessionName, sessionHelper.get(sessionName, true));
-            // TODO Optionally delete all variables
+            logout(sessionName, sessionHelper.get(sessionName, false));
             getSessionHelper().destroy(sessionName);
         }
         return result;
@@ -46,6 +45,10 @@ public abstract class AbstractSessionLogoutCommand<D extends ISessionDescriptor>
     public boolean isSingular() {
     	return false;
     }
-    
+
+    /*******************************************************************************
+    * This method will always be invoked on existing sessions, independent of whether the session has expired
+    * This is to ensure cleanup of the local session directory and tokens stored in ssc (if the token has already been cleaned up by ssc this should not result in an error)
+    *******************************************************************************/
     protected abstract void logout(String sessionName, D sessionDescriptor);
 }
