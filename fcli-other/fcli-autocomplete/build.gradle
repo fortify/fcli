@@ -8,10 +8,14 @@ dependencies {
 	//runtimeOnly 'info.picocli:picocli-codegen'
 }
 
-task dist(type: JavaExec) {
+task distAutoComplete(type: JavaExec) {
     dependsOn(createDistDir)
     description = "Generate fcli autocomplete"
     classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
     main 'picocli.AutoComplete'
     args fcliRootCommandsClassName, "-f", "--completionScript=${distDir}/fcli_completion"
+}
+
+task dist {
+    dependsOn distAutoComplete
 }
