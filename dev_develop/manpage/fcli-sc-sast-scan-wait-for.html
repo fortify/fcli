@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230728.160843-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230731.151621-dev_develop" %}
 
 
 <div id="header">
@@ -48,15 +48,19 @@ fcli_version:
                            [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
                            [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
                            [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequeste</em>
-    _                       d&gt;_] [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [<strong>-s</strong>=<em>&lt;waitType&gt;</em>]
-                           [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] [[<strong>-h</strong>]
+    _                       d&gt;_] [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] [[<strong>-h</strong>]
                            [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                            [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                            [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                           [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] [<strong>--while-all</strong>=<em>&lt;state1&gt;</em>
-                   _        [|&lt;state2&gt;]&#8230;&#8203;_ | <strong>-w</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> |
-                           <strong>-u</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em> | <strong>--until-any</strong>=<em>&lt;state1&gt;</em>
-                   _        [|&lt;state2&gt;]&#8230;&#8203;<em>] [[<strong>--session</strong>=</em>&lt;sessionName&gt;_]]
+                           [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] [<strong>-u</strong>=<em>any-match|all-match</em> |
+                           <strong>-w</strong>=<em>any-match|all-match</em>] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
+                           [<strong>--any-scan-state</strong>=<em>&lt;scanStates&gt;</em>[,<em>&lt;scanStates&gt;</em>&#8230;&#8203;]
+                           [<strong>--any-scan-state</strong>=<em>&lt;scanStates&gt;</em>[,<em>&lt;scanStates&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                           | <strong>--any-upload-state</strong>=<em>&lt;uploadStates&gt;</em>[,
+                           <em>&lt;uploadStates&gt;</em>&#8230;&#8203;] [<strong>--any-upload-state</strong>=<em>&lt;uploadStates&gt;</em>
+                           [,<em>&lt;uploadStates&gt;</em>&#8230;&#8203;]]&#8230;&#8203; |
+                           <strong>--any-ssc-state</strong>=<em>&lt;sscStates&gt;</em>[,<em>&lt;sscStates&gt;</em>&#8230;&#8203;]
+                           [<strong>--any-ssc-state</strong>=<em>&lt;sscStates&gt;</em>[,<em>&lt;sscStates&gt;</em>&#8230;&#8203;]]&#8230;&#8203;]
                            <em>scan-job-tokens</em>&#8230;&#8203;</p>
 </div>
 </div>
@@ -65,15 +69,15 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Although this command offers a lot of options to cover many different use cases, you can simply pass a scan id (possibly stored using --store on the 'scan start' command) to wait for completion of a single scan.</p>
+<p>Although this command offers a lot of options to cover many different use cases, for ScanCentral SAST 22.1+ you can simply pass a scan id (possibly stored using --store on the 'scan start' command) to wait until the scan has been fully processed on SSC. If any error state or unknown state is detected, an exception will be thrown. For older ScanCentral SAST versions, or if the given scan isn&#8217;t being uploaded to SSC, either --any-scan-state or --any-upload-state must be specified, as the default behavior is based on --any-ssc-state, which is not supported on older ScanCentral SAST versions or if the scan is not being uploaded to SSC.</p>
 </div>
 <div class="paragraph">
-<p>If none of the --while or --until options are specified, this command will by default wait until the scan has completed, until the SSC upload has completed, or until the scan has been fully processed by SSC, depending on the --status-type option. If any error state or unknown state is detected, an exception will be thrown.</p>
+<p>The following scan/upload states are currently known by fcli:
+See fcli help output</p>
 </div>
 <div class="paragraph">
-<p>The following states are currently known by fcli:
-If --status-type is set to 'scan' or 'upload': See fcli help output
-If --status-type is set to 'processing': See fcli help output</p>
+<p>The following SSC artifact processing states are currently known by fcli:
+See fcli help output</p>
 </div>
 </div>
 </div>
@@ -82,6 +86,18 @@ If --status-type is set to 'processing': See fcli help output</p>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--any-scan-state</strong>=<em>&lt;scanStates&gt;</em>[,<em>&lt;scanStates&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>One or more scan states against which to match the given scans.</p>
+</dd>
+<dt class="hdlist1"><strong>--any-ssc-state</strong>=<em>&lt;sscStates&gt;</em>[,<em>&lt;sscStates&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>One or more SSC artifact processing states against which to match the given scans.</p>
+</dd>
+<dt class="hdlist1"><strong>--any-upload-state</strong>=<em>&lt;uploadStates&gt;</em>[,<em>&lt;uploadStates&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>One or more scan upload states against which to match the given scans.</p>
+</dd>
 <dt class="hdlist1"><strong>-i</strong>, <strong>--interval</strong>=<em>&lt;intervalPeriod&gt;</em></dt>
 <dd>
 <p>Polling interval, for example 5s (5 seconds) or 1m (1 minute).</p>
@@ -106,29 +122,17 @@ If --status-type is set to 'processing': See fcli help output</p>
 <dd>
 <p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
-<dt class="hdlist1"><strong>-s</strong>, <strong>--status-type</strong>=<em>&lt;waitType&gt;</em></dt>
-<dd>
-<p>Specify what status type to wait for. Can be one of 'scan' (wait for scan status), 'upload' (wait for SSC upload status), or 'processing' (wait for SSC artifact processing status). Default value is 'processing', but note that this is only supported on ScanCentral SAST Controller 22.1+. For older versions, either 'scan' or 'upload' must be specified.</p>
-</dd>
 <dt class="hdlist1"><strong>-t</strong>, <strong>--timeout</strong>=<em>&lt;timeoutPeriod&gt;</em></dt>
 <dd>
 <p>Time-out, for example 30s (30 seconds), 5m (5 minutes), 1h (1 hour).</p>
 </dd>
-<dt class="hdlist1"><strong>-u</strong>, <strong>--until, --until-all</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em></dt>
+<dt class="hdlist1"><strong>-u</strong>, <strong>--until</strong>=<em>any-match|all-match</em></dt>
 <dd>
-<p>Wait until all records match any of the given states.</p>
+<p>Wait until either any or all scans match. If neither --until or --while are specified, default is to wait until all scans match.</p>
 </dd>
-<dt class="hdlist1"><strong>--until-any</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em></dt>
+<dt class="hdlist1"><strong>-w</strong>, <strong>--while</strong>=<em>any-match|all-match</em></dt>
 <dd>
-<p>Wait until any of the records match any of the given states.</p>
-</dd>
-<dt class="hdlist1"><strong>-w</strong>, <strong>--while, --while-any</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em></dt>
-<dd>
-<p>Wait while any records match any of the given states.</p>
-</dd>
-<dt class="hdlist1"><strong>--while-all</strong>=<em>&lt;state1&gt;[|&lt;state2&gt;]&#8230;&#8203;</em></dt>
-<dd>
-<p>Wait while all records match any of the given states.</p>
+<p>Wait while either any or all scans match.</p>
 </dd>
 </dl>
 </div>
@@ -210,7 +214,7 @@ If --status-type is set to 'processing': See fcli help output</p>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-07-28 16:11:07 UTC
+Last updated 2023-07-31 15:18:43 UTC
 </div>
 </div>
 </body>
