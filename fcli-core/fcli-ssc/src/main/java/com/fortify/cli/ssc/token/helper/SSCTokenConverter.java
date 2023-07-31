@@ -31,7 +31,7 @@ public final class SSCTokenConverter {
     }
     
     public static final String toRestToken(String token) {
-        return isApplicationToken(token) ? encode(token) : token; 
+        return isApplicationToken(token) ? encode(token) : validateRestTokenFormat(token); 
     }
     
     public static final char[] toRestToken(char[] token) {
@@ -50,6 +50,11 @@ public final class SSCTokenConverter {
         if(!isApplicationToken(token)) {
             throw new IllegalArgumentException("The provided token could not be decoded to a valid application token format");
         }
+        return token;
+    }
+    
+    private static final String validateRestTokenFormat(String token) {
+        decode(token);
         return token;
     }
     
