@@ -84,7 +84,7 @@ public class JsonPropertyAccessor implements PropertyAccessor {
 		if (node instanceof ArrayNode) {
 			return index != null;
 		}
-		return true;
+		return node.has(name);
 	}
 
 	private JsonNode asJson(Object target) throws AccessException {
