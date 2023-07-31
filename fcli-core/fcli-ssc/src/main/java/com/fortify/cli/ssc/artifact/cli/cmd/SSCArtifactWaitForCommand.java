@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.artifact.cli.cmd;
 
+import java.util.Set;
+
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
@@ -19,15 +21,19 @@ import com.fortify.cli.ssc._common.output.cli.mixin.SSCProductHelperStandardMixi
 import com.fortify.cli.ssc.artifact.cli.mixin.SSCArtifactResolverMixin;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
+import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus.SSCArtifactStatusIterable;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.WaitFor.CMD_NAME)
 public class SSCArtifactWaitForCommand extends AbstractWaitForCommand {
     @Getter @Mixin SSCProductHelperStandardMixin productHelper;
     @Mixin private SSCArtifactResolverMixin.PositionalParameterMulti artifactsResolver;
+    @Option(names={"-s", "--any-state"}, required=true, split=",", defaultValue="PROCESS_COMPLETE", completionCandidates = SSCArtifactStatusIterable.class)
+    private Set<String> states;
     
     @Override
     protected WaitHelperBuilder configure(WaitHelperBuilder builder) {
@@ -37,6 +43,6 @@ public class SSCArtifactWaitForCommand extends AbstractWaitForCommand {
                 .currentStateProperty("status")
                 .knownStates(SSCArtifactStatus.getKnownStateNames())
                 .failureStates(SSCArtifactStatus.getFailureStateNames())
-                .defaultCompleteStates(SSCArtifactStatus.getDefaultCompleteStateNames());
+                .matchStates(states);
     }
 }

@@ -20,7 +20,7 @@ import com.fortify.cli.common.rest.wait.WaitUnknownStateRequestedAction;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-public class WaitHelperControlOptions implements IWaitHelperControlProperties {
+public class WaitHelperControlPropertiesMixin implements IWaitHelperControlProperties {
     @Option(names= {"--on-unknown-state-requested"}, defaultValue = "fail")
     @Getter private WaitUnknownStateRequestedAction onUnknownStateRequested;
     @Option(names= {"--on-failure-state"}, defaultValue = "fail")

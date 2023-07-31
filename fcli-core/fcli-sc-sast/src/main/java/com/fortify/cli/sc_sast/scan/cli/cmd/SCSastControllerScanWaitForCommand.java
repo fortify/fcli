@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.sc_sast.scan.cli.cmd;
 
-import java.util.function.BiFunction;
+import java.util.Set;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
@@ -20,11 +20,13 @@ import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
 import com.fortify.cli.sc_sast._common.output.cli.mixin.SCSastControllerProductHelperStandardMixin;
 import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanJobResolverMixin;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobArtifactState;
-import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobState;
+import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobArtifactState.SCSastControllerScanJobArtifactStateIterable;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
+import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobState;
+import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobState.SCSastControllerScanJobStateIterable;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -33,46 +35,44 @@ import picocli.CommandLine.Option;
 public class SCSastControllerScanWaitForCommand extends AbstractWaitForCommand {
     @Getter @Mixin SCSastControllerProductHelperStandardMixin productHelper;
     @Mixin private SCSastScanJobResolverMixin.PositionalParameterMulti scanJobsResolver;
-    @Option(names={"-s", "--status-type"}, defaultValue="processing", required=true) private WaitType waitType;
+    @ArgGroup(exclusive = true, multiplicity = "0..1") private WaitOptions waitOptions;
+    private static final class WaitOptions {
+        @Option(names={"--any-scan-state"}, required=true, split=",", completionCandidates = SCSastControllerScanJobStateIterable.class)
+        private Set<String> scanStates;
+        @Option(names={"--any-upload-state"}, required=true, split=",", completionCandidates = SCSastControllerScanJobStateIterable.class)
+        private Set<String> uploadStates;
+        @Option(names={"--any-ssc-state"}, required=true, split=",", completionCandidates = SCSastControllerScanJobArtifactStateIterable.class)
+        private Set<String> sscStates;
+    }
     
     @Override
     protected WaitHelperBuilder configure(WaitHelperBuilder builder) {
-        return waitType.configurer.apply(builder, scanJobsResolver);
-    }
-    
-    @RequiredArgsConstructor
-    private static enum WaitType {
-        scan(WaitType::configureWaitForScan), 
-        upload(WaitType::configureWaitForUpload), 
-        processing(WaitType::configureWaitForProcessing);
-        
-        private final BiFunction<WaitHelperBuilder, SCSastScanJobResolverMixin.PositionalParameterMulti, WaitHelperBuilder> configurer;
-        
-        private static WaitHelperBuilder configureWaitForScan(WaitHelperBuilder builder, SCSastScanJobResolverMixin.PositionalParameterMulti scanJobsResolver) {
+        Set<String> sscStates = waitOptions==null 
+                ? Set.of(SCSastControllerScanJobArtifactState.getDefaultCompleteStateNames()) 
+                : waitOptions.sscStates;
+        if ( sscStates!=null && !sscStates.isEmpty() ) {
+            return builder
+                .recordsSupplier(u->scanJobsResolver.getScanJobDescriptorJsonNodes(u, StatusEndpointVersion.v3))
+                .currentStateProperty("sscArtifactState")
+                .knownStates(SCSastControllerScanJobArtifactState.getKnownStateNames())
+                .failureStates(SCSastControllerScanJobArtifactState.getFailureStateNames())
+                .matchStates(sscStates);
+        } else if ( waitOptions.uploadStates!=null && !waitOptions.uploadStates.isEmpty() ) {
+            return builder
+                .recordsSupplier(scanJobsResolver::getScanJobDescriptorJsonNodes)
+                .currentStateProperty("sscUploadState")
+                .knownStates(SCSastControllerScanJobState.getKnownStateNames())
+                .failureStates(SCSastControllerScanJobState.getFailureStateNames())
+                .matchStates(waitOptions.uploadStates);
+        } else if ( waitOptions.scanStates!=null && !waitOptions.scanStates.isEmpty() ) {
             return builder
                     .recordsSupplier(scanJobsResolver::getScanJobDescriptorJsonNodes)
                     .currentStateProperty("scanState")
                     .knownStates(SCSastControllerScanJobState.getKnownStateNames())
                     .failureStates(SCSastControllerScanJobState.getFailureStateNames())
-                    .defaultCompleteStates(SCSastControllerScanJobState.getDefaultCompleteStateNames());
-        }
-        
-        private static WaitHelperBuilder configureWaitForUpload(WaitHelperBuilder builder, SCSastScanJobResolverMixin.PositionalParameterMulti scanJobsResolver) {
-            return builder
-                    .recordsSupplier(scanJobsResolver::getScanJobDescriptorJsonNodes)
-                    .currentStateProperty("sscUploadState")
-                    .knownStates(SCSastControllerScanJobState.getKnownStateNames())
-                    .failureStates(SCSastControllerScanJobState.getFailureStateNames())
-                    .defaultCompleteStates(SCSastControllerScanJobState.getDefaultCompleteStateNames());
-        }
-        
-        private static WaitHelperBuilder configureWaitForProcessing(WaitHelperBuilder builder, SCSastScanJobResolverMixin.PositionalParameterMulti scanJobsResolver) {
-            return builder
-                    .recordsSupplier(u->scanJobsResolver.getScanJobDescriptorJsonNodes(u, StatusEndpointVersion.v3))
-                    .currentStateProperty("sscArtifactState")
-                    .knownStates(SCSastControllerScanJobArtifactState.getKnownStateNames())
-                    .failureStates(SCSastControllerScanJobArtifactState.getFailureStateNames())
-                    .defaultCompleteStates(SCSastControllerScanJobArtifactState.getDefaultCompleteStateNames());
+                    .matchStates(waitOptions.scanStates);
+        } else {
+            throw new RuntimeException("Unexpected situation, please file a bug");
         }
     }
 }
