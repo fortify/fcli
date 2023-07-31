@@ -30,8 +30,13 @@ public abstract class AbstractSessionLogoutCommand<D extends ISessionDescriptor>
         var sessionHelper = getSessionHelper();
         if ( sessionHelper.exists(sessionName) ) {
         	result = sessionHelper.sessionSummaryAsObjectNode(sessionName);
-            logout(sessionName, sessionHelper.get(sessionName, false));
-            getSessionHelper().destroy(sessionName);
+            try {
+                logout(sessionName, sessionHelper.get(sessionName, false));
+            } catch (Exception e){
+                throw e;
+            } finally {
+                getSessionHelper().destroy(sessionName);
+            }
         }
         return result;
     }
