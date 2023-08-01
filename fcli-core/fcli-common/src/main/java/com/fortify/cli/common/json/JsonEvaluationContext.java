@@ -140,6 +140,7 @@ public final class JsonEvaluationContext implements EvaluationContext {
      * @see org.springframework.expression.EvaluationContext#getOperatorOverloader()
      */
     public OperatorOverloader getOperatorOverloader() {
+        System.err.println("getOperatorOverloader()");
         // TODO Return out custom overloader
         return delegate.getOperatorOverloader();
     }

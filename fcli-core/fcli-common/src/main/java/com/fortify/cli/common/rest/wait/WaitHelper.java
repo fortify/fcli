@@ -29,14 +29,14 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.rest.wait.WaitType.AnyOrAll;
+import com.fortify.cli.common.rest.wait.WaitType.LoopType;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
-import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.UnirestInstance;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Builder
 public class WaitHelper {
@@ -46,7 +46,7 @@ public class WaitHelper {
     private final Function<JsonNode, JsonNode> recordTransformer;
     private final String[] knownStates;
     private final String[] failureStates;
-    private final String[] defaultCompleteStates;
+    private final Set<String> matchStates;
     @Builder.Default private final WaitUnknownStateRequestedAction onUnknownStateRequested = WaitUnknownStateRequestedAction.fail;
     @Builder.Default private final WaitUnknownOrFailureStateAction onFailureState = WaitUnknownOrFailureStateAction.fail;
     @Builder.Default private final WaitUnknownOrFailureStateAction onUnknownState = WaitUnknownOrFailureStateAction.fail;
@@ -55,6 +55,7 @@ public class WaitHelper {
     private final String timeoutPeriod;
     private final IWaitHelperProgressMonitor progressMonitor;
     private final Consumer<Map<ObjectNode, WaitStatus>> onFinish; 
+    private final WaitType waitType;
     @Getter private final Map<ObjectNode, WaitStatus> result = new LinkedHashMap<>(); 
     
     public static final ArrayNode plainRecordsAsArrayNode(Map<ObjectNode, WaitStatus> recordsWithWaitStatus) {
@@ -67,56 +68,11 @@ public class WaitHelper {
                 .collect(JsonHelper.arrayNodeCollector());
     }
     
-    public final WaitHelper wait(UnirestInstance unirest, IWaitHelperWaitDefinitionSupplier waitDefinitionSupplier) {
-        return wait(unirest, waitDefinitionSupplier.getWaitDefinition());
-    }
-    
-    public final WaitHelper wait(UnirestInstance unirest, IWaitHelperWaitDefinition waitDefinition) {
-        return waitUntilAll(unirest, waitDefinition.getUntilAll())
-                .waitUntilAny(unirest, waitDefinition.getUntilAny())
-                .waitWhileAll(unirest, waitDefinition.getWhileAll())
-                .waitWhileAny(unirest, waitDefinition.getWhileAny())
-                .waitComplete(unirest);
-    }
-    
-    public final WaitHelper waitUntilAll(UnirestInstance unirest, String untilStates) {
-        if ( StringUtils.isNotBlank(untilStates) ) {
-            wait(unirest, new StateEvaluator(untilStates, EvaluatorType.Until), AnyOrAll.ALL);
-        }
+    public final WaitHelper wait(UnirestInstance unirest) {
+        wait(unirest, new StateEvaluator(matchStates, waitType.getLoopType()), waitType.getAnyOrAll());
         return this;
     }
     
-    public final WaitHelper waitUntilAny(UnirestInstance unirest, String untilStates) {
-        if ( StringUtils.isNotBlank(untilStates) ) {
-            wait(unirest, new StateEvaluator(untilStates, EvaluatorType.Until), AnyOrAll.ANY);
-        }
-        return this;
-    }
-    
-    public final WaitHelper waitWhileAll(UnirestInstance unirest, String whileStates) {
-        if ( StringUtils.isNotBlank(whileStates) ) {
-            wait(unirest, new StateEvaluator(whileStates, EvaluatorType.While), AnyOrAll.ALL);
-        }
-        return this;
-    }
-    
-    public final WaitHelper waitWhileAny(UnirestInstance unirest, String whileStates) {
-        if ( StringUtils.isNotBlank(whileStates) ) {
-            wait(unirest, new StateEvaluator(whileStates, EvaluatorType.While), AnyOrAll.ALL);
-        }
-        return this;
-    }
-    
-    public final WaitHelper waitComplete(UnirestInstance unirest) {
-        if ( result.isEmpty() ) {
-            if ( defaultCompleteStates==null || defaultCompleteStates.length==0 ) {
-                throw new IllegalArgumentException("One of --until* or --while* must be provided");
-            }
-            wait(unirest, new StateEvaluator(String.join("|", defaultCompleteStates), EvaluatorType.Until), AnyOrAll.ALL);
-        }
-        return this;
-    }
-
     private final void wait(UnirestInstance unirest, StateEvaluator evaluator, AnyOrAll anyOrAll) {
         if ( currentState==null ) {
             throw new RuntimeException("No currentState function or currentStateProperty set");
@@ -172,8 +128,8 @@ public class WaitHelper {
             return false;
         }
         switch (anyOrAll) {
-        case ANY: return !waitStatuses.containsValue(WaitStatus.WAIT_COMPLETE);
-        case ALL: return !waitStatuses.values().stream().allMatch(WaitStatus.WAIT_COMPLETE::equals);
+        case any_match: return !waitStatuses.containsValue(WaitStatus.WAIT_COMPLETE);
+        case all_match: return !waitStatuses.values().stream().allMatch(WaitStatus.WAIT_COMPLETE::equals);
         default: throw new RuntimeException("This exception shouldn't occur; please submit a bug"); 
         }
     }
@@ -224,34 +180,17 @@ public class WaitHelper {
         WAITING, WAIT_COMPLETE, UNKNOWN_STATE_DETECTED, FAILURE_STATE_DETECTED, TIMEOUT 
     }
     
-    private static enum AnyOrAll {
-        ANY, ALL
-    }
-    
-    @RequiredArgsConstructor
-    private static enum EvaluatorType {
-        Until(false),
-        While(true);
-        
-        private final boolean waitIfMatching;
-        
-        public boolean isWaiting(Set<String> statesToMatch, String currentState) {
-            return waitIfMatching == matches(statesToMatch, currentState);
-        }
-        
-        private static boolean matches(Set<String> statesToMatch, String currentState) {
-            return statesToMatch.contains(currentState);
-        }
-    }
-    
     private final class StateEvaluator {
         private final Set<String> statesSet;
         private final Set<String> knownStatesSet;
         private final Set<String> failureStatesSet;
-        private final EvaluatorType evaluatorType;
+        private final LoopType evaluatorType;
         
-        public StateEvaluator(String statesString, EvaluatorType evaluatorType) {
-            this.statesSet = Set.of(statesString.split("\\|"));
+        public StateEvaluator(Set<String> statesSet, LoopType evaluatorType) {
+            this.statesSet = statesSet;
+            if ( statesSet==null || statesSet.isEmpty() ) {
+                throw new IllegalStateException("No states to be matched have been specified");
+            }
             this.evaluatorType = evaluatorType;
             this.knownStatesSet = knownStates==null ? null : new HashSet<>(Set.of(knownStates));
             if ( this.knownStatesSet!=null ) {
@@ -325,11 +264,6 @@ public class WaitHelper {
         
         public WaitHelperBuilder knownStates(String... knownStates) {
             this.knownStates = knownStates;
-            return this;
-        }
-        
-        public WaitHelperBuilder defaultCompleteStates(String... defaultCompleteStates) {
-            this.defaultCompleteStates = defaultCompleteStates;
             return this;
         }
         

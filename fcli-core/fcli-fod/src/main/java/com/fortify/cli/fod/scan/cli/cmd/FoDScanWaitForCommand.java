@@ -13,6 +13,8 @@
 
 package com.fortify.cli.fod.scan.cli.cmd;
 
+import java.util.Set;
+
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
@@ -20,15 +22,19 @@ import com.fortify.cli.fod._common.output.mixin.FoDProductHelperStandardMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanResolverMixin;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanStatus;
+import com.fortify.cli.fod.scan.helper.FoDScanStatus.FoDScanStatusIterable;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.WaitFor.CMD_NAME)
 public class FoDScanWaitForCommand extends AbstractWaitForCommand {
     @Getter @Mixin FoDProductHelperStandardMixin productHelper;
     @Mixin private FoDScanResolverMixin.PositionalParameterMulti scansResolver;
+    @Option(names={"-s", "--any-state"}, required=true, split=",", defaultValue="Completed", completionCandidates = FoDScanStatusIterable.class)
+    private Set<String> states;
 
     @Override
     protected WaitHelperBuilder configure(WaitHelperBuilder builder) {
@@ -38,7 +44,7 @@ public class FoDScanWaitForCommand extends AbstractWaitForCommand {
                 .currentStateProperty("analysisStatusType")
                 .knownStates(FoDScanStatus.getKnownStateNames())
                 .failureStates(FoDScanStatus.getFailureStateNames())
-                .defaultCompleteStates(FoDScanStatus.getDefaultCompleteStateNames());
+                .matchStates(states);
     }
 
 }
