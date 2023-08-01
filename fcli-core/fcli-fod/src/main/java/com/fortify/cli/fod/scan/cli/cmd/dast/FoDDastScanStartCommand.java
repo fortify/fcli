@@ -28,9 +28,8 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
-import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
-import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseResolverMixin;
+import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
@@ -53,7 +52,7 @@ import picocli.CommandLine.Option;
 public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
     @Getter @Mixin private FoDOutputHelperMixins.StartDast outputHelper;
-    @Mixin private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
+    @Mixin private FoDReleaseResolverMixin.PositionalParameter releaseResolver;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--start-date"})
@@ -80,13 +79,12 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
             FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
 
-            String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
-
+            FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
+            
             // check if scan is already running
-            FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptorById(unirest, relId, true);
-            if (appRelDescriptor.getDynamicAnalysisStatusType() != null && (appRelDescriptor.getDynamicAnalysisStatusType().equals("In_Progress")
-                    || appRelDescriptor.getDynamicAnalysisStatusType().equals("Scheduled"))) {
-                FoDScanDescriptor scanDescriptor = FoDScanHelper.getScanDescriptor(unirest, String.valueOf(appRelDescriptor.getCurrentDynamicScanId()));
+            if (releaseDescriptor.getDynamicAnalysisStatusType() != null && (releaseDescriptor.getDynamicAnalysisStatusType().equals("In_Progress")
+                    || releaseDescriptor.getDynamicAnalysisStatusType().equals("Scheduled"))) {
+                FoDScanDescriptor scanDescriptor = FoDScanHelper.getScanDescriptor(unirest, String.valueOf(releaseDescriptor.getCurrentDynamicScanId()));
                 if (inProgressScanActionType.getInProgressScanActionType() != null) {
                     if (inProgressScanActionType.getInProgressScanActionType().equals(FoDEnums.InProgressScanActionType.DoNotStartScan)) {
                         return scanDescriptor.asObjectNode().put("__action__", "SKIPPED_RUNNING");
@@ -94,11 +92,12 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                         progressWriter.writeWarning("Cancelling scans automatically is not currently supported.");
                     }
                 } else {
-                    throw new ValidationException("A dynamic scan with id '" + "" + appRelDescriptor.getCurrentDynamicScanId() +
-                            "' is already in progress for release: " + appRelDescriptor.getReleaseName());
+                    throw new ValidationException("A dynamic scan with id '" + "" + releaseDescriptor.getCurrentDynamicScanId() +
+                            "' is already in progress for release: " + releaseDescriptor.getQualifiedName());
                 }
             }
 
+            var relId = String.valueOf(releaseDescriptor.getReleaseId());
             // get current setup and check if its valid
             FoDDastScanSetupDescriptor currentSetup = FoDDastScanHelper.getSetupDescriptor(unirest, relId);
             if (StringUtils.isBlank(currentSetup.getDynamicSiteURL())) {
@@ -151,7 +150,7 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                     .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
 
             //System.out.println(startScanRequest);
-            return FoDDastScanHelper.startScan(unirest, relId, startScanRequest).asJsonNode();
+            return FoDDastScanHelper.startScan(unirest, releaseDescriptor, startScanRequest).asJsonNode();
         }
     }
 

@@ -18,8 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
-import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
+import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
@@ -43,11 +42,10 @@ public class FoDDastScanHelper extends FoDScanHelper {
         return JsonHelper.treeToValue(response, FoDDastScanSetupDescriptor.class);
     }*/
 
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartDastScanRequest startDastScanRequest) {
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDStartDastScanRequest startDastScanRequest) {
         ObjectNode body = objectMapper.valueToTree(startDastScanRequest);
-        FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
         JsonNode response = unirest.post(FoDUrls.DYNAMIC_SCANS + "/start-scan")
-                .routeParam("relId", relId)
+                .routeParam("relId", releaseDescriptor.getReleaseId())
                 .body(body).asObject(JsonNode.class).getBody();
         FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
@@ -57,9 +55,9 @@ public class FoDDastScanHelper extends FoDScanHelper {
                 .put("scanId", startScanResponse.getScanId())
                 .put("scanType", FoDScanTypeOptions.FoDScanType.Dynamic.name())
                 .put("analysisStatusType", "Pending")
-                .put("applicationName", appRelDescriptor.getApplicationName())
-                .put("releaseName", appRelDescriptor.getReleaseName())
-                .put("microserviceName", appRelDescriptor.getMicroserviceName());
+                .put("applicationName", releaseDescriptor.getApplicationName())
+                .put("releaseName", releaseDescriptor.getReleaseName())
+                .put("microserviceName", releaseDescriptor.getMicroserviceName());
         return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
     }
 

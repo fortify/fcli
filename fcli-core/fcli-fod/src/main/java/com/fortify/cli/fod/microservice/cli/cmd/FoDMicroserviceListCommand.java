@@ -25,7 +25,7 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
 import com.fortify.cli.fod._common.rest.query.cli.mixin.FoDFiltersParamMixin;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
+import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -47,7 +47,7 @@ public class FoDMicroserviceListCommand extends AbstractFoDBaseRequestOutputComm
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDAppMicroserviceHelper.renameFields(record);
+        return FoDMicroserviceHelper.renameFields(record);
     }
 
     @Override

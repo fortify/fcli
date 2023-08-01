@@ -23,8 +23,7 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
-import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
+import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
@@ -39,19 +38,20 @@ public class FoDSastScanHelper extends FoDScanHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static final FoDSastScanSetupDescriptor setupScan(UnirestInstance unirest, Integer relId, FoDSetupSastScanRequest setupSastScanRequest) {
+    public static final FoDSastScanSetupDescriptor setupScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDSetupSastScanRequest setupSastScanRequest) {
+        var relId = releaseDescriptor.getReleaseId();
         ObjectNode body = objectMapper.valueToTree(setupSastScanRequest);
         JsonHelper.stripNulls(body);
         unirest.put(FoDUrls.STATIC_SCANS + "/scan-setup")
-                .routeParam("relId", String.valueOf(relId))
+                .routeParam("relId", relId)
                 .body(body).asObject(JsonNode.class).getBody();
-        return getSetupDescriptorWithAppRel(unirest, String.valueOf(relId));
+        return getSetupDescriptorWithAppRel(unirest, releaseDescriptor);
     }
 
     // TODO Split into multiple methods
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, String relId, FoDStartSastScanRequest req,
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDStartSastScanRequest req,
                                                     File scanFile, int chunkSize) {
-        FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
+        var relId = releaseDescriptor.getReleaseId();
         HttpRequest<?> request = unirest.post(FoDUrls.STATIC_SCAN_START).routeParam("relId", relId)
                 .queryString("entitlementPreferenceType", (req.getEntitlementPreferenceType() != null ?
                         FoDEnums.EntitlementPreferenceType.valueOf(req.getEntitlementPreferenceType()) : FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan))
@@ -80,9 +80,9 @@ public class FoDSastScanHelper extends FoDScanHelper {
                 .put("scanId", startScanResponse.getScanId())
                 .put("scanType", FoDScanTypeOptions.FoDScanType.Static.name())
                 .put("analysisStatusType", "Pending")
-                .put("applicationName", appRelDescriptor.getApplicationName())
-                .put("releaseName", appRelDescriptor.getReleaseName())
-                .put("microserviceName", appRelDescriptor.getMicroserviceName());
+                .put("applicationName", releaseDescriptor.getApplicationName())
+                .put("releaseName", releaseDescriptor.getReleaseName())
+                .put("microserviceName", releaseDescriptor.getMicroserviceName());
         return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
     }
 
@@ -94,14 +94,13 @@ public class FoDSastScanHelper extends FoDScanHelper {
         return JsonHelper.treeToValue(setup, FoDSastScanSetupDescriptor.class);
     }
 
-    public static final FoDSastScanSetupDescriptor getSetupDescriptorWithAppRel(UnirestInstance unirest, String relId) {
-        FoDAppRelDescriptor appRelDescriptor = FoDAppRelHelper.getAppRelDescriptor(unirest, relId, ":", true);
+    public static final FoDSastScanSetupDescriptor getSetupDescriptorWithAppRel(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         GetRequest request = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
-                .routeParam("relId", relId);
+                .routeParam("relId", releaseDescriptor.getReleaseId());
         JsonNode setup = request.asObject(ObjectNode.class).getBody()
-                .put("applicationName", appRelDescriptor.getApplicationName())
-                .put("releaseName", appRelDescriptor.getReleaseName())
-                .put("microserviceName", appRelDescriptor.getMicroserviceName());
+                .put("applicationName", releaseDescriptor.getApplicationName())
+                .put("releaseName", releaseDescriptor.getReleaseName())
+                .put("microserviceName", releaseDescriptor.getMicroserviceName());
         return JsonHelper.treeToValue(setup, FoDSastScanSetupDescriptor.class);
     }
 

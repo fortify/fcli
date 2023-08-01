@@ -23,12 +23,12 @@ import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseResolverMixin;
+import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
+import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
-import com.fortify.cli.fod.release.helper.FoDAppRelAssessmentTypeDescriptor;
-import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
@@ -47,7 +47,7 @@ import picocli.CommandLine.Option;
 public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.SetupSast outputHelper;
     @Mixin
-    private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
+    private FoDReleaseResolverMixin.PositionalParameter releaseResolver;
 
     private enum StaticAssessmentTypes { Static, StaticPlus }
     @Option(names = {"--assessment-type"}, required = true)
@@ -68,12 +68,6 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     private Boolean includeThirdPartyLibraries = false;
     @Option(names = {"--use-source-control"})
     private Boolean useSourceControl = false;
-//    @Option(names = {"--scan-binary"})
-//    private Boolean scanBinary = false;
-
-    // no longer used - using specific StaticAssessmentTypes above
-    //@Mixin
-    //private FoDAssessmentTypeOptions.RequiredOption assessmentType;
 
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
@@ -81,7 +75,8 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         try ( var progressWriter = progressWriterFactory.create() ) {
-            String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
+            var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
+            var relId = releaseDescriptor.getReleaseId();
             Integer entitlementIdToUse = 0;
             Integer assessmentTypeId = 0;
             Integer technologyStackId = 0;
@@ -93,11 +88,11 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
 
             // find/check out assessment type id
             //FoDScanTypeOptions.FoDScanType scanType = assessmentType.getAssessmentType().toScanType();
-            FoDAppRelAssessmentTypeDescriptor[] appRelAssessmentTypeDescriptor = FoDAppRelHelper.getAppRelAssessmentTypes(unirest, relId,
+            FoDReleaseAssessmentTypeDescriptor[] appRelAssessmentTypeDescriptor = FoDReleaseHelper.getAppRelAssessmentTypes(unirest, relId,
                     FoDScanTypeOptions.FoDScanType.Static, true);
             //String assessmentTypeName = assessmentType.getAssessmentType().toString().replace("Plus", "+") + " Assessment";
             String assessmentTypeName = staticAssessmentType.name().replace("Plus", "+") + " Assessment";
-            for (FoDAppRelAssessmentTypeDescriptor assessmentType : appRelAssessmentTypeDescriptor) {
+            for (FoDReleaseAssessmentTypeDescriptor assessmentType : appRelAssessmentTypeDescriptor) {
                 if (assessmentType.getName().equals(assessmentTypeName)) {
                     assessmentTypeId = assessmentType.getAssessmentTypeId();
                 }
@@ -156,7 +151,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 .includeThirdPartyLibraries(includeThirdPartyLibraries)
                 .useSourceControl(useSourceControl).build();
 
-            return FoDSastScanHelper.setupScan(unirest, Integer.valueOf(relId), setupSastScanRequest).asJsonNode();
+            return FoDSastScanHelper.setupScan(unirest, releaseDescriptor, setupSastScanRequest).asJsonNode();
         }
     }
 

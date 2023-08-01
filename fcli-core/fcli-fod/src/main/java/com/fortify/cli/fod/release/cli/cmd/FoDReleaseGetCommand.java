@@ -18,7 +18,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseResolverMixin;
-import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
+import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -28,16 +28,16 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Get.CMD_NAME)
 public class FoDReleaseGetCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer {
     @Getter @Mixin private OutputHelperMixins.Get outputHelper;
-    @Mixin private FoDReleaseResolverMixin.PositionalParameter appRelResolver;
+    @Mixin private FoDReleaseResolverMixin.PositionalParameter releaseResolver;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        return appRelResolver.getAppRelDescriptor(unirest).asJsonNode();
+        return releaseResolver.getReleaseDescriptor(unirest).asJsonNode();
     }
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDAppRelHelper.renameFields(record);
+        return FoDReleaseHelper.renameFields(record);
     }
 
     @Override

@@ -13,9 +13,9 @@
 
 package com.fortify.cli.fod.microservice.cli.mixin;
 
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
-import com.fortify.cli.fod.release.cli.mixin.FoDDelimiterMixin;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
+import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
+import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -28,8 +28,8 @@ public class FoDMicroserviceResolverMixin {
         @Mixin private FoDDelimiterMixin delimiterMixin;
         public abstract String getAppMicroserviceNameOrId();
 
-        public FoDAppMicroserviceDescriptor getAppMicroserviceDescriptor(UnirestInstance unirest, String... fields){
-            return FoDAppMicroserviceHelper.getRequiredAppMicroservice(unirest, getAppMicroserviceNameOrId(), delimiterMixin.getDelimiter(), fields);
+        public FoDMicroserviceDescriptor getAppMicroserviceDescriptor(UnirestInstance unirest, String... fields){
+            return FoDMicroserviceHelper.getRequiredAppMicroservice(unirest, getAppMicroserviceNameOrId(), delimiterMixin.getDelimiter(), fields);
         }
 
         public String getAppMicroserviceId(UnirestInstance unirest) {

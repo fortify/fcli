@@ -23,7 +23,7 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
 import com.fortify.cli.fod._common.rest.query.cli.mixin.FoDFiltersParamMixin;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
-import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
+import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -46,7 +46,7 @@ public class FoDReleaseListCommand extends AbstractFoDBaseRequestOutputCommand i
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDAppRelHelper.renameFields(record);
+        return FoDReleaseHelper.renameFields(record);
     }
 
     @Override

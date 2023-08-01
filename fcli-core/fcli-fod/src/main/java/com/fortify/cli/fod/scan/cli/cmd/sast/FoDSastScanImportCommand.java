@@ -23,7 +23,7 @@ import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod._common.util.FoDConstants;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseResolverMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDImportScan;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
@@ -40,7 +40,7 @@ import picocli.CommandLine.Mixin;
 public class FoDSastScanImportCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.ImportSast outputHelper;
 
-    @Mixin private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
+    @Mixin private FoDReleaseResolverMixin.PositionalParameter releaseResolver;
 
     @CommandLine.Option(names = {"--chunk-size"})
     private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
@@ -50,7 +50,7 @@ public class FoDSastScanImportCommand extends AbstractFoDJsonNodeOutputCommand i
     // TODO Split method in multiple methods for upload and generating output
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
+        String relId = releaseResolver.getReleaseId(unirest);
         HttpRequest<?> request = unirest.put(FoDUrls.STATIC_SCANS_IMPORT).routeParam("relId", relId);
         FoDImportScan importScanHelper = new FoDImportScan(
                 unirest, relId, request, scanFile

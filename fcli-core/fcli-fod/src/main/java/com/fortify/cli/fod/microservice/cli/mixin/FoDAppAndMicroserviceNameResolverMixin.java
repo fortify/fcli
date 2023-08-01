@@ -13,7 +13,7 @@
 
 package com.fortify.cli.fod.microservice.cli.mixin;
 
-import com.fortify.cli.fod.release.cli.mixin.FoDDelimiterMixin;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;

@@ -20,8 +20,8 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseResolverMixin;
-import com.fortify.cli.fod.release.helper.FoDAppRelDescriptor;
-import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
+import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
+import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -31,11 +31,11 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
 public class FoDReleaseDeleteCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
-    @Mixin private FoDReleaseResolverMixin.PositionalParameter appRelResolver;
+    @Mixin private FoDReleaseResolverMixin.PositionalParameter releaseResolver;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        FoDAppRelDescriptor appRelDescriptor = appRelResolver.getAppRelDescriptor(unirest);
+        FoDReleaseDescriptor appRelDescriptor = releaseResolver.getReleaseDescriptor(unirest);
         unirest.delete(FoDUrls.RELEASE)
                 .routeParam("relId", String.valueOf(appRelDescriptor.getReleaseId()))
                 .asObject(JsonNode.class).getBody();
@@ -44,7 +44,7 @@ public class FoDReleaseDeleteCommand extends AbstractFoDJsonNodeOutputCommand im
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDAppRelHelper.renameFields(record);
+        return FoDReleaseHelper.renameFields(record);
     }
 
     @Override

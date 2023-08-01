@@ -19,8 +19,8 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.microservice.cli.mixin.FoDMicroserviceResolverMixin;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
+import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
+import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -38,13 +38,13 @@ public class FoDMicroserviceDeleteCommand extends AbstractFoDJsonNodeOutputComma
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        FoDAppMicroserviceDescriptor appMicroserviceDescriptor = appMicroserviceResolver.getAppMicroserviceDescriptor(unirest);
-        return FoDAppMicroserviceHelper.deleteAppMicroservice(unirest, appMicroserviceDescriptor);
+        FoDMicroserviceDescriptor appMicroserviceDescriptor = appMicroserviceResolver.getAppMicroserviceDescriptor(unirest);
+        return FoDMicroserviceHelper.deleteAppMicroservice(unirest, appMicroserviceDescriptor);
     }
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDAppMicroserviceHelper.renameFields(record);
+        return FoDMicroserviceHelper.renameFields(record);
     }
 
     @Override

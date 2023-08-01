@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.release.cli.mixin;
+package com.fortify.cli.fod._common.cli.mixin;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
