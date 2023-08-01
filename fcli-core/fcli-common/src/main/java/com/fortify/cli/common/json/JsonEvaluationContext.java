@@ -63,7 +63,7 @@ public final class JsonEvaluationContext implements EvaluationContext {
         dateTimeRegistrar.setDateTimeFormatter(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         dateTimeRegistrar.registerFormatters(conversionService);
         SimpleEvaluationContext context = SimpleEvaluationContext
-                .forPropertyAccessors(new JsonPropertyAccessor())
+                .forPropertyAccessors(new ExistingJsonPropertyAccessor())
                 .withConversionService(conversionService)
                 .withInstanceMethods()
                 .build();
@@ -184,6 +184,13 @@ public final class JsonEvaluationContext implements EvaluationContext {
         @Override
         public ArrayNode convert(List<?> source) {
             return JsonHelper.getObjectMapper().valueToTree(source);
+        }
+    }
+    
+    private static final class ExistingJsonPropertyAccessor extends JsonPropertyAccessor {
+        @Override
+        public boolean canRead(EvaluationContext context, Object target, String name) throws AccessException {
+            return super.canRead(context, target, name) && (!(target instanceof ObjectNode) || ((ObjectNode)target).has(name));
         }
     }
 }
