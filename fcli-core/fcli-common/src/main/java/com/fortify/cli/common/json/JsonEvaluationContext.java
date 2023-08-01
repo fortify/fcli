@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.expression.AccessException;
 import org.springframework.expression.BeanResolver;
 import org.springframework.expression.ConstructorResolver;
 import org.springframework.expression.EvaluationContext;
@@ -36,6 +37,7 @@ import org.springframework.integration.json.JsonPropertyAccessor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.spring.expression.SpelHelper;
 import com.fortify.cli.common.spring.expression.StandardSpelFunctions;
 
@@ -45,11 +47,11 @@ import com.fortify.cli.common.spring.expression.StandardSpelFunctions;
  * properties on {@link JsonNode} instances. We allow reflective method calls using 
  * {@link DataBindingMethodResolver}. Note that native binaries will only be able to access 
  * methods declared in reflect-config.json. We use the delegate pattern to allow for 
- * customizing the {@link #getOperatorOverloader()} method, as {@link SimpleEvaluationContext}
- * doesn't allow for customizing the default overloader.
+ * potential future customization.
  * 
  * @return
  */
+//TODO reconsider this implementation, maybe rework to use a factory pattern
 public final class JsonEvaluationContext implements EvaluationContext {
     private final EvaluationContext delegate = createDelegate();
     
@@ -140,8 +142,6 @@ public final class JsonEvaluationContext implements EvaluationContext {
      * @see org.springframework.expression.EvaluationContext#getOperatorOverloader()
      */
     public OperatorOverloader getOperatorOverloader() {
-        System.err.println("getOperatorOverloader()");
-        // TODO Return out custom overloader
         return delegate.getOperatorOverloader();
     }
 
@@ -188,6 +188,10 @@ public final class JsonEvaluationContext implements EvaluationContext {
     }
     
     private static final class ExistingJsonPropertyAccessor extends JsonPropertyAccessor {
+        /**
+        * By default the JsonPropertyAccessor.canRead method always returns true if target is a valid JsonObject
+        * This override exists to ensure we return false in case the target object does not have a property with the provided name
+        */
         @Override
         public boolean canRead(EvaluationContext context, Object target, String name) throws AccessException {
             return super.canRead(context, target, name) && (!(target instanceof ObjectNode) || ((ObjectNode)target).has(name));
