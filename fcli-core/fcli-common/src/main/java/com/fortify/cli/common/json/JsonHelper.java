@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fortify.cli.common.json.EvaluationContextFactory.EvaluationContextType;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Getter;
@@ -49,7 +50,8 @@ public class JsonHelper {
     private static final SpelExpressionParser spelParser = new SpelExpressionParser();
     @Getter private static final ObjectMapper objectMapper = _createObjectMapper();
     //private static final Logger LOG = LoggerFactory.getLogger(JsonHelper.class);
-    private static final EvaluationContext spelEvaluationContext = new JsonEvaluationContext();
+    private static final EvaluationContext standardSpelEvaluationContext = EvaluationContextFactory.getEvaluationContext(EvaluationContextType.STANDARD);
+    private static final EvaluationContext ueSpelEvaluationContext = EvaluationContextFactory.getEvaluationContext(EvaluationContextType.USEREXPRESSIONS);
     
     private static final ObjectMapper _createObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -59,9 +61,24 @@ public class JsonHelper {
         objectMapper.registerModule(new JavaTimeModule());
         return objectMapper;
     }
+    public static final <R> R evaluateSpelExpression(EvaluationContextType contextType, JsonNode input, Expression expression, Class<R> returnClass) {
+        switch(contextType) {
+        case STANDARD:
+            return expression.getValue(standardSpelEvaluationContext, input, returnClass);
+        case USEREXPRESSIONS:
+            return expression.getValue(ueSpelEvaluationContext, input, returnClass);
+            default:
+                throw new IllegalArgumentException("Unhandled EvaluationContextType enum value " + contextType.name());
+        }
+    }
+    
+    public static final <R> R evaluateSpelExpression(EvaluationContextType contextType, JsonNode input, String expression, Class<R> returnClass) {
+        return evaluateSpelExpression(contextType, input, spelParser.parseExpression(expression), returnClass);
+    }
+    
     
     public static final <R> R evaluateSpelExpression(JsonNode input, Expression expression, Class<R> returnClass) {
-        return expression.getValue(spelEvaluationContext, input, returnClass);
+        return expression.getValue(standardSpelEvaluationContext, input, returnClass);
     }
     
     public static final <R> R evaluateSpelExpression(JsonNode input, String expression, Class<R> returnClass) {
