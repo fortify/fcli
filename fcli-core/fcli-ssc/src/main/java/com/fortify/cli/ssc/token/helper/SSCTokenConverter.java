@@ -13,10 +13,13 @@
 package com.fortify.cli.ssc.token.helper;
 
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Base64;
 
+
 public final class SSCTokenConverter {
+    private static Pattern applicationTokenPattern = Pattern.compile("^[\\da-f]{8}(?:-[\\da-f]{4}){3}-[\\da-f]{12}$");
     private SSCTokenConverter() {}
     
     public static final String toApplicationToken(String token) {
@@ -28,7 +31,7 @@ public final class SSCTokenConverter {
     }
     
     public static final String toRestToken(String token) {
-        return isApplicationToken(token) ? encode(token) : token; 
+        return isApplicationToken(token) ? encode(token) : validateRestTokenFormat(token); 
     }
     
     public static final char[] toRestToken(char[] token) {
@@ -36,11 +39,23 @@ public final class SSCTokenConverter {
     }
     
     public static final boolean isApplicationToken(String token) {
-        return token.matches("^[\\da-f]{8}(?:-[\\da-f]{4}){3}-[\\da-f]{12}$");
+        return applicationTokenPattern.matcher(token).matches();
     }
     
     private static final String decode(String token) {
-        return new String(Base64.decodeBase64(token), StandardCharsets.UTF_8);
+        return validateApplicationTokenFormat(new String(Base64.decodeBase64(token), StandardCharsets.UTF_8));
+    }
+    
+    private static final String validateApplicationTokenFormat(String token) {
+        if(!isApplicationToken(token)) {
+            throw new IllegalArgumentException("The provided token could not be decoded to a valid application token format");
+        }
+        return token;
+    }
+    
+    private static final String validateRestTokenFormat(String token) {
+        decode(token);
+        return token;
     }
     
     private static final String encode(String token) {
