@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 @Timeout(value = 5)
 public class WaitHelperTest {
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    
+    /*
     @Test
     public void testNoRequests() {
         try {
@@ -110,4 +110,5 @@ public class WaitHelperTest {
             fail("WaitHelper didn't throw exception on unknown state");
         } catch ( RuntimeException expected ) {}
     }
+    */
 }

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.json;
+package com.fortify.cli.common.spring.expression;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -18,6 +18,8 @@ import java.util.List;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.expression.AccessException;
 import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
 import org.springframework.format.support.DefaultFormattingConversionService;
@@ -27,13 +29,48 @@ import org.springframework.integration.json.JsonPropertyAccessor;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.spring.expression.SpelHelper;
-import com.fortify.cli.common.spring.expression.StandardSpelFunctions;
+import com.fortify.cli.common.json.JsonHelper;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-public final class EvaluationContextFactory {
+@RequiredArgsConstructor
+public enum SpelEvaluator {
+    JSON_GENERIC(createJsonGenericContext()),
+    JSON_QUERY(createJsonQueryContext());
     
-    public static final EvaluationContext getEvaluationContext(EvaluationContextType type) {
+    private static final SpelExpressionParser SPEL_PARSER = new SpelExpressionParser();
+    @Getter private final EvaluationContext context;
+
+    public final <R> R evaluate(Expression expression, Object input, Class<R> returnClass) {
+        return expression.getValue(context, input, returnClass);
+    }
+
+    public final <R> R evaluate(String expression, Object input, Class<R> returnClass) {
+        return evaluate(SPEL_PARSER.parseExpression(expression), input, returnClass);
+    } 
+    
+    private static final EvaluationContext createJsonGenericContext() {
+        SimpleEvaluationContext context = SimpleEvaluationContext
+            .forPropertyAccessors(new JsonPropertyAccessor())
+            .withConversionService(createJsonConversionService())
+            .withInstanceMethods()
+            .build();
+        SpelHelper.registerFunctions(context, StandardSpelFunctions.class);
+        return context;
+    }
+    
+    private static final EvaluationContext createJsonQueryContext() {
+        SimpleEvaluationContext context = SimpleEvaluationContext
+            .forPropertyAccessors(new ExistingJsonPropertyAccessor())
+            .withConversionService(createJsonConversionService())
+            .withInstanceMethods()
+            .build();
+        SpelHelper.registerFunctions(context, StandardSpelFunctions.class);
+        return context;
+    }
+    
+    private static final DefaultFormattingConversionService createJsonConversionService() {
         DefaultFormattingConversionService  conversionService = new DefaultFormattingConversionService();
         conversionService.addConverter(new JsonNodeWrapperToJsonNodeConverter());
         conversionService.addConverter(new ListToArrayNodeConverter());
@@ -42,28 +79,9 @@ public final class EvaluationContextFactory {
         dateTimeRegistrar.setDateFormatter(DateTimeFormatter.ISO_DATE);
         dateTimeRegistrar.setDateTimeFormatter(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         dateTimeRegistrar.registerFormatters(conversionService);
-        switch(type) {
-        case STANDARD:
-            SimpleEvaluationContext context = SimpleEvaluationContext
-            .forPropertyAccessors(new JsonPropertyAccessor())
-            .withConversionService(conversionService)
-            .withInstanceMethods()
-            .build();
-            SpelHelper.registerFunctions(context, StandardSpelFunctions.class);
-            return context;
-        case USEREXPRESSIONS:
-            context = SimpleEvaluationContext
-            .forPropertyAccessors(new ExistingJsonPropertyAccessor())
-            .withConversionService(conversionService)
-            .withInstanceMethods()
-            .build();
-            SpelHelper.registerFunctions(context, StandardSpelFunctions.class);
-            return context;
-            default:
-                throw new IllegalArgumentException("Unhandled EvaluationContextType enum value " + type.name());
-        }
+        return conversionService;
     }
-
+    
     private static final class ObjectToJsonNodeConverter implements Converter<Object, JsonNode> {
         @Override
         public JsonNode convert(Object source) {
@@ -87,10 +105,5 @@ public final class EvaluationContextFactory {
         public boolean canRead(EvaluationContext context, Object target, String name) throws AccessException {
             return super.canRead(context, target, name) && (!(target instanceof ObjectNode) || ((ObjectNode)target).has(name));
         }
-    }
-    
-    public enum EvaluationContextType {
-        STANDARD,
-        USEREXPRESSIONS
     }
 }

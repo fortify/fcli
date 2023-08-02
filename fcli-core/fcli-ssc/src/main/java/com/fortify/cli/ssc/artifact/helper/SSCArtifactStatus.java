@@ -13,6 +13,7 @@
 
 package com.fortify.cli.ssc.artifact.helper;
 
+import java.util.ArrayList;
 import java.util.stream.Stream;
 
 /**
@@ -66,6 +67,13 @@ public enum SSCArtifactStatus {
     
     public static final String[] getDefaultCompleteStateNames() {
         return Stream.of(getDefaultCompleteStates()).map(SSCArtifactStatus::name).toArray(String[]::new);
+    }
+    
+    public static final class SSCArtifactStatusIterable extends ArrayList<String> {
+        private static final long serialVersionUID = 1L;
+        public SSCArtifactStatusIterable() { 
+            super(Stream.of(SSCArtifactStatus.values()).map(SSCArtifactStatus::name).toList()); 
+        }
     }
 
 }

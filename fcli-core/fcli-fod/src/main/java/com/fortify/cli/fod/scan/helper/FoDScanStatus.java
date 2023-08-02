@@ -13,6 +13,7 @@
 
 package com.fortify.cli.fod.scan.helper;
 
+import java.util.ArrayList;
 import java.util.stream.Stream;
 
 public enum FoDScanStatus {
@@ -40,6 +41,13 @@ public enum FoDScanStatus {
 
     public static final String[] getDefaultCompleteStateNames() {
         return Stream.of(getDefaultCompleteStates()).map(FoDScanStatus::name).toArray(String[]::new);
+    }
+    
+    public static final class FoDScanStatusIterable extends ArrayList<String> {
+        private static final long serialVersionUID = 1L;
+        public FoDScanStatusIterable() { 
+            super(Stream.of(FoDScanStatus.values()).map(Enum::name).toList()); 
+        }
     }
 
 }

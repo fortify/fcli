@@ -15,8 +15,7 @@ package com.fortify.cli.common.output.query;
 import org.springframework.expression.Expression;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.json.EvaluationContextFactory.EvaluationContextType;
-import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.spring.expression.SpelEvaluator;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,7 @@ public class QueryExpression {
 
     public boolean matches(JsonNode record) {
         try {
-            return JsonHelper.evaluateSpelExpression(EvaluationContextType.USEREXPRESSIONS, record, expression, Boolean.class);
+            return SpelEvaluator.JSON_QUERY.evaluate(expression, record, Boolean.class);
         } catch ( Exception e ) {
             throw new IllegalStateException(String.format("Error evaluating query expression:\n\tMessage: %s\n\tExpression: %s\n\tRecord: %s", e.getMessage(), expression.getExpressionString(), record.toPrettyString().replace("\n", "\n\t\t")), e);
         }

@@ -18,8 +18,8 @@ import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 import com.fortify.cli.common.rest.cli.mixin.StandardWaitHelperProgressMonitorMixin;
-import com.fortify.cli.common.rest.cli.mixin.WaitHelperControlOptions;
-import com.fortify.cli.common.rest.cli.mixin.WaitHelperWaitOptions;
+import com.fortify.cli.common.rest.cli.mixin.WaitHelperControlPropertiesMixin;
+import com.fortify.cli.common.rest.cli.mixin.WaitHelperWaitTypeMixin;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.wait.WaitHelper;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
@@ -30,8 +30,8 @@ import picocli.CommandLine.Mixin;
 
 public abstract class AbstractWaitForCommand extends AbstractRunnableCommand implements IActionCommandResultSupplier, IProductHelperSupplier, ISingularSupplier, Runnable {
     @Getter @Mixin private OutputHelperMixins.WaitFor outputHelper;
-    @Mixin private WaitHelperControlOptions controlOptions;
-    @Mixin private WaitHelperWaitOptions waitOptions;
+    @Mixin private WaitHelperControlPropertiesMixin controlProperties;
+    @Mixin private WaitHelperWaitTypeMixin waitTypeSupplier;
     @Mixin StandardWaitHelperProgressMonitorMixin progressMonitorMixin;
     
     @Override
@@ -49,10 +49,11 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
     private void wait(UnirestInstance unirest) {
         configure(
                 WaitHelper.builder()
-                    .controlProperties(controlOptions)
+                    .controlProperties(controlProperties)
+                    .waitType(waitTypeSupplier.getWaitType())
                     .progressMonitor(progressMonitorMixin.create(false))
                     .onFinish(WaitHelper::recordsWithActionAsArrayNode, outputHelper::write)
-            ).build().wait(unirest, waitOptions);
+            ).build().wait(unirest);
     }
     
     protected abstract WaitHelperBuilder configure(WaitHelperBuilder builder);

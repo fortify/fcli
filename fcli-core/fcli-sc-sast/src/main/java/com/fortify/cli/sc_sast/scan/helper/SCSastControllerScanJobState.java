@@ -13,6 +13,7 @@
 
 package com.fortify.cli.sc_sast.scan.helper;
 
+import java.util.ArrayList;
 import java.util.stream.Stream;
 
 /**
@@ -55,6 +56,13 @@ public enum SCSastControllerScanJobState {
     
     public static final String[] getDefaultCompleteStateNames() {
         return Stream.of(getDefaultCompleteStates()).map(SCSastControllerScanJobState::name).toArray(String[]::new);
+    }
+    
+    public static final class SCSastControllerScanJobStateIterable extends ArrayList<String> {
+        private static final long serialVersionUID = 1L;
+        public SCSastControllerScanJobStateIterable() { 
+            super(Stream.of(SCSastControllerScanJobState.values()).map(Enum::name).toList()); 
+        }
     }
 
 }
