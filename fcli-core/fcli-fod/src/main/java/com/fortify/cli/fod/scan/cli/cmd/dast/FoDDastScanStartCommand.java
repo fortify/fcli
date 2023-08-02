@@ -25,10 +25,11 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDQualifiedReleaseNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
@@ -52,7 +53,8 @@ import picocli.CommandLine.Option;
 public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
     @Getter @Mixin private FoDOutputHelperMixins.StartDast outputHelper;
-    @Mixin private FoDReleaseResolverMixin.PositionalParameter releaseResolver;
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin private FoDQualifiedReleaseNameOrIdResolverMixin.PositionalParameter releaseResolver;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--start-date"})

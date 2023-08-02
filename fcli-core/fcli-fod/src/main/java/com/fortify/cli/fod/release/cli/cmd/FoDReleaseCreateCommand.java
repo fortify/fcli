@@ -18,11 +18,11 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
-import com.fortify.cli.fod.release.cli.mixin.FoDCopyFromReleaseResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDQualifiedReleaseNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.cli.mixin.FoDQualifiedReleaseNameResolverMixin;
-import com.fortify.cli.fod.release.helper.FoDQualifiedReleaseNameDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseCreateRequest;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
@@ -35,8 +35,9 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDQualifiedReleaseNameResolverMixin.PositionalParameter releaseNameResolver;
-    @Mixin private FoDCopyFromReleaseResolverMixin copyFromReleaseResolver;
+    @Mixin private FoDQualifiedReleaseNameOrIdResolverMixin.OptionalCopyFromOption copyFromReleaseResolver;
 
     @Option(names = {"--description", "-d"})
     private String description;
@@ -55,22 +56,33 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
                 return descriptor.asObjectNode().put(IActionCommandResultSupplier.actionFieldName, "SKIPPED_EXISTING"); 
             }
         }
-        FoDQualifiedReleaseNameDescriptor qualifiedNameDescriptor = releaseNameResolver.getQualifiedReleaseNameDescriptor();
+        // Ensure app exists
+        var appDescriptor = releaseNameResolver.getAppDescriptor(unirest, true);
+        // Ensure microservice exists (if specified)
+        var microserviceDescriptor = releaseNameResolver.getMicroServiceDescriptor(unirest, true);
+        // Ensure microservice is specified if application has microservices
+        if ( appDescriptor.isHasMicroservices() && microserviceDescriptor==null ) {
+            throw new IllegalArgumentException("Microservice name must be specified for microservices application");
+        }
+        
+        String simpleReleaseName = releaseNameResolver.getSimpleReleaseName();
+        String copyReleaseId = copyFromReleaseResolver.getReleaseId(unirest);
 
-        String copyReleaseId = copyFromReleaseResolver.getReleaseId(unirest, releaseNameResolver.getDelimiterMixin());
-        int appId = releaseNameResolver.getAppDescriptor(unirest, true).getApplicationId();
-        var microserviceDescriptor = releaseNameResolver.getMicroServiceDescriptor(unirest, false);
-        Integer microserviceId = microserviceDescriptor==null ? null : microserviceDescriptor.getMicroserviceId();                
-        FoDReleaseCreateRequest relCreateRequest = FoDReleaseCreateRequest.builder()
-                .applicationId(appId)
-                .releaseName(qualifiedNameDescriptor.getReleaseName())
+        var requestBuilder = FoDReleaseCreateRequest.builder()
+                .applicationId(appDescriptor.getApplicationId())
+                .releaseName(simpleReleaseName)
                 .releaseDescription(description)
-                .copyState(StringUtils.isNotBlank(copyReleaseId))
-                .copyStateReleaseId(Integer.parseInt(copyReleaseId))
-                .sdlcStatusType(sdlcStatus.getSdlcStatusType().name())
-                .microserviceId(microserviceId).build();
+                .sdlcStatusType(sdlcStatus.getSdlcStatusType().name());
+        if ( microserviceDescriptor!=null ) {
+            requestBuilder = requestBuilder.microserviceId(microserviceDescriptor.getMicroserviceId());
+        }
+        if ( StringUtils.isNotBlank(copyReleaseId) ) {
+            requestBuilder = requestBuilder
+                .copyState(true)
+                .copyStateReleaseId(Integer.parseInt(copyReleaseId));
+        }
 
-        return FoDReleaseHelper.createRelease(unirest, relCreateRequest).asJsonNode();
+        return FoDReleaseHelper.createRelease(unirest, requestBuilder.build()).asJsonNode();
     }
 
     public JsonNode transformRecord(JsonNode record) {

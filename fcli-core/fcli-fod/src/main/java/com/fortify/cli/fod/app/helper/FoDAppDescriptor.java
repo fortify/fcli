@@ -33,8 +33,7 @@ public class FoDAppDescriptor extends JsonNodeHolder {
     private String businessCriticalityType;
     private ArrayList<FoDAttributeDescriptor> attributes;
     private String emailList;
-    private Integer releaseId;
-    private Integer microserviceId;
+    private boolean hasMicroservices;
 
     public Map<Integer, String> attributesAsMap() {
         Map<Integer, String> attrMap = new HashMap<>();

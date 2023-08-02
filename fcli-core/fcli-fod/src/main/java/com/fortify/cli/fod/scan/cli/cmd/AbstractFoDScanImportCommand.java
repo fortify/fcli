@@ -18,11 +18,12 @@ import java.io.File;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod._common.util.FoDConstants;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDQualifiedReleaseNameOrIdResolverMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDImportScan;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
@@ -34,7 +35,8 @@ import picocli.CommandLine;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractFoDScanImportCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
-    @Mixin private FoDReleaseResolverMixin.PositionalParameter releaseResolver;
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin private FoDQualifiedReleaseNameOrIdResolverMixin.PositionalParameter releaseResolver;
 
     @CommandLine.Option(names = {"--chunk-size"})
     private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;

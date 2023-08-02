@@ -13,6 +13,8 @@
 
 package com.fortify.cli.fod.release.helper;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.AllArgsConstructor;
@@ -23,6 +25,7 @@ import lombok.ToString;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Getter @ToString @Builder
+@JsonInclude(Include.NON_NULL)
 public class FoDReleaseCreateRequest {
     private Integer applicationId;
     private String releaseName;

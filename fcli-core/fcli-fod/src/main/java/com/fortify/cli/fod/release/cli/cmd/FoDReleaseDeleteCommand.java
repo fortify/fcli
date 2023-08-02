@@ -17,9 +17,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDQualifiedReleaseNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
@@ -31,7 +32,8 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
 public class FoDReleaseDeleteCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
-    @Mixin private FoDReleaseResolverMixin.PositionalParameter releaseResolver;
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin private FoDQualifiedReleaseNameOrIdResolverMixin.PositionalParameter releaseResolver;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {

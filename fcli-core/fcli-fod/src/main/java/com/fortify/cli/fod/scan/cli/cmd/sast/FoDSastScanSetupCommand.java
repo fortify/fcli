@@ -20,10 +20,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDQualifiedReleaseNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
@@ -46,8 +47,9 @@ import picocli.CommandLine.Option;
 @Command(name = FoDOutputHelperMixins.SetupSast.CMD_NAME)
 public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.SetupSast outputHelper;
-    @Mixin
-    private FoDReleaseResolverMixin.PositionalParameter releaseResolver;
+    
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin private FoDQualifiedReleaseNameOrIdResolverMixin.PositionalParameter releaseResolver;
 
     private enum StaticAssessmentTypes { Static, StaticPlus }
     @Option(names = {"--assessment-type"}, required = true)

@@ -14,6 +14,7 @@
 package com.fortify.cli.fod.release.cli.mixin;
 
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
+import com.fortify.cli.fod._common.cli.mixin.IFoDDelimiterMixinAware;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
@@ -24,18 +25,23 @@ import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.Mixin;
+import lombok.Setter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class FoDQualifiedReleaseNameResolverMixin {
-    public static abstract class AbstractQualifiedReleaseNameResolverMixin {
-        @Getter @Mixin private FoDDelimiterMixin delimiterMixin;
+    public static abstract class AbstractFoDQualifiedReleaseNameResolverMixin implements IFoDDelimiterMixinAware {
+        @Setter private FoDDelimiterMixin delimiterMixin;
         public abstract String getQualifiedReleaseName();
 
         public final FoDQualifiedReleaseNameDescriptor getQualifiedReleaseNameDescriptor() {
             if (getQualifiedReleaseName() == null) { return null; }
             return FoDQualifiedReleaseNameDescriptor.fromQualifiedReleaseName(getQualifiedReleaseName(), getDelimiter());
+        }
+        
+        public String getSimpleReleaseName() {
+            var desc = getQualifiedReleaseNameDescriptor();
+            return desc==null ? null : desc.getReleaseName();
         }
         
         public FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, boolean failIfNotFound) {
@@ -60,12 +66,12 @@ public class FoDQualifiedReleaseNameResolverMixin {
         }
     }
 
-    public static class RequiredOption extends AbstractQualifiedReleaseNameResolverMixin {
+    public static class RequiredOption extends AbstractFoDQualifiedReleaseNameResolverMixin {
         @Option(names = {"--release"}, required = true, paramLabel = "app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name")
         @Getter private String qualifiedReleaseName;
     }
 
-    public static class PositionalParameter extends AbstractQualifiedReleaseNameResolverMixin {
+    public static class PositionalParameter extends AbstractFoDQualifiedReleaseNameResolverMixin {
         @Parameters(index = "0", paramLabel = "app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name")
         @Getter private String qualifiedReleaseName;
     }
