@@ -33,7 +33,7 @@ class SSCTokenSpec extends FcliBaseSpec {
     
     
     def "create"() {
-        def args = "ssc token create CIToken --expire-in='5m' --user=" + user + " --password=" + pass + " --store token"
+        def args = "ssc token create CIToken --expire-in='5m' --user=$user --password=$pass --store token"
         when:
             def result = Fcli.run(args)
         then:
@@ -45,7 +45,7 @@ class SSCTokenSpec extends FcliBaseSpec {
     }
     
     def "verifyCreated"() {
-        def args = "ssc token list -q id==#var('token').id --user=" + user + " --password=" + pass
+        def args = "ssc token list -q id==#var('token').id --user=$user --password=$pass"
         when:
             def result = Fcli.run(args)
         then:
@@ -57,7 +57,7 @@ class SSCTokenSpec extends FcliBaseSpec {
     }
 
     def "update"() {
-        def args = "ssc token update --description=updatedDescription --user=" + user + " --password=" + pass + " ::token::id"
+        def args = "ssc token update --description=updatedDescription --user=$user --password=$pass ::token::id"
         when:
             def result = Fcli.run(args)
         then:
@@ -69,7 +69,7 @@ class SSCTokenSpec extends FcliBaseSpec {
     }
     
     def "verifyUpdated"() {
-        def args = "ssc token list -q id==#var('token').id --user=" + user + " --password=" + pass
+        def args = "ssc token list -q id==#var('token').id --user=$user --password=$pass"
         when:
             def result = Fcli.run(args)
         then:
@@ -81,7 +81,7 @@ class SSCTokenSpec extends FcliBaseSpec {
     }
     
     def "revoke"() {
-        def args = "ssc token revoke ::token::restToken --user=" + user + " --password=" + pass
+        def args = "ssc token revoke ::token::restToken --user=$user --password=$pass"
         when:
             def result = Fcli.run(args)
         then:
@@ -93,7 +93,7 @@ class SSCTokenSpec extends FcliBaseSpec {
     }
     
     def "verifyRevoked"() {
-        def args = "ssc token list -q id==#var('token').id --user=" + user + " --password=" + pass
+        def args = "ssc token list -q id==#var('token').id --user=$user --password=$pass"
         when:
             def result = Fcli.run(args)
         then:
