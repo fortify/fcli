@@ -158,10 +158,6 @@ public class Fcli {
             super(msg);
             this.result = result;
         }
-        
-        public FcliResult getResult() {
-            return this.result;
-        }
     }
     
     @CompileStatic
