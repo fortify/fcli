@@ -2,6 +2,7 @@ package com.fortify.cli.ftest.core;
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.Fcli.FcliResult
+import com.fortify.cli.ftest._common.Fcli.UnexpectedFcliResultException
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.Prefix
 
@@ -334,18 +335,19 @@ class QuerySpec extends FcliBaseSpec {
             }
     }
     
-    /*
+    
     def "smallerAndGreaterEqualDateTimeNow"() {
         when:
-            def result = generate("#date(dateTimeValue)<=#now() || (#date(dateTimeValue)<=#now('+40y') && #date(dateTimeValue)>=#now('+20y'))")
+            def result = generate("(#date(dateTimeValue)<=#now('+14610d') && #date(dateTimeValue)>=#now('+1000d'))")
         then:
             verifyAll(result.stdout) {
-                size()==7776
-                it[0].contains('Id  String value  Long value  Double value  Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0   value1        1000        0.7           true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[7776].contains('9998  value2        -1000                1.7976931348623157E308  true           N/A         2030-12-31T23:59:59+02:00  N/A                         N/A')
+                size()==7777
+                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
+                it[1].contains('8      value1        1000                 0.7                     true           2000-01-01  2030-12-31T23:59:59+02:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4 ')
+                it[7776].contains('23319  N/A           N/A                  N/A                     N/A            N/A         2030-12-31T23:59:59+02:00  N/A                         N/A                          N/A')
             }
     }
+    /*
     def "matches"() {
         when:
             def result = generate("stringValue matches 'value1|value2'")
@@ -356,8 +358,8 @@ class QuerySpec extends FcliBaseSpec {
                 it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
                 it[1].contains('15551  value2        N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
             }
-    }
-    */
+    }*/
+    
     def "matchesWithNullGuard"() {
         when:
             def result = generate("stringValue != null && stringValue matches 'value1|value2'")
@@ -370,5 +372,15 @@ class QuerySpec extends FcliBaseSpec {
             }
     }
     
+    def "throwsOnNonExistingProperty"() {
+        when:
+            def result = generate("nonexistingvalue == 'value1'")
+        then:
+            def e = thrown(UnexpectedFcliResultException)
+            verifyAll(e.result.stderr) {
+                it.any {it.contains('Property or field \'nonexistingvalue\' cannot be found on object of type \'com.fasterxml.jackson.databind.node.ObjectNode\' - maybe not public or not valid?')}
+                it.any {it.contains('java.lang.IllegalStateException: Error evaluating query expression:')}
+            }
+    }
     
 }

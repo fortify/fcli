@@ -142,13 +142,21 @@ public class Fcli {
             if ( expectedSuccess!=success ) {
                 def pfx = msg.isBlank() ? "" : (msg+":\n   ")
                 if ( success ) {
-                    throw new IllegalStateException(pfx+"Fcli unexpectedly terminated successfully")
+                    throw new UnexpectedFcliResultException(pfx+"Fcli unexpectedly terminated successfully", this)
                 } else {
-                    throw new IllegalStateException(pfx+"Fcli unexpectedly terminated unsuccessfully\n   "
-                        +stderr.join("\n   "))
+                    throw new UnexpectedFcliResultException(pfx+"Fcli unexpectedly terminated unsuccessfully\n   "
+                        +stderr.join("\n   "), this)
                 }
             }
             return this
+        }
+    }
+    
+    public static class UnexpectedFcliResultException extends RuntimeException {
+        public FcliResult result;
+        public UnexpectedFcliResultException(String msg, FcliResult result) {
+            super(msg);
+            this.result = result;
         }
     }
     
