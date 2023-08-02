@@ -153,10 +153,14 @@ public class Fcli {
     }
     
     public static class UnexpectedFcliResultException extends RuntimeException {
-        public FcliResult result;
+        final FcliResult result;
         public UnexpectedFcliResultException(String msg, FcliResult result) {
             super(msg);
             this.result = result;
+        }
+        
+        public FcliResult getResult() {
+            return this.result;
         }
     }
     
