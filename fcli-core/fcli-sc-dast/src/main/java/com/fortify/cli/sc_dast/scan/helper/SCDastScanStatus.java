@@ -13,6 +13,7 @@
 
 package com.fortify.cli.sc_dast.scan.helper;
 
+import java.util.ArrayList;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -68,6 +69,13 @@ public enum SCDastScanStatus {
     
     public static final String[] getDefaultCompleteStateNames() {
         return Stream.of(getDefaultCompleteStates()).map(SCDastScanStatus::name).toArray(String[]::new);
+    }
+    
+    public static final class SCDastScanStatusIterable extends ArrayList<String> {
+        private static final long serialVersionUID = 1L;
+        public SCDastScanStatusIterable() { 
+            super(Stream.of(SCDastScanStatus.values()).map(SCDastScanStatus::name).toList()); 
+        }
     }
 
 }

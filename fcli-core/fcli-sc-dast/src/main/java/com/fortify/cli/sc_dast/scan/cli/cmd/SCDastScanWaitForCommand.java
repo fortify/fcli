@@ -12,21 +12,27 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast.scan.cli.cmd;
 
+import java.util.Set;
+
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
 import com.fortify.cli.sc_dast._common.output.cli.mixin.SCDastProductHelperStandardMixin;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
+import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus.SCDastScanStatusIterable;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.WaitFor.CMD_NAME)
 public class SCDastScanWaitForCommand extends AbstractWaitForCommand {
     @Getter @Mixin SCDastProductHelperStandardMixin productHelper;
     @Mixin private SCDastScanResolverMixin.PositionalParameterMulti scansResolver;
+    @Option(names={"-s", "--any-state"}, required=true, split=",", defaultValue="Complete", completionCandidates = SCDastScanStatusIterable.class)
+    private Set<String> states;
     
     @Override
     protected WaitHelperBuilder configure(WaitHelperBuilder builder) {
@@ -36,6 +42,6 @@ public class SCDastScanWaitForCommand extends AbstractWaitForCommand {
                 .currentStateProperty("scanStatus")
                 .knownStates(SCDastScanStatus.getKnownStateNames())
                 .failureStates(SCDastScanStatus.getFailureStateNames())
-                .defaultCompleteStates(SCDastScanStatus.getDefaultCompleteStateNames());
+                .matchStates(states);
     }
 }

@@ -23,9 +23,7 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -35,7 +33,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fortify.cli.common.json.EvaluationContextFactory.EvaluationContextType;
+import com.fortify.cli.common.spring.expression.SpelEvaluator;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Getter;
@@ -47,12 +45,8 @@ import lombok.Getter;
  *
  */
 public class JsonHelper {
-    private static final SpelExpressionParser spelParser = new SpelExpressionParser();
     @Getter private static final ObjectMapper objectMapper = _createObjectMapper();
     //private static final Logger LOG = LoggerFactory.getLogger(JsonHelper.class);
-    private static final EvaluationContext standardSpelEvaluationContext = EvaluationContextFactory.getEvaluationContext(EvaluationContextType.STANDARD);
-    private static final EvaluationContext ueSpelEvaluationContext = EvaluationContextFactory.getEvaluationContext(EvaluationContextType.USEREXPRESSIONS);
-    
     private static final ObjectMapper _createObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -61,29 +55,15 @@ public class JsonHelper {
         objectMapper.registerModule(new JavaTimeModule());
         return objectMapper;
     }
-    public static final <R> R evaluateSpelExpression(EvaluationContextType contextType, JsonNode input, Expression expression, Class<R> returnClass) {
-        switch(contextType) {
-        case STANDARD:
-            return expression.getValue(standardSpelEvaluationContext, input, returnClass);
-        case USEREXPRESSIONS:
-            return expression.getValue(ueSpelEvaluationContext, input, returnClass);
-            default:
-                throw new IllegalArgumentException("Unhandled EvaluationContextType enum value " + contextType.name());
-        }
-    }
-    
-    public static final <R> R evaluateSpelExpression(EvaluationContextType contextType, JsonNode input, String expression, Class<R> returnClass) {
-        return evaluateSpelExpression(contextType, input, spelParser.parseExpression(expression), returnClass);
-    }
-    
     
     public static final <R> R evaluateSpelExpression(JsonNode input, Expression expression, Class<R> returnClass) {
-        return expression.getValue(standardSpelEvaluationContext, input, returnClass);
+        return SpelEvaluator.JSON_GENERIC.evaluate(expression, input, returnClass);
     }
-    
+
     public static final <R> R evaluateSpelExpression(JsonNode input, String expression, Class<R> returnClass) {
-        return evaluateSpelExpression(input, spelParser.parseExpression(expression), returnClass);
+        return SpelEvaluator.JSON_GENERIC.evaluate(expression, input, returnClass);
     }
+
     
     public static final ObjectNode getFirstObjectNode(JsonNode input) {
         if ( input instanceof ObjectNode ) {

@@ -134,7 +134,7 @@ public class FortifyCLITest {
     
     private void checkMultiValueOption(Results results, CommandSpec cmdSpec, OptionSpec optionSpec) {
         if ( optionSpec.isMultiValue() ) {
-            Stream.of(optionSpec.names()).filter(n->n.startsWith("--") && !n.endsWith("s")).forEach(
+            Stream.of(optionSpec.names()).filter(n->n.startsWith("--") && !n.endsWith("s") && !n.contains("any")).forEach(
                 name->results.add(TestType.MULTI_OPT_PLURAL_NAME, Level.ERROR, cmdSpec, optionSpec, "Multi-value option should use plural option name: "+name));
             if ( StringUtils.isBlank(optionSpec.splitRegex()) ) {
                 results.add(TestType.MULTI_OPT_SPLIT, Level.ERROR, cmdSpec, optionSpec, "Multi-value option should define a split expression");

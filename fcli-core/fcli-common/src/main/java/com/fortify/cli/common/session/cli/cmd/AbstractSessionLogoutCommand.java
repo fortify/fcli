@@ -12,6 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.common.session.cli.cmd;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.session.cli.mixin.SessionNameMixin;
@@ -21,6 +24,7 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractSessionLogoutCommand<D extends ISessionDescriptor> extends AbstractSessionCommand<D> implements IActionCommandResultSupplier {
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractSessionLogoutCommand.class);
     @Getter @Mixin private SessionNameMixin.OptionalLogoutOption sessionNameMixin;
     
     @Override
@@ -33,7 +37,8 @@ public abstract class AbstractSessionLogoutCommand<D extends ISessionDescriptor>
             try {
                 logout(sessionName, sessionHelper.get(sessionName, false));
             } catch (Exception e){
-                throw e;
+                LOG.warn("Logout failed");
+                LOG.debug("Exception details:", e);
             } finally {
                 getSessionHelper().destroy(sessionName);
             }
