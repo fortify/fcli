@@ -16,35 +16,28 @@ package com.fortify.cli.fod.microservice.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
-import com.fortify.cli.fod.microservice.cli.mixin.FoDMicroserviceResolverMixin;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
+import com.fortify.cli.fod.microservice.cli.mixin.FoDMicroserviceByQualifiedNameResolverMixin;
+import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
+import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Spec;
 
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
-public class FoDMicroserviceDeleteCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDMicroserviceDeleteCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
-    @Spec CommandSpec spec;
-
-    @Mixin private FoDMicroserviceResolverMixin.PositionalParameter appMicroserviceResolver;
+    
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin private FoDMicroserviceByQualifiedNameResolverMixin.PositionalParameter qualifiedMicroserviceNameResolver;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        FoDAppMicroserviceDescriptor appMicroserviceDescriptor = appMicroserviceResolver.getAppMicroserviceDescriptor(unirest);
-        return FoDAppMicroserviceHelper.deleteAppMicroservice(unirest, appMicroserviceDescriptor);
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDAppMicroserviceHelper.renameFields(record);
+        FoDMicroserviceDescriptor appMicroserviceDescriptor = qualifiedMicroserviceNameResolver.getMicroserviceDescriptor(unirest, true);
+        return FoDMicroserviceHelper.deleteMicroservice(unirest, appMicroserviceDescriptor).asJsonNode();
     }
 
     @Override

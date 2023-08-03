@@ -11,21 +11,22 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.release.cli.mixin;
+package com.fortify.cli.fod.app.helper;
 
 import javax.validation.ValidationException;
 
 import lombok.Data;
 
 @Data
-public final class FoDAppAndRelNameDescriptor {
-    private final String appName, relName;
+public final class FoDMicroserviceAndReleaseNameDescriptor {
+    private final String microserviceName, releaseName;
     
-    public static final FoDAppAndRelNameDescriptor fromCombinedAppAndRelName(String appAndRelName, String delimiter) {
-        String[] appAndRelNameArray = appAndRelName.split(delimiter);
-        if (appAndRelNameArray.length != 2) {
-            throw new ValidationException("Application and release name must be specified in the format <application name>"+delimiter+"<release name>");
+    public static final FoDMicroserviceAndReleaseNameDescriptor fromMicroserviceAndReleaseName(String microserviceAndReleaseName, String delimiter) {
+        String[] elts = microserviceAndReleaseName.split(delimiter);
+        switch ( elts.length ) {
+        case 2: return new FoDMicroserviceAndReleaseNameDescriptor(elts[0], elts[1]);
+        case 1: return new FoDMicroserviceAndReleaseNameDescriptor(null, elts[0]);
+        default: throw new ValidationException("Release name must be specified in the format ["+delimiter+"<microservice name>]"+delimiter+"<release name>");
         }
-        return new FoDAppAndRelNameDescriptor(appAndRelNameArray[0], appAndRelNameArray[1]);
     }
 }

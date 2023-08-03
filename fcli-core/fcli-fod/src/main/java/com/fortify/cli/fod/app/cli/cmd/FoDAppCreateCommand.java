@@ -12,6 +12,13 @@
  *******************************************************************************/
 package com.fortify.cli.fod.app.cli.cmd;
 
+import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_NAME;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -23,12 +30,14 @@ import com.fortify.cli.fod.app.attr.cli.helper.FoDAttributeHelper;
 import com.fortify.cli.fod.app.attr.cli.mixin.FoDAttributeUpdateOptions;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppTypeOptions;
 import com.fortify.cli.fod.app.cli.mixin.FoDCriticalityTypeOptions;
+import com.fortify.cli.fod.app.cli.mixin.FoDMicroserviceAndReleaseNameResolverMixin;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.app.helper.FoDAppCreateRequest;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine;
@@ -37,11 +46,6 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Spec;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import static com.fortify.cli.common.util.DisableTest.TestType.MULTI_OPT_PLURAL_NAME;
 
 @CommandLine.Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
@@ -55,12 +59,9 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
     @DisableTest(MULTI_OPT_PLURAL_NAME)
     @Option(names = {"--notify"}, required = false, split=",")
     protected ArrayList<String> notifications;
-    @Option(names = {"--release", "--release-name"})
-    protected String releaseName;
+    @Mixin private FoDMicroserviceAndReleaseNameResolverMixin.RequiredOption releaseNameResolverMixin;
     @Option(names = {"--release-description"})
     protected String releaseDescription;
-    @Option(names = {"--microservice", "--microservice-name"}, required = false)
-    private String microservice;
     @Option(names = {"--owner"}, required = true)
     protected String owner;
     @Option(names = {"--groups"}, required = false, split=",")
@@ -79,16 +80,19 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        validate();
+        var releaseNameDescriptor = releaseNameResolverMixin.getMicroserviceAndReleaseNameDescriptor();
+        var microserviceName = releaseNameDescriptor.getMicroserviceName();
+        validateMicroserviceName(microserviceName);
 
         FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, owner, true);
-        ArrayList<String> microservices = new ArrayList<>(Arrays.asList(microservice));
+        List<String> microservices = StringUtils.isBlank(microserviceName) 
+                ? Collections.emptyList() : new ArrayList<>(Arrays.asList(microserviceName));
         FoDAppCreateRequest appCreateRequest = FoDAppCreateRequest.builder()
                 .applicationName(applicationName)
                 .applicationDescription(description)
-                .businessCriticalityType(String.valueOf(criticalityType.getCriticalityType()))
+                .businessCriticalityType(criticalityType.getCriticalityType().name())
                 .emailList(FoDAppHelper.getEmailList(notifications))
-                .releaseName(releaseName)
+                .releaseName(releaseNameDescriptor.getReleaseName())
                 .releaseDescription(releaseDescription)
                 .sdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
                 .ownerId(userDescriptor.getUserId())
@@ -101,12 +105,15 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
         return FoDAppHelper.createApp(unirest, appCreateRequest).asJsonNode();
     }
 
-    protected void validate() {
-        if (appType.getAppType().equals(FoDAppTypeOptions.FoDAppType.Microservice)) {
-            if (StringUtils.isBlank(microservice)) {
+    protected void validateMicroserviceName(String microserviceName) {
+        if ( appType.getAppType().equals(FoDAppTypeOptions.FoDAppType.Microservice) ) {
+            if ( StringUtils.isBlank(microserviceName) ) {
                 throw new CommandLine.ParameterException(spec.commandLine(),
-                        "Missing option: if 'Microservice' type is specified then the '--microservice-name' option needs to specified.");
+                    "Invalid option value: if 'Microservice' type is specified then --release must be specified as <microservice>:<release>");
             }
+        } else if ( StringUtils.isNotBlank(microserviceName) ) {
+            throw new CommandLine.ParameterException(spec.commandLine(),
+               "Invalid option value: --release must be a plain release name for non-microservice applications.");
         }
     }
 

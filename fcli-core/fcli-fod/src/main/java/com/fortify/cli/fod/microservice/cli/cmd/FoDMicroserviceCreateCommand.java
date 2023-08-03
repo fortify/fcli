@@ -16,15 +16,14 @@ package com.fortify.cli.fod.microservice.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
-import com.fortify.cli.fod.app.helper.FoDAppHelper;
-import com.fortify.cli.fod.microservice.cli.mixin.FoDAppAndMicroserviceNameDescriptor;
-import com.fortify.cli.fod.microservice.cli.mixin.FoDAppAndMicroserviceNameResolverMixin;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceDescriptor;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceHelper;
-import com.fortify.cli.fod.microservice.helper.FoDAppMicroserviceUpdateRequest;
+import com.fortify.cli.fod.microservice.cli.mixin.FoDMicroserviceByQualifiedNameResolverMixin;
+import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
+import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
+import com.fortify.cli.fod.microservice.helper.FoDMicroserviceUpdateRequest;
+import com.fortify.cli.fod.microservice.helper.FoDQualifiedMicroserviceNameDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -33,9 +32,11 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
-public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
-    @Mixin private FoDAppAndMicroserviceNameResolverMixin.PositionalParameter appAndMicroserviceNameResolver;
+    
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin private FoDMicroserviceByQualifiedNameResolverMixin.PositionalParameter qualifiedMicroserviceNameResolver;
 
     @Option(names={"--skip-if-exists"})
     private boolean skipIfExists = false;
@@ -43,21 +44,15 @@ public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputComma
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         if (skipIfExists) {
-            FoDAppMicroserviceDescriptor descriptor = FoDAppMicroserviceHelper.getOptionalAppMicroserviceFromAppAndMicroserviceName(unirest, appAndMicroserviceNameResolver.getAppAndMicroserviceNameDescriptor());
+            FoDMicroserviceDescriptor descriptor = qualifiedMicroserviceNameResolver.getMicroserviceDescriptor(unirest, false);
             if (descriptor != null) { return descriptor.asObjectNode().put("__action__", "SKIPPED_EXISTING"); }
         }
-        FoDAppAndMicroserviceNameDescriptor appAndMicroserviceNameDescriptor = FoDAppAndMicroserviceNameDescriptor.fromCombinedAppAndMicroserviceName(
-                appAndMicroserviceNameResolver.getAppAndMicroserviceName(), appAndMicroserviceNameResolver.getDelimiter());
-
-        FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appAndMicroserviceNameDescriptor.getAppName(), true);
-        FoDAppMicroserviceUpdateRequest msCreateRequest = FoDAppMicroserviceUpdateRequest.builder()
-                .microserviceName(appAndMicroserviceNameDescriptor.getMicroserviceName()).build();
-        return FoDAppMicroserviceHelper.createAppMicroservice(unirest, appDescriptor.getApplicationId(), msCreateRequest);
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDAppMicroserviceHelper.renameFields(record);
+        FoDAppDescriptor appDescriptor = qualifiedMicroserviceNameResolver.getAppDescriptor(unirest, true);
+        FoDQualifiedMicroserviceNameDescriptor qualifiedMicroserviceNameDescriptor = qualifiedMicroserviceNameResolver.getQualifiedMicroserviceNameDescriptor();
+        FoDMicroserviceUpdateRequest msCreateRequest = FoDMicroserviceUpdateRequest.builder()
+                .microserviceName(qualifiedMicroserviceNameDescriptor.getMicroserviceName())
+                .build();
+        return FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, msCreateRequest).asJsonNode();
     }
 
     @Override

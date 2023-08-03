@@ -29,8 +29,8 @@ import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.release.helper.FoDAppRelAssessmentTypeDescriptor;
-import com.fortify.cli.fod.release.helper.FoDAppRelHelper;
+import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
+import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 
@@ -51,12 +51,12 @@ public class FoDScanHelper {
     public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId,
                                                                                    Integer entitlementId, FoDScanTypeOptions.FoDScanType scanType) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
-        FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
+        FoDReleaseAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDReleaseHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
             progressWriter.writeI18nProgress("validating-remediation-entitlement");
             // check we have an appropriate remediation scan available
-            for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
+            for (FoDReleaseAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
                 if (atd.getEntitlementId() > 0 && atd.getEntitlementId().equals(entitlementId) && atd.getIsRemediation()
                         && atd.getRemediationScansAvailable() > 0) {
                     entitlement.setEntitlementDescription(atd.getEntitlementDescription());
@@ -80,12 +80,12 @@ public class FoDScanHelper {
                                                                         FoDEnums.EntitlementPreferenceType entitlementType,
                                                                         FoDScanTypeOptions.FoDScanType scanType) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
-        FoDAppRelAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAppRelHelper.getAppRelAssessmentTypes(unirest,
+        FoDReleaseAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDReleaseHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
             progressWriter.writeI18nProgress("validating-entitlement");
             // check for an entitlement
-            for (FoDAppRelAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
+            for (FoDReleaseAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
                 if (atd.getEntitlementId() != null && atd.getEntitlementId() > 0) {
                     if (atd.getFrequencyType().equals(entitlementType.name().replace("Only",""))) {
                         String atdName = atd.getName()

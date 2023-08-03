@@ -13,8 +13,10 @@
 
 package com.fortify.cli.fod.release.helper;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -22,14 +24,14 @@ import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
-public class FoDAppRelDescriptor extends JsonNodeHolder {
-    private Integer releaseId;
+public class FoDReleaseDescriptor extends JsonNodeHolder {
+    private String releaseId;
     private String releaseName;
     private String releaseDescription;
     private Boolean suspended;
     private String microserviceName;
-    private Integer microserviceId;
-    private Integer applicationId;
+    private String microserviceId;
+    private String applicationId;
     private String applicationName;
     private Integer rating;
     private Integer critical;
@@ -47,4 +49,10 @@ public class FoDAppRelDescriptor extends JsonNodeHolder {
     private String staticAnalysisStatusType;
     private String dynamicAnalysisStatusType;
     private String mobileAnalysisStatusType;
+    
+    @JsonIgnore public String getQualifiedName() {
+        return StringUtils.isBlank(microserviceName)
+                ? String.format("%s:%s", applicationName, releaseName)
+                : String.format("%s:%s:%s", applicationName, microserviceName, releaseName);
+    }
 }
