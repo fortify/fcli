@@ -47,7 +47,7 @@ import lombok.SneakyThrows;
 public final class FcliVariableHelper {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final Pattern variableNamePattern = Pattern.compile("^[a-zA-Z0-9_]+$");
-    private static final Pattern variableReferencePattern = Pattern.compile("^::([a-zA-Z0-9_]+)::(.*)$");
+    private static final Pattern variableReferencePattern = Pattern.compile("^(-{1,2}[\\-_a-zA-Z0-9]{1,}=){0,1}::([a-zA-Z0-9_]+)::(.*)$");
     private FcliVariableHelper() {}
     
     @Data @EqualsAndHashCode(callSuper = true) @Builder 
@@ -126,14 +126,14 @@ public final class FcliVariableHelper {
     public static final String resolveVariable(String arg) {
         Matcher matcher = variableReferencePattern.matcher(arg);
         if (matcher.matches()) {
-            String variableName = matcher.group(1);
-            String propertyPath = getVariablePropertyPathOrDefault(variableName, matcher.group(2));
+            String variableName = matcher.group(2);
+            String propertyPath = getVariablePropertyPathOrDefault(variableName, matcher.group(3));
             JsonNode contents = getVariableContents(variableName, true);
             String value = JsonHelper.evaluateSpelExpression(contents, propertyPath, String.class);
             if ( value==null ) {
                 throw new IllegalArgumentException(String.format("Property path '%s' for variable '%s' resolves to null", propertyPath, variableName));
             }
-            return value;
+            return matcher.group(1)!=null ? matcher.group(1)+value : value;
         }
         return arg;
     }
