@@ -12,9 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.fod.app.helper;
 
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 
@@ -24,7 +21,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-//TODO Use @Builder instead of manually defining setter methods?
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Getter @Builder @ToString
 public class FoDAppUpdateRequest {
@@ -33,7 +29,4 @@ public class FoDAppUpdateRequest {
     private String businessCriticalityType;
     private String emailList;
     private JsonNode attributes;
-    private List<String> addMicroservices;
-    private List<String> deleteMicroservices;
-    private Map<String,String> renameMicroservices;
 }

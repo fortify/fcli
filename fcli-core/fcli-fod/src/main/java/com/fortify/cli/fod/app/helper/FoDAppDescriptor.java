@@ -27,14 +27,13 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public class FoDAppDescriptor extends JsonNodeHolder {
-    private Integer applicationId;
+    private String applicationId;
     private String applicationName;
     private String applicationDescription;
     private String businessCriticalityType;
     private ArrayList<FoDAttributeDescriptor> attributes;
     private String emailList;
-    private Integer releaseId;
-    private Integer microserviceId;
+    private boolean hasMicroservices;
 
     public Map<Integer, String> attributesAsMap() {
         Map<Integer, String> attrMap = new HashMap<>();
