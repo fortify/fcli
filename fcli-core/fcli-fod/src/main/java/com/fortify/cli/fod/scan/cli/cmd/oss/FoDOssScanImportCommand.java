@@ -24,7 +24,7 @@ import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod._common.util.FoDConstants;
-import com.fortify.cli.fod.release.cli.mixin.FoDQualifiedReleaseNameOrIdResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDSbomFormatOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDImportScan;
@@ -43,7 +43,7 @@ public class FoDOssScanImportCommand extends AbstractFoDJsonNodeOutputCommand im
     @Getter @Mixin private FoDOutputHelperMixins.ImportOss outputHelper;
 
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDQualifiedReleaseNameOrIdResolverMixin.PositionalParameter releaseResolver;
+    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
     @Mixin private FoDSbomFormatOptions.OptionalOption sbomFormat;
 
     @CommandLine.Option(names = {"--chunk-size"})

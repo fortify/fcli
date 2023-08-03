@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public class FoDAppDescriptor extends JsonNodeHolder {
-    private Integer applicationId;
+    private String applicationId;
     private String applicationName;
     private String applicationDescription;
     private String businessCriticalityType;

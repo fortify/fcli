@@ -23,8 +23,8 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public class FoDMicroserviceDescriptor extends JsonNodeHolder {
-    private Integer microserviceId;
+    private String applicationId;
+    private String applicationName;
+    private String microserviceId;
     private String microserviceName;
-    private Integer releaseId;
-    private Integer applicationId;
 }

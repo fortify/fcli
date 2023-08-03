@@ -19,6 +19,7 @@ import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
+import com.fortify.cli.fod.microservice.helper.FoDQualifiedMicroserviceNameDescriptor;
 import com.fortify.cli.fod.release.helper.FoDQualifiedReleaseNameDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
@@ -29,7 +30,7 @@ import lombok.Setter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-public class FoDQualifiedReleaseNameResolverMixin {
+public class FoDReleaseByQualifiedNameResolverMixin {
     public static abstract class AbstractFoDQualifiedReleaseNameResolverMixin implements IFoDDelimiterMixinAware {
         @Setter private FoDDelimiterMixin delimiterMixin;
         public abstract String getQualifiedReleaseName();
@@ -50,11 +51,10 @@ public class FoDQualifiedReleaseNameResolverMixin {
             return FoDAppHelper.getAppDescriptor(unirest, desc.getAppName(), failIfNotFound);
         }
         
-        public FoDMicroserviceDescriptor getMicroServiceDescriptor(UnirestInstance unirest, boolean failIfNotFound) {
+        public FoDMicroserviceDescriptor getMicroserviceDescriptor(UnirestInstance unirest, boolean failIfNotFound) {
             var desc = getQualifiedReleaseNameDescriptor();
             if (desc == null || desc.getAppName()==null || desc.getMicroserviceName()==null) { return null; }
-            return FoDMicroserviceHelper.getAppMicroserviceDescriptor(unirest, desc.getAppName(),
-                    desc.getMicroserviceName(), failIfNotFound);
+            return FoDMicroserviceHelper.getMicroserviceDescriptor(unirest, FoDQualifiedMicroserviceNameDescriptor.from(desc), failIfNotFound);
         }
         
         public FoDReleaseDescriptor getReleaseDescriptor(UnirestInstance unirest, String... fields){

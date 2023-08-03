@@ -25,7 +25,7 @@ import lombok.Setter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-public class FoDQualifiedReleaseNameOrIdResolverMixin {
+public class FoDReleaseByQualifiedNameOrIdResolverMixin {
     public static abstract class AbstractFoDQualifiedReleaseNameOrIdResolverMixin implements IFoDDelimiterMixinAware {
         @Setter private FoDDelimiterMixin delimiterMixin;
         public abstract String getQualifiedReleaseNameOrId();

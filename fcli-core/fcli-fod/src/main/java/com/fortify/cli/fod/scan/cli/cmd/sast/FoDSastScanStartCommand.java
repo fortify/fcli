@@ -30,7 +30,7 @@ import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.release.cli.mixin.FoDQualifiedReleaseNameOrIdResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeOptions;
@@ -53,7 +53,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
     @Getter @Mixin private FoDOutputHelperMixins.StartSast outputHelper;
     
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDQualifiedReleaseNameOrIdResolverMixin.PositionalParameter releaseResolver;
+    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--purchase-entitlement"})

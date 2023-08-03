@@ -14,7 +14,6 @@ package com.fortify.cli.fod.app.helper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.validation.ValidationException;
 
@@ -27,9 +26,6 @@ import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppTypeOptions;
-import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
-import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
-import com.fortify.cli.fod.microservice.helper.FoDMicroserviceUpdateRequest;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -82,43 +78,14 @@ public class FoDAppHelper {
         return descriptor;
     }
 
-    public static final FoDAppDescriptor updateApp(UnirestInstance unirest, Integer appId,
+    public static final FoDAppDescriptor updateApp(UnirestInstance unirest, String appId,
                                                    FoDAppUpdateRequest appUpdateRequest) {
         ObjectNode body = objectMapper.valueToTree(appUpdateRequest);
         unirest.put(FoDUrls.APPLICATION)
-                .routeParam("appId", String.valueOf(appId))
+                .routeParam("appId", appId)
                 .body(body).asObject(JsonNode.class).getBody();
 
-        // add microservices(s)
-        if (appUpdateRequest != null && appUpdateRequest.getAddMicroservices() != null) {
-            for (String ms: appUpdateRequest.getAddMicroservices()) {
-                //System.out.println("Adding microservice: " + ms);
-                FoDMicroserviceUpdateRequest msUpdateRequest = FoDMicroserviceUpdateRequest.builder()
-                        .microserviceName(ms).build();
-                FoDMicroserviceHelper.createAppMicroservice(unirest, appId, msUpdateRequest);
-            }
-        }
-        // delete microservice(s)
-        if (appUpdateRequest != null && appUpdateRequest.getDeleteMicroservices() != null) {
-            for (String ms: appUpdateRequest.getDeleteMicroservices()) {
-                //System.out.println("Deleting microservice: " + ms);
-                FoDMicroserviceDescriptor appMicroserviceDescriptor = FoDMicroserviceHelper
-                        .getRequiredAppMicroservice(unirest, appUpdateRequest.getApplicationName() + ":" + ms, ":");
-                FoDMicroserviceHelper.deleteAppMicroservice(unirest, appMicroserviceDescriptor);
-            }
-        }
-        // rename microservice(s)
-        if (appUpdateRequest != null && appUpdateRequest.getRenameMicroservices() != null) {
-            for (Map.Entry<String,String> ms: appUpdateRequest.getRenameMicroservices().entrySet()) {
-                //System.out.println("Renaming microservice " + ms.getKey() + " to " + ms.getValue());
-                FoDMicroserviceDescriptor appMicroserviceDescriptor = FoDMicroserviceHelper
-                        .getRequiredAppMicroservice(unirest, appUpdateRequest.getApplicationName() + ":" + ms.getKey(), ":");
-                FoDMicroserviceUpdateRequest msUpdateRequest = FoDMicroserviceUpdateRequest.builder()
-                        .microserviceName(ms.getValue()).build();
-                FoDMicroserviceHelper.updateAppMicroservice(unirest, appMicroserviceDescriptor, msUpdateRequest);
-            }
-        }
-        return getAppDescriptor(unirest, String.valueOf(appId), true);
+        return getAppDescriptor(unirest, appId, true);
     }
 
     public static String getEmailList(ArrayList<String> notifications) {

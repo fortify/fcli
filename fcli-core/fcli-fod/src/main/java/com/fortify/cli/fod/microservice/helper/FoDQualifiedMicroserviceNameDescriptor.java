@@ -11,21 +11,25 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.microservice.cli.mixin;
+package com.fortify.cli.fod.microservice.helper;
 
-import javax.validation.ValidationException;
+import com.fortify.cli.fod.release.helper.FoDQualifiedReleaseNameDescriptor;
 
 import lombok.Data;
 
 @Data
-public final class FoDAppAndMicroserviceNameDescriptor {
+public final class FoDQualifiedMicroserviceNameDescriptor {
     private final String appName, microserviceName;
     
-    public static final FoDAppAndMicroserviceNameDescriptor fromCombinedAppAndMicroserviceName(String appAndMicroserviceName, String delimiter) {
+    public static final FoDQualifiedMicroserviceNameDescriptor fromCombinedAppAndMicroserviceName(String appAndMicroserviceName, String delimiter) {
         String[] appAndMicroserviceNameArray = appAndMicroserviceName.split(delimiter);
         if (appAndMicroserviceNameArray.length != 2) {
-            throw new ValidationException("Application and microservice name must be specified in the format <application name>"+delimiter+"<microservice name>");
+            throw new IllegalArgumentException("Application and microservice name must be specified in the format <application name>"+delimiter+"<microservice name>");
         }
-        return new FoDAppAndMicroserviceNameDescriptor(appAndMicroserviceNameArray[0], appAndMicroserviceNameArray[1]);
+        return new FoDQualifiedMicroserviceNameDescriptor(appAndMicroserviceNameArray[0], appAndMicroserviceNameArray[1]);
+    }
+
+    public static FoDQualifiedMicroserviceNameDescriptor from(FoDQualifiedReleaseNameDescriptor desc) {
+        return new FoDQualifiedMicroserviceNameDescriptor(desc.getAppName(), desc.getMicroserviceName());
     }
 }

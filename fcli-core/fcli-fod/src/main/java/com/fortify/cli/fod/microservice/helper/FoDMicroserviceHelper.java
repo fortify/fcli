@@ -13,156 +13,129 @@
 
 package com.fortify.cli.fod.microservice.helper;
 
-import static com.fortify.cli.fod.app.helper.FoDAppHelper.getAppDescriptor;
-
-import javax.validation.ValidationException;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
-import com.fortify.cli.fod.microservice.cli.mixin.FoDAppAndMicroserviceNameDescriptor;
+import com.fortify.cli.fod.app.helper.FoDAppHelper;
 
-import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 
 public class FoDMicroserviceHelper {
-    @Getter
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
 
     public static final JsonNode renameFields(JsonNode record) {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
-    public static final FoDMicroserviceDescriptor getRequiredAppMicroservice(UnirestInstance unirest, String appMicroserviceNameOrId, String delimiter, String... fields) {
-        FoDMicroserviceDescriptor descriptor = getOptionalAppMicroservice(unirest, appMicroserviceNameOrId, delimiter, fields);
-        if (descriptor == null) {
-            throw new ValidationException("No application microservice found for application microservice name or id: " + appMicroserviceNameOrId);
-        }
-        return descriptor;
+    public static final FoDMicroserviceDescriptor getMicroserviceDescriptor(UnirestInstance unirest, FoDQualifiedMicroserviceNameDescriptor microserviceNameDescriptor, boolean failIfNotFound) {
+        var app = getAppDescriptor(unirest, microserviceNameDescriptor, failIfNotFound);
+        // The call above can only return null if failIfNotFound==false, 
+        // so we can simply return null if no app was found.
+        if ( app==null ) { return null; }
+        return getMicroserviceDescriptor(unirest, app, microserviceNameDescriptor, failIfNotFound);       
     }
 
-    public static final FoDMicroserviceDescriptor getOptionalAppMicroservice(UnirestInstance unirest, String appMicroserviceNameOrId, String delimiter, String... fields) {
-        try {
-            int microserviceId = Integer.parseInt(appMicroserviceNameOrId);
-            return getOptionalAppMicroserviceFromId(unirest, microserviceId, fields);
-        } catch (NumberFormatException nfe) {
-            return getOptionalAppMicroserviceFromAppAndMicroserviceName(unirest, FoDAppAndMicroserviceNameDescriptor.fromCombinedAppAndMicroserviceName(appMicroserviceNameOrId, delimiter), fields);
+    private static final FoDMicroserviceDescriptor getMicroserviceDescriptor(UnirestInstance unirest, FoDAppDescriptor appDescriptor,
+            FoDQualifiedMicroserviceNameDescriptor microserviceNameDescriptor, boolean failIfNotFound) {
+        var microservices = (ArrayNode)unirest.get(FoDUrls.MICROSERVICES).routeParam("appId", appDescriptor.getApplicationId())
+            .asObject(JsonNode.class).getBody().get("items");
+        var matching = JsonHelper.stream(microservices)
+                .filter(match(microserviceNameDescriptor))
+                .collect(Collectors.toList());
+        switch ( matching.size() ) {
+        case 0:
+            return nullOrNotFoundException(microserviceNameDescriptor, failIfNotFound);
+        case 1:
+            return getDescriptor(appDescriptor, microservices.get(0));
+        default:
+            // FoD usually doesn't allow duplicate microservice names, but we handle this
+            // by throwing an exception, just in case.
+            throw multipleFoundException(microserviceNameDescriptor);
         }
     }
 
-    public static final FoDMicroserviceDescriptor getOptionalAppMicroserviceFromId(UnirestInstance unirest, int relId, String... fields) {
-        GetRequest request = unirest.get(FoDUrls.MICROSERVICES)
-                .queryString("filters", String.format("microserviceId:%d", relId));
-        return getOptionalDescriptor(request);
+    private static final FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, FoDQualifiedMicroserviceNameDescriptor microserviceNameDescriptor, boolean failIfNotFound) {
+        var appName = microserviceNameDescriptor.getAppName();
+        var app = FoDAppHelper.getAppDescriptor(unirest, appName, failIfNotFound);
+        if ( app!=null && !app.isHasMicroservices() ) {
+            throw new IllegalArgumentException("Cannot get microservice data from non-microservice application "+microserviceNameDescriptor.getAppName());
+        }
+        return app;
     }
 
-    public static final FoDMicroserviceDescriptor getOptionalAppMicroserviceFromAppAndMicroserviceName(UnirestInstance unirest, FoDAppAndMicroserviceNameDescriptor appAndMicroserviceNameDescriptor, String... fields) {
-        return getAppMicroserviceDescriptor(unirest, appAndMicroserviceNameDescriptor.getAppName(), appAndMicroserviceNameDescriptor.getMicroserviceName(), true);
+    private static final Predicate<? super JsonNode> match(FoDQualifiedMicroserviceNameDescriptor microserviceNameDescriptor) {
+        return ms->microserviceNameDescriptor.getMicroserviceName().equals(ms.get("microserviceName").asText());
+    }
+    
+    private static final FoDMicroserviceDescriptor nullOrNotFoundException(FoDQualifiedMicroserviceNameDescriptor microserviceNameDescriptor, boolean failIfNotFound) {
+        if ( failIfNotFound ) {
+            throw new IllegalArgumentException(String.format("Cannot find microservice %s on application %s", microserviceNameDescriptor.getMicroserviceName(), microserviceNameDescriptor.getAppName()));
+        }
+        return null;
+    }
+    
+    private static final RuntimeException multipleFoundException(FoDQualifiedMicroserviceNameDescriptor microserviceNameDescriptor) {
+        return new IllegalStateException(String.format("Multiple microservices found with name %s on application %s", microserviceNameDescriptor.getMicroserviceName(), microserviceNameDescriptor.getAppName()));
     }
 
-    // TODO Consider splitting into multiple methods
-    public static final FoDMicroserviceDescriptor getAppMicroserviceDescriptor(UnirestInstance unirest, String appName, String microserviceName, boolean failIfNotFound) {
-        GetRequest request = unirest.get(FoDUrls.MICROSERVICES);
-        int appId = 0;
-        boolean isMicroserviceId = false;
-        int microserviceId = 0;
-        try {
-            appId = Integer.parseInt(appName);
-        } catch (NumberFormatException nfe) {
-            appId = getAppDescriptor(unirest, appName, true).getApplicationId();
-        }
-        //System.out.println(appId);
-
-        try {
-            microserviceId = Integer.parseInt(microserviceName);
-            isMicroserviceId = true;
-        } catch (NumberFormatException nfe) {
-            isMicroserviceId = false;
-        }
-        //System.out.println(microserviceId);
-        request = request.routeParam("appId", String.valueOf(appId));
-        JsonNode items = request.asObject(ObjectNode.class).getBody().get("items");
-        if (failIfNotFound && (items.size() == 0 || !items.isArray())) {
-            throw new ValidationException("No application microservices found for names or ids: " + appName + ":" + microserviceName);
-        }
-        FoDMicroserviceDescriptor descriptor = new FoDMicroserviceDescriptor();
-        for (final JsonNode objNode : items) {
-            //System.out.println(objNode);
-            if ((isMicroserviceId && objNode.get("microserviceId").asInt() == microserviceId) ||
-                    objNode.get("microserviceName").asText().equals(microserviceName)) {
-                descriptor.setMicroserviceId(objNode.get("microserviceId").asInt());
-                descriptor.setMicroserviceName(objNode.get("microserviceName").asText());
-                descriptor.setApplicationId(appId);
-                descriptor.setReleaseId(objNode.get("releaseId").asInt());
-            }
-        }
-        if (descriptor.getMicroserviceName() == null || descriptor.getMicroserviceName().isEmpty()) {
-            if (failIfNotFound)
-                throw new ValidationException("No microservice found for application and microservice name or ids: " + appName + ":" + microserviceName);
-        }
-        return descriptor;
-    }
-
-    public static final JsonNode createAppMicroservice(UnirestInstance unirest, Integer appId, FoDMicroserviceUpdateRequest msRequest) {
+    public static final FoDMicroserviceDescriptor createMicroservice(UnirestInstance unirest, FoDAppDescriptor appDescriptor, FoDMicroserviceUpdateRequest msRequest) {
         ObjectNode body = objectMapper.valueToTree(msRequest);
         JsonNode response = unirest.post(FoDUrls.MICROSERVICES)
-                .routeParam("appId", String.valueOf(String.valueOf(appId)))
+                .routeParam("appId", appDescriptor.getApplicationId())
                 .body(body).asObject(JsonNode.class).getBody();
-        FoDMicroserviceDescriptor descriptor = getDescriptor(response);
-        ObjectNode node = getObjectMapper().createObjectNode();
-        node.put("applicationId", appId);
-        node.put("applicationName", getAppDescriptor(unirest, String.valueOf(appId), true).getApplicationName());
-        node.put("microserviceId", descriptor.getMicroserviceId());
-        node.put("microserviceName", msRequest.getMicroserviceName());
-        return node;
+        return getDescriptor(appDescriptor, response, msRequest.getMicroserviceName());
     }
 
-    public static final JsonNode updateAppMicroservice(UnirestInstance unirest, FoDMicroserviceDescriptor currentMs, FoDMicroserviceUpdateRequest msRequest) {
+    public static final FoDMicroserviceDescriptor updateMicroservice(UnirestInstance unirest, FoDMicroserviceDescriptor currentMs, FoDMicroserviceUpdateRequest msRequest) {
+        FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, currentMs.getApplicationId(), true);
         ObjectNode body = objectMapper.valueToTree(msRequest);
         JsonNode response = unirest.put(FoDUrls.MICROSERVICES_UPDATE)
-                .routeParam("appId", String.valueOf(currentMs.getApplicationId()))
-                .routeParam("microserviceId", String.valueOf(currentMs.getMicroserviceId()))
+                .routeParam("appId", currentMs.getApplicationId())
+                .routeParam("microserviceId", currentMs.getMicroserviceId())
                 .body(body).asObject(JsonNode.class).getBody();
-        FoDMicroserviceDescriptor descriptor = getDescriptor(response);
-        ObjectNode node = getObjectMapper().createObjectNode();
-        node.put("applicationId", currentMs.getApplicationId());
-        node.put("applicationName", getAppDescriptor(unirest, String.valueOf(currentMs.getApplicationId()), true).getApplicationName());
-        node.put("microserviceId", descriptor.getMicroserviceId());
-        node.put("microserviceName", msRequest.getMicroserviceName());
-        return node;
+        return getDescriptor(appDescriptor, response, msRequest.getMicroserviceName());
     }
 
-    public static final JsonNode deleteAppMicroservice(UnirestInstance unirest, FoDMicroserviceDescriptor currentMs) {
-        FoDAppDescriptor appDescriptor = getAppDescriptor(unirest, String.valueOf(currentMs.getApplicationId()), true);
+    public static final FoDMicroserviceDescriptor deleteMicroservice(UnirestInstance unirest, FoDMicroserviceDescriptor currentMs) {
         unirest.delete(FoDUrls.MICROSERVICES_UPDATE)
-                .routeParam("appId", String.valueOf(currentMs.getApplicationId()))
-                .routeParam("microserviceId", String.valueOf(currentMs.getMicroserviceId()))
+                .routeParam("appId", currentMs.getApplicationId())
+                .routeParam("microserviceId", currentMs.getMicroserviceId())
                 .asObject(JsonNode.class).getBody();
-        ObjectNode node = getObjectMapper().createObjectNode();
-        node.put("applicationName", appDescriptor.getApplicationName());
-        node.put("microserviceId", currentMs.getMicroserviceId());
-        node.put("microserviceName", currentMs.getMicroserviceName());
-        return node;
+        return currentMs;
     }
-
-    //
-
-    private static final FoDMicroserviceDescriptor getOptionalDescriptor(GetRequest request) {
-        JsonNode microservices = request.asObject(ObjectNode.class).getBody().get("items");
-        if (microservices.size() > 1) {
-            throw new ValidationException("Multiple application microservices found");
+    
+    private static final FoDMicroserviceDescriptor getDescriptor(FoDAppDescriptor appDescriptor, JsonNode responseWithIdOnly, String microserviceName) {
+        if ( responseWithIdOnly instanceof ObjectNode ) {
+            return getDescriptor(appDescriptor, (ObjectNode)responseWithIdOnly, microserviceName);
+        } else {
+            throw new RuntimeException("Expected ObjectNode, got "+responseWithIdOnly.getClass().getSimpleName());
         }
-        return microservices.size() == 0 ? null : getDescriptor(microservices.get(0));
     }
 
-    private static final FoDMicroserviceDescriptor getDescriptor(JsonNode node) {
-        return JsonHelper.treeToValue(node, FoDMicroserviceDescriptor.class);
+    private static final FoDMicroserviceDescriptor getDescriptor(FoDAppDescriptor appDescriptor, ObjectNode responseWithIdOnly, String microserviceName) {
+        return getDescriptor(appDescriptor, responseWithIdOnly.put("microserviceName", microserviceName));
     }
-
-
+    
+    private static final FoDMicroserviceDescriptor getDescriptor(FoDAppDescriptor appDescriptor, JsonNode node) {
+        if ( node instanceof ObjectNode ) {
+            return getDescriptor(appDescriptor, (ObjectNode)node);
+        } else {
+            throw new RuntimeException("Expected ObjectNode, got "+node.getClass().getSimpleName());
+        }
+    }
+    
+    private static final FoDMicroserviceDescriptor getDescriptor(FoDAppDescriptor appDescriptor, ObjectNode node) {
+        var fullNode = node.deepCopy()
+                .put("applicationId", appDescriptor.getApplicationId())
+                .put("applicationName", appDescriptor.getApplicationName());
+        return JsonHelper.treeToValue(fullNode, FoDMicroserviceDescriptor.class);
+    }
 }

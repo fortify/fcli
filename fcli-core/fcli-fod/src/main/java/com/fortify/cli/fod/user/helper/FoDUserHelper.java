@@ -143,7 +143,7 @@ public class FoDUserHelper {
         FoDAppDescriptor appDescriptor = FoDAppHelper.getAppDescriptor(unirest, appNameOrId, true);
         if (action.equals(FoDEnums.UserApplicationAccessAction.Add)) {
             FoDUserAppAccessRequest appAccessRequest = FoDUserAppAccessRequest.builder()
-                    .applicationId(appDescriptor.getApplicationId()).build();
+                    .applicationId(Integer.valueOf(appDescriptor.getApplicationId())).build();
             ObjectNode body = objectMapper.valueToTree(appAccessRequest);
             unirest.post(FoDUrls.USER_APPLICATION_ACCESS).routeParam("userId", String.valueOf(userDescriptor.getUserId()))
                     .body(body).asEmpty();

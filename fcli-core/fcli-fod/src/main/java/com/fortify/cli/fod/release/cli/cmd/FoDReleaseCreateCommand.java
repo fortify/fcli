@@ -21,8 +21,8 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
-import com.fortify.cli.fod.release.cli.mixin.FoDQualifiedReleaseNameOrIdResolverMixin;
-import com.fortify.cli.fod.release.cli.mixin.FoDQualifiedReleaseNameResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseCreateRequest;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
@@ -36,8 +36,8 @@ import picocli.CommandLine.Option;
 public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDQualifiedReleaseNameResolverMixin.PositionalParameter releaseNameResolver;
-    @Mixin private FoDQualifiedReleaseNameOrIdResolverMixin.OptionalCopyFromOption copyFromReleaseResolver;
+    @Mixin private FoDReleaseByQualifiedNameResolverMixin.PositionalParameter releaseNameResolver;
+    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.OptionalCopyFromOption copyFromReleaseResolver;
 
     @Option(names = {"--description", "-d"})
     private String description;
@@ -59,7 +59,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
         // Ensure app exists
         var appDescriptor = releaseNameResolver.getAppDescriptor(unirest, true);
         // Ensure microservice exists (if specified)
-        var microserviceDescriptor = releaseNameResolver.getMicroServiceDescriptor(unirest, true);
+        var microserviceDescriptor = releaseNameResolver.getMicroserviceDescriptor(unirest, true);
         // Ensure microservice is specified if application has microservices
         if ( appDescriptor.isHasMicroservices() && microserviceDescriptor==null ) {
             throw new IllegalArgumentException("Microservice name must be specified for microservices application");
@@ -69,12 +69,12 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
         String copyReleaseId = copyFromReleaseResolver.getReleaseId(unirest);
 
         var requestBuilder = FoDReleaseCreateRequest.builder()
-                .applicationId(appDescriptor.getApplicationId())
+                .applicationId(Integer.valueOf(appDescriptor.getApplicationId()))
                 .releaseName(simpleReleaseName)
                 .releaseDescription(description)
                 .sdlcStatusType(sdlcStatus.getSdlcStatusType().name());
         if ( microserviceDescriptor!=null ) {
-            requestBuilder = requestBuilder.microserviceId(microserviceDescriptor.getMicroserviceId());
+            requestBuilder = requestBuilder.microserviceId(Integer.valueOf(microserviceDescriptor.getMicroserviceId()));
         }
         if ( StringUtils.isNotBlank(copyReleaseId) ) {
             requestBuilder = requestBuilder
