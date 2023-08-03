@@ -16,6 +16,7 @@ import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.sc_sast._common.session.cli.cmd.SCSastSessionCommands;
 import com.fortify.cli.sc_sast.rest.cli.cmd.SCSastControllerRestCommands;
 import com.fortify.cli.sc_sast.scan.cli.cmd.SCSastScanCommands;
+import com.fortify.cli.sc_sast.sensor.cli.cmd.SCSastSensorCommands;
 
 import picocli.CommandLine.Command;
 
@@ -33,6 +34,7 @@ import picocli.CommandLine.Command;
                 //   other commands ('Manage').
                 SCSastSessionCommands.class,
                 SCSastScanCommands.class,
+                SCSastSensorCommands.class,
                 SCSastControllerRestCommands.class,
         }
 )
