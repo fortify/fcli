@@ -17,12 +17,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
-import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDBaseRequestOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
-import com.fortify.cli.fod._common.rest.query.cli.mixin.FoDFiltersParamMixin;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 
@@ -33,19 +29,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class FoDMicroserviceListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
+public class FoDMicroserviceListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
     @Mixin private FoDAppResolverMixin.RequiredOption appResolver;
-    @Mixin private FoDFiltersParamMixin filterParamMixin;
-    @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new FoDFiltersParamGenerator()
-            .add("id", "microserviceId")
-            .add("name", "microserviceName")
-            .add("releaseId", "release.id");
-    // Removing this option for now, until we get more clarity on what the corresponding
-    // request parameter means exactly; it seems to include only a single release id for 
-    // each microservice, whereas each microservice can have multiple releases, so this
-    // doesn't seem to make any sense.
-    // @Option(names = {"--include-releases"}) private Boolean includeReleases;
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
@@ -58,9 +44,8 @@ public class FoDMicroserviceListCommand extends AbstractFoDBaseRequestOutputComm
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(FoDUrls.MICROSERVICES)
-                .routeParam("appId", appResolver.getAppId(unirest));
-                // See comment on --include-releases option definition
-                //.queryString("includeReleases", (includeReleases != null && includeReleases ? "true" : "false"));
+                .routeParam("appId", appResolver.getAppId(unirest))
+                .queryString("includeReleases", "false");
     }
 
     @Override

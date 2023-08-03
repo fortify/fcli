@@ -40,8 +40,10 @@ public class FoDMicroserviceHelper {
 
     private static final FoDMicroserviceDescriptor getMicroserviceDescriptor(UnirestInstance unirest, FoDAppDescriptor appDescriptor,
             FoDQualifiedMicroserviceNameDescriptor microserviceNameDescriptor, boolean failIfNotFound) {
-        var microservices = (ArrayNode)unirest.get(FoDUrls.MICROSERVICES).routeParam("appId", appDescriptor.getApplicationId())
-            .asObject(JsonNode.class).getBody().get("items");
+        var microservices = (ArrayNode)unirest.get(FoDUrls.MICROSERVICES)
+                .routeParam("appId", appDescriptor.getApplicationId())
+                .queryString("includeReleases", "false")
+                .asObject(JsonNode.class).getBody().get("items");
         var matching = JsonHelper.stream(microservices)
                 .filter(match(microserviceNameDescriptor))
                 .collect(Collectors.toList());
