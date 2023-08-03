@@ -14,6 +14,7 @@
 package com.fortify.cli.fod.microservice.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
@@ -23,7 +24,7 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
 import com.fortify.cli.fod._common.rest.query.cli.mixin.FoDFiltersParamMixin;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
-import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
+import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -48,7 +49,10 @@ public class FoDMicroserviceListCommand extends AbstractFoDBaseRequestOutputComm
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDMicroserviceHelper.renameFields(record);
+        FoDAppDescriptor appDescriptor = appResolver.getAppDescriptor(getUnirestInstance());
+        return ((ObjectNode)record)
+                .put("applicationId", appDescriptor.getApplicationId())    
+                .put("applicationName", appDescriptor.getApplicationName());
     }
 
     @Override

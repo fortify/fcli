@@ -34,7 +34,7 @@ public class FoDReleaseByQualifiedNameOrIdResolverMixin {
             var qualifiedReleaseNameOrId = getQualifiedReleaseNameOrId();
             return StringUtils.isBlank(qualifiedReleaseNameOrId)
                     ? null 
-                    : FoDReleaseHelper.getRequiredReleaseDescriptor(unirest, qualifiedReleaseNameOrId, delimiterMixin.getDelimiter(), fields);
+                    : FoDReleaseHelper.getReleaseDescriptor(unirest, qualifiedReleaseNameOrId, delimiterMixin.getDelimiter(), true, fields);
         }
         
         public String getReleaseId(UnirestInstance unirest) {

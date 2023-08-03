@@ -35,36 +35,29 @@ public class FoDReleaseHelper {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
-    public static final FoDReleaseDescriptor getRequiredReleaseDescriptor(UnirestInstance unirest, String qualifiedReleaseNameOrId, String delimiter, String... fields) {
-        FoDReleaseDescriptor descriptor = getOptionalReleaseDescriptor(unirest, qualifiedReleaseNameOrId, delimiter, fields);
-        if (descriptor == null) {
-            throw new ValidationException("No release found for name or id: " + qualifiedReleaseNameOrId);
-        }
-        return descriptor;
-    }
-
-    public static final FoDReleaseDescriptor getOptionalReleaseDescriptor(UnirestInstance unirest, String qualifiedReleaseNameOrId, String delimiter, String... fields) {
+    public static final FoDReleaseDescriptor getReleaseDescriptor(UnirestInstance unirest, String qualifiedReleaseNameOrId, String delimiter, boolean failIfNotFound, String... fields) {
         try {
             int relId = Integer.parseInt(qualifiedReleaseNameOrId);
-            return getOptionalReleaseDescriptorFromId(unirest, relId, fields);
+            return getReleaseDescriptorFromId(unirest, relId, failIfNotFound, fields);
         } catch (NumberFormatException nfe) {
-            return getOptionalReleaseDescriptorFromQualifiedName(unirest, FoDQualifiedReleaseNameDescriptor.fromQualifiedReleaseName(qualifiedReleaseNameOrId, delimiter), fields);
+            return getReleaseDescriptorFromQualifiedName(unirest, FoDQualifiedReleaseNameDescriptor.fromQualifiedReleaseName(qualifiedReleaseNameOrId, delimiter), failIfNotFound, fields);
         }
     }
 
-    public static final FoDReleaseDescriptor getOptionalReleaseDescriptorFromId(UnirestInstance unirest, int relId, String... fields) {
-        GetRequest request = unirest.get(FoDUrls.RELEASES)
-                .queryString("filters", String.format("releaseId:%d", relId));
-        return getOptionalDescriptor(request);
+    public static final FoDReleaseDescriptor getReleaseDescriptorFromId(UnirestInstance unirest, int relId, boolean failIfNotFound, String... fields) {
+        GetRequest request = addFieldsParam(unirest.get(FoDUrls.RELEASES)
+                .queryString("filters", String.format("releaseId:%d", relId)), fields);
+        return getDescriptor(request, String.valueOf(relId), failIfNotFound);
     }
 
-    public static final FoDReleaseDescriptor getOptionalReleaseDescriptorFromQualifiedName(UnirestInstance unirest, FoDQualifiedReleaseNameDescriptor releaseNameDescriptor, String... fields) {
+    public static final FoDReleaseDescriptor getReleaseDescriptorFromQualifiedName(UnirestInstance unirest, FoDQualifiedReleaseNameDescriptor releaseNameDescriptor, boolean failIfNotFound, String... fields) {
         var filters = String.format("applicationName:%s+releaseName:%s", releaseNameDescriptor.getAppName(), releaseNameDescriptor.getReleaseName());
         if ( StringUtils.isNotBlank(releaseNameDescriptor.getMicroserviceName()) ) {
             filters += String.format("+microserviceName:%s", releaseNameDescriptor.getMicroserviceName());
         }
-        GetRequest request = unirest.get(FoDUrls.RELEASES).queryString("filters", filters);
-        return getOptionalDescriptor(request);
+        GetRequest request = addFieldsParam(unirest.get(FoDUrls.RELEASES)
+                .queryString("filters", filters), fields);
+        return getDescriptor(request, releaseNameDescriptor.getQualifiedName(), failIfNotFound);
     }
 
     public static final FoDReleaseAssessmentTypeDescriptor[] getAppRelAssessmentTypes(UnirestInstance unirestInstance,
@@ -97,9 +90,9 @@ public class FoDReleaseHelper {
 
     public static final FoDReleaseDescriptor createRelease(UnirestInstance unirest, FoDReleaseCreateRequest relCreateRequest) {
         ObjectNode body = objectMapper.valueToTree(relCreateRequest);
-        JsonNode response = unirest.post(FoDUrls.RELEASES)
-                .body(body).asObject(JsonNode.class).getBody();
-        return JsonHelper.treeToValue(response, FoDReleaseDescriptor.class);
+        var releaseId = unirest.post(FoDUrls.RELEASES)
+                .body(body).asObject(JsonNode.class).getBody().get("releaseId").asInt();
+        return getReleaseDescriptorFromId(unirest, releaseId, true);
     }
 
     public static final FoDReleaseDescriptor updateRelease(UnirestInstance unirest, String relId,
@@ -109,18 +102,38 @@ public class FoDReleaseHelper {
         unirest.put(FoDUrls.RELEASE)
                 .routeParam("relId", relId)
                 .body(body).asObject(JsonNode.class).getBody();
-        return getRequiredReleaseDescriptor(unirest, relId, ":");
+        return getReleaseDescriptorFromId(unirest, Integer.parseInt(relId), true);
     }
-
-    private static final FoDReleaseDescriptor getOptionalDescriptor(GetRequest request) {
-        JsonNode releases = request.asObject(ObjectNode.class).getBody().get("items");
-        if (releases.size() > 1) {
-            throw new ValidationException("Multiple application releases found");
+    
+    private static final GetRequest addFieldsParam(GetRequest req, String... fields) {
+        if ( fields!=null && fields.length>0 ) {
+            req = req.queryString("fields", String.join(",", fields));
         }
-        return releases.size() == 0 ? null : getDescriptor(releases.get(0));
+        return req;
     }
 
-    private static final FoDReleaseDescriptor getDescriptor(JsonNode node) {
-        return  JsonHelper.treeToValue(node, FoDReleaseDescriptor.class);
+    private static final FoDReleaseDescriptor getDescriptor(GetRequest request, String releaseNameOrId, boolean failIfNotFound) {
+        JsonNode releases = request.asObject(ObjectNode.class).getBody().get("items");
+        switch ( releases.size() ) {
+        case 0:
+            return nullOrNotFoundException(releaseNameOrId, failIfNotFound);
+        case 1:
+            return JsonHelper.treeToValue(releases.get(0), FoDReleaseDescriptor.class);
+        default:
+            // FoD usually doesn't allow duplicate release names, but we handle this
+            // by throwing an exception, just in case.
+            throw multipleFoundException(releaseNameOrId);
+        }
+    }
+
+    private static final FoDReleaseDescriptor nullOrNotFoundException(String releaseNameOrId, boolean failIfNotFound) {
+        if ( failIfNotFound ) {
+            throw new IllegalArgumentException(String.format("Cannot find release %s", releaseNameOrId));
+        }
+        return null;
+    }
+    
+    private static final RuntimeException multipleFoundException(String releaseNameOrId) {
+        return new IllegalStateException(String.format("Multiple releases found with name or id %s", releaseNameOrId));
     }
 }

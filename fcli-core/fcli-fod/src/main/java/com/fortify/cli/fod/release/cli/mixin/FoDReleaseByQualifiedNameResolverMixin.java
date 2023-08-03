@@ -57,8 +57,8 @@ public class FoDReleaseByQualifiedNameResolverMixin {
             return FoDMicroserviceHelper.getMicroserviceDescriptor(unirest, FoDQualifiedMicroserviceNameDescriptor.from(desc), failIfNotFound);
         }
         
-        public FoDReleaseDescriptor getReleaseDescriptor(UnirestInstance unirest, String... fields){
-            return FoDReleaseHelper.getRequiredReleaseDescriptor(unirest, getQualifiedReleaseName(), delimiterMixin.getDelimiter(), fields);
+        public FoDReleaseDescriptor getReleaseDescriptor(UnirestInstance unirest, boolean failIfNotFound, String... fields){
+            return FoDReleaseHelper.getReleaseDescriptor(unirest, getQualifiedReleaseName(), delimiterMixin.getDelimiter(), failIfNotFound, fields);
         }
 
         public final String getDelimiter() {

@@ -16,7 +16,6 @@ package com.fortify.cli.fod.microservice.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
@@ -33,7 +32,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
-public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
@@ -54,11 +53,6 @@ public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputComma
                 .microserviceName(qualifiedMicroserviceNameDescriptor.getMicroserviceName())
                 .build();
         return FoDMicroserviceHelper.createMicroservice(unirest, appDescriptor, msCreateRequest).asJsonNode();
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDMicroserviceHelper.renameFields(record);
     }
 
     @Override

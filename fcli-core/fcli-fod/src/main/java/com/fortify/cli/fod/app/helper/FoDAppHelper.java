@@ -25,13 +25,11 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod.app.cli.mixin.FoDAppTypeOptions;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
-// TODO Review method length (avoid long methods), in particular updateApp()
 public class FoDAppHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -65,17 +63,9 @@ public class FoDAppHelper {
                 body.replace("releaseMicroserviceName", appCreateRequest.getMicroservices().get(0));
             }
         }
-        JsonNode response = unirest.post(FoDUrls.APPLICATIONS)
-                .body(body).asObject(JsonNode.class).getBody();
-        FoDAppDescriptor descriptor = JsonHelper.treeToValue(response, FoDAppDescriptor.class);
-        descriptor.asObjectNode()
-                .put("applicationName", appCreateRequest.getApplicationName())
-                .put("releaseName", appCreateRequest.getReleaseName())
-                .put("microserviceName", appCreateRequest.getMicroservices().get(0).asText())
-                .put("applicationType", appCreateRequest.getHasMicroservices() ? FoDAppTypeOptions.FoDAppType.Microservice.getName() : appCreateRequest.getApplicationType())
-                .put("businessCriticalityType", appCreateRequest.getBusinessCriticalityType())
-                .put("applicationDescription", appCreateRequest.getApplicationDescription());
-        return descriptor;
+        var appId = unirest.post(FoDUrls.APPLICATIONS)
+                .body(body).asObject(JsonNode.class).getBody().get("applicationId").asText();
+        return getAppDescriptor(unirest, appId, true);
     }
 
     public static final FoDAppDescriptor updateApp(UnirestInstance unirest, String appId,

@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
@@ -30,10 +29,6 @@ import kong.unirest.UnirestInstance;
 
 public class FoDMicroserviceHelper {
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
-
-    public static final JsonNode renameFields(JsonNode record) {
-        return new RenameFieldsTransformer(new String[]{}).transform(record);
-    }
 
     public static final FoDMicroserviceDescriptor getMicroserviceDescriptor(UnirestInstance unirest, FoDQualifiedMicroserviceNameDescriptor microserviceNameDescriptor, boolean failIfNotFound) {
         var app = getAppDescriptor(unirest, microserviceNameDescriptor, failIfNotFound);
@@ -54,7 +49,7 @@ public class FoDMicroserviceHelper {
         case 0:
             return nullOrNotFoundException(microserviceNameDescriptor, failIfNotFound);
         case 1:
-            return getDescriptor(appDescriptor, microservices.get(0));
+            return getDescriptor(appDescriptor, matching.get(0));
         default:
             // FoD usually doesn't allow duplicate microservice names, but we handle this
             // by throwing an exception, just in case.

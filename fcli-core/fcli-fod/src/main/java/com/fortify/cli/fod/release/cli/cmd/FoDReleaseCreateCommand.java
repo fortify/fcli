@@ -51,7 +51,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         if (skipIfExists) {
-            var descriptor = releaseNameResolver.getReleaseDescriptor(unirest);
+            var descriptor = releaseNameResolver.getReleaseDescriptor(unirest, false);
             if (descriptor != null) { 
                 return descriptor.asObjectNode().put(IActionCommandResultSupplier.actionFieldName, "SKIPPED_EXISTING"); 
             }

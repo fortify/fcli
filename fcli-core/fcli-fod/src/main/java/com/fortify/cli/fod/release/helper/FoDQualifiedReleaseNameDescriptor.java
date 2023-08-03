@@ -15,6 +15,8 @@ package com.fortify.cli.fod.release.helper;
 
 import javax.validation.ValidationException;
 
+import com.fortify.cli.common.util.StringUtils;
+
 import lombok.Data;
 
 @Data
@@ -28,5 +30,10 @@ public final class FoDQualifiedReleaseNameDescriptor {
         case 2: return new FoDQualifiedReleaseNameDescriptor(elts[0], null, elts[1]);
         default: throw new ValidationException("Release name must be specified in the format <application name>["+delimiter+"<microservice name>]"+delimiter+"<release name>");
         }
+    }
+
+    public final String getQualifiedName() {
+        var optionalMsQualifier = StringUtils.isBlank(microserviceName)?"":(":"+microserviceName);
+        return String.format("%s%s:%s", appName, optionalMsQualifier, releaseName);
     }
 }
