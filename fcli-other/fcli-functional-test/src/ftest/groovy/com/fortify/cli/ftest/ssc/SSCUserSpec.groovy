@@ -23,12 +23,13 @@ import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 import spock.lang.AutoCleanup
 import spock.lang.Requires
 import spock.lang.Shared
+import spock.lang.Stepwise
 
-@Prefix("ssc.user") @FcliSession(SSC) 
+@Prefix("ssc.user") @FcliSession(SSC) @Stepwise
 class SSCUserSpec extends FcliBaseSpec {
     
     def "list"() {
-        def args = "ssc user list"
+        def args = "ssc user list --store users"
         when:
             def result = Fcli.run(args)
         then:
@@ -40,35 +41,35 @@ class SSCUserSpec extends FcliBaseSpec {
     }
     
     def "get.byId"() {
-        def args = "ssc user get 1"
+        def args = "ssc user get ::users::get(0).id"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[1].equals("id: 1")
+                it[2].startsWith("isLdap: ")
             }
     }
     
     def "get.byName"() {
-        def args = "ssc user get admin"
+        def args = "ssc user get ::users::get(0).entityName"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[1].equals("id: 1")
+                it[2].startsWith("isLdap: ")
             }
     }
     
     def "get.byMail"() {
-        def args = "ssc user get my_email@fortify.com"
+        def args = "ssc user get ::users::get(0).email"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[1].equals("id: 1")
+                it[2].startsWith("isLdap: ")
             }
     }
     

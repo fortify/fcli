@@ -23,8 +23,9 @@ import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 import spock.lang.AutoCleanup
 import spock.lang.Requires
 import spock.lang.Shared
+import spock.lang.Stepwise
 
-@Prefix("ssc.job") @FcliSession(SSC) 
+@Prefix("ssc.job") @FcliSession(SSC) @Stepwise
 class SSCJobSpec extends FcliBaseSpec {
     
     def "list"() {
@@ -39,21 +40,9 @@ class SSCJobSpec extends FcliBaseSpec {
             }
     }
     
-    def "extractJobName"() {
-        def args = "util variable contents jobs -q jobName==#var('jobs').get(0).jobName --store job"
-        when:
-            def result = Fcli.run(args)
-        then:
-            verifyAll(result.stdout) {
-                size()>=2
-                it[0].replace(' ', '').equals("JobnameJobgroupJobclassUsernameProjectversionidStateExecutionorderPriorityStarttimeFinishtimeJobdataauthenticationusernameJobdataparamprojectversionnameJobdatajobuuidJobdataparamprojectnameJobdataparamprojectversionidCancellableCancelrequestedCreatetimeHref")
-                
-            }
-    }
-    
-    //TODO replace hardcoded value
+
     def "get.byName"() {
-        def args = "ssc job get ReportCleanup\$743d0bdc-4570-4b7b-a5d5-c4373f9d7732"
+        def args = "ssc job get ::jobs::get(0).jobName"
         when:
             def result = Fcli.run(args)
         then:

@@ -23,12 +23,13 @@ import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 import spock.lang.AutoCleanup
 import spock.lang.Requires
 import spock.lang.Shared
+import spock.lang.Stepwise
 
-@Prefix("ssc.issue-template") @FcliSession(SSC) 
+@Prefix("ssc.issue-template") @FcliSession(SSC) @Stepwise
 class SSCIssueTemplateSpec extends FcliBaseSpec {
     
     def "list"() {
-        def args = "ssc issue-template list"
+        def args = "ssc issue-template list --store templates"
         when:
             def result = Fcli.run(args)
         then:
@@ -40,24 +41,24 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     }
     
     def "get.byId"() {
-        def args = "ssc issue-template get PCI-SSF-1.1-Basic-Project-Template"
+        def args = "ssc issue-template get ::templates::get(0).id"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[1].equals("id: \"PCI-SSF-1.1-Basic-Project-Template\"")
+                it.any { it.startsWith("defaultTemplate:") }
             }
     }
     
     def "get.byName"() {
-        def args = "ssc issue-template get PCI\\ SSF\\ 1.1\\ Basic\\ Issue\\ Template"
+        def args = "ssc issue-template get ::templates::get(0).name"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[1].equals("id: \"PCI-SSF-1.1-Basic-Project-Template\"")
+                it.any { it.startsWith("defaultTemplate:") }
             }
     }
     //TODO add tests for create,delete,download,update

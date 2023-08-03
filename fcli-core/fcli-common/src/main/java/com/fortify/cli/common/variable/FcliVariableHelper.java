@@ -124,9 +124,8 @@ public final class FcliVariableHelper {
     }
     
     public static final String resolveVariable(String arg) {
-        StringBuilder sb = new StringBuilder();
         Matcher matcher = variableReferencePattern.matcher(arg);
-        while (matcher.find()) {
+        if (matcher.matches()) {
             String variableName = matcher.group(1);
             String propertyPath = getVariablePropertyPathOrDefault(variableName, matcher.group(2));
             JsonNode contents = getVariableContents(variableName, true);
@@ -134,10 +133,9 @@ public final class FcliVariableHelper {
             if ( value==null ) {
                 throw new IllegalArgumentException(String.format("Property path '%s' for variable '%s' resolves to null", propertyPath, variableName));
             }
-            matcher.appendReplacement(sb, value);
+            return value;
         }
-        matcher.appendTail(sb);
-        return sb.toString();
+        return arg;
     }
     
     private static final String getVariablePropertyPathOrDefault(String variableName, String propertyPath) {

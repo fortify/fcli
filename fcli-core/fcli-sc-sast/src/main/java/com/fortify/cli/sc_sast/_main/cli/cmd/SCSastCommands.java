@@ -34,8 +34,8 @@ import picocli.CommandLine.Command;
                 //   other commands ('Manage').
                 SCSastSessionCommands.class,
                 SCSastScanCommands.class,
-                SCSastControllerRestCommands.class,
                 SCSastSensorCommands.class,
+                SCSastControllerRestCommands.class,
         }
 )
 public class SCSastCommands extends AbstractContainerCommand {}

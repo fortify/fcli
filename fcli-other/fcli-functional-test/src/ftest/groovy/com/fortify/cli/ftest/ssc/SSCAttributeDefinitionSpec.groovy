@@ -23,12 +23,13 @@ import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 import spock.lang.AutoCleanup
 import spock.lang.Requires
 import spock.lang.Shared
+import spock.lang.Stepwise
 
-@Prefix("ssc.attribute-definition") @FcliSession(SSC) 
+@Prefix("ssc.attribute-definition") @FcliSession(SSC) @Stepwise
 class SSCAttributeDefinitionSpec extends FcliBaseSpec {
     
     def "list"() {
-        def args = "ssc attribute-definition list"
+        def args = "ssc attribute-definition list --store definitions"
         when:
             def result = Fcli.run(args)
         then:
@@ -40,24 +41,24 @@ class SSCAttributeDefinitionSpec extends FcliBaseSpec {
     }
     
     def "get.byId"() {
-        def args = "ssc attribute-definition get 5"
+        def args = "ssc attribute-definition get ::definitions::get(0).id"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[5].equals("guid: \"DevPhase\"")
+                it[1].startsWith("id:")
             }
     }
     
     def "get.byName"() {
-        def args = "ssc attribute-definition get DevPhase"
+        def args = "ssc attribute-definition get ::definitions::get(0).guid"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[5].equals("guid: \"DevPhase\"")
+                it[1].startsWith("id:")
             }
     }
 }
