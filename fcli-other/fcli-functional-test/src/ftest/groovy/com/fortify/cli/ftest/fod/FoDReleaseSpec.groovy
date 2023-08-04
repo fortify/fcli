@@ -26,15 +26,15 @@ class FoDReleaseSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>=1
                 if(size()>1) {
-                it[0].replace(' ', '').equals("IdNameMicroserviceApplicationSDLCStatus")
+                    it[0].replace(' ', '').equals("IdNameMicroserviceApplicationSDLCStatus")
                 } else {
-                it[0].equals("No data")
+                    it[0].equals("No data")
                 }
             }
     }
     
     def "create"() {
-        def args = "fod release create " + app.appName + ":" + app.appName + ":testrel --sdlc-status=Development"
+        def args = "fod release create " + app.appName + ":" + app.microserviceName + ":testrel --sdlc-status=Development"
         when:
             def result = Fcli.run(args)
         then:
@@ -65,9 +65,8 @@ class FoDReleaseSpec extends FcliBaseSpec {
     }*/
     
     def "get.byName"() {
-        def args = "fod release get " + app.appName + ":" + app.appName + ":testrel"
+        def args = "fod release get " + app.appName + ":" + app.microserviceName + ":testrel"
         when:
-            if(!appsExist) {return;}
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
@@ -78,7 +77,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
     
     
     def "update"() {
-        def args = "fod release update "  + app.appName + ":" + app.appName + ":testrel --sdlc-status QA"
+        def args = "fod release update "  + app.appName + ":" + app.microserviceName + ":testrel --sdlc-status QA"
         when:
             def result = Fcli.run(args)
         then:

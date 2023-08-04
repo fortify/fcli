@@ -19,6 +19,7 @@ public class FODAppRel implements Closeable, AutoCloseable {
     private final String fcliVariableName = "fod_apprel_"+random
     private final String appName = "fcli-"+random
     private final String versionName = "v"+random
+    private final String microserviceName = "ms"+random
     private final String ownerId = 16225;
     
     public FODAppRel createWebApp() {
@@ -53,7 +54,7 @@ public class FODAppRel implements Closeable, AutoCloseable {
         Fcli.run("fod app create $appName:$versionName "+
             "--description Auto\\ created\\ by\\ test " +
             "--sdlc-status=Development " +
-            "--release=$appName:$versionName "+
+            "--release=$microserviceName:$versionName "+
             "--owner=$ownerId " +
             "--app-type=Microservice " +
             "--business-criticality=Medium " +

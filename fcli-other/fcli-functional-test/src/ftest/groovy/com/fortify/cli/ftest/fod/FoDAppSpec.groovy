@@ -28,9 +28,9 @@ class FoDAppSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>=1
                 if(size()>1) {
-                it[0].replace(' ', '').equals("IdNameTypeCriticality")
+                    it[0].replace(' ', '').equals("IdNameTypeCriticality")
                 } else {
-                it[0].equals("No data")
+                    it[0].equals("No data")
                 }
             }
     }
