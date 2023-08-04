@@ -25,11 +25,12 @@ import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeOptions;
@@ -50,8 +51,9 @@ import picocli.CommandLine.Option;
 @Command(name = FoDOutputHelperMixins.StartSast.CMD_NAME)
 public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.StartSast outputHelper;
-    @Mixin
-    private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
+    
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--purchase-entitlement"})
@@ -77,8 +79,9 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
     public JsonNode getJsonNode(UnirestInstance unirest) {
         try ( var progressWriter = progressWriterFactory.create() ) {
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
-            String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
-
+            var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
+            String relId = releaseDescriptor.getReleaseId();
+            
             // get current setup and check if its valid
             FoDSastScanSetupDescriptor currentSetup = FoDSastScanHelper.getSetupDescriptor(unirest, relId);
             if (StringUtils.isBlank(currentSetup.getTechnologyStack())) {
@@ -107,7 +110,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                 startScanRequest.setEntitlementPreferenceType(String.valueOf(FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan));
             }
 
-            return FoDSastScanHelper.startScan(unirest, relId, startScanRequest, scanFile, chunkSize).asJsonNode();
+            return FoDSastScanHelper.startScan(unirest, releaseDescriptor, startScanRequest, scanFile, chunkSize).asJsonNode();
         }
     }
 

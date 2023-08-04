@@ -10,7 +10,8 @@
  * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.fod.release.helper;
+
+package com.fortify.cli.fod.microservice.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 
@@ -22,10 +23,6 @@ import lombok.ToString;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Getter @ToString @Builder
-public class FoDAppRelUpdateRequest {
-    private String releaseName;
-    private String releaseDescription;
-    private String sdlcStatusType;
-    private Integer ownerId;
-    private Integer microserviceId;
+public class FoDMicroserviceUpdateRequest {
+    private String microserviceName;
 }

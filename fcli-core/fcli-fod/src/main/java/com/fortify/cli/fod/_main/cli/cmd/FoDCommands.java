@@ -27,8 +27,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "fod",
         resourceBundle = "com.fortify.cli.fod.i18n.FoDMessages",
-        hidden = true,
-        subcommands = {
+         subcommands = {
                 // This list of product subcommands should be in alphabetical
                 // order, except for:
                 // - session command (should be the first command, as it is a

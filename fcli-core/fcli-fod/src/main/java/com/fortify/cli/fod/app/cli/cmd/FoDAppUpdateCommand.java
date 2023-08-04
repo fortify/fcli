@@ -53,20 +53,8 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
     @DisableTest(MULTI_OPT_PLURAL_NAME)
     @Option(names = {"--notify"}, required = false, split=",")
     private ArrayList<String> notificationsUpdate;
-    // microservice commands are available via `fod app-ms` and should not be on update command
-    // descriptions for `fod app update` also updated
-    /*
-    @Mixin
-    FoDMicroserviceUpdateOptions.AddMicroserviceOption addMicroservices;
-    @Mixin
-    FoDMicroserviceUpdateOptions.DeleteMicroserviceOption deleteMicroservices;
-    @Mixin
-    FoDMicroserviceUpdateOptions.RenameMicroserviceOption renameMicroservices;
-     */
-    @Mixin
-    private FoDCriticalityTypeOptions.OptionalOption criticalityTypeUpdate;
-    @Mixin
-    private FoDAttributeUpdateOptions.OptionalAttrOption appAttrsUpdate;
+    @Mixin private FoDCriticalityTypeOptions.OptionalOption criticalityTypeUpdate;
+    @Mixin private FoDAttributeUpdateOptions.OptionalAttrOption appAttrsUpdate;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {

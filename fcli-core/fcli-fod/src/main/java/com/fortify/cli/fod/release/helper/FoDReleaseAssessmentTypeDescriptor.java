@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
-public class FoDAppRelAssessmentTypeDescriptor extends JsonNodeHolder {
+public class FoDReleaseAssessmentTypeDescriptor extends JsonNodeHolder {
     private Integer assessmentTypeId;
     private String name;
     private String scanType;

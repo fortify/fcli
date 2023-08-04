@@ -18,11 +18,12 @@ import java.io.File;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod._common.util.FoDConstants;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDImportScan;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
@@ -34,7 +35,8 @@ import picocli.CommandLine;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractFoDScanImportCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
-    @Mixin private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
 
     @CommandLine.Option(names = {"--chunk-size"})
     private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
@@ -52,7 +54,7 @@ public abstract class AbstractFoDScanImportCommand extends AbstractFoDJsonNodeOu
     // TODO Split method in multiple methods for upload and generating output
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
+        String relId = releaseResolver.getReleaseId(unirest);
         HttpRequest<?> request = unirest.put(getImportUrl()).routeParam("relId", relId);
         FoDImportScan importScanHelper = new FoDImportScan(
                 unirest, relId, request, scanFile

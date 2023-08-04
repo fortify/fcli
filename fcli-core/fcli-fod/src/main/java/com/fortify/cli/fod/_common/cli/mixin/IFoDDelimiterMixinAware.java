@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/**
+ * Copyright 2023 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -9,14 +9,9 @@
  * liable for technical or editorial errors or omissions contained 
  * herein. The information contained herein is subject to change 
  * without notice.
- *******************************************************************************/
+ */
+package com.fortify.cli.fod._common.cli.mixin;
 
-package com.fortify.cli.fod.release.cli.mixin;
-
-import lombok.Getter;
-import picocli.CommandLine.Option;
-
-public final class FoDDelimiterMixin {
-    @Option(names = {"--delim"}, defaultValue = ":")
-    @Getter private String delimiter;
+public interface IFoDDelimiterMixinAware {
+    void setDelimiterMixin(FoDDelimiterMixin delimiterMixin);
 }

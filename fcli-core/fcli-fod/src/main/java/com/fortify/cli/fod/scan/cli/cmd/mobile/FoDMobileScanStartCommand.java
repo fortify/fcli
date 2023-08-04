@@ -27,14 +27,15 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod._common.util.FoDEnums;
+import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
-import com.fortify.cli.fod.release.cli.mixin.FoDAppMicroserviceRelResolverMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeOptions;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
@@ -53,8 +54,8 @@ import picocli.CommandLine.Option;
 public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
     @Getter @Mixin private FoDOutputHelperMixins.StartMobile outputHelper;
-    @Mixin
-    private FoDAppMicroserviceRelResolverMixin.PositionalParameter appMicroserviceRelResolver;
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
     private enum MobileAssessmentTypes { Mobile, MobilePlus, Remediation }
     @Option(names = {"--assessment-type"}, required = true)
     private MobileAssessmentTypes mobileAssessmentType;
@@ -87,7 +88,8 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
     public JsonNode getJsonNode(UnirestInstance unirest) {
         try ( var progressWriter = progressWriterFactory.create() ) {
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
-            String relId = appMicroserviceRelResolver.getAppMicroserviceRelId(unirest);
+            var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
+            String relId = releaseDescriptor.getReleaseId();
 
             // retrieve current scan setup
             // NOTE: there is currently no GET method for retrieving scan setup so the following cannot be used:
@@ -117,7 +119,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
                     .scanTool(fcliProperties.getProperty("projectName", "fcli"))
                     .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
 
-            return FoDMobileScanHelper.startScan(unirest, progressWriter, relId, startScanRequest, scanFile, chunkSize).asJsonNode();
+            return FoDMobileScanHelper.startScan(unirest, progressWriter, releaseDescriptor, startScanRequest, scanFile, chunkSize).asJsonNode();
         }
     }
 

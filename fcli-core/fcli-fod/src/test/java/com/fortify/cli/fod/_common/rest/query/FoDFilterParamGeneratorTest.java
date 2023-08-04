@@ -20,7 +20,6 @@ import org.springframework.expression.spel.SpelParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
-import com.fortify.cli.fod._common.rest.query.FoDFiltersParamGenerator;
 
 public class FoDFilterParamGeneratorTest {
     private IServerSideQueryParamValueGenerator generator = new FoDFiltersParamGenerator()
