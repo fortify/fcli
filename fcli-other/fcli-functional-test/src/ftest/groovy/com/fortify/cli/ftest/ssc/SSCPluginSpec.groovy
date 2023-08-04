@@ -31,7 +31,7 @@ class SSCPluginSpec extends FcliBaseSpec {
     boolean pluginsExist = false;
     
     def "list"() {
-        def args = "ssc plugin list"
+        def args = "ssc plugin list --store plugins"
         when:
             def result = Fcli.run(args)
             pluginsExist = result.stdout.size()>1
@@ -48,14 +48,14 @@ class SSCPluginSpec extends FcliBaseSpec {
     
     def "get.byId"() {
         
-            def args = "ssc alert-definition get ::alertdefinitions::get(0).id"
+            def args = "ssc plugin get ::plugins::get(0).id"
             when:
                 if(!pluginsExist) {return;}
                 def result = Fcli.run(args)
             then:
                 verifyAll(result.stdout) {
                     size()>0
-                    it.any { it.startsWith("alertTriggers:") }
+                    it.any { it.startsWith("pluginVersion:") }
                 }
     }
     
