@@ -12,12 +12,12 @@
  *******************************************************************************/
 package com.fortify.cli.common.util;
 
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
-
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -124,7 +124,8 @@ public class FcliDataHelper {
 
     private static void writeFileWithOwnerOnlyPermissions(final Path filePath, final String contents, boolean failOnError) {
         try {
-            Files.writeString(filePath, "", CREATE, WRITE, TRUNCATE_EXISTING);
+            BufferedWriter  writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath.toString()), "UTF-8"));
+            writer.write("");
             if ( FileSystems.getDefault().supportedFileAttributeViews().contains("posix") ) {
                 Files.setPosixFilePermissions(filePath, PosixFilePermissions.fromString("rw-------"));
             } else {
@@ -133,7 +134,8 @@ public class FcliDataHelper {
                 file.setReadable(true, true);
                 file.setWritable(true, true);
             }
-            Files.writeString(filePath, contents, CREATE, WRITE, TRUNCATE_EXISTING);
+           writer.write(contents);
+           writer.close();
         } catch ( IOException e ) {
             throwOrLog("Error writing file "+filePath, e, failOnError);
         }
@@ -147,7 +149,7 @@ public class FcliDataHelper {
     public static final <R> R readFile(Path relativePath, Class<R> returnType, boolean failOnError) {
         final Path filePath = resolveFcliHomePath(relativePath);
         try {
-            String contents = Files.readString(filePath);
+            String contents = Files.readString(filePath, StandardCharsets.UTF_8);
             return String.class.isAssignableFrom(returnType)
                     ? (R)contents 
                     : JsonHelper.jsonStringToValue(contents, returnType);
