@@ -96,7 +96,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
                 .releaseDescription(releaseDescription)
                 .sdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
                 .ownerId(userDescriptor.getUserId())
-                .applicationType(appType.getAppType().getName())
+                .applicationType(appType.getAppType().getFoDValue())
                 .hasMicroservices(appType.getAppType().isMicroservice())
                 .microservices(FoDAppHelper.getMicroservicesNode(microservices))
                 .attributes(FoDAttributeHelper.getAttributesNode(unirest, appAttrs.getAttributes(), autoRequiredAttrs))
@@ -119,7 +119,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
+        return FoDAppHelper.transformRecord(record);
     }
 
     @Override

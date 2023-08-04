@@ -26,21 +26,33 @@ import picocli.CommandLine.Option;
 public class FoDAppTypeOptions {
     public enum FoDAppType {
         Web("Web_Thick_Client"),
+        ThickClient("Web_Thick_Client"),
         Mobile("Mobile"),
         Microservice("Microservice");
 
-        public final String name;
+        private final String fodValue;
 
-        FoDAppType(String name) {
-            this.name = name;
+        private FoDAppType(String fodValue) {
+            this.fodValue = fodValue;
         }
 
-        public String getName() {
-            return this.name;
+        public String getFoDValue() {
+            return this.fodValue;
+        }
+        
+        public String getFriendlyName() {
+            return "Web_Thick_Client".equals(fodValue) ? "Web/Thick Client" : fodValue;
         }
 
         public boolean isMicroservice() {
-            return (name.equals("Microservice"));
+            return (fodValue.equals("Microservice"));
+        }
+        
+        public static final FoDAppType fromFoDValue(String fodValue) {
+            return Stream.of(FoDAppType.values())
+                    .filter(v->v.getFoDValue().equals(fodValue))
+                    .findFirst()
+                    .orElseThrow(()->new IllegalStateException("Unknown FoD application type: "+fodValue));
         }
     }
 
