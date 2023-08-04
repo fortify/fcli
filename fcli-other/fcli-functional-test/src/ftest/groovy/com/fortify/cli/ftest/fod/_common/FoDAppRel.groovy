@@ -14,7 +14,7 @@ package com.fortify.cli.ftest.fod._common
 
 import com.fortify.cli.ftest._common.Fcli
 
-public class FODAppRel implements Closeable, AutoCloseable {
+public class FoDAppRel implements Closeable, AutoCloseable {
     private final String random = System.currentTimeMillis()
     private final String fcliVariableName = "fod_apprel_"+random
     private final String appName = "fcli-"+random
@@ -22,7 +22,7 @@ public class FODAppRel implements Closeable, AutoCloseable {
     private final String microserviceName = "ms"+random
     private final String ownerId = 16225;
     
-    public FODAppRel createWebApp() {
+    public FoDAppRel createWebApp() {
         Fcli.run("fod app create $appName:$versionName "+ 
             "--description Auto\\ created\\ by\\ test " +
             "--sdlc-status=Development " + 
@@ -36,7 +36,7 @@ public class FODAppRel implements Closeable, AutoCloseable {
         return this
     }
     
-    public FODAppRel createMobileApp() {
+    public FoDAppRel createMobileApp() {
         Fcli.run("fod app create $appName:$versionName "+
             "--description Auto\\ created\\ by\\ test " +
             "--sdlc-status=Development " +
@@ -50,7 +50,7 @@ public class FODAppRel implements Closeable, AutoCloseable {
         return this
     }
     
-    public FODAppRel createMicroservicesApp() {
+    public FoDAppRel createMicroservicesApp() {
         Fcli.run("fod app create $appName:$versionName "+
             "--description Auto\\ created\\ by\\ test " +
             "--sdlc-status=Development " +

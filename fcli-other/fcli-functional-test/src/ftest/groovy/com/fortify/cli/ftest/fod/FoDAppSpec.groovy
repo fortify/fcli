@@ -6,7 +6,7 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.fod._common.FODAppRel
+import com.fortify.cli.ftest.fod._common.FoDAppRel
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 
 import spock.lang.AutoCleanup
@@ -16,9 +16,9 @@ import spock.lang.Unroll
 
 @Prefix("fod.app") @FcliSession(FOD) @Stepwise
 class FoDAppSpec extends FcliBaseSpec {
-    @Shared FODAppRel webApp = null;
-    @Shared FODAppRel mobileApp = null;
-    @Shared FODAppRel microservicesApp = null;
+    @Shared FoDAppRel webApp = null;
+    @Shared FoDAppRel mobileApp = null;
+    @Shared FoDAppRel microservicesApp = null;
     
     def "list"() {
         def args = "fod app list"
@@ -37,21 +37,21 @@ class FoDAppSpec extends FcliBaseSpec {
     
     def "createWebApp"() {
         when:
-            webApp = new FODAppRel().createWebApp();
+            webApp = new FoDAppRel().createWebApp();
         then:
             noExceptionThrown()
     }
     
     def "createMicroserviceApp"() {
         when:
-            microservicesApp = new FODAppRel().createMicroservicesApp();
+            microservicesApp = new FoDAppRel().createMicroservicesApp();
         then:
             noExceptionThrown()
     }
     
     def "createMobileApp"() {
         when:
-            mobileApp = new FODAppRel().createMobileApp();
+            mobileApp = new FoDAppRel().createMobileApp();
         then:
             noExceptionThrown()
     }
@@ -71,7 +71,6 @@ class FoDAppSpec extends FcliBaseSpec {
     def "get.byId"() {
         def args = "fod app get ::apps::get(0).applicationId"
         when:
-            if(!appsExist) {return;}
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
@@ -83,7 +82,6 @@ class FoDAppSpec extends FcliBaseSpec {
     def "get.byName"() {
         def args = "fod app get ::apps::get(0).applicationName"
         when:
-            if(!appsExist) {return;}
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {

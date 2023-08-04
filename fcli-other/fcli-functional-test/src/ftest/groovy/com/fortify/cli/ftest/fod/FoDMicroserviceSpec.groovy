@@ -6,7 +6,7 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.fod._common.FODAppRel
+import com.fortify.cli.ftest.fod._common.FoDAppRel
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 
 import spock.lang.AutoCleanup
@@ -16,7 +16,7 @@ import spock.lang.Unroll
 
 @Prefix("fod.microservice") @FcliSession(FOD) @Stepwise
 class FoDMicroserviceSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup FODAppRel app = new FODAppRel().createMicroservicesApp()
+    @Shared @AutoCleanup FoDAppRel app = new FoDAppRel().createMicroservicesApp()
     
     @Shared 
     boolean appsExist = false;
