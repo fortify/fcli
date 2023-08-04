@@ -22,9 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.fortify.cli.fod.app.cli.mixin.FoDAppTypeOptions.FoDAppType;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -33,8 +33,18 @@ import lombok.Getter;
 public class FoDAppHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
 
-    public static final JsonNode renameFields(JsonNode record) {
-        return new RenameFieldsTransformer(new String[]{}).transform(record);
+    public static final JsonNode transformRecord(JsonNode record) {
+        return addFcliAppType((ObjectNode)record);
+    }
+
+    private static JsonNode addFcliAppType(ObjectNode record) {
+        FoDAppType type = null;
+        if (record.get("hasMicroservices").asBoolean()) {
+            type = FoDAppType.Microservice;
+        } else {
+            type = FoDAppType.fromFoDValue(record.get("applicationType").asText());
+        }
+        return record.put("fcliApplicationType", type.getFriendlyName());
     }
 
     public static final FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String appNameOrId, boolean failIfNotFound) {

@@ -86,7 +86,7 @@ public class FoDAppUpdateCommand extends AbstractFoDJsonNodeOutputCommand implem
 
     @Override
     public JsonNode transformRecord(JsonNode record) {
-        return FoDAppHelper.renameFields(record);
+        return FoDAppHelper.transformRecord(record);
     }
 
     @Override
