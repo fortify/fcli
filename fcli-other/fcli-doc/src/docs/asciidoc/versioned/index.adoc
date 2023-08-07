@@ -197,11 +197,24 @@ Various fcli options take either plain expressions, like link:++#-q--query++[-q 
 When evaluating expressions, fcli configures SpEL for 'data binding and condition evaluation', meaning that not all SpEL features are available. In particular, query expressions cannot invoke constructors nor static methods, and write access is mostly disabled. Attempts to access non-existing JSON properties will result in an error, which, although uncommon, may be an issue if the server doesn't consistently return all expected properties. You'll need to explicitly check for property existence in such cases, for example:
 
 * Top-level properties: +
-  `+fcli ... list -q "(has('property2') && property2=='value2')"+`
+  `+fcli ... list -q '(has("property2") && property2=="value2")'+`
 * Nested properties: +
-  `+fcli ... list -q "nestedObject!=null && get('nestedObject').has('stringValue') && nestedObject.stringValue=='nestedObjectValue1'"+`
+  `+fcli ... list -q 'nestedObject!=null && get("nestedObject").has("stringValue") && nestedObject.stringValue=="nestedObjectValue1"'+`
 * Nested array properties: +
-  `+fcli ... list -q "nestedObjectArray !=null && !(nestedObjectArray.isEmpty()) && get('nestedObjectArray').get(0).has('stringValue') && nestedObjectArray.get(0).stringValue=='nestedArrayValue1' "+`
+  `+fcli ... list -q 'nestedObjectArray !=null && !(nestedObjectArray.isEmpty()) && get("nestedObjectArray").get(0).has("stringValue") && nestedObjectArray.get(0).stringValue=="nestedArrayValue1"'+`
+
+Some SpEL operators like `matches` may throw an exception if any of the operands is `null`. For example, the following will result in an error if the `prop1` propery is `null` for any of the records returned by the `list` command: +
+
+* `+fcli ... list -q 'prop1 matches "value1|value2"'+`
+
+Such errors can be avoided using one of the following approaches:
+
+* Rewrite the expression to not use the `matches` operator, for example: +
+  `+fcli ... list -q '{"value1","value2"}.contains(prop1)'+`
+* Add null-check (include all records for which `prop` is `null`): +
+  `+fcli ... list -q 'prop1==null || prop1 matches "value1|value2"'+`
+* Add null-check (exclude all records for which `prop` is `null`): +
+  `+fcli ... list -q 'prop1!=null && prop1 matches "value1|value2"'+`
 
 Fcli provides some utility functions that may be used in expressions. Note that these functions calls are preceded by a `+#+` character.
 
