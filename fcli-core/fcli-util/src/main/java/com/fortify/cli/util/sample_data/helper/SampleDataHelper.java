@@ -55,7 +55,7 @@ public final class SampleDataHelper {
                                                     .put("dateTimeValue", dateTimeValue);
                                             obj.set("nestedObject", nestedObject);
                                             obj.set("nestedObjectArray", nestedObjectArray);
-                                            obj.set("nestedStringAray", nestedStringArray);
+                                            obj.set("nestedStringArray", nestedStringArray);
                                             result.add(obj);
                                         }
                                     }
