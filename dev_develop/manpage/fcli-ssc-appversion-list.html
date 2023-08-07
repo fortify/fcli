@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230804.144447-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230807.081349-dev_develop" %}
 
 
 <div id="header">
@@ -55,7 +55,39 @@ fcli_version:
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>By default, this command simply lists all application versions. However, the --embed, --query and --output options allow for implementing advanced use cases. Some examples:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>List application versions created by user 'admin':
+-q 'createdBy=="admin"'</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>List application versions requiring refresh:
+-q 'refreshRequired'</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>List application versions with artifacts requiring approval:
+-q 'currentState.attentionRequired'</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>List application versions with business risk 'High':
+--embed attrValuesByGuid -q 'attrValuesByGuid["BusinessRisk"].contains("High")'</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Generate script for purging all application versions:
+-o 'expr=fcli ssc appversion purge-artifacts --older-than 30d {id}\n'</pre>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -142,7 +174,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-04 14:46:28 UTC
+Last updated 2023-08-07 08:15:32 UTC
 </div>
 </div>
 </body>
