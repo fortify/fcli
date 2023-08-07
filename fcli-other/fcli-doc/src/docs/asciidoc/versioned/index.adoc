@@ -224,6 +224,12 @@ Fcli provides some utility functions that may be used in expressions. Note that 
 * `+#var(name)+`: Get fcli variable contents; variable properties can be accessed as usual, i.e. `+#var("myVar")?.rootProp?.subProp+`.
 * `+#env(name)+`: Get the value of an environment variable.
 
+Note that for date comparisons, both sides of the comparison operator need to be explicitly defined as date/time objects. For example:
+
+* Invalid comparison: `+#date(myprop) < '2023-01-01'+`
+* Valid comparison: `+#date(myprop) < #date('2023-01-01')+`
+* Valid comparison: `+#date(myprop) < #now('-90d')+`
+
 SpEL expressions may contain various characters that will be interpreted by some shells, like the `#` character for calling functions, and either single or double quotes around literal string values. As such, with most shells you should enclose the full expression in single or double quotes, and use the other quotes in the expression, for example:
 
 * `+-q '... "literal SpEL string" ...'+` (single quotes for shell, double quotes for SpEL literals)
