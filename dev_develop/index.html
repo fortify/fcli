@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230807.081349-dev_develop
+fcli_version: 0.20230807.095108-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20230807.081349-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230807.081349-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230807.095108-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230807.081349-dev_develop</span>
+<span id="revnumber">version 0.20230807.095108-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -504,7 +504,52 @@ All commands that automatically generate server-side queries provide the <code>-
 <p>Various fcli options take either plain expressions, like <a href="#-q--query">-q | --query</a>, or template expressions (plain text combined with expressions embedded between curly braces), like <a href="#-o--output">-o | –output expr=&#8230;&#8203;</a>. These expressions use Spring Expression Language (SpEL); general information on syntax, supported operators and more can be found in the <a href="https://docs.spring.io/spring-framework/docs/6.0.x/reference/html/core.html#expressions">SpEL Documentation</a>.</p>
 </div>
 <div class="paragraph">
-<p>When evaluating expressions, fcli configures SpEL for 'data binding and condition evaluation', meaning that not all SpEL features are available. In particular, query expressions cannot invoke constructors nor static methods, and write access is mostly disabled.</p>
+<p>When evaluating expressions, fcli configures SpEL for 'data binding and condition evaluation', meaning that not all SpEL features are available. In particular, query expressions cannot invoke constructors nor static methods, and write access is mostly disabled. Attempts to access non-existing JSON properties will result in an error, which, although uncommon, may be an issue if the server doesn&#8217;t consistently return all expected properties. You&#8217;ll need to explicitly check for property existence in such cases, for example:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Top-level properties:<br>
+<code>fcli ... list -q '(has("property2") &amp;&amp; property2=="value2")'</code></p>
+</li>
+<li>
+<p>Nested properties:<br>
+<code>fcli ... list -q 'nestedObject!=null &amp;&amp; get("nestedObject").has("stringValue") &amp;&amp; nestedObject.stringValue=="nestedObjectValue1"'</code></p>
+</li>
+<li>
+<p>Nested array properties:<br>
+<code>fcli ... list -q 'nestedObjectArray !=null &amp;&amp; !(nestedObjectArray.isEmpty()) &amp;&amp; get("nestedObjectArray").get(0).has("stringValue") &amp;&amp; nestedObjectArray.get(0).stringValue=="nestedArrayValue1"'</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Some SpEL operators like <code>matches</code> may throw an exception if any of the operands is <code>null</code>. For example, the following will result in an error if the <code>prop1</code> propery is <code>null</code> for any of the records returned by the <code>list</code> command:<br></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>fcli ... list -q 'prop1 matches "value1|value2"'</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Such errors can be avoided using one of the following approaches:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Rewrite the expression to not use the <code>matches</code> operator, for example:<br>
+<code>fcli ... list -q '{"value1","value2"}.contains(prop1)'</code></p>
+</li>
+<li>
+<p>Add null-check (include all records for which <code>prop</code> is <code>null</code>):<br>
+<code>fcli ... list -q 'prop1==null || prop1 matches "value1|value2"'</code></p>
+</li>
+<li>
+<p>Add null-check (exclude all records for which <code>prop</code> is <code>null</code>):<br>
+<code>fcli ... list -q 'prop1!=null &amp;&amp; prop1 matches "value1|value2"'</code></p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
 <p>Fcli provides some utility functions that may be used in expressions. Note that these functions calls are preceded by a <code>#</code> character.</p>
@@ -525,6 +570,22 @@ All commands that automatically generate server-side queries provide the <code>-
 </li>
 <li>
 <p><code>#env(name)</code>: Get the value of an environment variable.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Note that for date comparisons, both sides of the comparison operator need to be explicitly defined as date/time objects. For example:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Invalid comparison: <code>#date(myprop) &lt; '2023-01-01'</code></p>
+</li>
+<li>
+<p>Valid comparison: <code>#date(myprop) &lt; #date('2023-01-01')</code></p>
+</li>
+<li>
+<p>Valid comparison: <code>#date(myprop) &lt; #now('-90d')</code></p>
 </li>
 </ul>
 </div>
@@ -864,8 +925,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230807.081349-dev_develop<br>
-Last updated 2023-08-07 08:15:32 UTC
+Version 0.20230807.095108-dev_develop<br>
+Last updated 2023-08-07 09:53:01 UTC
 </div>
 </div>
 </body>
