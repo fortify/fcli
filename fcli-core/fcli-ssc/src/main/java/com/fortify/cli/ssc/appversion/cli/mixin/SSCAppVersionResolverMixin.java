@@ -23,7 +23,7 @@ import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionResolverMixin {
     public static abstract class AbstractSSCAppVersionResolverMixin {
-        @Mixin private SSCDelimiterMixin delimiterMixin;
+        @Getter @Mixin private SSCDelimiterMixin delimiterMixin;
         public abstract String getAppVersionNameOrId();
 
         public SSCAppVersionDescriptor getAppVersionDescriptor(UnirestInstance unirest, String... fields){
