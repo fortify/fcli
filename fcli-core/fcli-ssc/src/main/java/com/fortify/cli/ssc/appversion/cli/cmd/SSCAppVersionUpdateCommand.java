@@ -13,6 +13,8 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -53,6 +55,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     private String name;
     @Option(names={"--description","-d"}, required = false)
     private String description;
+    private static final Pattern appAndVersionNamePattern = Pattern.compile("^([a-zA-Z0-9_\\-]*):([a-zA-Z0-9_\\-]*)$");
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -107,8 +110,23 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     
     private boolean optionalUpdate(ObjectNode updateData, String name, String value) {
         if ( StringUtils.isBlank(value) ) { return false; }
+        if(name.equals("name")) {
+            value = verifyUpdatedNameData(updateData, value);
+        }
         updateData.put(name, value);
         return true;
+    }
+    
+    private String verifyUpdatedNameData(ObjectNode updateData, String value) {
+        Matcher matcher = appAndVersionNamePattern.matcher(value);
+        if(matcher.matches()) {
+            if(matcher.group(1).equals(updateData.get("project").get("name").asText())) {
+                return matcher.group(2);
+            } else {
+                throw new IllegalArgumentException("If the --name parameter is provided in <application>:<version> format the application must match the name of the application referenced in the appVersionNameOrId parameter");
+            }
+        }
+        return value;
     }
     
     private boolean optionalUpdate(ObjectNode updateData, SSCIssueTemplateDescriptor descriptor) {
