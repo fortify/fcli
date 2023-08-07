@@ -194,7 +194,14 @@ Available on virtually all commands that interact with a target system, this opt
 
 Various fcli options take either plain expressions, like link:++#-q--query++[-q | --query], or template expressions (plain text combined with expressions embedded between curly braces), like link:++#-o--output++[-o | –output expr=...]. These expressions use Spring Expression Language (SpEL); general information on syntax, supported operators and more can be found in the link:https://docs.spring.io/spring-framework/docs/6.0.x/reference/html/core.html#expressions[SpEL Documentation].
 
-When evaluating expressions, fcli configures SpEL for 'data binding and condition evaluation', meaning that not all SpEL features are available. In particular, query expressions cannot invoke constructors nor static methods, and write access is mostly disabled.
+When evaluating expressions, fcli configures SpEL for 'data binding and condition evaluation', meaning that not all SpEL features are available. In particular, query expressions cannot invoke constructors nor static methods, and write access is mostly disabled. Attempts to access non-existing JSON properties will result in an error, which, although uncommon, may be an issue if the server doesn't consistently return all expected properties. You'll need to explicitly check for property existence in such cases, for example:
+
+* Top-level properties: +
+  `+fcli ... list -q "(has('property2') && property2=='value2')"+`
+* Nested properties: +
+  `+fcli ... list -q "nestedObject!=null && get('nestedObject').has('stringValue') && nestedObject.stringValue=='nestedObjectValue1'"+`
+* Nested array properties: +
+  `+fcli ... list -q "nestedObjectArray !=null && !(nestedObjectArray.isEmpty()) && get('nestedObjectArray').get(0).has('stringValue') && nestedObjectArray.get(0).stringValue=='nestedArrayValue1' "+`
 
 Fcli provides some utility functions that may be used in expressions. Note that these functions calls are preceded by a `+#+` character.
 
