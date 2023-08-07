@@ -6,7 +6,7 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.fod._common.FoDAppRel
+import com.fortify.cli.ftest.fod._common.FoDApp
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 
 import spock.lang.AutoCleanup
@@ -16,9 +16,9 @@ import spock.lang.Unroll
 
 @Prefix("fod.app") @FcliSession(FOD) @Stepwise
 class FoDAppSpec extends FcliBaseSpec {
-    @Shared FoDAppRel webApp = null;
-    @Shared FoDAppRel mobileApp = null;
-    @Shared FoDAppRel microservicesApp = null;
+    @Shared FoDApp webApp = null;
+    @Shared FoDApp mobileApp = null;
+    @Shared FoDApp microservicesApp = null;
     
     def "list"() {
         def args = "fod app list"
@@ -37,56 +37,88 @@ class FoDAppSpec extends FcliBaseSpec {
     
     def "createWebApp"() {
         when:
-            webApp = new FoDAppRel().createWebApp();
+            webApp = new FoDApp().createWebApp();
         then:
             noExceptionThrown()
     }
     
     def "createMicroserviceApp"() {
         when:
-            microservicesApp = new FoDAppRel().createMicroservicesApp();
+            microservicesApp = new FoDApp().createMicroservicesApp();
         then:
             noExceptionThrown()
     }
     
     def "createMobileApp"() {
         when:
-            mobileApp = new FoDAppRel().createMobileApp();
+            mobileApp = new FoDApp().createMobileApp();
         then:
             noExceptionThrown()
     }
     
-    def "verifyCreated"() {
-        def args = "fod app list --store apps"
-        when:
-            def result = Fcli.run(args)
-        then:
-            verifyAll(result.stdout) {
-                it.any { it.contains(webApp.appName) }
-                it.any { it.contains(microservicesApp.appName) }
-                it.any { it.contains(mobileApp.appName) }
-            }
-    }
-    
-    def "get.byId"() {
-        def args = "fod app get ::apps::get(0).applicationId"
+    def "get.byIdWebApp"() {
+        def args = "fod app get " + webApp.get("applicationId")
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[1].startsWith("applicationId: ")
+                it[2].equals("applicationName: \"" + webApp.appName + ":" + webApp.versionName +"\"")
             }
     }
     
-    def "get.byName"() {
-        def args = "fod app get ::apps::get(0).applicationName"
+    def "get.byIdMobileApp"() {
+        def args = "fod app get " + mobileApp.get("applicationId")
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[1].startsWith("applicationId: ")
+                it[2].equals("applicationName: \"" + mobileApp.appName + ":" + mobileApp.versionName +"\"")
+            }
+    }
+    
+    def "get.byIdMicroservicesApp"() {
+        def args = "fod app get " + microservicesApp.get("applicationId")
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>2
+                it[2].equals("applicationName: \"" + microservicesApp.appName + ":" + microservicesApp.versionName +"\"")
+            }
+    }
+    
+    def "get.byNameWebApp"() {
+        def args = "fod app get " + webApp.appName
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>2
+                it[1].startsWith("applicationId: " + webApp.get("applicationId"))
+            }
+    }
+    
+    def "get.byNameMobileApp"() {
+        def args = "fod app get " + mobileApp.appName
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>2
+                it[1].startsWith("applicationId: " + mobileApp.get("applicationId"))
+            }
+    }
+    
+    def "get.byNameMicroservicesApp"() {
+        def args = "fod app get " + microservicesApp.appName
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>2
+                it[1].startsWith("applicationId: " + microservicesApp.get("applicationId"))
             }
     }
     
@@ -102,12 +134,12 @@ class FoDAppSpec extends FcliBaseSpec {
     }
     
     def "verifyUpdated"() {
-        def args = "fod app list"
+        def args = "fod app get " + webApp.get("applicationId")
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.contains(webApp.appName) && it.contains("High") }
+                it[6].equals("businessCriticalityType: \"High\"")
             }
     }
     

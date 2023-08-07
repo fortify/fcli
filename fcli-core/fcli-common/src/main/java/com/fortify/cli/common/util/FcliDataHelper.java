@@ -123,8 +123,7 @@ public class FcliDataHelper {
     }
 
     private static void writeFileWithOwnerOnlyPermissions(final Path filePath, final String contents, boolean failOnError) {
-        try {
-            BufferedWriter  writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath.toString()), "UTF-8"));
+        try (var fos = new FileOutputStream(filePath.toString()); var osw = new OutputStreamWriter(fos, "UTF-8"); BufferedWriter  writer = new BufferedWriter(osw); ){
             writer.write("");
             if ( FileSystems.getDefault().supportedFileAttributeViews().contains("posix") ) {
                 Files.setPosixFilePermissions(filePath, PosixFilePermissions.fromString("rw-------"));

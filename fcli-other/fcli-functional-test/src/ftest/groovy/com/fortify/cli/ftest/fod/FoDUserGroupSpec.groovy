@@ -6,7 +6,7 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.fod._common.FoDAppRel
+import com.fortify.cli.ftest.fod._common.FoDApp
 import com.fortify.cli.ftest.fod._common.FoDUser
 import com.fortify.cli.ftest.fod._common.FoDUserGroup
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
@@ -16,11 +16,11 @@ import spock.lang.Shared
 import spock.lang.Stepwise
 import spock.lang.Unroll
 
-@Prefix("fod.app") @FcliSession(FOD) @Stepwise
+@Prefix("fod.usergroup") @FcliSession(FOD) @Stepwise
 class FoDUserGroupSpec extends FcliBaseSpec {
     @Shared @AutoCleanup FoDUser user = new FoDUser().create()
     @Shared @AutoCleanup FoDUserGroup group = new FoDUserGroup().create()
-    @Shared @AutoCleanup FoDAppRel app = new FoDAppRel().createWebApp()
+    @Shared @AutoCleanup FoDApp app = new FoDApp().createWebApp()
     
     def "list"() {
         def args = "fod user-group list"
