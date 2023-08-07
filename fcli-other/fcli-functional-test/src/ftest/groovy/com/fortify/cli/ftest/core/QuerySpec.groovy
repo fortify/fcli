@@ -20,9 +20,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==3
-                it[0].contains('Id     String value  Long value  Double value  Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000        0.7           true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[2].contains('23327  N/A           N/A         N/A           N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[2].replace(" ","").equals('23327N/AN/AN/AN/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -32,9 +32,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==15553
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[15552].contains('23327  N/A           N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[15552].replace(" ","").equals('23327N/AN/AN/AN/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -44,10 +44,10 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==15553
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[1297].contains('3888   value1        -2000                0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[15552].contains('23327  N/A           N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[1297].replace(" ","").equals('3888value1-20000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[15552].replace(" ","").equals('23327N/AN/AN/AN/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -57,10 +57,10 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==11665
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[11448].contains('23111  N/A           N/A                  1.7976931348623157E308  N/A            N/A         N/A                        N/A                         N/A                          N/A')
-                it[11664].contains('23327  N/A           N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[11448].replace(" ","").equals('23111N/AN/A1.7976931348623157E308N/AN/AN/AN/AN/AN/A')
+                it[11664].replace(" ","").equals('23327N/AN/AN/AN/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -70,9 +70,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==15553
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[15552].contains('23327  N/A           N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[15552].replace(" ","").equals('23327N/AN/AN/AN/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -82,9 +82,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==15553
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[15552].contains('23327  N/A           N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[15552].replace(" ","").equals('23327N/AN/AN/AN/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -94,9 +94,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==15553
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[15552].contains('23327  N/A           N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[15552].replace(" ","").equals('23327N/AN/AN/AN/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -106,8 +106,8 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==2
-                it[0].contains('Id  String value  Long value  Double value  Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0   value1        1000        0.7           true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
             }
 
     }
@@ -118,9 +118,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==7777
-                it[0].contains('Id    String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0     value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[7776].contains('7775  value1        N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[7776].replace(" ","").equals('7775value1N/AN/AN/AN/AN/AN/AN/AN/A')
             }
 
     }
@@ -131,9 +131,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==3889
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('5184   value1        9223372036854775807  0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[3888].contains('22031  N/A           9223372036854775807  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('5184value192233720368547758070.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[3888].replace(" ","").equals('22031N/A9223372036854775807N/AN/AN/AN/AN/AN/AN/A')
             }
 
     }
@@ -144,9 +144,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==3889
-                it[0].contains('Id     String value  Long value           Double value  Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7           true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[3888].contains('22247  N/A           N/A                  0.7           N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[3888].replace(" ","").equals('22247N/AN/A0.7N/AN/AN/AN/AN/AN/A')
             }
 
     }
@@ -157,9 +157,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==7777
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[7776].contains('23183  N/A           N/A                  N/A                     true           N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[7776].replace(" ","").equals('23183N/AN/AN/AtrueN/AN/AN/AN/AN/A')
             }
 
     }
@@ -170,9 +170,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==7777
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[7776].contains('23279  N/A           N/A                  N/A                     N/A            2000-01-01  N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[7776].replace(" ","").equals('23279N/AN/AN/AN/A2000-01-01N/AN/AN/AN/A')
             }
 
     }
@@ -183,9 +183,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==7777
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[7776].contains('23311  N/A           N/A                  N/A                     N/A            N/A         2000-01-01T00:00:00+00:00  N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[7776].replace(" ","").equals('23311N/AN/AN/AN/AN/A2000-01-01T00:00:00+00:00N/AN/AN/A')
             }
 
     }
@@ -197,9 +197,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==7778
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[7777].contains('15551  value2        N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[7777].replace(" ","").equals('15551value2N/AN/AN/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -209,9 +209,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==7129
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1081].contains('5400   value1        9223372036854775807  -0.7                    true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[7128].contains('22247  N/A           N/A                  0.7                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1081].replace(" ","").equals('5400value19223372036854775807-0.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[7128].replace(" ","").equals('22247N/AN/A0.7N/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -221,9 +221,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==12961
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[49].contains('96     value1        1000                 0.7                     false          2030-12-31  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[12960].contains('23279  N/A           N/A                  N/A                     N/A            2000-01-01  N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[49].replace(" ","").equals('96value110000.7false2030-12-312000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[12960].replace(" ","").equals('23279N/AN/AN/AN/A2000-01-01N/AN/AN/AN/A')
             }
     }
     
@@ -233,9 +233,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==10369
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1737].contains('5192   value1        9223372036854775807  0.7                     true           2000-01-01  2030-12-31T23:59:59+02:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[10368].contains('23311  N/A           N/A                  N/A                     N/A            N/A         2000-01-01T00:00:00+00:00  N/A                         N/A                          N/A ')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1737].replace(" ","").equals('5192value192233720368547758070.7true2000-01-012030-12-31T23:59:59+02:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[10368].replace(" ","").equals('23311N/AN/AN/AN/AN/A2000-01-01T00:00:00+00:00N/AN/AN/A')
             }
     }
     
@@ -245,9 +245,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==8888
-                it[0].contains('Id    String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('1112  value1        1000                 N/A                     true           2030-12-31  2030-12-31T23:59:59+02:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[8887].contains('9998  value2        -1000                1.7976931348623157E308  true           N/A         2030-12-31T23:59:59+02:00  N/A                         N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('1112value11000N/Atrue2030-12-312030-12-31T23:59:59+02:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[8887].replace(" ","").equals('9998value2-10001.7976931348623157E308trueN/A2030-12-31T23:59:59+02:00N/AN/AnestedArrayValue3,nestedArrayValue4')
             }
     }
     
@@ -257,9 +257,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==3889
-                it[0].contains('Id     String value  Long value  Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('2592   value1        2000        0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[3888].contains('19439  N/A           2000        N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('2592value120000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[3888].replace(" ","").equals('19439N/A2000N/AN/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -269,9 +269,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==7777
-                it[0].contains('Id     String value  Long value           Double value  Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7           true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[7776].contains('22679  N/A           N/A                  1.4           N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[7776].replace(" ","").equals('22679N/AN/A1.4N/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -281,9 +281,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==7777
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('8      value1        1000                 0.7                     true           2000-01-01  2030-12-31T23:59:59+02:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[7776].contains('23319  N/A           N/A                  N/A                     N/A            N/A         2030-12-31T23:59:59+02:00  N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('8value110000.7true2000-01-012030-12-31T23:59:59+02:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[7776].replace(" ","").equals('23319N/AN/AN/AN/AN/A2030-12-31T23:59:59+02:00N/AN/AN/A')
             }
     }
     
@@ -293,9 +293,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==8890
-                it[0].contains('Id    String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object  Nested object array  Nested string aray')
-                it[1].contains('1111  value1        1000                 N/A                     true           2030-12-31  2000-01-01T00:00:00+00:00  N/A            N/A                  N/A')
-                it[8889].contains('9999  value2        -1000                1.7976931348623157E308  true           N/A         2030-12-31T23:59:59+02:00  N/A            N/A                  N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('1111value11000N/Atrue2030-12-312000-01-01T00:00:00+00:00N/AN/AN/A')
+                it[8889].replace(" ","").equals('9999value2-10001.7976931348623157E308trueN/A2030-12-31T23:59:59+02:00N/AN/AN/A')
             }
     }
     
@@ -305,9 +305,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==11665
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[11664].contains('22031  N/A           9223372036854775807  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[11664].replace(" ","").equals('22031N/A9223372036854775807N/AN/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -317,9 +317,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==15553
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[15552].contains('23111  N/A           N/A                  1.7976931348623157E308  N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[15552].replace(" ","").equals('23111N/AN/A1.7976931348623157E308N/AN/AN/AN/AN/AN/A')
             }
     }
     
@@ -329,9 +329,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==15553
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[15552].contains('23319  N/A           N/A                  N/A                     N/A            N/A         2030-12-31T23:59:59+02:00  N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[15552].replace(" ","").equals('23319N/AN/AN/AN/AN/A2030-12-31T23:59:59+02:00N/AN/AN/A')
             }
     }
     
@@ -342,9 +342,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==7777
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('8      value1        1000                 0.7                     true           2000-01-01  2030-12-31T23:59:59+02:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4 ')
-                it[7776].contains('23319  N/A           N/A                  N/A                     N/A            N/A         2030-12-31T23:59:59+02:00  N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('8value110000.7true2000-01-012030-12-31T23:59:59+02:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[7776].replace(" ","").equals('23319N/AN/AN/AN/AN/A2030-12-31T23:59:59+02:00N/AN/AN/A')
             }
     }
     /*
@@ -366,9 +366,9 @@ class QuerySpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==15553
-                it[0].contains('Id     String value  Long value           Double value            Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0      value1        1000                 0.7                     true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
-                it[15552].contains('15551  value2        N/A                  N/A                     N/A            N/A         N/A                        N/A                         N/A                          N/A')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
+                it[15552].replace(" ","").equals('15551value2N/AN/AN/AN/AN/AN/AN/AN/A')
             }
     }
     
