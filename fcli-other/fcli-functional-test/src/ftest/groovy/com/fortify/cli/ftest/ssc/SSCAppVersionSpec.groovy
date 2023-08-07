@@ -71,6 +71,18 @@ class SSCAppVersionSpec extends FcliBaseSpec {
             }
     }
     
+    def "updateNameWithMatchingAppNameAndCustomDelimiter"() {
+        def args = "ssc appversion update " + version.get("id") + " --name " + version.appName + "|updatedVersionName3 --description updated2 --delim |"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()==2
+                it[1].contains("updatedVersionName3");
+                !it[1].contains("|")
+            }
+    }
+    
     def "updateNameWithNonMatchingAppName"() {
         def args = "ssc appversion update " + version.get("id") + " --name nonExistingAppversion123:updatedVersionName3 --description updated3"
         when:
@@ -78,7 +90,7 @@ class SSCAppVersionSpec extends FcliBaseSpec {
         then:
             def e = thrown(UnexpectedFcliResultException)
             verifyAll(e.result.stderr) {
-                it[0].equals("java.lang.IllegalArgumentException: If the --name parameter is provided in <application>:<version> format the application must match the name of the application referenced in the appVersionNameOrId parameter")
+                it[0].equals("java.lang.IllegalArgumentException: If the --name parameter is provided in <application><delim><version> format the application must match the name of the application referenced in the appVersionNameOrId parameter")
             }
     }
 }
