@@ -37,11 +37,11 @@ public final class LanguageDescriptor {
         return locale.getLanguage();
     }
     
-    public final String getLanguageLocalName() {
+    public final String getLocalName() {
         return locale.getDisplayLanguage(locale);
     }
     
-    public final String getLanguageName() {
+    public final String getName() {
         return locale.getDisplayLanguage(new Locale("en"));
     }
     

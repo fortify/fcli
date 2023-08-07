@@ -30,7 +30,7 @@ public class LanguageListCommand extends AbstractOutputCommand implements IJsonN
     
     @Override
     public JsonNode getJsonNode() {
-        return LanguageHelper.getSupportLanguageDescriptorsStream()
+        return LanguageHelper.getSupportedLanguageDescriptorsStream()
             .map(LanguageDescriptor::asObjectNode)
             .collect(JsonHelper.arrayNodeCollector());
     }

@@ -31,7 +31,7 @@ public final class LanguageHelper {
     private static final String[] supportedLanguages = {"en", "nl"};
     private LanguageHelper() {}
     
-    public static final Stream<LanguageDescriptor> getSupportLanguageDescriptorsStream() {
+    public static final Stream<LanguageDescriptor> getSupportedLanguageDescriptorsStream() {
         return Stream.of(supportedLanguages)
             .map(LanguageDescriptor::new);
     }
