@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230807.124405-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230807.130622-dev_develop" %}
 
 
 <div id="header">
@@ -56,12 +56,12 @@ fcli_version:
                            <strong>-w</strong>=<em>any-match|all-match</em>] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                            [<strong>--any-scan-state</strong>=<em>&lt;scanStates&gt;</em>[,<em>&lt;scanStates&gt;</em>&#8230;&#8203;]
                            [<strong>--any-scan-state</strong>=<em>&lt;scanStates&gt;</em>[,<em>&lt;scanStates&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
-                           | <strong>--any-upload-state</strong>=<em>&lt;uploadStates&gt;</em>[,
-                           <em>&lt;uploadStates&gt;</em>&#8230;&#8203;] [<strong>--any-upload-state</strong>=<em>&lt;uploadStates&gt;</em>
-                           [,<em>&lt;uploadStates&gt;</em>&#8230;&#8203;]]&#8230;&#8203; |
-                           <strong>--any-ssc-state</strong>=<em>&lt;sscStates&gt;</em>[,<em>&lt;sscStates&gt;</em>&#8230;&#8203;]
-                           [<strong>--any-ssc-state</strong>=<em>&lt;sscStates&gt;</em>[,<em>&lt;sscStates&gt;</em>&#8230;&#8203;]]&#8230;&#8203;]
-                           <em>scan-job-tokens</em>&#8230;&#8203;</p>
+                           | <strong>--any-publish-state</strong>=<em>&lt;publishStates&gt;</em>[,
+                           <em>&lt;publishStates&gt;</em>&#8230;&#8203;]
+                           [<strong>--any-publish-state</strong>=<em>&lt;publishStates&gt;</em>[,
+                           <em>&lt;publishStates&gt;</em>&#8230;&#8203;]]&#8230;&#8203; | <strong>--any-ssc-state</strong>=<em>&lt;sscStates&gt;</em>
+                           [,<em>&lt;sscStates&gt;</em>&#8230;&#8203;] [<strong>--any-ssc-state</strong>=<em>&lt;sscStates&gt;</em>[,
+                           <em>&lt;sscStates&gt;</em>&#8230;&#8203;]]&#8230;&#8203;] <em>scan-job-tokens</em>&#8230;&#8203;</p>
 </div>
 </div>
 </div>
@@ -69,10 +69,10 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Although this command offers a lot of options to cover many different use cases, for ScanCentral SAST 22.1+ you can simply pass a scan id (possibly stored using --store on the 'scan start' command) to wait until the scan has been fully processed on SSC. If any error state or unknown state is detected, an exception will be thrown. For older ScanCentral SAST versions, or if the given scan isn&#8217;t being uploaded to SSC, either --any-scan-state or --any-upload-state must be specified, as the default behavior is based on --any-ssc-state, which is not supported on older ScanCentral SAST versions or if the scan is not being uploaded to SSC.</p>
+<p>Although this command offers a lot of options to cover many different use cases, for ScanCentral SAST 22.1+ you can simply pass a scan id (possibly stored using --store on the 'scan start' command) to wait until the scan has been fully processed on SSC. If any error state or unknown state is detected, an exception will be thrown. For older ScanCentral SAST versions, or if the given scan isn&#8217;t being published to SSC, either --any-scan-state or --any-publish-state must be specified, as the default behavior is based on --any-ssc-state, which is not supported on older ScanCentral SAST versions or if the scan is not being published to SSC.</p>
 </div>
 <div class="paragraph">
-<p>The following scan/upload states are currently known by fcli:
+<p>The following scan/publish states are currently known by fcli:
 See fcli help output</p>
 </div>
 <div class="paragraph">
@@ -86,6 +86,10 @@ See fcli help output</p>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--any-publish-state</strong>=<em>&lt;publishStates&gt;</em>[,<em>&lt;publishStates&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>One or more scan publishing states against which to match the given scans.</p>
+</dd>
 <dt class="hdlist1"><strong>--any-scan-state</strong>=<em>&lt;scanStates&gt;</em>[,<em>&lt;scanStates&gt;</em>&#8230;&#8203;]</dt>
 <dd>
 <p>One or more scan states against which to match the given scans.</p>
@@ -93,10 +97,6 @@ See fcli help output</p>
 <dt class="hdlist1"><strong>--any-ssc-state</strong>=<em>&lt;sscStates&gt;</em>[,<em>&lt;sscStates&gt;</em>&#8230;&#8203;]</dt>
 <dd>
 <p>One or more SSC artifact processing states against which to match the given scans.</p>
-</dd>
-<dt class="hdlist1"><strong>--any-upload-state</strong>=<em>&lt;uploadStates&gt;</em>[,<em>&lt;uploadStates&gt;</em>&#8230;&#8203;]</dt>
-<dd>
-<p>One or more scan upload states against which to match the given scans.</p>
 </dd>
 <dt class="hdlist1"><strong>-i</strong>, <strong>--interval</strong>=<em>&lt;intervalPeriod&gt;</em></dt>
 <dd>
@@ -214,7 +214,7 @@ See fcli help output</p>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-07 12:46:14 UTC
+Last updated 2023-08-07 13:08:12 UTC
 </div>
 </div>
 </body>

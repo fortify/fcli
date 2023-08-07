@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230807.124405-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230807.130622-dev_develop" %}
 
 
 <div id="header">
@@ -44,8 +44,8 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-sast scan start</strong> [<strong>--[no-]upload</strong>] [<strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
-                        [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--notify</strong>=<em>&lt;email&gt;</em>]
+<p><strong>fcli sc-sast scan start</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--notify</strong>=<em>&lt;email&gt;</em>]
+                        [<strong>--publish-to</strong>=<em>&lt;appVersionNameOrId&gt;</em>]
                         [<strong>--ssc-ci-token</strong>=<em>&lt;ciToken&gt;</em>] [[<strong>-h</strong>]
                         [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
@@ -66,21 +66,17 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
-<dd>
-<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
-</dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accept "application:version" as an argument or parameter.</p>
 </dd>
-<dt class="hdlist1"><strong>--[no-]upload</strong></dt>
-<dd>
-<p>By default, scan results will be automatically uploaded to SSC, unless the --no-upload option is provided.</p>
-</dd>
 <dt class="hdlist1"><strong>--notify</strong>=<em>&lt;email&gt;</em></dt>
 <dd>
 <p>Email address to which to send a scan completion notification.</p>
+</dd>
+<dt class="hdlist1"><strong>--publish-to</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dd>
+<p>Publish scan results to the given SSC application version once the scan has completed.</p>
 </dd>
 <dt class="hdlist1"><strong>--ssc-ci-token</strong>=<em>&lt;ciToken&gt;</em></dt>
 <dd>
@@ -196,7 +192,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-07 12:46:14 UTC
+Last updated 2023-08-07 13:08:12 UTC
 </div>
 </div>
 </body>
