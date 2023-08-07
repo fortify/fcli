@@ -117,9 +117,8 @@ public final class FcliVariableHelper {
         checkVariableName(variableName);
         VariableDescriptor descriptor = createVariableDescriptor(variableName, defaultPropertyName, singular, encrypt);
         saveVariableDescriptor(descriptor);
-        try (var fos = new FileOutputStream(getVariableContentsAbsolutePath(variableName).toString()); var osw = new OutputStreamWriter(fos, "UTF-8"); PrintWriter  pw = new PrintWriter(osw); ){
-            return encrypt ? new EncryptionHelper.EncryptWriter(pw) : pw;
-        }
+        PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(getVariableContentsAbsolutePath(variableName).toString()), StandardCharsets.UTF_8)) ;
+        return encrypt ? new EncryptionHelper.EncryptWriter(pw) : pw;
     }
     
     public static final String[] resolveVariables(String[] args) {
