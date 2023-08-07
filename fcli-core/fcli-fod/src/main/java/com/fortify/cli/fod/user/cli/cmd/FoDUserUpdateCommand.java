@@ -76,7 +76,7 @@ public class FoDUserUpdateCommand extends AbstractFoDJsonNodeOutputCommand imple
         }
 
         FoDUserUpdateRequest userUpdateRequest = FoDUserUpdateRequest.builder()
-                .email(StringUtils.isNotBlank(email) ? email : userDescriptor.getUserName())
+                .email(StringUtils.isNotBlank(email) ? email : userDescriptor.getEmail())
                 .firstName(StringUtils.isNotBlank(firstName) ? firstName : userDescriptor.getFirstName())
                 .lastName(StringUtils.isNotBlank(lastName) ? lastName : userDescriptor.getLastName())
                 .phoneNumber(StringUtils.isNotBlank(phoneNumber) ? phoneNumber : userDescriptor.getPhoneNumber())
