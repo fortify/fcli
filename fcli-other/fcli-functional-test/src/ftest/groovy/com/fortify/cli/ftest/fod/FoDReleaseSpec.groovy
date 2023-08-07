@@ -34,7 +34,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
     }
     
     def "create"() {
-        def args = "fod release create " + app.appName + ":" + app.microserviceName + ":testrel --sdlc-status=Development"
+        def args = "fod release create " + app.appName + ":" + app.microserviceName + ":testrel --sdlc-status=Development --store testrel"
         when:
             def result = Fcli.run(args)
         then:
@@ -51,18 +51,18 @@ class FoDReleaseSpec extends FcliBaseSpec {
                 it.any { it.contains(app.versionName) }
             }
     }
-    /* currently does not work
+    
     def "get.byId"() {
-        def args = "fod release get ::releases::get(0).releaseId"
+        def args = "fod release get ::testrel::releaseId"
         when:
-            if(!appsExist) {return;}
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[1].startsWith("releaseId: ")
+                it[2].equals("releaseName: \"testrel\"")
+                it[9].equals("applicationName: \"" + app.appName + ":" + app.versionName + "\"")
             }
-    }*/
+    }
     
     def "get.byName"() {
         def args = "fod release get " + app.appName + ":" + app.microserviceName + ":testrel"
@@ -71,7 +71,8 @@ class FoDReleaseSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[1].startsWith("releaseId: ")
+                it[2].equals("releaseName: \"testrel\"")
+                it[9].equals("applicationName: \"" + app.appName + ":" + app.versionName + "\"")
             }
     }
     
@@ -87,12 +88,12 @@ class FoDReleaseSpec extends FcliBaseSpec {
     }
     
     def "verifyUpdated"() {
-        def args = "fod release list"
+        def args = "fod release get ::testrel::releaseId"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.contains(app.versionName) && it.contains("QA") }
+                it.any {it.equals("sdlcStatusType: \"QA\"") }
             }
     }
     
