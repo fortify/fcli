@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.common.variable;
 
-import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -117,8 +116,8 @@ public final class FcliVariableHelper {
         checkVariableName(variableName);
         VariableDescriptor descriptor = createVariableDescriptor(variableName, defaultPropertyName, singular, encrypt);
         saveVariableDescriptor(descriptor);
-        PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(getVariableContentsAbsolutePath(variableName).toString()), StandardCharsets.UTF_8)) ;
-        return encrypt ? new EncryptionHelper.EncryptWriter(pw) : pw;
+        VariableContentsWriter vcw = new VariableContentsWriter(getVariableContentsAbsolutePath(variableName).toString());
+        return encrypt ? new EncryptionHelper.EncryptWriter(vcw) : vcw;
     }
     
     public static final String[] resolveVariables(String[] args) {
