@@ -173,7 +173,7 @@ public enum SSCAppVersionEmbedderSupplier implements ISSCEntityEmbedderSupplier 
     private static final class SSCAppVersionAttributesByGuidEmbedder extends AbstractSSCAppVersionAttributeEmbedder {
         @Override
         protected void update(ObjectNode record, JsonNode attrs) {
-            record.set("attrsByGuid", getAttributeHelper().getAttributesBy(attrs, "guid", SSCAppVersionAttributeHelper::getValuesForAttribute));
+            record.set("attrsByGuid", getAttributeHelper().getAttributesBy(attrs, "guid", Function.identity()));
         }
     }
     
@@ -187,7 +187,7 @@ public enum SSCAppVersionEmbedderSupplier implements ISSCEntityEmbedderSupplier 
     private static final class SSCAppVersionAttributeValuesByGuidEmbedder extends AbstractSSCAppVersionAttributeEmbedder {
         @Override
         protected void update(ObjectNode record, JsonNode attrs) {
-            record.set("attrValuesByGuid", getAttributeHelper().getAttributesBy(attrs, "guid", Function.identity()));
+            record.set("attrValuesByGuid", getAttributeHelper().getAttributesBy(attrs, "guid", SSCAppVersionAttributeHelper::getValuesForAttribute));
         }
     }
     
