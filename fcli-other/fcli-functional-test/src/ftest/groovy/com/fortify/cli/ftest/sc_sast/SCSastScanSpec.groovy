@@ -66,7 +66,7 @@ class SCSastScanSpec extends FcliBaseSpec {
     
 
     def "startScan"() {
-        def args = "sc-sast scan start --no-upload -v ::highestSensor::get(0).scaVersion -p=$packageZip --store upload"
+        def args = "sc-sast scan start -v ::highestSensor::get(0).scaVersion -p=$packageZip --store upload"
         when:
             def result = Fcli.run(args) 
         then:

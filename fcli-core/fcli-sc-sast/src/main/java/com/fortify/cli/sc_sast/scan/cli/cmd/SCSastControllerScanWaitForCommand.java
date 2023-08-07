@@ -39,8 +39,8 @@ public class SCSastControllerScanWaitForCommand extends AbstractWaitForCommand {
     private static final class WaitOptions {
         @Option(names={"--any-scan-state"}, required=true, split=",", completionCandidates = SCSastControllerScanJobStateIterable.class)
         private Set<String> scanStates;
-        @Option(names={"--any-upload-state"}, required=true, split=",", completionCandidates = SCSastControllerScanJobStateIterable.class)
-        private Set<String> uploadStates;
+        @Option(names={"--any-publish-state"}, required=true, split=",", completionCandidates = SCSastControllerScanJobStateIterable.class)
+        private Set<String> publishStates;
         @Option(names={"--any-ssc-state"}, required=true, split=",", completionCandidates = SCSastControllerScanJobArtifactStateIterable.class)
         private Set<String> sscStates;
     }
@@ -57,13 +57,13 @@ public class SCSastControllerScanWaitForCommand extends AbstractWaitForCommand {
                 .knownStates(SCSastControllerScanJobArtifactState.getKnownStateNames())
                 .failureStates(SCSastControllerScanJobArtifactState.getFailureStateNames())
                 .matchStates(sscStates);
-        } else if ( waitOptions.uploadStates!=null && !waitOptions.uploadStates.isEmpty() ) {
+        } else if ( waitOptions.publishStates!=null && !waitOptions.publishStates.isEmpty() ) {
             return builder
                 .recordsSupplier(scanJobsResolver::getScanJobDescriptorJsonNodes)
-                .currentStateProperty("sscUploadState")
+                .currentStateProperty("publishState")
                 .knownStates(SCSastControllerScanJobState.getKnownStateNames())
                 .failureStates(SCSastControllerScanJobState.getFailureStateNames())
-                .matchStates(waitOptions.uploadStates);
+                .matchStates(waitOptions.publishStates);
         } else if ( waitOptions.scanStates!=null && !waitOptions.scanStates.isEmpty() ) {
             return builder
                     .recordsSupplier(scanJobsResolver::getScanJobDescriptorJsonNodes)

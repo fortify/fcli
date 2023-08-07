@@ -31,6 +31,12 @@ public class SCSastControllerScanJobHelper {
         @Getter private final String endpoint;
     }
     
+    public static final ObjectNode renameFields(ObjectNode node) {
+        node = (ObjectNode)new RenameFieldsTransformer("state", "scanState").transform(node);
+        node = (ObjectNode)new RenameFieldsTransformer("sscUploadState", "publishState").transform(node);
+        return node;
+    }
+    
     public static final SCSastControllerScanJobDescriptor getScanJobDescriptor(UnirestInstance unirest, String scanJobToken, StatusEndpointVersion minEndpointVersion) {
         SCSastControllerScanJobDescriptor descriptor = null;
         RuntimeException lastException = null;
@@ -58,9 +64,9 @@ public class SCSastControllerScanJobHelper {
     }
 
     private static SCSastControllerScanJobDescriptor getScanJobDescriptor(ObjectNode node) {
-        node = (ObjectNode)new RenameFieldsTransformer("state", "scanState").transform(node);
+        node = renameFields(node);
         if ( node.get("sscArtifactState").isNull() ) {
-            node.put("sscArtifactState", node.get("sscUploadState").asText());
+            node.put("sscArtifactState", node.get("publishState").asText());
         }
         return JsonHelper.treeToValue(node, SCSastControllerScanJobDescriptor.class);
     }

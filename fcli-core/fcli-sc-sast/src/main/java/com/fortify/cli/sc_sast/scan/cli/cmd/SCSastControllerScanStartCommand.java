@@ -28,7 +28,7 @@ import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanStartOptionsArgGroup;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.AbstractSSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 
 import kong.unirest.MultipartBody;
@@ -46,8 +46,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
     private String userName = System.getProperty("user.name", "unknown"); // TODO Do we want to give an option to override this?
     @Option(names = "--notify") private String email; // TODO Add email address validation
-    @Mixin private SSCAppVersionResolverMixin.OptionalOption sscAppVersionResolver;
-    @Option(names = "--no-upload", negatable = true) private boolean upload = true;
+    @Mixin private PublishToAppVersionResolverMixin sscAppVersionResolver;
     @Option(names = "--ssc-ci-token") private String ciToken;
     
     // TODO Add options for specifying (custom) rules file(s), filter file(s) and project template
@@ -96,7 +95,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
     
     private String getUploadToken() {
         String uploadToken = null;
-        if ( upload ) {
+        if ( sscAppVersionResolver.hasValue() ) {
         	if ( !StringUtils.isBlank(this.ciToken) ) {
         		// Convert token to application token, in case it was provided as a REST token
         		uploadToken = SSCTokenConverter.toApplicationToken(this.ciToken);
@@ -110,7 +109,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
                 char[] ciTokenFromSession = getProductHelper().getSessionDescriptor().getPredefinedSscToken();
                 uploadToken = ciTokenFromSession==null ? null : SSCTokenConverter.toApplicationToken(String.valueOf(ciTokenFromSession));
             }
-            if ( StringUtils.isBlank(uploadToken) ) { throw new IllegalArgumentException("--ssc-ci-token is required unless --no-upload is specified or if --ssc-ci-token was passed to the 'sc-sast session login' command"); }
+            if ( StringUtils.isBlank(uploadToken) ) { throw new IllegalArgumentException("--ssc-ci-token is required if --publish-to is specified and --ssc-ci-token was not passed to the 'sc-sast session login' command"); }
         }
         return uploadToken;
     }
@@ -150,5 +149,11 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
             }
             zout.closeEntry();
         }
+    }
+    
+    private static final class PublishToAppVersionResolverMixin extends AbstractSSCAppVersionResolverMixin {
+        @Option(names = {"--publish-to"}, required = false)
+        @Getter private String appVersionNameOrId;
+        public final boolean hasValue() { return StringUtils.isNotBlank(appVersionNameOrId); }
     }
 }

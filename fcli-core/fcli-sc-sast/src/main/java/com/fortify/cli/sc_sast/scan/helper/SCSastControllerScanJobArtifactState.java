@@ -20,7 +20,7 @@ import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
 
 /**
  * This is a copy of {@link SSCArtifactStatus}, but adds states from 
- * {@link SCSastControllerScanJobState} so we can copy scanState/sscUploadState
+ * {@link SCSastControllerScanJobState} so we can copy scanState/publishState
  * to sscArtifactState where needed.
  */
 public enum SCSastControllerScanJobArtifactState {

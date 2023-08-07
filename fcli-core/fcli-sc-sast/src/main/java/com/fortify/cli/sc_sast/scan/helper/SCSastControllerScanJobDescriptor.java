@@ -13,7 +13,6 @@
 package com.fortify.cli.sc_sast.scan.helper;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
@@ -26,9 +25,9 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SCSastControllerScanJobDescriptor extends JsonNodeHolder {
     private String jobToken;
-    @JsonProperty("state") private String scanState;
+    private String scanState; // Original property name: state, renamed in SCSastControllerScanJobHelper
     private boolean hasFiles;
-    private String sscUploadState;
+    private String publishState; // Original property name: sscUploadState, renamed in SCSastControllerScanJobHelper
     private String scaProgress;
     private String sscArtifactState;
     private int endpointVersion;
