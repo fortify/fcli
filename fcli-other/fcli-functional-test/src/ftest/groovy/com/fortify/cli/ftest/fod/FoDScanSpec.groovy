@@ -20,8 +20,8 @@ import spock.lang.Unroll
 @Prefix("fod.scan") @FcliSession(FOD) @Stepwise
 class FoDScanSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/shared/EightBall-22.1.0.fpr") String sastResults
-    @Shared @TestResource("runtime/shared/iwa_net_scandata.fpr") String dastResults
-    @Shared @TestResource("runtime/shared/iwa_net_cyclonedx.json") String ossResults
+    //@Shared @TestResource("runtime/shared/iwa_net_scandata.fpr") String dastResults
+    //@Shared @TestResource("runtime/shared/iwa_net_cyclonedx.json") String ossResults
     @Shared @AutoCleanup FoDApp app = new FoDApp().createWebApp()
     
     def "list"() {
