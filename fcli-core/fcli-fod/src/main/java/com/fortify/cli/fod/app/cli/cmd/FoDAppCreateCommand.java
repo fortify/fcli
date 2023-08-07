@@ -34,7 +34,6 @@ import com.fortify.cli.fod.app.cli.mixin.FoDMicroserviceAndReleaseNameResolverMi
 import com.fortify.cli.fod.app.cli.mixin.FoDSdlcStatusTypeOptions;
 import com.fortify.cli.fod.app.helper.FoDAppCreateRequest;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
-import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
@@ -84,7 +83,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
         var microserviceName = releaseNameDescriptor.getMicroserviceName();
         validateMicroserviceName(microserviceName);
 
-        FoDUserDescriptor userDescriptor = FoDUserHelper.getUserDescriptor(unirest, owner, true);
+        var ownerId = FoDUserHelper.getUserDescriptor(unirest, owner, true).getUserId();
         List<String> microservices = StringUtils.isBlank(microserviceName) 
                 ? Collections.emptyList() : new ArrayList<>(Arrays.asList(microserviceName));
         FoDAppCreateRequest appCreateRequest = FoDAppCreateRequest.builder()
@@ -95,7 +94,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
                 .releaseName(releaseNameDescriptor.getReleaseName())
                 .releaseDescription(releaseDescription)
                 .sdlcStatusType(String.valueOf(sdlcStatus.getSdlcStatusType()))
-                .ownerId(userDescriptor.getUserId())
+                .ownerId(ownerId)
                 .applicationType(appType.getAppType().getFoDValue())
                 .hasMicroservices(appType.getAppType().isMicroservice())
                 .microservices(FoDAppHelper.getMicroservicesNode(microservices))
