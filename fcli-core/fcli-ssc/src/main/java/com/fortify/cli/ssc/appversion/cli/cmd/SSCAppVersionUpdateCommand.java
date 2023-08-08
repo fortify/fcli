@@ -97,7 +97,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     
     private final HttpRequest<?> getAppVersionUpdateRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
         ObjectNode updateData = (ObjectNode)descriptor.asJsonNode();
-        boolean hasUpdate = optionalUpdate(updateData, "name", getPlainVersionName(name, descriptor));
+        boolean hasUpdate = optionalUpdate(updateData, "name", getUnqualifiedVersionName(name, descriptor));
         hasUpdate |= optionalUpdate(updateData, "description", description);
         hasUpdate |= optionalUpdate(updateData, issueTemplateResolver.getIssueTemplateDescriptor(unirest));
         return hasUpdate 
@@ -118,7 +118,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
         return true;
     }
     
-    private String getPlainVersionName(String potentialQualifiedName, SSCAppVersionDescriptor descriptor) {
+    private String getUnqualifiedVersionName(String potentialQualifiedName, SSCAppVersionDescriptor descriptor) {
         if ( StringUtils.isBlank(potentialQualifiedName) ) { return null; }
         String delim = appVersionResolver.getDelimiterMixin().getDelimiter();
         var nameElts = potentialQualifiedName.split(delim);
@@ -129,7 +129,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
             if ( nameElts[0].equals(descriptor.getApplicationName()) ) {
                 return nameElts[1];
             } 
-            // Intentially no break to throw exception if app name doesn't match 
+            // Intentionally no break to throw exception if app name doesn't match 
         default:
             throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s:<new name>", descriptor.getApplicationName()));
         }

@@ -34,11 +34,11 @@ import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolv
 import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
-import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
+import com.fortify.cli.fod.scan.helper.FoDAssessmentType;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.mobile.FoDMobileScanHelper;
 import com.fortify.cli.fod.scan.helper.mobile.FoDStartMobileScanRequest;
 
@@ -72,9 +72,8 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
     private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
     @Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
-
-    @Mixin
-    private FoDEntitlementFrequencyTypeOptions.RequiredOption entitlementType;
+    @Mixin private FoDEntitlementFrequencyTypeMixins.OptionalOption entitlementFrequencyTypeMixin;
+    
     // no longer used - using specific MobileAssessmentTypes above
     //@Mixin
     //private FoDAssessmentTypeOptions.OptionalOption assessmentType;
@@ -150,11 +149,11 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
         }
 
         // if assessment and entitlement type are both specified, find entitlement to use
-        FoDAssessmentTypeOptions.FoDAssessmentType assessmentType = FoDAssessmentTypeOptions.FoDAssessmentType.valueOf(String.valueOf(mobileAssessmentType));
-        FoDEnums.EntitlementPreferenceType entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.fromInt(entitlementType.getEntitlementFrequencyType().getValue());
+        FoDAssessmentType assessmentType = FoDAssessmentType.valueOf(String.valueOf(mobileAssessmentType));
+        FoDEnums.EntitlementPreferenceType entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.fromInt(entitlementFrequencyTypeMixin.getEntitlementFrequencyType().getValue());
         entitlementToUse = FoDMobileScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
                 assessmentType, entitlementPreferenceType,
-                FoDScanTypeOptions.FoDScanType.Mobile);
+                FoDScanType.Mobile);
 
         if (entitlementToUse.getEntitlementId() == null || entitlementToUse.getEntitlementId() <= 0) {
             throw new IllegalStateException("Could not find a valid FoD entitlement to use.");

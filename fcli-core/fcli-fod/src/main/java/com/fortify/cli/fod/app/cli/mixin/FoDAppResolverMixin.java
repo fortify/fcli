@@ -13,6 +13,7 @@
 
 package com.fortify.cli.fod.app.cli.mixin;
 
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 
@@ -25,12 +26,16 @@ public class FoDAppResolverMixin {
     public static abstract class AbstractFoDAppResolverMixin {
         public abstract String getAppNameOrId();
 
-        public FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String... fields){
-            return FoDAppHelper.getAppDescriptor(unirest, getAppNameOrId(), true);
+        public FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String... fields) {
+            String appNameOrId = getAppNameOrId();
+            return StringUtils.isBlank(appNameOrId) 
+                    ? null 
+                    : FoDAppHelper.getAppDescriptor(unirest, appNameOrId, true);
         }
 
         public String getAppId(UnirestInstance unirest) {
-            return getAppDescriptor(unirest, "applicationId").getApplicationId().toString();
+            FoDAppDescriptor appDescriptor = getAppDescriptor(unirest, "applicationId");
+            return appDescriptor==null ? null : appDescriptor.getApplicationId();
         }
     }
 

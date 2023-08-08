@@ -19,9 +19,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.FoDStartScanResponse;
 
 import kong.unirest.GetRequest;
@@ -53,7 +53,7 @@ public class FoDDastScanHelper extends FoDScanHelper {
         }
         JsonNode node = objectMapper.createObjectNode()
                 .put("scanId", startScanResponse.getScanId())
-                .put("scanType", FoDScanTypeOptions.FoDScanType.Dynamic.name())
+                .put("scanType", FoDScanType.Dynamic.name())
                 .put("analysisStatusType", "Pending")
                 .put("applicationName", releaseDescriptor.getApplicationName())
                 .put("releaseName", releaseDescriptor.getReleaseName())

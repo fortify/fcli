@@ -25,10 +25,10 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDImportScan;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan.helper.FoDScanType;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -62,7 +62,7 @@ public class FoDSastScanImportCommand extends AbstractFoDJsonNodeOutputCommand i
         if (response != null) {
             // get latest scan as we cannot use the referenceId from import anywhere
             FoDScanDescriptor descriptor = FoDScanHelper.getLatestScanDescriptor(unirest, relId,
-                    FoDScanTypeOptions.FoDScanType.Static, true);
+                    FoDScanType.Static, true);
             return descriptor.asObjectNode()
                     .put("releaseId", relId)
                     .put("scanMethod", "FPRImport")

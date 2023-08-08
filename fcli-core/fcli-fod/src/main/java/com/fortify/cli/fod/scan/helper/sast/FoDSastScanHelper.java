@@ -24,9 +24,9 @@ import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.FoDStartScan;
 
 import kong.unirest.GetRequest;
@@ -78,7 +78,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
         }
         JsonNode node = objectMapper.createObjectNode()
                 .put("scanId", startScanResponse.getScanId())
-                .put("scanType", FoDScanTypeOptions.FoDScanType.Static.name())
+                .put("scanType", FoDScanType.Static.name())
                 .put("analysisStatusType", "Pending")
                 .put("applicationName", releaseDescriptor.getApplicationName())
                 .put("releaseName", releaseDescriptor.getReleaseName())

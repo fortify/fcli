@@ -29,8 +29,6 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
-import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
 
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
@@ -47,7 +45,7 @@ public class FoDScanHelper {
     }
 
     public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId,
-                                                                                   Integer entitlementId, FoDScanTypeOptions.FoDScanType scanType) {
+                                                                                   Integer entitlementId, FoDScanType scanType) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
         FoDReleaseAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDReleaseHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
@@ -74,9 +72,9 @@ public class FoDScanHelper {
     }
 
     public static final FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId,
-                                                                        FoDAssessmentTypeOptions.FoDAssessmentType assessmentType,
+                                                                        FoDAssessmentType assessmentType,
                                                                         FoDEnums.EntitlementPreferenceType entitlementType,
-                                                                        FoDScanTypeOptions.FoDScanType scanType) {
+                                                                        FoDScanType scanType) {
         FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
         FoDReleaseAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDReleaseHelper.getAppRelAssessmentTypes(unirest,
                 relId, scanType, true);
@@ -109,7 +107,7 @@ public class FoDScanHelper {
     }
 
     // TODO Unused method
-    private final static Integer unitsRequired(FoDAssessmentTypeOptions.FoDAssessmentType assessmentType,
+    private final static Integer unitsRequired(FoDAssessmentType assessmentType,
                                                FoDEnums.EntitlementPreferenceType entitlementType) {
         if (entitlementType == FoDEnums.EntitlementPreferenceType.SingleScanOnly ||
                 entitlementType == FoDEnums.EntitlementPreferenceType.SingleScanFirstThenSubscription) {
@@ -139,7 +137,7 @@ public class FoDScanHelper {
     }
 
     public static final FoDScanDescriptor getLatestScanDescriptor(UnirestInstance unirest, String relId,
-                                                                  FoDScanTypeOptions.FoDScanType scanType,
+                                                                  FoDScanType scanType,
                                                                   boolean latestById) {
         String queryField = (latestById ? "scanId" : "startedDateTime");
         Optional<JsonNode> latestScan = JsonHelper.stream(

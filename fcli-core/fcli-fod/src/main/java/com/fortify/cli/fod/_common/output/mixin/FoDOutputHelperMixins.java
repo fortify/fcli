@@ -21,20 +21,6 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
  * @author rsenden
  */
 public class FoDOutputHelperMixins {
-
-     public static class ListSast extends OutputHelperMixins.TableWithQuery {
-        public static final String CMD_NAME = "list-sast";
-    }
-     public static class ListDast extends OutputHelperMixins.TableWithQuery {
-        public static final String CMD_NAME = "list-dast";
-    }
-     public static class ListOss extends OutputHelperMixins.TableWithQuery {
-        public static final String CMD_NAME = "list-oss";
-    }
-     public static class ListMobile extends OutputHelperMixins.TableWithQuery {
-        public static final String CMD_NAME = "list-mobile";
-    }
-
      public static class SetupSast extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "setup-sast";
     }
