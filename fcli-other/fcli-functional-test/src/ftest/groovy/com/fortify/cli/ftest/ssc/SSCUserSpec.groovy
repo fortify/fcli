@@ -40,38 +40,74 @@ class SSCUserSpec extends FcliBaseSpec {
             }
     }
     
-    def "get.byId"() {
-        def args = "ssc user get ::users::get(0).id"
+    def "create"() {
+        Fcli.run("ssc role list --store roles")
+        def args = "ssc user create --username fcliTemporaryTestuser --password P@ssW._ord123 -pne --firstname fName --lastname lName --email mail@mail.mail --roles ::roles::get(0).id --store user"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].startsWith("isLdap: ")
+                it[2].equals("userName: \"fclitemporarytestuser\"")
+                it[3].equals("firstName: \"fName\"")
+                it[4].equals("lastName: \"lName\"")
+                it[5].equals("email: \"mail@mail.mail\"")
+                !it[11].equals("roles: null")
+            }
+    }
+    
+    def "get.byId"() {
+        def args = "ssc user get ::user::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[3].equals("entityName: \"fclitemporarytestuser\"")
             }
     }
     
     def "get.byName"() {
-        def args = "ssc user get ::users::get(0).entityName"
+        def args = "ssc user get ::user::userName"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].startsWith("isLdap: ")
+                it[3].equals("entityName: \"fclitemporarytestuser\"")
             }
     }
     
     def "get.byMail"() {
-        def args = "ssc user get ::users::get(0).email"
+        def args = "ssc user get ::user::email"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].startsWith("isLdap: ")
+                it[3].equals("entityName: \"fclitemporarytestuser\"")
             }
     }
     
-    //TODO add tests for delete? what about create?
+    def "delete"() {
+        def args = "ssc user delete ::user::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()==2
+                it[1].contains("DELETED")
+            }
+    }
+    
+    def "verifyDeleted"() {
+        def args = "ssc user list --store users"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                !it.any { it.contains("fclitemporarytestuser") }
+            }
+    }
 }
