@@ -13,7 +13,7 @@ import spock.lang.Shared
 
 @Prefix("ssc.app") @FcliSession(SSC)
 class SSCAppSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
+    @Shared SSCAppVersion version = new SSCAppVersion().create()
     
     def "list"() {
         def args = "ssc app list"
@@ -42,6 +42,26 @@ class SSCAppSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 it.any { it =~ version.appName }
+            }
+    }
+    
+    def "update"() {
+        def args = "ssc app update "+version.appName + " --description updateddescription"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                it.any { it =~ "updateddescription" }
+            }
+    }
+    
+    def "delete"() {
+        def args = "ssc app delete "+version.appName +" -y"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                it.any { it =~ "DELETED" }
             }
     }
     
