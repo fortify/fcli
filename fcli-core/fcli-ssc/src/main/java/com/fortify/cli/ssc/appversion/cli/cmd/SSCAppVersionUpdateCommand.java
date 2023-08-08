@@ -121,18 +121,14 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     
     private String getUnqualifiedVersionName(String potentialQualifiedName, SSCAppVersionDescriptor descriptor) {
         if ( StringUtils.isBlank(potentialQualifiedName) ) { return null; }
-        String delim = appVersionResolver.getDelimiterMixin().getDelimiter();
-        var nameElts = potentialQualifiedName.split(Pattern.quote(delim));
-        switch ( nameElts.length ) {
-        case 0: return null; // Shouldn't happen because of blank check above...
-        case 1: return nameElts[0];
-        case 2: 
-            if ( nameElts[0].equals(descriptor.getApplicationName()) ) {
-                return nameElts[1];
-            } 
-            // Intentionally no break to throw exception if app name doesn't match 
-        default:
-            throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s%s<new name>, current: %s", descriptor.getApplicationName(), delim, potentialQualifiedName));
+        var delim = appVersionResolver.getDelimiterMixin().getDelimiter();
+        var qualifierPrefix = descriptor.getQualifierPrefix(delim);
+        var result = !potentialQualifiedName.startsWith(qualifierPrefix)
+                ? potentialQualifiedName
+                : potentialQualifiedName.substring(qualifierPrefix.length());
+        if ( result.contains(delim) ) {
+            throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s<new name>, current: %s", qualifierPrefix, potentialQualifiedName));
         }
+        return result;
     }
 }

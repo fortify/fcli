@@ -13,8 +13,6 @@
 
 package com.fortify.cli.fod.release.cli.cmd;
 
-import java.util.regex.Pattern;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -69,29 +67,15 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
     
     private String getUnqualifiedReleaseName(String potentialQualifiedName, FoDReleaseDescriptor descriptor) {
         if ( StringUtils.isBlank(potentialQualifiedName) ) { return null; }
-        String delim = delimiterMixin.getDelimiter();
-        var nameElts = potentialQualifiedName.split(Pattern.quote(delim));
-        var qualifier = getReleaseQualifier(delim, descriptor);
-        switch ( nameElts.length ) {
-        case 0: return null; // Shouldn't happen because of blank check above...
-        case 1: return nameElts[0];
-        case 2: case 3:
-            if ( potentialQualifiedName.startsWith(qualifier+delim) ) {
-                return nameElts[nameElts.length-1];
-            }
-            // Intentionally no break to throw exception if app name doesn't match
-        default:
-            throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s%s<new name>, current: %s", qualifier, delim, potentialQualifiedName));
+        var delim = delimiterMixin.getDelimiter();
+        var qualifierPrefix = descriptor.getQualifierPrefix(delim);
+        var result = !potentialQualifiedName.startsWith(qualifierPrefix)
+                ? potentialQualifiedName
+                : potentialQualifiedName.substring(qualifierPrefix.length());
+        if ( result.contains(delim) ) {
+            throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s<new name>, current: %s", qualifierPrefix, potentialQualifiedName));
         }
-    }
-
-    private String getReleaseQualifier(String delim, FoDReleaseDescriptor descriptor) {
-        var msName = descriptor.getMicroserviceName();
-        String qualifier = descriptor.getApplicationName();
-        if ( StringUtils.isNotBlank(msName) ) {
-            qualifier += delim+msName;
-        }
-        return qualifier;
+        return result;
     }
 
     @Override
