@@ -1,5 +1,5 @@
 ---
-title: fcli-fod-scan-import-oss(1)
+title: fcli-fod-release-import-scan(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-fod-scan-import-oss(1)</title>
+<title>fcli-fod-release-import-scan(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.085207-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.153301-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-fod-scan-import-oss(1) Manual Page</h1>
+<h1>fcli-fod-release-import-scan(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-scan-import-oss - Import an existing OSS scan (in JSON SBOM format).</p>
+<p>fcli-fod-release-import-scan - Import existing scan results into a release.</p>
 </div>
 </div>
 <div id="content">
@@ -43,13 +43,13 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod scan import-oss</strong> [<strong>--chunk-size</strong>=<em>&lt;chunkSize&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                         <strong>-f</strong>=<em>&lt;scanFile&gt;</em> [<strong>--sbom-format</strong>=<em>&lt;sbomFormat&gt;</em>] [[<strong>-h</strong>]
-                         [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
-                         <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-             _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] <em>id|app[:</em>
-                 _        ms]:rel_</p>
+<p><strong>fcli fod release import-scan</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>-f</strong>=<em>&lt;scanFile&gt;</em> <strong>--type</strong>=<em>&lt;type&gt;</em>
+                             [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                             [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                             [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                       _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                 _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                             <em>id|app[:ms]:rel</em></p>
 </div>
 </div>
 </div>
@@ -64,21 +64,17 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--chunk-size</strong>=<em>&lt;chunkSize&gt;</em></dt>
-<dd>
-<p>Fragment size (in bytes) for file uploads. Default is 8Mb.</p>
-</dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
-<p>Change the default delimiter character when using options that accept "application:release" as an argument or parameter.</p>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
 </dd>
 <dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;scanFile&gt;</em></dt>
 <dd>
-<p>Absolute path of the (FPR) scan file to upload.</p>
+<p>File containing existing scan results to be imported.</p>
 </dd>
-<dt class="hdlist1"><strong>--sbom-format</strong>=<em>&lt;sbomFormat&gt;</em></dt>
+<dt class="hdlist1"><strong>--type</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
-<p>The SBOM format to import. If empty Cyclone DX format is assumed.</p>
+<p>Type of scan results to be imported. Valid values: Dast, Sast, Mobile, CycloneDX..</p>
 </dd>
 </dl>
 </div>
@@ -160,7 +156,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-08 08:53:51 UTC
+Last updated 2023-08-08 15:35:02 UTC
 </div>
 </div>
 </body>

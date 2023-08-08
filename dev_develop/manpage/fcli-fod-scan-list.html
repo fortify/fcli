@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.085207-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.153301-dev_develop" %}
 
 
 <div id="header">
@@ -42,15 +42,8 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod scan list</strong> [<strong>--latest-first</strong>]
-                   [<strong>--completed-on-end-date</strong>=<em>&lt;completedOnEndDate&gt;</em>]
-                   [<strong>--completed-on-start-date</strong>=<em>&lt;completedOnStartDate&gt;</em>]
-                   [<strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em>]
-                   [<strong>--modified-start-date</strong>=<em>&lt;modifiedStartDate&gt;</em>]
-                   [<strong>--period</strong>=<em>&lt;timePeriodType&gt;</em>]
-                   [<strong>--started-on-end-date</strong>=<em>&lt;startedOnEndDate&gt;</em>]
-                   [<strong>--started-on-start-date</strong>=<em>&lt;startedOnStartDate&gt;</em>]
-                   [<strong>--status</strong>=<em>&lt;analysisStatusType&gt;</em>] [<strong>--type</strong>=<em>&lt;scanType&gt;</em>] [[<strong>-h</strong>]
+<p><strong>fcli fod scan list</strong> [<strong>--app</strong>=<em>&lt;appNameOrId&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>--release</strong>=<em>id|app</em>
+             _      [:ms]:rel_] [<strong>--status</strong>=<em>&lt;status&gt;</em>] [<strong>--type</strong>=<em>&lt;type&gt;</em>] [[<strong>-h</strong>]
                    [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                    <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
@@ -70,49 +63,29 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--completed-on-end-date</strong>=<em>&lt;completedOnEndDate&gt;</em></dt>
+<dt class="hdlist1"><strong>--app</strong>=<em>&lt;appNameOrId&gt;</em></dt>
 <dd>
-<p>Only include scans completed before the date specified (in MM/dd/yyyy HH:mm format).</p>
+<p>Application id or name. Note that numeric values are always interpreted as id&#8217;s. If you have numeric application names, you will need to specify the application id.</p>
 </dd>
-<dt class="hdlist1"><strong>--completed-on-start-date</strong>=<em>&lt;completedOnStartDate&gt;</em></dt>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
-<p>Include scans completed on or after the date specified (in MM/dd/yyyy HH:mm format).</p>
-</dd>
-<dt class="hdlist1"><strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em></dt>
-<dd>
-<p>Server-side queries are automatically generated from the -q / --query option if possible; generated queries can be viewed in the debug log. The --q-param option can be used to override the automatically generated query, for example to further optimize the request. See the Fortify on Demand REST API documentation for information on supported formats.</p>
-</dd>
-<dt class="hdlist1"><strong>--latest-first</strong></dt>
-<dd>
-<p>List latest scans first.</p>
-</dd>
-<dt class="hdlist1"><strong>--modified-start-date</strong>=<em>&lt;modifiedStartDate&gt;</em></dt>
-<dd>
-<p>Include scans modified on or after the date specified (in MM/dd/yyyy HH:mm format).</p>
-</dd>
-<dt class="hdlist1"><strong>--period, --time-period</strong>=<em>&lt;timePeriodType&gt;</em></dt>
-<dd>
-<p>Time period to retrieve results over. Valid values: Last30, Last60, Last90, Last180, Last360. Default value is Last30.</p>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
 </dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
 <p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
 </dd>
-<dt class="hdlist1"><strong>--started-on-end-date</strong>=<em>&lt;startedOnEndDate&gt;</em></dt>
+<dt class="hdlist1"><strong>--release</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
-<p>Only include scans started before the date specified (in MM/dd/yyyy HH:mm format).</p>
+<p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
 </dd>
-<dt class="hdlist1"><strong>--started-on-start-date</strong>=<em>&lt;startedOnStartDate&gt;</em></dt>
+<dt class="hdlist1"><strong>--status</strong>=<em>&lt;status&gt;</em></dt>
 <dd>
-<p>Include scans started on or after the date specified (in MM/dd/yyyy HH:mm format).</p>
+<p>Only return records matching the given scan processing status.</p>
 </dd>
-<dt class="hdlist1"><strong>--status, --analysis-status</strong>=<em>&lt;analysisStatusType&gt;</em></dt>
+<dt class="hdlist1"><strong>--type</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
-<p>Scan analysis status. Valid values: Not_Started, In_Progress, Completed, Canceled, Waiting, Scheduled, Queued.</p>
-</dd>
-<dt class="hdlist1"><strong>--type, --scan-type</strong>=<em>&lt;scanType&gt;</em></dt>
-<dd>
-<p>Scan type. Valid values: Static, Dynamic, Mobile, Monitoring, Network, OpenSource, Container.</p>
+<p>Only return records matching the given scan type.</p>
 </dd>
 </dl>
 </div>
@@ -181,7 +154,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-08 08:53:51 UTC
+Last updated 2023-08-08 15:35:02 UTC
 </div>
 </div>
 </body>

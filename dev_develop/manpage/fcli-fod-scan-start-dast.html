@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.085207-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.153301-dev_develop" %}
 
 
 <div id="header">
@@ -71,11 +71,11 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>--assessment, --assessment-type</strong>=<em>&lt;assessmentType&gt;</em></dt>
 <dd>
-<p>The assessment type to use. Valid values: Static, StaticPlus, DynamicWebsite, DynamicPlusWebsite, DynamicAPI, DynamicPlusAPI, Mobile, MobilePlus.</p>
+<p>The type of Dynamic assessment to carry out. Valid values: Static, StaticPlus, DynamicWebsite, DynamicPlusWebsite, DynamicAPI, DynamicPlusAPI, Mobile, MobilePlus</p>
 </dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
-<p>Change the default delimiter character when using options that accept "application:release" as an argument or parameter.</p>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
 </dd>
 <dt class="hdlist1"><strong>--entitlement, --entitlement-preference</strong>=<em>&lt;entitlementPreferenceType&gt;</em></dt>
 <dd>
@@ -87,7 +87,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--in-progress, --in-progress-action</strong>=<em>&lt;inProgressScanActionType&gt;</em></dt>
 <dd>
-<p>The action to use if a scan is already in progress. Valid values: DoNotStartScan, CancelScanInProgress, Queue.</p>
+<p>The action to use if a scan is already in progress. Valid values: DoNotStartScan, CancelInProgressScan, Queue.</p>
 </dd>
 <dt class="hdlist1"><strong>--notes</strong>=<em>&lt;notes&gt;</em></dt>
 <dd>
@@ -185,7 +185,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-08 08:53:51 UTC
+Last updated 2023-08-08 15:35:02 UTC
 </div>
 </div>
 </body>

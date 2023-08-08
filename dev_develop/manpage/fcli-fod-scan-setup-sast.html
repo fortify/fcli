@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.085207-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.153301-dev_develop" %}
 
 
 <div id="header">
@@ -49,7 +49,7 @@ fcli_version:
                          <strong>--audit-preference</strong>=<em>&lt;auditPreferenceType&gt;</em>
                          [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                          [<strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em>]
-                         <strong>--frequency</strong>=<em>&lt;entitlementFrequency&gt;</em>
+                         [<strong>--frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em>]
                          [<strong>--language-level</strong>=<em>&lt;languageLevel&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
                          <strong>--technology-stack</strong>=<em>&lt;technologyStack&gt;</em> [[<strong>-h</strong>]
                          [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
@@ -81,15 +81,15 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
-<p>Change the default delimiter character when using options that accept "application:release" as an argument or parameter.</p>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
 </dd>
 <dt class="hdlist1"><strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em></dt>
 <dd>
 <p>Entitlement Id to use. If not specified Frequency and Assessment Type will be used to find one.</p>
 </dd>
-<dt class="hdlist1"><strong>--frequency, --entitlement-frequency</strong>=<em>&lt;entitlementFrequency&gt;</em></dt>
+<dt class="hdlist1"><strong>--frequency, --entitlement-frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em></dt>
 <dd>
-<p>The Entitlement Frequency to use. Valid values: SingleScan, Subscription.</p>
+<p>The entitlement frequency type to use. Valid values: SingleScan, Subscription.</p>
 </dd>
 <dt class="hdlist1"><strong>--include-third-party-libs</strong></dt>
 <dd>
@@ -195,7 +195,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-08 08:53:51 UTC
+Last updated 2023-08-08 15:35:02 UTC
 </div>
 </div>
 </body>

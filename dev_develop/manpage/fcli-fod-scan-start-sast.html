@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.085207-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.153301-dev_develop" %}
 
 
 <div id="header">
@@ -43,8 +43,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod scan start-sast</strong> [<strong>--purchase-entitlement</strong>] [<strong>--chunk-size</strong>=<em>&lt;chunkSize&gt;</em>]
-                         [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+<p><strong>fcli fod scan start-sast</strong> [<strong>--purchase-entitlement</strong>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                          [<strong>--entitlement</strong>=<em>&lt;entitlementPreferenceType&gt;</em>]
                          [<strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em>] <strong>-f</strong>=<em>&lt;scanFile&gt;</em>
                          [<strong>--in-progress</strong>=<em>&lt;inProgressScanActionType&gt;</em>]
@@ -69,13 +68,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--chunk-size</strong>=<em>&lt;chunkSize&gt;</em></dt>
-<dd>
-<p>Fragment size (in bytes) for file uploads. Default is 8Mb.</p>
-</dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
-<p>Change the default delimiter character when using options that accept "application:release" as an argument or parameter.</p>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
 </dd>
 <dt class="hdlist1"><strong>--entitlement, --entitlement-preference</strong>=<em>&lt;entitlementPreferenceType&gt;</em></dt>
 <dd>
@@ -91,7 +86,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--in-progress, --in-progress-action</strong>=<em>&lt;inProgressScanActionType&gt;</em></dt>
 <dd>
-<p>The action to use if a scan is already in progress. Valid values: DoNotStartScan, CancelScanInProgress, Queue.</p>
+<p>The action to use if a scan is already in progress. Valid values: DoNotStartScan, CancelInProgressScan, Queue.</p>
 </dd>
 <dt class="hdlist1"><strong>--notes</strong>=<em>&lt;notes&gt;</em></dt>
 <dd>
@@ -189,7 +184,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-08 08:53:51 UTC
+Last updated 2023-08-08 15:35:02 UTC
 </div>
 </div>
 </body>
