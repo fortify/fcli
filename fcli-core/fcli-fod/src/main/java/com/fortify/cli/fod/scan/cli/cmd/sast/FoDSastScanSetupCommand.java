@@ -13,8 +13,6 @@
 
 package com.fortify.cli.fod.scan.cli.cmd.sast;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -112,7 +110,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 } else if (entitlementFrequency == FoDEnums.EntitlementFrequencyType.Subscription) {
                     entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.SubscriptionOnly;
                 } else {
-                    throw new ValidationException("The entitlement frequency '"
+                    throw new IllegalArgumentException("The entitlement frequency '"
                             + entitlementFrequency.name() + "' cannot be used here");
                 }
                 FoDAssessmentTypeOptions.FoDAssessmentType assessmentType = FoDAssessmentTypeOptions.FoDAssessmentType.valueOf(String.valueOf(staticAssessmentType));
@@ -128,7 +126,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
             try {
                 lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupTypeOptions.FoDLookupType.TechnologyTypes, technologyStack, true);
             } catch (JsonProcessingException ex) {
-                throw new ValidationException(ex.getMessage());
+                throw new IllegalStateException(ex.getMessage());
             }
             if (lookupDescriptor != null) technologyStackId = Integer.valueOf(lookupDescriptor.getValue());
             //System.out.println("technologyStackId = " + technologyStackId);
@@ -136,7 +134,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 try {
                     lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupTypeOptions.FoDLookupType.LanguageLevels, String.valueOf(technologyStackId), languageLevel, true);
                 } catch (JsonProcessingException ex) {
-                    throw new ValidationException(ex.getMessage());
+                    throw new IllegalStateException(ex.getMessage());
                 }
                 if (lookupDescriptor != null) languageLevelId = Integer.valueOf(lookupDescriptor.getValue());
                 //System.out.println("languageLevelId = " + languageLevelId);

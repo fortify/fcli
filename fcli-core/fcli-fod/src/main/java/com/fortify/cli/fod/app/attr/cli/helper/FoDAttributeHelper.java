@@ -18,8 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,9 +44,9 @@ public class FoDAttributeHelper {
         }
         JsonNode attr = request.asObject(ObjectNode.class).getBody().get("items");
         if (failIfNotFound && attr.size() == 0) {
-            throw new ValidationException("No attribute found for name or id: " + attrNameOrId);
+            throw new IllegalArgumentException("No attribute found for name or id: " + attrNameOrId);
         } else if (attr.size() > 1) {
-            throw new ValidationException("Multiple attributes found for name or id: " + attrNameOrId);
+            throw new IllegalArgumentException("Multiple attributes found for name or id: " + attrNameOrId);
         }
         return attr.size() == 0 ? null : JsonHelper.treeToValue(attr.get(0), FoDAttributeDescriptor.class);
     }

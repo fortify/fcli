@@ -12,8 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.role.helper;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
@@ -50,7 +48,7 @@ public class SSCRoleHelper {
         try{
             response = bulkRequest.execute(unirestInstance);
         }catch (UnexpectedHttpResponseException | NullPointerException e){
-            throw new ValidationException("Unable to find the specified role: " + roleNameOrId);
+            throw new IllegalArgumentException("Unable to find the specified role: " + roleNameOrId);
         }
 
         JsonNode role = response.body("role").get("data");
@@ -62,11 +60,11 @@ public class SSCRoleHelper {
 
         JsonNode roles = response.body("roles").get("data");
         if (roles == null){
-            throw new ValidationException("No role found for the role name or id: " + roleNameOrId);
+            throw new IllegalArgumentException("No role found for the role name or id: " + roleNameOrId);
         } else if( roles.size()==0 ) {
-            throw new ValidationException("No role found for the role name or id: " + roleNameOrId);
+            throw new IllegalArgumentException("No role found for the role name or id: " + roleNameOrId);
         } else if ( roles.size()>1 ) {
-            throw new ValidationException("Multiple roles found for the role name or id: " + roleNameOrId);
+            throw new IllegalArgumentException("Multiple roles found for the role name or id: " + roleNameOrId);
         }
         return JsonHelper.treeToValue(roles.get(0), SSCRoleDescriptor.class);
     }

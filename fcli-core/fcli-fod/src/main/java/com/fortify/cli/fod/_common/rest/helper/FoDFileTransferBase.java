@@ -19,8 +19,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -62,7 +60,7 @@ public abstract class FoDFileTransferBase {
         this.endpoint = endpoint;
         this.uploadFile = uploadFile;
         if (!uploadFile.exists() || !uploadFile.canRead())
-            throw new ValidationException("Could not read file: " + uploadFile.getPath());
+            throw new IllegalArgumentException("Could not read file: " + uploadFile.getPath());
         this.fileLen = uploadFile.length();
     }
 

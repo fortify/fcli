@@ -16,8 +16,6 @@ package com.fortify.cli.fod.scan.cli.cmd.sast;
 import java.io.File;
 import java.util.Properties;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -85,7 +83,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
             // get current setup and check if its valid
             FoDSastScanSetupDescriptor currentSetup = FoDSastScanHelper.getSetupDescriptor(unirest, relId);
             if (StringUtils.isBlank(currentSetup.getTechnologyStack())) {
-                throw new ValidationException("The static scan configuration for release with id '" + relId +
+                throw new IllegalStateException("The static scan configuration for release with id '" + relId +
                         "' has not been setup correctly - 'Technology Stack/Language Level' is missing or empty.");
             }
 

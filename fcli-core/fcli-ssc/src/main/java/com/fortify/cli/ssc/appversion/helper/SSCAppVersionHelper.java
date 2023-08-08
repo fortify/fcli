@@ -12,8 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.helper;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -34,7 +32,7 @@ public class SSCAppVersionHelper {
     public static final SSCAppVersionDescriptor getRequiredAppVersion(UnirestInstance unirest, String appVersionNameOrId, String delimiter, String... fields) {
         SSCAppVersionDescriptor descriptor = getOptionalAppVersion(unirest, appVersionNameOrId, delimiter, fields);
         if ( descriptor==null ) {
-            throw new ValidationException("No application version found for application version name or id: "+appVersionNameOrId);
+            throw new IllegalArgumentException("No application version found for application version name or id: "+appVersionNameOrId);
         }
         return descriptor;
     }
@@ -70,7 +68,7 @@ public class SSCAppVersionHelper {
     private static final SSCAppVersionDescriptor getOptionalDescriptor(GetRequest request) {
         JsonNode versions = request.asObject(ObjectNode.class).getBody().get("data");
         if ( versions.size()>1 ) {
-            throw new ValidationException("Multiple application versions found");
+            throw new IllegalArgumentException("Multiple application versions found");
         }
         return versions.size()==0 ? null : JsonHelper.treeToValue(versions.get(0), SSCAppVersionDescriptor.class);
     }

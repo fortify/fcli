@@ -12,8 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.role_permission.helper;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
@@ -67,7 +65,7 @@ public class SSCRolePermissionHelper {
         try{
             response = bulkRequest.execute(unirestInstance);
         }catch (UnexpectedHttpResponseException | NullPointerException e){
-            throw new ValidationException("Unable to find the specified role: " + rolePermissionNameOrId);
+            throw new IllegalArgumentException("Unable to find the specified role: " + rolePermissionNameOrId);
         }
 
         JsonNode rolePermission = response.body("rolePermission").get("data");
@@ -79,11 +77,11 @@ public class SSCRolePermissionHelper {
 
         JsonNode rolePermissions = response.body("rolePermissions").get("data");
         if (rolePermissions == null){
-            throw new ValidationException("No role permission found for the role permission name or id: " + rolePermissionNameOrId);
+            throw new IllegalArgumentException("No role permission found for the role permission name or id: " + rolePermissionNameOrId);
         } else if( rolePermissions.size()==0 ) {
-            throw new ValidationException("No role permission found for the role permission name or id: " + rolePermissionNameOrId);
+            throw new IllegalArgumentException("No role permission found for the role permission name or id: " + rolePermissionNameOrId);
         } else if ( rolePermissions.size()>1 ) {
-            throw new ValidationException("Multiple role permissions found for the role permission name or id: " + rolePermissionNameOrId);
+            throw new IllegalArgumentException("Multiple role permissions found for the role permission name or id: " + rolePermissionNameOrId);
         }
         return JsonHelper.treeToValue(rolePermissions.get(0), SSCRolePermissionDescriptor.class);
     }

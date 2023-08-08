@@ -12,6 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.fod.rest.lookup.helper;
 
+import java.util.Iterator;
+import java.util.List;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,13 +23,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import javax.validation.ValidationException;
-import java.util.Iterator;
-import java.util.List;
 
 public class FoDLookupHelper {
     @Getter
@@ -53,7 +53,7 @@ public class FoDLookupHelper {
             }
         }
         if (failIfNotFound) {
-            throw new ValidationException("No value found for '" + text + "' in " + type.name());
+            throw new IllegalArgumentException("No value found for '" + text + "' in " + type.name());
         }
         return currentLookup;
     }
@@ -75,7 +75,7 @@ public class FoDLookupHelper {
             }
         }
         if (failIfNotFound) {
-            throw new ValidationException("No value found for '" + text + "' with group '" + group + "' in " + type.name());
+            throw new IllegalArgumentException("No value found for '" + text + "' with group '" + group + "' in " + type.name());
         }
         return currentLookup;
     }
