@@ -17,6 +17,7 @@ import spock.lang.Stepwise
 class SSCArtifactUploadSpec extends FcliBaseSpec {
     @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     @Shared @TestResource("runtime/shared/EightBall-22.1.0.fpr") String fpr
+    @Shared @TestResource("runtime/shared/LoginProject.fpr") String diffpr
     @Shared String uploadVariableName = version.fcliVariableName+"_artifact"
     @Shared String uploadVariableRef = "::$uploadVariableName::"
     
@@ -40,7 +41,52 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                //
+                it.any { it =~ "WAIT_COMPLETE" }
+            }
+    }
+    
+    def "approve1"() {
+        def args = "ssc artifact approve ::$uploadVariableName::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                it.any { it =~ "NO_APPROVAL_NEEDED" }
+            }
+    }
+    
+    
+    def "upload2"() {
+        def args = "ssc artifact upload $diffpr --appversion "+
+            "${version.variableRef} --store upload"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                it[0] =~ /Id\s+Scan types\s+Last scan date\s+Upload date\s+Status/
+                it[1] =~ /^\s*\d+.*/
+            }
+    }
+    
+    def "wait-for2"() {
+        // Depending on externalmetadata versions in FPR and on SSC, approval
+        // may be required
+        def args = "ssc artifact wait-for ::upload:: -i 2s -s PROCESS_COMPLETE,REQUIRE_AUTH"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                it.any { it =~ "WAIT_COMPLETE" }
+            }
+    }
+    
+    def "approve2"() {
+        def args = "ssc artifact approve ::upload::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                it.any { it =~ "APPROVED" }
             }
     }
     
