@@ -27,8 +27,8 @@ class OutputOptionsGetSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==2
-                it[0].contains('Id  String value  Long value  Double value  Boolean value  Date value  Date time value            Nested object string value  Nested object boolean value  Nested string aray')
-                it[1].contains('0   value1        1000        0.7           true           2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1          true                         nestedArrayValue3, nestedArrayValue4')
+                it[0].replace(" ","").equals('IdStringvalueLongvalueDoublevalueBooleanvalueDatevalueDatetimevalueNestedobjectstringvalueNestedobjectbooleanvalueNestedstringarray')
+                it[1].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
             }
     }
     
@@ -39,7 +39,7 @@ class OutputOptionsGetSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==1
-                it[0].contains('0  value1  1000  0.7  true  2000-01-01  2000-01-01T00:00:00+00:00  nestedObjectValue1  true  nestedArrayValue3, nestedArrayValue4')
+                it[0].replace(" ","").equals('0value110000.7true2000-01-012000-01-01T00:00:00+00:00nestedObjectValue1truenestedArrayValue3,nestedArrayValue4')
             }
     }
     
@@ -50,7 +50,7 @@ class OutputOptionsGetSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==2
-                it[0] == 'id,stringValue,longValue,doubleValue,booleanValue,dateValue,dateTimeValue,nestedObjectStringValue,nestedObjectBooleanValue,nestedStringAray'
+                it[0] == 'id,stringValue,longValue,doubleValue,booleanValue,dateValue,dateTimeValue,nestedObjectStringValue,nestedObjectBooleanValue,nestedStringArray'
                 it[1] == '0,value1,1000,0.7,true,2000-01-01,"2000-01-01T00:00:00+00:00",nestedObjectValue1,true,"nestedArrayValue3, nestedArrayValue4"'
             }
     }
