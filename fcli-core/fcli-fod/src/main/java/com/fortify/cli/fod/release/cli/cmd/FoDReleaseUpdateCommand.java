@@ -48,7 +48,7 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
     private String releaseOwner;
 
     @Mixin
-    private FoDSdlcStatusTypeOptions.RequiredOption sdlcStatus;
+    private FoDSdlcStatusTypeOptions.OptionalOption sdlcStatus;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -56,7 +56,7 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
         FoDSdlcStatusTypeOptions.FoDSdlcStatusType sdlcStatusTypeNew = sdlcStatus.getSdlcStatusType();
 
         FoDReleaseUpdateRequest appRelUpdateRequest = FoDReleaseUpdateRequest.builder()
-                .releaseName(StringUtils.isNotBlank(releaseName) ? releaseName : releaseDescriptor.getReleaseName())
+                .releaseName(StringUtils.isNotBlank(releaseName) ? getUnqualifiedReleaseName(releaseName, releaseDescriptor) : releaseDescriptor.getReleaseName())
                 .releaseDescription(StringUtils.isNotBlank(description) ? description : releaseDescriptor.getReleaseDescription())
                 .ownerId(StringUtils.isNotBlank(releaseOwner) ? Integer.valueOf(releaseOwner) : releaseDescriptor.getOwnerId())
                 .microserviceId(releaseDescriptor.getMicroserviceId())
@@ -64,6 +64,38 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
 
         return FoDReleaseHelper.updateRelease(unirest, releaseDescriptor.getReleaseId(), appRelUpdateRequest).asJsonNode();
     }
+    
+    private String getUnqualifiedReleaseName(String potentialQualifiedName, FoDReleaseDescriptor descriptor) {
+        if ( StringUtils.isBlank(potentialQualifiedName) ) { return null; }
+        String delim = delimiterMixin.getDelimiter();
+        var nameElts = potentialQualifiedName.split(delim);
+        switch ( nameElts.length ) {
+        case 0: return null; // Shouldn't happen because of blank check above...
+        case 1: return nameElts[0];
+        case 2: case 3:
+            if ( potentialQualifiedName.startsWith(getReleaseQualifier(descriptor)+":") ) {
+                return nameElts[nameElts.length-1];
+            }
+            // Intentionally no break to throw exception if app name doesn't match
+        default:
+            throw nameFormatException(descriptor);
+        }
+    }
+    
+    private RuntimeException nameFormatException(FoDReleaseDescriptor descriptor) {
+        String qualifier = getReleaseQualifier(descriptor);
+        return new IllegalArgumentException(String.format("--name option must contain either a plain name or %s:<new name>", qualifier)); 
+    }
+
+    private String getReleaseQualifier(FoDReleaseDescriptor descriptor) {
+        var msName = descriptor.getMicroserviceName();
+        String qualifier = descriptor.getApplicationName();
+        if ( StringUtils.isNotBlank(msName) ) {
+            qualifier += ":"+msName;
+        }
+        return qualifier;
+    }
+
     @Override
     public JsonNode transformRecord(JsonNode record) {
         return FoDReleaseHelper.renameFields(record);

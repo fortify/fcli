@@ -37,6 +37,7 @@ public class FoDUrls {
     public static final String LOOKUP_ITEMS = ApiBase + "/lookup-items";
     public static final String SCANS = ApiBase + "/scans";
     public static final String SCAN = ApiBase + "/scans/{scanId}";
+    public static final String APP_SCANS = APPLICATION + "/scans";
     public static final String RELEASE_SCANS = RELEASE + "/scans";
     public static final String STATIC_SCANS = ApiBase + "/releases/{relId}/static-scans";
     public static final String STATIC_SCANS_IMPORT = STATIC_SCANS + "/import-scan";

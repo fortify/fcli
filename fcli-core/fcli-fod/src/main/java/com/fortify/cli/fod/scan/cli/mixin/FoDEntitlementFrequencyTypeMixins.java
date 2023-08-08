@@ -11,22 +11,17 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan.cli.cmd.dast;
+package com.fortify.cli.fod.scan.cli.mixin;
 
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.scan.cli.cmd.AbstractFoDScanListCommand;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod._common.util.FoDEnums;
 
 import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
-@Command(name = FoDOutputHelperMixins.ListDast.CMD_NAME)
-public class FoDDastScanListCommand extends AbstractFoDScanListCommand {
-    @Getter @Mixin private FoDOutputHelperMixins.ListDast outputHelper;
-
-    @Override
-    public String getScanType() {
-        return FoDScanTypeOptions.FoDScanType.Dynamic.name();
+public class FoDEntitlementFrequencyTypeMixins {
+    public static class OptionalOption {
+        @Option(names = {"--frequency", "--entitlement-frequency"}, required = false, descriptionKey = "fcli.fod.scan.entitlement-frequency")
+        @Getter private FoDEnums.EntitlementFrequencyType entitlementFrequencyType;
     }
+
 }

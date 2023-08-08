@@ -25,11 +25,12 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
-import com.fortify.cli.fod.scan.cli.mixin.FoDSbomFormatOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDSbomFormatMixins;
 import com.fortify.cli.fod.scan.helper.FoDImportScan;
+import com.fortify.cli.fod.scan.helper.FoDSbomFormat;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan.helper.FoDScanType;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -44,7 +45,7 @@ public class FoDOssScanImportCommand extends AbstractFoDJsonNodeOutputCommand im
 
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
-    @Mixin private FoDSbomFormatOptions.OptionalOption sbomFormat;
+    @Mixin private FoDSbomFormatMixins.OptionalOption sbomFormat;
 
     @CommandLine.Option(names = {"--chunk-size"})
     private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
@@ -58,7 +59,7 @@ public class FoDOssScanImportCommand extends AbstractFoDJsonNodeOutputCommand im
         String relId = releaseResolver.getReleaseId(unirest);
         String importUrl = FoDUrls.RELEASE_IMPORT_CYCLONEDX_SBOM;
         if (sbomFormat != null && sbomFormat.getSbomFormat() != null) {
-            if (sbomFormat.getSbomFormat().equals(FoDSbomFormatOptions.FoDSbomFormat.CycloneDX)) {
+            if (sbomFormat.getSbomFormat().equals(FoDSbomFormat.CycloneDX)) {
                 importUrl = FoDUrls.RELEASE_IMPORT_CYCLONEDX_SBOM;
             } else {
                 throw new RuntimeException("Unknown SBOM format specified");
@@ -73,7 +74,7 @@ public class FoDOssScanImportCommand extends AbstractFoDJsonNodeOutputCommand im
         if (response != null) {
             // get latest scan as we cannot use the referenceId from import anywhere
             FoDScanDescriptor descriptor = FoDScanHelper.getLatestScanDescriptor(unirest, relId,
-                    FoDScanTypeOptions.FoDScanType.OpenSource, true);
+                    FoDScanType.OpenSource, true);
             return descriptor.asObjectNode()
                     .put("releaseId", relId)
                     .put("scanMethod", "SBOMImport")

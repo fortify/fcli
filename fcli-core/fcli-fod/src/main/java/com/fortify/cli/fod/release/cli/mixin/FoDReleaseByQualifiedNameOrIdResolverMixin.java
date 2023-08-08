@@ -38,13 +38,18 @@ public class FoDReleaseByQualifiedNameOrIdResolverMixin {
         }
         
         public String getReleaseId(UnirestInstance unirest) {
-            var descriptor = getReleaseDescriptor(unirest, "id");
+            var descriptor = getReleaseDescriptor(unirest, "releaseId");
             return descriptor==null ? null : descriptor.getReleaseId();
         }
     }
 
     public static class RequiredOption extends AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
         @Option(names = {"--release"}, required = true, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id")
+        @Getter private String qualifiedReleaseNameOrId;
+    }
+    
+    public static class OptionalOption extends AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
+        @Option(names = {"--release"}, required = false, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id")
         @Getter private String qualifiedReleaseNameOrId;
     }
     
