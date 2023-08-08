@@ -46,7 +46,7 @@ class SCSastScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>1
-                it[0].replace(' ', '').equals("UuidProcessuuidStateWorkerstarttimeWorkerexpirytimeLastseenLastactivityIpaddressHostnameScaversionVmnameAvailableprocessorsTotalphysicalmemoryOsnameOsversionOsarchitectureCloudpooluuidCloudpoolpathCloudpoolnameCloudpooldescriptionCloudpoolchildofglobalpoolCloudpoolisdeletableCloudpoolstatsHref")
+                it[0].replace(' ', '').equals("HostnameStatePoolnameIpaddressScaversionLastseenSensorstarttime")
                 
             }
     }
@@ -72,7 +72,7 @@ class SCSastScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==2
-                it[0].replace(' ', '').equals("JobtokenHasfilesScanstateScaprogressSscuploadstateSscprocessingstateEndpointversionAction")
+                it[0].replace(' ', '').equals("JobtokenHasfilesScanstatePublishstateSscprocessingstateEndpointversionAction")
             }
     }
     
