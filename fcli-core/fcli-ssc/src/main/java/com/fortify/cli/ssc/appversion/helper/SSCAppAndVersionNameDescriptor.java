@@ -12,8 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.helper;
 
-import javax.validation.ValidationException;
-
 import lombok.Data;
 
 @Data
@@ -23,7 +21,7 @@ public final class SSCAppAndVersionNameDescriptor {
     public static final SSCAppAndVersionNameDescriptor fromCombinedAppAndVersionName(String appAndVersionName, String delimiter) {
         String[] appAndVersionNameArray = appAndVersionName.split(delimiter);
         if ( appAndVersionNameArray.length != 2 ) { 
-            throw new ValidationException("Application and version name must be specified in the format <application name>"+delimiter+"<version name>"); 
+            throw new IllegalArgumentException("Application and version name must be specified in the format <application name>"+delimiter+"<version name>"); 
         }
         return new SSCAppAndVersionNameDescriptor(appAndVersionNameArray[0], appAndVersionNameArray[1]);
     }

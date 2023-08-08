@@ -18,8 +18,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -159,7 +157,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
                 FoDScanTypeOptions.FoDScanType.Mobile);
 
         if (entitlementToUse.getEntitlementId() == null || entitlementToUse.getEntitlementId() <= 0) {
-            throw new ValidationException("Could not find a valid FoD entitlement to use.");
+            throw new IllegalStateException("Could not find a valid FoD entitlement to use.");
         }
         return entitlementToUse;
     }
@@ -170,7 +168,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
             try {
                 lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupTypeOptions.FoDLookupType.TimeZones, timezone, false);
             } catch (JsonProcessingException ex) {
-                throw new ValidationException(ex.getMessage());
+                throw new IllegalStateException(ex.getMessage());
             }
             return lookupDescriptor.getValue();
         } else {

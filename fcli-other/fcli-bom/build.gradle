@@ -42,11 +42,7 @@ dependencies {
         api('hu.webarticum:tree-printer:3.1.0')
         api('com.github.freva:ascii-table:1.8.0')
         
-		// TODO This seems to be used by SSC & FoD modules only to throw ValidationExceptions;
-		//      we should define fcli-specific functionality for handling validation errors
-		//      and then likely remove this dependency.
-        api('javax.validation:validation-api:2.0.1.Final')
-		// Remove annotation processor warning. TODO Is this still needed?
+		// Remove annotation processor warning.
         api('com.google.code.findbugs:jsr305:3.0.2')
         
         // Encryption

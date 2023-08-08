@@ -17,8 +17,6 @@ import static java.util.function.Predicate.not;
 
 import java.util.Optional;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -69,7 +67,7 @@ public class FoDScanHelper {
             if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
                 progressWriter.writeI18nProgress("using-remediation-entitlement", entitlement.getEntitlementDescription());
             } else {
-                throw new ValidationException("No remediation scan entitlements found");
+                throw new IllegalStateException("No remediation scan entitlements found");
             }
         }
         return entitlement;
@@ -120,7 +118,7 @@ public class FoDScanHelper {
                 entitlementType == FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan) {
             return assessmentType.getSubscriptionUnits();
         } else {
-            throw new ValidationException("Unknown entitlement type used: " + entitlementType.name());
+            throw new IllegalArgumentException("Unknown entitlement type used: " + entitlementType.name());
         }
     }
 

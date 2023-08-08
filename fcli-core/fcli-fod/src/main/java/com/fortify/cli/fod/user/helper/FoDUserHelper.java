@@ -14,8 +14,6 @@ package com.fortify.cli.fod.user.helper;
 
 import java.util.ArrayList;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -56,9 +54,9 @@ public class FoDUserHelper {
         }
         JsonNode attr = request.asObject(ObjectNode.class).getBody().get("items");
         if (failIfNotFound && attr.size() == 0) {
-            throw new ValidationException("No user found for name or id: " + userNameOrId);
+            throw new IllegalArgumentException("No user found for name or id: " + userNameOrId);
         } else if (attr.size() > 1) {
-            throw new ValidationException("Multiple users found for name or id: " + userNameOrId);
+            throw new IllegalArgumentException("Multiple users found for name or id: " + userNameOrId);
         }
         return attr.size() == 0 ? null : JsonHelper.treeToValue(attr.get(0), FoDUserDescriptor.class);
     }
@@ -67,7 +65,7 @@ public class FoDUserHelper {
         GetRequest request = unirest.get(FoDUrls.USER).routeParam("userId", userId);
         JsonNode user = request.asObject(ObjectNode.class).getBody();
         if (failIfNotFound && user.get("userName").asText().isEmpty()) {
-            throw new ValidationException("No user found for id: " + userId);
+            throw new IllegalArgumentException("No user found for id: " + userId);
         }
         return getDescriptor(user);
     }
@@ -153,7 +151,7 @@ public class FoDUserHelper {
                     .routeParam("applicationId", String.valueOf(appDescriptor.getApplicationId()))
                     .asEmpty();
         } else {
-            throw new ValidationException("Invalid action specified when updating users application access");
+            throw new IllegalArgumentException("Invalid action specified when updating users application access");
         }
         return userDescriptor;
     }
@@ -167,7 +165,7 @@ public class FoDUserHelper {
                 FoDLookupDescriptor lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupTypeOptions.FoDLookupType.Roles, roleNameOrId, true);
                 roleId = Integer.valueOf(lookupDescriptor.getValue());
             } catch (JsonProcessingException e) {
-                throw new ValidationException("Unable to find role with name: " + roleNameOrId);
+                throw new IllegalArgumentException("Unable to find role with name: " + roleNameOrId);
             }
         }
         return roleId;

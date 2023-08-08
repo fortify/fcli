@@ -15,8 +15,6 @@ package com.fortify.cli.fod.app.helper;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -57,9 +55,9 @@ public class FoDAppHelper {
         }
         JsonNode app = request.asObject(ObjectNode.class).getBody().get("items");
         if (failIfNotFound && app.size() == 0) {
-            throw new ValidationException("No application found for name or id: " + appNameOrId);
+            throw new IllegalArgumentException("No application found for name or id: " + appNameOrId);
         } else if (app.size() > 1) {
-            throw new ValidationException("Multiple applications found for name or id: " + appNameOrId);
+            throw new IllegalArgumentException("Multiple applications found for name or id: " + appNameOrId);
         }
         return app.size() == 0 ? null : getDescriptor(app.get(0));
     }

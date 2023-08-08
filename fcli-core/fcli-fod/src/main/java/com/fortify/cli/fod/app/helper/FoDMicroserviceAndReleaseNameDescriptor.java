@@ -13,8 +13,6 @@
 
 package com.fortify.cli.fod.app.helper;
 
-import javax.validation.ValidationException;
-
 import lombok.Data;
 
 @Data
@@ -26,7 +24,7 @@ public final class FoDMicroserviceAndReleaseNameDescriptor {
         switch ( elts.length ) {
         case 2: return new FoDMicroserviceAndReleaseNameDescriptor(elts[0], elts[1]);
         case 1: return new FoDMicroserviceAndReleaseNameDescriptor(null, elts[0]);
-        default: throw new ValidationException("Release name must be specified in the format ["+delimiter+"<microservice name>]"+delimiter+"<release name>");
+        default: throw new IllegalArgumentException("Release name must be specified in the format ["+delimiter+"<microservice name>]"+delimiter+"<release name>");
         }
     }
 }
