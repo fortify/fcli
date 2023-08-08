@@ -29,12 +29,12 @@ import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
-import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeMixins;
+import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
+import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.sast.FoDSastScanHelper;
 import com.fortify.cli.fod.scan.helper.sast.FoDSastScanSetupDescriptor;
 import com.fortify.cli.fod.scan.helper.sast.FoDStartSastScanRequest;
@@ -64,11 +64,11 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
     private File scanFile;
 
     @Mixin
-    private FoDEntitlementPreferenceTypeOptions.OptionalOption entitlementType;
+    private FoDEntitlementPreferenceTypeMixins.OptionalOption entitlementType;
     @Mixin
-    private FoDRemediationScanPreferenceTypeOptions.OptionalOption remediationScanType;
+    private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
     @Mixin
-    private FoDInProgressScanActionTypeOptions.OptionalOption inProgressScanActionType;
+    private FoDInProgressScanActionTypeMixins.OptionalOption inProgressScanActionType;
 
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
@@ -142,7 +142,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
         if (remediationScanType.getRemediationScanPreferenceType() != null && (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
             // if requesting a remediation scan make we have one available
             FoDSastScanHelper.validateRemediationEntitlement(unirest, progressWriter, relId,
-                    currentSetup.getEntitlementId(), FoDScanTypeOptions.FoDScanType.Static).getEntitlementId();
+                    currentSetup.getEntitlementId(), FoDScanType.Static).getEntitlementId();
         }
         return entitlementToUse;
     }

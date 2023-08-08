@@ -11,22 +11,17 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan.cli.cmd.mobile;
+package com.fortify.cli.fod.scan.cli.mixin;
 
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.scan.cli.cmd.AbstractFoDScanListCommand;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.helper.FoDSbomFormat;
 
 import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
-@Command(name = FoDOutputHelperMixins.ListMobile.CMD_NAME)
-public class FoDMobileScanListCommand extends AbstractFoDScanListCommand {
-    @Getter @Mixin FoDOutputHelperMixins.ListMobile outputHelper;
-
-    @Override
-    public String getScanType() {
-        return FoDScanTypeOptions.FoDScanType.Mobile.name();
+public class FoDSbomFormatMixins {
+    public static class OptionalOption {
+        @Option(names = {"--sbom-format"}, required = false, descriptionKey = "fcli.fod.import.sbom-format")
+        @Getter private FoDSbomFormat sbomFormat;
     }
+
 }

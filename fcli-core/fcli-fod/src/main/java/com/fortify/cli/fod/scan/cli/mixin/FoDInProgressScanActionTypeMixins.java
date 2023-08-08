@@ -11,22 +11,17 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan.cli.cmd.oss;
+package com.fortify.cli.fod.scan.cli.mixin;
 
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.scan.cli.cmd.AbstractFoDScanListCommand;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod._common.util.FoDEnums;
 
 import lombok.Getter;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
-@Command(name = FoDOutputHelperMixins.ListOss.CMD_NAME)
-public class FoDOssScanListCommand extends AbstractFoDScanListCommand {
-    @Getter @Mixin FoDOutputHelperMixins.ListOss outputHelper;
-
-    @Override
-    public String getScanType() {
-        return FoDScanTypeOptions.FoDScanType.OpenSource.name();
+public class FoDInProgressScanActionTypeMixins {
+    public static class OptionalOption {
+        @Option(names = {"--in-progress", "--in-progress-action"}, required = false, descriptionKey = "fcli.fod.scan.in-progress-action")
+        @Getter private FoDEnums.InProgressScanActionType inProgressScanActionType;
     }
+
 }

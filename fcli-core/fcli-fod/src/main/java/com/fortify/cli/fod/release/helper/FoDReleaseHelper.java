@@ -20,7 +20,7 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.helper.FoDScanType;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -59,7 +59,7 @@ public class FoDReleaseHelper {
     }
 
     public static final FoDReleaseAssessmentTypeDescriptor[] getAppRelAssessmentTypes(UnirestInstance unirestInstance,
-                                                                                     String relId, FoDScanTypeOptions.FoDScanType scanType, boolean failIfNotFound) {
+                                                                                     String relId, FoDScanType scanType, boolean failIfNotFound) {
         GetRequest request = unirestInstance.get(FoDUrls.RELEASE + "/assessment-types")
                 .routeParam("relId", relId)
                 .queryString("scanType", scanType.name());
@@ -71,7 +71,7 @@ public class FoDReleaseHelper {
     }
 
     public static final FoDReleaseAssessmentTypeDescriptor getAppRelAssessmentType(UnirestInstance unirestInstance,
-                                                                                  String relId, FoDScanTypeOptions.FoDScanType scanType,
+                                                                                  String relId, FoDScanType scanType,
                                                                                   boolean isPlus, boolean failIfNotFound) {
         String filterString = "name:" + scanType.toString() +
                 (isPlus ? "+" : "") + " Assessment";

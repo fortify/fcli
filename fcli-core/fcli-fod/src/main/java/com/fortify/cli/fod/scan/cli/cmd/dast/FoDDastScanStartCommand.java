@@ -29,14 +29,14 @@ import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDAssessmentTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeOptions;
-import com.fortify.cli.fod.scan.cli.mixin.FoDScanTypeOptions;
+import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeMixins;
+import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
+import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
+import com.fortify.cli.fod.scan.helper.FoDAssessmentType;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.dast.FoDDastScanHelper;
 import com.fortify.cli.fod.scan.helper.dast.FoDDastScanSetupDescriptor;
 import com.fortify.cli.fod.scan.helper.dast.FoDStartDastScanRequest;
@@ -61,14 +61,14 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
     private String notes;
 
     @Mixin
-    private FoDRemediationScanPreferenceTypeOptions.OptionalOption remediationScanType;
+    private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
     @Mixin
-    private FoDInProgressScanActionTypeOptions.OptionalOption inProgressScanActionType;
+    private FoDInProgressScanActionTypeMixins.OptionalOption inProgressScanActionType;
 
     @Mixin
-    private FoDEntitlementPreferenceTypeOptions.OptionalOption entitlementType;
-    @Mixin
-    private FoDAssessmentTypeOptions.OptionalOption assessmentType;
+    private FoDEntitlementPreferenceTypeMixins.OptionalOption entitlementType;
+    @Option(names = {"--assessment", "--assessment-type"}, required = false)
+    private FoDAssessmentType assessmentType;
 
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
@@ -120,12 +120,12 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                     (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
                 // if requesting a remediation scan make we have one available
                 entitlementToUse = FoDDastScanHelper.validateRemediationEntitlement(unirest, progressWriter, relId,
-                        currentSetup.getEntitlementId(), FoDScanTypeOptions.FoDScanType.Dynamic);
-            } else if (assessmentType.getAssessmentType() != null && entitlementType.getEntitlementPreferenceType() != null) {
+                        currentSetup.getEntitlementId(), FoDScanType.Dynamic);
+            } else if (assessmentType != null && entitlementType.getEntitlementPreferenceType() != null) {
                 // if assessment and entitlement type are both specified, find entitlement to use
                 entitlementToUse = FoDDastScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
-                        assessmentType.getAssessmentType(), entitlementType.getEntitlementPreferenceType(),
-                        FoDScanTypeOptions.FoDScanType.Dynamic);
+                        assessmentType, entitlementType.getEntitlementPreferenceType(),
+                        FoDScanType.Dynamic);
             } else {
                 // use the current scan setup
                 entitlementToUse.copyFromCurrentSetup(currentSetup);
