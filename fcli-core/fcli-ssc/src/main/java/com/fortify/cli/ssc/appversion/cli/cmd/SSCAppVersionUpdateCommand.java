@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -121,7 +122,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     private String getUnqualifiedVersionName(String potentialQualifiedName, SSCAppVersionDescriptor descriptor) {
         if ( StringUtils.isBlank(potentialQualifiedName) ) { return null; }
         String delim = appVersionResolver.getDelimiterMixin().getDelimiter();
-        var nameElts = potentialQualifiedName.split(delim);
+        var nameElts = potentialQualifiedName.split(Pattern.quote(delim));
         switch ( nameElts.length ) {
         case 0: return null; // Shouldn't happen because of blank check above...
         case 1: return nameElts[0];

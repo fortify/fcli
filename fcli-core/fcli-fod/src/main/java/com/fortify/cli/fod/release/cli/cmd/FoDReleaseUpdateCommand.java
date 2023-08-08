@@ -13,6 +13,8 @@
 
 package com.fortify.cli.fod.release.cli.cmd;
 
+import java.util.regex.Pattern;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -68,7 +70,7 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
     private String getUnqualifiedReleaseName(String potentialQualifiedName, FoDReleaseDescriptor descriptor) {
         if ( StringUtils.isBlank(potentialQualifiedName) ) { return null; }
         String delim = delimiterMixin.getDelimiter();
-        var nameElts = potentialQualifiedName.split(delim);
+        var nameElts = potentialQualifiedName.split(Pattern.quote(delim));
         var qualifier = getReleaseQualifier(delim, descriptor);
         switch ( nameElts.length ) {
         case 0: return null; // Shouldn't happen because of blank check above...
