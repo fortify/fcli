@@ -41,10 +41,10 @@ public class FoDSessionLoginCommand extends AbstractSessionLoginCommand<FoDSessi
         FoDSessionDescriptor sessionDescriptor;
         IUrlConfig urlConfig = loginOptions.getUrlConfigOptions();
         if ( loginOptions.hasClientCredentials() ) {
-            FoDTokenCreateResponse createTokenResponse = FoDOAuthHelper.createToken(urlConfig, loginOptions.getClientCredentialOptions(), loginOptions.getScopes());
+            FoDTokenCreateResponse createTokenResponse = FoDOAuthHelper.createToken(urlConfig, loginOptions.getClientCredentialOptions(), loginOptions.getAuthOptions().getScopes());
             sessionDescriptor = new FoDSessionDescriptor(urlConfig, createTokenResponse);
         } else if ( loginOptions.hasUserCredentialsConfig() ) {
-            FoDTokenCreateResponse createTokenResponse = FoDOAuthHelper.createToken(urlConfig, loginOptions.getUserCredentialOptions(), loginOptions.getScopes());
+            FoDTokenCreateResponse createTokenResponse = FoDOAuthHelper.createToken(urlConfig, loginOptions.getUserCredentialOptions(), loginOptions.getAuthOptions().getScopes());
             sessionDescriptor = new FoDSessionDescriptor(urlConfig, createTokenResponse);
         } else {
             throw new IllegalArgumentException("Either FoD client or user credentials must be provided");
