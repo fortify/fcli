@@ -26,7 +26,6 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeMixins;
@@ -58,8 +57,6 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
     private final Boolean purchaseEntitlement = false;
     @Option(names = {"--notes"})
     private String notes;
-    @Option(names = {"--chunk-size"})
-    private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
     @CommandLine.Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
 
@@ -108,7 +105,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                 startScanRequest.setEntitlementPreferenceType(String.valueOf(FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan));
             }
 
-            return FoDSastScanHelper.startScan(unirest, releaseDescriptor, startScanRequest, scanFile, chunkSize).asJsonNode();
+            return FoDSastScanHelper.startScan(unirest, releaseDescriptor, startScanRequest, scanFile).asJsonNode();
         }
     }
 

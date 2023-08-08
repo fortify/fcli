@@ -50,7 +50,7 @@ public class FoDSastScanHelper extends FoDScanHelper {
 
     // TODO Split into multiple methods
     public static final FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDStartSastScanRequest req,
-                                                    File scanFile, int chunkSize) {
+                                                    File scanFile) {
         var relId = releaseDescriptor.getReleaseId();
         HttpRequest<?> request = unirest.post(FoDUrls.STATIC_SCAN_START).routeParam("relId", relId)
                 .queryString("entitlementPreferenceType", (req.getEntitlementPreferenceType() != null ?
