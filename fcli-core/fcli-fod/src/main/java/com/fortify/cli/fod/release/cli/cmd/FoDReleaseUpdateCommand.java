@@ -67,33 +67,15 @@ public class FoDReleaseUpdateCommand extends AbstractFoDJsonNodeOutputCommand im
     
     private String getUnqualifiedReleaseName(String potentialQualifiedName, FoDReleaseDescriptor descriptor) {
         if ( StringUtils.isBlank(potentialQualifiedName) ) { return null; }
-        String delim = delimiterMixin.getDelimiter();
-        var nameElts = potentialQualifiedName.split(delim);
-        switch ( nameElts.length ) {
-        case 0: return null; // Shouldn't happen because of blank check above...
-        case 1: return nameElts[0];
-        case 2: case 3:
-            if ( potentialQualifiedName.startsWith(getReleaseQualifier(descriptor)+":") ) {
-                return nameElts[nameElts.length-1];
-            }
-            // Intentionally no break to throw exception if app name doesn't match
-        default:
-            throw nameFormatException(descriptor);
+        var delim = delimiterMixin.getDelimiter();
+        var qualifierPrefix = descriptor.getQualifierPrefix(delim);
+        var result = !potentialQualifiedName.startsWith(qualifierPrefix)
+                ? potentialQualifiedName
+                : potentialQualifiedName.substring(qualifierPrefix.length());
+        if ( result.contains(delim) ) {
+            throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s<new name>, current: %s", qualifierPrefix, potentialQualifiedName));
         }
-    }
-    
-    private RuntimeException nameFormatException(FoDReleaseDescriptor descriptor) {
-        String qualifier = getReleaseQualifier(descriptor);
-        return new IllegalArgumentException(String.format("--name option must contain either a plain name or %s:<new name>", qualifier)); 
-    }
-
-    private String getReleaseQualifier(FoDReleaseDescriptor descriptor) {
-        var msName = descriptor.getMicroserviceName();
-        String qualifier = descriptor.getApplicationName();
-        if ( StringUtils.isNotBlank(msName) ) {
-            qualifier += ":"+msName;
-        }
-        return qualifier;
+        return result;
     }
 
     @Override

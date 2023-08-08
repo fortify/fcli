@@ -55,4 +55,10 @@ public class FoDReleaseDescriptor extends JsonNodeHolder {
                 ? String.format("%s:%s", applicationName, releaseName)
                 : String.format("%s:%s:%s", applicationName, microserviceName, releaseName);
     }
+    
+    @JsonIgnore
+    public String getQualifierPrefix(String delimiter) {
+        var msQualifierPrefix = StringUtils.isBlank(microserviceName) ? "" : (microserviceName+delimiter);
+        return applicationName+delimiter+msQualifierPrefix;
+    }
 }

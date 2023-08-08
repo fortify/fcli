@@ -42,4 +42,9 @@ public class SSCAppVersionDescriptor extends JsonNodeHolder {
     public String getAppAndVersionName() {
         return applicationName+":"+versionName;
     }
+    
+    @JsonIgnore
+    public String getQualifierPrefix(String delimiter) {
+        return applicationName+delimiter;
+    }
 }

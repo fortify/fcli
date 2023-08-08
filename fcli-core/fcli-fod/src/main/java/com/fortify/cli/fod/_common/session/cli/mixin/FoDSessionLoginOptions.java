@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.fod._common.session.cli.mixin;
 
+import java.net.URI;
 import java.util.Optional;
 
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
@@ -21,23 +22,23 @@ import com.fortify.cli.fod._common.session.helper.oauth.IFoDClientCredentials;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserCredentials;
 
 import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 public class FoDSessionLoginOptions {
-    @ArgGroup(exclusive = false, multiplicity = "1", order = 1)
-    @Getter private UrlConfigOptions urlConfigOptions = new UrlConfigOptions();
+    @Mixin @Getter private FoDUrlConfigOptions urlConfigOptions = new FoDUrlConfigOptions();
     
     @ArgGroup(exclusive = false, multiplicity = "1", order = 2)
     @Getter private FoDAuthOptions authOptions = new FoDAuthOptions();
     
-    public String[] getScopes() {
-        return new String[]{"api-tenant"}; // TODO make scopes configurable
-    }
-    
     public static class FoDAuthOptions {
         @ArgGroup(exclusive = true, multiplicity = "1", order = 3)
         @Getter private FoDCredentialOptions credentialOptions = new FoDCredentialOptions();
+        @Option(names="--scopes", defaultValue="api-tenant", split=",")
+        @Getter private String[] scopes;
     }
     
     public static class FoDCredentialOptions {
@@ -80,5 +81,19 @@ public class FoDSessionLoginOptions {
         return clientCredentialOptions!=null
                 && StringUtils.isNotBlank(clientCredentialOptions.getClientId())
                 && StringUtils.isNotBlank(clientCredentialOptions.getClientSecret());
+    }
+    
+    @Command
+    public static final class FoDUrlConfigOptions extends UrlConfigOptions {
+        @Override @SneakyThrows
+        public String getUrl() {
+            var baseUrl = super.getUrl();
+            var uri = new URI(baseUrl);
+            if ( !uri.getHost().startsWith("api.") ) {
+                uri = new URI(uri.getScheme(), uri.getUserInfo(), "api."+uri.getHost(), uri.getPort(), 
+                        uri.getPath(), uri.getQuery(), uri.getFragment());
+            }
+            return uri.toString();
+        }
     }
 }

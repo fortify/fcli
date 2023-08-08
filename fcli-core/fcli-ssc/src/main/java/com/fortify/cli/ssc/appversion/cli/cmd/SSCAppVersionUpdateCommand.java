@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -120,18 +121,14 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     
     private String getUnqualifiedVersionName(String potentialQualifiedName, SSCAppVersionDescriptor descriptor) {
         if ( StringUtils.isBlank(potentialQualifiedName) ) { return null; }
-        String delim = appVersionResolver.getDelimiterMixin().getDelimiter();
-        var nameElts = potentialQualifiedName.split(delim);
-        switch ( nameElts.length ) {
-        case 0: return null; // Shouldn't happen because of blank check above...
-        case 1: return nameElts[0];
-        case 2: 
-            if ( nameElts[0].equals(descriptor.getApplicationName()) ) {
-                return nameElts[1];
-            } 
-            // Intentionally no break to throw exception if app name doesn't match 
-        default:
-            throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s:<new name>", descriptor.getApplicationName()));
+        var delim = appVersionResolver.getDelimiterMixin().getDelimiter();
+        var qualifierPrefix = descriptor.getQualifierPrefix(delim);
+        var result = !potentialQualifiedName.startsWith(qualifierPrefix)
+                ? potentialQualifiedName
+                : potentialQualifiedName.substring(qualifierPrefix.length());
+        if ( result.contains(delim) ) {
+            throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s<new name>, current: %s", qualifierPrefix, potentialQualifiedName));
         }
+        return result;
     }
 }
