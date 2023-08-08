@@ -51,8 +51,6 @@ dependencies {
 	implementation('hu.webarticum:tree-printer')
 	implementation('com.github.freva:ascii-table')
 	
-	//implementation 'javax.validation:validation-api'
-	
 	// Encryption library
 	implementation('org.jasypt:jasypt')
 	

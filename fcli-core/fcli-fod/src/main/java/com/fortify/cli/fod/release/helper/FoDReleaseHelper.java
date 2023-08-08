@@ -13,8 +13,6 @@
 
 package com.fortify.cli.fod.release.helper;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -67,7 +65,7 @@ public class FoDReleaseHelper {
                 .queryString("scanType", scanType.name());
         JsonNode assessmentTypes = request.asObject(ObjectNode.class).getBody().get("items");
         if (failIfNotFound && assessmentTypes.size() == 0) {
-            throw new ValidationException("No assessment types found for release id: " + relId);
+            throw new IllegalStateException("No assessment types found for release id: " + relId);
         }
         return JsonHelper.treeToValue(assessmentTypes, FoDReleaseAssessmentTypeDescriptor[].class);
     }
@@ -83,7 +81,7 @@ public class FoDReleaseHelper {
                 .queryString("filters", filterString);
         JsonNode assessmentTypes = request.asObject(ObjectNode.class).getBody().get("items");
         if (failIfNotFound && assessmentTypes.size() == 0) {
-            throw new ValidationException("No assessment types found for release id: " + relId);
+            throw new IllegalStateException("No assessment types found for release id: " + relId);
         }
         return JsonHelper.treeToValue(assessmentTypes, FoDReleaseAssessmentTypeDescriptor.class);
     }

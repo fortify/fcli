@@ -17,8 +17,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
-import javax.validation.ValidationException;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -94,7 +92,7 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                         progressWriter.writeWarning("Cancelling scans automatically is not currently supported.");
                     }
                 } else {
-                    throw new ValidationException("A dynamic scan with id '" + "" + releaseDescriptor.getCurrentDynamicScanId() +
+                    throw new IllegalStateException("A dynamic scan with id '" + "" + releaseDescriptor.getCurrentDynamicScanId() +
                             "' is already in progress for release: " + releaseDescriptor.getQualifiedName());
                 }
             }
@@ -103,7 +101,7 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
             // get current setup and check if its valid
             FoDDastScanSetupDescriptor currentSetup = FoDDastScanHelper.getSetupDescriptor(unirest, relId);
             if (StringUtils.isBlank(currentSetup.getDynamicSiteURL())) {
-                throw new ValidationException("The dynamic scan configuration for release with id '" + relId +
+                throw new IllegalStateException("The dynamic scan configuration for release with id '" + relId +
                         "' has not been setup correctly - 'Dynamic Site URL' is missing or empty.");
             }
 
@@ -134,7 +132,7 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
             }
 
             if (entitlementToUse.getEntitlementId() == null || entitlementToUse.getEntitlementId() <= 0) {
-                throw new ValidationException("Could not find a valid FoD entitlement to use.");
+                throw new IllegalStateException("Could not find a valid FoD entitlement to use.");
             }
 
             String startDateStr = (startDate == null || startDate.isEmpty())

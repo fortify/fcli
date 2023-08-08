@@ -12,11 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -57,7 +53,6 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     private String name;
     @Option(names={"--description","-d"}, required = false)
     private String description;
-    private static final List<String> regexSpecialChars = Arrays.asList(new String[] {"|","+","*","?","^","$","(",")","[","]","{","}","\\"});
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -102,7 +97,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     
     private final HttpRequest<?> getAppVersionUpdateRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
         ObjectNode updateData = (ObjectNode)descriptor.asJsonNode();
-        boolean hasUpdate = optionalUpdate(updateData, "name", name);
+        boolean hasUpdate = optionalUpdate(updateData, "name", getPlainVersionName(name, descriptor));
         hasUpdate |= optionalUpdate(updateData, "description", description);
         hasUpdate |= optionalUpdate(updateData, issueTemplateResolver.getIssueTemplateDescriptor(unirest));
         return hasUpdate 
@@ -112,28 +107,8 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     
     private boolean optionalUpdate(ObjectNode updateData, String name, String value) {
         if ( StringUtils.isBlank(value) ) { return false; }
-        if(name.equals("name")) {
-            value = verifyUpdatedNameData(updateData, value);
-        }
         updateData.put(name, value);
         return true;
-    }
-    
-    private String verifyUpdatedNameData(ObjectNode updateData, String value) {
-        String delim = appVersionResolver.getDelimiterMixin().getDelimiter();
-        if(regexSpecialChars.contains(delim)) {
-            delim = "\\" + delim;
-        }
-        Pattern appAndVersionNamePattern = Pattern.compile("^([a-zA-Z0-9_\\-]*)" + delim + "([a-zA-Z0-9_\\-]*)$");
-        Matcher matcher = appAndVersionNamePattern.matcher(value);
-        if(matcher.matches()) {
-            if(matcher.group(1).equals(updateData.get("project").get("name").asText())) {
-                return matcher.group(2);
-            } else {
-                throw new IllegalArgumentException("If the --name parameter is provided in <application><delim><version> format the application must match the name of the application referenced in the appVersionNameOrId parameter");
-            }
-        }
-        return value;
     }
     
     private boolean optionalUpdate(ObjectNode updateData, SSCIssueTemplateDescriptor descriptor) {
@@ -141,5 +116,22 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
         updateData.put("issueTemplateId", descriptor.getId());
         updateData.put("issueTemplateName", descriptor.getName());
         return true;
+    }
+    
+    private String getPlainVersionName(String potentialQualifiedName, SSCAppVersionDescriptor descriptor) {
+        if ( StringUtils.isBlank(potentialQualifiedName) ) { return null; }
+        String delim = appVersionResolver.getDelimiterMixin().getDelimiter();
+        var nameElts = potentialQualifiedName.split(delim);
+        switch ( nameElts.length ) {
+        case 0: return null; // Shouldn't happen because of blank check above...
+        case 1: return nameElts[0];
+        case 2: 
+            if ( nameElts[0].equals(descriptor.getApplicationName()) ) {
+                return nameElts[1];
+            } 
+            // Intentially no break to throw exception if app name doesn't match 
+        default:
+            throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s:<new name>", descriptor.getApplicationName()));
+        }
     }
 }
