@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.160528-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230808.164855-dev_develop" %}
 
 
 <div id="header">
@@ -41,12 +41,12 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod session login</strong> [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] [[<strong>-h</strong>]
+<p><strong>fcli fod session login</strong> [<strong>-k</strong>] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <strong>--url</strong>=<em>&lt;url&gt;</em> [[<strong>-h</strong>]
                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                       [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] (<strong>--url</strong>=<em>&lt;url&gt;</em> [<strong>-k</strong>])
-                       </p>
+                       [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] ([<strong>--scopes</strong>=<em>&lt;scopes&gt;</em>[,
+                       <em>&lt;scopes&gt;</em>&#8230;&#8203;]]&#8230;&#8203; <strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>]                        <strong>-t</strong>=<em>&lt;tenant&gt;</em>) | (<strong>--client-id</strong>=<em>&lt;clientId&gt;</em> <strong>--client-secret</strong>                        [=<em>&lt;clientSecret&gt;</em>])</p>
 </div>
 </div>
 </div>
@@ -69,6 +69,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
 <dd>
 <p>Name for this FoD session. Default value: default.</p>
+</dd>
+<dt class="hdlist1"><strong>--scopes</strong>=<em>&lt;scopes&gt;</em>[,<em>&lt;scopes&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>FoD scopes to request. Default value: api-tenant</p>
 </dd>
 <dt class="hdlist1"><strong>-u</strong>, <strong>--user</strong>=<em>&lt;user&gt;</em></dt>
 <dd>
@@ -200,7 +204,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-08 16:07:41 UTC
+Last updated 2023-08-08 16:51:04 UTC
 </div>
 </div>
 </body>
