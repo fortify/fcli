@@ -14,6 +14,7 @@ package com.fortify.cli.ssc.artifact.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.artifact.cli.mixin.SSCArtifactResolverMixin;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
@@ -24,17 +25,28 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = SSCOutputHelperMixins.ArtifactApprove.CMD_NAME)
-public class SSCArtifactApproveCommand extends AbstractSSCArtifactOutputCommand implements IJsonNodeSupplier {
+public class SSCArtifactApproveCommand extends AbstractSSCArtifactOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.ArtifactApprove outputHelper; 
     @Mixin private SSCArtifactResolverMixin.PositionalParameter artifactResolver;
     @Option(names = {"-m", "--message"}, defaultValue = "Approved through fcli")
     private String message;
+    private boolean approvalNeeded = false;
     
     @Override
     public JsonNode getJsonNode() {
         var unirest = getUnirestInstance();
-        SSCArtifactHelper.approve(unirest, artifactResolver.getArtifactId(unirest), message);
-        return artifactResolver.getArtifactDescriptor(unirest).asJsonNode();
+        var descriptor = artifactResolver.getArtifactDescriptor(unirest).asJsonNode();
+        if(descriptor.get("allowApprove")!=null && descriptor.get("allowApprove").asBoolean() == true) {
+            approvalNeeded = true;
+            SSCArtifactHelper.approve(unirest, artifactResolver.getArtifactId(unirest), message);
+            return artifactResolver.getArtifactDescriptor(unirest).asJsonNode();
+        } 
+        return descriptor;
+    }
+
+    @Override
+    public String getActionCommandResult() {
+        return approvalNeeded ? "APPROVED" : "NO_APPROVAL_NEEDED";
     }
     
     @Override
