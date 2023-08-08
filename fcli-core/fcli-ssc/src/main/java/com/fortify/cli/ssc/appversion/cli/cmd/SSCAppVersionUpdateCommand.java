@@ -131,7 +131,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
             } 
             // Intentionally no break to throw exception if app name doesn't match 
         default:
-            throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s:<new name>", descriptor.getApplicationName()));
+            throw new IllegalArgumentException(String.format("--name option must contain either a plain name or %s%s<new name>, current: %s", descriptor.getApplicationName(), delim, potentialQualifiedName));
         }
     }
 }
