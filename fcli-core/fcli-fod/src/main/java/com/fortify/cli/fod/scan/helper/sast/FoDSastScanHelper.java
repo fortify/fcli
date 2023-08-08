@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
 import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod._common.util.FoDEnums;
@@ -27,7 +28,6 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
-import com.fortify.cli.fod.scan.helper.FoDStartScan;
 
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
@@ -70,9 +70,8 @@ public class FoDSastScanHelper extends FoDScanHelper {
             String truncatedNotes = abbreviateString(req.getNotes(), FoDConstants.MAX_NOTES_LENGTH);
             request = request.queryString("notes", truncatedNotes);
         }
-        FoDStartScan startScan = new FoDStartScan(unirest, relId, request, scanFile);
-        startScan.setChunkSize(chunkSize);
-        FoDUploadResponse startScanResponse = startScan.upload();
+        JsonNode uploadResponse = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile);
+        FoDUploadResponse startScanResponse = JsonHelper.treeToValue(uploadResponse, FoDUploadResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new RuntimeException("Unable to retrieve scan id from response when starting Static scan.");
         }

@@ -47,17 +47,8 @@ public class FoDOutputHelperMixins {
         public static final String CMD_NAME = "start-mobile";
     }
 
-     public static class ImportSast extends OutputHelperMixins.TableNoQuery {
-        public static final String CMD_NAME = "import-sast";
-    }
-     public static class ImportDast extends OutputHelperMixins.TableNoQuery {
-        public static final String CMD_NAME = "import-dast";
-    }
-     public static class ImportOss extends OutputHelperMixins.TableNoQuery {
-        public static final String CMD_NAME = "import-oss";
-    }
-     public static class ImportMobile extends OutputHelperMixins.TableNoQuery {
-        public static final String CMD_NAME = "import-mobile";
+    public static class ImportScan extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "import-scan";
     }
 
     public static class Lookup extends OutputHelperMixins.TableWithQuery {

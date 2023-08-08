@@ -15,6 +15,7 @@ package com.fortify.cli.fod._common.rest.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
+import com.fortify.cli.common.rest.unirest.URIHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.PagedList;
@@ -35,7 +36,7 @@ public class FoDPagingHelper {
                 int limit = body.get("limit").asInt();
                 int newOffset = offset + limit;
                 if (newOffset < totalCount) {
-                    return PagingHelper.addOrReplaceParam(uri, "offset", newOffset);
+                    return URIHelper.addOrReplaceParam(uri, "offset", newOffset);
                 }
                 return null;
             }
