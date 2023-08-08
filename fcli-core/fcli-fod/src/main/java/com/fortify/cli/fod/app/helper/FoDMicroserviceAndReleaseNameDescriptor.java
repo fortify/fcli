@@ -13,6 +13,8 @@
 
 package com.fortify.cli.fod.app.helper;
 
+import java.util.regex.Pattern;
+
 import lombok.Data;
 
 @Data
@@ -20,7 +22,7 @@ public final class FoDMicroserviceAndReleaseNameDescriptor {
     private final String microserviceName, releaseName;
     
     public static final FoDMicroserviceAndReleaseNameDescriptor fromMicroserviceAndReleaseName(String microserviceAndReleaseName, String delimiter) {
-        String[] elts = microserviceAndReleaseName.split(delimiter);
+        String[] elts = microserviceAndReleaseName.split(Pattern.quote(delimiter));
         switch ( elts.length ) {
         case 2: return new FoDMicroserviceAndReleaseNameDescriptor(elts[0], elts[1]);
         case 1: return new FoDMicroserviceAndReleaseNameDescriptor(null, elts[0]);

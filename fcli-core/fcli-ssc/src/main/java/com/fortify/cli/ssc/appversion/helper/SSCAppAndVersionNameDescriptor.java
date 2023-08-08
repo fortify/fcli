@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.helper;
 
+import java.util.regex.Pattern;
+
 import lombok.Data;
 
 @Data
@@ -19,7 +21,7 @@ public final class SSCAppAndVersionNameDescriptor {
     private final String appName, versionName;
     
     public static final SSCAppAndVersionNameDescriptor fromCombinedAppAndVersionName(String appAndVersionName, String delimiter) {
-        String[] appAndVersionNameArray = appAndVersionName.split(delimiter);
+        String[] appAndVersionNameArray = appAndVersionName.split(Pattern.quote(delimiter));
         if ( appAndVersionNameArray.length != 2 ) { 
             throw new IllegalArgumentException("Application and version name must be specified in the format <application name>"+delimiter+"<version name>"); 
         }
