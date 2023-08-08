@@ -28,7 +28,6 @@ import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
@@ -68,8 +67,6 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
     private String startDate;
     @Option(names = {"--notes"})
     private String notes;
-    @Option(names = {"--chunk-size"})
-    private int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
     @Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
     @Mixin private FoDEntitlementFrequencyTypeMixins.OptionalOption entitlementFrequencyTypeMixin;
@@ -116,7 +113,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
                     .scanTool(fcliProperties.getProperty("projectName", "fcli"))
                     .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
 
-            return FoDMobileScanHelper.startScan(unirest, progressWriter, releaseDescriptor, startScanRequest, scanFile, chunkSize).asJsonNode();
+            return FoDMobileScanHelper.startScan(unirest, progressWriter, releaseDescriptor, startScanRequest, scanFile).asJsonNode();
         }
     }
 

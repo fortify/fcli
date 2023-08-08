@@ -15,6 +15,7 @@ package com.fortify.cli.sc_dast._common.rest.helper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
+import com.fortify.cli.common.rest.unirest.URIHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.PagedList;
@@ -37,7 +38,7 @@ public class SCDastPagingHelper {
                 // In exceptional cases, SC-DAST may return MAXINT for limit, in which case
                 // newOffset will become negative, hence we check whether newOffset > 0
                 if (newOffset>0 && newOffset < totalCount) {
-                    return PagingHelper.addOrReplaceParam(uriString, "offset", newOffset);
+                    return URIHelper.addOrReplaceParam(uriString, "offset", newOffset);
                 }
             }
             return null;
