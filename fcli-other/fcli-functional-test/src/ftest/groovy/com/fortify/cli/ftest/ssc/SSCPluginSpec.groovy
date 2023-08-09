@@ -18,6 +18,7 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
+import com.fortify.cli.ftest._common.spec.TestResource
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 
 import spock.lang.AutoCleanup
@@ -27,14 +28,13 @@ import spock.lang.Stepwise
 
 @Prefix("ssc.plugin") @FcliSession(SSC) @Stepwise
 class SSCPluginSpec extends FcliBaseSpec {
-    @Shared
-    boolean pluginsExist = false;
+    @Shared @TestResource("runtime/shared/fortify-ssc-parser-sample-1.0.2.jar") String samplePlugin
     
-    def "list"() {
+    
+    def "listAll"() {
         def args = "ssc plugin list --store plugins"
         when:
             def result = Fcli.run(args)
-            pluginsExist = result.stdout.size()>1
         then:
             verifyAll(result.stdout) {
                 size()>=0
@@ -46,18 +46,117 @@ class SSCPluginSpec extends FcliBaseSpec {
             }
     }
     
-    def "get.byId"() {
+    def "install"() {
         
-            def args = "ssc plugin get ::plugins::get(0).id"
+            def args = "ssc plugin install -f $samplePlugin --no-auto-enable"
             when:
-                if(!pluginsExist) {return;}
                 def result = Fcli.run(args)
             then:
                 verifyAll(result.stdout) {
                     size()>0
-                    it.any { it.startsWith("pluginVersion:") }
+                    it.last().contains("INSTALLED")
                 }
     }
     
-    //TODO add tests for install, uninstall, enable, disable, get
+    def "listNewlyInstalled"() {
+        def args = "ssc plugin list --store plugin -q pluginId=='com.example.ssc.parser.sample.alternative'"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()==2
+                it[0].replace(' ', '').equals("IdPluginidPlugintypePluginnamePluginversionPluginstate")
+            }
+    }
+    
+    def "get.byId"() {
+        
+            def args = "ssc plugin get ::plugin::get(0).id"
+            when:
+                def result = Fcli.run(args)
+            then:
+                verifyAll(result.stdout) {
+                    size()>0
+                    it.any { it.equals("pluginName: \"Alternative sample parser plugin\"") }
+                    it.any { it.equals("pluginState: \"STOPPED\"") }
+                }
+    }
+    
+    def "enable"() {
+        
+            def args = "ssc plugin enable ::plugin::get(0).id"
+            when:
+                def result = Fcli.run(args)
+            then:
+                verifyAll(result.stdout) {
+                    size()>0
+                    it.any { it.contains("ENABLED") }
+                }
+    }
+    
+    def "verifyEnabled"() {
+        
+            def args = "ssc plugin get ::plugin::get(0).id"
+            when:
+                def result = Fcli.run(args)
+            then:
+                verifyAll(result.stdout) {
+                    size()>0
+                    it.any { it.equals("pluginName: \"Alternative sample parser plugin\"") }
+                    it.any { it.equals("pluginState: \"STARTED\"") }
+                }
+    }
+    
+    def "disable"() {
+        
+            def args = "ssc plugin disable ::plugin::get(0).id"
+            when:
+                def result = Fcli.run(args)
+            then:
+                verifyAll(result.stdout) {
+                    size()>0
+                    it.any { it.contains("DISABLED") }
+                }
+    }
+    
+    def "verifyDisabled"() {
+        
+            def args = "ssc plugin get ::plugin::get(0).id"
+            when:
+                def result = Fcli.run(args)
+            then:
+                verifyAll(result.stdout) {
+                    size()>0
+                    it.any { it.equals("pluginName: \"Alternative sample parser plugin\"") }
+                    it.any { it.equals("pluginState: \"STOPPED\"") }
+                }
+    }
+    
+    def "uninstall"() {
+        
+            def args = "ssc plugin uninstall ::plugin::get(0).id"
+            when:
+                def result = Fcli.run(args)
+            then:
+                verifyAll(result.stdout) {
+                    size()==2
+                    it[1].contains("UNINSTALLED")
+                }
+    }
+    
+    def "verifyUninstalled"() {
+        
+            def args = "ssc plugin list"
+            when:
+                def result = Fcli.run(args)
+            then:
+                verifyAll(result.stdout) {
+                    size()>0
+                    if(size()>1) {
+                        !it.any { it.contains("com.example.ssc.parser.sample.alternative") }
+                    } else {
+                        it[0].equals("No data")
+                    }
+                }
+    }
 }

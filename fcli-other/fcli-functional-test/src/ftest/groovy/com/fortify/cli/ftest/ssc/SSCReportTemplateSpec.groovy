@@ -18,26 +18,106 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
+import com.fortify.cli.ftest._common.spec.TestResource
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 
 import spock.lang.AutoCleanup
 import spock.lang.Requires
 import spock.lang.Shared
+import spock.lang.Stepwise
 
-@Prefix("ssc.report-template") @FcliSession(SSC) 
+@Prefix("ssc.report-template") @FcliSession(SSC) @Stepwise
 class SSCReportTemplateSpec extends FcliBaseSpec {
+    @Shared @TestResource("runtime/shared/project_report.rptdesign") String sampleTemplate
+    @Shared @TestResource("runtime/shared/ReportTemplateConfig.yml") String sampleConfig
+    private String reportName = "fcli-test-report"
     
     def "list"() {
-        def args = "ssc report-template list"
+        def args = "ssc report-template list --store reports"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
                 it[0].replace(' ', '').equals("IdNameTypeTemplatedocidInuse")
-                it.any { it.startsWith(" 1") }
+            }
+    }    
+    
+    def "create"() {
+        def args = "ssc report-template create --template $sampleTemplate --config $sampleConfig"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it.last().contains("CREATED")
             }
     }
     
-    //TODO add tests for create, get, download, generate-config, delete
+    def "generate-config"() {
+        def args = "ssc report-template generate-config -y"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it[1].contains("GENERATED")
+            }
+    }
+    
+    def "get.byName"() {
+        def args = "ssc report-template get $reportName --store report"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it[2].equals("name: \"fcli-test-report\"")
+            }
+    }
+    
+    def "get.byId"() {
+        def args = "ssc report-template get ::report::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it[2].equals("name: \"fcli-test-report\"")
+            }
+    }
+    
+    def "download"() {
+        def args = "ssc report-template download ::report::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it.last().contains("DOWNLOADED")
+            }
+    }
+    
+    def "delete"() {
+        def args = "ssc report-template delete ::report::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it.last().contains("DELETED")
+            }
+    }
+    
+    def "verifyDeleted"() {
+            def args = "ssc report-template list"
+            when:
+                def result = Fcli.run(args)
+            then:
+                verifyAll(result.stdout) {
+                    size()>0
+                    !it.any { it.contains(reportName) }
+                }
+    }
+    
 }

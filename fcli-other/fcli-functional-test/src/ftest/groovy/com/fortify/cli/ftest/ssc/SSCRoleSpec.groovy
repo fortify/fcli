@@ -19,13 +19,15 @@ import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
-
+import com.fortify.cli.ftest.ssc._common.SSCRole
 import spock.lang.AutoCleanup
 import spock.lang.Requires
 import spock.lang.Shared
+import spock.lang.Stepwise
 
-@Prefix("ssc.role") @FcliSession(SSC) 
+@Prefix("ssc.role") @FcliSession(SSC) @Stepwise
 class SSCRoleSpec extends FcliBaseSpec {
+    @Shared SSCRole role = null;
     
     def "list"() {
         def args = "ssc role list"
@@ -39,27 +41,50 @@ class SSCRoleSpec extends FcliBaseSpec {
             }
     }
     
-    def "get.byId"() {
-        def args = "ssc role get admin"
+    def "create"() {
         when:
-            def result = Fcli.run(args)
+            role = new SSCRole().create();
         then:
-            verifyAll(result.stdout) {
-                size()>0
-                it[1].equals("id: \"admin\"")
-            }
+            noExceptionThrown()
     }
     
     def "get.byName"() {
-        def args = "ssc role get Administrator"
+        def args = "ssc role get " + role.roleName + " --store role"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[1].equals("id: \"admin\"")
+                it[2].equals("name: \"" + role.roleName + "\"")
             }
     }
     
-    //TODO add tests for create, delete
+    def "get.byId"() {
+        def args = "ssc role get ::role::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[2].equals("name: \"" + role.roleName + "\"")
+            }
+    }
+    
+    def "delete"() {
+        when:
+            role.close();
+        then:
+            noExceptionThrown()
+    }
+    
+    def "verifyDeleted"() {
+        def args = "ssc role list"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                !it.any { it.contains(role.roleName) }
+            }
+    }
 }
