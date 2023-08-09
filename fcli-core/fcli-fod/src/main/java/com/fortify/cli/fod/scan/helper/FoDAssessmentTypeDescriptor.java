@@ -14,8 +14,8 @@
 package com.fortify.cli.fod.scan.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.fod.scan.helper.dast.FoDDastScanSetupDescriptor;
-import com.fortify.cli.fod.scan.helper.sast.FoDSastScanSetupDescriptor;
+import com.fortify.cli.fod.scan_setup.helper.FoDScanDastSetupDescriptor;
+import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupDescriptor;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,7 +33,7 @@ public class FoDAssessmentTypeDescriptor {
     private Integer frequencyTypeId;
     private String frequencyType;
 
-    public FoDAssessmentTypeDescriptor copyFromCurrentSetup(FoDDastScanSetupDescriptor curSetup) {
+    public FoDAssessmentTypeDescriptor copyFromCurrentSetup(FoDScanDastSetupDescriptor curSetup) {
         this.assessmentTypeId = curSetup.getAssessmentTypeId();
         this.entitlementId = curSetup.getEntitlementId();
         this.entitlementDescription = curSetup.getEntitlementDescription();
@@ -42,7 +42,7 @@ public class FoDAssessmentTypeDescriptor {
         return this;
     }
 
-    public FoDAssessmentTypeDescriptor copyFromCurrentSetup(FoDSastScanSetupDescriptor curSetup) {
+    public FoDAssessmentTypeDescriptor copyFromCurrentSetup(FoDScanSastSetupDescriptor curSetup) {
         this.assessmentTypeId = curSetup.getAssessmentTypeId();
         this.entitlementId = curSetup.getEntitlementId();
         this.entitlementDescription = curSetup.getEntitlementDescription();

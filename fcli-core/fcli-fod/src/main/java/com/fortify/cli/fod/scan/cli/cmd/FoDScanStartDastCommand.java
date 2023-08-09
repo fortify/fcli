@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan.cli.cmd.dast;
+package com.fortify.cli.fod.scan.cli.cmd;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -37,9 +37,10 @@ import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
-import com.fortify.cli.fod.scan.helper.dast.FoDDastScanHelper;
-import com.fortify.cli.fod.scan.helper.dast.FoDDastScanSetupDescriptor;
-import com.fortify.cli.fod.scan.helper.dast.FoDStartDastScanRequest;
+import com.fortify.cli.fod.scan.helper.dast.FoDScanDastHelper;
+import com.fortify.cli.fod.scan.helper.dast.FoDScanDastStartRequest;
+import com.fortify.cli.fod.scan_setup.helper.FoDScanDastSetupDescriptor;
+import com.fortify.cli.fod.scan_setup.helper.FoDScanDastSetupHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -48,7 +49,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = FoDOutputHelperMixins.StartDast.CMD_NAME)
-public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDScanStartDastCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
     @Getter @Mixin private FoDOutputHelperMixins.StartDast outputHelper;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
@@ -99,7 +100,7 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
 
             var relId = String.valueOf(releaseDescriptor.getReleaseId());
             // get current setup and check if its valid
-            FoDDastScanSetupDescriptor currentSetup = FoDDastScanHelper.getSetupDescriptor(unirest, relId);
+            FoDScanDastSetupDescriptor currentSetup = FoDScanDastSetupHelper.getSetupDescriptor(unirest, relId);
             if (StringUtils.isBlank(currentSetup.getDynamicSiteURL())) {
                 throw new IllegalStateException("The dynamic scan configuration for release with id '" + relId +
                         "' has not been setup correctly - 'Dynamic Site URL' is missing or empty.");
@@ -119,11 +120,11 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
             } else if (remediationScanType.getRemediationScanPreferenceType() != null &&
                     (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
                 // if requesting a remediation scan make we have one available
-                entitlementToUse = FoDDastScanHelper.validateRemediationEntitlement(unirest, progressWriter, relId,
+                entitlementToUse = FoDScanDastHelper.validateRemediationEntitlement(unirest, progressWriter, relId,
                         currentSetup.getEntitlementId(), FoDScanType.Dynamic);
             } else if (assessmentType != null && entitlementType.getEntitlementPreferenceType() != null) {
                 // if assessment and entitlement type are both specified, find entitlement to use
-                entitlementToUse = FoDDastScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
+                entitlementToUse = FoDScanDastHelper.getEntitlementToUse(unirest, progressWriter, relId,
                         assessmentType, entitlementType.getEntitlementPreferenceType(),
                         FoDScanType.Dynamic);
             } else {
@@ -138,7 +139,7 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
             String startDateStr = (startDate == null || startDate.isEmpty())
                     ? LocalDateTime.now().format(dtf)
                     : LocalDateTime.parse(startDate, dtf).toString();
-            FoDStartDastScanRequest startScanRequest = FoDStartDastScanRequest.builder()
+            FoDScanDastStartRequest startScanRequest = FoDScanDastStartRequest.builder()
                     .startDate(startDateStr)
                     .assessmentTypeId(entitlementToUse.getAssessmentTypeId())
                     .entitlementId(entitlementToUse.getEntitlementId())
@@ -150,7 +151,7 @@ public class FoDDastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                     .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
 
             //System.out.println(startScanRequest);
-            return FoDDastScanHelper.startScan(unirest, releaseDescriptor, startScanRequest).asJsonNode();
+            return FoDScanDastHelper.startScan(unirest, releaseDescriptor, startScanRequest).asJsonNode();
         }
     }
 

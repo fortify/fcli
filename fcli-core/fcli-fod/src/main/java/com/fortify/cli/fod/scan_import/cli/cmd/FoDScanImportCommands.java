@@ -11,25 +11,19 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan.helper.sast;
+package com.fortify.cli.fod.scan_import.cli.cmd;
 
-import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import picocli.CommandLine.Command;
 
-@Reflectable @NoArgsConstructor @AllArgsConstructor
-@Data @Builder
-public class FoDStartSastScanRequest {
-    private String entitlementPreferenceType;
-    private Boolean purchaseEntitlement;
-    private Integer entitlementId;
-    private String remdiationScanPreferenceType;
-    private String inProgressScanActionType;
-    private String scanMethodType;
-    private String scanTool;
-    private String scanToolVersion;
-    private String notes;
+@Command(name = "scan-import",
+        subcommands = {
+            FoDScanImportDastCommand.class,                
+            FoDScanImportMobileCommand.class,
+            FoDScanImportOpenSourceCommand.class,
+            FoDScanImportSastCommand.class,
+        }
+)
+public class FoDScanImportCommands extends AbstractContainerCommand {
 }

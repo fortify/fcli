@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan.cli.cmd.mobile;
+package com.fortify.cli.fod.scan.cli.cmd;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -38,8 +38,8 @@ import com.fortify.cli.fod.scan.helper.FoDAssessmentType;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
-import com.fortify.cli.fod.scan.helper.mobile.FoDMobileScanHelper;
-import com.fortify.cli.fod.scan.helper.mobile.FoDStartMobileScanRequest;
+import com.fortify.cli.fod.scan.helper.mobile.FoDScanMobileHelper;
+import com.fortify.cli.fod.scan.helper.mobile.FoDScanMobileStartRequest;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -48,7 +48,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = FoDOutputHelperMixins.StartMobile.CMD_NAME)
-public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDScanStartMobileCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
     @Getter @Mixin private FoDOutputHelperMixins.StartMobile outputHelper;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
@@ -101,7 +101,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
                     ? LocalDateTime.now().format(dtf)
                     : LocalDateTime.parse(startDate, dtf).toString();
 
-            FoDStartMobileScanRequest startScanRequest = FoDStartMobileScanRequest.builder()
+            FoDScanMobileStartRequest startScanRequest = FoDScanMobileStartRequest.builder()
                     .startDate(startDateStr)
                     .assessmentTypeId(entitlementToUse.getAssessmentTypeId())
                     .entitlementId(entitlementToUse.getEntitlementId())
@@ -113,7 +113,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
                     .scanTool(fcliProperties.getProperty("projectName", "fcli"))
                     .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
 
-            return FoDMobileScanHelper.startScan(unirest, progressWriter, releaseDescriptor, startScanRequest, scanFile).asJsonNode();
+            return FoDScanMobileHelper.startScan(unirest, progressWriter, releaseDescriptor, startScanRequest, scanFile).asJsonNode();
         }
     }
 
@@ -148,7 +148,7 @@ public class FoDMobileScanStartCommand extends AbstractFoDJsonNodeOutputCommand 
         // if assessment and entitlement type are both specified, find entitlement to use
         FoDAssessmentType assessmentType = FoDAssessmentType.valueOf(String.valueOf(mobileAssessmentType));
         FoDEnums.EntitlementPreferenceType entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.fromInt(entitlementFrequencyTypeMixin.getEntitlementFrequencyType().getValue());
-        entitlementToUse = FoDMobileScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
+        entitlementToUse = FoDScanMobileHelper.getEntitlementToUse(unirest, progressWriter, relId,
                 assessmentType, entitlementPreferenceType,
                 FoDScanType.Mobile);
 

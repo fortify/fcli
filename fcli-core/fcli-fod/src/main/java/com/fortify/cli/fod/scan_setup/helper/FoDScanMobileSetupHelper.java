@@ -11,24 +11,20 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan.helper.dast;
+package com.fortify.cli.fod.scan_setup.helper;
 
-import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.fod._common.rest.FoDUrls;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import kong.unirest.UnirestInstance;
 
-@Reflectable @NoArgsConstructor
-@Data @ToString
-@EqualsAndHashCode(callSuper=false)
-public class FoDDastScanSetupDescriptor extends JsonNodeHolder {
-    private Integer assessmentTypeId;
-    private Integer entitlementId;
-    private String entitlementDescription;
-    private String entitlementFrequencyType;
-    private Integer entitlementFrequencyTypeId;
-    private String dynamicSiteURL;
+public class FoDScanMobileSetupHelper {
+    public static final FoDScanMobileSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
+        var body = unirest.get(FoDUrls.MOBILE_SCANS + "/scan-setup")
+                .routeParam("relId", relId)
+                .asObject(ObjectNode.class)
+                .getBody();
+        return JsonHelper.treeToValue(body, FoDScanMobileSetupDescriptor.class);
+    }
 }
