@@ -17,7 +17,7 @@ import com.fortify.cli.ftest._common.Fcli
 public class SSCUser implements Closeable, AutoCloseable {
     private final String random = System.currentTimeMillis()
     private final String fcliVariableName = "ssc_user_"+random
-    private final String userName = "fcli-temp-user"
+    private final String userName = "fcli-temp-user"+random
     
     public SSCUser create() {
         Fcli.run("ssc user create --username $userName" + 

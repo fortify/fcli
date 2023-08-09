@@ -17,7 +17,7 @@ import com.fortify.cli.ftest._common.Fcli
 public class SSCRole implements Closeable, AutoCloseable {
     private final String random = System.currentTimeMillis()
     private final String fcliVariableName = "ssc_role_"+random
-    private final String roleName = "fcli-temp-role"
+    private final String roleName = "fcli-temp-role"+random
     
     public SSCRole create() {
         Fcli.run("ssc role create $roleName" + 

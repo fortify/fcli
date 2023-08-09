@@ -19,6 +19,7 @@ import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
+import com.fortify.cli.ftest._common.Fcli.UnexpectedFcliResultException
 
 import spock.lang.AutoCleanup
 import spock.lang.Requires
@@ -27,7 +28,8 @@ import spock.lang.Stepwise
 
 @Prefix("ssc.user") @FcliSession(SSC) @Stepwise
 class SSCUserSpec extends FcliBaseSpec {
-    
+    private final String random = System.currentTimeMillis()
+    private final String userName = "fcliTemporaryTestuser"+random
     def "list"() {
         def args = "ssc user list --store users"
         when:
@@ -42,13 +44,13 @@ class SSCUserSpec extends FcliBaseSpec {
     
     def "create"() {
         Fcli.run("ssc role list --store roles")
-        def args = "ssc user create --username fcliTemporaryTestuser --password P@ssW._ord123 -pne --firstname fName --lastname lName --email mail@mail.mail --roles ::roles::get(0).id --store user"
+        def args = "ssc user create --username $userName --password P@ssW._ord123 --pne --suspend --rpc --firstname fName --lastname lName --email mail@mail.mail --roles ::roles::get(0).id --store user"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].equals("userName: \"fclitemporarytestuser\"")
+                it[2].equals("userName: \"" + userName + "\"")
                 it[3].equals("firstName: \"fName\"")
                 it[4].equals("lastName: \"lName\"")
                 it[5].equals("email: \"mail@mail.mail\"")
@@ -63,7 +65,7 @@ class SSCUserSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[3].equals("entityName: \"fclitemporarytestuser\"")
+                it[3].equals("entityName: \"" + userName + "\"")
             }
     }
     
@@ -74,7 +76,7 @@ class SSCUserSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[3].equals("entityName: \"fclitemporarytestuser\"")
+                it[3].equals("entityName: \"" + userName + "\"")
             }
     }
     
@@ -85,7 +87,7 @@ class SSCUserSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[3].equals("entityName: \"fclitemporarytestuser\"")
+                it[3].equals("entityName: \"" + userName + "\"")
             }
     }
     
@@ -107,7 +109,7 @@ class SSCUserSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                !it.any { it.contains("fclitemporarytestuser") }
+                !it.any { it.contains(userName) }
             }
     }
 }

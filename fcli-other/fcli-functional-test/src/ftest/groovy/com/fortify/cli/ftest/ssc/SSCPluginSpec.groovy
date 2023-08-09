@@ -48,7 +48,7 @@ class SSCPluginSpec extends FcliBaseSpec {
     
     def "install"() {
         
-            def args = "ssc plugin install -f $samplePlugin --no-auto-enable"
+            def args = "ssc plugin install -f $samplePlugin"
             when:
                 def result = Fcli.run(args)
             then:
@@ -67,6 +67,18 @@ class SSCPluginSpec extends FcliBaseSpec {
                 size()==2
                 it[0].replace(' ', '').equals("IdPluginidPlugintypePluginnamePluginversionPluginstate")
             }
+    }
+    
+    def "disable"() {
+        
+            def args = "ssc plugin disable ::plugin::get(0).id"
+            when:
+                def result = Fcli.run(args)
+            then:
+                verifyAll(result.stdout) {
+                    size()>0
+                    it.any { it.contains("DISABLED") }
+                }
     }
     
     def "get.byId"() {
@@ -104,18 +116,6 @@ class SSCPluginSpec extends FcliBaseSpec {
                     size()>0
                     it.any { it.equals("pluginName: \"Alternative sample parser plugin\"") }
                     it.any { it.equals("pluginState: \"STARTED\"") }
-                }
-    }
-    
-    def "disable"() {
-        
-            def args = "ssc plugin disable ::plugin::get(0).id"
-            when:
-                def result = Fcli.run(args)
-            then:
-                verifyAll(result.stdout) {
-                    size()>0
-                    it.any { it.contains("DISABLED") }
                 }
     }
     

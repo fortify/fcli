@@ -19,6 +19,7 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
@@ -29,12 +30,26 @@ public class SSCUserCreateRequest {
     private String email;
     private String firstName;
     private String lastName;
-    private ArrayList<SSCRoleObject> roles;
+    @Builder.Default
+    private ArrayList<SSCRoleObject> roles = new ArrayList<SSCRoleObject>();
     @Builder.Default
     private Boolean passwordNeverExpires = false;
     @Builder.Default
     private Boolean requirePasswordChange = false;
     @Builder.Default
     private Boolean suspended = false;
+    
+    public void addRoles(ArrayList<String> rolesToAdd) {
+        if(rolesToAdd!=null) {
+            rolesToAdd.forEach((n) -> roles.add(new SSCRoleObject(n)));
+        }
+    }
+    
+    public class SSCRoleObject {
+        @Getter private String id;
+        public SSCRoleObject(String id) {
+            this.id = id;
+        }
+    }
 }
 
