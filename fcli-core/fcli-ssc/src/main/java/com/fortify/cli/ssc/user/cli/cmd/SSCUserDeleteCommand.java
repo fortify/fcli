@@ -51,7 +51,7 @@ public class SSCUserDeleteCommand extends AbstractSSCJsonNodeOutputCommand imple
             throw new IllegalArgumentException("No matching users found for deletion");
         }
         String authEntityIdsToDelete = JsonHelper.stream(authEntitiesToDelete).map(this::getAuthEntityId).collect(Collectors.joining(","));
-        unirest.delete(SSCUrls.AUTH_ENTITIES).queryString("ids", authEntityIdsToDelete).asEmpty().getBody();
+        unirest.delete(SSCUrls.AUTH_ENTITIES).queryString("ids", authEntityIdsToDelete).asObject(JsonNode.class).getBody();
         return authEntitiesToDelete;
     }
     

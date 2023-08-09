@@ -33,7 +33,7 @@ public class SSCReportTemplateDeleteCommand extends AbstractSSCJsonNodeOutputCom
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCReportTemplateDescriptor descriptor = reportTemplateResolver.getReportTemplateDescriptor(unirest);
-        unirest.delete(SSCUrls.REPORT_DEFINITION(descriptor.getId()));
+        unirest.delete(SSCUrls.REPORT_DEFINITION(descriptor.getId())).asObject(JsonNode.class).getBody();
         return descriptor.asJsonNode();
     }
     

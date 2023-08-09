@@ -81,6 +81,19 @@ class SSCPluginSpec extends FcliBaseSpec {
                 }
     }
     
+    def "verifyDisabled"() {
+        
+            def args = "ssc plugin get ::plugin::get(0).id"
+            when:
+                def result = Fcli.run(args)
+            then:
+                verifyAll(result.stdout) {
+                    size()>0
+                    it.any { it.equals("pluginName: \"Alternative sample parser plugin\"") }
+                    it.any { it.equals("pluginState: \"STOPPED\"") }
+                }
+    }
+    
     def "get.byId"() {
         
             def args = "ssc plugin get ::plugin::get(0).id"
@@ -116,19 +129,6 @@ class SSCPluginSpec extends FcliBaseSpec {
                     size()>0
                     it.any { it.equals("pluginName: \"Alternative sample parser plugin\"") }
                     it.any { it.equals("pluginState: \"STARTED\"") }
-                }
-    }
-    
-    def "verifyDisabled"() {
-        
-            def args = "ssc plugin get ::plugin::get(0).id"
-            when:
-                def result = Fcli.run(args)
-            then:
-                verifyAll(result.stdout) {
-                    size()>0
-                    it.any { it.equals("pluginName: \"Alternative sample parser plugin\"") }
-                    it.any { it.equals("pluginState: \"STOPPED\"") }
                 }
     }
     

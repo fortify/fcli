@@ -24,7 +24,6 @@ import com.fortify.cli.ssc.user.helper.SSCUserCreateRequest;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
