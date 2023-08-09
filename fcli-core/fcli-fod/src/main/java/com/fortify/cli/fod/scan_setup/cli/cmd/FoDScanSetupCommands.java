@@ -11,22 +11,19 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.release.cli.cmd;
+package com.fortify.cli.fod.scan_setup.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
-import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
-import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
-@CommandLine.Command(name = "release",
+@Command(name = "scan-setup",
         subcommands = {
-                FoDReleaseCreateCommand.class,
-                FoDReleaseListCommand.class,
-                FoDReleaseGetCommand.class,
-                FoDReleaseUpdateCommand.class,
-                FoDReleaseDeleteCommand.class
+                FoDScanSetupGetDastCommand.class,
+                // FoDScanSetupGetMobileCommand.class, // Currently not supported by FoD API
+                FoDScanSetupGetSastCommand.class,
+                FoDScanSetupSastCommand.class,
         }
 )
-@DefaultVariablePropertyName("releaseId")
-public class FoDReleaseCommands extends AbstractContainerCommand {
+public class FoDScanSetupCommands extends AbstractContainerCommand {
 }

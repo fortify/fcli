@@ -24,13 +24,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
-import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
-import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
@@ -120,20 +118,12 @@ public class FoDScanHelper {
         }
     }
 
-    public static final FoDScanDescriptor getScanDescriptor(UnirestInstance unirest, String scanId) throws FoDScanNotFoundException {
-        try {
-            HttpResponse<ObjectNode> response = unirest.get(FoDUrls.SCAN + "/summary")
-                    .routeParam("scanId", scanId).asObject(ObjectNode.class);
-            if (response.isSuccess()) {
-                JsonNode scan = response.getBody();
-                return scan == null ? null : getDescriptor(scan);
-            }
-        } catch (UnexpectedHttpResponseException ex) {
-            if (ex.getMessage().contains("404 Not Found")) {
-                throw new FoDScanNotFoundException("Could not retrieve scan with id: " + scanId);
-            }
-        }
-        return null;
+    public static final FoDScanDescriptor getScanDescriptor(UnirestInstance unirest, String scanId) {
+        var result = unirest.get(FoDUrls.SCAN + "/summary")
+                    .routeParam("scanId", scanId)
+                    .asObject(ObjectNode.class)
+                    .getBody();
+        return getDescriptor(result);
     }
 
     public static final FoDScanDescriptor getLatestScanDescriptor(UnirestInstance unirest, String relId,

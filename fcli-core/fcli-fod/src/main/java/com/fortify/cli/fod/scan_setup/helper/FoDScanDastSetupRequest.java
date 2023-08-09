@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan.helper.dast;
+package com.fortify.cli.fod.scan_setup.helper;
 
 import java.util.ArrayList;
 
@@ -26,7 +26,7 @@ import lombok.ToString;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Getter @ToString @Builder
-public class FoDSetupDastScanRequest {
+public class FoDScanDastSetupRequest {
 
     @Reflectable @NoArgsConstructor
     @Getter @ToString

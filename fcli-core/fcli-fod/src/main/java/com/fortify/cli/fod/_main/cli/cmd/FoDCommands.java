@@ -19,6 +19,8 @@ import com.fortify.cli.fod.microservice.cli.cmd.FoDMicroserviceCommands;
 import com.fortify.cli.fod.release.cli.cmd.FoDReleaseCommands;
 import com.fortify.cli.fod.rest.cli.cmd.FoDRestCommands;
 import com.fortify.cli.fod.scan.cli.cmd.FoDScanCommands;
+import com.fortify.cli.fod.scan_import.cli.cmd.FoDScanImportCommands;
+import com.fortify.cli.fod.scan_setup.cli.cmd.FoDScanSetupCommands;
 import com.fortify.cli.fod.user.cli.cmd.FoDUserCommands;
 import com.fortify.cli.fod.user_group.cli.cmd.FoDUserGroupCommands;
 
@@ -41,6 +43,8 @@ import picocli.CommandLine.Command;
                 FoDReleaseCommands.class,
                 FoDMicroserviceCommands.class,
                 FoDScanCommands.class,
+                FoDScanImportCommands.class,
+                FoDScanSetupCommands.class,
                 FoDUserCommands.class,
                 FoDUserGroupCommands.class,
                 FoDRestCommands.class,

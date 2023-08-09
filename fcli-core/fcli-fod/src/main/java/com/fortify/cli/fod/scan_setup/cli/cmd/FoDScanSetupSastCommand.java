@@ -11,13 +11,15 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan.cli.cmd.sast;
+package com.fortify.cli.fod.scan_setup.cli.cmd;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
@@ -33,9 +35,10 @@ import com.fortify.cli.fod.scan.helper.FoDAssessmentType;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
-import com.fortify.cli.fod.scan.helper.sast.FoDSastScanHelper;
-import com.fortify.cli.fod.scan.helper.sast.FoDSastScanSetupDescriptor;
-import com.fortify.cli.fod.scan.helper.sast.FoDSetupSastScanRequest;
+import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
+import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupDescriptor;
+import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupHelper;
+import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupRequest;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -44,7 +47,8 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = FoDOutputHelperMixins.SetupSast.CMD_NAME)
-public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+@DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
+public class FoDScanSetupSastCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.SetupSast outputHelper;
     
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
@@ -84,7 +88,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
 
             // TODO Unused variable
             // get current setup
-            FoDSastScanSetupDescriptor currentSetup = FoDSastScanHelper.getSetupDescriptor(unirest, relId);
+            FoDScanSastSetupDescriptor currentSetup = FoDScanSastHelper.getSetupDescriptor(unirest, relId);
 
             // find/check out assessment type id
             //FoDScanTypeOptions.FoDScanType scanType = assessmentType.getAssessmentType().toScanType();
@@ -141,7 +145,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 //System.out.println("languageLevelId = " + languageLevelId);
             }
 
-            FoDSetupSastScanRequest setupSastScanRequest = FoDSetupSastScanRequest.builder()
+            FoDScanSastSetupRequest setupSastScanRequest = FoDScanSastSetupRequest.builder()
                 .entitlementId(entitlementIdToUse)
                 .assessmentTypeId(assessmentTypeId)
                 .entitlementFrequencyType(entitlementFrequencyTypeMixin.getEntitlementFrequencyType().name())
@@ -152,7 +156,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 .includeThirdPartyLibraries(includeThirdPartyLibraries)
                 .useSourceControl(useSourceControl).build();
 
-            return FoDSastScanHelper.setupScan(unirest, releaseDescriptor, setupSastScanRequest).asJsonNode();
+            return FoDScanSastSetupHelper.setupScan(unirest, releaseDescriptor, setupSastScanRequest).asJsonNode();
         }
     }
 
