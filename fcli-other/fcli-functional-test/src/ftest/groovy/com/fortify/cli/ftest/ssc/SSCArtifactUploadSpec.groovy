@@ -91,6 +91,18 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
             }
     }
     
+    def "wait-for-dif-process"() {
+        // Depending on externalmetadata versions in FPR and on SSC, approval
+        // may be required
+        def args = "ssc artifact wait-for ::upload:: -i 2s -s PROCESS_COMPLETE"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                it.any { it =~ "WAIT_COMPLETE" }
+            }
+    }
+    
     def "list"() {
         def args = "ssc artifact list --appversion ${version.variableRef}"
         when:
@@ -120,6 +132,28 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
             noExceptionThrown()
             verifyAll(result.stdout) {
                 it.last().contains("ARTIFACT_DOWNLOADED");
+            }
+    }
+    
+    def "getIssueCount"() {
+        def args = "ssc issue count --appversion " + version.appName + ":" + version.versionName
+        when:
+            def result = Fcli.run(args)
+        then:
+            noExceptionThrown()
+            verifyAll(result.stdout) {
+                it.last().replace(" ","").contains("Low17");
+            }
+    }
+    
+    def "getIssueCountQuickView"() {
+        def args = "ssc issue count --appversion " + version.appName + ":" + version.versionName + " --filterset Quick\\ View"
+        when:
+            def result = Fcli.run(args)
+        then:
+            noExceptionThrown()
+            verifyAll(result.stdout) {
+                it.last().replace(" ","").contains("High4");
             }
     }
     
