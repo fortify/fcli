@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan.helper.mobile;
+package com.fortify.cli.fod.scan.helper.dast;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -24,24 +24,18 @@ import lombok.ToString;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Getter @ToString @Builder
-public class FoDStartMobileScanRequest {
+public class FoDScanDastStartRequest {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MM/dd/yyyy HH:mm")
 
     private String startDate;
     private Integer assessmentTypeId;
     private Integer entitlementId;
     private String entitlementFrequencyType;
-
-    private String timeZone;
-
-    private String frameworkType;
     private Boolean isRemediationScan;
     //private Boolean isBundledAssessment;
     //private Integer parentAssessmentTypeId;
-    //private Boolean applyPreviousScanSettings;
+    private Boolean applyPreviousScanSettings;
     private String scanMethodType;
     private String scanTool;
     private String scanToolVersion;
-
-    private String notes;
 }

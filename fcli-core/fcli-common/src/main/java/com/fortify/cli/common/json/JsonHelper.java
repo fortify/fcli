@@ -122,17 +122,6 @@ public class JsonHelper {
         }
     }
     
-    public static final void stripNulls(JsonNode node) {
-        Iterator<JsonNode> it = node.iterator();
-        while (it.hasNext()) {
-            JsonNode child = it.next();
-            if (child.isNull())
-                it.remove();
-            else
-                stripNulls(child);
-        }
-    }
-    
     private static final class ArrayNodeCollector implements Collector<JsonNode, ArrayNode, ArrayNode> {
         @Override
         public Supplier<ArrayNode> supplier() {

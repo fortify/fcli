@@ -17,7 +17,6 @@ import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -28,17 +27,16 @@ import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 
-import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
-public class FoDMobileScanHelper extends FoDScanHelper {
+public class FoDScanMobileHelper extends FoDScanHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     // TODO Split into multiple methods
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, IProgressWriterI18n progressWriter, FoDReleaseDescriptor releaseDescriptor, FoDStartMobileScanRequest req,
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, IProgressWriterI18n progressWriter, FoDReleaseDescriptor releaseDescriptor, FoDScanMobileStartRequest req,
                                                     File scanFile) {
         var relId = releaseDescriptor.getReleaseId();
         HttpRequest<?> request = unirest.post(FoDUrls.MOBILE_SCANS_START).routeParam("relId", relId)
@@ -65,12 +63,5 @@ public class FoDMobileScanHelper extends FoDScanHelper {
             .put("releaseName", releaseDescriptor.getReleaseName())
             .put("microserviceName", releaseDescriptor.getMicroserviceName());
         return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
-    }
-
-    public static final FoDMobileScanSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
-        GetRequest request = unirest.get(FoDUrls.MOBILE_SCANS + "/scan-setup")
-                .routeParam("relId", relId);
-        JsonNode setup = request.asObject(ObjectNode.class).getBody();
-        return JsonHelper.treeToValue(setup, FoDMobileScanSetupDescriptor.class);
     }
 }

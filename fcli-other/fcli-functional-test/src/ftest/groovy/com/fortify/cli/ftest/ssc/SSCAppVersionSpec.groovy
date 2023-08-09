@@ -90,7 +90,7 @@ class SSCAppVersionSpec extends FcliBaseSpec {
         then:
             def e = thrown(UnexpectedFcliResultException)
             verifyAll(e.result.stderr) {
-                it[0].equals("java.lang.IllegalArgumentException: If the --name parameter is provided in <application><delim><version> format the application must match the name of the application referenced in the appVersionNameOrId parameter")
+                it[0].startsWith("java.lang.IllegalArgumentException: --name option must contain either a plain name or ${version.appName}:<new name>, current: nonExistingAppversion123:updatedVersionName3")
             }
     }
 }

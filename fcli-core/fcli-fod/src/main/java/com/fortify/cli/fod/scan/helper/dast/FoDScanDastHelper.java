@@ -24,11 +24,10 @@ import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.FoDStartScanResponse;
 
-import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
-public class FoDDastScanHelper extends FoDScanHelper {
+public class FoDScanDastHelper extends FoDScanHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -42,7 +41,7 @@ public class FoDDastScanHelper extends FoDScanHelper {
         return JsonHelper.treeToValue(response, FoDDastScanSetupDescriptor.class);
     }*/
 
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDStartDastScanRequest startDastScanRequest) {
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanDastStartRequest startDastScanRequest) {
         ObjectNode body = objectMapper.valueToTree(startDastScanRequest);
         JsonNode response = unirest.post(FoDUrls.DYNAMIC_SCANS + "/start-scan")
                 .routeParam("relId", releaseDescriptor.getReleaseId())
@@ -60,12 +59,4 @@ public class FoDDastScanHelper extends FoDScanHelper {
                 .put("microserviceName", releaseDescriptor.getMicroserviceName());
         return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
     }
-
-    public static final FoDDastScanSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
-        GetRequest request = unirest.get(FoDUrls.DYNAMIC_SCANS + "/scan-setup")
-                .routeParam("relId", relId);
-        JsonNode setup = request.asObject(ObjectNode.class).getBody();
-        return JsonHelper.treeToValue(setup, FoDDastScanSetupDescriptor.class);
-    }
-
 }

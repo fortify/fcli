@@ -22,15 +22,14 @@ import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @Builder
-public class FoDSetupSastScanRequest {
-    private Integer assessmentTypeId;
-    private String entitlementFrequencyType;
+public class FoDScanSastStartRequest {
+    private String entitlementPreferenceType;
+    private Boolean purchaseEntitlement;
     private Integer entitlementId;
-    private Integer technologyStackId;
-    private Integer languageLevelId;
-    private Boolean performOpenSourceAnalysis;
-    private String auditPreferenceType;
-    private Boolean includeThirdPartyLibraries;
-    private Boolean useSourceControl;
-    private Boolean scanBinary;
+    private String remdiationScanPreferenceType;
+    private String inProgressScanActionType;
+    private String scanMethodType;
+    private String scanTool;
+    private String scanToolVersion;
+    private String notes;
 }

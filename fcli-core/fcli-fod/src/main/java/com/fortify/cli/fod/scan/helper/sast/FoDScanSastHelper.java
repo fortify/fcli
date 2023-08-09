@@ -28,28 +28,19 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
+import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupDescriptor;
 
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
-public class FoDSastScanHelper extends FoDScanHelper {
+public class FoDScanSastHelper extends FoDScanHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static final FoDSastScanSetupDescriptor setupScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDSetupSastScanRequest setupSastScanRequest) {
-        var relId = releaseDescriptor.getReleaseId();
-        ObjectNode body = objectMapper.valueToTree(setupSastScanRequest);
-        JsonHelper.stripNulls(body);
-        unirest.put(FoDUrls.STATIC_SCANS + "/scan-setup")
-                .routeParam("relId", relId)
-                .body(body).asObject(JsonNode.class).getBody();
-        return getSetupDescriptorWithAppRel(unirest, releaseDescriptor);
-    }
-
     // TODO Split into multiple methods
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDStartSastScanRequest req,
+    public static final FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanSastStartRequest req,
                                                     File scanFile) {
         var relId = releaseDescriptor.getReleaseId();
         HttpRequest<?> request = unirest.post(FoDUrls.STATIC_SCAN_START).routeParam("relId", relId)
@@ -85,22 +76,22 @@ public class FoDSastScanHelper extends FoDScanHelper {
         return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
     }
 
-    public static final FoDSastScanSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
+    public static final FoDScanSastSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
         GetRequest request = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", relId);
         JsonNode setup = request.asObject(ObjectNode.class).getBody()
                 .put("applicationName", "test");
-        return JsonHelper.treeToValue(setup, FoDSastScanSetupDescriptor.class);
+        return JsonHelper.treeToValue(setup, FoDScanSastSetupDescriptor.class);
     }
 
-    public static final FoDSastScanSetupDescriptor getSetupDescriptorWithAppRel(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
+    public static final FoDScanSastSetupDescriptor getSetupDescriptorWithAppRel(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         GetRequest request = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", releaseDescriptor.getReleaseId());
         JsonNode setup = request.asObject(ObjectNode.class).getBody()
                 .put("applicationName", releaseDescriptor.getApplicationName())
                 .put("releaseName", releaseDescriptor.getReleaseName())
                 .put("microserviceName", releaseDescriptor.getMicroserviceName());
-        return JsonHelper.treeToValue(setup, FoDSastScanSetupDescriptor.class);
+        return JsonHelper.treeToValue(setup, FoDScanSastSetupDescriptor.class);
     }
 
     // TODO Consider having a generic abbreviate method in StringUtils
