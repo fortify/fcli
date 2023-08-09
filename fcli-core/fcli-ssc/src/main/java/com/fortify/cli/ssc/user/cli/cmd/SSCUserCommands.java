@@ -19,6 +19,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "user",
         subcommands = {
+                SSCUserCreateCommand.class,
                 SSCUserDeleteCommand.class,
                 SSCUserGetCommand.class,
                 SSCUserListCommand.class

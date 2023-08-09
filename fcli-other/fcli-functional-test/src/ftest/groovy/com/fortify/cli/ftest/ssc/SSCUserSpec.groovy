@@ -19,6 +19,7 @@ import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
+import com.fortify.cli.ftest._common.Fcli.UnexpectedFcliResultException
 
 import spock.lang.AutoCleanup
 import spock.lang.Requires
@@ -27,6 +28,12 @@ import spock.lang.Stepwise
 
 @Prefix("ssc.user") @FcliSession(SSC) @Stepwise
 class SSCUserSpec extends FcliBaseSpec {
+    @Shared private final String random = System.currentTimeMillis()
+    @Shared private final String userName = "fclitemporarytestuser"+random
+    
+    @Shared private String unameval = "userName: \"$userName\""
+    @Shared private String entityval = "entityName: \"$userName\""
+    @Shared private String mailval = "email: \"$random@mail.mail\""
     
     def "list"() {
         def args = "ssc user list --store users"
@@ -40,38 +47,74 @@ class SSCUserSpec extends FcliBaseSpec {
             }
     }
     
-    def "get.byId"() {
-        def args = "ssc user get ::users::get(0).id"
+    def "create"() {
+        Fcli.run("ssc role list --store roles")
+        def args = "ssc user create --username $userName --password P@ssW._ord123 --pne --suspend --rpc --firstname fName --lastname lName --email $random@mail.mail --roles ::roles::get(0).id --store user"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].startsWith("isLdap: ")
+                it[2].equals(unameval)
+                it[3].equals("firstName: \"fName\"")
+                it[4].equals("lastName: \"lName\"")
+                it[5].equals(mailval)
+                !it[11].equals("roles: null")
+            }
+    }
+    
+    def "get.byId"() {
+        def args = "ssc user get ::user::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[3].equals(entityval)
             }
     }
     
     def "get.byName"() {
-        def args = "ssc user get ::users::get(0).entityName"
+        def args = "ssc user get ::user::userName"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].startsWith("isLdap: ")
+                it[3].equals(entityval)
             }
     }
     
     def "get.byMail"() {
-        def args = "ssc user get ::users::get(0).email"
+        def args = "ssc user get ::user::email"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].startsWith("isLdap: ")
+                it[3].equals(entityval)
             }
     }
     
-    //TODO add tests for delete? what about create?
+    def "delete"() {
+        def args = "ssc user delete ::user::id"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()==2
+                it[1].contains("DELETED")
+            }
+    }
+    
+    def "verifyDeleted"() {
+        def args = "ssc user list --store users"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                !it.any { it.contains(userName) }
+            }
+    }
 }

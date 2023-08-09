@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<FilterTemplate
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:ns2="
+	xmlns://www.fortify.com/schema/audit"
+	xmlns:ns3="
+	xmlns://www.fortifysoftware.com/schema/wsTypes"
+	xmlns:ns4="http://www.fortify.com/schema/fws"
+	xmlns:ns5="
+	xmlns://www.fortify.com/schema/issuemanagement"
+	xmlns:ns6="
+	xmlns://www.fortifysoftware.com/schema/activitytemplate"
+	xmlns:ns7="
+	xmlns://www.fortifysoftware.com/schema/seed"
+	xmlns:ns8="
+	xmlns://www.fortifysoftware.com/schema/runtime"
+	xmlns:ns9="
+	xmlns://www.fortify.com/schema/attachments" version="1.2" disableEdit="false" id="Fortify-Priority-Project-Template" objectVersion="1" publishVersion="1">
+	<Name>fcli-test-Template</Name>
+	<Description>Issue Template for High Risk Projects</Description>
+	<FolderDefinition id="b968f72f-cc12-03b5-976e-ad4c13920c21" color="ca3f37">
+		<name>Critical</name>
+		<description>This folder provides a comprehensive list of issues in the application with a high impact and high likelihood.</description>
+	</FolderDefinition>
+	<FolderDefinition id="5b50bb77-071d-08ed-fdba-1213fa90ac5a" color="ff8c00">
+		<name>High</name>
+		<description>This folder provides a comprehensive list of issues in the application with a high impact and low likelihood.</description>
+	</FolderDefinition>
+	<FolderDefinition id="d5f55910-5f0d-a775-e91f-191d1f5608a4" color="ffc800">
+		<name>Medium</name>
+		<description>This folder provides a comprehensive list of issues in the application with a low impact and high likelihood.</description>
+	</FolderDefinition>
+	<FolderDefinition id="bb824e8d-b401-40be-13bd-5d156696a685" color="dbb604">
+		<name>Low</name>
+		<description>This folder provides a comprehensive list of issues in the application with a low impact and low likelihood.</description>
+	</FolderDefinition>
+	<FolderDefinition id="a4c7b486-1867-465d-87ef-9d80632621e1" color="blue">
+		<name>Don't Care</name>
+		<description></description>
+	</FolderDefinition>
+	<DefaultFolder folderID="bb824e8d-b401-40be-13bd-5d156696a685"/>
+	<TagDefinition id="87f2364f-dcd4-49e6-861d-f8d3f351686b" type="user" extensible="false" hidden="false" isIconTag="true" restriction="NONE" objectVersion="1" valueType="LIST">
+		<name>Analysis</name>
+		<Description>The analysis tag must be set for an issue to be counted as 'Audited.' Fortify recommends that the auditor set the analysis tag as the final action during an issue audit.</Description>
+		<value isDefault="false" id="0" Description="" hidden="false">Not an Issue</value>
+		<value isDefault="false" id="1" Description="" hidden="false">Reliability Issue</value>
+		<value isDefault="false" id="2" Description="" hidden="false">Bad Practice</value>
+		<value isDefault="false" id="3" Description="" hidden="false">Suspicious</value>
+		<value isDefault="false" id="4" Description="" hidden="false">Exploitable</value>
+	</TagDefinition>
+	<PrimaryTag>
+		<primaryTagGUID>87f2364f-dcd4-49e6-861d-f8d3f351686b</primaryTagGUID>
+		<neutralWeight>0</neutralWeight>
+		<openRange>(2,5]</openRange>
+		<naiRange>[0,2]</naiRange>
+	</PrimaryTag>
+	<FilterSet type="user" id="a243b195-0a59-3f8b-1403-d55b7a7d78e6" enabled="true" disableEdit="false">
+		<Title>Security Auditor View</Title>
+		<Description>This setting provides the static code analyzer with the most comprehensive set of rules.  It should be used to discover a broad set of security issues to be audited.  Fortify assigns issues impact, accuracy, probability, and confidence values, which are used to calculate priority.  These filters sort issues into four folders based on their priority: Critical, High, Medium, and Low.</Description>
+		<EnabledFolders>b968f72f-cc12-03b5-976e-ad4c13920c21</EnabledFolders>
+		<EnabledFolders>5b50bb77-071d-08ed-fdba-1213fa90ac5a</EnabledFolders>
+		<EnabledFolders>d5f55910-5f0d-a775-e91f-191d1f5608a4</EnabledFolders>
+		<EnabledFolders>bb824e8d-b401-40be-13bd-5d156696a685</EnabledFolders>
+		<EnabledFolders>a4c7b486-1867-465d-87ef-9d80632621e1</EnabledFolders>
+		<Filter>
+			<actionParam>b968f72f-cc12-03b5-976e-ad4c13920c21</actionParam>
+			<query>[fortify priority order]:critical</query>
+			<action>setFolder</action>
+		</Filter>
+		<Filter>
+			<actionParam>5b50bb77-071d-08ed-fdba-1213fa90ac5a</actionParam>
+			<query>[fortify priority order]:high</query>
+			<action>setFolder</action>
+		</Filter>
+		<Filter>
+			<actionParam>d5f55910-5f0d-a775-e91f-191d1f5608a4</actionParam>
+			<query>[fortify priority order]:medium</query>
+			<action>setFolder</action>
+		</Filter>
+		<Filter>
+			<actionParam>bb824e8d-b401-40be-13bd-5d156696a685</actionParam>
+			<query>[fortify priority order]:low</query>
+			<action>setFolder</action>
+		</Filter>
+		<Filter>
+			<actionParam>true</actionParam>
+			<query>category:"command injection" OR category:"sql injection"</query>
+			<action>hide</action>
+		</Filter>
+		<Filter>
+			<actionParam>a4c7b486-1867-465d-87ef-9d80632621e1</actionParam>
+			<query>[fortify priority order]:"high" AND category:"password management\: insecure submission"</query>
+			<action>setFolder</action>
+		</Filter>
+		<Filter>
+			<actionParam>a4c7b486-1867-465d-87ef-9d80632621e1</actionParam>
+			<query>[fortify priority order]:"medium" AND category:"poor error handling\: unhandled exception" AND file:"/riches/showlocations.action"</query>
+			<action>setFolder</action>
+		</Filter>
+		<Filter>
+			<actionParam>true</actionParam>
+			<query>category:"privacy violation\: http get"</query>
+			<action>hide</action>
+		</Filter>
+	</FilterSet>
+	<FilterSet type="user" id="32142c2d-3f7f-4863-a1bf-9b1e2f34d2ed" enabled="false" disableEdit="false">
+		<Title>Quick View</Title>
+		<Description>The Quick View filter set shows the most important issues that you should focus on first by taking advantage of the impact and likelihood metrics used to determine Fortify Priority Order. When selected, the Quick View filter hides all medium- and low-priority findings, which have a lower impact on source code security, and hides findings that, while they might have a high potential impact, are least likely to be exploited.</Description>
+		<EnabledFolders>b968f72f-cc12-03b5-976e-ad4c13920c21</EnabledFolders>
+		<EnabledFolders>5b50bb77-071d-08ed-fdba-1213fa90ac5a</EnabledFolders>
+		<EnabledFolders>d5f55910-5f0d-a775-e91f-191d1f5608a4</EnabledFolders>
+		<EnabledFolders>bb824e8d-b401-40be-13bd-5d156696a685</EnabledFolders>
+		<Filter>
+			<actionParam>b968f72f-cc12-03b5-976e-ad4c13920c21</actionParam>
+			<query>[fortify priority order]:critical</query>
+			<action>setFolder</action>
+		</Filter>
+		<Filter>
+			<actionParam>5b50bb77-071d-08ed-fdba-1213fa90ac5a</actionParam>
+			<query>[fortify priority order]:high</query>
+			<action>setFolder</action>
+		</Filter>
+		<Filter>
+			<actionParam>d5f55910-5f0d-a775-e91f-191d1f5608a4</actionParam>
+			<query>[fortify priority order]:medium</query>
+			<action>setFolder</action>
+		</Filter>
+		<Filter>
+			<actionParam>bb824e8d-b401-40be-13bd-5d156696a685</actionParam>
+			<query>[fortify priority order]:low</query>
+			<action>setFolder</action>
+		</Filter>
+		<Filter>
+			<actionParam>true</actionParam>
+			<query>impact:![2.5, 5.0]</query>
+			<action>hide</action>
+		</Filter>
+		<Filter>
+			<actionParam>true</actionParam>
+			<query>likelihood:!(1.0, 5.0]</query>
+			<action>hide</action>
+		</Filter>
+	</FilterSet>
+</FilterTemplate>
