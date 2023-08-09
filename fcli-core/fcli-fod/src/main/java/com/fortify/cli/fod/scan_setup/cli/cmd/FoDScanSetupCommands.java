@@ -19,6 +19,9 @@ import picocli.CommandLine.Command;
 
 @Command(name = "scan-setup",
         subcommands = {
+                FoDScanSetupGetDastCommand.class,
+                // FoDScanSetupGetMobileCommand.class, // Currently not supported by FoD API
+                FoDScanSetupGetSastCommand.class,
                 FoDScanSetupSastCommand.class,
         }
 )

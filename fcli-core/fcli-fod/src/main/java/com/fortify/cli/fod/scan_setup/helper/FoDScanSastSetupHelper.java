@@ -21,20 +21,20 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import kong.unirest.UnirestInstance;
 
 public class FoDScanSastSetupHelper {
-    public static final FoDScanSastSetupDescriptor getSetupDescriptor(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
+    public static final FoDScanSastSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String releaseId) {
         var body = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
-                .routeParam("relId", releaseDescriptor.getReleaseId())
+                .routeParam("relId", releaseId)
                 .asObject(ObjectNode.class)
                 .getBody();
         return JsonHelper.treeToValue(body, FoDScanSastSetupDescriptor.class);
     }
     
     public static final FoDScanSastSetupDescriptor setupScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanSastSetupRequest setupSastScanRequest) {
-        var relId = releaseDescriptor.getReleaseId();
+        var releaseId = releaseDescriptor.getReleaseId();
         unirest.put(FoDUrls.STATIC_SCANS + "/scan-setup")
-                .routeParam("relId", relId)
+                .routeParam("relId", releaseId)
                 .body(setupSastScanRequest)
                 .asString().getBody();
-        return getSetupDescriptor(unirest, releaseDescriptor);
+        return getSetupDescriptor(unirest, releaseId);
     }
 }
