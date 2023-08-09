@@ -19,7 +19,7 @@ import java.lang.annotation.Annotation
  * Multiple exceptions can be provided separated by comma
  */
 public class StepWiseExceptExtension extends StepwiseExtension {
-    ArrayList<String> exceptions = Arrays.asList();
+    ArrayList<String> exceptions = new ArrayList<String>()
     
     public void visitSpecAnnotation(Annotation annotation, final SpecInfo spec) {
         exceptions = getExceptionsList(annotation.except())

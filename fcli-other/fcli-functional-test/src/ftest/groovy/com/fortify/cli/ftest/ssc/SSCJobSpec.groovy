@@ -78,7 +78,7 @@ class SSCJobSpec extends FcliBaseSpec {
     }
     
     def "update"() {
-        def args = "ssc job update ::jobs::get(#var('jobs').size()-1).jobName --priority 1 --store job"
+        def args = "ssc job update ::jobs::get(0).jobName --priority 1 --store job"
         when:
             def result = Fcli.run(args)
         then:
@@ -99,6 +99,7 @@ class SSCJobSpec extends FcliBaseSpec {
     }
 
     def "get.byName"() {
+        Thread.sleep(1000)
         def args = "ssc job get ::job::jobName"
         when:
             def result = Fcli.run(args)
