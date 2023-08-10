@@ -26,8 +26,8 @@ import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
-import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
+import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeDescriptor;
+import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -42,15 +42,15 @@ public class FoDScanHelper {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
-    public static final FoDAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId,
+    public static final FoDScanAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId,
                                                                                    Integer entitlementId, FoDScanType scanType) {
-        FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
-        FoDReleaseAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDReleaseHelper.getAppRelAssessmentTypes(unirest,
+        FoDScanAssessmentTypeDescriptor entitlement = new FoDScanAssessmentTypeDescriptor();
+        FoDAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAssessmentTypeHelper.getAssessmentTypes(unirest,
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
             progressWriter.writeI18nProgress("validating-remediation-entitlement");
             // check we have an appropriate remediation scan available
-            for (FoDReleaseAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
+            for (FoDAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
                 if (atd.getEntitlementId() > 0 && atd.getEntitlementId().equals(entitlementId) && atd.getIsRemediation()
                         && atd.getRemediationScansAvailable() > 0) {
                     entitlement.setEntitlementDescription(atd.getEntitlementDescription());
@@ -69,17 +69,17 @@ public class FoDScanHelper {
         return entitlement;
     }
 
-    public static final FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId,
+    public static final FoDScanAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId,
                                                                         FoDAssessmentType assessmentType,
                                                                         FoDEnums.EntitlementPreferenceType entitlementType,
                                                                         FoDScanType scanType) {
-        FoDAssessmentTypeDescriptor entitlement = new FoDAssessmentTypeDescriptor();
-        FoDReleaseAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDReleaseHelper.getAppRelAssessmentTypes(unirest,
+        FoDScanAssessmentTypeDescriptor entitlement = new FoDScanAssessmentTypeDescriptor();
+        FoDAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAssessmentTypeHelper.getAssessmentTypes(unirest,
                 relId, scanType, true);
         if (assessmentTypeDescriptors.length > 0) {
             progressWriter.writeI18nProgress("validating-entitlement");
             // check for an entitlement
-            for (FoDReleaseAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
+            for (FoDAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
                 if (atd.getEntitlementId() != null && atd.getEntitlementId() > 0) {
                     if (atd.getFrequencyType().equals(entitlementType.name().replace("Only",""))) {
                         String atdName = atd.getName()

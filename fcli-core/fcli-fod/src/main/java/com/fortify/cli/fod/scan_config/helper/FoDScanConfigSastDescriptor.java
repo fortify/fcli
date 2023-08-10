@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan_setup.helper;
+package com.fortify.cli.fod.scan_config.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
@@ -19,16 +19,16 @@ import com.fortify.cli.common.json.JsonNodeHolder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 @Reflectable @NoArgsConstructor
-@Data @ToString
-@EqualsAndHashCode(callSuper=false)
-public class FoDScanDastSetupDescriptor extends JsonNodeHolder {
+@Data @EqualsAndHashCode(callSuper=false)
+public class FoDScanConfigSastDescriptor extends JsonNodeHolder {
+    private Integer releaseId;
     private Integer assessmentTypeId;
     private Integer entitlementId;
     private String entitlementDescription;
     private String entitlementFrequencyType;
     private Integer entitlementFrequencyTypeId;
-    private String dynamicSiteURL;
+    private Integer technologyStackId;
+    private String technologyStack;
 }

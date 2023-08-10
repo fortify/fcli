@@ -11,19 +11,19 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan_setup.cli.cmd;
+package com.fortify.cli.fod.scan_config.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
-@Command(name = "scan-setup",
+@Command(name = "scan-config",
         subcommands = {
-                FoDScanSetupGetDastCommand.class,
-                // FoDScanSetupGetMobileCommand.class, // Currently not supported by FoD API
-                FoDScanSetupGetSastCommand.class,
-                FoDScanSetupSastCommand.class,
+                FoDScanConfigGetDastCommand.class,
+                FoDScanConfigGetMobileCommand.class,
+                FoDScanConfigGetSastCommand.class,
+                FoDScanConfigSetupSastCommand.class,
         }
 )
-public class FoDScanSetupCommands extends AbstractContainerCommand {
+public class FoDScanConfigCommands extends AbstractContainerCommand {
 }

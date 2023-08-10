@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan_setup.cli.cmd;
+package com.fortify.cli.fod.scan_config.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,7 +26,7 @@ import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
-public abstract class AbstractFoDScanSetupGetCommand extends AbstractFoDJsonNodeOutputCommand {
+public abstract class AbstractFoDScanConfigGetCommand extends AbstractFoDJsonNodeOutputCommand {
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
     

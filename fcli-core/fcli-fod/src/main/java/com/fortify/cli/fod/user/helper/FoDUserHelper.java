@@ -26,9 +26,9 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
-import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
+import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
 import kong.unirest.GetRequest;
@@ -162,7 +162,7 @@ public class FoDUserHelper {
             roleId = Integer.parseInt(roleNameOrId);
         } catch (NumberFormatException nfe) {
             try {
-                FoDLookupDescriptor lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupTypeOptions.FoDLookupType.Roles, roleNameOrId, true);
+                FoDLookupDescriptor lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupType.Roles, roleNameOrId, true);
                 roleId = Integer.valueOf(lookupDescriptor.getValue());
             } catch (JsonProcessingException e) {
                 throw new IllegalArgumentException("Unable to find role with name: " + roleNameOrId);

@@ -33,14 +33,14 @@ import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeMixins;
 import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
 import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentType;
-import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
+import com.fortify.cli.fod.scan.helper.FoDScanAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.dast.FoDScanDastHelper;
 import com.fortify.cli.fod.scan.helper.dast.FoDScanDastStartRequest;
-import com.fortify.cli.fod.scan_setup.helper.FoDScanDastSetupDescriptor;
-import com.fortify.cli.fod.scan_setup.helper.FoDScanDastSetupHelper;
+import com.fortify.cli.fod.scan_config.helper.FoDScanConfigDastDescriptor;
+import com.fortify.cli.fod.scan_config.helper.FoDScanConfigDastHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -78,7 +78,7 @@ public class FoDScanStartDastCommand extends AbstractFoDJsonNodeOutputCommand im
     public JsonNode getJsonNode(UnirestInstance unirest) {
         try ( var progressWriter = progressWriterFactory.create() ) {
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
-            FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
+            FoDScanAssessmentTypeDescriptor entitlementToUse = new FoDScanAssessmentTypeDescriptor();
 
             FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
             
@@ -100,7 +100,7 @@ public class FoDScanStartDastCommand extends AbstractFoDJsonNodeOutputCommand im
 
             var relId = String.valueOf(releaseDescriptor.getReleaseId());
             // get current setup and check if its valid
-            FoDScanDastSetupDescriptor currentSetup = FoDScanDastSetupHelper.getSetupDescriptor(unirest, relId);
+            FoDScanConfigDastDescriptor currentSetup = FoDScanConfigDastHelper.getSetupDescriptor(unirest, relId);
             if (StringUtils.isBlank(currentSetup.getDynamicSiteURL())) {
                 throw new IllegalStateException("The dynamic scan configuration for release with id '" + relId +
                         "' has not been setup correctly - 'Dynamic Site URL' is missing or empty.");

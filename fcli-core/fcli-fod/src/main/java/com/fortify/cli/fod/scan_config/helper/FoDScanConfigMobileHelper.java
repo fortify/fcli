@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan_setup.helper;
+package com.fortify.cli.fod.scan_config.helper;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
@@ -19,12 +19,12 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 
 import kong.unirest.UnirestInstance;
 
-public class FoDScanDastSetupHelper {
-    public static final FoDScanDastSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
-        var body = unirest.get(FoDUrls.DYNAMIC_SCANS + "/scan-setup")
+public class FoDScanConfigMobileHelper {
+    public static final FoDScanConfigMobileDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
+        var body = unirest.get(FoDUrls.MOBILE_SCANS + "/scan-setup")
                 .routeParam("relId", relId)
                 .asObject(ObjectNode.class)
                 .getBody();
-        return JsonHelper.treeToValue(body, FoDScanDastSetupDescriptor.class);
+        return JsonHelper.treeToValue(body, FoDScanConfigMobileDescriptor.class);
     }
 }

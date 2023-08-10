@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.release.helper;
+package com.fortify.cli.fod.scan_config.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
@@ -21,24 +21,14 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
-@Data @EqualsAndHashCode(callSuper = true)
-public class FoDReleaseAssessmentTypeDescriptor extends JsonNodeHolder {
+@Data @EqualsAndHashCode(callSuper=false)
+public class FoDScanConfigMobileDescriptor extends JsonNodeHolder {
+    private Integer releaseId;
     private Integer assessmentTypeId;
-    private String name;
-    private String scanType;
-    private Integer scanTypeId;
     private Integer entitlementId;
-    private String frequencyType;
-    private Integer frequencyTypeId;
-    private Integer units;
-    private Integer unitsAvailable;
-    private String subscriptionEndDate;
-    private Boolean isRemediation;
-    private Integer remediationScansAvailable;
-    private Boolean isBundledAssessment;
-    private Integer parentAssessmentTypeId;
-    private String parentAssessmentTypeName;
-    private Integer parentAssessmentTypeScanTypeId;
-    private String parentAssessmentTypeScanType;
     private String entitlementDescription;
+    private String entitlementFrequencyType;
+    private Integer entitlementFrequencyTypeId;
+    private Integer technologyStackId;
+    private String technologyStack;
 }

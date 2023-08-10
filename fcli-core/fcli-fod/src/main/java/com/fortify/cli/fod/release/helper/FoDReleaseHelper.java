@@ -20,7 +20,6 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod.scan.helper.FoDScanType;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -56,34 +55,6 @@ public class FoDReleaseHelper {
         GetRequest request = addFieldsParam(unirest.get(FoDUrls.RELEASES)
                 .queryString("filters", filters), fields);
         return getDescriptor(request, releaseNameDescriptor.getQualifiedName(), failIfNotFound);
-    }
-
-    public static final FoDReleaseAssessmentTypeDescriptor[] getAppRelAssessmentTypes(UnirestInstance unirestInstance,
-                                                                                     String relId, FoDScanType scanType, boolean failIfNotFound) {
-        GetRequest request = unirestInstance.get(FoDUrls.RELEASE + "/assessment-types")
-                .routeParam("relId", relId)
-                .queryString("scanType", scanType.name());
-        JsonNode assessmentTypes = request.asObject(ObjectNode.class).getBody().get("items");
-        if (failIfNotFound && assessmentTypes.size() == 0) {
-            throw new IllegalStateException("No assessment types found for release id: " + relId);
-        }
-        return JsonHelper.treeToValue(assessmentTypes, FoDReleaseAssessmentTypeDescriptor[].class);
-    }
-
-    public static final FoDReleaseAssessmentTypeDescriptor getAppRelAssessmentType(UnirestInstance unirestInstance,
-                                                                                  String relId, FoDScanType scanType,
-                                                                                  boolean isPlus, boolean failIfNotFound) {
-        String filterString = "name:" + scanType.toString() +
-                (isPlus ? "+" : "") + " Assessment";
-        GetRequest request = unirestInstance.get(FoDUrls.RELEASE + "/assessment-types")
-                .routeParam("relId", relId)
-                .queryString("scanType", scanType.name())
-                .queryString("filters", filterString);
-        JsonNode assessmentTypes = request.asObject(ObjectNode.class).getBody().get("items");
-        if (failIfNotFound && assessmentTypes.size() == 0) {
-            throw new IllegalStateException("No assessment types found for release id: " + relId);
-        }
-        return JsonHelper.treeToValue(assessmentTypes, FoDReleaseAssessmentTypeDescriptor.class);
     }
 
     public static final FoDReleaseDescriptor createRelease(UnirestInstance unirest, FoDReleaseCreateRequest relCreateRequest) {

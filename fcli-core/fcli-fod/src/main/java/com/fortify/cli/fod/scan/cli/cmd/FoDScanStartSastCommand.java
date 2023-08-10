@@ -31,12 +31,12 @@ import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolv
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeMixins;
 import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
 import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
-import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
+import com.fortify.cli.fod.scan.helper.FoDScanAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastStartRequest;
-import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupDescriptor;
+import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -78,14 +78,14 @@ public class FoDScanStartSastCommand extends AbstractFoDJsonNodeOutputCommand im
             String relId = releaseDescriptor.getReleaseId();
             
             // get current setup and check if its valid
-            FoDScanSastSetupDescriptor currentSetup = FoDScanSastHelper.getSetupDescriptor(unirest, relId);
+            FoDScanConfigSastDescriptor currentSetup = FoDScanSastHelper.getSetupDescriptor(unirest, relId);
             if (StringUtils.isBlank(currentSetup.getTechnologyStack())) {
                 throw new IllegalStateException("The static scan configuration for release with id '" + relId +
                         "' has not been setup correctly - 'Technology Stack/Language Level' is missing or empty.");
             }
 
             // get entitlement to use
-            FoDAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, progressWriter, relId, currentSetup);
+            FoDScanAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, progressWriter, relId, currentSetup);
 
             FoDScanSastStartRequest startScanRequest = FoDScanSastStartRequest.builder()
                     .purchaseEntitlement(purchaseEntitlement)
@@ -124,8 +124,8 @@ public class FoDScanStartSastCommand extends AbstractFoDJsonNodeOutputCommand im
         return true;
     }
 
-    private FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId, FoDScanSastSetupDescriptor currentSetup) {
-        FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
+    private FoDScanAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId, FoDScanConfigSastDescriptor currentSetup) {
+        FoDScanAssessmentTypeDescriptor entitlementToUse = new FoDScanAssessmentTypeDescriptor();
 
         /**
          * Logic for finding/using "entitlement" and "remediation" scanning is as follows:

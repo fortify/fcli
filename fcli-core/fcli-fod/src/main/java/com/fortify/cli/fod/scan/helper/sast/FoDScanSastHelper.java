@@ -28,7 +28,7 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
-import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupDescriptor;
+import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
 
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
@@ -76,22 +76,22 @@ public class FoDScanSastHelper extends FoDScanHelper {
         return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
     }
 
-    public static final FoDScanSastSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
+    public static final FoDScanConfigSastDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
         GetRequest request = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", relId);
         JsonNode setup = request.asObject(ObjectNode.class).getBody()
                 .put("applicationName", "test");
-        return JsonHelper.treeToValue(setup, FoDScanSastSetupDescriptor.class);
+        return JsonHelper.treeToValue(setup, FoDScanConfigSastDescriptor.class);
     }
 
-    public static final FoDScanSastSetupDescriptor getSetupDescriptorWithAppRel(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
+    public static final FoDScanConfigSastDescriptor getSetupDescriptorWithAppRel(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         GetRequest request = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", releaseDescriptor.getReleaseId());
         JsonNode setup = request.asObject(ObjectNode.class).getBody()
                 .put("applicationName", releaseDescriptor.getApplicationName())
                 .put("releaseName", releaseDescriptor.getReleaseName())
                 .put("microserviceName", releaseDescriptor.getMicroserviceName());
-        return JsonHelper.treeToValue(setup, FoDScanSastSetupDescriptor.class);
+        return JsonHelper.treeToValue(setup, FoDScanConfigSastDescriptor.class);
     }
 
     // TODO Consider having a generic abbreviate method in StringUtils
