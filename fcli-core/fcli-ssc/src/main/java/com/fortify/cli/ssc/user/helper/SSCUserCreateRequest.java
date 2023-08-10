@@ -45,6 +45,7 @@ public class SSCUserCreateRequest {
         }
     }
     
+    @Reflectable
     public class SSCRoleObject {
         @Getter private String id;
         public SSCRoleObject(String id) {
