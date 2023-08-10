@@ -15,7 +15,7 @@ package com.fortify.cli.ssc.app.cli.mixin;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;

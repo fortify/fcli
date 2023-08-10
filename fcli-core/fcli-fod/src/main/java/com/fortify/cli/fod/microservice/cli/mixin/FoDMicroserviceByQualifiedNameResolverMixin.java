@@ -21,7 +21,7 @@ import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
 import com.fortify.cli.fod.microservice.helper.FoDQualifiedMicroserviceNameDescriptor;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import lombok.Setter;
 import picocli.CommandLine.Option;

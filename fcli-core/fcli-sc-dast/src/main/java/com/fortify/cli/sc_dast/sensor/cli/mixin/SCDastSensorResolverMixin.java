@@ -15,7 +15,7 @@ package com.fortify.cli.sc_dast.sensor.cli.mixin;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorDescriptor;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Parameters;
 

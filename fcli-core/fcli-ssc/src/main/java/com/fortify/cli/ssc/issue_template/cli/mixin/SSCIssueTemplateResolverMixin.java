@@ -16,7 +16,7 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;

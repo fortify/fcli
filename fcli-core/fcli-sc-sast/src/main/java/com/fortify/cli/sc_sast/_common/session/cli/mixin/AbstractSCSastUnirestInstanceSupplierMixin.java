@@ -18,7 +18,7 @@ import com.fortify.cli.sc_sast._common.rest.helper.SCSastUnirestHelper;
 import com.fortify.cli.sc_sast._common.session.helper.SCSastSessionDescriptor;
 import com.fortify.cli.sc_sast._common.session.helper.SCSastSessionHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public abstract class AbstractSCSastUnirestInstanceSupplierMixin extends AbstractSessionDescriptorSupplierMixin<SCSastSessionDescriptor> {
     @Override

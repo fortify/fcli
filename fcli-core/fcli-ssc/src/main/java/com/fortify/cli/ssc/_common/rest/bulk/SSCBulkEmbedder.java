@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 /**
  * This class takes zero or more {@link ISSCEntityEmbedderSupplier} instances

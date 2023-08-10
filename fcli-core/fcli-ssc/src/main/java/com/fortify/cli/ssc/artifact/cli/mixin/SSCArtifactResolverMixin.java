@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Parameters;
 

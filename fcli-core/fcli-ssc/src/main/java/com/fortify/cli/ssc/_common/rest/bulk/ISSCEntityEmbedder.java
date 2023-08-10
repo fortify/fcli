@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 /**
  * Interface for adding one or more requests and corresponding response consumers

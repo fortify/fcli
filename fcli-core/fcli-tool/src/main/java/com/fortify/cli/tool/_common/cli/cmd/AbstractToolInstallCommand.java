@@ -42,7 +42,7 @@ import com.fortify.cli.tool._common.helper.ToolVersionDownloadDescriptor;
 import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
 import com.fortify.cli.tool._common.util.FileUtils;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;

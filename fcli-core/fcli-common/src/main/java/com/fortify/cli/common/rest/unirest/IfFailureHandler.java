@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.unirest;
 
-import kong.unirest.HttpResponse;
+import kong.unirest.core.HttpResponse;
 
 public class IfFailureHandler {
     public static final void handle(HttpResponse<?> failureResponse) {

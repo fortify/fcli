@@ -13,7 +13,6 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -35,8 +34,8 @@ import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionUserUpdateBuilder
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

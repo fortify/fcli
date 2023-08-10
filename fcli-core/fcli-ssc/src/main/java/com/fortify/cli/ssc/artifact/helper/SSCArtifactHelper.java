@@ -24,7 +24,7 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -15,7 +15,7 @@ package com.fortify.cli.ssc.user.cli.mixin;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.ssc.user.helper.SSCUserHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Parameters;
 

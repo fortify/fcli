@@ -21,7 +21,7 @@ import com.fortify.cli.common.session.cli.mixin.AbstractSessionUnirestInstanceSu
 import com.fortify.cli.fod._common.session.helper.FoDSessionDescriptor;
 import com.fortify.cli.fod._common.session.helper.FoDSessionHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public class FoDProductHelperBasicMixin extends AbstractSessionUnirestInstanceSupplierMixin<FoDSessionDescriptor> 
     implements IProductHelper

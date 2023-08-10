@@ -31,8 +31,8 @@ import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
-import kong.unirest.GetRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.GetRequest;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 
 // TODO Methods are relatively long, consider splitting if possible

@@ -19,8 +19,8 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.PagedList;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.PagedList;
 import lombok.Setter;
 
 public class SSCPagingHelper {

@@ -18,7 +18,7 @@ import com.fortify.cli.ssc._common.session.helper.SSCSessionDescriptor;
 import com.fortify.cli.ssc._common.session.helper.SSCSessionHelper;
 import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public class SSCProductHelperBasicMixin extends AbstractSessionUnirestInstanceSupplierMixin<SSCSessionDescriptor>
     implements IProductHelper

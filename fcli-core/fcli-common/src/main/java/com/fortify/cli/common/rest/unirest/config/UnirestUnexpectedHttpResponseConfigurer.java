@@ -14,12 +14,12 @@ package com.fortify.cli.common.rest.unirest.config;
 
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 
-import kong.unirest.Config;
-import kong.unirest.HttpRequestSummary;
-import kong.unirest.HttpResponse;
-import kong.unirest.Interceptor;
-import kong.unirest.UnirestException;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.Config;
+import kong.unirest.core.HttpRequestSummary;
+import kong.unirest.core.HttpResponse;
+import kong.unirest.core.Interceptor;
+import kong.unirest.core.UnirestException;
+import kong.unirest.core.UnirestInstance;
 
 public class UnirestUnexpectedHttpResponseConfigurer implements Interceptor {
     

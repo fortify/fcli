@@ -24,9 +24,9 @@ import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.HttpRequestWithBody;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.HttpRequestWithBody;
+import kong.unirest.core.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractSSCArtifactUploadCommand extends AbstractSSCArtifactOutputCommand implements IBaseRequestSupplier {

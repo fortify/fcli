@@ -25,9 +25,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.fortify.cli.common.json.JsonHelper;
 
-import kong.unirest.Body;
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.Body;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 
 /**
  * This class allows for building and executing SSC bulk requests

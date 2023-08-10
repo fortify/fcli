@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Parameters;
 

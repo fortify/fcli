@@ -31,8 +31,8 @@ import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusE
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.AbstractSSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 
-import kong.unirest.MultipartBody;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.MultipartBody;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;

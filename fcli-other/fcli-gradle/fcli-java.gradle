@@ -21,7 +21,7 @@ dependencies {
 	annotationProcessor('com.formkiq:graalvm-annotations-processor')
 
 	// REST client
-	implementation('com.konghq:unirest-java') {
+	implementation('com.konghq:unirest-java-core') {
 		exclude group: 'com.google.code.gson', module: 'gson' // We use Jackson, so no need for Gson
 		exclude group: 'commons-logging', module: 'commons-logging' // We use jcl-over-slf4j
 	}
@@ -53,6 +53,9 @@ dependencies {
 	
 	// Encryption library
 	implementation('org.jasypt:jasypt')
+    
+    // Commons Codec
+    implementation('commons-codec:commons-codec')
 	
 	// Test dependencies
 	testImplementation 'org.junit.jupiter:junit-jupiter-api'

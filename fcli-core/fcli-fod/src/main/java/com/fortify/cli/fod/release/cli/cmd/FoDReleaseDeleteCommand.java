@@ -24,7 +24,7 @@ import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolv
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

@@ -26,8 +26,8 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 
 /**
  * The SSC /api/v1/projectVersions/{id}/attributes endpoint returns

@@ -21,8 +21,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.license.msp_report.collector.MspReportAppScanCollector;
-import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.license.msp_report.collector.MspReportAppScanCollector.MspReportScanCollectorState;
+import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.license.msp_report.config.MspReportSSCSourceConfig;
 import com.fortify.cli.license.msp_report.generator.AbstractMspReportUnirestResultsGenerator;
 import com.fortify.cli.ssc._common.rest.bulk.SSCBulkEmbedder;
@@ -34,9 +34,9 @@ import com.fortify.cli.ssc.attribute_definition.domain.SSCAttributeDefinitionTyp
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.HttpResponse;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.HttpResponse;
+import kong.unirest.core.UnirestInstance;
 
 /**
  * This class is responsible for loading MSP data from SSC.

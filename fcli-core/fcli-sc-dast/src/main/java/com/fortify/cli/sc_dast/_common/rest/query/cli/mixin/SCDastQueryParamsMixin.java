@@ -16,7 +16,7 @@ import java.util.Map;
 
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 import picocli.CommandLine.Option;
 
 public class SCDastQueryParamsMixin implements IHttpRequestUpdater {

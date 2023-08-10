@@ -38,7 +38,7 @@ import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastStartRequest;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;

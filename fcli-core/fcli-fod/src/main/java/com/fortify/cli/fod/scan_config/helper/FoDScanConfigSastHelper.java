@@ -18,7 +18,7 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public class FoDScanConfigSastHelper {
     public static final FoDScanConfigSastDescriptor getSetupDescriptor(UnirestInstance unirest, String releaseId) {

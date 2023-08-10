@@ -22,22 +22,22 @@ import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 // TODO Consider moving all classes in this package to a more appropriate package,
 //      for example as a sub-package of the 'rest' package.
 public class FoDOAuthHelper {
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDUserCredentials uc, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(uc, scopes);
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
-            return createToken(unirest, urlConfig, formData);
+        try ( var unirestWrapper = GenericUnirestFactory.createAutoCloseableUnirestInstanceWrapper() ) {
+            return createToken(unirestWrapper.get(), urlConfig, formData);
         }
     }
 
     public static final FoDTokenCreateResponse createToken(IUrlConfig urlConfig, IFoDClientCredentials cc, String... scopes) {
         Map<String,Object> formData = generateTokenRequest(cc, scopes);
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
-            return createToken(unirest, urlConfig, formData);
+        try ( var unirestWrapper = GenericUnirestFactory.createAutoCloseableUnirestInstanceWrapper() ) {
+            return createToken(unirestWrapper.get(), urlConfig, formData);
         }
     }
     

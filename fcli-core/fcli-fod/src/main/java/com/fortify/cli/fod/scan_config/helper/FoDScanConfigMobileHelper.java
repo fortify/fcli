@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public class FoDScanConfigMobileHelper {
     public static final FoDScanConfigMobileDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {

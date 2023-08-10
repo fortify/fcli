@@ -19,7 +19,7 @@ import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.ssc._common.rest.bulk.ISSCEntityEmbedderSupplier;
 import com.fortify.cli.ssc._common.rest.bulk.SSCBulkEmbedder;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractSSCBulkEmbedMixin implements IInputTransformer {

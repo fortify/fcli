@@ -25,7 +25,7 @@ import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper.ISSCAddDo
 import com.fortify.cli.ssc.report_template.cli.mixin.SSCReportTemplateResolverMixin;
 import com.fortify.cli.ssc.report_template.helper.SSCReportTemplateDescriptor;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

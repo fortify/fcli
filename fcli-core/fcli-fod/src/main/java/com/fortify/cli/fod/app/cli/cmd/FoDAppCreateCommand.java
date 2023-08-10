@@ -37,7 +37,7 @@ import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine;
 import picocli.CommandLine.Mixin;

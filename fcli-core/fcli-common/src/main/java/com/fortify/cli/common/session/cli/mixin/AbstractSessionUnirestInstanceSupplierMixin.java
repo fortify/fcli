@@ -16,7 +16,7 @@ import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.session.helper.ISessionDescriptor;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public abstract class AbstractSessionUnirestInstanceSupplierMixin<D extends ISessionDescriptor> 
     extends AbstractSessionDescriptorSupplierMixin<D>

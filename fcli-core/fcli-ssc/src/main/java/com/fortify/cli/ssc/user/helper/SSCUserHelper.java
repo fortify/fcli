@@ -18,7 +18,7 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.user.helper.SSCUserSpecPredicate.MatchMode;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public final class SSCUserHelper {
     private final UnirestInstance unirest;

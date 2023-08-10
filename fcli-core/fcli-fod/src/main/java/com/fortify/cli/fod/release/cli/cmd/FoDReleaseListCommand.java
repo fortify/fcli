@@ -25,8 +25,8 @@ import com.fortify.cli.fod._common.rest.query.cli.mixin.FoDFiltersParamMixin;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

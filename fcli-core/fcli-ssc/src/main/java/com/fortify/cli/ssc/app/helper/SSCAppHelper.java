@@ -16,8 +16,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 
-import kong.unirest.GetRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.GetRequest;
+import kong.unirest.core.UnirestInstance;
 
 public class SSCAppHelper {
     public static final SSCAppDescriptor getApp(UnirestInstance unirestInstance, String appNameOrId, boolean failIfNotFound, String... fields) {

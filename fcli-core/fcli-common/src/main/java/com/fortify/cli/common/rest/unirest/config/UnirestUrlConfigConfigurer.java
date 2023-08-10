@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.unirest.config;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public final class UnirestUrlConfigConfigurer {
     /**

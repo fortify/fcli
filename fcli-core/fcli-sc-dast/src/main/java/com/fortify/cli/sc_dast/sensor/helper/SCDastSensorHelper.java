@@ -23,8 +23,8 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.sc_dast._common.rest.helper.SCDastInputTransformer;
 import com.fortify.cli.sc_dast._common.rest.helper.SCDastPagingHelper;
 
-import kong.unirest.HttpResponse;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpResponse;
+import kong.unirest.core.UnirestInstance;
 
 public class SCDastSensorHelper {
     private SCDastSensorHelper() {}

@@ -15,7 +15,7 @@ package com.fortify.cli.ssc.attribute_definition.cli.mixin;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionDescriptor;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Parameters;
 

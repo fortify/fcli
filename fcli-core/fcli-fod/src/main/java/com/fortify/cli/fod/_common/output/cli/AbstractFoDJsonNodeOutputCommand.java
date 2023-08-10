@@ -15,7 +15,7 @@ package com.fortify.cli.fod._common.output.cli;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public abstract class AbstractFoDJsonNodeOutputCommand extends AbstractFoDOutputCommand  implements IJsonNodeSupplier {
     @Override

@@ -30,9 +30,9 @@ import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
 
-import kong.unirest.GetRequest;
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.GetRequest;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 
 public class FoDScanSastHelper extends FoDScanHelper {

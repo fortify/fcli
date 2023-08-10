@@ -39,7 +39,7 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
 import com.fortify.cli.common.util.JavaHelper;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractOutputHelperMixin implements IOutputHelper {

@@ -21,17 +21,27 @@ import org.slf4j.LoggerFactory;
 
 import com.fortify.cli.common.json.JsonHelper;
 
-import kong.unirest.Unirest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.Unirest;
+import kong.unirest.core.UnirestInstance;
 import kong.unirest.jackson.JacksonObjectMapper;
+import lombok.RequiredArgsConstructor;
 
 public final class GenericUnirestFactory {
     private static final Logger LOG = LoggerFactory.getLogger(GenericUnirestFactory.class);
     private static final ConcurrentMap<String, UnirestInstance> instances = new ConcurrentHashMap<>();
     
     /**
+     * Create a new {@link UnirestInstance} and wrap it in an {@link AutoCloseableUnirestInstanceWrapper}
+     * instance to allow for auto-closing the instance in a try-with-resources block.
+     * @return
+     */
+    public static final AutoCloseableUnirestInstanceWrapper createAutoCloseableUnirestInstanceWrapper() {
+        return new AutoCloseableUnirestInstanceWrapper(createUnirestInstance());
+    }
+    
+    /**
      * Create a new {@link UnirestInstance}. Callers are responsible for closing the
-     * {@link UnirestInstance} after use, for example using a try-with-resources block.
+     * {@link UnirestInstance} after use by calling its close() method.
      * @return
      */
     public static final UnirestInstance createUnirestInstance() {
@@ -75,12 +85,21 @@ public final class GenericUnirestFactory {
         UnirestInstance instance = instances.remove(key);
         if ( instance!=null ) {
             try {
-                instance.shutDown(true);
+                instance.close();
             } catch ( Exception e ) {
                 String msg = "Error shutting down unirest instance"; 
                 LOG.warn(msg);
                 LOG.debug(msg, e);
             }
         }
+    }
+    
+    @RequiredArgsConstructor
+    public static final class AutoCloseableUnirestInstanceWrapper implements AutoCloseable {
+        private final UnirestInstance instance;
+        
+        public final UnirestInstance get() { return instance; }
+        @Override
+        public final void close() { instance.close(); }
     }
 }

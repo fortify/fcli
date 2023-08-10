@@ -25,7 +25,7 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public class FoDMicroserviceHelper {
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();

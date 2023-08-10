@@ -29,9 +29,9 @@ import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.StringUtils;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.HttpRequestWithBody;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.HttpRequestWithBody;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.ArgGroup;

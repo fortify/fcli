@@ -34,7 +34,7 @@ import com.fortify.cli.common.rest.wait.WaitType.LoopType;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Builder;
 import lombok.Getter;
 

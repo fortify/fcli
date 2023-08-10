@@ -24,7 +24,7 @@ import com.fortify.cli.fod.user.helper.FoDUserCreateRequest;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

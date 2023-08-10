@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.paging;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 
 public interface INextPageUrlProducerSupplier {
     INextPageUrlProducer getNextPageUrlProducer(HttpRequest<?> originalRequest);

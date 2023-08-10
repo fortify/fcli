@@ -15,8 +15,8 @@ package com.fortify.cli.common.output.writer.output;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.HttpResponse;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.HttpResponse;
 
 public interface IOutputWriter {
 

@@ -13,9 +13,8 @@
 package com.fortify.cli.ssc.token.helper;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.regex.Pattern;
-
-import org.apache.commons.codec.binary.Base64;
 
 
 public final class SSCTokenConverter {
@@ -43,11 +42,11 @@ public final class SSCTokenConverter {
     }
     
     private static final String decode(String token) {
-        return new String(Base64.decodeBase64(token), StandardCharsets.UTF_8);
+        return new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
     }
     
     private static final String encode(String token) {
-        return Base64.encodeBase64String(token.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(token.getBytes(StandardCharsets.UTF_8));
     }
     
     private static final String validateTokenFormat(String token) {

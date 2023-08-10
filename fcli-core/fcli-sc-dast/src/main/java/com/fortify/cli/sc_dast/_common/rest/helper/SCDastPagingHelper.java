@@ -17,8 +17,8 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.URIHelper;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.PagedList;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.PagedList;
 
 public class SCDastPagingHelper {
     public static final PagedList<JsonNode> pagedRequest(HttpRequest<?> request) {

@@ -22,8 +22,8 @@ import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder;
 import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 
 /**
  * This class provides various helper methods for retrieving and formatting

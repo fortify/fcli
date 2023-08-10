@@ -18,7 +18,7 @@ import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputComma
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion_filterset.cli.mixin.SSCAppVersionFilterSetResolverMixin;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

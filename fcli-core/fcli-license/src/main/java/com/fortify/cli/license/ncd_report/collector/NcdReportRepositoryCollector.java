@@ -21,8 +21,8 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.license.ncd_report.descriptor.INcdReportRepositoryDescriptor;
-import com.fortify.cli.license.ncd_report.writer.NcdReportResultsWriters;
 import com.fortify.cli.license.ncd_report.writer.NcdReportRepositoriesWriter.NcdReportRepositoryReportingStatus;
+import com.fortify.cli.license.ncd_report.writer.NcdReportResultsWriters;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;

@@ -17,8 +17,8 @@ import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCo
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.plugin.cli.mixin.SSCPluginResolverMixin;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

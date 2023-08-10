@@ -14,8 +14,8 @@ package com.fortify.cli.common.rest.paging;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.PagedList;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.PagedList;
 
 public class PagingHelper {
     public static final PagedList<JsonNode> pagedRequest(HttpRequest<?> request, INextPageUrlProducer nextPageUrlProducer) {

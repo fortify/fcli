@@ -23,7 +23,7 @@ import com.fortify.cli.sc_sast._common.session.helper.SCSastSessionDescriptor;
 import com.fortify.cli.sc_sast._common.session.helper.SCSastSessionHelper;
 import com.fortify.cli.ssc._common.session.helper.ISSCCredentialsConfig;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -49,8 +49,8 @@ public class SCSastSessionLoginCommand extends AbstractSessionLoginCommand<SCSas
     @Override
     protected void testAuthenticatedConnection(String sessionName) {
     	SCSastSessionDescriptor sessionData = SCSastSessionHelper.instance().get(sessionName, true);
-    	try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
-    	    testAuthenticatedConnection(unirest, sessionData);
+    	try ( var unirestWrapper = GenericUnirestFactory.createAutoCloseableUnirestInstanceWrapper() ) {
+    	    testAuthenticatedConnection(unirestWrapper.get(), sessionData);
     	}
     }
 

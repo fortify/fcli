@@ -12,9 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.unirest;
 
-import kong.unirest.HttpRequestSummary;
-import kong.unirest.HttpResponse;
-import kong.unirest.UnirestException;
+import kong.unirest.core.HttpRequestSummary;
+import kong.unirest.core.HttpResponse;
+import kong.unirest.core.UnirestException;
 import lombok.Getter;
 
 public final class UnexpectedHttpResponseException extends UnirestException {

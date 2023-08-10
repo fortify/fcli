@@ -21,7 +21,7 @@ import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionUserMixin;
 import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionUserUpdateBuilder;
 import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionUserUpdateBuilder.SSCAppVersionAuthEntitiesUpdater;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

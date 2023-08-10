@@ -26,7 +26,7 @@ import com.fortify.cli.sc_dast.scan.helper.SCDastScanHelper;
 import com.fortify.cli.sc_dast.scan_policy.cli.mixin.SCDastScanPolicyResolverMixin;
 import com.fortify.cli.sc_dast.scan_settings.cli.mixin.SCDastScanSettingsResolverMixin;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

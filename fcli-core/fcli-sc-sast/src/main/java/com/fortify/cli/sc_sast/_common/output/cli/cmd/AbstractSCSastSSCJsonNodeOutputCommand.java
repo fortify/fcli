@@ -15,7 +15,7 @@ package com.fortify.cli.sc_sast._common.output.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public abstract class AbstractSCSastSSCJsonNodeOutputCommand extends AbstractSCSastControllerOutputCommand  implements IJsonNodeSupplier {
     @Override

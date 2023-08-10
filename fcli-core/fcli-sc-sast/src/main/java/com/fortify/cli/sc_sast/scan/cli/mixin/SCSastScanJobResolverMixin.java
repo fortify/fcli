@@ -21,7 +21,7 @@ import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobDescriptor;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Parameters;
 

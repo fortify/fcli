@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 
 import com.fortify.cli.common.util.FcliDataHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public final class ProxyHelper {
     private ProxyHelper() {}

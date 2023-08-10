@@ -20,7 +20,7 @@ import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.scan.cli.mixin.FoDScanResolverMixin;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

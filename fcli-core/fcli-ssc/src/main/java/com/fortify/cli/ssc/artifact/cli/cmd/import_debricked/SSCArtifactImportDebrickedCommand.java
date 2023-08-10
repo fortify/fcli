@@ -36,7 +36,7 @@ import com.fortify.cli.ssc.artifact.cli.cmd.import_debricked.DebrickedLoginOptio
 import com.fortify.cli.ssc.artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAuthOptions;
 import com.fortify.cli.ssc.artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedUserCredentialOptions;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
@@ -80,8 +80,8 @@ public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUpload
     @Override
     protected void preUpload(UnirestInstance unirest, IProgressWriterI18n progressWriter, File file) {
     	progressWriter.writeProgress("Status: Generating & downloading SBOM");
-    	try ( var debrickedUnirest = GenericUnirestFactory.createUnirestInstance() ) {
-    	    downloadSbom(debrickedUnirest, file);
+    	try ( var debrickedUnirestWrapper = GenericUnirestFactory.createAutoCloseableUnirestInstanceWrapper() ) {
+    	    downloadSbom(debrickedUnirestWrapper.get(), file);
     	}
     	progressWriter.writeProgress("Status: Uploading SBOM to SSC");
     }

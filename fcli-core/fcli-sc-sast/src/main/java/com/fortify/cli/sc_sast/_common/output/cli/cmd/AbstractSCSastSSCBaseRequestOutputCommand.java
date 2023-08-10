@@ -14,8 +14,8 @@ package com.fortify.cli.sc_sast._common.output.cli.cmd;
 
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 
 public abstract class AbstractSCSastSSCBaseRequestOutputCommand extends AbstractSCSastControllerOutputCommand  implements IBaseRequestSupplier {
     @Override

@@ -18,7 +18,7 @@ import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseC
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.sc_sast._common.session.helper.SCSastSessionDescriptor;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public class SCSastUnirestHelper {
     public static final void configureScSastControllerUnirestInstance(UnirestInstance unirest, SCSastSessionDescriptor sessionData) {

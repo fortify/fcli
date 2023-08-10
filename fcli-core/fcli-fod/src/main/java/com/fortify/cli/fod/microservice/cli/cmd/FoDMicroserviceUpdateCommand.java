@@ -23,7 +23,7 @@ import com.fortify.cli.fod.microservice.helper.FoDMicroserviceDescriptor;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceHelper;
 import com.fortify.cli.fod.microservice.helper.FoDMicroserviceUpdateRequest;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

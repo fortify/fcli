@@ -19,7 +19,7 @@ import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppResolverMixin;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

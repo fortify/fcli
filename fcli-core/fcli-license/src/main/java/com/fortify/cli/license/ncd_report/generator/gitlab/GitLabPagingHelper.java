@@ -17,8 +17,8 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.LinkHeaderNextPageUrlProducerFactory;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.PagedList;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.PagedList;
 
 /**
  * This class provides utility methods for handling GitLab paging.

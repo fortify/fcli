@@ -24,7 +24,7 @@ import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
 import com.fortify.cli.common.util.StringUtils;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

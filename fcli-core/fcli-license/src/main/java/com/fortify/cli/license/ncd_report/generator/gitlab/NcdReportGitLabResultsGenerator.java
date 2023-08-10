@@ -31,9 +31,9 @@ import com.fortify.cli.license.ncd_report.descriptor.NcdReportBranchCommitDescri
 import com.fortify.cli.license.ncd_report.generator.AbstractNcdReportUnirestResultsGenerator;
 import com.fortify.cli.license.ncd_report.generator.github.GitHubPagingHelper;
 
-import kong.unirest.GetRequest;
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.GetRequest;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 
 /**
  * This class is responsible for loading repository, branch, commit and author

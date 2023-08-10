@@ -21,8 +21,8 @@ import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 
-import kong.unirest.GetRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.GetRequest;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 
 public class FoDReleaseHelper {

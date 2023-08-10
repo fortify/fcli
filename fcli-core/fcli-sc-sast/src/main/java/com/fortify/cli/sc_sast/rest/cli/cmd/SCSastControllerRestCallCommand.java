@@ -21,7 +21,7 @@ import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.sc_sast._common.output.cli.mixin.SCSastControllerProductHelperBasicMixin;
 import com.fortify.cli.sc_sast._common.rest.helper.SCSastInputTransformer;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

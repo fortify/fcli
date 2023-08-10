@@ -15,7 +15,7 @@ package com.fortify.cli.ssc.appversion.cli.mixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;

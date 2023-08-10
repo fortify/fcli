@@ -23,7 +23,7 @@ import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixi
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

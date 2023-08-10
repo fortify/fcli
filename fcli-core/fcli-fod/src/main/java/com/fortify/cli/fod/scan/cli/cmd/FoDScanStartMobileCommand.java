@@ -41,7 +41,7 @@ import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.mobile.FoDScanMobileHelper;
 import com.fortify.cli.fod.scan.helper.mobile.FoDScanMobileStartRequest;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

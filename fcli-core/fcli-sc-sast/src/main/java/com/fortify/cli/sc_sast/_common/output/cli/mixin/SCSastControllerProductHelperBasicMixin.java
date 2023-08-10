@@ -16,7 +16,7 @@ import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.sc_sast._common.session.cli.mixin.AbstractSCSastUnirestInstanceSupplierMixin;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public class SCSastControllerProductHelperBasicMixin extends AbstractSCSastUnirestInstanceSupplierMixin
     implements IProductHelper, IUnirestInstanceSupplier

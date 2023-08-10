@@ -23,8 +23,8 @@ import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder;
 import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeHelper;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

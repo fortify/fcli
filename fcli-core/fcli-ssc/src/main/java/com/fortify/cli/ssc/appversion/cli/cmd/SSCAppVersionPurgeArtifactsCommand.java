@@ -29,7 +29,7 @@ import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper.SSCAppVersionArtifactPurgeByDateRequest;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

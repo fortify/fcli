@@ -19,7 +19,7 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 
 // IMPORTANT: When updating/adding any methods in this class, FoDRestCallCommand
 // also likely needs to be updated

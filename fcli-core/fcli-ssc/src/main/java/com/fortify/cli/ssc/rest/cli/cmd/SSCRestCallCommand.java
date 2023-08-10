@@ -22,7 +22,7 @@ import com.fortify.cli.ssc._common.output.cli.mixin.SSCProductHelperBasicMixin;
 import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc._common.rest.helper.SSCPagingHelper;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

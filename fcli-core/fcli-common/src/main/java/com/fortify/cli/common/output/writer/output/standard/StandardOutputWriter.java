@@ -45,8 +45,8 @@ import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.common.variable.EncryptVariable;
 import com.fortify.cli.common.variable.FcliVariableHelper;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.HttpResponse;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.HttpResponse;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;

@@ -29,7 +29,7 @@ import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 
 // TODO Class contains unused unitsRequired() method

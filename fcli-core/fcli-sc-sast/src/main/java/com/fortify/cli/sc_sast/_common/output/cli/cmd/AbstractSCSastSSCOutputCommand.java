@@ -17,7 +17,7 @@ import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.sc_sast._common.output.cli.mixin.SCSastSSCProductHelperStandardMixin;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 

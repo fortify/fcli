@@ -23,12 +23,12 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriter;
 import com.fortify.cli.common.progress.helper.ProgressWriterType;
 
-import kong.unirest.GetRequest;
-import kong.unirest.HttpRequest;
-import kong.unirest.HttpRequestWithBody;
-import kong.unirest.ObjectMapper;
-import kong.unirest.ProgressMonitor;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.GetRequest;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.HttpRequestWithBody;
+import kong.unirest.core.ObjectMapper;
+import kong.unirest.core.ProgressMonitor;
+import kong.unirest.core.UnirestInstance;
 import kong.unirest.jackson.JacksonObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;

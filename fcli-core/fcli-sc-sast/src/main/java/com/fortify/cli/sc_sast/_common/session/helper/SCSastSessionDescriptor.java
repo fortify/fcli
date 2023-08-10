@@ -34,10 +34,10 @@ import com.fortify.cli.ssc._common.session.helper.ISSCCredentialsConfig;
 import com.fortify.cli.ssc._common.session.helper.ISSCUserCredentialsConfig;
 import com.fortify.cli.ssc.token.helper.SSCTokenCreateRequest;
 import com.fortify.cli.ssc.token.helper.SSCTokenCreateResponse;
-import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 import com.fortify.cli.ssc.token.helper.SSCTokenCreateResponse.SSCTokenData;
+import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

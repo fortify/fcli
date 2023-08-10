@@ -23,8 +23,8 @@ import com.fortify.cli.ssc._common.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc._common.rest.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc._common.rest.query.cli.mixin.SSCQParamMixin;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

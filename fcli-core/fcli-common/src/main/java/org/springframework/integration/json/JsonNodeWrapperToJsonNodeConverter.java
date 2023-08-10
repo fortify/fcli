@@ -19,12 +19,12 @@ package org.springframework.integration.json;
 import java.util.Collections;
 import java.util.Set;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.GenericConverter;
 import org.springframework.integration.json.JsonPropertyAccessor.JsonNodeWrapper;
 import org.springframework.lang.Nullable;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * The {@link org.springframework.core.convert.converter.Converter} implementation for the conversion

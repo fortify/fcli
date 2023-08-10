@@ -17,7 +17,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.sc_sast._common.output.cli.cmd.AbstractSCSastControllerJsonNodeOutputCommand;
 import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanJobResolverMixin;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

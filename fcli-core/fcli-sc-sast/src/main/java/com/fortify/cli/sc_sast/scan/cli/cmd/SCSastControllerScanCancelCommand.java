@@ -19,7 +19,7 @@ import com.fortify.cli.sc_sast._common.output.cli.cmd.AbstractSCSastControllerJs
 import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanJobResolverMixin;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobDescriptor;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

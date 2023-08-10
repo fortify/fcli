@@ -20,8 +20,8 @@ import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder;
 import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
 
-import kong.unirest.GetRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.GetRequest;
+import kong.unirest.core.UnirestInstance;
 
 public class SSCRolePermissionHelper {
 

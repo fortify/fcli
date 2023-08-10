@@ -34,8 +34,8 @@ import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseC
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 
-import kong.unirest.GetRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.GetRequest;
+import kong.unirest.core.UnirestInstance;
 import picocli.CommandLine.Help.Ansi;
 
 public class SSCTokenHelper {
@@ -59,39 +59,39 @@ public class SSCTokenHelper {
     }
     
     public static final JsonNode listTokens(IUrlConfig urlConfig, IUserCredentialsConfig uc, Map<String,Object> queryParams) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
-            return listTokens(unirest, urlConfig, uc, queryParams);
+        try ( var unirestWrapper = GenericUnirestFactory.createAutoCloseableUnirestInstanceWrapper() ) {
+            return listTokens(unirestWrapper.get(), urlConfig, uc, queryParams);
         }
     }
     
     public static final JsonNode updateToken(IUrlConfig urlConfig, IUserCredentialsConfig uc, String tokenId, SSCTokenUpdateRequest tokenUpdateRequest) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
-            return updateToken(unirest, urlConfig, uc, tokenId, tokenUpdateRequest);
+        try ( var unirestWrapper = GenericUnirestFactory.createAutoCloseableUnirestInstanceWrapper() ) {
+            return updateToken(unirestWrapper.get(), urlConfig, uc, tokenId, tokenUpdateRequest);
         }
     }
     
     public static final JsonNode deleteTokensById(IUrlConfig urlConfig, IUserCredentialsConfig uc, String... tokenIds) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
-            return deleteTokensById(unirest, urlConfig, uc, tokenIds);
+        try ( var unirestWrapper = GenericUnirestFactory.createAutoCloseableUnirestInstanceWrapper() ) {
+            return deleteTokensById(unirestWrapper.get(), urlConfig, uc, tokenIds);
         }
     }
     
     public static final JsonNode deleteTokensByValue(IUrlConfig urlConfig, IUserCredentialsConfig uc, String... tokens) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
-            return deleteTokensByValue(unirest, urlConfig, uc, tokens);
+        try ( var unirestWrapper = GenericUnirestFactory.createAutoCloseableUnirestInstanceWrapper() ) {
+            return deleteTokensByValue(unirestWrapper.get(), urlConfig, uc, tokens);
         }
     }
     
     public static final <T> T createToken(IUrlConfig urlConfig, IUserCredentialsConfig uc, SSCTokenCreateRequest tokenCreateRequest, Class<T> returnType) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
-            return createToken(unirest, urlConfig, uc, tokenCreateRequest, returnType);
+        try ( var unirestWrapper = GenericUnirestFactory.createAutoCloseableUnirestInstanceWrapper() ) {
+            return createToken(unirestWrapper.get(), urlConfig, uc, tokenCreateRequest, returnType);
         }
     }
     
     public static final <R> R run(IUrlConfig urlConfig, char[] activeToken, Function<UnirestInstance, R> f) {
-        try ( var unirest = GenericUnirestFactory.createUnirestInstance() ) {
-            configureUnirest(unirest, urlConfig, activeToken);
-            return f.apply(unirest);
+        try ( var unirestWrapper = GenericUnirestFactory.createAutoCloseableUnirestInstanceWrapper() ) {
+            configureUnirest(unirestWrapper.get(), urlConfig, activeToken);
+            return f.apply(unirestWrapper.get());
         }
     }
 

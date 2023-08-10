@@ -15,7 +15,7 @@ package com.fortify.cli.ssc.role_permission.cli.mixin;
 import com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionDescriptor;
 import com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Option;

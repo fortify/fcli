@@ -22,7 +22,7 @@ import com.fortify.cli.fod._common.output.mixin.FoDProductHelperBasicMixin;
 import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

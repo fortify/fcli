@@ -19,7 +19,7 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.sc_dast._common.rest.helper.SCDastInputTransformer;
 import com.fortify.cli.sc_dast._common.rest.helper.SCDastPagingHelper;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 
 // IMPORTANT: When updating/adding any methods in this class, SCDastControllerRestCallCommand
 // also likely needs to be updated

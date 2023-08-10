@@ -18,7 +18,7 @@ import com.fortify.cli.sc_dast._common.output.cli.cmd.AbstractSCDastJsonNodeOutp
 import com.fortify.cli.sc_dast.sensor.cli.mixin.SCDastSensorResolverMixin;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

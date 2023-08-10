@@ -30,8 +30,8 @@ import com.fortify.cli.ssc.attribute_definition.domain.SSCAttributeDefinitionTyp
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionDescriptor;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 
 public final class SSCAppVersionAttributeUpdateBuilder {
     private static final ObjectMapper objectMapper = new ObjectMapper();

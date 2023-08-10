@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.output.cli.cmd;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 
 public interface IBaseRequestSupplier {
     HttpRequest<?> getBaseRequest();

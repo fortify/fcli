@@ -18,8 +18,8 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 
-import kong.unirest.GetRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.GetRequest;
+import kong.unirest.core.UnirestInstance;
 
 public final class FoDAssessmentTypeHelper {
     private FoDAssessmentTypeHelper() {}

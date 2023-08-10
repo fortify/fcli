@@ -12,7 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.unirest.config;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public class UnirestJsonHeaderConfigurer {
     public static final void configure(UnirestInstance unirest) {

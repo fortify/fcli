@@ -15,7 +15,7 @@ package com.fortify.cli.sc_dast.scan_settings.cli.mixin;
 import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsDescriptor;
 import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;

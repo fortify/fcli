@@ -16,7 +16,7 @@ package com.fortify.cli.fod.user_group.cli.mixin;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupDescriptor;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;

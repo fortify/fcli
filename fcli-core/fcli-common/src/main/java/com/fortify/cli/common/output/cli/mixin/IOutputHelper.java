@@ -18,7 +18,7 @@ import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.writer.IBasicOutputConfigSupplier;
 import com.fortify.cli.common.output.writer.IOutputWriterFactorySupplier;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 
 public interface IOutputHelper extends IBasicOutputConfigSupplier, IOutputWriterFactorySupplier {
     IProductHelper getProductHelper();

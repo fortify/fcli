@@ -21,7 +21,7 @@ import com.fortify.cli.common.session.cli.mixin.AbstractSessionUnirestInstanceSu
 import com.fortify.cli.sc_dast._common.session.helper.SCDastSessionDescriptor;
 import com.fortify.cli.sc_dast._common.session.helper.SCDastSessionHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 
 public class SCDastProductHelperBasicMixin extends AbstractSessionUnirestInstanceSupplierMixin<SCDastSessionDescriptor> 
     implements IProductHelper

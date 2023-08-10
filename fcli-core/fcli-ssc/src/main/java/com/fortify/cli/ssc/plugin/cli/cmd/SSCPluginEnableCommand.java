@@ -19,7 +19,7 @@ import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputComma
 import com.fortify.cli.ssc.plugin.cli.mixin.SSCPluginResolverMixin;
 import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

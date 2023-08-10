@@ -25,8 +25,8 @@ import com.fortify.cli.ssc.user.helper.SSCUserHelper;
 import com.fortify.cli.ssc.user.helper.SSCUserSpecPredicate;
 import com.fortify.cli.ssc.user.helper.SSCUserSpecPredicate.MatchMode;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 import lombok.Data;
 
 public final class SSCAppVersionUserUpdateBuilder {

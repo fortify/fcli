@@ -24,7 +24,7 @@ import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper.ISSCAddUploadTokenFunction;
 import com.fortify.cli.ssc.plugin.helper.SSCPluginStateHelper;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

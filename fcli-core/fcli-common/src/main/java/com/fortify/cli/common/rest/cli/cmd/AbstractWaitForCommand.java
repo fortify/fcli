@@ -24,7 +24,7 @@ import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.rest.wait.WaitHelper;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 

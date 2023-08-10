@@ -24,7 +24,7 @@ import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.user.helper.SSCUserSpecPredicate;
 import com.fortify.cli.ssc.user.helper.SSCUserSpecPredicate.MatchMode;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

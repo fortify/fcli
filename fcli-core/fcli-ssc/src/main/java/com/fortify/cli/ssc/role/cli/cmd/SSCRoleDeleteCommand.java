@@ -20,7 +20,7 @@ import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.role.cli.mixin.SSCRoleResolverMixin;
 import com.fortify.cli.ssc.role.helper.SSCRoleDescriptor;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

@@ -14,8 +14,8 @@ package com.fortify.cli.fod._common.output.cli;
 
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.UnirestInstance;
 
 public abstract class AbstractFoDBaseRequestOutputCommand extends AbstractFoDOutputCommand  implements IBaseRequestSupplier {
     @Override

@@ -26,9 +26,9 @@ import com.fortify.cli.common.progress.helper.ProgressWriterType;
 import com.fortify.cli.common.rest.unirest.URIHelper;
 import com.fortify.cli.fod._common.util.FoDConstants;
 
-import kong.unirest.HttpRequest;
-import kong.unirest.ProgressMonitor;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.HttpRequest;
+import kong.unirest.core.ProgressMonitor;
+import kong.unirest.core.UnirestInstance;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 

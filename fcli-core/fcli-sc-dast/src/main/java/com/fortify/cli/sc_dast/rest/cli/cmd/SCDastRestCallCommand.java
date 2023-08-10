@@ -22,7 +22,7 @@ import com.fortify.cli.sc_dast._common.output.cli.mixin.SCDastProductHelperBasic
 import com.fortify.cli.sc_dast._common.rest.helper.SCDastInputTransformer;
 import com.fortify.cli.sc_dast._common.rest.helper.SCDastPagingHelper;
 
-import kong.unirest.HttpRequest;
+import kong.unirest.core.HttpRequest;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

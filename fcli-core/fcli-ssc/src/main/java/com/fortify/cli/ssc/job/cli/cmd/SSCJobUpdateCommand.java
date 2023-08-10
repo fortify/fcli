@@ -21,7 +21,7 @@ import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.job.cli.mixin.SSCJobResolverMixin;
 import com.fortify.cli.ssc.job.helper.SSCJobDescriptor;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;

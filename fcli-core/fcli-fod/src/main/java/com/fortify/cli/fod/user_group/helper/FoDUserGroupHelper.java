@@ -28,8 +28,8 @@ import com.fortify.cli.fod.app.helper.FoDAppHelper;
 import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
 
-import kong.unirest.GetRequest;
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.GetRequest;
+import kong.unirest.core.UnirestInstance;
 import lombok.Getter;
 
 // Methods are relatively long, consider splitting

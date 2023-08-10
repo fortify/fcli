@@ -22,7 +22,7 @@ import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 
-import kong.unirest.UnirestInstance;
+import kong.unirest.core.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
