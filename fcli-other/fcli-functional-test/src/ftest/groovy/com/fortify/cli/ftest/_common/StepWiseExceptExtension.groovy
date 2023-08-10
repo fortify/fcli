@@ -35,9 +35,6 @@ public class StepWiseExceptExtension extends StepwiseExtension {
       
     private AbstractRunListener getRunListener(final SpecInfo spec) {
       return new AbstractRunListener() {
-          
-        //ArrayList<String> xceptions = Arrays.asList("ssc.job (SSCJobSpec).upload")
-        
         @Override
         public void error(ErrorInfo error) {
           // @StepwiseExcept only affects class that carries the annotation,
@@ -49,7 +46,7 @@ public class StepWiseExceptExtension extends StepwiseExtension {
           List<FeatureInfo> features = spec.getFeatures();
           int indexOfFailedFeature = features.indexOf(error.getMethod().getFeature());
           for (int i = indexOfFailedFeature + 1; i < features.size(); i++) {
-            features.get(i).skip("Skipped due to previous Error (by @Stepwise)");
+            features.get(i).skip("Skipped due to previous Error (by @StepwiseExcept)");
           }
         }
       }
