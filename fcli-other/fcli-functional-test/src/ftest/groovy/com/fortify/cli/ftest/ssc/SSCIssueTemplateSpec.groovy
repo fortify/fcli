@@ -28,7 +28,7 @@ import spock.lang.Stepwise
 
 @Prefix("ssc.issue-template") @FcliSession(SSC) @Stepwise
 class SSCIssueTemplateSpec extends FcliBaseSpec {
-    @Shared @TestResource("runtime/shared/issueTemplate.xml") String templateFile
+    @Shared @TestResource("runtime/ssc/issueTemplate.xml") String templateFile
     private static final String random = System.currentTimeMillis()
     private static final String templateName = "fcli-test-Template"+random
     

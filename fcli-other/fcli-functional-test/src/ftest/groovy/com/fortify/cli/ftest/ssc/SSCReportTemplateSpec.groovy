@@ -28,9 +28,9 @@ import spock.lang.Stepwise
 
 @Prefix("ssc.report-template") @FcliSession(SSC) @Stepwise
 class SSCReportTemplateSpec extends FcliBaseSpec {
-    @Shared @TestResource("runtime/shared/project_report.rptdesign") String sampleTemplate
-    @Shared @TestResource("runtime/shared/ReportTemplateConfig.yml") String sampleConfig
-    private String reportName = "fcli-test-report"
+    @Shared @TestResource("runtime/ssc/project_report.rptdesign") String sampleTemplate
+    @Shared @TestResource("runtime/ssc/ReportTemplateConfig.yml") String sampleConfig
+    private String reportName = "fcli-test-report-"+System.currentTimeMillis()
     
     def "list"() {
         def args = "ssc report-template list --store reports"

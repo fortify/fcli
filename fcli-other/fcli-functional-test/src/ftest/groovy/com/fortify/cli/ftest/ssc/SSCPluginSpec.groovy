@@ -28,7 +28,7 @@ import spock.lang.Stepwise
 
 @Prefix("ssc.plugin") @FcliSession(SSC) @Stepwise
 class SSCPluginSpec extends FcliBaseSpec {
-    @Shared @TestResource("runtime/shared/fortify-ssc-parser-sample-1.0.2.jar") String samplePlugin
+    @Shared @TestResource("runtime/ssc/fortify-ssc-parser-sample-1.0.2.jar") String samplePlugin
     
     
     def "listAll"() {

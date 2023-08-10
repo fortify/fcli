@@ -21,9 +21,11 @@ import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 
 import spock.lang.AutoCleanup
+import spock.lang.Requires
 import spock.lang.Shared
 
 @Prefix("ssc.activity-feed") @FcliSession(SSC)
+@Requires({System.getProperty('ft.include.long-running')})
 class SSCActivityFeedSpec extends FcliBaseSpec {
     @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     

@@ -27,12 +27,24 @@ class TestResourceExtension extends AbstractTempDirExtension {
     }
     
     private Path extractResource(String resourceFile) {
-        TestResourceExtension.class.classLoader.getResourceAsStream(resourceFile).withCloseable {
+        getResource(resourceFile).withCloseable {
             Path outputFilePath = tempDir.resolve(resourceFile)
             outputFilePath.parent.toFile().mkdirs()
             Files.copy(it, outputFilePath, StandardCopyOption.REPLACE_EXISTING)
             return outputFilePath
         }
+    }
+    
+    private InputStream getResource(String resourceFile) {
+        def cl = TestResourceExtension.class.classLoader
+        def stream = cl.getResourceAsStream(resourceFile)
+        if ( stream==null ) {
+            stream = cl.getResourceAsStream(resourceFile+"-no-shadow")
+        }
+        if ( stream==null ) {
+            throw new IllegalStateException("${resourceFile} (or ${resourceFile}-no-shadow) referenced in @TestResource not found")
+        }
+        return stream
     }
     
 }
