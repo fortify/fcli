@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-appversion(1)
+title: fcli-fod-scan-config(1)
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-appversion(1)</title>
+<title>fcli-fod-scan-config(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,7 +20,7 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-ssc-appversion(1) Manual Page</h1>
+<h1>fcli-fod-scan-config(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -32,7 +32,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-appversion - Manage SSC application versions.</p>
+<p>fcli-fod-scan-config - Setup scan configurations on FoD.</p>
 </div>
 </div>
 <div id="content">
@@ -40,7 +40,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion</strong> [<strong>-h</strong>] [COMMAND]</p>
+<p><strong>fcli fod scan-config</strong> [<strong>-h</strong>] [COMMAND]</p>
 </div>
 </div>
 </div>
@@ -68,37 +68,21 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-ssc-appversion-create.html"><strong>create</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-fod-scan-config-get-dast.html"><strong>get-dast</strong></a></dt>
 <dd>
-<p>Create an application version.</p>
+<p>Get current DAST scan configuration.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-ssc-appversion-delete.html"><strong>delete</strong>, <strong>rm</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-fod-scan-config-get-mobile.html"><strong>get-mobile</strong></a></dt>
 <dd>
-<p>Delete an application version.</p>
+<p>Get current Mobile scan configuration (unavailable).</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-ssc-appversion-download-state.html"><strong>download-state</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-fod-scan-config-get-sast.html"><strong>get-sast</strong></a></dt>
 <dd>
-<p>Download application version state.</p>
+<p>Get current SAST scan configuration</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-ssc-appversion-get.html"><strong>get</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-fod-scan-config-setup-sast.html"><strong>setup-sast</strong></a></dt>
 <dd>
-<p>Get application version details.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-ssc-appversion-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
-<dd>
-<p>List application versions.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-ssc-appversion-purge-artifacts.html"><strong>purge-artifacts</strong></a></dt>
-<dd>
-<p>Purge application version artifacts.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-ssc-appversion-refresh-metrics.html"><strong>refresh-metrics</strong></a></dt>
-<dd>
-<p>Refresh application version metrics.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-ssc-appversion-update.html"><strong>update</strong></a></dt>
-<dd>
-<p>Update an application version.</p>
+<p>Configure the release for enabling SAST scans.</p>
 </dd>
 </dl>
 </div>

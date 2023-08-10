@@ -1,5 +1,5 @@
 ---
-title: fcli-fod-scan-setup-get-sast(1)
+title: fcli-fod-scan-config-setup-sast(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-fod-scan-setup-get-sast(1)</title>
+<title>fcli-fod-scan-config-setup-sast(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230810.092255-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230810.094216-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-fod-scan-setup-get-sast(1) Manual Page</h1>
+<h1>fcli-fod-scan-config-setup-sast(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-scan-setup-get-sast - Get current SAST scan configuration</p>
+<p>fcli-fod-scan-config-setup-sast - Configure the release for enabling SAST scans.</p>
 </div>
 </div>
 <div id="content">
@@ -43,13 +43,23 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod scan-setup get-sast</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [[<strong>-h</strong>]
-                             [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                             [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                             [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
-                       _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                 _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                             <em>id|app[:ms]:rel</em></p>
+<p><strong>fcli fod scan-config setup-sast</strong> [<strong>--include-third-party-libs</strong>] [<strong>--oss</strong>]
+                                [<strong>--use-source-control</strong>]
+                                <strong>--assessment-type</strong>=<em>&lt;staticAssessmentType&gt;</em>
+                                <strong>--audit-preference</strong>=<em>&lt;auditPreferenceType&gt;</em>
+                                [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+                                [<strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em>]
+                                [<strong>--frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em>]
+                                [<strong>--language-level</strong>=<em>&lt;languageLevel&gt;</em>]
+                                [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                                <strong>--technology-stack</strong>=<em>&lt;technologyStack&gt;</em> [[<strong>-h</strong>]
+                                [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                                [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                          _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                    _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                <em>id|app[:ms]:rel</em></p>
 </div>
 </div>
 </div>
@@ -64,9 +74,49 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--assessment-type</strong>=<em>&lt;staticAssessmentType&gt;</em></dt>
+<dd>
+<p>The type of Static assessment to carry out. Valid values: Static, StaticPlus</p>
+</dd>
+<dt class="hdlist1"><strong>--audit-preference</strong>=<em>&lt;auditPreferenceType&gt;</em></dt>
+<dd>
+<p>Audit preference, e.g. Manual or Automated</p>
+</dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em></dt>
+<dd>
+<p>Entitlement Id to use. If not specified Frequency and Assessment Type will be used to find one.</p>
+</dd>
+<dt class="hdlist1"><strong>--frequency, --entitlement-frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em></dt>
+<dd>
+<p>The entitlement frequency type to use. Valid values: SingleScan, Subscription.</p>
+</dd>
+<dt class="hdlist1"><strong>--include-third-party-libs</strong></dt>
+<dd>
+<p>Indicates if third party libraries should be included.</p>
+</dd>
+<dt class="hdlist1"><strong>--language-level</strong>=<em>&lt;languageLevel&gt;</em></dt>
+<dd>
+<p>The language level of the technology stack (if needed).</p>
+</dd>
+<dt class="hdlist1"><strong>--oss</strong></dt>
+<dd>
+<p>Perform Open Source Analysis scan.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+</dd>
+<dt class="hdlist1"><strong>--technology-stack</strong>=<em>&lt;technologyStack&gt;</em></dt>
+<dd>
+<p>The technology stack of the application.</p>
+</dd>
+<dt class="hdlist1"><strong>--use-source-control</strong></dt>
+<dd>
+<p>Indicates if source control should be used.</p>
 </dd>
 </dl>
 </div>
@@ -148,7 +198,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-10 09:24:49 UTC
+Last updated 2023-08-10 09:44:10 UTC
 </div>
 </div>
 </body>

@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230810.092255-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230810.094216-dev_develop" %}
 
 
 <div id="header">
@@ -30,6 +30,7 @@ fcli_version:
 <li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
@@ -42,12 +43,11 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod rest lookup</strong> [<strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em>] [<strong>--type</strong>=<em>&lt;lookupType&gt;</em>]
-                     [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+<p><strong>fcli fod rest lookup</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                      [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                      <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
          _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
-               _      expression&gt;</em>]</p>
+               _      expression&gt;</em>] [<em>&lt;type&gt;</em>]</p>
 </div>
 </div>
 </div>
@@ -64,17 +64,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--filters-param</strong>=<em>&lt;filtersParam&gt;</em></dt>
-<dd>
-<p>Server-side queries are automatically generated from the -q / --query option if possible; generated queries can be viewed in the debug log. The --q-param option can be used to override the automatically generated query, for example to further optimize the request. See the Fortify on Demand REST API documentation for information on supported formats.</p>
-</dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
 <p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
-</dd>
-<dt class="hdlist1"><strong>--type, --lookup-type</strong>=<em>&lt;lookupType&gt;</em></dt>
-<dd>
-<p>The type of lookup items to return. Valid values: All, MobileScanPlatformTypes, MobileScanFrameworkTypes, MobileScanEnvironmentTypes, MobileScanRoleTypes, MobileScanExternalDeviceTypes, DynamicScanEnvironmentFacingTypes, DynamicScanAuthenticationTypes, TimeZones, RepeatScheduleTypes, GeoLocations, SDLCStatusTypes, DayOfWeekTypes, BusinessCriticalityTypes, ReportTemplateTypes, AnalysisStatusTypes, ScanStatusTypes, ReportFormats, Roles, ScanPreferenceTypes, AuditPreferenceTypes, EntitlementFrequencyTypes, ApplicationTypes, ScanTypes, AttributeTypes, AttributeDataTypes, MultiFactorAuthorizationTypes, ReportTypes, ReportStatusTypes, PassFailReasonTypes, DynamicScanWebServiceTypes, VulnerabilitySeverityTypes, TechnologyTypes, LanguageLevels, AuditActionTypes, NotificationTriggerTypes, ConcurrentRequestThreadsTypes, MobileScanAuditPreferenceTypes, DataExportTypes, ScanMethodTypes, StartScanMethodTypes, AuditTemplateConditionTypes, OpenSourceScanTypeAuditTemplateFieldTypes, StaticScanTypeAuditTemplateFieldTypes, DynamicMobileScanTypeAuditTemplateFieldTypes. Leave empty to list all the valid lookup items of the REST API.</p>
 </dd>
 </dl>
 </div>
@@ -139,11 +131,24 @@ fcli_version:
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">[<em>&lt;type&gt;</em>]</dt>
+<dd>
+<p>The type of lookup items to return. Valid values: All, MobileScanPlatformTypes, MobileScanFrameworkTypes, MobileScanEnvironmentTypes, MobileScanRoleTypes, MobileScanExternalDeviceTypes, DynamicScanEnvironmentFacingTypes, DynamicScanAuthenticationTypes, TimeZones, RepeatScheduleTypes, GeoLocations, SDLCStatusTypes, DayOfWeekTypes, BusinessCriticalityTypes, ReportTemplateTypes, AnalysisStatusTypes, ScanStatusTypes, ReportFormats, Roles, ScanPreferenceTypes, AuditPreferenceTypes, EntitlementFrequencyTypes, ApplicationTypes, ScanTypes, AttributeTypes, AttributeDataTypes, MultiFactorAuthorizationTypes, ReportTypes, ReportStatusTypes, PassFailReasonTypes, DynamicScanWebServiceTypes, VulnerabilitySeverityTypes, TechnologyTypes, LanguageLevels, AuditActionTypes, NotificationTriggerTypes, ConcurrentRequestThreadsTypes, MobileScanAuditPreferenceTypes, DataExportTypes, ScanMethodTypes, StartScanMethodTypes, AuditTemplateConditionTypes, OpenSourceScanTypeAuditTemplateFieldTypes, StaticScanTypeAuditTemplateFieldTypes, DynamicMobileScanTypeAuditTemplateFieldTypes. Leave empty to list all the valid lookup items of the REST API.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-10 09:24:49 UTC
+Last updated 2023-08-10 09:44:10 UTC
 </div>
 </div>
 </body>
