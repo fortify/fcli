@@ -28,8 +28,8 @@ import org.junit.platform.launcher.listeners.TestExecutionSummary
  * @author Ruud Senden
  */
 public class TestRunner {
-    static def orgOut = System.out
-    static def orgErr = System.err
+    static PrintStream orgOut = System.out
+    static PrintStream orgErr = System.err
     public static void main(String[] args) {
         setSystemProperties(args)
         def exitCode = 0
@@ -109,6 +109,7 @@ public class TestRunner {
             }
         }
         private void logStatus(String msg) {
+            orgErr.flush(); // Make sure all error output has been printed before outputting status message
             def msgWithPrefix = logPrefixFormat.format(new Date()) + msg;
             orgOut.println(msgWithPrefix)
             log.println(msgWithPrefix)
