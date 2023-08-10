@@ -62,11 +62,7 @@ class SSCJobSpec extends FcliBaseSpec {
     }
     
     def "update"() {
-<<<<<<< HEAD
         def args = "ssc job update ::jobs::get(0).jobName --priority 1 --store job"
-=======
-        def args = "ssc job update ::jobs::get(#var('jobs').size()-1).jobName --priority 1"
->>>>>>> parent of f03f75c71 (chore: updated tests, added spock annotation extension)
         when:
             def result = Fcli.run(args)
         then:
@@ -87,12 +83,8 @@ class SSCJobSpec extends FcliBaseSpec {
     }
 
     def "get.byName"() {
-<<<<<<< HEAD
         Thread.sleep(1000)
         def args = "ssc job get ::job::jobName"
-=======
-        def args = "ssc job get ::jobs::get(0).jobName"
->>>>>>> parent of f03f75c71 (chore: updated tests, added spock annotation extension)
         when:
             def result = Fcli.run(args)
         then:
