@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.fod._common.output.mixin;
 
+import com.fortify.cli.common.http.connection.helper.ConnectionHelper;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
@@ -37,6 +38,7 @@ public class FoDProductHelperBasicMixin extends AbstractSessionUnirestInstanceSu
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, sessionDescriptor.getUrlConfig());
         ProxyHelper.configureProxy(unirest, "fod", sessionDescriptor.getUrlConfig().getUrl());
+        ConnectionHelper.configureTimeouts(unirest, "fod");
         final String authHeader = String.format("Bearer %s", sessionDescriptor.getActiveBearerToken());
         unirest.config().setDefaultHeader("Authorization", authHeader);
     }

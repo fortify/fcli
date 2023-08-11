@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.sc_sast._common.rest.helper;
 
+import com.fortify.cli.common.http.connection.helper.ConnectionHelper;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
@@ -34,6 +35,7 @@ public class SCSastUnirestHelper {
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, sessionData.getSscUrlConfig());
         ProxyHelper.configureProxy(unirest, "sc-sast", sessionData.getSscUrlConfig().getUrl());
+        ConnectionHelper.configureTimeouts(unirest, "sc-sast");
         unirest.config().requestCompression(false); // For some reason, larger SSC requests fail when compression is enabled
         unirest.config().setDefaultHeader("Authorization", "FortifyToken "+new String(sessionData.getActiveSSCToken()));
     }

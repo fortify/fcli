@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
+import com.fortify.cli.common.http.connection.helper.ConnectionHelper;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
@@ -107,6 +108,7 @@ public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUpload
         DebrickedUrlConfigOptions debrickedUrlConfig = debrickedLoginOptions.getUrlConfigOptions();
 		UnirestUrlConfigConfigurer.configure(debrickedUnirest, debrickedUrlConfig);
         ProxyHelper.configureProxy(debrickedUnirest, "debricked", debrickedUrlConfig.getUrl());
+        ConnectionHelper.configureTimeouts(debrickedUnirest, "debricked");
         String debrickedJwtToken = getDebrickedJwtToken(debrickedUnirest);
         UnirestJsonHeaderConfigurer.configure(debrickedUnirest);
 		String authHeader = String.format("Bearer %s", debrickedJwtToken);

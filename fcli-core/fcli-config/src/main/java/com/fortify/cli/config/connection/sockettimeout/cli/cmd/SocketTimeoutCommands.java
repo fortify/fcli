@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+ * Copyright 2021, 2022 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -10,27 +10,20 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.config._main.cli.cmd;
+package com.fortify.cli.config.connection.sockettimeout.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
-import com.fortify.cli.config.connection.cli.cmd.ConnectionCommands;
-import com.fortify.cli.config.language.cli.cmd.LanguageCommands;
-import com.fortify.cli.config.proxy.cli.cmd.ProxyCommands;
-import com.fortify.cli.config.truststore.cli.cmd.TrustStoreCommands;
-
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "config",
-        aliases = "cfg",
-        resourceBundle = "com.fortify.cli.config.i18n.ConfigMessages",
+        name = "sockettimeout",
         subcommands = {
-                ConfigClearCommand.class,
-                ConnectionCommands.class,
-                LanguageCommands.class,
-                ProxyCommands.class,
-                TrustStoreCommands.class
+                SocketTimeoutAddCommand.class,
+                SocketTimeoutClearCommand.class,
+                SocketTimeoutDeleteCommand.class,
+                SocketTimeoutListCommand.class,
+                SocketTimeoutUpdateCommand.class
         }
 )
-public class ConfigCommands extends AbstractContainerCommand {
+public class SocketTimeoutCommands extends AbstractContainerCommand {
 }

@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.http.connection.helper.ConnectionHelper;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -107,6 +108,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private final Void download(String downloadUrl, File destFile) {
         UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance("tool",
                 u->ProxyHelper.configureProxy(u, "tool", downloadUrl));
+        ConnectionHelper.configureTimeouts(unirest, "tool");
         unirest.get(downloadUrl).asFile(destFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
         return null;
     }

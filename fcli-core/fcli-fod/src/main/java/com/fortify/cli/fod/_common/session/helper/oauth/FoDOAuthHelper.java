@@ -15,6 +15,7 @@ package com.fortify.cli.fod._common.session.helper.oauth;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.fortify.cli.common.http.connection.helper.ConnectionHelper;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
@@ -55,6 +56,7 @@ public class FoDOAuthHelper {
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
         ProxyHelper.configureProxy(unirest, "fod", urlConfig.getUrl());
+        ConnectionHelper.configureTimeouts(unirest, "fod");
         UnirestJsonHeaderConfigurer.configure(unirest);
     }
     

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.fortify.cli.common.http.connection.helper.ConnectionHelper;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
@@ -140,6 +141,7 @@ public class SSCTokenHelper {
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
         ProxyHelper.configureProxy(unirest, "ssc", urlConfig.getUrl());
+        ConnectionHelper.configureTimeouts(unirest, "ssc");
         UnirestBasicAuthConfigurer.configure(unirest, uc);
         UnirestJsonHeaderConfigurer.configure(unirest);
     }
@@ -149,6 +151,7 @@ public class SSCTokenHelper {
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, urlConfig);
         ProxyHelper.configureProxy(unirest, "ssc", urlConfig.getUrl());
+        ConnectionHelper.configureTimeouts(unirest, "ssc");
         unirest.config().requestCompression(false); // TODO For some reason, in native binaries, compression may cause issues
         unirest.config().setDefaultHeader("Authorization", "FortifyToken "+new String(activeToken));
     }

@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.common.report.generator;
 
+import com.fortify.cli.common.http.connection.helper.ConnectionHelper;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.report.collector.IReportResultsCollector;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
@@ -101,6 +102,7 @@ public abstract class AbstractReportUnirestResultsGenerator<T extends IUrlConfig
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, sourceConfig());
         ProxyHelper.configureProxy(unirest, getType(), sourceConfig().getUrl());
+        ConnectionHelper.configureTimeouts(unirest, getType());
         configure(unirest);
         return unirest;
     }

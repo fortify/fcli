@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast._common.output.cli.mixin;
 
+import com.fortify.cli.common.http.connection.helper.ConnectionHelper;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
@@ -32,6 +33,7 @@ public class SCDastProductHelperBasicMixin extends AbstractSessionUnirestInstanc
         UnirestJsonHeaderConfigurer.configure(unirest);
         UnirestUrlConfigConfigurer.configure(unirest, sessionDescriptor.getScDastUrlConfig());
         ProxyHelper.configureProxy(unirest, "sc-dast", sessionDescriptor.getScDastUrlConfig().getUrl());
+        ConnectionHelper.configureTimeouts(unirest, "sc-dast");
         unirest.config().requestCompression(false); // TODO Check whether SC DAST suffers from the same issue as SSC, with some requests failing if compression is enabled
         unirest.config().setDefaultHeader("Authorization", "FortifyToken "+new String(sessionDescriptor.getActiveToken()));
     }
