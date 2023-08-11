@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan_import.cli.cmd;
+package com.fortify.cli.fod.release.cli.cmd;
 
 import java.io.File;
 
@@ -29,7 +29,7 @@ import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
-public abstract class AbstractFoDScanImportCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
+public abstract class AbstractFoDReleaseImportCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
 

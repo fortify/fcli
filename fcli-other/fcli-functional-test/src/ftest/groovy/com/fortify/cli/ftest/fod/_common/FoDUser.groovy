@@ -16,30 +16,23 @@ import com.fortify.cli.ftest._common.Fcli
 
 public class FoDUser implements Closeable, AutoCloseable {
     private final String random = System.currentTimeMillis()
-    private final String fcliVariableName = "fod_user_"+random
-    private final String groupName = "fcli-"+random
-    private final String userName = "fcliAutomatedTestUser"
+    final String variableName = "fod_user_"+random
+    final String variableRef = "::"+variableName+"::"
+    final String groupName = "fcli-"+random
+    final String userName = "fcliAutomatedTestUser"
     
     public FoDUser create() {
         Fcli.run("fod rest lookup --type Roles --store roles")
         Fcli.run("fod user create $userName --email=test@test.test --firstname=test --lastname=user --phone=1234 --role=::roles::get(0).value " +
-            "--store $fcliVariableName",
+            "--store $variableName",
             {it.expectSuccess(true, "Unable to create user")})
         return this
     }
     
     public String get(String propertyPath) {
-        Fcli.run("util var contents $fcliVariableName -o expr={$propertyPath}",
+        Fcli.run("util var contents $variableName -o expr={$propertyPath}",
             {it.expectSuccess(true, "Error getting application release property "+propertyPath)})
             .stdout[0]  
-    }
-    
-    public String getVariableName() {
-        return fcliVariableName
-    }
-    
-    public String getVariableRef() {
-        return "::"+fcliVariableName+"::"
     }
     
     public void close() {

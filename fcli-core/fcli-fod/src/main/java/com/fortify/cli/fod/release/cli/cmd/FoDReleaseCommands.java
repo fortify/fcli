@@ -23,6 +23,10 @@ import picocli.CommandLine;
                 FoDReleaseCreateCommand.class,
                 FoDReleaseListCommand.class,
                 FoDReleaseGetCommand.class,
+                FoDReleaseImportDastCommand.class,                
+                FoDReleaseImportMobileCommand.class,
+                FoDReleaseImportOpenSourceCommand.class,
+                FoDReleaseImportSastCommand.class,
                 FoDReleaseUpdateCommand.class,
                 FoDReleaseDeleteCommand.class
         }

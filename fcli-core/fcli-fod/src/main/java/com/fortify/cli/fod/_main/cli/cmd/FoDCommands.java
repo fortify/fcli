@@ -21,7 +21,6 @@ import com.fortify.cli.fod.release.cli.cmd.FoDReleaseCommands;
 import com.fortify.cli.fod.rest.cli.cmd.FoDRestCommands;
 import com.fortify.cli.fod.scan.cli.cmd.FoDScanCommands;
 import com.fortify.cli.fod.scan_config.cli.cmd.FoDScanConfigCommands;
-import com.fortify.cli.fod.scan_import.cli.cmd.FoDScanImportCommands;
 import com.fortify.cli.fod.user.cli.cmd.FoDUserCommands;
 import com.fortify.cli.fod.user_group.cli.cmd.FoDUserGroupCommands;
 
@@ -39,13 +38,14 @@ import picocli.CommandLine.Command;
                 //   command and looks better in the usage command list, as usually
                 //   'rest' has a different header ('Interact with' compared to most
                 //   other commands ('Manage').
+                // - If it makes sense to 'group' related entities, like app, microservice
+                //   and release
                 FoDSessionCommands.class,
                 FoDAppCommands.class,
-                FoDReleaseCommands.class,
                 FoDMicroserviceCommands.class,
+                FoDReleaseCommands.class,
                 FoDAssessmentTypeCommands.class,
                 FoDScanCommands.class,
-                FoDScanImportCommands.class,
                 FoDScanConfigCommands.class,
                 FoDUserCommands.class,
                 FoDUserGroupCommands.class,

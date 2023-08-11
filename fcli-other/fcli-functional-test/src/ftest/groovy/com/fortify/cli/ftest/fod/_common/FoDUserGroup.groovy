@@ -16,28 +16,21 @@ import com.fortify.cli.ftest._common.Fcli
 
 public class FoDUserGroup implements Closeable, AutoCloseable {
     private final String random = System.currentTimeMillis()
-    private final String fcliVariableName = "fod_usergroup_"+random
-    private final String groupName = "fcli-"+random
+    final String variableName = "fod_usergroup_"+random
+    final String variableRef = "::"+variableName+"::"
+    final String groupName = "fcli-"+random
     
     public FoDUserGroup create() {
         Fcli.run("fod user-group create $groupName "+
-            "--store $fcliVariableName",
+            "--store $variableName",
             {it.expectSuccess(true, "Unable to create user-group")})
         return this
     }
     
     public String get(String propertyPath) {
-        Fcli.run("util var contents $fcliVariableName -o expr={$propertyPath}",
+        Fcli.run("util var contents $variableName -o expr={$propertyPath}",
             {it.expectSuccess(true, "Error getting application release property "+propertyPath)})
             .stdout[0]  
-    }
-    
-    public String getVariableName() {
-        return fcliVariableName
-    }
-    
-    public String getVariableRef() {
-        return "::"+fcliVariableName+"::"
     }
     
     public void close() {

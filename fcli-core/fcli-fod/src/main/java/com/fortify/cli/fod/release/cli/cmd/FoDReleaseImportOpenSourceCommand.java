@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.fod.scan_import.cli.cmd;
+package com.fortify.cli.fod.release.cli.cmd;
 
 import java.util.function.BiFunction;
 
@@ -26,7 +26,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = FoDOutputHelperMixins.ImportOpenSource.CMD_NAME)
-public class FoDScanImportOpenSourceCommand extends AbstractFoDScanImportCommand {
+public class FoDReleaseImportOpenSourceCommand extends AbstractFoDReleaseImportCommand {
     @Getter @Mixin private FoDOutputHelperMixins.ImportOpenSource outputHelper;
     
     @Option(names="--type", required = true, defaultValue = "CycloneDX")
