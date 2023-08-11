@@ -6,14 +6,14 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.ssc._common.SSCAppVersion
+import com.fortify.cli.ftest.ssc._common.SSCAppVersionSupplier
 
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 
 @Prefix("ssc.app") @FcliSession(SSC)
 class SSCAppSpec extends FcliBaseSpec {
-    @Shared SSCAppVersion version = new SSCAppVersion().create()
+    @Shared @AutoCleanup SSCAppVersionSupplier versionSupplier = new SSCAppVersionSupplier()
     
     def "list"() {
         def args = "ssc app list"
@@ -21,32 +21,32 @@ class SSCAppSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it =~ version.appName }
+                it.any { it =~ versionSupplier.version.appName }
             }
     }
     
     def "get.byId"() {
-        def args = "ssc app get "+version.get("application.id")
+        def args = "ssc app get "+versionSupplier.version.get("application.id")
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it =~ version.appName }
+                it.any { it =~ versionSupplier.version.appName }
             }
     }
     
     def "get.byName"() {
-        def args = "ssc app get "+version.appName
+        def args = "ssc app get "+versionSupplier.version.appName
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it =~ version.appName }
+                it.any { it =~ versionSupplier.version.appName }
             }
     }
     
     def "update"() {
-        def args = "ssc app update "+version.appName + " --description updateddescription"
+        def args = "ssc app update "+versionSupplier.version.appName + " --description updateddescription"
         when:
             def result = Fcli.run(args)
         then:
@@ -56,7 +56,7 @@ class SSCAppSpec extends FcliBaseSpec {
     }
     
     def "delete"() {
-        def args = "ssc app delete "+version.appName +" -y"
+        def args = "ssc app delete "+versionSupplier.version.appName +" -y"
         when:
             def result = Fcli.run(args)
         then:

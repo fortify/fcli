@@ -7,7 +7,7 @@ import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest._common.spec.TestResource
-import com.fortify.cli.ftest.ssc._common.SSCAppVersion
+import com.fortify.cli.ftest.ssc._common.SSCAppVersionSupplier
 
 import spock.lang.AutoCleanup
 import spock.lang.Requires
@@ -16,15 +16,15 @@ import spock.lang.Stepwise
 
 @Prefix("ssc.artifact") @FcliSession(SSC) @Stepwise
 class SSCArtifactUploadSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
+    @Shared @AutoCleanup SSCAppVersionSupplier versionSupplier = new SSCAppVersionSupplier()
     @Shared @TestResource("runtime/shared/EightBall-22.1.0.fpr") String fpr
     @Shared @TestResource("runtime/shared/LoginProject.fpr") String diffpr
-    @Shared String uploadVariableName = version.fcliVariableName+"_artifact"
+    @Shared String uploadVariableName = versionSupplier.version.fcliVariableName+"_artifact"
     @Shared String uploadVariableRef = "::$uploadVariableName::"
     
     def "upload"() {
         def args = "ssc artifact upload $fpr --appversion "+ 
-            "${version.variableRef} --store $uploadVariableName"
+            "${versionSupplier.version.variableRef} --store $uploadVariableName"
         when:
             def result = Fcli.run(args)
         then:
@@ -59,7 +59,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     
     def "upload-dif"() {
         def args = "ssc artifact upload $diffpr --appversion "+
-            "${version.variableRef} --store upload"
+            "${versionSupplier.version.variableRef} --store upload"
         when:
             def result = Fcli.run(args)
         then:
@@ -104,7 +104,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     }
     
     def "list"() {
-        def args = "ssc artifact list --appversion ${version.variableRef}"
+        def args = "ssc artifact list --appversion ${versionSupplier.version.variableRef}"
         when:
             def result = Fcli.run(args)
         then:
@@ -136,7 +136,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     }
     
     def "getIssueCount"() {
-        def args = "ssc issue count --appversion " + version.appName + ":" + version.versionName
+        def args = "ssc issue count --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName
         when:
             def result = Fcli.run(args)
         then:
@@ -147,7 +147,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     }
     
     def "getIssueCountQuickView"() {
-        def args = "ssc issue count --appversion " + version.appName + ":" + version.versionName + " --filterset Quick\\ View"
+        def args = "ssc issue count --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName + " --filterset Quick\\ View"
         when:
             def result = Fcli.run(args)
         then:
@@ -159,7 +159,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     
     @Requires({System.getProperty('ft.debricked.user') && System.getProperty('ft.debricked.password') && System.getProperty('ft.debricked.repository') && System.getProperty('ft.debricked.branch')})
     def "import-debricked"() {
-        def args = "ssc artifact import-debricked --appversion " + version.appName + ":" + version.versionName +
+        def args = "ssc artifact import-debricked --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName +
                     " --repository " + System.getProperty("ft.debricked.repository") + 
                     " --branch " + System.getProperty("ft.debricked.branch") + 
                     " --debricked-user " + System.getProperty("ft.debricked.user") + 

@@ -18,7 +18,6 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.ssc._common.SSCAppVersion
 import com.fortify.cli.ftest._common.Fcli.UnexpectedFcliResultException
 
 import spock.lang.AutoCleanup

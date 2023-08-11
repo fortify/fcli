@@ -19,7 +19,7 @@ import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest._common.spec.TestResource
-import com.fortify.cli.ftest.ssc._common.SSCAppVersion
+import com.fortify.cli.ftest.ssc._common.SSCAppVersionSupplier
 
 import spock.lang.AutoCleanup
 import spock.lang.Requires
@@ -34,14 +34,15 @@ import com.fortify.cli.ftest._common.StepwiseExcept
 */ 
 @Prefix("ssc.job") @FcliSession(SSC) @StepwiseExcept(except="ssc.job (SSCJobSpec).upload")
 class SSCJobSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
+    /*
+    @Shared @AutoCleanup SSCAppVersionSupplier versionSupplier = new SSCAppVersionSupplier()
     @Shared @TestResource("runtime/shared/EightBall-22.1.0.fpr") String fpr
     @Shared @TestResource("runtime/shared/LoginProject.fpr") String diffpr
-    @Shared String uploadVariableName = version.fcliVariableName+"_artifact"
+    @Shared String uploadVariableName = versionSupplier.version.fcliVariableName+"_artifact"
     @Shared String uploadVariableRef = "::$uploadVariableName::"
     @Shared int repeats = 5;
+    
 
-    /*
      * these uploads are here to create cancellable jobs
      * the most reliable way seems to be to upload differing artifacts
      * and then approve the last one uploaded, so multiple processing jobs are scheduled.

@@ -14,36 +14,56 @@ package com.fortify.cli.ftest.ssc._common
 
 import com.fortify.cli.ftest._common.Fcli
 
-public class SSCRole implements Closeable, AutoCloseable {
-    private final String random = System.currentTimeMillis()
-    private final String fcliVariableName = "ssc_role_"+random
-    private final String roleName = "fcli-temp-role"+random
+public class SSCRoleSupplier implements Closeable, AutoCloseable {
+    private SSCRole role;
     
-    public SSCRole create() {
-        Fcli.run("ssc role create $roleName" + 
-            " --description auto\\ created\\ by\\ test" + 
-            " --permission-ids user_view,user_manage" + 
-            " --store $fcliVariableName",
-            {it.expectSuccess(true, "Unable to create role")})
-        return this
+    public SSCRole getRole() {
+        if ( !role ) {
+            role = new SSCRole().create()
+        }
+        return role
     }
     
-    public String get(String propertyPath) {
-        Fcli.run("util var contents $fcliVariableName -o expr={$propertyPath}",
-            {it.expectSuccess(true, "Error getting application version property "+propertyPath)})
-            .stdout[0]  
-    }
-    
-    public String getVariableName() {
-        return fcliVariableName
-    }
-    
-    public String getVariableRef() {
-        return "::"+fcliVariableName+"::"
-    }
-    
+    @Override
     public void close() {
-        Fcli.run("ssc role delete ::$fcliVariableName::id",
-            {it.expectSuccess(true, "Unable to delete role")}) 
+        if ( role ) {
+            role.close();
+            role = null;
+        }
     }
+
+    public class SSCRole implements Closeable, AutoCloseable {
+        private final String random = System.currentTimeMillis()
+        private final String fcliVariableName = "ssc_role_"+random
+        private final String roleName = "fcli-temp-role"+random
+        
+        public SSCRole create() {
+            Fcli.run("ssc role create $roleName" + 
+                " --description auto\\ created\\ by\\ test" + 
+                " --permission-ids user_view,user_manage" + 
+                " --store $fcliVariableName",
+                {it.expectSuccess(true, "Unable to create role")})
+            return this
+        }
+        
+        public String get(String propertyPath) {
+            Fcli.run("util var contents $fcliVariableName -o expr={$propertyPath}",
+                {it.expectSuccess(true, "Error getting application version property "+propertyPath)})
+                .stdout[0]  
+        }
+        
+        public String getVariableName() {
+            return fcliVariableName
+        }
+        
+        public String getVariableRef() {
+            return "::"+fcliVariableName+"::"
+        }
+        
+        public void close() {
+            Fcli.run("ssc role delete ::$fcliVariableName::id",
+                {it.expectSuccess(true, "Unable to delete role")}) 
+        }
+    }
+
 }

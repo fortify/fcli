@@ -18,14 +18,11 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.ssc._common.SSCAppVersion
-
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 
 @Prefix("ssc.rest.call") @FcliSession(SSC)
 class SSCRestCallSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     
     def "session-info"() {
         def args = "ssc rest call -X POST /api/v1/userSession/info -d ignored"

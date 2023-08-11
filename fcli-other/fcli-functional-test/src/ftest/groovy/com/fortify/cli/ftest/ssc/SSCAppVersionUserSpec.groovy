@@ -7,7 +7,7 @@ import com.fortify.cli.ftest._common.Fcli.UnexpectedFcliResultException
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.ssc._common.SSCAppVersion
+import com.fortify.cli.ftest.ssc._common.SSCAppVersionSupplier
 import com.fortify.cli.ftest.ssc._common.SSCUserSupplier
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -15,11 +15,11 @@ import spock.lang.Stepwise
 
 @Prefix("ssc.appversion-user") @FcliSession(SSC) @Stepwise
 class SSCAppVersionUserSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
+    @Shared @AutoCleanup SSCAppVersionSupplier versionSupplier = new SSCAppVersionSupplier()
     @Shared @AutoCleanup SSCUserSupplier userSupplier = new SSCUserSupplier()
     
     def "list"() {
-        def args = "ssc appversion-user list --appversion " + version.appName + ":" + version.versionName
+        def args = "ssc appversion-user list --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName
         when:
             def result = Fcli.run(args)
         then:
@@ -35,7 +35,7 @@ class SSCAppVersionUserSpec extends FcliBaseSpec {
     }
     
     def "add"() {
-        def args = "ssc appversion-user add " + userSupplier.user.userName + " --appversion " + version.appName + ":" + version.versionName 
+        def args = "ssc appversion-user add " + userSupplier.user.userName + " --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName 
         when:
             def result = Fcli.run(args)
         then:
@@ -47,7 +47,7 @@ class SSCAppVersionUserSpec extends FcliBaseSpec {
     }
     
     def "verifyAdd"() {
-        def args = "ssc appversion-user list --appversion " + version.appName + ":" + version.versionName
+        def args = "ssc appversion-user list --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName
         when:
             def result = Fcli.run(args)
         then:
@@ -59,7 +59,7 @@ class SSCAppVersionUserSpec extends FcliBaseSpec {
     }
     
     def "delete"() {
-        def args = "ssc appversion-user delete " + userSupplier.user.userName + " --appversion " + version.appName + ":" + version.versionName
+        def args = "ssc appversion-user delete " + userSupplier.user.userName + " --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName
         when:
             def result = Fcli.run(args)
         then:
@@ -71,7 +71,7 @@ class SSCAppVersionUserSpec extends FcliBaseSpec {
     }
     
     def "verifyDelete"() {
-        def args = "ssc appversion-user list --appversion " + version.appName + ":" + version.versionName
+        def args = "ssc appversion-user list --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName
         when:
             def result = Fcli.run(args)
         then:

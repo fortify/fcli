@@ -13,37 +13,62 @@
 package com.fortify.cli.ftest.ssc._common
 
 import com.fortify.cli.ftest._common.Fcli
+import com.fortify.cli.ftest.ssc._common.SSCUserSupplier.SSCUser
 
-public class SSCAppVersion implements Closeable, AutoCloseable {
-    private final String random = System.currentTimeMillis()
-    private final String fcliVariableName = "ssc_appversion_"+random
-    private final String appName = "fcli-"+random
-    private final String versionName = "v"+random
+public class SSCAppVersionSupplier implements Closeable, AutoCloseable  {
+    private SSCAppVersion version;
     
-    public SSCAppVersion create() {
-        Fcli.run("ssc appversion create $appName:$versionName "+ 
-            "--issue-template Prioritized\\ High\\ Risk\\ Issue\\ Template "+
-            "--auto-required-attrs --store $fcliVariableName",
-            {it.expectSuccess(true, "Unable to create application version")})
-        return this
+    public SSCAppVersion getVersion() {
+        if ( !version ) {
+            version = new SSCAppVersion().create()
+        }
+        return version
     }
     
-    public String get(String propertyPath) {
-        Fcli.run("util var contents $fcliVariableName -o expr={$propertyPath}",
-            {it.expectSuccess(true, "Error getting application version property "+propertyPath)})
-            .stdout[0]  
-    }
-    
-    public String getVariableName() {
-        return fcliVariableName
-    }
-    
-    public String getVariableRef() {
-        return "::"+fcliVariableName+"::"
-    }
-    
+    @Override
     public void close() {
-        Fcli.run("ssc appversion delete ::$fcliVariableName::",
-            {it.expectSuccess(true, "Unable to delete application version")}) 
+        if ( version ) {
+            version.close();
+            version = null;
+        }
     }
+    
+    
+    
+    public class SSCAppVersion implements Closeable, AutoCloseable {
+        private final String random = System.currentTimeMillis()
+        private final String fcliVariableName = "ssc_appversion_"+random
+        private final String appName = "fcli-"+random
+        private final String versionName = "v"+random
+        
+        public SSCAppVersion create() {
+            Fcli.run("ssc appversion create $appName:$versionName "+
+                "--issue-template Prioritized\\ High\\ Risk\\ Issue\\ Template "+
+                "--auto-required-attrs --store $fcliVariableName",
+                {it.expectSuccess(true, "Unable to create application version")})
+            return this
+        }
+        
+        public String get(String propertyPath) {
+            Fcli.run("util var contents $fcliVariableName -o expr={$propertyPath}",
+                {it.expectSuccess(true, "Error getting application version property "+propertyPath)})
+                .stdout[0]
+        }
+        
+        public String getVariableName() {
+            return fcliVariableName
+        }
+        
+        public String getVariableRef() {
+            return "::"+fcliVariableName+"::"
+        }
+        
+        public void close() {
+            Fcli.run("ssc appversion delete ::$fcliVariableName::",
+                {it.expectSuccess(true, "Unable to delete application version")})
+        }
+    }
+    
 }
+
+

@@ -18,7 +18,7 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.ssc._common.SSCAppVersion
+import com.fortify.cli.ftest.ssc._common.SSCAppVersionSupplier
 
 import spock.lang.AutoCleanup
 import spock.lang.Requires
@@ -27,7 +27,7 @@ import spock.lang.Shared
 @Prefix("ssc.event") @FcliSession(SSC) 
 @Requires({System.getProperty('ft.include.long-running')})
 class SSCEventSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
+    @Shared @AutoCleanup SSCAppVersionSupplier versionSupplier = new SSCAppVersionSupplier()
     
     def "list"() {
         def args = "ssc event list"
@@ -37,8 +37,8 @@ class SSCEventSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>0
                 it.any { it =~ "PROJECT_VERSION_CREATED" }
-                it.any { it =~ "Application: "+version.appName }
-                it.any { it =~ "Version: "+version.versionName }
+                it.any { it =~ "Application: "+versionSupplier.version.appName }
+                it.any { it =~ "Version: "+versionSupplier.version.versionName }
             }
     }
 }
