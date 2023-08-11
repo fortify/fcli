@@ -14,6 +14,7 @@ package com.fortify.cli.config.connection.connecttimeout.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.http.connection.helper.ConnectionHelper;
+import com.fortify.cli.common.http.connection.helper.TimeoutDescriptor.TimeoutType;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -26,12 +27,12 @@ import picocli.CommandLine.Parameters;
 @Command(name=OutputHelperMixins.Delete.CMD_NAME)
 public class ConnectTimeoutDeleteCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier{
     @Mixin @Getter private OutputHelperMixins.Delete outputHelper;
-    @Parameters(arity="1", descriptionKey = "fcli.config.connection.sockettimeout.name", paramLabel = "NAME")
+    @Parameters(arity="1", descriptionKey = "fcli.config.connection.timeout.delete.name", paramLabel = "NAME")
     private String name;
     
     @Override
     public JsonNode getJsonNode() {
-        return ConnectionHelper.deleteTimeout(ConnectionHelper.getConnectTimeout(name)).asJsonNode();
+        return ConnectionHelper.deleteTimeout(ConnectionHelper.getTimeout(name, TimeoutType.CONNECT)).asJsonNode();
     }
     
     @Override

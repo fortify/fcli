@@ -15,6 +15,7 @@ package com.fortify.cli.common.http.connection.helper;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+import com.fortify.cli.common.http.connection.helper.TimeoutDescriptor.TimeoutType;
 import com.fortify.cli.common.util.FcliDataHelper;
 
 import kong.unirest.UnirestInstance;
@@ -23,13 +24,13 @@ public final class ConnectionHelper {
     private ConnectionHelper() {}
     
     public static final void configureTimeouts(UnirestInstance unirest, String module) {
-        getConnectTimeoutsStream()
+        getTimeoutsStream(TimeoutType.CONNECT)
             .filter(d->d.matchesModule(module))
             .findFirst()
             .ifPresent(d->
                 unirest.config().connectTimeout(d.getTimeout())
             );
-        getSocketTimeoutsStream()
+        getTimeoutsStream(TimeoutType.SOCKET)
         .filter(d->d.matchesModule(module))
         .findFirst()
         .ifPresent(d->
@@ -37,18 +38,10 @@ public final class ConnectionHelper {
         );
     }
     
-    public static final TimeoutDescriptor getConnectTimeout(String name) {
-        Path timeoutConfigPath = getConnectTimeoutConfigPath(name);
+    public static final TimeoutDescriptor getTimeout(String name, TimeoutType type) {
+        Path timeoutConfigPath = getTimeoutConfigPath(name, type);
         if ( !FcliDataHelper.exists(timeoutConfigPath) ) {
             throw new IllegalArgumentException("No connect timeout configuration found with name: "+name);
-        }
-        return getTimeout(timeoutConfigPath);
-    }
-    
-    public static final TimeoutDescriptor getSocketTimeout(String name) {
-        Path timeoutConfigPath = getSocketTimeoutConfigPath(name);
-        if ( !FcliDataHelper.exists(timeoutConfigPath) ) {
-            throw new IllegalArgumentException("No socket timeout configuration found with name: "+name);
         }
         return getTimeout(timeoutConfigPath);
     }
@@ -76,53 +69,40 @@ public final class ConnectionHelper {
         return descriptor;
     }
     
-    public static final Stream<TimeoutDescriptor> deleteAllConnectTimeouts() {
-        return getConnectTimeoutsStream()
-                .peek(ConnectionHelper::deleteTimeout);
+    public static final Stream<TimeoutDescriptor> deleteAllTimeouts(TimeoutType type) {
+        return getTimeoutsStream(type).peek(ConnectionHelper::deleteTimeout);
     }
     
-    public static final Stream<TimeoutDescriptor> getConnectTimeoutsStream() {
-        return FcliDataHelper.exists(getConnectTimeoutConfigPath())
-                ? FcliDataHelper.listFilesInDir(getConnectTimeoutConfigPath(), true).map(ConnectionHelper::getTimeout)
+    public static final Stream<TimeoutDescriptor> getTimeoutsStream(TimeoutType type) {
+        return FcliDataHelper.exists(getTimeoutConfigPath(type))
+                ? FcliDataHelper.listFilesInDir(getTimeoutConfigPath(type), true).map(ConnectionHelper::getTimeout)
                 : Stream.empty();
     }
     
-    public static final Stream<TimeoutDescriptor> deleteAllSocketTimeouts() {
-        return getConnectTimeoutsStream()
-                .peek(ConnectionHelper::deleteTimeout);
+    private static final Path getTimeoutConfigPath(String name, TimeoutType type) {
+        switch(type) {
+        case CONNECT:
+            return getTimeoutConfigPath(type).resolve(getTimeoutFileName(name));
+        case SOCKET:
+            return getTimeoutConfigPath(type).resolve(getTimeoutFileName(name));
+        default:
+                throw new IllegalArgumentException("unknown timeoutdescriptor type");
+        }
     }
     
-    public static final Stream<TimeoutDescriptor> getSocketTimeoutsStream() {
-        return FcliDataHelper.exists(getSocketTimeoutConfigPath())
-                ? FcliDataHelper.listFilesInDir(getSocketTimeoutConfigPath(), true).map(ConnectionHelper::getTimeout)
-                : Stream.empty();
-    }
-    
-    private static final Path getConnectTimeoutConfigPath() {
-        return FcliDataHelper.getFcliConfigPath().resolve("connecttimeouts");
-    }
-    
-    private static final Path getConnectTimeoutConfigPath(String name) {
-        return getConnectTimeoutConfigPath().resolve(getTimeoutFileName(name));
-    }
-    
-    private static final Path getSocketTimeoutConfigPath() {
-        return FcliDataHelper.getFcliConfigPath().resolve("sockettimeouts");
-    }
-    
-    private static final Path getSocketTimeoutConfigPath(String name) {
-        return getSocketTimeoutConfigPath().resolve(getTimeoutFileName(name));
+    private static final Path getTimeoutConfigPath(TimeoutType type) {
+        switch(type) {
+        case CONNECT:
+            return FcliDataHelper.getFcliConfigPath().resolve("connecttimeouts");
+        case SOCKET:
+            return FcliDataHelper.getFcliConfigPath().resolve("sockettimeouts");
+        default:
+                throw new IllegalArgumentException("unknown timeoutdescriptor type");
+        }
     }
     
     private static final Path getTimeoutConfigPath(TimeoutDescriptor descriptor) {
-        switch(descriptor.getType()) {
-        case CONNECT:
-            return getConnectTimeoutConfigPath().resolve(getTimeoutFileName(descriptor.getName()));
-        case SOCKET:
-            return getSocketTimeoutConfigPath().resolve(getTimeoutFileName(descriptor.getName()));
-        default:
-            throw new IllegalArgumentException("unknown timeoutdescriptor type");
-        }
+        return getTimeoutConfigPath(descriptor.getType()).resolve(getTimeoutFileName(descriptor.getName()));
     }
     
     private static final String getTimeoutFileName(String name) {

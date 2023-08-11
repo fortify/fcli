@@ -10,11 +10,11 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class TimeoutOptions {
-    @Parameters(arity="1", descriptionKey = "fcli.config.connection.connecttimeout.add.timeout", paramLabel = "Timeout in ms")
+    @Parameters(arity="1", descriptionKey = "fcli.config.connection.timeout.add.timeout", paramLabel = "Timeout in ms")
     @Getter private int timeout;
-    @Getter @Option(names = {"--name"}, descriptionKey = "fcli.config.connection.connecttimeout.add.name") 
+    @Getter @Option(names = {"--name"}, descriptionKey = "fcli.config.connection.timeout.add.name") 
     private String name;
-    @Getter @Option(names = {"--modules", "-m"}, split = ",", descriptionKey = "fcli.config.connection.connecttimeout.add.modules") 
+    @Getter @Option(names = {"--modules", "-m"}, split = ",", descriptionKey = "fcli.config.connection.timeout.add.modules") 
     private Set<String> modules;
     
     public TimeoutDescriptor asTimeoutDescriptor(TimeoutType type) {

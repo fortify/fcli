@@ -15,6 +15,7 @@ package com.fortify.cli.config.connection.connecttimeout.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.http.connection.helper.ConnectionHelper;
 import com.fortify.cli.common.http.connection.helper.TimeoutDescriptor;
+import com.fortify.cli.common.http.connection.helper.TimeoutDescriptor.TimeoutType;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -30,7 +31,7 @@ public class ConnectTimeoutClearCommand extends AbstractOutputCommand implements
     
     @Override
     public JsonNode getJsonNode() {
-        return ConnectionHelper.deleteAllConnectTimeouts().map(TimeoutDescriptor::asJsonNode).collect(JsonHelper.arrayNodeCollector());
+        return ConnectionHelper.deleteAllTimeouts(TimeoutType.CONNECT).map(TimeoutDescriptor::asJsonNode).collect(JsonHelper.arrayNodeCollector());
     }
     
     @Override
