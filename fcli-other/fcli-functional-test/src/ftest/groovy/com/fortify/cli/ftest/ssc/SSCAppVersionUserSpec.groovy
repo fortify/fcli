@@ -59,7 +59,7 @@ class SSCAppVersionUserSpec extends FcliBaseSpec {
     }
     
     def "delete"() {
-        def args = "ssc appversion-user delete " + user.userName + " --appversion " + version.appName + ":" + version.versionName
+        def args = "ssc appversion-user delete " + userSupplier.user.userName + " --appversion " + version.appName + ":" + version.versionName
         when:
             def result = Fcli.run(args)
         then:
