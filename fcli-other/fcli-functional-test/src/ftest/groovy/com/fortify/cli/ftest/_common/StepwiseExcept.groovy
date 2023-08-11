@@ -10,8 +10,8 @@ import java.lang.annotation.Target
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@ExtensionAnnotation(StepWiseExceptExtension.class)
-public @interface StepWiseExcept {
+@ExtensionAnnotation(StepwiseExceptExtension.class)
+public @interface StepwiseExcept {
     String except() default ""
     
 }

@@ -18,7 +18,7 @@ import java.lang.annotation.Annotation
  * "<prefix> (<className>).<featureName>"
  * Multiple exceptions can be provided separated by comma
  */
-public class StepWiseExceptExtension extends StepwiseExtension {
+public class StepwiseExceptExtension extends StepwiseExtension {
     ArrayList<String> exceptions = Arrays.asList();
     
     public void visitSpecAnnotation(Annotation annotation, final SpecInfo spec) {

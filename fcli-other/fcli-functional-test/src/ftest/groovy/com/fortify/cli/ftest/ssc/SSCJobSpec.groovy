@@ -26,9 +26,13 @@ import spock.lang.Requires
 import spock.lang.Shared
 import spock.lang.Stepwise
 import spock.lang.Unroll
-import com.fortify.cli.ftest._common.StepWiseExcept
+import com.fortify.cli.ftest._common.StepwiseExcept
 
-@Prefix("ssc.job") @FcliSession(SSC) @StepWiseExcept(except="ssc.job (SSCJobSpec).upload,second value")
+/*The @StepwiseExcept annotation is used here to allow some of the upload iterations to fail 
+ *and continue test execution regardless. To achieve this a test identifier in the format
+ *<prefix> (Classname).featurename is passed to declare an exception for the tests in question
+*/ 
+@Prefix("ssc.job") @FcliSession(SSC) @StepwiseExcept(except="ssc.job (SSCJobSpec).upload")
 class SSCJobSpec extends FcliBaseSpec {
     @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
     @Shared @TestResource("runtime/shared/EightBall-22.1.0.fpr") String fpr
@@ -40,7 +44,7 @@ class SSCJobSpec extends FcliBaseSpec {
     /*
      * these uploads are here to create cancellable jobs
      * the most reliable way seems to be to upload differing artifacts
-     * and then approve the last one uploaded so multiple processing jobs are scheduled
+     * and then approve the last one uploaded, so multiple processing jobs are scheduled.
      * this assumes that the processing rule with identifier
      * "com.fortify.manager.BLL.processingrules.VetoCascadingApprovalProcessingRule"
      * is NOT enabled on the application version in question
