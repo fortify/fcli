@@ -23,14 +23,14 @@ public class FoDApp implements Closeable, AutoCloseable {
     final String microserviceName = "ms"+random
     final String qualifiedRelease = appName+":"+versionName
     final String qualifiedMicroserviceRelease = appName+":"+microserviceName+":"+versionName
-    final String ownerId = 16225;
+    final String owner = "fcli-functional-test";
     
     public FoDApp createWebApp() {
         Fcli.run("fod app create $appName:$versionName "+ 
             "--description Auto\\ created\\ by\\ test " +
             "--sdlc-status=Development " + 
             "--release=$versionName "+
-            "--owner=$ownerId " +
+            "--owner=$owner " +
             "--app-type=Web " +
             "--business-criticality=Medium " +
             "--auto-required-attrs " +
@@ -44,7 +44,7 @@ public class FoDApp implements Closeable, AutoCloseable {
             "--description Auto\\ created\\ by\\ test " +
             "--sdlc-status=Development " +
             "--release=$versionName "+
-            "--owner=$ownerId " +
+            "--owner=$owner " +
             "--app-type=Mobile " +
             "--business-criticality=Medium " +
             "--auto-required-attrs " +
@@ -58,7 +58,7 @@ public class FoDApp implements Closeable, AutoCloseable {
             "--description Auto\\ created\\ by\\ test " +
             "--sdlc-status=Development " +
             "--release=$microserviceName:$versionName "+
-            "--owner=$ownerId " +
+            "--owner=$owner " +
             "--app-type=Microservice " +
             "--business-criticality=Medium " +
             "--auto-required-attrs " +

@@ -88,7 +88,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        type: [ssc, sc-sast, sc-dast, report]
+        type: [fod, ssc, sc-sast, sc-dast, report]
     
     runs-on: ubuntu-latest
 
@@ -122,16 +122,21 @@ jobs:
           # options for all session types, as some SC-SAST/SC-DAST tests may also
           # require an SSC session.
           java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=$type \
-            -Dft.ssc.url=$url -Dft.ssc.user=$user -Dft.ssc.password=$pwd \
-            -Dft.sc-sast.ssc-url=$url -Dft.sc-sast.ssc-user=$user -Dft.sc-sast.ssc-password=$pwd \
-            -Dft.sc-dast.ssc-url=$url -Dft.sc-dast.ssc-user=$user -Dft.sc-dast.ssc-password=$pwd \
-            -Dft.sc-sast.client-auth-token=$sctoken
+            -Dft.fod.url=$fod_url -Dft.fod.tenant=$fod_tenant -Dft.fod.user=$fod_user -Dft.fod.password=$fod_pwd \
+            -Dft.ssc.url=$ssc_url -Dft.ssc.user=$ssc_user -Dft.ssc.password=$ssc_pwd \
+            -Dft.sc-sast.ssc-url=$ssc_url -Dft.sc-sast.ssc-user=$ssc_user -Dft.sc-sast.ssc-password=$ssc_pwd \
+            -Dft.sc-dast.ssc-url=$ssc_url -Dft.sc-dast.ssc-user=$ssc_user -Dft.sc-dast.ssc-password=$ssc_pwd \
+            -Dft.sc-sast.client-auth-token=$scsast_token
         env:
           type: ${{ matrix.type }}
-          url: ${{ secrets.FCLI_FT_SSC_URL }}
-          user: ${{ secrets.FCLI_FT_SSC_USER }}
-          pwd: ${{ secrets.FCLI_FT_SSC_PWD }}
-          sctoken: ${{ secrets.FCLI_FT_SCSAST_TOKEN }}
+          fod_url: ${{ secrets.FCLI_FT_FOD_URL }}
+          fod_tenant: ${{ secrets.FCLI_FT_FOD_TENANT }}
+          fod_user: ${{ secrets.FCLI_FT_FOD_USER }}
+          fod_pwd: ${{ secrets.FCLI_FT_FOD_PWD }}
+          ssc_url: ${{ secrets.FCLI_FT_SSC_URL }}
+          ssc_user: ${{ secrets.FCLI_FT_SSC_USER }}
+          ssc_pwd: ${{ secrets.FCLI_FT_SSC_PWD }}
+          scsast_token: ${{ secrets.FCLI_FT_SCSAST_TOKEN }}
           # Pass GitHub and GitLab tokens for use by NCD license report tests
           FCLI_FT_GITHUB_TOKEN: ${{ secrets.FCLI_FT_GITHUB_TOKEN }}
           FCLI_FT_GITLAB_TOKEN: ${{ secrets.FCLI_FT_GITLAB_TOKEN }}
