@@ -1,5 +1,5 @@
 ---
-title: fcli-fod-scan-import-import-mobile(1)
+title: fcli-fod-release-import-sast(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-fod-scan-import-import-mobile(1)</title>
+<title>fcli-fod-release-import-sast(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230811.104103-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230811.104331-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-fod-scan-import-import-mobile(1) Manual Page</h1>
+<h1>fcli-fod-release-import-sast(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-scan-import-import-mobile - Import existing mobile scan results.</p>
+<p>fcli-fod-release-import-sast - Import existing SAST scan results.</p>
 </div>
 </div>
 <div id="content">
@@ -43,14 +43,13 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod scan-import import-mobile</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>--release</strong>=<em>id|app[:ms]:</em>
-                       _            rel_ [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                                   [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                                   [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
-                             _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                       _            <em class="=&lt;propertyNames&gt;">]
-                                   [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] <em>&lt;scanFile&gt;</em></p>
+<p><strong>fcli fod release import-sast</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>--release</strong>=<em>id|app[:ms]:rel</em>
+                             [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                             [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                             [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                       _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                 _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                             <em>&lt;scanFile&gt;</em></p>
 </div>
 </div>
 </div>
@@ -143,7 +142,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><em>&lt;scanFile&gt;</em></dt>
 <dd>
-<p>File containing existing mobile scan results to be imported.</p>
+<p>FPR file containing existing SAST scan results to be imported.</p>
 </dd>
 </dl>
 </div>
@@ -153,7 +152,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-11 10:42:56 UTC
+Last updated 2023-08-11 10:45:16 UTC
 </div>
 </div>
 </body>

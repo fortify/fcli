@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230811.104103-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230811.104331-dev_develop" %}
 
 
 <div id="header">
@@ -43,9 +43,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli fod assessment-type list</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>--release</strong>=<em>id|app[:ms]:rel</em>
-                              <strong>--scan-type</strong>=<em>&lt;scanType&gt;</em> [[<strong>-h</strong>]
-                              [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                              [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                              [<strong>--scan-types</strong>=<em>&lt;scanTypes&gt;</em>[,<em>&lt;scanTypes&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                              [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                              [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
                               [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
                         _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
                   _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
@@ -76,9 +76,9 @@ fcli_version:
 <dd>
 <p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
 </dd>
-<dt class="hdlist1"><strong>--scan-type</strong>=<em>&lt;scanType&gt;</em></dt>
+<dt class="hdlist1"><strong>--scan-types</strong>=<em>&lt;scanTypes&gt;</em>[,<em>&lt;scanTypes&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Scan type for which to list assessment types. Valid values: Static, Dynamic, Mobile, Monitoring, Network, OpenSource, Container.</p>
+<p>Comma-separated list of scan types for which to list assessment types. Default value: Static,Dynamic,Mobile. Valid values: Static, Dynamic, Mobile, Monitoring, Network, OpenSource, Container.</p>
 </dd>
 </dl>
 </div>
@@ -147,7 +147,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-11 10:42:56 UTC
+Last updated 2023-08-11 10:45:16 UTC
 </div>
 </div>
 </body>
