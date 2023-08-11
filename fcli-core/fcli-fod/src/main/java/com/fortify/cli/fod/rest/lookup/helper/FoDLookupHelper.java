@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -36,7 +35,7 @@ public class FoDLookupHelper {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
     }
 
-    public static final FoDLookupDescriptor getDescriptor(UnirestInstance unirestInstance, FoDLookupTypeOptions.FoDLookupType type,
+    public static final FoDLookupDescriptor getDescriptor(UnirestInstance unirestInstance, FoDLookupType type,
                                                           String text, boolean failIfNotFound) throws JsonProcessingException {
         FoDLookupDescriptor currentLookup = null;
         GetRequest request = unirestInstance.get(FoDUrls.LOOKUP_ITEMS).queryString("type",
@@ -58,7 +57,7 @@ public class FoDLookupHelper {
         return currentLookup;
     }
 
-    public static final FoDLookupDescriptor getDescriptor(UnirestInstance unirestInstance, FoDLookupTypeOptions.FoDLookupType type,
+    public static final FoDLookupDescriptor getDescriptor(UnirestInstance unirestInstance, FoDLookupType type,
                                                           String group, String text, boolean failIfNotFound) throws JsonProcessingException {
         FoDLookupDescriptor currentLookup = null;
         GetRequest request = unirestInstance.get(FoDUrls.LOOKUP_ITEMS).queryString("type",

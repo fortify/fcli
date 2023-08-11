@@ -10,11 +10,11 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.fod.scan_setup.cli.cmd;
+package com.fortify.cli.fod.scan_config.cli.cmd;
 
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupDescriptor;
-import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupHelper;
+import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
+import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -22,11 +22,11 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = FoDOutputHelperMixins.GetSast.CMD_NAME)
-public class FoDScanSetupGetSastCommand extends AbstractFoDScanSetupGetCommand {
+public class FoDScanConfigGetSastCommand extends AbstractFoDScanConfigGetCommand {
     @Getter @Mixin private FoDOutputHelperMixins.GetSast outputHelper;
     
     @Override
-    protected FoDScanSastSetupDescriptor getDescriptor(UnirestInstance unirest, String releaseId) {
-        return FoDScanSastSetupHelper.getSetupDescriptor(unirest, releaseId);
+    protected FoDScanConfigSastDescriptor getDescriptor(UnirestInstance unirest, String releaseId) {
+        return FoDScanConfigSastHelper.getSetupDescriptor(unirest, releaseId);
     }
 }

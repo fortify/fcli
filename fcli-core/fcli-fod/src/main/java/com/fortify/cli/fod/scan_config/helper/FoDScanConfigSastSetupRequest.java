@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan_setup.helper;
+package com.fortify.cli.fod.scan_config.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 
@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @Builder
-public class FoDScanSastSetupRequest {
+public class FoDScanConfigSastSetupRequest {
     private Integer assessmentTypeId;
     private String entitlementFrequencyType;
     private Integer entitlementId;

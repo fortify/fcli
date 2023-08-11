@@ -8,7 +8,7 @@ import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest.ssc._common.SSCAppVersion
-import com.fortify.cli.ftest.ssc._common.SSCUser
+import com.fortify.cli.ftest.ssc._common.SSCUserSupplier
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Stepwise
@@ -16,7 +16,7 @@ import spock.lang.Stepwise
 @Prefix("ssc.appversion-user") @FcliSession(SSC) @Stepwise
 class SSCAppVersionUserSpec extends FcliBaseSpec {
     @Shared @AutoCleanup SSCAppVersion version = new SSCAppVersion().create()
-    @Shared @AutoCleanup SSCUser user = new SSCUser().create()
+    @Shared @AutoCleanup SSCUserSupplier userSupplier = new SSCUserSupplier()
     
     def "list"() {
         def args = "ssc appversion-user list --appversion " + version.appName + ":" + version.versionName
@@ -35,14 +35,14 @@ class SSCAppVersionUserSpec extends FcliBaseSpec {
     }
     
     def "add"() {
-        def args = "ssc appversion-user add " + user.userName + " --appversion " + version.appName + ":" + version.versionName 
+        def args = "ssc appversion-user add " + userSupplier.user.userName + " --appversion " + version.appName + ":" + version.versionName 
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()==2
                 it[0].replace(" ","").equals("IdEntitynameDisplaynameTypeEmailIsldapAction");
-                it[1].contains(user.userName)
+                it[1].contains(userSupplier.user.userName)
             }
     }
     
@@ -54,7 +54,7 @@ class SSCAppVersionUserSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()==2
                 it[0].replace(" ","").equals("IdEntitynameDisplaynameTypeEmailIsldap");
-                it[1].contains(user.userName)
+                it[1].contains(userSupplier.user.userName)
             }
     }
     

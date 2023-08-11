@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan_setup.helper;
+package com.fortify.cli.fod.scan_config.helper;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
@@ -20,16 +20,16 @@ import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
 
-public class FoDScanSastSetupHelper {
-    public static final FoDScanSastSetupDescriptor getSetupDescriptor(UnirestInstance unirest, String releaseId) {
+public class FoDScanConfigSastHelper {
+    public static final FoDScanConfigSastDescriptor getSetupDescriptor(UnirestInstance unirest, String releaseId) {
         var body = unirest.get(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", releaseId)
                 .asObject(ObjectNode.class)
                 .getBody();
-        return JsonHelper.treeToValue(body, FoDScanSastSetupDescriptor.class);
+        return JsonHelper.treeToValue(body, FoDScanConfigSastDescriptor.class);
     }
     
-    public static final FoDScanSastSetupDescriptor setupScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanSastSetupRequest setupSastScanRequest) {
+    public static final FoDScanConfigSastDescriptor setupScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanConfigSastSetupRequest setupSastScanRequest) {
         var releaseId = releaseDescriptor.getReleaseId();
         unirest.put(FoDUrls.STATIC_SCANS + "/scan-setup")
                 .routeParam("relId", releaseId)

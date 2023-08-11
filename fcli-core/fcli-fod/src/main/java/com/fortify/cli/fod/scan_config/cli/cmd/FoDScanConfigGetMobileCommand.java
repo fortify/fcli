@@ -10,23 +10,23 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.fod.scan_setup.cli.cmd;
+package com.fortify.cli.fod.scan_config.cli.cmd;
 
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod.scan_setup.helper.FoDScanDastSetupDescriptor;
-import com.fortify.cli.fod.scan_setup.helper.FoDScanDastSetupHelper;
+import com.fortify.cli.fod.scan_config.helper.FoDScanConfigMobileDescriptor;
+import com.fortify.cli.fod.scan_config.helper.FoDScanConfigMobileHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = FoDOutputHelperMixins.GetDast.CMD_NAME)
-public class FoDScanSetupGetDastCommand extends AbstractFoDScanSetupGetCommand {
-    @Getter @Mixin private FoDOutputHelperMixins.GetDast outputHelper;
+@Command(name = FoDOutputHelperMixins.GetMobile.CMD_NAME)
+public class FoDScanConfigGetMobileCommand extends AbstractFoDScanConfigGetCommand {
+    @Getter @Mixin private FoDOutputHelperMixins.GetMobile outputHelper;
     
     @Override
-    protected FoDScanDastSetupDescriptor getDescriptor(UnirestInstance unirest, String releaseId) {
-        return FoDScanDastSetupHelper.getSetupDescriptor(unirest, releaseId);
+    protected FoDScanConfigMobileDescriptor getDescriptor(UnirestInstance unirest, String releaseId) {
+        return FoDScanConfigMobileHelper.getSetupDescriptor(unirest, releaseId);
     }
 }

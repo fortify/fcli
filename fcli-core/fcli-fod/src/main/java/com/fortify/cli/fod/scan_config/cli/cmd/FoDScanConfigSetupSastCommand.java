@@ -11,7 +11,7 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan_setup.cli.cmd;
+package com.fortify.cli.fod.scan_config.cli.cmd;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,21 +24,21 @@ import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
+import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeDescriptor;
+import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
-import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
-import com.fortify.cli.fod.release.helper.FoDReleaseHelper;
-import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
+import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentType;
-import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
+import com.fortify.cli.fod.scan.helper.FoDScanAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
-import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupDescriptor;
-import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupHelper;
-import com.fortify.cli.fod.scan_setup.helper.FoDScanSastSetupRequest;
+import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
+import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastHelper;
+import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastSetupRequest;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -48,7 +48,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = FoDOutputHelperMixins.SetupSast.CMD_NAME)
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
-public class FoDScanSetupSastCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDScanConfigSetupSastCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private FoDOutputHelperMixins.SetupSast outputHelper;
     
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
@@ -88,15 +88,15 @@ public class FoDScanSetupSastCommand extends AbstractFoDJsonNodeOutputCommand im
 
             // TODO Unused variable
             // get current setup
-            FoDScanSastSetupDescriptor currentSetup = FoDScanSastHelper.getSetupDescriptor(unirest, relId);
+            FoDScanConfigSastDescriptor currentSetup = FoDScanSastHelper.getSetupDescriptor(unirest, relId);
 
             // find/check out assessment type id
             //FoDScanTypeOptions.FoDScanType scanType = assessmentType.getAssessmentType().toScanType();
-            FoDReleaseAssessmentTypeDescriptor[] appRelAssessmentTypeDescriptor = FoDReleaseHelper.getAppRelAssessmentTypes(unirest, relId,
+            FoDAssessmentTypeDescriptor[] appRelAssessmentTypeDescriptor = FoDAssessmentTypeHelper.getAssessmentTypes(unirest, relId,
                     FoDScanType.Static, true);
             //String assessmentTypeName = assessmentType.getAssessmentType().toString().replace("Plus", "+") + " Assessment";
             String assessmentTypeName = staticAssessmentType.name().replace("Plus", "+") + " Assessment";
-            for (FoDReleaseAssessmentTypeDescriptor assessmentType : appRelAssessmentTypeDescriptor) {
+            for (FoDAssessmentTypeDescriptor assessmentType : appRelAssessmentTypeDescriptor) {
                 if (assessmentType.getName().equals(assessmentTypeName)) {
                     assessmentTypeId = assessmentType.getAssessmentTypeId();
                 }
@@ -119,7 +119,7 @@ public class FoDScanSetupSastCommand extends AbstractFoDJsonNodeOutputCommand im
                             + entitlementFrequency.name() + "' cannot be used here");
                 }
                 FoDAssessmentType assessmentType = FoDAssessmentType.valueOf(String.valueOf(staticAssessmentType));
-                FoDAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
+                FoDScanAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
                         assessmentType, entitlementPreferenceType,
                         FoDScanType.Mobile);
                 entitlementIdToUse = assessmentTypeDescriptor.getEntitlementId();
@@ -129,7 +129,7 @@ public class FoDScanSetupSastCommand extends AbstractFoDJsonNodeOutputCommand im
             // find/check technology stack / language level
             FoDLookupDescriptor lookupDescriptor = null;
             try {
-                lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupTypeOptions.FoDLookupType.TechnologyTypes, technologyStack, true);
+                lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupType.TechnologyTypes, technologyStack, true);
             } catch (JsonProcessingException ex) {
                 throw new IllegalStateException(ex.getMessage());
             }
@@ -137,7 +137,7 @@ public class FoDScanSetupSastCommand extends AbstractFoDJsonNodeOutputCommand im
             //System.out.println("technologyStackId = " + technologyStackId);
             if (languageLevel != null && languageLevel.length() > 0) {
                 try {
-                    lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupTypeOptions.FoDLookupType.LanguageLevels, String.valueOf(technologyStackId), languageLevel, true);
+                    lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupType.LanguageLevels, String.valueOf(technologyStackId), languageLevel, true);
                 } catch (JsonProcessingException ex) {
                     throw new IllegalStateException(ex.getMessage());
                 }
@@ -145,7 +145,7 @@ public class FoDScanSetupSastCommand extends AbstractFoDJsonNodeOutputCommand im
                 //System.out.println("languageLevelId = " + languageLevelId);
             }
 
-            FoDScanSastSetupRequest setupSastScanRequest = FoDScanSastSetupRequest.builder()
+            FoDScanConfigSastSetupRequest setupSastScanRequest = FoDScanConfigSastSetupRequest.builder()
                 .entitlementId(entitlementIdToUse)
                 .assessmentTypeId(assessmentTypeId)
                 .entitlementFrequencyType(entitlementFrequencyTypeMixin.getEntitlementFrequencyType().name())
@@ -156,7 +156,7 @@ public class FoDScanSetupSastCommand extends AbstractFoDJsonNodeOutputCommand im
                 .includeThirdPartyLibraries(includeThirdPartyLibraries)
                 .useSourceControl(useSourceControl).build();
 
-            return FoDScanSastSetupHelper.setupScan(unirest, releaseDescriptor, setupSastScanRequest).asJsonNode();
+            return FoDScanConfigSastHelper.setupScan(unirest, releaseDescriptor, setupSastScanRequest).asJsonNode();
         }
     }
 

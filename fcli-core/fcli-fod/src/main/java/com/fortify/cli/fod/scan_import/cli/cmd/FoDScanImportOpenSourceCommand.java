@@ -34,7 +34,7 @@ public class FoDScanImportOpenSourceCommand extends AbstractFoDScanImportCommand
     
     @Override
     protected HttpRequest<?> getBaseRequest(UnirestInstance unirest, String releaseId) {
-        return unirest.put(FoDUrls.MOBILE_SCANS_IMPORT).routeParam("relId", releaseId);
+        return type.getBaseRequest(unirest, releaseId);
     }
     
     @RequiredArgsConstructor

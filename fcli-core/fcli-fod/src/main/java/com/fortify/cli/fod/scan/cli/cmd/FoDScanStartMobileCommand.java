@@ -30,12 +30,12 @@ import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
-import com.fortify.cli.fod.rest.lookup.cli.mixin.FoDLookupTypeOptions;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
+import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
 import com.fortify.cli.fod.scan.helper.FoDAssessmentType;
-import com.fortify.cli.fod.scan.helper.FoDAssessmentTypeDescriptor;
+import com.fortify.cli.fod.scan.helper.FoDScanAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.mobile.FoDScanMobileHelper;
@@ -92,7 +92,7 @@ public class FoDScanStartMobileCommand extends AbstractFoDJsonNodeOutputCommand 
             // TODO: check if a scan is already running
 
             // get entitlement to use
-            FoDAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, progressWriter, relId);
+            FoDScanAssessmentTypeDescriptor entitlementToUse = getEntitlementToUse(unirest, progressWriter, relId);
 
             // validate timezone (if specified)
             String timeZoneToUse = validateTimezone(unirest, timezone);
@@ -132,8 +132,8 @@ public class FoDScanStartMobileCommand extends AbstractFoDJsonNodeOutputCommand 
         return true;
     }
 
-    private FoDAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId) {
-        FoDAssessmentTypeDescriptor entitlementToUse = new FoDAssessmentTypeDescriptor();
+    private FoDScanAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId) {
+        FoDScanAssessmentTypeDescriptor entitlementToUse = new FoDScanAssessmentTypeDescriptor();
 
         /**
          * Logic for finding/using "entitlement" is as follows:
@@ -162,7 +162,7 @@ public class FoDScanStartMobileCommand extends AbstractFoDJsonNodeOutputCommand 
         FoDLookupDescriptor lookupDescriptor = null;
         if (timezone != null && !timezone.isEmpty()) {
             try {
-                lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupTypeOptions.FoDLookupType.TimeZones, timezone, false);
+                lookupDescriptor = FoDLookupHelper.getDescriptor(unirest, FoDLookupType.TimeZones, timezone, false);
             } catch (JsonProcessingException ex) {
                 throw new IllegalStateException(ex.getMessage());
             }
