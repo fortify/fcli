@@ -16,11 +16,14 @@ import com.fortify.cli.ftest._common.Fcli
 
 public class FoDApp implements Closeable, AutoCloseable {
     private final String random = System.currentTimeMillis()
-    private final String fcliVariableName = "fod_apprel_"+random
-    private final String appName = "fcli-"+random
-    private final String versionName = "v"+random
-    private final String microserviceName = "ms"+random
-    private final String ownerId = 16225;
+    final String variableName = "fod_apprel_"+random
+    final String variableRef = "::"+variableName+"::"
+    final String appName = "fcli-"+random
+    final String versionName = "v"+random
+    final String microserviceName = "ms"+random
+    final String qualifiedRelease = appName+":"+versionName
+    final String qualifiedMicroserviceRelease = appName+":"+microserviceName+":"+versionName
+    final String ownerId = 16225;
     
     public FoDApp createWebApp() {
         Fcli.run("fod app create $appName:$versionName "+ 
@@ -31,7 +34,7 @@ public class FoDApp implements Closeable, AutoCloseable {
             "--app-type=Web " +
             "--business-criticality=Medium " +
             "--auto-required-attrs " +
-            "--store $fcliVariableName",
+            "--store $variableName",
             {it.expectSuccess(true, "Unable to create application release")})
         return this
     }
@@ -45,7 +48,7 @@ public class FoDApp implements Closeable, AutoCloseable {
             "--app-type=Mobile " +
             "--business-criticality=Medium " +
             "--auto-required-attrs " +
-            "--store $fcliVariableName",
+            "--store $variableName",
             {it.expectSuccess(true, "Unable to create application release")})
         return this
     }
@@ -59,23 +62,15 @@ public class FoDApp implements Closeable, AutoCloseable {
             "--app-type=Microservice " +
             "--business-criticality=Medium " +
             "--auto-required-attrs " +
-            "--store $fcliVariableName",
+            "--store $variableName",
             {it.expectSuccess(true, "Unable to create application release")})
         return this
     }
     
     public String get(String propertyPath) {
-        Fcli.run("util var contents $fcliVariableName -o expr={$propertyPath}",
+        Fcli.run("util var contents $variableName -o expr={$propertyPath}",
             {it.expectSuccess(true, "Error getting application release property "+propertyPath)})
             .stdout[0]  
-    }
-    
-    public String getVariableName() {
-        return fcliVariableName
-    }
-    
-    public String getVariableRef() {
-        return "::"+fcliVariableName+"::"
     }
     
     public void close() {

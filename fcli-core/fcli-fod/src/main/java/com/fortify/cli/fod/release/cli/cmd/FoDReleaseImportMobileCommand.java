@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.fod.scan_import.cli.cmd;
+package com.fortify.cli.fod.release.cli.cmd;
 
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -21,12 +21,12 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = FoDOutputHelperMixins.ImportDast.CMD_NAME)
-public class FoDScanImportDastCommand extends AbstractFoDScanImportCommand {
-    @Getter @Mixin private FoDOutputHelperMixins.ImportDast outputHelper;
+@Command(name = FoDOutputHelperMixins.ImportMobile.CMD_NAME)
+public class FoDReleaseImportMobileCommand extends AbstractFoDReleaseImportCommand {
+    @Getter @Mixin private FoDOutputHelperMixins.ImportMobile outputHelper;
     
     @Override
     protected HttpRequest<?> getBaseRequest(UnirestInstance unirest, String releaseId) {
-        return unirest.put(FoDUrls.DYNAMIC_SCANS_IMPORT).routeParam("relId", releaseId);
+        return unirest.put(FoDUrls.MOBILE_SCANS_IMPORT).routeParam("relId", releaseId);
     }
 }

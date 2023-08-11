@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.fod.scan_import.cli.cmd;
+package com.fortify.cli.fod.release.cli.cmd;
 
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -22,7 +22,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = FoDOutputHelperMixins.ImportSast.CMD_NAME)
-public class FoDScanImportSastCommand extends AbstractFoDScanImportCommand {
+public class FoDReleaseImportSastCommand extends AbstractFoDReleaseImportCommand {
     @Getter @Mixin private FoDOutputHelperMixins.ImportSast outputHelper;
     
     @Override
