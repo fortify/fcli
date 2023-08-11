@@ -37,7 +37,7 @@ public class SSCUserSupplier implements Closeable, AutoCloseable {
         private final String fcliVariableName = "ssc_user_"+random
         private final String userName = "fcli-temp-user"+random
         
-        public SSCUserSupplier create() {
+        public SSCUser create() {
             Fcli.run("ssc user create --username $userName" + 
                 " --password P@ssW._ord123" + 
                 " --firstname fName" + 

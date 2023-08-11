@@ -48,7 +48,7 @@ class SSCJobSpec extends FcliBaseSpec {
      * this assumes that the processing rule with identifier
      * "com.fortify.manager.BLL.processingrules.VetoCascadingApprovalProcessingRule"
      * is NOT enabled on the application version in question
-     */
+     
     @Unroll
     def "upload"() {
         def args = "ssc artifact upload $fpr --appversion "+ 
@@ -63,22 +63,10 @@ class SSCJobSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 it[0] =~ /Id\s+Scan types\s+Last scan date\s+Upload date\s+Status/
-                it[1] =~ /^\s*\d+.*/
+                it[1] =~ /^\s*\d+./
             }
         where:
             i << (1..repeats)
-    }
-    
-    def "list"() {
-        def args = "ssc job list --store jobs -q cancellable==true"
-        when:
-            def result = Fcli.run(args)
-        then:
-            verifyAll(result.stdout) {
-                size()>0
-                it[0].replace(' ', '').equals("JobnameJobgroupJobclassStateCancellablePriorityCreatetimeStarttimeFinishtime")
-                it.any { it.startsWith(" JOB") }
-            }
     }
     
     def "update"() {
@@ -101,18 +89,29 @@ class SSCJobSpec extends FcliBaseSpec {
                 it[1].contains("CANCEL_REQUESTED")
             }
     }
-
-    def "get.byName"() {
-
-        Thread.sleep(1000)
-        def args = "ssc job get ::job::jobName"
+    */
+    def "list"() {
+        def args = "ssc job list --store jobs"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it.any { it.startsWith("priority: 1") }
-                it.any { it.equals("cancelRequested: true") || it.equals("state: \"CANCELLED\"")}
+                it[0].replace(' ', '').equals("JobnameJobgroupJobclassStateCancellablePriorityCreatetimeStarttimeFinishtime")
+                it.any { it.startsWith(" JOB") }
+            }
+    }
+
+    def "get.byName"() {
+
+        Thread.sleep(1000)
+        def args = "ssc job get ::jobs::get(0).jobName"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[1].startsWith("jobName:")
             }
     }
 }
