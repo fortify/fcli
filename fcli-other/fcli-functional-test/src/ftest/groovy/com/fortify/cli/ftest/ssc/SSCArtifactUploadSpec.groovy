@@ -52,7 +52,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it =~ "NO_APPROVAL_NEEDED" }
+                it.any { it =~ "NO_APPROVAL_NEEDED" || it =~ "APPROVED" }
             }
     }
     

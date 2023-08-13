@@ -32,7 +32,7 @@ public class SSCRoleSupplier implements Closeable, AutoCloseable {
         }
     }
 
-    public class SSCRole implements Closeable, AutoCloseable {
+    public class SSCRole {
         private final String random = System.currentTimeMillis()
         private final String fcliVariableName = "ssc_role_"+random
         private final String roleName = "fcli-temp-role"+random
