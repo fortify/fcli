@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.regex.Matcher
 
 import org.junit.platform.engine.TestExecutionResult
+import org.junit.platform.engine.TestExecutionResult.Status
 import org.junit.platform.engine.discovery.DiscoverySelectors
 import org.junit.platform.launcher.LauncherDiscoveryRequest
 import org.junit.platform.launcher.TestExecutionListener
@@ -99,7 +100,7 @@ public class TestRunner {
             }
         }
         public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-            if ( !testIdentifier.isContainer() ) {
+            if ( !testIdentifier.isContainer() || testExecutionResult.status!=Status.SUCCESSFUL ) {
                 testExecutionResult.throwable.ifPresent({
                     it.printStackTrace(orgErr)
                     it.printStackTrace(System.err)

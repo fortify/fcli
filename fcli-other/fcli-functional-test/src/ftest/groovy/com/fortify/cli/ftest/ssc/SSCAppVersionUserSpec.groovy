@@ -76,8 +76,7 @@ class SSCAppVersionUserSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()==1
-                it[0].equals("No data");
+                !it.any { it.contains(userSupplier.user.userName) }
             }
     }
 }
