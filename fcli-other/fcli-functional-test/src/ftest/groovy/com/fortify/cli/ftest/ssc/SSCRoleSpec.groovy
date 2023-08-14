@@ -18,8 +18,8 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.ssc._common.SSCAppVersion
-import com.fortify.cli.ftest.ssc._common.SSCRole
+import com.fortify.cli.ftest.ssc._common.SSCRoleSupplier
+import com.fortify.cli.ftest.ssc._common.SSCRoleSupplier.SSCRole
 import spock.lang.AutoCleanup
 import spock.lang.Requires
 import spock.lang.Shared
@@ -27,7 +27,7 @@ import spock.lang.Stepwise
 
 @Prefix("ssc.role") @FcliSession(SSC) @Stepwise
 class SSCRoleSpec extends FcliBaseSpec {
-    @Shared SSCRole role = null;
+    @Shared SSCRoleSupplier roleSupplier = new SSCRoleSupplier();
     
     def "list"() {
         def args = "ssc role list"
@@ -43,19 +43,19 @@ class SSCRoleSpec extends FcliBaseSpec {
     
     def "create"() {
         when:
-            role = new SSCRole().create();
+            SSCRole role = roleSupplier.role;
         then:
             noExceptionThrown()
     }
     
     def "get.byName"() {
-        def args = "ssc role get " + role.roleName + " --store role"
+        def args = "ssc role get " + roleSupplier.role.roleName + " --store role"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].equals("name: \"" + role.roleName + "\"")
+                it[2].equals("name: \"" + roleSupplier.role.roleName + "\"")
             }
     }
     
@@ -66,13 +66,13 @@ class SSCRoleSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].equals("name: \"" + role.roleName + "\"")
+                it[2].equals("name: \"" + roleSupplier.role.roleName + "\"")
             }
     }
     
     def "delete"() {
         when:
-            role.close();
+            roleSupplier.role.close();
         then:
             noExceptionThrown()
     }
@@ -84,7 +84,7 @@ class SSCRoleSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                !it.any { it.contains(role.roleName) }
+                !it.any { it.contains(roleSupplier.role.roleName) }
             }
     }
 }
