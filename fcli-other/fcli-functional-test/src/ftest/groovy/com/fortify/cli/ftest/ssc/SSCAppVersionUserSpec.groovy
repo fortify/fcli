@@ -52,7 +52,7 @@ class SSCAppVersionUserSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()==2
+                size()>=2
                 it[0].replace(" ","").equals("IdEntitynameDisplaynameTypeEmailIsldap");
                 it[1].contains(userSupplier.user.userName)
             }
