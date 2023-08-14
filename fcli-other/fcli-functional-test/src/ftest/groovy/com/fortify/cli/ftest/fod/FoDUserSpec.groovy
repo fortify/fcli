@@ -6,9 +6,9 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.fod._common.FoDApp
-import com.fortify.cli.ftest.fod._common.FoDUser
-import com.fortify.cli.ftest.fod._common.FoDUserGroup
+import com.fortify.cli.ftest.fod._common.FoDWebAppSupplier
+import com.fortify.cli.ftest.fod._common.FoDUserSupplier
+import com.fortify.cli.ftest.fod._common.FoDUserGroupSupplier
 
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -17,9 +17,9 @@ import spock.lang.Unroll
 
 @Prefix("fod.user") @FcliSession(FOD) @Stepwise
 class FoDUserSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup FoDUser user = new FoDUser().create()
-    @Shared @AutoCleanup FoDUserGroup group = new FoDUserGroup().create()
-    @Shared @AutoCleanup FoDApp app = new FoDApp().createWebApp()
+    @Shared @AutoCleanup FoDUserSupplier user = new FoDUserSupplier()
+    @Shared @AutoCleanup FoDUserGroupSupplier group = new FoDUserGroupSupplier()
+    @Shared @AutoCleanup FoDWebAppSupplier app = new FoDWebAppSupplier()
     
     def "list"() {
         def args = "fod user list"
@@ -33,7 +33,7 @@ class FoDUserSpec extends FcliBaseSpec {
     }
     
     def "get.byName"() {
-        def args = "fod user get " + user.userName + " --store user"
+        def args = "fod user get ${user.get().userName} --store user"
         when:
             def result = Fcli.run(args)
         then:
@@ -56,7 +56,7 @@ class FoDUserSpec extends FcliBaseSpec {
     
     
     def "update"() {
-        def args = "fod user update fcliAutomatedTestUser --lastname updatedLastname --firstname updatedFirstname --phone 5678"
+        def args = "fod user update ${user.get().userName} --lastname updatedLastname --firstname updatedFirstname --phone 5678"
         when:
             def result = Fcli.run(args)
         then:
@@ -71,22 +71,22 @@ class FoDUserSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.contains("fcliAutomatedTestUser") && it.contains("updatedLastname") }
+                it.any { it.contains("${user.get().userName}") && it.contains("updatedLastname") }
             }
     }
     
     def "updateAddGroups"() {
-        def args = "fod user update " + user.userName + " --add-groups=" + group.groupName + " --firstname updatedFirstname2"
+        def args = "fod user update ${user.get().userName} --add-groups=${group.get().groupName} --firstname updatedFirstname2"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.contains("fcliAutomatedTestUser") && it.contains("updatedFirstname2") }
+                it.any { it.contains("${user.get().userName}") && it.contains("updatedFirstname2") }
             }
     }
     
     def "verifyAddGroups"() {
-        def args = "fod user-group get " + group.groupName
+        def args = "fod user-group get ${group.get().groupName}"
         when:
             def result = Fcli.run(args)
         then:
@@ -96,14 +96,15 @@ class FoDUserSpec extends FcliBaseSpec {
     }
     
     def "updateAddApps"() {
-        def args = "fod user update " + user.userName + " --add-apps=" + app.appName + " --email test2@test.test"
+        def args = "fod user update ${user.get().userName} --add-apps=${app.get().appName} --email test2@test.test"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.contains("fcliAutomatedTestUser") && it.contains("test2@test.test") }
+                it.any { it.contains("${user.get().userName}") && it.contains("test2@test.test") }
             }
     }
+    
     
     def "verifyAddApps"() {
         //seems to take about 5 seconds to register, adding a few just in case
@@ -114,22 +115,22 @@ class FoDUserSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it[2].contains(app.appName)
+                it[2].contains(app.get().appName)
             }
     }
     
     def "updateRemoveGroups"() {
-        def args = "fod user update " + user.userName + " --remove-groups=" + group.groupName
+        def args = "fod user update ${user.get().userName} --remove-groups=${group.get().groupName}"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.contains("fcliAutomatedTestUser") && it.contains("UPDATED") }
+                it.any { it.contains("${user.get().userName}") && it.contains("UPDATED") }
             }
     }
     
     def "verifyRemoveGroups"() {
-        def args = "fod user-group get " + group.groupName
+        def args = "fod user-group get ${group.get().groupName}"
         when:
             def result = Fcli.run(args)
         then:
@@ -139,12 +140,12 @@ class FoDUserSpec extends FcliBaseSpec {
     }
     
     def "updateRemoveApps"() {
-        def args = "fod user update " + user.userName + " --remove-apps=" + app.appName
+        def args = "fod user update ${user.get().userName} --remove-apps=${app.get().appName}"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.contains("fcliAutomatedTestUser") && it.contains("UPDATED") }
+                it.any { it.contains("${user.get().userName}") && it.contains("UPDATED") }
             }
     }
     

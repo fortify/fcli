@@ -6,9 +6,9 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.fod._common.FoDApp
-import com.fortify.cli.ftest.fod._common.FoDUser
-import com.fortify.cli.ftest.fod._common.FoDUserGroup
+import com.fortify.cli.ftest.fod._common.FoDWebAppSupplier
+import com.fortify.cli.ftest.fod._common.FoDUserSupplier
+import com.fortify.cli.ftest.fod._common.FoDUserGroupSupplier
 
 import spock.lang.AutoCleanup
 import spock.lang.Shared

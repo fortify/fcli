@@ -6,9 +6,9 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.fod._common.FoDApp
-import com.fortify.cli.ftest.fod._common.FoDUser
-import com.fortify.cli.ftest.fod._common.FoDUserGroup
+import com.fortify.cli.ftest.fod._common.FoDWebAppSupplier
+import com.fortify.cli.ftest.fod._common.FoDUserSupplier
+import com.fortify.cli.ftest.fod._common.FoDUserGroupSupplier
 
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -17,9 +17,9 @@ import spock.lang.Unroll
 
 @Prefix("fod.usergroup") @FcliSession(FOD) @Stepwise
 class FoDUserGroupSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup FoDUser user = new FoDUser().create()
-    @Shared @AutoCleanup FoDUserGroup group = new FoDUserGroup().create()
-    @Shared @AutoCleanup FoDApp app = new FoDApp().createWebApp()
+    @Shared @AutoCleanup FoDUserSupplier user = new FoDUserSupplier()
+    @Shared @AutoCleanup FoDUserGroupSupplier group = new FoDUserGroupSupplier()
+    @Shared @AutoCleanup FoDWebAppSupplier app = new FoDWebAppSupplier()
     
     def "list"() {
         def args = "fod user-group list"
@@ -33,13 +33,13 @@ class FoDUserGroupSpec extends FcliBaseSpec {
     }
     
     def "get.byName"() {
-        def args = "fod user-group get " + group.groupName + " --store group" 
+        def args = "fod user-group get ${group.get().groupName} --store group" 
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>=6
-                it[2].contains(group.groupName)
+                it[2].contains(group.get().groupName)
             }
     }
     
@@ -50,15 +50,13 @@ class FoDUserGroupSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=6
-                it[2].contains(group.groupName)
+                it[2].contains(group.get().groupName)
             }
     }
     
     
     def "update"() {
-        def args = "fod user-group update " + group.groupName + 
-                    " --add-users " + user.userName +
-                    " --add-apps " + app.appName
+        def args = "fod user-group update ${group.get().groupName} --add-users ${user.get().userName} --add-apps ${app.get().appName}"
         when:
             def result = Fcli.run(args)
         then:
@@ -71,7 +69,7 @@ class FoDUserGroupSpec extends FcliBaseSpec {
     def "verifyUpdate"() {
         //app assignment seems to take about 5 seconds to register, adding a few just in case
         Thread.sleep(10000)
-        def args = "fod user-group get " + group.groupName
+        def args = "fod user-group get ${group.get().groupName}"
         when:
             def result = Fcli.run(args)
         then:

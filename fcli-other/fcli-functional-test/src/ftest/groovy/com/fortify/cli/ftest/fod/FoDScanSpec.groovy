@@ -7,9 +7,9 @@ import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest._common.spec.TestResource
-import com.fortify.cli.ftest.fod._common.FoDApp
-import com.fortify.cli.ftest.fod._common.FoDUser
-import com.fortify.cli.ftest.fod._common.FoDUserGroup
+import com.fortify.cli.ftest.fod._common.FoDWebAppSupplier
+import com.fortify.cli.ftest.fod._common.FoDUserSupplier
+import com.fortify.cli.ftest.fod._common.FoDUserGroupSupplier
 
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -21,7 +21,7 @@ class FoDScanSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/shared/EightBall-22.1.0.fpr") String sastResults
     //@Shared @TestResource("runtime/shared/iwa_net_scandata.fpr") String dastResults
     //@Shared @TestResource("runtime/shared/iwa_net_cyclonedx.json") String ossResults
-    @Shared @AutoCleanup FoDApp app = new FoDApp().createWebApp()
+    @Shared @AutoCleanup FoDWebAppSupplier app = new FoDWebAppSupplier()
     
     def "list"() {
         def args = "fod scan list --store scans"

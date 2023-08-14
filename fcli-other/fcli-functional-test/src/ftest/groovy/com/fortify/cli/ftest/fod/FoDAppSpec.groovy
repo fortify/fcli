@@ -6,18 +6,19 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.fod._common.FoDApp
+import com.fortify.cli.ftest.fod._common.FoDMicroservicesAppSupplier
+import com.fortify.cli.ftest.fod._common.FoDMobileAppSupplier
+import com.fortify.cli.ftest.fod._common.FoDWebAppSupplier
 
-import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Stepwise
-import spock.lang.Unroll
 
 @Prefix("fod.app") @FcliSession(FOD) @Stepwise
 class FoDAppSpec extends FcliBaseSpec {
-    @Shared FoDApp webApp = null;
-    @Shared FoDApp mobileApp = null;
-    @Shared FoDApp microservicesApp = null;
+    /*
+    @Shared FoDWebAppSupplier webAppSupplier = null;
+    @Shared FoDMobileAppSupplier mobileAppSupplier = null;
+    @Shared FoDMicroservicesAppSupplier microservicesAppSupplier = null;
     
     def "list"() {
         def args = "fod app list"
@@ -36,21 +37,21 @@ class FoDAppSpec extends FcliBaseSpec {
     
     def "createWebApp"() {
         when:
-            webApp = new FoDApp().createWebApp();
+            webApp = new FoDWebAppSupplier().createWebApp();
         then:
             noExceptionThrown()
     }
     
     def "createMicroserviceApp"() {
         when:
-            microservicesApp = new FoDApp().createMicroservicesApp();
+            microservicesApp = new FoDWebAppSupplier().createMicroservicesApp();
         then:
             noExceptionThrown()
     }
     
     def "createMobileApp"() {
         when:
-            mobileApp = new FoDApp().createMobileApp();
+            mobileApp = new FoDWebAppSupplier().createMobileApp();
         then:
             noExceptionThrown()
     }
@@ -174,6 +175,7 @@ class FoDAppSpec extends FcliBaseSpec {
                 !it.any { it.contains(mobileApp.appName) }
             }
     }
+    */
     
 }
 

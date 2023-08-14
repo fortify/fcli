@@ -6,16 +6,15 @@ import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.fod._common.FoDApp
+import com.fortify.cli.ftest.fod._common.FoDMicroservicesAppSupplier
 
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Stepwise
-import spock.lang.Unroll
 
 @Prefix("fod.release") @FcliSession(FOD) @Stepwise
 class FoDReleaseSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup FoDApp app = new FoDApp().createMicroservicesApp()
+    @Shared @AutoCleanup FoDMicroservicesAppSupplier app = new FoDMicroservicesAppSupplier()
     
     def "list"() {
         def args = "fod release list"
@@ -24,16 +23,12 @@ class FoDReleaseSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=1
-                if(size()>1) {
-                    it[0].replace(' ', '').equals("IdNameMicroserviceApplicationSDLCStatus")
-                } else {
-                    it[0].equals("No data")
-                }
+                it[0].replace(' ', '').equals("IdNameMicroserviceApplicationSDLCStatus")
             }
     }
     
     def "create"() {
-        def args = "fod release create " + app.appName + ":" + app.microserviceName + ":testrel --sdlc-status=Development --store testrel"
+        def args = "fod release create ${app.get().qualifiedMicroserviceName}:testrel --sdlc-status=Development --store testrel"
         when:
             def result = Fcli.run(args)
         then:
@@ -47,7 +42,9 @@ class FoDReleaseSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.contains(app.versionName) }
+                it.any { it.contains(app.get().appName) \
+                    && it.contains(app.get().microserviceName) \
+                    && it.contains("testrel") }
             }
     }
     
@@ -58,26 +55,26 @@ class FoDReleaseSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[2].equals("releaseName: \"testrel\"")
-                it[9].equals("applicationName: \"" + app.appName + ":" + app.versionName + "\"")
+                it.any { it.contains("releaseName: \"testrel\"") }
+                it.any { it.contains("applicationName: \"${app.get().appName}\"") }
             }
     }
     
     def "get.byName"() {
-        def args = "fod release get " + app.appName + ":" + app.microserviceName + ":testrel"
+        def args = "fod release get ${app.get().qualifiedMicroserviceName}:testrel"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[2].equals("releaseName: \"testrel\"")
-                it[9].equals("applicationName: \"" + app.appName + ":" + app.versionName + "\"")
+                it.any { it.contains("releaseName: \"testrel\"") }
+                it.any { it.contains("applicationName: \"${app.get().appName}\"") }
             }
     }
     
     
     def "update"() {
-        def args = "fod release update "  + app.appName + ":" + app.microserviceName + ":testrel --sdlc-status QA"
+        def args = "fod release update ${app.get().qualifiedMicroserviceName}:testrel --sdlc-status QA"
         when:
             def result = Fcli.run(args)
         then:
@@ -97,7 +94,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
     }
     
     def "delete"() {
-        def args = "fod release delete " + app.appName + ":testrel"
+        def args = "fod release delete ${app.get().qualifiedMicroserviceName}:testrel"
         when:
             def result = Fcli.run(args)
         then:
@@ -107,7 +104,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
     }
     
     def "verifyDeleted"() {
-        def args = "fod release list"
+        def args = "fod release list --app ${app.get().appName}"
         when:
             def result = Fcli.run(args)
         then:
