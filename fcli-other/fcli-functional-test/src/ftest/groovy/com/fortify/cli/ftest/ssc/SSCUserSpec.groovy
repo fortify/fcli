@@ -47,8 +47,7 @@ class SSCUserSpec extends FcliBaseSpec {
     }
     
     def "create"() {
-        Fcli.run("ssc role list --store roles")
-        def args = "ssc user create --username $userName --password P@ssW._ord123 --pne --suspend --rpc --firstname fName --lastname lName --email $random@mail.mail --roles ::roles::get(0).id --store user"
+        def args = "ssc user create --username $userName --password P@ssW._ord123 --pne --suspend --rpc --firstname fName --lastname lName --email $random@mail.mail --roles View\\ Only --store user"
         when:
             def result = Fcli.run(args)
         then:
