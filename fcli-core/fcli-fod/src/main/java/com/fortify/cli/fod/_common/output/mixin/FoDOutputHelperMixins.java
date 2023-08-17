@@ -73,5 +73,8 @@ public class FoDOutputHelperMixins {
     public static class Lookup extends OutputHelperMixins.TableWithQuery {
         public static final String CMD_NAME = "lookup";
     }
-
+    
+    public static class DownloadFpr extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "download-fpr";
+    }
 }

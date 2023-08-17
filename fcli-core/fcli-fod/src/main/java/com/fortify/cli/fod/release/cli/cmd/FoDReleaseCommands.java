@@ -16,13 +16,14 @@ package com.fortify.cli.fod.release.cli.cmd;
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
-import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
-@CommandLine.Command(name = "release",
+@Command(name = "release",
         subcommands = {
                 FoDReleaseCreateCommand.class,
-                FoDReleaseListCommand.class,
                 FoDReleaseGetCommand.class,
+                FoDReleaseListCommand.class,
+                FoDReleaseDownloadFprCommand.class,
                 FoDReleaseImportDastCommand.class,                
                 FoDReleaseImportMobileCommand.class,
                 FoDReleaseImportOpenSourceCommand.class,
