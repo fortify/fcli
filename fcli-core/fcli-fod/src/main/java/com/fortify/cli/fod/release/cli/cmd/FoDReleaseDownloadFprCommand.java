@@ -47,12 +47,13 @@ public class FoDReleaseDownloadFprCommand extends AbstractFoDJsonNodeOutputComma
         var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
         int status = 202;
         while ( status==202 ) {
-            Thread.sleep(30000L);
             status = unirest.get("/api/v3/releases/{releaseId}/fpr")
                 .routeParam("releaseId", releaseDescriptor.getReleaseId())
+                .accept("application/octet-stream")
                 .queryString("scanType", scanType.name())
                 .asFile(outputFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING)
                 .getStatus();
+            if ( status==202 ) { Thread.sleep(30000L); }
         }
         return releaseDescriptor.asJsonNode();
     }
