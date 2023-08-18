@@ -14,13 +14,22 @@ import picocli.CommandLine.Option;
 
 public class FoDSessionLoginOptions {
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-connection-options.heading", order = 1)
-    @Getter private UrlConfigOptions urlConfigOptions = new UrlConfigOptions();
+    @Getter private UrlConfigOptions urlConfigOptions = new FoDUrlConfigOptions();
     
     @ArgGroup(exclusive = false, multiplicity = "1", headingKey = "arggroup.fod-authentication-options.heading", order = 2)
     @Getter private FoDAuthOptions authOptions = new FoDAuthOptions();
     
+    
+    
     public String[] getScopes() {
         return new String[]{"api-tenant"}; // TODO make scopes configurable
+    }
+    
+    public static class FoDUrlConfigOptions extends UrlConfigOptions {
+        @Override
+        protected int getDefaultSocketTimeoutInMillis() {
+            return 600000;
+        }
     }
     
     public static class FoDAuthOptions {

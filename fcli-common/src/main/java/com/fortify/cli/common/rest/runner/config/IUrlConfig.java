@@ -24,10 +24,6 @@
  ******************************************************************************/
 package com.fortify.cli.common.rest.runner.config;
 
-public interface IUrlConfig {
+public interface IUrlConfig extends IConnectionConfig {
     String  getUrl();
-    Boolean getInsecureModeEnabled();
-    default boolean isInsecureModeEnabled() {
-        return Boolean.TRUE.equals(getInsecureModeEnabled());
-    }
 }

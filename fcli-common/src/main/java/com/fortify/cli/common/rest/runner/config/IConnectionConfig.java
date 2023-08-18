@@ -1,5 +1,5 @@
 /*******************************************************************************
- * (c) Copyright 2021 Micro Focus or one of its affiliates
+ * (c) Copyright 2020 Micro Focus or one of its affiliates
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the 
@@ -22,21 +22,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE.
  ******************************************************************************/
-package com.fortify.cli.sc_sast.session.cli.mixin;
+package com.fortify.cli.common.rest.runner.config;
 
-import com.fortify.cli.common.rest.cli.mixin.ConnectionConfigOptions;
-import com.fortify.cli.common.rest.runner.config.IUrlConfig;
-
-import io.micronaut.core.annotation.ReflectiveAccess;
-import lombok.Getter;
-import picocli.CommandLine.Option;
-
-@ReflectiveAccess
-public class SCSastUrlConfigOptions extends ConnectionConfigOptions implements IUrlConfig {
-    @Option(names = {"--ssc-url"}, required = true, order=1)
-    @Getter private String url;
-    
-    public boolean hasUrlConfig() {
-        return url!=null;
+public interface IConnectionConfig {
+    int     getConnectTimeoutInMillis();
+    int     getSocketTimeoutInMillis();
+    Boolean getInsecureModeEnabled();
+    default boolean isInsecureModeEnabled() {
+        return Boolean.TRUE.equals(getInsecureModeEnabled());
     }
 }

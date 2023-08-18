@@ -37,7 +37,9 @@ public final class UnirestUrlConfigConfigurer {
         if ( urlConfig==null ) { throw new IllegalArgumentException("URL configuration may not be null"); }
         unirestInstance.config()
             .defaultBaseUrl(normalizeUrl(urlConfig.getUrl()))
-            .verifySsl(!urlConfig.isInsecureModeEnabled());
+            .verifySsl(!urlConfig.isInsecureModeEnabled())
+            .socketTimeout(urlConfig.getSocketTimeoutInMillis())
+            .connectTimeout(urlConfig.getConnectTimeoutInMillis());
     }
     
     /**
