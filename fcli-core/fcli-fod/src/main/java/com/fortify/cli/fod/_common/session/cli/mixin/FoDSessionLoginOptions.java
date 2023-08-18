@@ -95,5 +95,10 @@ public class FoDSessionLoginOptions {
             }
             return uri.toString();
         }
+        
+        @Override
+        protected int getDefaultSocketTimeoutInMillis() {
+            return 600000;
+        }
     }
 }

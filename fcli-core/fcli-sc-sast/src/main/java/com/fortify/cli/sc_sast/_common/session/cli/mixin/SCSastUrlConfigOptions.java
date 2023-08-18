@@ -12,17 +12,15 @@
  *******************************************************************************/
 package com.fortify.cli.sc_sast._common.session.cli.mixin;
 
+import com.fortify.cli.common.rest.cli.mixin.ConnectionConfigOptions;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-public class SCSastUrlConfigOptions implements IUrlConfig {
+public class SCSastUrlConfigOptions extends ConnectionConfigOptions implements IUrlConfig {
     @Option(names = {"--ssc-url"}, required = true, order=1)
     @Getter private String url;
-    
-    @Option(names = {"--insecure", "-k"}, required = false, defaultValue = "false", order=6)
-    @Getter private Boolean insecureModeEnabled;
     
     public boolean hasUrlConfig() {
         return url!=null;

@@ -22,12 +22,9 @@ import picocli.CommandLine.Option;
  * </pre>
  * @author Ruud Senden
  */
-public class UrlConfigOptions implements IUrlConfig {
+public class UrlConfigOptions extends ConnectionConfigOptions implements IUrlConfig {
     @Option(names = {"--url"}, required = true, order=1)
     @Getter private String url;
-    
-    @Option(names = {"--insecure", "-k"}, required = false, defaultValue = "false", order=6)
-    @Getter private Boolean insecureModeEnabled;
     
     public boolean hasUrlConfig() {
         return url!=null;

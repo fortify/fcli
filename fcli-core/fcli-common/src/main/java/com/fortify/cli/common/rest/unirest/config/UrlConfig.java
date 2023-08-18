@@ -26,6 +26,8 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor @AllArgsConstructor 
 public class UrlConfig implements IUrlConfig {
     private String  url;
+    private int     socketTimeoutInMillis;
+    private int     connectTimeoutInMillis;
     private Boolean insecureModeEnabled;
     
     public static final UrlConfig from(IUrlConfig other) {
@@ -37,7 +39,9 @@ public class UrlConfig implements IUrlConfig {
         if ( other!=null ) {
             builder = builder
                 .url(other.getUrl())
-                .insecureModeEnabled(other.isInsecureModeEnabled());
+                .insecureModeEnabled(other.isInsecureModeEnabled())
+                .connectTimeoutInMillis(other.getConnectTimeoutInMillis())
+                .socketTimeoutInMillis(other.getSocketTimeoutInMillis());
         }
         return builder;
     }
@@ -47,6 +51,8 @@ public class UrlConfig implements IUrlConfig {
         if ( other!=null && overrides!=null ) {
             override(overrides.getUrl(), builder::url);
             override(overrides.getInsecureModeEnabled(), builder::insecureModeEnabled);
+            builder.connectTimeoutInMillis(overrides.getConnectTimeoutInMillis())
+                .socketTimeoutInMillis(overrides.getSocketTimeoutInMillis());
         }
         return builder;
     }

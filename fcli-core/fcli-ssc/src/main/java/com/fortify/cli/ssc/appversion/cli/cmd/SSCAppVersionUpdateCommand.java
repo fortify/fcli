@@ -13,7 +13,6 @@
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;

@@ -20,6 +20,7 @@ import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.license.ncd_report.collector.NcdReportResultsCollector;
 import com.fortify.cli.license.ncd_report.generator.gitlab.NcdReportGitLabResultsGenerator;
 
+import kong.unirest.Config;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -36,6 +37,8 @@ import lombok.NoArgsConstructor;
 public class NcdReportGitLabSourceConfig extends AbstractNcdReportRepoSelectorConfig implements INcdReportSourceConfig, IUrlConfig {
     private String baseUrl;
     private String tokenExpression;
+    private int connectTimeoutInMillis = Config.DEFAULT_CONNECT_TIMEOUT;
+    private int socketTimeoutInMillis = Config.DEFAULT_SOCKET_TIMEOUT;
     private Boolean insecureModeEnabled;
     private Optional<Boolean> includeSubgroups = Optional.empty();
     

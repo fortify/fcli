@@ -18,6 +18,7 @@ import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.license.msp_report.collector.MspReportResultsCollector;
 import com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCResultsGenerator;
 
+import kong.unirest.Config;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -33,6 +34,8 @@ import lombok.NoArgsConstructor;
 public class MspReportSSCSourceConfig implements IMspReportSourceConfig, IUrlConfig {
     private String baseUrl;
     private String tokenExpression;
+    private int connectTimeoutInMillis = Config.DEFAULT_CONNECT_TIMEOUT;
+    private int socketTimeoutInMillis = Config.DEFAULT_SOCKET_TIMEOUT;
     private Boolean insecureModeEnabled;
     
     @Override

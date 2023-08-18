@@ -18,6 +18,7 @@ import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 import com.fortify.cli.license.ncd_report.collector.NcdReportResultsCollector;
 import com.fortify.cli.license.ncd_report.generator.github.NcdReportGitHubResultsGenerator;
 
+import kong.unirest.Config;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -35,6 +36,8 @@ import lombok.NoArgsConstructor;
 public class NcdReportGitHubSourceConfig extends AbstractNcdReportRepoSelectorConfig implements INcdReportSourceConfig, IUrlConfig {
     private String apiUrl = "https://api.github.com/";
     private String tokenExpression;
+    private int connectTimeoutInMillis = Config.DEFAULT_CONNECT_TIMEOUT;
+    private int socketTimeoutInMillis = Config.DEFAULT_SOCKET_TIMEOUT;
     private Boolean insecureModeEnabled;
     
     @Override

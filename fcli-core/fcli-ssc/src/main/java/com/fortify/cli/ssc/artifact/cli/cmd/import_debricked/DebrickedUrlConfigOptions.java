@@ -12,18 +12,16 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.artifact.cli.cmd.import_debricked;
 
+import com.fortify.cli.common.rest.cli.mixin.ConnectionConfigOptions;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
-public class DebrickedUrlConfigOptions implements IUrlConfig {
+public class DebrickedUrlConfigOptions extends ConnectionConfigOptions implements IUrlConfig {
 	// For now, this option is hidden as there is only the single debricked.com SaaS instance
     @Option(names = {"--debricked-url"}, required = true, order=1, defaultValue = "https://debricked.com", hidden = true)
     @Getter private String url;
-    
-    @Option(names = {"--insecure", "-k"}, required = false, defaultValue = "false", order=6)
-    @Getter private Boolean insecureModeEnabled;
     
     public boolean hasUrlConfig() {
         return url!=null;
