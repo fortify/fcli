@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Documentation
-fcli_version: 
+fcli_version: none
 ---
 
 <!DOCTYPE html>
@@ -21,9 +21,18 @@ fcli_version:
 
 <div id="header">
 <h1>Fortify CLI (fcli) Documentation</h1>
+<div class="details">
+<span id="revnumber">version none</span>
+</div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
+<li><a href="#_release_documentation">Release Documentation</a>
+<ul class="sectlevel2">
+<li><a href="#_releases_versions">Releases Versions</a></li>
+<li><a href="#_development_versions">Development Versions</a></li>
+</ul>
+</li>
 <li><a href="#_developer_documentation">Developer Documentation</a></li>
 </ul>
 </div>
@@ -32,7 +41,31 @@ fcli_version:
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST. Please select a version from the menu on the top-right to view detailed usage documentation and manual pages for that version.</p>
+<p>The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_release_documentation"><a class="anchor" href="#_release_documentation"></a>Release Documentation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Release documentation can be accessed through the drop-down menu on the top-right, or from the sections below.</p>
+</div>
+<div class="sect2">
+<h3 id="_releases_versions"><a class="anchor" href="#_releases_versions"></a>Releases Versions</h3>
+<ul>
+{% for version in site.data.versions.release %}
+   <li><a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a></li>
+{% endfor %}
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_development_versions"><a class="anchor" href="#_development_versions"></a>Development Versions</h3>
+<ul>
+{% for version in site.data.versions.dev %}
+   <li><a href="{{ site.baseurl }}/{{ version }}">{{ version }}</a></li>
+{% endfor %}
+</ul>
 </div>
 </div>
 </div>
@@ -47,7 +80,8 @@ fcli_version:
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-08-18 13:49:09 UTC
+Version none<br>
+Last updated 2023-08-18 13:55:44 UTC
 </div>
 </div>
 </body>

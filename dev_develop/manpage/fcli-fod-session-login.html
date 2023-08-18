@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230818.133437-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230818.135545-dev_develop" %}
 
 
 <div id="header">
@@ -41,7 +41,9 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod session login</strong> [<strong>-k</strong>] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <strong>--url</strong>=<em>&lt;url&gt;</em> [[<strong>-h</strong>]
+<p><strong>fcli fod session login</strong> [<strong>-k</strong>] [<strong>--connect-timeout</strong>=<em>&lt;connectTimeout&gt;</em>]
+                       [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
+                       [<strong>--socket-timeout</strong>=<em>&lt;socketTimeout&gt;</em>] <strong>--url</strong>=<em>&lt;url&gt;</em> [[<strong>-h</strong>]
                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
@@ -150,6 +152,14 @@ fcli_version:
 <dd>
 <p>Disable SSL checks.</p>
 </dd>
+<dt class="hdlist1"><strong>--socket-timeout</strong>=<em>&lt;socketTimeout&gt;</em></dt>
+<dd>
+<p>Socket timeout for this session, for example 30s (30 seconds), 5m (5 minutes). Default value: 10 minutes.</p>
+</dd>
+<dt class="hdlist1"><strong>--connect-timeout</strong>=<em>&lt;connectTimeout&gt;</em></dt>
+<dd>
+<p>Connection timeout for this session, for example 30s (30 seconds), 5m (5 minutes). Default value: 10 seconds.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -204,7 +214,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-18 13:36:22 UTC
+Last updated 2023-08-18 13:57:27 UTC
 </div>
 </div>
 </body>
