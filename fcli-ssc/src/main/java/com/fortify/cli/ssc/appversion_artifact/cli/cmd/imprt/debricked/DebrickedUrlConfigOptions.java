@@ -24,6 +24,7 @@
  ******************************************************************************/
 package com.fortify.cli.ssc.appversion_artifact.cli.cmd.imprt.debricked;
 
+import com.fortify.cli.common.rest.cli.mixin.ConnectionConfigOptions;
 import com.fortify.cli.common.rest.runner.config.IUrlConfig;
 
 import io.micronaut.core.annotation.ReflectiveAccess;
@@ -31,13 +32,10 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 
 @ReflectiveAccess
-public class DebrickedUrlConfigOptions implements IUrlConfig {
+public class DebrickedUrlConfigOptions extends ConnectionConfigOptions implements IUrlConfig {
 	// For now, this option is hidden as there is only the single debricked.com SaaS instance
     @Option(names = {"--debricked-url"}, required = true, order=1, defaultValue = "https://debricked.com", hidden = true)
     @Getter private String url;
-    
-    @Option(names = {"--insecure", "-k"}, required = false, description = "Disable SSL checks", defaultValue = "false", order=6)
-    @Getter private Boolean insecureModeEnabled;
     
     public boolean hasUrlConfig() {
         return url!=null;
