@@ -24,7 +24,8 @@ jobs:
         with:
           command: github-release
           release-type: simple
-          package-name: ${{ github.event.repository.name }}  
+          package-name: ${{ github.event.repository.name }} 
+          default-branch: main 
           
       - name: PROD - Define release info
         if: steps.create_prod_release.outputs.release_created
@@ -237,6 +238,7 @@ jobs:
           command: release-pr
           release-type: simple
           package-name: ${{ github.event.repository.name }}
+          default-branch: main
           
       - name: DEV - Prepare GitHub release 
         if: needs.build.outputs.do_dev_release
