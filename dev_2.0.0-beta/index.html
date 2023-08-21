@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230609.101848-dev_2.0.0-beta
+fcli_version: 0.20230821.115445-dev_2.0.0-beta
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20230609.101848-dev_2.0.0-beta
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230609.101848-dev_2.0.0-beta" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230821.115445-dev_2.0.0-beta" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230609.101848-dev_2.0.0-beta</span>
+<span id="revnumber">version 0.20230821.115445-dev_2.0.0-beta</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -31,16 +31,16 @@ fcli_version: 0.20230609.101848-dev_2.0.0-beta
 <li><a href="#_command_structure">Command Structure</a></li>
 <li><a href="#_common_options">Common Options</a>
 <ul class="sectlevel2">
-<li><a href="#_h_help">-h | –help</a></li>
-<li><a href="#_env_prefix">–env-prefix</a></li>
-<li><a href="#_log_level">–log-level</a></li>
-<li><a href="#_log_file">–log-file</a></li>
-<li><a href="#_o_output">-o | –output</a></li>
-<li><a href="#_output_to_file">–output-to-file</a></li>
+<li><a href="#_h_help">-h | --help</a></li>
+<li><a href="#_env_prefix">--env-prefix</a></li>
+<li><a href="#_log_level">--log-level</a></li>
+<li><a href="#_log_file">--log-file</a></li>
+<li><a href="#_o_output">-o | --output</a></li>
+<li><a href="#_output_to_file">--output-to-file</a></li>
 <li><a href="#_progress">--progress</a></li>
-<li><a href="#_store">–store</a></li>
-<li><a href="#_q_query">-q | –query</a></li>
-<li><a href="#_session">–session</a></li>
+<li><a href="#_store">--store</a></li>
+<li><a href="#_q_query">-q | --query</a></li>
+<li><a href="#_session">--session</a></li>
 <li><a href="#_option_expressions">Option Expressions</a></li>
 </ul>
 </li>
@@ -204,7 +204,7 @@ man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p
 </li>
 <li>
 <p>If you experience any unexpected behavior with native binaries, like commands or command line options not being listed or recognized, or technical error messages about methods, constructors or serializers not being
-found, please try with the Java version a s it may be an issue specific to the native binaries. See the <a href="#_troubleshooting">Troubleshooting</a> section for details.</p>
+found, please try with the Java version as it may be an issue specific to the native binaries. See the <a href="#_troubleshooting">Troubleshooting</a> section for details.</p>
 </li>
 </ul>
 </div>
@@ -236,7 +236,8 @@ found, please try with the Java version a s it may be an issue specific to the n
 </li>
 <li>
 <p>Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the <code>&lt;tab&gt;</code> to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell.<br>
-<code>source &lt;extraction-dir&gt;/fcli_completion</code></p>
+<code>source &lt;extraction-dir&gt;/fcli_completion</code><br>
+<strong>Note</strong>: Please ensure that the version of the completion script matches the fcli version that you&#8217;re using, as otherwise the completion script may provide incorrect suggestions.</p>
 </li>
 </ul>
 </div>
@@ -268,13 +269,13 @@ simple wrapper script/batch file or shell alias to make it slightly easier to in
 <p>The following sections describe common options that are available on (most) fcli commands.</p>
 </div>
 <div class="sect2">
-<h3 id="_h_help"><a class="anchor" href="#_h_help"></a>-h | –help</h3>
+<h3 id="_h_help"><a class="anchor" href="#_h_help"></a>-h | --help</h3>
 <div class="paragraph">
 <p>This option can be used on every fcli (sub-)command to view usage information for that command. Usage information usually shows the command synopsis, a description of the functionality provided by the command, and a description of each command line option or parameter accepted by the command.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_env_prefix"><a class="anchor" href="#_env_prefix"></a>–env-prefix</h3>
+<h3 id="_env_prefix"><a class="anchor" href="#_env_prefix"></a>--env-prefix</h3>
 <div class="paragraph">
 <p>As described in the <a href="#_environment_variables">Environment Variables</a> section, default option and parameter values can be retrieved from environment variables starting with <code>FCLI_DEFAULT</code>. This option allows for configuring a different environment variable prefix. This may be useful if, for example, you want to login to multiple instances of the same system using environment variables. For example, when running <code>fcli ssc session login --env-prefix PROD</code>, fcli will look for environment variables like <code>PROD_SSC_URL</code> instead of <code>FCLI_DEFAULT_SSC_URL</code>.</p>
 </div>
@@ -283,21 +284,21 @@ simple wrapper script/batch file or shell alias to make it slightly easier to in
 </div>
 </div>
 <div class="sect2">
-<h3 id="_log_level"><a class="anchor" href="#_log_level"></a>–log-level</h3>
+<h3 id="_log_level"><a class="anchor" href="#_log_level"></a>--log-level</h3>
 <div class="paragraph">
 <p>This option can be used on every fcli (sub-)command to specify the fcli log level; see the help output for a list of allowed levels. Note that this option also requires the <code>--log-file</code> option to be specified,
 otherwise no log will be written.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_log_file"><a class="anchor" href="#_log_file"></a>–log-file</h3>
+<h3 id="_log_file"><a class="anchor" href="#_log_file"></a>--log-file</h3>
 <div class="paragraph">
 <p>This option can be used on every fcli (sub-)command to specify the file to which to output log data. If not specified, currently no log data will be written, although future versions may specify a default log file
 location in the fcli data folder.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_o_output"><a class="anchor" href="#_o_output"></a>-o | –output</h3>
+<h3 id="_o_output"><a class="anchor" href="#_o_output"></a>-o | --output</h3>
 <div class="paragraph">
 <p>Available on virtually all (leaf) commands that output data, this option can be used to specify the output format. Fcli supports a wide variety of output formats, like <code>table</code>, <code>csv</code>, <code>json</code>, <code>xml</code>, and <code>tree</code> formats, allowing for both human-readable output or output suitable for automations. The <code>csv-plain</code> and <code>table-plain</code> output formats produce CSV or table output without headers. The <code>*-flat</code>
 output formats produce a flattened view of the output data, potentially making it easier to process that data without having to navigate through an object tree. For a full list of output formats supported by your fcli
@@ -318,10 +319,10 @@ Formats the output data based on the given template expression, which is a combi
 <div class="ulist">
 <ul>
 <li>
-<p><code>fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr=fcli ssc appversion-artifact purge --older-than 30d --appversion {id}\n'</code></p>
+<p><code>fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr=fcli ssc appversion purge-artifacts --older-than 30d {id}\n'</code></p>
 </li>
 <li>
-<p><code>for id in $(fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr={id} '); do echo "fcli ssc appversion-artifact purge –older-than 30d –appversion ${id}'"; done</code></p>
+<p><code>for id in $(fcli ssc appversion list -q 'createdBy=="admin"' -o 'expr={id} '); do echo "fcli ssc appversion purge-artifacts –older-than 30d ${id}'"; done</code></p>
 </li>
 </ul>
 </div>
@@ -345,7 +346,7 @@ that changes state (delete/update/create/…). In most cases, the <code>get</cod
 </div>
 </div>
 <div class="sect2">
-<h3 id="_output_to_file"><a class="anchor" href="#_output_to_file"></a>–output-to-file</h3>
+<h3 id="_output_to_file"><a class="anchor" href="#_output_to_file"></a>--output-to-file</h3>
 <div class="paragraph">
 <p>Available on virtually all (leaf) commands that output data, this option can be used to write the command output data to a file, in the format specified by the <code>--output</code> option listed above. In some cases, this may be more convenient than redirecting the output to a file. For example, although currently not implemented, fcli could potentially skip creating the output file if there is no output data or if an error occurs. Also, for commands that output status updates, like <code>wait-for</code> commands, the <code>--output-to-file</code> option allows for status updates to be written to standard output while the final output of the command will be written to the file specified.</p>
 </div>
@@ -376,13 +377,13 @@ that changes state (delete/update/create/…). In most cases, the <code>get</cod
 </div>
 </div>
 <div class="sect2">
-<h3 id="_store"><a class="anchor" href="#_store"></a>–store</h3>
+<h3 id="_store"><a class="anchor" href="#_store"></a>--store</h3>
 <div class="paragraph">
 <p>Available on virtually all (leaf) commands that output data, this option can be used to store command output data in an fcli variable. For more details, see the <a href="#_fcli_variables">Fcli Variables</a> section.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_q_query"><a class="anchor" href="#_q_query"></a>-q | –query</h3>
+<h3 id="_q_query"><a class="anchor" href="#_q_query"></a>-q | --query</h3>
 <div class="paragraph">
 <p>Available on most <code>list</code> commands and some other commands, this option allows for querying the output data, outputting only records that match the given Spring Expression Language (SpEL) expression. See the <a href="#_option_expressions">Option Expressions</a> section for details.</p>
 </div>
@@ -419,15 +420,15 @@ Only output records if the value of property <code>p2</code> either equals 25 or
 Only output records if the value of property <code>p1</code> equals <code>v1</code> and the value of either property <code>p2</code> or <code>p3</code> is <code>v2</code></p>
 </li>
 <li>
-<p><code>fcli ssc appversion-artifact list --appversion MyApp:main -q 'scanTypes matches "\bSCA\b"'</code><br>
+<p><code>fcli ssc artifact list --appversion MyApp:main -q 'scanTypes matches "\bSCA\b"'</code><br>
 Only output artifacts containing a Fortify SCA scan (matching the whole word <code>SCA</code> against <code>scanTypes</code> property)</p>
 </li>
 <li>
-<p><code>fcli ssc appversion-artifact list --appversion MyApp:main -q '_embed.scans.![buildLabel].contains("myLabel")'</code><br>
+<p><code>fcli ssc artifact list --appversion MyApp:main -q '_embed.scans.![buildLabel].contains("myLabel")'</code><br>
 Only output artifacts for which any of the scans included in the artifact has a <code>buildLabel</code> that equals <code>myLabel</code></p>
 </li>
 <li>
-<p><code>fcli ssc appversion-artifact list --appversion MyApp:main -q '#now("-90d") &lt; #date(uploadDate)'</code><br>
+<p><code>fcli ssc artifact list --appversion MyApp:main -q '#now("-90d") &lt; #date(uploadDate)'</code><br>
 Only output artifacts that were uploaded less than 90 days ago.</p>
 </li>
 </ul>
@@ -492,7 +493,7 @@ All commands that automatically generate server-side queries provide the <code>-
 </div>
 </div>
 <div class="sect2">
-<h3 id="_session"><a class="anchor" href="#_session"></a>–session</h3>
+<h3 id="_session"><a class="anchor" href="#_session"></a>--session</h3>
 <div class="paragraph">
 <p>Available on virtually all commands that interact with a target system, this option allows for specifying a session name. For more details, see the <a href="#_session_management">Session Management</a> section.</p>
 </div>
@@ -503,7 +504,52 @@ All commands that automatically generate server-side queries provide the <code>-
 <p>Various fcli options take either plain expressions, like <a href="#-q--query">-q | --query</a>, or template expressions (plain text combined with expressions embedded between curly braces), like <a href="#-o--output">-o | –output expr=&#8230;&#8203;</a>. These expressions use Spring Expression Language (SpEL); general information on syntax, supported operators and more can be found in the <a href="https://docs.spring.io/spring-framework/docs/6.0.x/reference/html/core.html#expressions">SpEL Documentation</a>.</p>
 </div>
 <div class="paragraph">
-<p>When evaluating expressions, fcli configures SpEL for 'data binding and condition evaluation', meaning that not all SpEL features are available. In particular, query expressions cannot invoke constructors nor static methods, and write access is mostly disabled.</p>
+<p>When evaluating expressions, fcli configures SpEL for 'data binding and condition evaluation', meaning that not all SpEL features are available. In particular, query expressions cannot invoke constructors nor static methods, and write access is mostly disabled. Attempts to access non-existing JSON properties will result in an error, which, although uncommon, may be an issue if the server doesn&#8217;t consistently return all expected properties. You&#8217;ll need to explicitly check for property existence in such cases, for example:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Top-level properties:<br>
+<code>fcli ... list -q '(has("property2") &amp;&amp; property2=="value2")'</code></p>
+</li>
+<li>
+<p>Nested properties:<br>
+<code>fcli ... list -q 'nestedObject!=null &amp;&amp; get("nestedObject").has("stringValue") &amp;&amp; nestedObject.stringValue=="nestedObjectValue1"'</code></p>
+</li>
+<li>
+<p>Nested array properties:<br>
+<code>fcli ... list -q 'nestedObjectArray !=null &amp;&amp; !(nestedObjectArray.isEmpty()) &amp;&amp; get("nestedObjectArray").get(0).has("stringValue") &amp;&amp; nestedObjectArray.get(0).stringValue=="nestedArrayValue1"'</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Some SpEL operators like <code>matches</code> may throw an exception if any of the operands is <code>null</code>. For example, the following will result in an error if the <code>prop1</code> propery is <code>null</code> for any of the records returned by the <code>list</code> command:<br></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>fcli ... list -q 'prop1 matches "value1|value2"'</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Such errors can be avoided using one of the following approaches:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Rewrite the expression to not use the <code>matches</code> operator, for example:<br>
+<code>fcli ... list -q '{"value1","value2"}.contains(prop1)'</code></p>
+</li>
+<li>
+<p>Add null-check (include all records for which <code>prop</code> is <code>null</code>):<br>
+<code>fcli ... list -q 'prop1==null || prop1 matches "value1|value2"'</code></p>
+</li>
+<li>
+<p>Add null-check (exclude all records for which <code>prop</code> is <code>null</code>):<br>
+<code>fcli ... list -q 'prop1!=null &amp;&amp; prop1 matches "value1|value2"'</code></p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
 <p>Fcli provides some utility functions that may be used in expressions. Note that these functions calls are preceded by a <code>#</code> character.</p>
@@ -524,6 +570,22 @@ All commands that automatically generate server-side queries provide the <code>-
 </li>
 <li>
 <p><code>#env(name)</code>: Get the value of an environment variable.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Note that for date comparisons, both sides of the comparison operator need to be explicitly defined as date/time objects. For example:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Invalid comparison: <code>#date(myprop) &lt; '2023-01-01'</code></p>
+</li>
+<li>
+<p>Valid comparison: <code>#date(myprop) &lt; #date('2023-01-01')</code></p>
+</li>
+<li>
+<p>Valid comparison: <code>#date(myprop) &lt; #now('-90d')</code></p>
 </li>
 </ul>
 </div>
@@ -608,7 +670,7 @@ fcli ssc session logout --user &lt;user&gt; --password &lt;password&gt;</code></
 <p>By default, fcli stores configuration and state data like session files (see <a href="#_session_management">Session Management</a>), fcli variable contents (see <a href="#_fcli_variables">Fcli Variables</a>) and proxy settings in its data folder. Future versions of fcli may also automatically generated log files in this data directory, if no <code>--log-file</code> option is provided.</p>
 </div>
 <div class="paragraph">
-<p>The locations of these files can be controller through the following environment variables:</p>
+<p>The locations of these files can be controlled through the following environment variables:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -729,7 +791,7 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 <h2 id="_fcli_variables"><a class="anchor" href="#_fcli_variables"></a>Fcli Variables</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding <code>wait-for</code> command, or for creating an SSC application version, and passing the SSC application version id to the <code>appversion-artifact upload</code> command.</p>
+<p>Fcli allows for storing fcli output data in fcli variables for use by subsequent fcli commands. This is a powerful feature that prevents users from having to use shell features to parse fcli output when needing to provide output from one command as input to another command. For example, this feature allows for starting a scan, and then passing the scan id to a corresponding <code>wait-for</code> command, or for creating an SSC application version, and passing the SSC application version id to the <code>artifact upload</code> command.</p>
 </div>
 <div class="paragraph">
 <p>Variables can be stored using the <code>--store myVarName[:prop1,prop2]</code> option on data output commands. If property names are specified, then only these property names will be stored. If no property names are provided, all available JSON properties will be stored.</p>
@@ -738,18 +800,18 @@ Default: <code>&lt;user home directory&gt;/.fortify</code></p>
 <p>Variables can be referenced in subsequent fcli commands using the <code>::myVarName::prop</code> syntax anywhere on the command line; such occurrences will be substituted with the value of the given property name.</p>
 </div>
 <div class="paragraph">
-<p>Many (but not all) fcli commands will also store an entity-specific default property name when using the <code>--store</code> option. Whether a default property name has been stored can be seen in the output of the <code>fcli state var list</code> command. If a default property name was stored, the <code>::myVarName::</code> syntax can be used to reference the value of the default property name, thereby avoiding the need to manually specify the appropriate property name.</p>
+<p>Many (but not all) fcli commands will also store an entity-specific default property name when using the <code>--store</code> option. Whether a default property name has been stored can be seen in the output of the <code>fcli util variable list</code> command. If a default property name was stored, the <code>::myVarName::</code> syntax can be used to reference the value of the default property name, thereby avoiding the need to manually specify the appropriate property name.</p>
 </div>
 <div class="paragraph">
 <p>Following are some examples, assuming the necessary login sessions are available:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion
-fcli ssc appversion-artifact upload myScan.fpr --appversion ::myVersion::
+<pre class="highlight"><code class="language-bash" data-lang="bash">fcli ssc appversion create myApp:1.0 --auto-required-attrs --skip-if-exists --store myVersion
+fcli ssc artifact upload myScan.fpr --appversion ::myVersion::
 
 fcli ssc appversion create myApp:1.0 --auto-required --skip-if-exists --store myVersion:id,name
-fcli ssc appversion-artifact upload myScan.fpr --appversion ::myVersion::id
+fcli ssc artifact upload myScan.fpr --appversion ::myVersion::id
 
 fcli sc-sast scan start -p package.zip -v 22.2 --appversion test:1.0 --store x
 fcli sc-sast scan wait-for ::x::
@@ -759,17 +821,17 @@ fcli sc-sast scan wait-for ::x::jobToken</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Fcli provides the regular <code>get</code>, <code>list</code> and <code>delete</code> operations on the <code>+fcli state variable</code> command tree, and actual variable contents can be retrieved using the <code>fcli state variable contents</code> command. Please see help output or manual pages for more information on these commands.</p>
+<p>Fcli provides the regular <code>get</code>, <code>list</code> and <code>delete</code> operations on the <code>+fcli util variable</code> command tree, and actual variable contents can be retrieved using the <code>fcli util variable contents</code> command. Please see help output or manual pages for more information on these commands.</p>
 </div>
 <div class="paragraph">
-<p>The <code>fcli state variable contents</code> command supports the regular fcli output options and query capabilities. This allows for advanced us cases, like retrieving server data once and then outputting it in multiple formats, potentially even applying separate filters. As an example:</p>
+<p>The <code>fcli util variable contents</code> command supports the regular fcli output options and query capabilities. This allows for advanced us cases, like retrieving server data once and then outputting it in multiple formats, potentially even applying separate filters. As an example:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="highlight"><code class="language-bash" data-lang="bash">fcli ssc appversion list --store myVersions
-fcli state variable contents myVersions -o csv --output-to-file myVersions.csv
-fcli state variable contents myVersions -o json -q createdBy=admin --output-to-file myAdminVersions.json
-fcli state variable contents myVersions -o 'expr={id}\n' --output-to-file myVersionIds.txt</code></pre>
+fcli util variable contents myVersions -o csv --output-to-file myVersions.csv
+fcli util variable contents myVersions -o json -q createdBy=admin --output-to-file myAdminVersions.json
+fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersionIds.txt</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -863,8 +925,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230609.101848-dev_2.0.0-beta<br>
-Last updated 2023-06-09 10:20:40 UTC
+Version 0.20230821.115445-dev_2.0.0-beta<br>
+Last updated 2023-08-21 11:56:56 UTC
 </div>
 </div>
 </body>

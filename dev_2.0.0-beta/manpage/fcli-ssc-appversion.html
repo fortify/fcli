@@ -1,6 +1,6 @@
 ---
 title: fcli-ssc-appversion(1)
-fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09 10 19 16
+fcli_version: 
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230609.101848-dev_2.0.0-beta" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230821.115445-dev_2.0.0-beta" %}
 
 
 <div id="header">
@@ -26,13 +26,13 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
-<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_options">Options</a></li>
 <li><a href="#_commands">Commands</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-appversion - Commands for interacting with application versions</p>
+<p>fcli-ssc-appversion - Manage SSC application versions.</p>
 </div>
 </div>
 <div id="content">
@@ -40,8 +40,7 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [COMMAND]</p>
+<p><strong>fcli ssc appversion</strong> [<strong>-h</strong>] [COMMAND]</p>
 </div>
 </div>
 </div>
@@ -52,25 +51,13 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 </div>
 </div>
 <div class="sect1">
-<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
 <dd>
 <p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
-</dd>
-<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
-<dd>
-<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
-</dd>
-<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
-<dd>
-<p>File where logging data will be written. If not specified, no logging data will be written.</p>
-</dd>
-<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
-<dd>
-<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
 </dd>
 </dl>
 </div>
@@ -83,23 +70,35 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 <dl>
 <dt class="hdlist1"><a href="fcli-ssc-appversion-create.html"><strong>create</strong></a></dt>
 <dd>
-<p>Create an application version</p>
+<p>Create an application version.</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-ssc-appversion-delete.html"><strong>delete</strong>, <strong>rm</strong></a></dt>
 <dd>
-<p>Delete an application version</p>
+<p>Delete an application version.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-appversion-download-state.html"><strong>download-state</strong></a></dt>
+<dd>
+<p>Download application version state.</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-ssc-appversion-get.html"><strong>get</strong></a></dt>
 <dd>
-<p>Get application version details</p>
+<p>Get application version details.</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-ssc-appversion-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
 <dd>
-<p>List and query application versions</p>
+<p>List application versions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-appversion-purge-artifacts.html"><strong>purge-artifacts</strong></a></dt>
+<dd>
+<p>Purge application version artifacts.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-appversion-refresh-metrics.html"><strong>refresh-metrics</strong></a></dt>
+<dd>
+<p>Refresh application version metrics.</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-ssc-appversion-update.html"><strong>update</strong></a></dt>
 <dd>
-<p>Update an application version</p>
+<p>Update an application version.</p>
 </dd>
 </dl>
 </div>
@@ -108,8 +107,8 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09 10 19 16<br>
-Last updated 2023-06-09 10:20:40 UTC
+Version <br>
+Last updated 2023-08-21 11:56:56 UTC
 </div>
 </div>
 </body>

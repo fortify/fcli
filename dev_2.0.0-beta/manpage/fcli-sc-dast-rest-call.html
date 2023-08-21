@@ -1,6 +1,6 @@
 ---
 title: fcli-sc-dast-rest-call(1)
-fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09 10 19 16
+fcli_version: 
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230609.101848-dev_2.0.0-beta" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230821.115445-dev_2.0.0-beta" %}
 
 
 <div id="header">
@@ -35,7 +35,7 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-sc-dast-rest-call - Call an individual ScanCentral DAST REST API endpoint</p>
+<p>fcli-sc-dast-rest-call - Call an individual Fortify ScanCentral DAST REST API endpoint.</p>
 </div>
 </div>
 <div id="content">
@@ -43,12 +43,12 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli sc-dast rest call</strong> [<strong>--[no-]transform</strong>] [<strong>-d</strong>=<em>&lt;data&gt;</em>] [<strong>-X</strong>=<em>&lt;httpMethod&gt;</em>] [[<strong>-h</strong>]
+<p><strong>fcli sc-dast rest call</strong> [<strong>--no-paging</strong>] [<strong>-d</strong>=<em>&lt;data&gt;</em>] [<strong>-X</strong>=<em>&lt;httpMethod&gt;</em>] [[<strong>-h</strong>]
                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                       [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                       [<strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em>]] [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]
-                       [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>] <em>&lt;uri&gt;</em></p>
+                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--no-transform</strong>] | <strong>-t</strong>=<em>&lt;expr&gt;</em>]
+                       <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+           _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
+                 _      expression&gt;</em>] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em>&lt;uri&gt;</em></p>
 </div>
 </div>
 </div>
@@ -63,21 +63,29 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-X</strong>, <strong>--request</strong>=<em>&lt;httpMethod&gt;</em></dt>
-<dd>
-<p>HTTP request type. (eg: GET, POST, PUT, DELETE)</p>
-</dd>
 <dt class="hdlist1"><strong>-d</strong>, <strong>--data</strong>=<em>&lt;data&gt;</em></dt>
 <dd>
-<p>This option will read data from a file for your request.</p>
+<p>Data to send in the request body. This option takes either a string to be sent as request body, or @@&lt;file&gt; to send the contents of the given file as the request body (note the double at-sign). This option is not available for GET requests.</p>
 </dd>
-<dt class="hdlist1"><strong>--[no-]transform</strong></dt>
+<dt class="hdlist1"><strong>--no-paging</strong></dt>
 <dd>
-<p>By default, this command performs generic transformations on ScanCentral DAST REST responses, like only outputting the actual response data (contents of the 'item' or 'items' properties). Use --no-transform to output the original response contents.</p>
+<p>By default, this command will load all pages of data from ScanCentral DAST (from the given offset if specified as a request parameter). Use this option to return only a single page.</p>
+</dd>
+<dt class="hdlist1"><strong>--no-transform</strong></dt>
+<dd>
+<p>By default, this command performs generic transformations on ScanCentral DAST REST responses, like only outputting the actual response data (contents of the 'item' or 'items' property). Use this option to output the original response contents without transformations.</p>
 </dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
-<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true. See fcli documentation for more information.</p>
+<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+</dd>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--transform</strong>=<em>&lt;expr&gt;</em></dt>
+<dd>
+<p>This option allows for performing custom transformations on the response data based on a Spring Expression Language (SpEL) expression. For example, this allows for retrieving data from sub-properties, or using project selection/projection. Note that the expression operates on the raw response, as if --no-transform was specified before evaluating the expression.</p>
+</dd>
+<dt class="hdlist1"><strong>-X</strong>, <strong>--request</strong>=<em>&lt;httpMethod&gt;</em></dt>
+<dd>
+<p>HTTP method/verb to use for the API request, like GET, POST, DELETE, &#8230;&#8203; Default value: GET.</p>
 </dd>
 </dl>
 </div>
@@ -90,7 +98,7 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 <dl>
 <dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
 <dd>
-<p>Session name to use</p>
+<p>Name of the ScanCentral DAST session to use for executing this command. Default value: default.</p>
 </dd>
 </dl>
 </div>
@@ -103,15 +111,15 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 <dl>
 <dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
-<p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
+<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
 </dd>
 <dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
 <dd>
-<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using {?variableName:property} on any subsequent command. Most commands that return a single record (get, start, create, &#8230;&#8203;) also support '?' to store the record identifier in a predefined variable, which can later be referenced using '?' on options/parameters that take the id of such records as input.</p>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
 </dd>
-<dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
-<p>Write results to the specified files in the given output format. By default, results will be written to stdout</p>
+<p>Write command output to the specified file instead of stdout.</p>
 </dd>
 </dl>
 </div>
@@ -122,21 +130,21 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
-<dd>
-<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
-</dd>
 <dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
 <dd>
 <p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
 </dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
 <dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
 <dd>
-<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
 </dd>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
-<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
 </dd>
 </dl>
 </div>
@@ -149,7 +157,7 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 <dl>
 <dt class="hdlist1"><em>&lt;uri&gt;</em></dt>
 <dd>
-<p>The uri to the REST API function that you want to invoke</p>
+<p>Relative URI to the REST API endpoint that you want to invoke.</p>
 </dd>
 </dl>
 </div>
@@ -158,8 +166,8 @@ fcli_version: fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20230609.101848-dev_2.0.0-beta, built on 2023-06-09 10 19 16<br>
-Last updated 2023-06-09 10:20:40 UTC
+Version <br>
+Last updated 2023-08-21 11:56:56 UTC
 </div>
 </div>
 </body>
