@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230818.135545-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230822.161204-dev_develop" %}
 
 
 <div id="header">
@@ -69,7 +69,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Although this command offers a lot of options to cover many different use cases, for ScanCentral SAST 22.1+ you can simply pass a scan id (possibly stored using --store on the 'scan start' command) to wait until the scan has been fully processed on SSC. If any error state or unknown state is detected, an exception will be thrown. For older ScanCentral SAST versions, or if the given scan isn&#8217;t being published to SSC, either --any-scan-state or --any-publish-state must be specified, as the default behavior is based on --any-ssc-state, which is not supported on older ScanCentral SAST versions or if the scan is not being published to SSC.</p>
+<p>Although this command offers a lot of options to cover many different use cases, you can simply pass a scan id (possibly stored using --store on the 'scan start' command) to wait until either the scan has been fully processed on SSC (if --publish-to was specified on the 'scan start' command and ScanCentral Controller version &gt; 22.1), until the scan has been published to SSC (if --publish-to was specified on the 'scan start' command and ScanCentral Controller version &#8656; 22.1), or until the scan was completed (if --publish-to was not specified on the 'scan start' command).</p>
 </div>
 <div class="paragraph">
 <p>The following scan/publish states are currently known by fcli:
@@ -214,7 +214,7 @@ See fcli help output</p>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-18 13:57:27 UTC
+Last updated 2023-08-22 16:14:14 UTC
 </div>
 </div>
 </body>
