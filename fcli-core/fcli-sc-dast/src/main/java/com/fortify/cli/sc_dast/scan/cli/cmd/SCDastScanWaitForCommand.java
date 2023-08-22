@@ -22,6 +22,7 @@ import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus.SCDastScanStatusIterable;
 
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -35,7 +36,7 @@ public class SCDastScanWaitForCommand extends AbstractWaitForCommand {
     private Set<String> states;
     
     @Override
-    protected WaitHelperBuilder configure(WaitHelperBuilder builder) {
+    protected WaitHelperBuilder configure(UnirestInstance unirest, WaitHelperBuilder builder) {
         return builder
                 .recordsSupplier(scansResolver::getScanDescriptorJsonNodes)
                 .recordTransformer(SCDastScanStatus::addScanStatus)

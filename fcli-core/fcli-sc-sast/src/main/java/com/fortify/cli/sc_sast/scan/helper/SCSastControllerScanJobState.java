@@ -30,7 +30,11 @@ public enum SCSastControllerScanJobState {
     COMPLETED, 
     FAILED, 
     FAULTED, 
-    TIMEOUT;
+    TIMEOUT,
+    
+    // Publish disabled state
+    NO_PUBLISH
+    ;
     
     public static final SCSastControllerScanJobState[] getFailureStates() {
         return new SCSastControllerScanJobState[]{

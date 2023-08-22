@@ -23,6 +23,7 @@ import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus.SSCArtifactStatusIterable;
 
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -36,7 +37,7 @@ public class SSCArtifactWaitForCommand extends AbstractWaitForCommand {
     private Set<String> states;
     
     @Override
-    protected WaitHelperBuilder configure(WaitHelperBuilder builder) {
+    protected WaitHelperBuilder configure(UnirestInstance unirest, WaitHelperBuilder builder) {
         return builder
                 .recordsSupplier(artifactsResolver::getArtifactDescriptorJsonNodes)
                 .recordTransformer(SSCArtifactHelper::addScanTypes)

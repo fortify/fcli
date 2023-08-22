@@ -31,4 +31,5 @@ public class SCSastControllerScanJobDescriptor extends JsonNodeHolder {
     private String scaProgress;
     private String sscArtifactState;
     private int endpointVersion;
+    private boolean publishRequested;
 }

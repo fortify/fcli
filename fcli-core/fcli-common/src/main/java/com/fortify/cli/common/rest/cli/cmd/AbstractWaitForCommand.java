@@ -47,7 +47,7 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
     }
     
     private void wait(UnirestInstance unirest) {
-        configure(
+        configure(unirest,
                 WaitHelper.builder()
                     .controlProperties(controlProperties)
                     .waitType(waitTypeSupplier.getWaitType())
@@ -56,7 +56,7 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
             ).build().wait(unirest);
     }
     
-    protected abstract WaitHelperBuilder configure(WaitHelperBuilder builder);
+    protected abstract WaitHelperBuilder configure(UnirestInstance unirest, WaitHelperBuilder builder);
 
     @Override
     public String getActionCommandResult() {

@@ -57,7 +57,10 @@ public enum SCSastControllerScanJobArtifactState {
     COMPLETED, 
     FAILED, 
     FAULTED, 
-    TIMEOUT;
+    TIMEOUT,
+    
+    // Publish disabled state
+    NO_PUBLISH
     ;
     
     public static final SCSastControllerScanJobArtifactState[] getFailureStates() {

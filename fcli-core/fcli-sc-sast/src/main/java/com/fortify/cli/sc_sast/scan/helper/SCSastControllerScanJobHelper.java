@@ -65,6 +65,12 @@ public class SCSastControllerScanJobHelper {
 
     private static SCSastControllerScanJobDescriptor getScanJobDescriptor(ObjectNode node) {
         node = renameFields(node);
+        if ( node.get("publishState").isNull() ) {
+            node.put("publishState", SCSastControllerScanJobState.NO_PUBLISH.name());
+            node.put("publishRequested", false);
+        } else {
+            node.put("publishRequested", true);
+        }
         if ( node.get("sscArtifactState").isNull() ) {
             node.put("sscArtifactState", node.get("publishState").asText());
         }

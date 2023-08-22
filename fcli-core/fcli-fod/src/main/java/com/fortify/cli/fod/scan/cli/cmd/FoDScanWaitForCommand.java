@@ -24,6 +24,7 @@ import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanStatus;
 import com.fortify.cli.fod.scan.helper.FoDScanStatus.FoDScanStatusIterable;
 
+import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -37,7 +38,7 @@ public class FoDScanWaitForCommand extends AbstractWaitForCommand {
     private Set<String> states;
 
     @Override
-    protected WaitHelperBuilder configure(WaitHelperBuilder builder) {
+    protected WaitHelperBuilder configure(UnirestInstance unirest, WaitHelperBuilder builder) {
         return builder
                 .recordsSupplier(scansResolver::getScanDescriptorJsonNodes)
                 .recordTransformer(FoDScanHelper::renameFields)

@@ -95,7 +95,11 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
     
     private String getUploadToken() {
         String uploadToken = null;
-        if ( sscAppVersionResolver.hasValue() ) {
+        if ( !sscAppVersionResolver.hasValue() ) {
+            if ( !StringUtils.isBlank(this.ciToken) ) {
+                throw new IllegalArgumentException("Option --ssc-ci-token may only be specified if --publish-to has been specified");
+            }
+        } else {
         	if ( !StringUtils.isBlank(this.ciToken) ) {
         		// Convert token to application token, in case it was provided as a REST token
         		uploadToken = SSCTokenConverter.toApplicationToken(this.ciToken);
