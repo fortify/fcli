@@ -17,7 +17,7 @@ import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 
 import kong.unirest.UnirestInstance;
 
-public abstract class AbstractSCSastSSCJsonNodeOutputCommand extends AbstractSCSastControllerOutputCommand  implements IJsonNodeSupplier {
+public abstract class AbstractSCSastSSCJsonNodeOutputCommand extends AbstractSCSastSSCOutputCommand implements IJsonNodeSupplier {
     @Override
     public final JsonNode getJsonNode() {
         return getJsonNode(getUnirestInstance());
