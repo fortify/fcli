@@ -51,7 +51,7 @@ public class FoDLookupHelper {
                 break;
             }
         }
-        if (failIfNotFound) {
+        if (currentLookup == null && failIfNotFound) {
             throw new IllegalArgumentException("No value found for '" + text + "' in " + type.name());
         }
         return currentLookup;
@@ -73,7 +73,7 @@ public class FoDLookupHelper {
                 break;
             }
         }
-        if (failIfNotFound) {
+        if (currentLookup == null && failIfNotFound) {
             throw new IllegalArgumentException("No value found for '" + text + "' with group '" + group + "' in " + type.name());
         }
         return currentLookup;

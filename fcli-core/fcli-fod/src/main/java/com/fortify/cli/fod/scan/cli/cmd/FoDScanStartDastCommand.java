@@ -13,40 +13,38 @@
 
 package com.fortify.cli.fod.scan.cli.cmd;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Properties;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
+import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeDescriptor;
+import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeHelper;
+import com.fortify.cli.fod.entitlement.helper.FoDEntitlementHelper;
+import com.fortify.cli.fod.entitlement.helper.FoDInvalidEntitlementException;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
-import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementPreferenceTypeMixins;
+import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
 import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
 import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
-import com.fortify.cli.fod.scan.helper.FoDAssessmentType;
-import com.fortify.cli.fod.scan.helper.FoDScanAssessmentTypeDescriptor;
-import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.dast.FoDScanDastHelper;
 import com.fortify.cli.fod.scan.helper.dast.FoDScanDastStartRequest;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigDastDescriptor;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigDastHelper;
-
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Properties;
 
 @Command(name = FoDOutputHelperMixins.StartDast.CMD_NAME)
 public class FoDScanStartDastCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
@@ -54,6 +52,9 @@ public class FoDScanStartDastCommand extends AbstractFoDJsonNodeOutputCommand im
     @Getter @Mixin private FoDOutputHelperMixins.StartDast outputHelper;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
+    @Option(names = {"--assessment-type"}, required = true)
+    //private DynamicAssessmentTypes dynamicAssessmentType;
+    private String dynamicAssessmentType;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--start-date"})
@@ -65,11 +66,8 @@ public class FoDScanStartDastCommand extends AbstractFoDJsonNodeOutputCommand im
     private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
     @Mixin
     private FoDInProgressScanActionTypeMixins.OptionalOption inProgressScanActionType;
-
     @Mixin
-    private FoDEntitlementPreferenceTypeMixins.OptionalOption entitlementType;
-    @Option(names = {"--assessment", "--assessment-type"}, required = false)
-    private FoDAssessmentType assessmentType;
+    private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
 
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
@@ -78,72 +76,60 @@ public class FoDScanStartDastCommand extends AbstractFoDJsonNodeOutputCommand im
     public JsonNode getJsonNode(UnirestInstance unirest) {
         try ( var progressWriter = progressWriterFactory.create() ) {
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
-            FoDScanAssessmentTypeDescriptor entitlementToUse = new FoDScanAssessmentTypeDescriptor();
+            var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
+            String relId = releaseDescriptor.getReleaseId();
+            Integer entitlementIdToUse = 0;
+            Integer assessmentTypeId = 0;
 
-            FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
-            
-            // check if scan is already running
-            if (releaseDescriptor.getDynamicAnalysisStatusType() != null && (releaseDescriptor.getDynamicAnalysisStatusType().equals("In_Progress")
-                    || releaseDescriptor.getDynamicAnalysisStatusType().equals("Scheduled"))) {
-                FoDScanDescriptor scanDescriptor = FoDScanHelper.getScanDescriptor(unirest, String.valueOf(releaseDescriptor.getCurrentDynamicScanId()));
-                if (inProgressScanActionType.getInProgressScanActionType() != null) {
-                    if (inProgressScanActionType.getInProgressScanActionType().equals(FoDEnums.InProgressScanActionType.DoNotStartScan)) {
-                        return scanDescriptor.asObjectNode().put("__action__", "SKIPPED_RUNNING");
-                    } else if (inProgressScanActionType.getInProgressScanActionType().equals(FoDEnums.InProgressScanActionType.CancelScanInProgress)) {
-                        progressWriter.writeWarning("Cancelling scans automatically is not currently supported.");
-                    }
-                } else {
-                    throw new IllegalStateException("A dynamic scan with id '" + "" + releaseDescriptor.getCurrentDynamicScanId() +
-                            "' is already in progress for release: " + releaseDescriptor.getQualifiedName());
+            // get current setup
+            FoDScanConfigDastDescriptor currentSetup = FoDScanConfigDastHelper.getSetupDescriptor(unirest, relId);
+            if (currentSetup.getAssessmentTypeId() == null || currentSetup.getAssessmentTypeId() <= 0) {
+                throw new IllegalStateException("The dynamic scan configuration for release with id '" + relId +
+                        "' has not been setup correctly - 'Assessment Type' is missing or empty.");
+            }
+
+            // find/check out assessment type id
+            FoDAssessmentTypeDescriptor[] appRelAssessmentTypeDescriptor = FoDAssessmentTypeHelper.getAssessmentTypes(unirest, relId, FoDScanType.Dynamic,
+                    entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), true);
+            for (FoDAssessmentTypeDescriptor assessmentType : appRelAssessmentTypeDescriptor) {
+                if (assessmentType.getName().equals(dynamicAssessmentType)) {
+                    assessmentTypeId = assessmentType.getAssessmentTypeId();
                 }
             }
-
-            var relId = String.valueOf(releaseDescriptor.getReleaseId());
-            // get current setup and check if its valid
-            FoDScanConfigDastDescriptor currentSetup = FoDScanConfigDastHelper.getSetupDescriptor(unirest, relId);
-            if (StringUtils.isBlank(currentSetup.getDynamicSiteURL())) {
-                throw new IllegalStateException("The dynamic scan configuration for release with id '" + relId +
-                        "' has not been setup correctly - 'Dynamic Site URL' is missing or empty.");
+            if (assessmentTypeId == 0) {
+                throw new IllegalArgumentException("Cannot find assessment type with name '" + dynamicAssessmentType + "'");
             }
 
-            /**
-             * Logic for finding/using "entitlement" and "remediation" scanning is as follows:
-             *  - if "entitlement id" is specified directly then use it
-             *  - if "remediation" scan specified make sure it is valid and available
-             *  - if an "assessment type" (Dynamic/Dynamic+) and "entitlement type" (Static/Subscription) then find an
-             *    appropriate entitlement to use
-             *  - otherwise fall back to current setup
-             */
+            // find/validate entitlement
             if (entitlementId != null && entitlementId > 0) {
-                entitlementToUse.copyFromCurrentSetup(currentSetup);
-                entitlementToUse.setEntitlementId(entitlementId);
-            } else if (remediationScanType.getRemediationScanPreferenceType() != null &&
-                    (remediationScanType.getRemediationScanPreferenceType() == FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
-                // if requesting a remediation scan make we have one available
-                entitlementToUse = FoDScanDastHelper.validateRemediationEntitlement(unirest, progressWriter, relId,
-                        currentSetup.getEntitlementId(), FoDScanType.Dynamic);
-            } else if (assessmentType != null && entitlementType.getEntitlementPreferenceType() != null) {
-                // if assessment and entitlement type are both specified, find entitlement to use
-                entitlementToUse = FoDScanDastHelper.getEntitlementToUse(unirest, progressWriter, relId,
-                        assessmentType, entitlementType.getEntitlementPreferenceType(),
-                        FoDScanType.Dynamic);
+                // use "entitlement id" explicitly specified
+                entitlementIdToUse = entitlementId;
+            } else if (currentSetup.getEntitlementId() != null && currentSetup.getEntitlementId() > 0) {
+                // use "entitlement id" already configured
+                entitlementIdToUse = currentSetup.getEntitlementId();
+                progressWriter.writeI18nProgress("fcli.fod.scan.start-dast.finding-entitlement");
             } else {
-                // use the current scan setup
-                entitlementToUse.copyFromCurrentSetup(currentSetup);
+                // find an appropriate "entitlement id" to use
+                entitlementIdToUse = FoDScanHelper.findEntitlementIdToUse(unirest, progressWriter, relId, dynamicAssessmentType,
+                        entitlementFrequencyTypeMixin.getEntitlementFrequencyType(),
+                        FoDScanType.Dynamic);
             }
-
-            if (entitlementToUse.getEntitlementId() == null || entitlementToUse.getEntitlementId() <= 0) {
-                throw new IllegalStateException("Could not find a valid FoD entitlement to use.");
+            // validate the entitlement
+            try {
+                FoDEntitlementHelper.validateEntitlement(unirest, progressWriter, entitlementIdToUse);
+            } catch (FoDInvalidEntitlementException ex) {
+                throw new IllegalStateException(ex.getMessage());
             }
+            progressWriter.writeI18nProgress("fcli.fod.scan.start-dast.using-entitlement", entitlementIdToUse);
 
             String startDateStr = (startDate == null || startDate.isEmpty())
                     ? LocalDateTime.now().format(dtf)
                     : LocalDateTime.parse(startDate, dtf).toString();
             FoDScanDastStartRequest startScanRequest = FoDScanDastStartRequest.builder()
                     .startDate(startDateStr)
-                    .assessmentTypeId(entitlementToUse.getAssessmentTypeId())
-                    .entitlementId(entitlementToUse.getEntitlementId())
-                    .entitlementFrequencyType(entitlementToUse.getFrequencyType())
+                    .assessmentTypeId(assessmentTypeId)
+                    .entitlementId(entitlementIdToUse)
+                    .entitlementFrequencyType(entitlementFrequencyTypeMixin.getEntitlementFrequencyType().name())
                     .isRemediationScan(remediationScanType.getRemediationScanPreferenceType() != null && !remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.NonRemediationScanOnly))
                     .applyPreviousScanSettings(true)
                     .scanMethodType("Other")

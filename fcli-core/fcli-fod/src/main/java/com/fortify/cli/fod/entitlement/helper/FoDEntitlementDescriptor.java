@@ -11,26 +11,30 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan.helper.sast;
+package com.fortify.cli.fod.entitlement.helper;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.formkiq.graalvm.annotations.Reflectable;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import com.fortify.cli.common.json.JsonNodeHolder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-@Reflectable @NoArgsConstructor @AllArgsConstructor
-@Data @Builder
-public class FoDScanSastStartRequest {
-    private String entitlementPreferenceType;
-    private Boolean purchaseEntitlement;
-    private Integer entitlementId;
-    private Boolean isRemediationScan;
-    private String remdiationScanPreferenceType;
-    private String inProgressScanActionType;
-    private String scanMethodType;
-    private String scanTool;
-    private String scanToolVersion;
-    private String notes;
+import java.util.Date;
+
+@Reflectable
+@NoArgsConstructor
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class FoDEntitlementDescriptor extends JsonNodeHolder {
+    Integer entitlementId;
+    String entitlementDescription;
+    Integer unitsPurchased;
+    Integer unitsConsumed;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyy-MM-dd'T'hh:mm:ss")
+    Date startDate;
+    //  e.g. "startDate": "2023-02-23T00:00:00",
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyy-MM-dd'T'hh:mm:ss")
+    Date endDate;
+//  e.g. "endDate": "2024-02-23T23:59:59",
 }
