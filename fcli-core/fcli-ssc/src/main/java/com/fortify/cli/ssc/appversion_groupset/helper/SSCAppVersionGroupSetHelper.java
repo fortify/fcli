@@ -22,7 +22,6 @@ import java.util.*;
 public final class SSCAppVersionGroupSetHelper {
     private final Map<String, SSCAppVersionGroupSetDescriptor> descriptorsByGuid = new HashMap<>();
     private final Map<String, SSCAppVersionGroupSetDescriptor> descriptorsByDisplayName = new HashMap<>();
-    //@Getter private SSCAppVersionIssueGroupDescriptor defaultFilterSetDescriptor;
     
     /**
      * This constructor calls the SSC projectVersion issueSelectorSet endpoint to retrieve filter and grouping data.
@@ -39,13 +38,9 @@ public final class SSCAppVersionGroupSetHelper {
         SSCAppVersionGroupSetDescriptor descriptor = JsonHelper.treeToValue(issueTemplate, SSCAppVersionGroupSetDescriptor.class);
         descriptorsByGuid.put(descriptor.getGuid(), descriptor);
         descriptorsByDisplayName.put(descriptor.getDisplayName(), descriptor);
-//        if ( descriptor.isDefaultFilterSet() ) {
-//            this.defaultFilterSetDescriptor = descriptor;
-//        }
     }
     
     public SSCAppVersionGroupSetDescriptor getDescriptorByDisplayNameOrId(String groupBySetDisplayNameOrId, boolean failIfNotFound) {
-        //if ( groupBySetDisplayNameOrId==null ) { return defaultFilterSetDescriptor; }
         SSCAppVersionGroupSetDescriptor descriptor = descriptorsByGuid.get(groupBySetDisplayNameOrId);
         descriptor = descriptor!=null ? descriptor : descriptorsByDisplayName.get(groupBySetDisplayNameOrId);
         if ( failIfNotFound && descriptor==null ) {
