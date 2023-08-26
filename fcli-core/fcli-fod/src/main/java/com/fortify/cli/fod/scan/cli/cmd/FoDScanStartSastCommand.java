@@ -16,13 +16,14 @@ package com.fortify.cli.fod.scan.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastStartRequest;
@@ -43,34 +44,40 @@ public class FoDScanStartSastCommand extends AbstractFoDJsonNodeOutputCommand im
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
 
-    @Option(names = {"--remediation"})
-    private Boolean remediationScan = false;
     @Option(names = {"--notes"})
     private String notes;
     @Option(names = {"-f", "--file"}, required = true)
     private File scanFile;
 
-    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
+    @Mixin
+    private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        try ( var progressWriter = progressWriterFactory.create() ) {
-            Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
-            var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
-            String relId = releaseDescriptor.getReleaseId();
+        Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
+        var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
+        String relId = releaseDescriptor.getReleaseId();
+        Boolean isRemediation = false;
 
-            validateScanSetup(unirest, relId);
-
-            FoDScanSastStartRequest startScanRequest = FoDScanSastStartRequest.builder()
-                    .isRemediationScan(remediationScan)
-                    .scanMethodType("Other")
-                    .notes(notes != null && !notes.isEmpty() ? notes : "")
-                    .scanTool(fcliProperties.getProperty("projectName", "fcli"))
-                    .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"))
-                    .build();
-
-            return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFile).asJsonNode();
+        // if we have requested remediation scan use it to find appropriate assessment type
+        if (remediationScanType != null && remediationScanType.getRemediationScanPreferenceType() != null) {
+            if (remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.RemediationScanIfAvailable) ||
+                    remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
+                isRemediation = true;
+            }
         }
+
+        validateScanSetup(unirest, relId);
+
+        FoDScanSastStartRequest startScanRequest = FoDScanSastStartRequest.builder()
+                .isRemediationScan(isRemediation)
+                .scanMethodType("Other")
+                .notes(notes != null && !notes.isEmpty() ? notes : "")
+                .scanTool(fcliProperties.getProperty("projectName", "fcli"))
+                .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"))
+                .build();
+
+        return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFile).asJsonNode();
     }
 
     @Override

@@ -97,44 +97,23 @@ public class FoDEnums {
     }
 
     public enum EntitlementPreferenceType {
-        SingleScanOnly(1),
-        SubscriptionOnly(2),
-        SingleScanFirstThenSubscription(3),
-        SubscriptionFirstThenSingleScan(4) ;
+        SingleScanOnly(1, EntitlementFrequencyType.SingleScan),
+        SubscriptionOnly(2, EntitlementFrequencyType.Subscription),
+        SingleScanFirstThenSubscription(3, EntitlementFrequencyType.SingleScan),
+        SubscriptionFirstThenSingleScan(4, EntitlementFrequencyType.Subscription);
 
         private final int _val;
+        private final EntitlementFrequencyType _frequencyType;
 
-        EntitlementPreferenceType(int val) {
+        EntitlementPreferenceType(int val, EntitlementFrequencyType frequencyType) {
             this._val = val;
+            this._frequencyType = frequencyType;
         }
         public int getValue() {
             return this._val;
         }
-
-        public String toString() {
-            switch (this._val) {
-                case 1:
-                    return "SingleScanOnly";
-                case 2:
-                    return "SubscriptionOnly";
-                case 3:
-                    return "SingleScanFirstThenSubscription";
-                case 4:
-                default:
-                    return "SubscriptionFirstThenSingleScan";
-            }
-        }
-
-        public EntitlementFrequencyType toFrequencyType() {
-            switch (this._val) {
-                case 1:
-                case 3:
-                    return EntitlementFrequencyType.SingleScan;
-                case 2:
-                case 4:
-                default:
-                    return EntitlementFrequencyType.Subscription;
-            }
+        public EntitlementFrequencyType getFrequencyType() {
+            return this._frequencyType;
         }
 
         public static EntitlementPreferenceType fromInt(int val) {

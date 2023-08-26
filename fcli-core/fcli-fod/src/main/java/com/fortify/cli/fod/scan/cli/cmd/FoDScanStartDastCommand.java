@@ -24,8 +24,6 @@ import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeHelper;
-import com.fortify.cli.fod.entitlement.helper.FoDEntitlementHelper;
-import com.fortify.cli.fod.entitlement.helper.FoDInvalidEntitlementException;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
 import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
@@ -44,6 +42,9 @@ import picocli.CommandLine.Option;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 
 @Command(name = FoDOutputHelperMixins.StartDast.CMD_NAME)
@@ -80,6 +81,15 @@ public class FoDScanStartDastCommand extends AbstractFoDJsonNodeOutputCommand im
             String relId = releaseDescriptor.getReleaseId();
             Integer entitlementIdToUse = 0;
             Integer assessmentTypeId = 0;
+            Boolean isRemediation = false;
+
+            // if we have requested remediation scan use it to find appropriate assessment type
+            if (remediationScanType != null && remediationScanType.getRemediationScanPreferenceType() != null) {
+                if (remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.RemediationScanIfAvailable) ||
+                        remediationScanType.getRemediationScanPreferenceType().equals(FoDEnums.RemediationScanPreferenceType.RemediationScanOnly)) {
+                    isRemediation = true;
+                }
+            }
 
             // get current setup
             FoDScanConfigDastDescriptor currentSetup = FoDScanConfigDastHelper.getSetupDescriptor(unirest, relId);
@@ -88,39 +98,41 @@ public class FoDScanStartDastCommand extends AbstractFoDJsonNodeOutputCommand im
                         "' has not been setup correctly - 'Assessment Type' is missing or empty.");
             }
 
-            // find/check out assessment type id
-            FoDAssessmentTypeDescriptor[] appRelAssessmentTypeDescriptor = FoDAssessmentTypeHelper.getAssessmentTypes(unirest, relId, FoDScanType.Dynamic,
-                    entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), true);
-            for (FoDAssessmentTypeDescriptor assessmentType : appRelAssessmentTypeDescriptor) {
-                if (assessmentType.getName().equals(dynamicAssessmentType)) {
-                    assessmentTypeId = assessmentType.getAssessmentTypeId();
+            progressWriter.writeI18nProgress("fcli.fod.finding-entitlement");
+
+            // find an appropriate assessment type to use
+            Optional<FoDAssessmentTypeDescriptor> atd = Arrays.stream(
+                            FoDAssessmentTypeHelper.getAssessmentTypes(unirest,
+                                    relId, FoDScanType.Dynamic,
+                                    entitlementFrequencyTypeMixin.getEntitlementFrequencyType(),
+                                    isRemediation, true)
+                    ).filter(n -> n.getName().equals(dynamicAssessmentType))
+                    .findFirst();
+            if (atd.isEmpty()) {
+                throw new IllegalArgumentException("Cannot find appropriate assessment type for specified options.");
+            }
+            assessmentTypeId = atd.get().getAssessmentTypeId();
+            entitlementIdToUse = atd.get().getEntitlementId();
+
+            // validate entitlement specified or currently in use against assessment type found
+            if (entitlementId != null && entitlementId > 0) {
+                // check if "entitlement id" explicitly matches what has been found
+                if (!Objects.equals(entitlementIdToUse, entitlementId)) {
+                    throw new IllegalArgumentException("Cannot find appropriate assessment type with entitlement: " + entitlementId);
+                }
+            } else {
+                if (currentSetup.getEntitlementId() != null && currentSetup.getEntitlementId() > 0) {
+                    // check if "entitlement id" is already configured
+                    if (!Objects.equals(entitlementIdToUse, currentSetup.getEntitlementId())) {
+                        progressWriter.writeI18nWarning("fcli.fod.changing-entitlement");
+                    }
                 }
             }
-            if (assessmentTypeId == 0) {
-                throw new IllegalArgumentException("Cannot find assessment type with name '" + dynamicAssessmentType + "'");
-            }
+            progressWriter.writeI18nProgress("fcli.fod.using-entitlement", entitlementIdToUse);
 
-            // find/validate entitlement
-            if (entitlementId != null && entitlementId > 0) {
-                // use "entitlement id" explicitly specified
-                entitlementIdToUse = entitlementId;
-            } else if (currentSetup.getEntitlementId() != null && currentSetup.getEntitlementId() > 0) {
-                // use "entitlement id" already configured
-                entitlementIdToUse = currentSetup.getEntitlementId();
-                progressWriter.writeI18nProgress("fcli.fod.scan.start-dast.finding-entitlement");
-            } else {
-                // find an appropriate "entitlement id" to use
-                entitlementIdToUse = FoDScanHelper.findEntitlementIdToUse(unirest, progressWriter, relId, dynamicAssessmentType,
-                        entitlementFrequencyTypeMixin.getEntitlementFrequencyType(),
-                        FoDScanType.Dynamic);
-            }
-            // validate the entitlement
-            try {
-                FoDEntitlementHelper.validateEntitlement(unirest, progressWriter, entitlementIdToUse);
-            } catch (FoDInvalidEntitlementException ex) {
-                throw new IllegalStateException(ex.getMessage());
-            }
-            progressWriter.writeI18nProgress("fcli.fod.scan.start-dast.using-entitlement", entitlementIdToUse);
+            // check if the entitlement is still valid
+            FoDAssessmentTypeHelper.validateEntitlement(progressWriter, relId, atd.get());
+            progressWriter.writeI18nProgress("fcli.fod.valid-entitlement", entitlementIdToUse);
 
             String startDateStr = (startDate == null || startDate.isEmpty())
                     ? LocalDateTime.now().format(dtf)

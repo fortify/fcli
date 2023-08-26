@@ -25,14 +25,12 @@ import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeHelper;
-import com.fortify.cli.fod.entitlement.helper.FoDEntitlementHelper;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
-import java.util.Arrays;
 import java.util.Optional;
 
 import static java.util.function.Predicate.not;
@@ -44,86 +42,6 @@ public class FoDScanHelper {
 
     public static final JsonNode renameFields(JsonNode record) {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
-    }
-
-    public static final FoDScanAssessmentTypeDescriptor validateRemediationEntitlement(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId,
-                                                                                       FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
-                                                                                   Integer entitlementId, FoDScanType scanType) {
-        FoDScanAssessmentTypeDescriptor entitlement = new FoDScanAssessmentTypeDescriptor();
-        FoDAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAssessmentTypeHelper.getAssessmentTypes(unirest,
-                relId, scanType, entitlementFrequencyType, true);
-        if (assessmentTypeDescriptors.length > 0) {
-            progressWriter.writeI18nProgress("fcli.fod.scan.start-sast.validating-remediation-entitlement");
-            // check we have an appropriate remediation scan available
-            for (FoDAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
-                if (atd.getEntitlementId() > 0 && atd.getEntitlementId().equals(entitlementId) && atd.getIsRemediation()
-                        && atd.getRemediationScansAvailable() > 0) {
-                    entitlement.setEntitlementDescription(atd.getEntitlementDescription());
-                    entitlement.setEntitlementId(atd.getEntitlementId());
-                    entitlement.setFrequencyType(atd.getFrequencyType());
-                    entitlement.setAssessmentTypeId(atd.getAssessmentTypeId());
-                    break;
-                }
-            }
-            if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
-                progressWriter.writeI18nProgress("fcli.fod.scan.start-sast.using-remediation-entitlement", entitlement.getEntitlementDescription());
-            } else {
-                throw new IllegalStateException("No remediation scan entitlements found");
-            }
-        }
-        return entitlement;
-    }
-
-    public static final FoDScanAssessmentTypeDescriptor getEntitlementToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter, String relId,
-                                                                        String assessmentType, FoDEnums.EntitlementPreferenceType entitlementType,
-                                                                        FoDScanType scanType) {
-        FoDScanAssessmentTypeDescriptor entitlement = new FoDScanAssessmentTypeDescriptor();
-        FoDEnums.EntitlementFrequencyType frequencyType = entitlementType.toFrequencyType();
-        FoDAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAssessmentTypeHelper.getAssessmentTypes(unirest,
-                relId, scanType, frequencyType, true);
-        System.out.println(Arrays.toString(assessmentTypeDescriptors));
-        if (assessmentTypeDescriptors.length > 0) {
-            progressWriter.writeI18nProgress("fcli.fod.scan.start-sast.validating-entitlement");
-            // check for an entitlement
-            for (FoDAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
-                if (atd.getEntitlementId() != null && atd.getEntitlementId() > 0) {
-                    if (atd.getName().equals(assessmentType)) {
-                        entitlement.setEntitlementDescription(atd.getEntitlementDescription());
-                        entitlement.setEntitlementId(atd.getEntitlementId());
-                        entitlement.setFrequencyType(atd.getFrequencyType());
-                        entitlement.setAssessmentTypeId(atd.getAssessmentTypeId());
-                        entitlement.setEntitlementDescription(atd.getEntitlementDescription());
-                        break;
-                    }
-                }
-            }
-            if (entitlement.getEntitlementId() != null && entitlement.getEntitlementId() > 0) {
-                progressWriter.writeI18nProgress("fcli.fod.scan.start-sast.using-entitlement", entitlement.getEntitlementDescription());
-            }
-        }
-        return entitlement;
-    }
-
-    public final static Integer findEntitlementIdToUse(UnirestInstance unirest, IProgressWriterI18n progressWriter,
-                                                       String relId, String assessmentType,
-                                                       FoDEnums.EntitlementFrequencyType frequencyType,
-                                                       FoDScanType scanType) {
-        FoDAssessmentTypeDescriptor[] assessmentTypeDescriptors = FoDAssessmentTypeHelper.getAssessmentTypes(unirest,
-                relId, scanType, frequencyType, true);
-        Integer entitlementIdToUse = 0;
-        if (assessmentTypeDescriptors.length > 0) {
-            for (FoDAssessmentTypeDescriptor atd : assessmentTypeDescriptors) {
-                if (atd.getEntitlementId() != null && atd.getEntitlementId() > 0) {
-                    if (atd.getName().equals(assessmentType)) {
-                        entitlementIdToUse = atd.getEntitlementId();
-                        // validate entitlement - only warn for now
-                        FoDEntitlementHelper.validateEntitlement(unirest, progressWriter, entitlementIdToUse);
-                        break;
-                    }
-                }
-            }
-        }
-        return entitlementIdToUse;
     }
 
     public static final FoDScanDescriptor getScanDescriptor(UnirestInstance unirest, String scanId) {

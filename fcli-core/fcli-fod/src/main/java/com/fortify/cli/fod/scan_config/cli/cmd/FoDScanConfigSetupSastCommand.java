@@ -26,37 +26,43 @@ import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeHelper;
-import com.fortify.cli.fod.entitlement.helper.FoDEntitlementHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
-import com.fortify.cli.fod.entitlement.helper.FoDInvalidEntitlementException;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastHelper;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastSetupRequest;
-
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+
 @Command(name = FoDOutputHelperMixins.SetupSast.CMD_NAME)
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
 public class FoDScanConfigSetupSastCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private FoDOutputHelperMixins.SetupSast outputHelper;
+    @Getter
+    @Mixin
+    private FoDOutputHelperMixins.SetupSast outputHelper;
 
-    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
+    @Mixin
+    private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin
+    private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
 
     @Option(names = {"--assessment-type"}, required = true)
-    private String staticAssessmentType;
-    @Mixin private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
+    private String staticAssessmentType; // Plain text name as custom assessment types can be created
+    @Mixin
+    private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--technology-stack"}, required = true)
@@ -64,20 +70,21 @@ public class FoDScanConfigSetupSastCommand extends AbstractFoDJsonNodeOutputComm
     @Option(names = {"--language-level"})
     private String languageLevel;
     @Option(names = {"--oss"})
-    private Boolean performOpenSourceAnalysis = false;
+    private final Boolean performOpenSourceAnalysis = false;
     @Option(names = {"--audit-preference"}, required = true)
     private FoDEnums.AuditPreferenceTypes auditPreferenceType;
     @Option(names = {"--include-third-party-libs"})
-    private Boolean includeThirdPartyLibraries = false;
+    private final Boolean includeThirdPartyLibraries = false;
     @Option(names = {"--use-source-control"})
-    private Boolean useSourceControl = false;
+    private final Boolean useSourceControl = false;
 
-    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
+    @Mixin
+    private ProgressWriterFactoryMixin progressWriterFactory;
 
     // TODO Split into multiple methods
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        try ( var progressWriter = progressWriterFactory.create() ) {
+        try (var progressWriter = progressWriterFactory.create()) {
             var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
             var relId = releaseDescriptor.getReleaseId();
             Integer entitlementIdToUse = 0;
@@ -88,40 +95,41 @@ public class FoDScanConfigSetupSastCommand extends AbstractFoDJsonNodeOutputComm
             // get current setup
             FoDScanConfigSastDescriptor currentSetup = FoDScanSastHelper.getSetupDescriptor(unirest, relId);
 
-            // find/check out assessment type id
-            FoDAssessmentTypeDescriptor[] appRelAssessmentTypeDescriptor = FoDAssessmentTypeHelper.getAssessmentTypes(unirest, relId, FoDScanType.Static,
-                    entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), true);
-            for (FoDAssessmentTypeDescriptor assessmentType : appRelAssessmentTypeDescriptor) {
-                if (assessmentType.getName().equals(staticAssessmentType)) {
-                    assessmentTypeId = assessmentType.getAssessmentTypeId();
+            progressWriter.writeI18nProgress("fcli.fod.finding-entitlement");
+
+            // find an appropriate assessment type to use
+            Optional<FoDAssessmentTypeDescriptor> atd = Arrays.stream(
+                            FoDAssessmentTypeHelper.getAssessmentTypes(unirest,
+                                    relId, FoDScanType.Static,
+                                    entitlementFrequencyTypeMixin.getEntitlementFrequencyType(),
+                                    false, true)
+                    ).filter(n -> n.getName().equals(staticAssessmentType))
+                    .findFirst();
+            if (atd.isEmpty()) {
+                throw new IllegalArgumentException("Cannot find appropriate assessment type for specified options.");
+            }
+            assessmentTypeId = atd.get().getAssessmentTypeId();
+            entitlementIdToUse = atd.get().getEntitlementId();
+
+            // validate entitlement specified or currently in use against assessment type found
+            if (entitlementId != null && entitlementId > 0) {
+                // check if "entitlement id" explicitly matches what has been found
+                if (!Objects.equals(entitlementIdToUse, entitlementId)) {
+                    throw new IllegalArgumentException("Cannot appropriate assessment type for use with entitlement: " + entitlementId);
+                }
+            } else {
+                if (currentSetup.getEntitlementId() != null && currentSetup.getEntitlementId() > 0) {
+                    // check if "entitlement id" is already configured
+                    if (!Objects.equals(entitlementIdToUse, currentSetup.getEntitlementId())) {
+                        progressWriter.writeI18nWarning("fcli.fod.changing-entitlement");
+                    }
                 }
             }
-            if (assessmentTypeId == 0) {
-                throw new IllegalArgumentException("Cannot find assessment type with name '" + staticAssessmentType + "'");
-            }
-            //System.out.println("assessmentTypeId = " + assessmentTypeId);
+            progressWriter.writeI18nProgress("fcli.fod.using-entitlement", entitlementIdToUse);
 
-            // find/validate entitlement
-            if (entitlementId != null && entitlementId > 0) {
-                // use "entitlement id" explicitly specified
-                entitlementIdToUse = entitlementId;
-            } else if (currentSetup.getEntitlementId() != null && currentSetup.getEntitlementId() > 0) {
-                // use "entitlement id" already configured
-                entitlementIdToUse = currentSetup.getEntitlementId();
-                progressWriter.writeI18nProgress("fcli.fod.scan-config.setup-sast.finding-entitlement");
-            } else {
-                // find an appropriate "entitlement id" to use
-                entitlementIdToUse = FoDScanHelper.findEntitlementIdToUse(unirest, progressWriter, relId, staticAssessmentType,
-                        entitlementFrequencyTypeMixin.getEntitlementFrequencyType(),
-                        FoDScanType.Static);
-            }
-            // validate the entitlement
-            try {
-                FoDEntitlementHelper.validateEntitlement(unirest, progressWriter, entitlementIdToUse);
-            } catch (FoDInvalidEntitlementException ex) {
-                throw new IllegalStateException(ex.getMessage());
-            }
-            progressWriter.writeI18nProgress("fcli.fod.scan-config.setup-sast.using-entitlement", entitlementIdToUse);
+            // check if the entitlement is still valid
+            FoDAssessmentTypeHelper.validateEntitlement(progressWriter, relId, atd.get());
+            progressWriter.writeI18nProgress("fcli.fod.valid-entitlement", entitlementIdToUse);
 
             // find/check technology stack / language level
             FoDLookupDescriptor lookupDescriptor = null;

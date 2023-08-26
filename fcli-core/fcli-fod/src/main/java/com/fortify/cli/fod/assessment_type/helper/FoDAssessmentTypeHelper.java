@@ -13,31 +13,59 @@
 package com.fortify.cli.fod.assessment_type.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
-
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Getter;
+
+import java.time.Instant;
+import java.util.Date;
+import java.util.Optional;
 
 public final class FoDAssessmentTypeHelper {
+    @Getter
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     private FoDAssessmentTypeHelper() {}
 
     public static final FoDAssessmentTypeDescriptor[] getAssessmentTypes(UnirestInstance unirestInstance,
                                                                          String relId,
                                                                          FoDScanType scanType,
                                                                          FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
+                                                                         Boolean isRemediation,
                                                                          boolean failIfNotFound) {
         GetRequest request = unirestInstance.get(FoDUrls.RELEASE + "/assessment-types")
                 .routeParam("relId", relId)
                 .queryString("scanType", scanType.name())
-                .queryString("filters", "frequencyType:".concat(entitlementFrequencyType.name()));
+                .queryString("filters", "frequencyType:"
+                        .concat(entitlementFrequencyType.name())
+                        .concat("+isRemediation:").concat(isRemediation.toString()));
         JsonNode assessmentTypes = request.asObject(ObjectNode.class).getBody().get("items");
         if (failIfNotFound && assessmentTypes.size() == 0) {
             throw new IllegalStateException("No assessment types found for release id: " + relId);
         }
         return JsonHelper.treeToValue(assessmentTypes, FoDAssessmentTypeDescriptor[].class);
+    }
+
+    public final static void validateEntitlement(IProgressWriterI18n progressWriter, String relId,
+                                                 FoDAssessmentTypeDescriptor atd) {
+        if (atd == null || atd.getAssessmentTypeId() == null || atd.getAssessmentTypeId() <= 0) {
+            throw new IllegalStateException("Invalid or empty FODAssessmentTypeDescriptor.");
+        }
+        // check entitlement has not expired
+        if (atd.getSubscriptionEndDate() == null ||
+                atd.getSubscriptionEndDate().before(Date.from(Instant.now()))) {
+            progressWriter.writeI18nWarning("fcli.fod.entitlement-expired");
+        }
+        // warn if all units are consumed or not enough for "new" scan
+        if (atd.getUnitsAvailable() == 0) {
+            progressWriter.writeI18nWarning("fcli.fod.entitlement-consumed");
+        }
     }
 }
