@@ -31,33 +31,38 @@ import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
-import com.fortify.cli.fod.scan.helper.FoDAssessmentType;
-import com.fortify.cli.fod.scan.helper.FoDScanAssessmentTypeDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastHelper;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastSetupRequest;
-
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+
 @Command(name = FoDOutputHelperMixins.SetupSast.CMD_NAME)
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
 public class FoDScanConfigSetupSastCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private FoDOutputHelperMixins.SetupSast outputHelper;
-    
-    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
+    @Getter
+    @Mixin
+    private FoDOutputHelperMixins.SetupSast outputHelper;
 
-    private enum StaticAssessmentTypes { Static, StaticPlus }
+    @Mixin
+    private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
+    @Mixin
+    private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
+
     @Option(names = {"--assessment-type"}, required = true)
-    private StaticAssessmentTypes staticAssessmentType;
-    @Mixin private FoDEntitlementFrequencyTypeMixins.OptionalOption entitlementFrequencyTypeMixin;
+    private String staticAssessmentType; // Plain text name as custom assessment types can be created
+    @Mixin
+    private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;
     @Option(names = {"--technology-stack"}, required = true)
@@ -65,20 +70,21 @@ public class FoDScanConfigSetupSastCommand extends AbstractFoDJsonNodeOutputComm
     @Option(names = {"--language-level"})
     private String languageLevel;
     @Option(names = {"--oss"})
-    private Boolean performOpenSourceAnalysis = false;
+    private final Boolean performOpenSourceAnalysis = false;
     @Option(names = {"--audit-preference"}, required = true)
     private FoDEnums.AuditPreferenceTypes auditPreferenceType;
     @Option(names = {"--include-third-party-libs"})
-    private Boolean includeThirdPartyLibraries = false;
+    private final Boolean includeThirdPartyLibraries = false;
     @Option(names = {"--use-source-control"})
-    private Boolean useSourceControl = false;
+    private final Boolean useSourceControl = false;
 
-    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
+    @Mixin
+    private ProgressWriterFactoryMixin progressWriterFactory;
 
     // TODO Split into multiple methods
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        try ( var progressWriter = progressWriterFactory.create() ) {
+        try (var progressWriter = progressWriterFactory.create()) {
             var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
             var relId = releaseDescriptor.getReleaseId();
             Integer entitlementIdToUse = 0;
@@ -86,45 +92,44 @@ public class FoDScanConfigSetupSastCommand extends AbstractFoDJsonNodeOutputComm
             Integer technologyStackId = 0;
             Integer languageLevelId = 0;
 
-            // TODO Unused variable
             // get current setup
             FoDScanConfigSastDescriptor currentSetup = FoDScanSastHelper.getSetupDescriptor(unirest, relId);
 
-            // find/check out assessment type id
-            //FoDScanTypeOptions.FoDScanType scanType = assessmentType.getAssessmentType().toScanType();
-            FoDAssessmentTypeDescriptor[] appRelAssessmentTypeDescriptor = FoDAssessmentTypeHelper.getAssessmentTypes(unirest, relId,
-                    FoDScanType.Static, true);
-            //String assessmentTypeName = assessmentType.getAssessmentType().toString().replace("Plus", "+") + " Assessment";
-            String assessmentTypeName = staticAssessmentType.name().replace("Plus", "+") + " Assessment";
-            for (FoDAssessmentTypeDescriptor assessmentType : appRelAssessmentTypeDescriptor) {
-                if (assessmentType.getName().equals(assessmentTypeName)) {
-                    assessmentTypeId = assessmentType.getAssessmentTypeId();
-                }
-            }
-            //System.out.println("assessmentTypeId = " + assessmentTypeId);
+            progressWriter.writeI18nProgress("fcli.fod.finding-entitlement");
 
-            // find/check entitlement id
-            if (entitlementId != null && entitlementId > 0) {
-                entitlementIdToUse = entitlementId;
-                // TODO: verify entitlementId
-            } else {
-                FoDEnums.EntitlementPreferenceType entitlementPreferenceType = null;
-                var entitlementFrequency = entitlementFrequencyTypeMixin.getEntitlementFrequencyType();               
-                if (entitlementFrequency == FoDEnums.EntitlementFrequencyType.SingleScan) {
-                    entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.SingleScanOnly;
-                } else if (entitlementFrequency == FoDEnums.EntitlementFrequencyType.Subscription) {
-                    entitlementPreferenceType = FoDEnums.EntitlementPreferenceType.SubscriptionOnly;
-                } else {
-                    throw new IllegalArgumentException("The entitlement frequency '"
-                            + entitlementFrequency.name() + "' cannot be used here");
-                }
-                FoDAssessmentType assessmentType = FoDAssessmentType.valueOf(String.valueOf(staticAssessmentType));
-                FoDScanAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, progressWriter, relId,
-                        assessmentType, entitlementPreferenceType,
-                        FoDScanType.Mobile);
-                entitlementIdToUse = assessmentTypeDescriptor.getEntitlementId();
+            // find an appropriate assessment type to use
+            Optional<FoDAssessmentTypeDescriptor> atd = Arrays.stream(
+                            FoDAssessmentTypeHelper.getAssessmentTypes(unirest,
+                                    relId, FoDScanType.Static,
+                                    entitlementFrequencyTypeMixin.getEntitlementFrequencyType(),
+                                    false, true)
+                    ).filter(n -> n.getName().equals(staticAssessmentType))
+                    .findFirst();
+            if (atd.isEmpty()) {
+                throw new IllegalArgumentException("Cannot find appropriate assessment type for specified options.");
             }
-            //System.out.println("entitlementId = " + entitlementIdToUse);
+            assessmentTypeId = atd.get().getAssessmentTypeId();
+            entitlementIdToUse = atd.get().getEntitlementId();
+
+            // validate entitlement specified or currently in use against assessment type found
+            if (entitlementId != null && entitlementId > 0) {
+                // check if "entitlement id" explicitly matches what has been found
+                if (!Objects.equals(entitlementIdToUse, entitlementId)) {
+                    throw new IllegalArgumentException("Cannot appropriate assessment type for use with entitlement: " + entitlementId);
+                }
+            } else {
+                if (currentSetup.getEntitlementId() != null && currentSetup.getEntitlementId() > 0) {
+                    // check if "entitlement id" is already configured
+                    if (!Objects.equals(entitlementIdToUse, currentSetup.getEntitlementId())) {
+                        progressWriter.writeI18nWarning("fcli.fod.changing-entitlement");
+                    }
+                }
+            }
+            progressWriter.writeI18nProgress("fcli.fod.using-entitlement", entitlementIdToUse);
+
+            // check if the entitlement is still valid
+            FoDAssessmentTypeHelper.validateEntitlement(progressWriter, relId, atd.get());
+            progressWriter.writeI18nProgress("fcli.fod.valid-entitlement", entitlementIdToUse);
 
             // find/check technology stack / language level
             FoDLookupDescriptor lookupDescriptor = null;
@@ -146,15 +151,15 @@ public class FoDScanConfigSetupSastCommand extends AbstractFoDJsonNodeOutputComm
             }
 
             FoDScanConfigSastSetupRequest setupSastScanRequest = FoDScanConfigSastSetupRequest.builder()
-                .entitlementId(entitlementIdToUse)
-                .assessmentTypeId(assessmentTypeId)
-                .entitlementFrequencyType(entitlementFrequencyTypeMixin.getEntitlementFrequencyType().name())
-                .technologyStackId(technologyStackId)
-                .languageLevelId(languageLevelId)
-                .performOpenSourceAnalysis(performOpenSourceAnalysis)
-                .auditPreferenceType(auditPreferenceType.name())
-                .includeThirdPartyLibraries(includeThirdPartyLibraries)
-                .useSourceControl(useSourceControl).build();
+                    .entitlementId(entitlementIdToUse)
+                    .assessmentTypeId(assessmentTypeId)
+                    .entitlementFrequencyType(entitlementFrequencyTypeMixin.getEntitlementFrequencyType().name())
+                    .technologyStackId(technologyStackId)
+                    .languageLevelId(languageLevelId)
+                    .performOpenSourceAnalysis(performOpenSourceAnalysis)
+                    .auditPreferenceType(auditPreferenceType.name())
+                    .includeThirdPartyLibraries(includeThirdPartyLibraries)
+                    .useSourceControl(useSourceControl).build();
 
             return FoDScanConfigSastHelper.setupScan(unirest, releaseDescriptor, setupSastScanRequest).asJsonNode();
         }

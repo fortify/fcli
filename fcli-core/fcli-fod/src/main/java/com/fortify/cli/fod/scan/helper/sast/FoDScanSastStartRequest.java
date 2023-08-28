@@ -26,6 +26,7 @@ public class FoDScanSastStartRequest {
     private String entitlementPreferenceType;
     private Boolean purchaseEntitlement;
     private Integer entitlementId;
+    private Boolean isRemediationScan;
     private String remdiationScanPreferenceType;
     private String inProgressScanActionType;
     private String scanMethodType;

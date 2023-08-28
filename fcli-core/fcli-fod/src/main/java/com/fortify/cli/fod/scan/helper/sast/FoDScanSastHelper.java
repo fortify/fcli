@@ -1,24 +1,23 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 
 package com.fortify.cli.fod.scan.helper.sast;
 
-import java.io.File;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
 import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
@@ -29,21 +28,36 @@ import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
-
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
+import java.io.File;
+
 public class FoDScanSastHelper extends FoDScanHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    // TODO Split into multiple methods
-    public static final FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanSastStartRequest req,
-                                                    File scanFile) {
+    public static final FoDScanDescriptor startScanWithDefaults(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor,
+                                                                FoDScanSastStartRequest req, File scanFile) {
         var relId = releaseDescriptor.getReleaseId();
-        HttpRequest<?> request = unirest.post(FoDUrls.STATIC_SCAN_START).routeParam("relId", relId)
+        HttpRequest<?> request = unirest.post(FoDUrls.STATIC_SCAN_START_WITH_DEFAULTS).routeParam("relId", relId)
+                .queryString("isRemediationScan", req.getIsRemediationScan())
+                .queryString("scanTool", req.getScanTool())
+                .queryString("scanToolVersion", req.getScanToolVersion())
+                .queryString("scanMethodType", req.getScanMethodType());
+        if (req.getNotes() != null && !req.getNotes().isEmpty()) {
+            String truncatedNotes = StringUtils.abbreviate(req.getNotes(), FoDConstants.MAX_NOTES_LENGTH);
+            request = request.queryString("notes", truncatedNotes);
+        }
+        return startScan(unirest, releaseDescriptor, request, scanFile);
+    }
+
+    public static final FoDScanDescriptor startScanAdvanced(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, FoDScanSastStartRequest req,
+                                                            File scanFile) {
+        var relId = releaseDescriptor.getReleaseId();
+        HttpRequest<?> request = unirest.post(FoDUrls.STATIC_SCAN_START_ADVANCED).routeParam("relId", relId)
                 .queryString("entitlementPreferenceType", (req.getEntitlementPreferenceType() != null ?
                         FoDEnums.EntitlementPreferenceType.valueOf(req.getEntitlementPreferenceType()) : FoDEnums.EntitlementPreferenceType.SubscriptionFirstThenSingleScan))
                 .queryString("purchaseEntitlement", Boolean.toString(req.getPurchaseEntitlement()))
@@ -58,9 +72,13 @@ public class FoDScanSastHelper extends FoDScanHelper {
             request = request.queryString("entitlementId", req.getEntitlementId());
         }
         if (req.getNotes() != null && !req.getNotes().isEmpty()) {
-            String truncatedNotes = abbreviateString(req.getNotes(), FoDConstants.MAX_NOTES_LENGTH);
+            String truncatedNotes = StringUtils.abbreviate(req.getNotes(), FoDConstants.MAX_NOTES_LENGTH);
             request = request.queryString("notes", truncatedNotes);
         }
+        return startScan(unirest, releaseDescriptor, request, scanFile);
+    }
+
+    private static FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, HttpRequest<?> request, File scanFile) {
         JsonNode uploadResponse = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile);
         FoDUploadResponse startScanResponse = JsonHelper.treeToValue(uploadResponse, FoDUploadResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
@@ -94,12 +112,4 @@ public class FoDScanSastHelper extends FoDScanHelper {
         return JsonHelper.treeToValue(setup, FoDScanConfigSastDescriptor.class);
     }
 
-    // TODO Consider having a generic abbreviate method in StringUtils
-    // TODO Consider adding commons-lang as fcli dependency, which already provides abbreviate method
-    private static String abbreviateString(String input, int maxLength) {
-        if (input.length() <= maxLength)
-            return input;
-        else
-            return input.substring(0, maxLength);
-    }
 }

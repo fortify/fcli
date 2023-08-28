@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod._common.rest;
@@ -41,12 +41,15 @@ public class FoDUrls {
     public static final String RELEASE_SCANS = RELEASE + "/scans";
     public static final String STATIC_SCANS = ApiBase + "/releases/{relId}/static-scans";
     public static final String STATIC_SCANS_IMPORT = STATIC_SCANS + "/import-scan";
-    public static final String STATIC_SCAN_START = STATIC_SCANS + "/start-scan-advanced";
+    public static final String STATIC_SCAN_START = STATIC_SCANS + "/start-scan";
+    public static final String STATIC_SCAN_START_WITH_DEFAULTS = STATIC_SCANS + "/start-scan-with-defaults";
+    public static final String STATIC_SCAN_START_ADVANCED = STATIC_SCANS + "/start-scan-advanced";
     public static final String DYNAMIC_SCANS = ApiBase + "/releases/{relId}/dynamic-scans";
     public static final String DYNAMIC_SCANS_IMPORT = DYNAMIC_SCANS + "/import-scan";
     public static final String MOBILE_SCANS = ApiBase + "/releases/{relId}/mobile-scans";
     public static final String MOBILE_SCANS_IMPORT = MOBILE_SCANS + "/import-scan";
     public static final String MOBILE_SCANS_SETUP = MOBILE_SCANS + "/scan-setup";
     public static final String MOBILE_SCANS_START = MOBILE_SCANS + "/start-scan";
+    public static final String ENTITLEMENTS = ApiBase + "/tenant-entitlements";
 
 }

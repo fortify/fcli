@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod._common.util;
@@ -97,32 +97,23 @@ public class FoDEnums {
     }
 
     public enum EntitlementPreferenceType {
-        SingleScanOnly(1),
-        SubscriptionOnly(2),
-        SingleScanFirstThenSubscription(3),
-        SubscriptionFirstThenSingleScan(4) ;
+        SingleScanOnly(1, EntitlementFrequencyType.SingleScan),
+        SubscriptionOnly(2, EntitlementFrequencyType.Subscription),
+        SingleScanFirstThenSubscription(3, EntitlementFrequencyType.SingleScan),
+        SubscriptionFirstThenSingleScan(4, EntitlementFrequencyType.Subscription);
 
         private final int _val;
+        private final EntitlementFrequencyType _frequencyType;
 
-        EntitlementPreferenceType(int val) {
+        EntitlementPreferenceType(int val, EntitlementFrequencyType frequencyType) {
             this._val = val;
+            this._frequencyType = frequencyType;
         }
         public int getValue() {
             return this._val;
         }
-
-        public String toString() {
-            switch (this._val) {
-                case 1:
-                    return "SingleScanOnly";
-                case 2:
-                    return "SubscriptionOnly";
-                case 3:
-                    return "SingleScanFirstThenSubscription";
-                case 4:
-                default:
-                    return "SubscriptionFirstThenSingleScan";
-            }
+        public EntitlementFrequencyType getFrequencyType() {
+            return this._frequencyType;
         }
 
         public static EntitlementPreferenceType fromInt(int val) {
