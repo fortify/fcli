@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230823.110757-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230828.080841-dev_develop" %}
 
 
 <div id="header">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-scan-start-mobile - Start a new Mobile scan.</p>
+<p>fcli-fod-scan-start-mobile - Start a new Mobile scan (PREVIEW).</p>
 </div>
 </div>
 <div id="content">
@@ -47,8 +47,9 @@ fcli_version:
                            [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                            [<strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em>] <strong>-f</strong>=<em>&lt;scanFile&gt;</em>
                            <strong>--framework</strong>=<em>&lt;mobileFramework&gt;</em>
-                           [<strong>--frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em>]
+                           <strong>--frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em>
                            [<strong>--notes</strong>=<em>&lt;notes&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                           [<strong>--remediation</strong>=<em>&lt;remediationScanPreferenceType&gt;</em>]
                            [<strong>--start-date</strong>=<em>&lt;startDate&gt;</em>] [<strong>--timezone</strong>=<em>&lt;timezone&gt;</em>]
                            [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                            [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
@@ -71,7 +72,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>--assessment-type</strong>=<em>&lt;mobileAssessmentType&gt;</em></dt>
 <dd>
-<p>The type of Mobile assessment to carry out. Valid values: Mobile, MobilePlus, Remediation.</p>
+<p>The type of Mobile assessment to carry out. Valid values: .</p>
 </dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
@@ -100,6 +101,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
 <p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+</dd>
+<dt class="hdlist1"><strong>--remediation, --remediation-preference</strong>=<em>&lt;remediationScanPreferenceType&gt;</em></dt>
+<dd>
+<p>The remediation preference to use. Valid values: RemediationScanIfAvailable, RemediationScanOnly, NonRemediationScanOnly.</p>
 </dd>
 <dt class="hdlist1"><strong>--start-date</strong>=<em>&lt;startDate&gt;</em></dt>
 <dd>
@@ -189,7 +194,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-23 11:09:43 UTC
+Last updated 2023-08-28 08:10:29 UTC
 </div>
 </div>
 </body>
