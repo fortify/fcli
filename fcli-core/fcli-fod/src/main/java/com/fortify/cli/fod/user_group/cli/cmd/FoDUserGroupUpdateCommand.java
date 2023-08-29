@@ -39,19 +39,19 @@ public class FoDUserGroupUpdateCommand extends AbstractFoDJsonNodeOutputCommand 
 
     @Mixin private FoDUserGroupResolverMixin.PositionalParameter userGroupResolver;
 
-    @Option(names = {"--new-name"})
+    @Option(names = {"--name"})
     private String newName;
     @Option(names = {"--add-all-users"})
     private Boolean addAllUsers = false;
     @Option(names = {"--remove-all-users"})
     private Boolean removeAllUsers = false;
-    @Option(names = {"--add-users"}, required = false, split = ",", descriptionKey = "fcli.fod.user.user-name-or-id")
+    @Option(names = {"--add-users"}, required = false, split = ",", descriptionKey = "fcli.fod.user.user-names-or-ids")
     private ArrayList<String> addUsers;
-    @Option(names = {"--remove-users"}, required = false, split = ",", descriptionKey = "fcli.fod.user.user-name-or-id")
+    @Option(names = {"--remove-users"}, required = false, split = ",", descriptionKey = "fcli.fod.user.user-names-or-ids")
     private ArrayList<String> removeUsers;
-    @Option(names = {"--add-apps", "--add-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app-name-or-id")
+    @Option(names = {"--add-apps", "--add-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app.app-names-or-ids")
     private ArrayList<String> addApplications;
-    @Option(names = {"--remove-apps", "--remove-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app-name-or-id")
+    @Option(names = {"--remove-apps", "--remove-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app.app-names-or-ids")
     private ArrayList<String> removeApplications;
 
     @Override

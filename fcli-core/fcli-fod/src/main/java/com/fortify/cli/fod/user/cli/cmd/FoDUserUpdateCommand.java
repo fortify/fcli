@@ -56,13 +56,13 @@ public class FoDUserUpdateCommand extends AbstractFoDJsonNodeOutputCommand imple
     private Boolean isSuspended = false;
     @Option(names = {"--must-change"})
     private Boolean mustChange = false;
-    @Option(names = {"--add-groups"}, required = false, split = ",", descriptionKey = "fcli.fod.group.group-name-or-id")
+    @Option(names = {"--add-groups"}, required = false, split = ",", descriptionKey = "fcli.fod.group.group-names-or-ids")
     private ArrayList<String> addUserGroups;
-    @Option(names = {"--remove-groups"}, required = false, split = ",", descriptionKey = "fcli.fod.group.group-name-or-id")
+    @Option(names = {"--remove-groups"}, required = false, split = ",", descriptionKey = "fcli.fod.group.group-names-or-ids")
     private ArrayList<String> removeUserGroups;
-    @Option(names = {"--add-apps", "--add-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app-name-or-id")
+    @Option(names = {"--add-apps", "--add-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app.app-names-or-ids")
     private ArrayList<String> addApplications;
-    @Option(names = {"--remove-apps", "--remove-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app-name-or-id")
+    @Option(names = {"--remove-apps", "--remove-applications"}, required = false, split = ",", descriptionKey = "fcli.fod.app.app-names-or-ids")
     private ArrayList<String> removeApplications;
 
     @Override

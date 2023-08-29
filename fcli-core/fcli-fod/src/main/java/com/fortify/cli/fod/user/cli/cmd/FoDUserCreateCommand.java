@@ -47,9 +47,9 @@ public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand imple
     private String phoneNumber;
     @Option(names = {"--role"}, required = true)
     private String roleNameOrId;
-    @Option(names = {"--groups"}, required = false, split = ",", descriptionKey = "fcli.fod.group.group-name-or-id")
+    @Option(names = {"--groups"}, required = false, split = ",", descriptionKey = "fcli.fod.group.group-names-or-ids")
     private ArrayList<String> userGroups;
-    @Option(names = {"--applications"}, required = false, split=",", descriptionKey = "fcli.fod.app-name-or-id")
+    @Option(names = {"--applications"}, required = false, split=",", descriptionKey = "fcli.fod.app.app-names-or-ids")
     private ArrayList<String> applications;
 
     @Override
