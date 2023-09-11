@@ -13,6 +13,8 @@
 
 package com.fortify.cli.fod.release.helper;
 
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
@@ -49,6 +51,9 @@ public class FoDReleaseDescriptor extends JsonNodeHolder {
     private String staticAnalysisStatusType;
     private String dynamicAnalysisStatusType;
     private String mobileAnalysisStatusType;
+    private LocalDateTime staticScanDate;
+    private LocalDateTime dynamicScanDate;
+    private LocalDateTime mobileScanDate;
     
     @JsonIgnore public String getQualifiedName() {
         return StringUtils.isBlank(microserviceName)
