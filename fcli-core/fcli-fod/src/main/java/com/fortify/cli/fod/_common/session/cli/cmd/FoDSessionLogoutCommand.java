@@ -28,6 +28,9 @@ public class FoDSessionLogoutCommand extends AbstractSessionLogoutCommand<FoDSes
     
     @Override
     protected void logout(String sessionName, FoDSessionDescriptor sessionDescriptor) {
-        // TODO Can we revoke a previously generated FoD token?
+        // FoD provides an undocumented /oauth/retireToken endpoint that we could potentially 
+        // call here. However, it's not documented and FoD dev stated that it's not necessary
+        // to explicitly retire tokens as they expire in 6 hours anyway. See the following issue
+        // for more information: https://github.com/fortify/fcli/issues/422
     }
 }
