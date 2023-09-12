@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230822.161210-dev_2.0.0-beta" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230912.132649-dev_2.0.0-beta" %}
 
 
 <div id="header">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-scan-start-dast - Start a new DAST scan.</p>
+<p>fcli-fod-scan-start-dast - Start a new DAST scan (PREVIEW).</p>
 </div>
 </div>
 <div id="content">
@@ -43,9 +43,10 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod scan start-dast</strong> [<strong>--assessment</strong>=<em>&lt;assessmentType&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                         [<strong>--entitlement</strong>=<em>&lt;entitlementPreferenceType&gt;</em>]
+<p><strong>fcli fod scan start-dast</strong> <strong>--assessment-type</strong>=<em>&lt;dynamicAssessmentType&gt;</em>
+                         [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                          [<strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em>]
+                         <strong>--frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em>
                          [<strong>--in-progress</strong>=<em>&lt;inProgressScanActionType&gt;</em>]
                          [<strong>--notes</strong>=<em>&lt;notes&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
                          [<strong>--remediation</strong>=<em>&lt;remediationScanPreferenceType&gt;</em>]
@@ -61,7 +62,9 @@ fcli_version:
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>This command is not fully implemented and is intended for preview only. It can only be used for starting a configured Dynamic scan and does not support file uploads (i.e. API definitions or workflows). Command name, options and behavior may change at any time, even between patch or minor releases, potentially affecting any workflows in which this command is being used.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -69,21 +72,21 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--assessment, --assessment-type</strong>=<em>&lt;assessmentType&gt;</em></dt>
+<dt class="hdlist1"><strong>--assessment-type</strong>=<em>&lt;dynamicAssessmentType&gt;</em></dt>
 <dd>
-<p>The type of Dynamic assessment to carry out. Valid values: Static, StaticPlus, DynamicWebsite, DynamicPlusWebsite, DynamicAPI, DynamicPlusAPI, Mobile, MobilePlus</p>
+<p>The type of Dynamic assessment to carry out. Valid values:</p>
 </dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
 </dd>
-<dt class="hdlist1"><strong>--entitlement, --entitlement-preference</strong>=<em>&lt;entitlementPreferenceType&gt;</em></dt>
-<dd>
-<p>The entitlement preference to use. Valid values: SingleScanOnly, SubscriptionOnly, SingleScanFirstThenSubscription, SubscriptionFirstThenSingleScan. Default is SubscriptionFirstThenSingleScan.</p>
-</dd>
 <dt class="hdlist1"><strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em></dt>
 <dd>
 <p>The Id of the entitlement to use for the scan.</p>
+</dd>
+<dt class="hdlist1"><strong>--frequency, --entitlement-frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em></dt>
+<dd>
+<p>The entitlement frequency type to use. Valid values: SingleScan, Subscription.</p>
 </dd>
 <dt class="hdlist1"><strong>--in-progress, --in-progress-action</strong>=<em>&lt;inProgressScanActionType&gt;</em></dt>
 <dd>
@@ -185,7 +188,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-22 16:13:55 UTC
+Last updated 2023-09-12 13:28:43 UTC
 </div>
 </div>
 </body>

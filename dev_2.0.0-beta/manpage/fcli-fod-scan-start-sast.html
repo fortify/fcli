@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230822.161210-dev_2.0.0-beta" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230912.132649-dev_2.0.0-beta" %}
 
 
 <div id="header">
@@ -43,11 +43,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod scan start-sast</strong> [<strong>--purchase-entitlement</strong>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                         [<strong>--entitlement</strong>=<em>&lt;entitlementPreferenceType&gt;</em>]
-                         [<strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em>] <strong>-f</strong>=<em>&lt;scanFile&gt;</em>
-                         [<strong>--in-progress</strong>=<em>&lt;inProgressScanActionType&gt;</em>]
-                         [<strong>--notes</strong>=<em>&lt;notes&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+<p><strong>fcli fod scan start-sast</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>-f</strong>=<em>&lt;scanFile&gt;</em> [<strong>--notes</strong>=<em>&lt;notes&gt;</em>]
                          [<strong>--remediation</strong>=<em>&lt;remediationScanPreferenceType&gt;</em>] [[<strong>-h</strong>]
                          [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                          [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
@@ -72,33 +68,13 @@ fcli_version:
 <dd>
 <p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
 </dd>
-<dt class="hdlist1"><strong>--entitlement, --entitlement-preference</strong>=<em>&lt;entitlementPreferenceType&gt;</em></dt>
-<dd>
-<p>The entitlement preference to use. Valid values: SingleScanOnly, SubscriptionOnly, SingleScanFirstThenSubscription, SubscriptionFirstThenSingleScan. Default is SubscriptionFirstThenSingleScan.</p>
-</dd>
-<dt class="hdlist1"><strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em></dt>
-<dd>
-<p>The Id of the entitlement to use for the scan.</p>
-</dd>
 <dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;scanFile&gt;</em></dt>
 <dd>
 <p>Absolute path of the ScanCentral package (.Zip) file to upload.</p>
 </dd>
-<dt class="hdlist1"><strong>--in-progress, --in-progress-action</strong>=<em>&lt;inProgressScanActionType&gt;</em></dt>
-<dd>
-<p>The action to use if a scan is already in progress. Valid values: DoNotStartScan, CancelInProgressScan, Queue.</p>
-</dd>
 <dt class="hdlist1"><strong>--notes</strong>=<em>&lt;notes&gt;</em></dt>
 <dd>
 <p>Scan notes.</p>
-</dd>
-<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
-<dd>
-<p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
-</dd>
-<dt class="hdlist1"><strong>--purchase-entitlement</strong></dt>
-<dd>
-<p>Purchase an entitlement if one is not currently allocated or available.</p>
 </dd>
 <dt class="hdlist1"><strong>--remediation, --remediation-preference</strong>=<em>&lt;remediationScanPreferenceType&gt;</em></dt>
 <dd>
@@ -184,7 +160,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-08-22 16:13:55 UTC
+Last updated 2023-09-12 13:28:43 UTC
 </div>
 </div>
 </body>
