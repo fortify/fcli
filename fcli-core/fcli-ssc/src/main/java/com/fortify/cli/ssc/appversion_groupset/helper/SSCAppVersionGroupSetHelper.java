@@ -22,7 +22,6 @@ import java.util.*;
 public final class SSCAppVersionGroupSetHelper {
     private final Map<String, SSCAppVersionGroupSetDescriptor> descriptorsByGuid = new HashMap<>();
     private final Map<String, SSCAppVersionGroupSetDescriptor> descriptorsByDisplayName = new HashMap<>();
-    //@Getter private SSCAppVersionIssueGroupDescriptor defaultFilterSetDescriptor;
     
     /**
      * This constructor calls the SSC projectVersion issueSelectorSet endpoint to retrieve filter and grouping data.
