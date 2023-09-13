@@ -16,6 +16,7 @@ import com.fortify.cli.common.cli.cmd.*;
 import picocli.CommandLine.*;
 
 @Command(
+        hidden = true,
         name = "appversion-groupset",
         subcommands = {
             SSCAppVersionGroupSetGetCommand.class,

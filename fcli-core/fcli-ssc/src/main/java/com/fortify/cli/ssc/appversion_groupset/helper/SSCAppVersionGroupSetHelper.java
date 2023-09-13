@@ -39,13 +39,9 @@ public final class SSCAppVersionGroupSetHelper {
         SSCAppVersionGroupSetDescriptor descriptor = JsonHelper.treeToValue(issueTemplate, SSCAppVersionGroupSetDescriptor.class);
         descriptorsByGuid.put(descriptor.getGuid(), descriptor);
         descriptorsByDisplayName.put(descriptor.getDisplayName(), descriptor);
-//        if ( descriptor.isDefaultFilterSet() ) {
-//            this.defaultFilterSetDescriptor = descriptor;
-//        }
     }
     
     public SSCAppVersionGroupSetDescriptor getDescriptorByDisplayNameOrId(String groupBySetDisplayNameOrId, boolean failIfNotFound) {
-        //if ( groupBySetDisplayNameOrId==null ) { return defaultFilterSetDescriptor; }
         SSCAppVersionGroupSetDescriptor descriptor = descriptorsByGuid.get(groupBySetDisplayNameOrId);
         descriptor = descriptor!=null ? descriptor : descriptorsByDisplayName.get(groupBySetDisplayNameOrId);
         if ( failIfNotFound && descriptor==null ) {
