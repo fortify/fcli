@@ -60,6 +60,13 @@ public class I18nParameterExceptionHandler implements CommandLine.IParameterExce
         } else if(ex != null && ex.getMessage().contains("Missing required parameter:")){
             String msg = i18nResource.getString("error.missing.parameter");
             CommandLine cmd = ex.getCommandLine();
+            // Not sure what the intention was for split(":")[1] but this is causing
+            // truncated parameter labels like the following on 'fcli fod release update'
+            // command (see https://github.com/fortify/fcli/issues/434):
+            //   Missing required parameter: 'id|app[
+            // As currently we don't support alternative languages anyway, we'll
+            // just disable this handler for now to fix #434. If we ever wish to
+            // re-enable, we'll need to fix this issue first.
             cmd.getErr().println(msg + ex.getMessage().split(":")[1]);
             cmd.usage(cmd.getErr());
             return cmd.getCommandSpec().exitCodeOnInvalidInput();
