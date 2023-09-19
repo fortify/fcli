@@ -9,7 +9,6 @@ import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest._common.spec.TestResource
 import com.fortify.cli.ftest.fod._common.FoDMobileAppSupplier
 import com.fortify.cli.ftest.fod._common.FoDWebAppSupplier
-import groovy.time.TimeDuration
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import org.hamcrest.Matchers
