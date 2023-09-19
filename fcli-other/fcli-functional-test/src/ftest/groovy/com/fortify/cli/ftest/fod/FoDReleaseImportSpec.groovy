@@ -11,8 +11,7 @@ import com.fortify.cli.ftest.fod._common.FoDMobileAppSupplier
 import com.fortify.cli.ftest.fod._common.FoDWebAppSupplier
 import spock.lang.AutoCleanup
 import spock.lang.Shared
-import org.hamcrest.Matchers
-import org.hamcrest.collection.ArrayMatching
+
 
 @Prefix("fod.import-scan") @FcliSession(FOD)
 class FoDReleaseImportSpec extends FcliBaseSpec {
