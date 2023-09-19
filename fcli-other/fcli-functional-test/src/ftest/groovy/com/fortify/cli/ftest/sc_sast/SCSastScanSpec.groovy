@@ -39,7 +39,7 @@ class SCSastScanSpec extends FcliBaseSpec {
     }
     
     def "listSensors"() {
-        def args = "sc-sast sensor list -q state=='ACTIVE' --store sensors"
+        def args = "sc-sast sensor list -q state=='ACTIVE'&&cloudPool!=null --store sensors"
         when:
             def result = Fcli.run(args)
         then:
