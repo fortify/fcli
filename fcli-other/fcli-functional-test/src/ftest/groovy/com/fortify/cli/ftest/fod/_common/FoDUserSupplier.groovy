@@ -25,8 +25,7 @@ public class FoDUserSupplier extends AbstractCloseableEntitySupplier<FoDUser> {
         private final String random = System.currentTimeMillis()
         final String variableName = "fod_user_"+random
         final String variableRef = "::"+variableName+"::"
-        final String groupName = "fcli-"+random
-        final String userName = "fcliAutomatedTestUser"
+        final String userName = "fcli-"+random
         
         public FoDUser create() {
             Fcli.run("fod rest lookup Roles --store roles")
