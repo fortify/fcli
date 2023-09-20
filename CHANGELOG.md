@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/fortify/fcli/compare/v1.3.0...v1.3.1) (2023-09-20)
+
+
+### Bug Fixes
+
+* `fcli tool sc-client install`: Add support for latest (23.1.0) version ([93af1c6](https://github.com/fortify/fcli/commit/93af1c62a70eaa7fcd1867d59d7a92a6de256f25))
+* `fcli tool vuln-exporter install`: Add support for latest (2.0.3) version ([c7d4af6](https://github.com/fortify/fcli/commit/c7d4af604c5f13aecbdd4271d2fb6f04a2c9f369))
+
 ## [1.3.0](https://github.com/fortify/fcli/compare/v1.2.5...v1.3.0) (2023-08-18)
 
 
