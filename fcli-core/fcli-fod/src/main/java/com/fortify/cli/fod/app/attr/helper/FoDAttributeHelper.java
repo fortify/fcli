@@ -15,6 +15,7 @@ package com.fortify.cli.fod.app.attr.helper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +52,7 @@ public class FoDAttributeHelper {
     }
 
     @SneakyThrows
-    public static final Map<String, String> getRequiredAttributes(UnirestInstance unirestInstance) {
+    public static final Map<String, String> getRequiredAttributesDefaultValues(UnirestInstance unirestInstance) {
         Map<String, String> reqAttrs = new HashMap<>();
         GetRequest request = unirestInstance.get(FoDUrls.ATTRIBUTES)
                 .queryString("filters", "isRequired:true");
@@ -122,16 +123,17 @@ public class FoDAttributeHelper {
         return attrArray;
     }
 
-    public static JsonNode getAttributesNode(UnirestInstance unirest, Map<String, String> attributes, Boolean autoReqdAttributes) {
-        Map<String, String> attributesMap = (Map<String, String>) attributes;
+    public static JsonNode getAttributesNode(UnirestInstance unirest, Map<String, String> attributesMap, boolean autoReqdAttributes) {
+        Map<String, String> combinedAttributesMap = new LinkedHashMap<>();
         if (autoReqdAttributes) {
             // find any required attributes
-            Map<String, String> reqAttributesMap = getRequiredAttributes(unirest);
-            attributesMap = reqAttributesMap;
+            combinedAttributesMap.putAll(getRequiredAttributesDefaultValues(unirest));
         }
-        ArrayNode attrArray = getObjectMapper().createArrayNode();
-        if (attributesMap == null || attributesMap.isEmpty()) return attrArray;
-        for (Map.Entry<String, String> attr : attributesMap.entrySet()) {
+        if ( attributesMap!=null && !attributesMap.isEmpty() ) {
+            combinedAttributesMap.putAll(attributesMap);
+        }
+        ArrayNode attrArray = JsonHelper.getObjectMapper().createArrayNode();
+        for (Map.Entry<String, String> attr : combinedAttributesMap.entrySet()) {
             ObjectNode attrObj = getObjectMapper().createObjectNode();
             FoDAttributeDescriptor attributeDescriptor = FoDAttributeHelper.getAttributeDescriptor(unirest, attr.getKey(), true);
             attrObj.put("id", attributeDescriptor.getId());
