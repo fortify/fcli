@@ -12,22 +12,21 @@
  */
 package com.fortify.cli.fod.assessment_type.helper;
 
+import java.time.Instant;
+import java.util.Date;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import java.time.Instant;
-import java.util.Date;
-import java.util.Optional;
 
 public final class FoDAssessmentTypeHelper {
     @Getter

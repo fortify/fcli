@@ -21,11 +21,11 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
-import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
+import com.fortify.cli.fod.scan.helper.FoDStartScanResponse;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -50,8 +50,8 @@ public class FoDScanMobileHelper extends FoDScanHelper {
             request = request.queryString("entitlementId", req.getEntitlementId());
         }
 
-        JsonNode uploadResponse = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile);
-        FoDUploadResponse startScanResponse = JsonHelper.treeToValue(uploadResponse, FoDUploadResponse.class);
+        JsonNode response = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile);
+        FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new RuntimeException("Unable to retrieve scan id from response when starting Static scan.");
         }

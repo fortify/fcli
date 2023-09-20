@@ -13,6 +13,14 @@
 
 package com.fortify.cli.fod.scan.cli.cmd;
 
+import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -31,19 +39,12 @@ import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.mobile.FoDScanMobileHelper;
 import com.fortify.cli.fod.scan.helper.mobile.FoDScanMobileStartRequest;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.io.File;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
 
 @Command(name = FoDOutputHelperMixins.StartMobile.CMD_NAME)
 public class FoDScanStartMobileCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
@@ -51,9 +52,7 @@ public class FoDScanStartMobileCommand extends AbstractFoDJsonNodeOutputCommand 
     @Getter @Mixin private FoDOutputHelperMixins.StartMobile outputHelper;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
-    private enum MobileAssessmentTypes { Mobile, MobilePlus, Remediation }
     @Option(names = {"--assessment-type"}, required = true)
-    //private MobileAssessmentTypes mobileAssessmentType;
     private String mobileAssessmentType;
     @Option(names = {"--entitlement-id"})
     private Integer entitlementId;

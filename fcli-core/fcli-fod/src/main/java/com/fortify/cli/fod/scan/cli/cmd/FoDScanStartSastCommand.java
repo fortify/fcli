@@ -13,6 +13,9 @@
 
 package com.fortify.cli.fod.scan.cli.cmd;
 
+import java.io.File;
+import java.util.Properties;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -28,14 +31,12 @@ import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastStartRequest;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.io.File;
-import java.util.Properties;
 
 @Command(name = FoDOutputHelperMixins.StartSast.CMD_NAME)
 public class FoDScanStartSastCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {

@@ -13,6 +13,8 @@
 
 package com.fortify.cli.fod.scan.helper.sast;
 
+import java.io.File;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,20 +22,19 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
-import com.fortify.cli.fod._common.rest.helper.FoDUploadResponse;
 import com.fortify.cli.fod._common.util.FoDConstants;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
+import com.fortify.cli.fod.scan.helper.FoDStartScanResponse;
 import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
+
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import java.io.File;
 
 public class FoDScanSastHelper extends FoDScanHelper {
     @Getter
@@ -79,8 +80,8 @@ public class FoDScanSastHelper extends FoDScanHelper {
     }
 
     private static FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor, HttpRequest<?> request, File scanFile) {
-        JsonNode uploadResponse = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile);
-        FoDUploadResponse startScanResponse = JsonHelper.treeToValue(uploadResponse, FoDUploadResponse.class);
+        JsonNode response = FoDFileTransferHelper.uploadChunked(unirest, request, scanFile);
+        FoDStartScanResponse startScanResponse = JsonHelper.treeToValue(response, FoDStartScanResponse.class);
         if (startScanResponse == null || startScanResponse.getScanId() <= 0) {
             throw new RuntimeException("Unable to retrieve scan id from response when starting Static scan.");
         }
