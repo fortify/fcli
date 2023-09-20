@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
@@ -46,19 +47,17 @@ public class FoDUserHelper {
 
     public static final FoDUserDescriptor getUserDescriptor(UnirestInstance unirestInstance, String userNameOrId, boolean failIfNotFound) {
         GetRequest request = unirestInstance.get(FoDUrls.USERS);
+        JsonNode result = null;
         try {
-            int attrId = Integer.parseInt(userNameOrId);
-            request = request.queryString("filters", String.format("userId:%d", attrId));
+            int userId = Integer.parseInt(userNameOrId);
+            result = FoDDataHelper.findUnique(request, String.format("userId:%d", userId));
         } catch (NumberFormatException nfe) {
-            request = request.queryString("filters", String.format("userName:%s", userNameOrId));
+            result = FoDDataHelper.findUnique(request, String.format("userName:%s", userNameOrId));
         }
-        JsonNode attr = request.asObject(ObjectNode.class).getBody().get("items");
-        if (failIfNotFound && attr.size() == 0) {
+        if ( failIfNotFound && result==null ) {
             throw new IllegalArgumentException("No user found for name or id: " + userNameOrId);
-        } else if (attr.size() > 1) {
-            throw new IllegalArgumentException("Multiple users found for name or id: " + userNameOrId);
         }
-        return attr.size() == 0 ? null : JsonHelper.treeToValue(attr.get(0), FoDUserDescriptor.class);
+        return result==null ? null : JsonHelper.treeToValue(result, FoDUserDescriptor.class);
     }
 
     public static final FoDUserDescriptor getUserDescriptorById(UnirestInstance unirest, String userId, boolean failIfNotFound) {

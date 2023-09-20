@@ -63,7 +63,6 @@ public class JsonHelper {
     public static final <R> R evaluateSpelExpression(JsonNode input, String expression, Class<R> returnClass) {
         return SpelEvaluator.JSON_GENERIC.evaluate(expression, input, returnClass);
     }
-
     
     public static final ObjectNode getFirstObjectNode(JsonNode input) {
         if ( input instanceof ObjectNode ) {

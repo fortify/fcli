@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -36,19 +37,17 @@ public class FoDAttributeHelper {
 
     public static final FoDAttributeDescriptor getAttributeDescriptor(UnirestInstance unirestInstance, String attrNameOrId, boolean failIfNotFound) {
         GetRequest request = unirestInstance.get(FoDUrls.ATTRIBUTES);
+        JsonNode result = null;
         try {
             int attrId = Integer.parseInt(attrNameOrId);
-            request = request.queryString("filters", String.format("id:%d", attrId));
+            result = FoDDataHelper.findUnique(request, String.format("id:%d", attrId));
         } catch (NumberFormatException nfe) {
-            request = request.queryString("filters", String.format("name:%s", attrNameOrId));
+            result = FoDDataHelper.findUnique(request, String.format("name:%s", attrNameOrId));
         }
-        JsonNode attr = request.asObject(ObjectNode.class).getBody().get("items");
-        if (failIfNotFound && attr.size() == 0) {
+        if ( failIfNotFound && result==null ) {
             throw new IllegalArgumentException("No attribute found for name or id: " + attrNameOrId);
-        } else if (attr.size() > 1) {
-            throw new IllegalArgumentException("Multiple attributes found for name or id: " + attrNameOrId);
         }
-        return attr.size() == 0 ? null : JsonHelper.treeToValue(attr.get(0), FoDAttributeDescriptor.class);
+        return result==null ? null : JsonHelper.treeToValue(result, FoDAttributeDescriptor.class);
     }
 
     @SneakyThrows

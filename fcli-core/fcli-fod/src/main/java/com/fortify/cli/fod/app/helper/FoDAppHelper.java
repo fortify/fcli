@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
 import com.fortify.cli.fod.app.cli.mixin.FoDAppTypeOptions.FoDAppType;
 
 import kong.unirest.GetRequest;
@@ -47,19 +48,17 @@ public class FoDAppHelper {
 
     public static final FoDAppDescriptor getAppDescriptor(UnirestInstance unirest, String appNameOrId, boolean failIfNotFound) {
         GetRequest request = unirest.get(FoDUrls.APPLICATIONS);
+        JsonNode result = null;
         try {
             int appId = Integer.parseInt(appNameOrId);
-            request = request.queryString("filters", String.format("applicationId:%d", appId));
+            result = FoDDataHelper.findUnique(request, String.format("applicationId:%d", appId));
         } catch (NumberFormatException nfe) {
-            request = request.queryString("filters", String.format("applicationName:%s", appNameOrId));
+            result = FoDDataHelper.findUnique(request, String.format("applicationName:%s", appNameOrId));
         }
-        JsonNode app = request.asObject(ObjectNode.class).getBody().get("items");
-        if (failIfNotFound && app.size() == 0) {
+        if ( failIfNotFound && result==null ) {
             throw new IllegalArgumentException("No application found for name or id: " + appNameOrId);
-        } else if (app.size() > 1) {
-            throw new IllegalArgumentException("Multiple applications found for name or id: " + appNameOrId);
         }
-        return app.size() == 0 ? null : getDescriptor(app.get(0));
+        return getAppDescriptor(result);
     }
 
     public static final FoDAppDescriptor createApp(UnirestInstance unirest, FoDAppCreateRequest appCreateRequest) {
@@ -113,8 +112,8 @@ public class FoDAppHelper {
         return microserviceArray;
     }
 
-    private static final FoDAppDescriptor getDescriptor(JsonNode node) {
-        return  JsonHelper.treeToValue(node, FoDAppDescriptor.class);
+    private static final FoDAppDescriptor getAppDescriptor(JsonNode node) {
+        return node==null ? null : JsonHelper.treeToValue(node, FoDAppDescriptor.class);
     }
 
 }

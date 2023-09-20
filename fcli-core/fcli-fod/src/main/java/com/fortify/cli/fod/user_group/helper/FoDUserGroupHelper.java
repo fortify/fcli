@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
@@ -43,19 +44,17 @@ public class FoDUserGroupHelper {
 
     public static final FoDUserGroupDescriptor getUserGroupDescriptor(UnirestInstance unirestInstance, String userGroupNameOrId, boolean failIfNotFound) {
         GetRequest request = unirestInstance.get(FoDUrls.USER_GROUPS);
+        JsonNode result = null;
         try {
             int attrId = Integer.parseInt(userGroupNameOrId);
-            request = request.queryString("filters", String.format("id:%d", attrId));
+            result = FoDDataHelper.findUnique(request, String.format("id:%d", attrId));
         } catch (NumberFormatException nfe) {
-            request = request.queryString("filters", String.format("name:%s", userGroupNameOrId));
+            result = FoDDataHelper.findUnique(request, String.format("name:%s", userGroupNameOrId));
         }
-        JsonNode attr = request.asObject(ObjectNode.class).getBody().get("items");
-        if (failIfNotFound && attr.size() == 0) {
+        if ( failIfNotFound && result==null ) {
             throw new IllegalArgumentException("No user group found for name or id: " + userGroupNameOrId);
-        } else if (attr.size() > 1) {
-            throw new IllegalArgumentException("Multiple user groups found for name or id: " + userGroupNameOrId);
         }
-        return attr.size() == 0 ? null : JsonHelper.treeToValue(attr.get(0), FoDUserGroupDescriptor.class);
+        return result==null ? null : JsonHelper.treeToValue(result, FoDUserGroupDescriptor.class);
     }
 
     public static final FoDUserGroupDescriptor getUserGroupDescriptorById(UnirestInstance unirest, String groupId, boolean failIfNotFound) {

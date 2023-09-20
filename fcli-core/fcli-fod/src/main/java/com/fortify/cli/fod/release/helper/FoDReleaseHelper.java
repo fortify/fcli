@@ -13,6 +13,8 @@
 
 package com.fortify.cli.fod.release.helper;
 
+import java.util.ArrayList;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -20,8 +22,10 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.fortify.cli.fod._common.rest.helper.FoDDataHelper;
 
 import kong.unirest.GetRequest;
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
@@ -42,19 +46,19 @@ public class FoDReleaseHelper {
     }
 
     public static final FoDReleaseDescriptor getReleaseDescriptorFromId(UnirestInstance unirest, int relId, boolean failIfNotFound, String... fields) {
-        GetRequest request = addFieldsParam(unirest.get(FoDUrls.RELEASES)
-                .queryString("filters", String.format("releaseId:%d", relId)), fields);
-        return getDescriptor(request, String.valueOf(relId), failIfNotFound);
+        GetRequest request = addFieldsParam(unirest.get(FoDUrls.RELEASES), fields);
+        return getDescriptor(request, String.valueOf(relId), failIfNotFound, String.format("releaseId:%d", relId));
     }
 
     public static final FoDReleaseDescriptor getReleaseDescriptorFromQualifiedName(UnirestInstance unirest, FoDQualifiedReleaseNameDescriptor releaseNameDescriptor, boolean failIfNotFound, String... fields) {
-        var filters = String.format("applicationName:%s+releaseName:%s", releaseNameDescriptor.getAppName(), releaseNameDescriptor.getReleaseName());
+        ArrayList<String> filters = new ArrayList<>();
+        filters.add(String.format("applicationName:%s", releaseNameDescriptor.getAppName()));
+        filters.add(String.format("releaseName:%s", releaseNameDescriptor.getReleaseName()));
         if ( StringUtils.isNotBlank(releaseNameDescriptor.getMicroserviceName()) ) {
-            filters += String.format("+microserviceName:%s", releaseNameDescriptor.getMicroserviceName());
+            filters.add(String.format("microserviceName:%s", releaseNameDescriptor.getMicroserviceName()));
         }
-        GetRequest request = addFieldsParam(unirest.get(FoDUrls.RELEASES)
-                .queryString("filters", filters), fields);
-        return getDescriptor(request, releaseNameDescriptor.getQualifiedName(), failIfNotFound);
+        GetRequest request = addFieldsParam(unirest.get(FoDUrls.RELEASES), fields);
+        return getDescriptor(request, releaseNameDescriptor.getQualifiedName(), failIfNotFound, filters.toArray(new String[] {}));
     }
 
     public static final FoDReleaseDescriptor createRelease(UnirestInstance unirest, FoDReleaseCreateRequest relCreateRequest) {
@@ -81,28 +85,12 @@ public class FoDReleaseHelper {
         return req;
     }
 
-    private static final FoDReleaseDescriptor getDescriptor(GetRequest request, String releaseNameOrId, boolean failIfNotFound) {
-        JsonNode releases = request.asObject(ObjectNode.class).getBody().get("items");
-        switch ( releases.size() ) {
-        case 0:
-            return nullOrNotFoundException(releaseNameOrId, failIfNotFound);
-        case 1:
-            return JsonHelper.treeToValue(releases.get(0), FoDReleaseDescriptor.class);
-        default:
-            // FoD usually doesn't allow duplicate release names, but we handle this
-            // by throwing an exception, just in case.
-            throw multipleFoundException(releaseNameOrId);
-        }
-    }
-
-    private static final FoDReleaseDescriptor nullOrNotFoundException(String releaseNameOrId, boolean failIfNotFound) {
-        if ( failIfNotFound ) {
+    private static final FoDReleaseDescriptor getDescriptor(HttpRequest<?> request, String releaseNameOrId, boolean failIfNotFound, String... filters) {
+        JsonNode result = FoDDataHelper.findUnique(request, filters);
+        if ( failIfNotFound && result==null ) {
             throw new IllegalArgumentException(String.format("Cannot find release %s", releaseNameOrId));
+        } else {
+            return JsonHelper.treeToValue(result, FoDReleaseDescriptor.class);
         }
-        return null;
-    }
-    
-    private static final RuntimeException multipleFoundException(String releaseNameOrId) {
-        return new IllegalStateException(String.format("Multiple releases found with name or id %s", releaseNameOrId));
     }
 }
