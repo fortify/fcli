@@ -18,10 +18,12 @@ import java.nio.file.Paths;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Data;
 
+@Reflectable // We only serialize, not de-serialize, so no need for no-args contructor
 @Data
 public class ToolVersionCombinedDescriptor {
     private final String name;
