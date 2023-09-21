@@ -22,6 +22,7 @@ import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
 import com.fortify.cli.ssc.appversion_attribute.cli.cmd.SSCAppVersionAttributeCommands;
 import com.fortify.cli.ssc.appversion_filterset.cli.cmd.SSCAppVersionFilterSetCommands;
 import com.fortify.cli.ssc.appversion_groupset.cli.cmd.SSCAppVersionGroupSetCommands;
+import com.fortify.cli.ssc.appversion_performanceindicator.cli.cmd.SSCAppVersionPerformanceIndicatorCommands;
 import com.fortify.cli.ssc.appversion_user.cli.cmd.SSCAppVersionUserCommands;
 import com.fortify.cli.ssc.artifact.cli.cmd.SSCArtifactCommands;
 import com.fortify.cli.ssc.attribute_definition.cli.cmd.SSCAttributeDefinitionCommands;
@@ -62,6 +63,7 @@ import picocli.CommandLine.Command;
                 SSCAppVersionAttributeCommands.class,
                 SSCAppVersionFilterSetCommands.class,
                 SSCAppVersionGroupSetCommands.class,
+                SSCAppVersionPerformanceIndicatorCommands.class,
                 SSCAppVersionUserCommands.class,
                 SSCArtifactCommands.class,
                 SSCAttributeDefinitionCommands.class,
