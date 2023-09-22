@@ -2,9 +2,6 @@
 defaultDownloadUrl: https://github.com/fod-dev/fod-uploader-java/releases/download/v{toolVersion}/FodUpload.jar
 defaultVersion: 5.4.0
 versions:
-  - version: latest
-    downloadUrl: https://github.com/fod-dev/fod-uploader-java/releases/latest/download/FodUpload.jar
-    digest: SHA-256:7d3fc9ada2df3cd5ed6159685d36656d04cef6ddda69bff2110702c052e64fce
   - version: 5.4.0
     digest: SHA-256:7d3fc9ada2df3cd5ed6159685d36656d04cef6ddda69bff2110702c052e64fce
   - version: 5.3.1
