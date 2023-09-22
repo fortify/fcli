@@ -1,0 +1,6 @@
+#Versions must be listed in descending order
+defaultDownloadUrl: https://github.com/fortify-ps/FortifyBugTrackerUtility/releases/download/{toolVersion}/FortifyBugTrackerUtility-{toolVersion}-dist.zip
+defaultVersion: 4.12
+versions:
+  - version: 4.12
+    digest: SHA-256:3c5142c63be6a6338f827e26ee79fdb70566dffd5a31680dce05544452c8a56a
