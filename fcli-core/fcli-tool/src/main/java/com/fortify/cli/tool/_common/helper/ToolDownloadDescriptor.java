@@ -39,7 +39,7 @@ public class ToolDownloadDescriptor {
     
     public final ToolVersionDownloadDescriptor getVersion(String version) {
         return getVersionsStream()
-                .filter(v->v.getVersion().equals(version))
+                .filter(v->v.getVersion().startsWith(version))
                 .findFirst().orElseThrow(()->new IllegalArgumentException("Version "+version+" not defined"));
     }
     

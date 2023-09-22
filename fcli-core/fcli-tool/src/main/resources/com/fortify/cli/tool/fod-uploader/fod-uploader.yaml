@@ -1,3 +1,4 @@
+#Versions must be listed in descending order
 defaultDownloadUrl: https://github.com/fod-dev/fod-uploader-java/releases/download/v{toolVersion}/FodUpload.jar
 defaultVersion: 5.4.0
 versions:
