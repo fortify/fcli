@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion_filterset.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.appversion_filterset.helper.SSCAppVersionFilterSetDescriptor;
 import com.fortify.cli.ssc.appversion_filterset.helper.SSCAppVersionFilterSetHelper;
 
@@ -35,7 +36,7 @@ public class SSCAppVersionFilterSetResolverMixin {
     }
     
     public static class PositionalParameterSingle extends AbstractSSCFilterSetResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.appversion-filter-set.resolver.titleOrId")
+        @EnvSuffix("FILTERSET") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.appversion-filter-set.resolver.titleOrId")
         @Getter private String filterSetTitleOrId;
     }
 }

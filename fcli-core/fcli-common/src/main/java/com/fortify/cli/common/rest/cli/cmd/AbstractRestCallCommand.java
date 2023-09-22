@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
@@ -51,7 +52,7 @@ import picocli.CommandLine.Parameters;
  * @author Ruud Senden
  */
 public abstract class AbstractRestCallCommand extends AbstractOutputCommand implements IBaseRequestSupplier, IProductHelperSupplier, IInputTransformer, IRecordTransformer, INextPageUrlProducerSupplier {
-    @Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
+    @EnvSuffix("URI") @Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
     
     @Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
     @DisableTest(TestType.OPT_SHORT_NAME)

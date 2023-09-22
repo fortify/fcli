@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.config.proxy.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.http.proxy.helper.ProxyDescriptor;
 
 import lombok.Getter;
@@ -19,7 +20,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class ProxyAddOptions extends AbstractProxyOptions {
-    @Parameters(arity="1", descriptionKey = "fcli.config.proxy.hostAndPort", paramLabel = "HOST:PORT")
+    @EnvSuffix("HOST_PORT") @Parameters(arity="1", descriptionKey = "fcli.config.proxy.hostAndPort", paramLabel = "HOST:PORT")
     @Getter private String proxyHostAndPort;
     
     @Getter @Option(names = {"--name"}, descriptionKey = "fcli.config.proxy.add.name") private String name;

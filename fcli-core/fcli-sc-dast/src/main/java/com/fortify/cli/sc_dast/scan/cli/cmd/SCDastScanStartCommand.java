@@ -18,6 +18,7 @@ import java.io.IOException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -36,7 +37,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Start.CMD_NAME)
 public final class SCDastScanStartCommand extends AbstractSCDastOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
-    @Parameters(index = "0", arity = "1", paramLabel = "name") private String scanName;
+    @EnvSuffix("NAME") @Parameters(index = "0", arity = "1", paramLabel = "name") private String scanName;
     @Mixin private SCDastScanSettingsResolverMixin.RequiredOption scanSettingsResolver;
     @Mixin private SCDastScanPolicyResolverMixin.OptionalOption scanPolicyResolver;
     private final ObjectMapper objectMapper = new ObjectMapper();

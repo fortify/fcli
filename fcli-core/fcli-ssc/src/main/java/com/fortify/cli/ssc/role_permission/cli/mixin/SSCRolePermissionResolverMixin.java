@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.role_permission.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionDescriptor;
 import com.fortify.cli.ssc.role_permission.helper.SSCRolePermissionHelper;
 
@@ -44,7 +45,7 @@ public class SSCRolePermissionResolverMixin {
 
     public static class PositionalParameter extends AbstractSSCRolePermissionMixin {
         @Getter
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.role-permission.resolver.nameOrId")
+        @EnvSuffix("ROLE_PERMISSION") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.role-permission.resolver.nameOrId")
         private String rolePermissionNameOrId;
     }
 }

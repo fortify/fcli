@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
@@ -30,7 +31,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Revoke.CMD_NAME)
 public class SSCTokenRevokeCommand extends AbstractSSCTokenCommand implements IRecordTransformer {
     @Getter @Mixin private OutputHelperMixins.Revoke outputHelper;
-    @Parameters(arity="1..", descriptionKey = "fcli.ssc.token.revoke.idsOrValues") private String[] tokenIdsOrValues;
+    @EnvSuffix("TOKENS") @Parameters(arity="1..", descriptionKey = "fcli.ssc.token.revoke.idsOrValues") private String[] tokenIdsOrValues;
     
     @Override
     protected JsonNode getJsonNode(IUrlConfig urlConfig, IUserCredentialsConfig userCredentialsConfig) {

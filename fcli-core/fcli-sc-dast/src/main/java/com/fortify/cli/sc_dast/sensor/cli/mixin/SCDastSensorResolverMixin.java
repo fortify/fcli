@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast.sensor.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorDescriptor;
 import com.fortify.cli.sc_dast.sensor.helper.SCDastSensorHelper;
 
@@ -34,7 +35,7 @@ public class SCDastSensorResolverMixin {
     }
     
     public static class PositionalParameter extends AbstractSSCDastSensorResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.sc-dast.sensor.resolver.nameOrId")
+        @EnvSuffix("SENSOR") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.sc-dast.sensor.resolver.nameOrId")
         @Getter private String sensorNameOrId;
     }
 }

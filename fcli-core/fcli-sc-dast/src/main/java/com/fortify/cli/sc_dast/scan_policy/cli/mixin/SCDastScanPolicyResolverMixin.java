@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast.scan_policy.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyDescriptor;
 import com.fortify.cli.sc_dast.scan_policy.helper.SCDastScanPolicyHelper;
@@ -45,7 +46,7 @@ public class SCDastScanPolicyResolverMixin {
     }
     
     public static class PositionalParameter extends AbstractSSCDastScanPolicyResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.sc-dast.scan-policy.resolver.nameOrId")
+        @EnvSuffix("POLICY") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.sc-dast.scan-policy.resolver.nameOrId")
         @Getter private String scanPolicyNameOrId;
     }
 }

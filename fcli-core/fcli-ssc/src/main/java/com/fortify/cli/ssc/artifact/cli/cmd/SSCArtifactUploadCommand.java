@@ -14,6 +14,7 @@ package com.fortify.cli.ssc.artifact.cli.cmd;
 
 import java.io.File;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
 import lombok.Getter;
@@ -25,7 +26,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Upload.CMD_NAME)
 public class SSCArtifactUploadCommand extends AbstractSSCArtifactUploadCommand {
     @Getter @Mixin private OutputHelperMixins.Upload outputHelper; 
-    @Getter @Parameters(arity="1", descriptionKey = "fcli.ssc.artifact.upload.file") 
+    @EnvSuffix("FILE") @Getter @Parameters(arity="1", descriptionKey = "fcli.ssc.artifact.upload.file") 
     private File file;
     
     @Option(names = {"-e", "--engine-type"})

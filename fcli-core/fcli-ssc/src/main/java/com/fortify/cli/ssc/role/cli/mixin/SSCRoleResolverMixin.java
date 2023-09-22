@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.role.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.role.helper.SSCRoleDescriptor;
 import com.fortify.cli.ssc.role.helper.SSCRoleHelper;
 
@@ -37,7 +38,7 @@ public class SSCRoleResolverMixin {
 
     public static class PositionalParameter extends AbstractSSCRoleMixin {
         @Getter
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.role.resolver.nameOrId")
+        @EnvSuffix("ROLE") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.role.resolver.nameOrId")
         private String roleNameOrId;
     }
 }

@@ -16,6 +16,7 @@ import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
@@ -32,7 +33,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class SSCIssueTemplateCreateCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper; 
-    @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.issue-template.name")
+    @EnvSuffix("ISSUE_TEMPLATE") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.issue-template.name")
     private String issueTemplateName;
     @Option(names={"--issue-template-file","-f"}, required = true)
     private String fileName;

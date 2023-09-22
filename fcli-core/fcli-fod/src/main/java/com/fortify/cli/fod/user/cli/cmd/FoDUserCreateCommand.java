@@ -15,6 +15,7 @@ package com.fortify.cli.fod.user.cli.cmd;
 import java.util.ArrayList;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -35,7 +36,7 @@ import picocli.CommandLine.Parameters;
 public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
 
-    @Parameters(index = "0", descriptionKey = "user-name")
+    @EnvSuffix("NAME") @Parameters(index = "0", descriptionKey = "user-name")
     private String userName;
     @Option(names = {"--email"}, required = true)
     private String email;

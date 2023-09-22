@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanDescriptor;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanHelper;
 
@@ -54,12 +55,12 @@ public class SCDastScanResolverMixin {
     }
     
     public static class PositionalParameter extends AbstractSSCDastScanResolverMixin {
-        @Parameters(index = "0", arity = "1", paramLabel="scan-id")
+        @EnvSuffix("SCAN") @Parameters(index = "0", arity = "1", paramLabel="scan-id")
         @Getter private String scanId;
     }
     
     public static class PositionalParameterMulti extends AbstractSSCDastMultiScanResolverMixin {
-        @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's")
+        @EnvSuffix("SCANS") @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's")
         @Getter private String[] scanIds;
     }
 }

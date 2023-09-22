@@ -14,6 +14,7 @@ package com.fortify.cli.ssc.role.cli.cmd;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -38,7 +39,7 @@ public class SSCRoleCreateCommand extends AbstractSSCBaseRequestOutputCommand im
  */
 
     @Getter
-    @Parameters(index = "0", descriptionKey = "fcli.ssc.role.name")
+    @EnvSuffix("NAME")@Parameters(index = "0", descriptionKey = "fcli.ssc.role.name")
     private String name;
 
     @Getter

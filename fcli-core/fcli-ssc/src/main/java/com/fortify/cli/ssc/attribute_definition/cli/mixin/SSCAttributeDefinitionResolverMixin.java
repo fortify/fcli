@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.attribute_definition.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionDescriptor;
 import com.fortify.cli.ssc.attribute_definition.helper.SSCAttributeDefinitionHelper;
 
@@ -29,7 +30,7 @@ public class SSCAttributeDefinitionResolverMixin {
     }
     
     public static class PositionalParameterSingle extends AbstractSSCAttributeDefinitionResolverMixin {
-        @Parameters(index = "0", arity = "1", paramLabel = "[CATEGORY:]ATTR", descriptionKey = "fcli.ssc.attribute-definition.resolver.nameOrId")
+        @EnvSuffix("ATTRDEF") @Parameters(index = "0", arity = "1", paramLabel = "[CATEGORY:]ATTR", descriptionKey = "fcli.ssc.attribute-definition.resolver.nameOrId")
         @Getter private String attributeDefinitionNameOrId;
     }
 }

@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.user.cli.mixin;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.user.helper.SSCUserHelper;
 
 import kong.unirest.UnirestInstance;
@@ -29,7 +30,7 @@ public class SSCUserResolverMixin {
     }
     
     public static class PositionalParameterSingle extends AbstractSSCAuthEntityResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.user.resolver.spec")
+        @EnvSuffix("USER") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.user.resolver.spec")
         @Getter private String authEntitySpec;
     }
 }

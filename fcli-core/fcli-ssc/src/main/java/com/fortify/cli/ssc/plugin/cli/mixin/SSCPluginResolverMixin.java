@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
+
 import lombok.Getter;
 import picocli.CommandLine.Parameters;
 
@@ -21,7 +23,7 @@ public class SSCPluginResolverMixin {
     }
     
     public static class PositionalParameter extends AbstractSSCPluginResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.plugin.resolver.numericId")
+        @EnvSuffix("PLUGIN") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.plugin.resolver.numericId")
         @Getter private String numericPluginId;
     }
 }

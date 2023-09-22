@@ -13,6 +13,7 @@
 
 package com.fortify.cli.fod.user_group.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupDescriptor;
 import com.fortify.cli.fod.user_group.helper.FoDUserGroupHelper;
 
@@ -45,7 +46,7 @@ public class FoDUserGroupResolverMixin {
     }
 
     public static class PositionalParameter extends AbstractFoDUserGroupResolverMixin {
-        @Parameters(index = "0", descriptionKey = "fcli.fod.group.group-name-or-id")
+        @EnvSuffix("GROUP") @Parameters(index = "0", descriptionKey = "fcli.fod.group.group-name-or-id")
         @Getter private String userGroupNameOrId;
     }
 }

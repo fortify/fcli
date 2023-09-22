@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.artifact.cli.cmd;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
@@ -25,7 +26,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Get.CMD_NAME)
 public class SSCArtifactGetCommand extends AbstractSSCArtifactOutputCommand implements IBaseRequestSupplier {
     @Getter @Mixin private OutputHelperMixins.Get outputHelper; 
-    @Parameters(arity="1", descriptionKey="fcli.ssc.artifact.get.id")
+    @EnvSuffix("ARTIFACT") @Parameters(arity="1", descriptionKey="fcli.ssc.artifact.get.id")
     private String artifactId;
     
     @Override

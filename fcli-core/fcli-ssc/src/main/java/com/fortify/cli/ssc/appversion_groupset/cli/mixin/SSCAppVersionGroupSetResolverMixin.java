@@ -12,10 +12,14 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion_groupset.cli.mixin;
 
-import com.fortify.cli.ssc.appversion_groupset.helper.*;
-import kong.unirest.*;
-import lombok.*;
-import picocli.CommandLine.*;
+import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.ssc.appversion_groupset.helper.SSCAppVersionGroupSetDescriptor;
+import com.fortify.cli.ssc.appversion_groupset.helper.SSCAppVersionGroupSetHelper;
+
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionGroupSetResolverMixin {
     private static abstract class AbstractSSCGroupSetResolverMixin {
@@ -32,7 +36,7 @@ public class SSCAppVersionGroupSetResolverMixin {
     }
     
     public static class PositionalParameterSingle extends AbstractSSCGroupSetResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.appversion-group-set.resolver.displayNameOrId")
+        @EnvSuffix("GROUPSET") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.appversion-group-set.resolver.displayNameOrId")
         @Getter private String groupSetDisplayNameOrId;
     }
 }

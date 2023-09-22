@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -34,7 +35,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
 public class SSCUserDeleteCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
-    @Parameters(index = "0..*", arity = "1..*", descriptionKey = "fcli.ssc.user.rm.spec")
+    @EnvSuffix("USERS") @Parameters(index = "0..*", arity = "1..*", descriptionKey = "fcli.ssc.user.rm.spec")
     private String[] authEntitySpecs;
     @Option(names="--allow-multi-match", defaultValue = "false")
     private boolean allowMultiMatch;

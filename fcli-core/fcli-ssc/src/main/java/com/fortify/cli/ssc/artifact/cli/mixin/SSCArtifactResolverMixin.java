@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactDescriptor;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 
@@ -54,12 +55,12 @@ public class SSCArtifactResolverMixin {
     }
     
     public static class PositionalParameter extends AbstractSSCAppVersionArtifactResolverMixin {
-        @Parameters(index = "0", arity = "1", paramLabel="artifact-id", descriptionKey = "fcli.ssc.artifact.resolver.id")
+        @EnvSuffix("ARTIFACT") @Parameters(index = "0", arity = "1", paramLabel="artifact-id", descriptionKey = "fcli.ssc.artifact.resolver.id")
         @Getter private String artifactId;
     }
     
     public static class PositionalParameterMulti extends AbstractSSCAppVersionMultiArtifactResolverMixin {
-        @Parameters(index = "0", arity = "1..", paramLabel = "artifact-id's", descriptionKey = "fcli.ssc.artifact.resolver.ids")
+        @EnvSuffix("ARTIFACTS") @Parameters(index = "0", arity = "1..", paramLabel = "artifact-id's", descriptionKey = "fcli.ssc.artifact.resolver.ids")
         @Getter private String[] artifactIds;
     }
 }

@@ -13,6 +13,7 @@
 
 package com.fortify.cli.fod.microservice.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.cli.mixin.IFoDDelimiterMixinAware;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
@@ -65,7 +66,7 @@ public class FoDMicroserviceByQualifiedNameResolverMixin {
     }
 
     public static class PositionalParameter extends AbstractFoDAppAndMicroserviceNameResolverMixin {
-        @Parameters(index = "0", paramLabel="app:ms", descriptionKey = "fcli.fod.microservice.resolver.name")
+        @EnvSuffix("MICROSERVICE") @Parameters(index = "0", paramLabel="app:ms", descriptionKey = "fcli.fod.microservice.resolver.name")
         @Getter private String qualifiedMicroserviceName;
     }
 }

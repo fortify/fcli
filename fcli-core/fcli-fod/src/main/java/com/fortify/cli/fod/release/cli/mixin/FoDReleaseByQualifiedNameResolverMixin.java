@@ -13,6 +13,7 @@
 
 package com.fortify.cli.fod.release.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.cli.mixin.IFoDDelimiterMixinAware;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
@@ -77,7 +78,7 @@ public class FoDReleaseByQualifiedNameResolverMixin {
     }
 
     public static class PositionalParameter extends AbstractFoDQualifiedReleaseNameResolverMixin {
-        @Parameters(index = "0", paramLabel = "app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name")
+        @EnvSuffix("RELEASE") @Parameters(index = "0", paramLabel = "app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name")
         @Getter private String qualifiedReleaseName;
     }
 }

@@ -16,6 +16,7 @@ import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
@@ -30,7 +31,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Upload.CMD_NAME)
 public class SSCSeedBundleUploadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Upload outputHelper;
-    @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.seed-bundle.upload.seedBundle")
+    @EnvSuffix("FILE") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.seed-bundle.upload.seedBundle")
     private File seedBundle;
     
     @Override

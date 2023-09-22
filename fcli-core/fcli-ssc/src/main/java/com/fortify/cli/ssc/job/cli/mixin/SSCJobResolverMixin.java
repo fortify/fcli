@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.job.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.job.helper.SSCJobDescriptor;
 import com.fortify.cli.ssc.job.helper.SSCJobHelper;
 
@@ -39,7 +40,7 @@ public class SSCJobResolverMixin {
     }
     
     public static class PositionalParameter extends AbstractSSCJobResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.job.resolver.name")
+        @EnvSuffix("JOB") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.job.resolver.name")
         @Getter private String jobName;
     }
 }

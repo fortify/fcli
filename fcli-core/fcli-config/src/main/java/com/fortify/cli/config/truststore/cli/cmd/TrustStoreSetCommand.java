@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
@@ -35,7 +36,7 @@ import picocli.CommandLine.Parameters;
 public class TrustStoreSetCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier, IRecordTransformer {
     @Mixin @Getter private OutputHelperMixins.Set outputHelper;
     
-    @Parameters(index = "0", arity = "1", descriptionKey = "fcli.config.truststore.set.trustStorePath")
+    @EnvSuffix("PATH") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.config.truststore.set.trustStorePath")
     private Path trustStorePath;
     
     @Option(names = {"-p", "--truststore-password"})

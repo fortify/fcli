@@ -13,6 +13,7 @@
 package com.fortify.cli.fod.rest.lookup.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDBaseRequestOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
@@ -31,7 +32,7 @@ import picocli.CommandLine.Parameters;
 public class FoDLookupCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer {
     @Getter @Mixin private FoDOutputHelperMixins.Lookup outputHelper;
 
-    @Parameters(arity = "0..1", defaultValue = "All")
+    @EnvSuffix("TYPE") @Parameters(arity = "0..1", defaultValue = "All")
     private FoDLookupType type;
     
     @Override

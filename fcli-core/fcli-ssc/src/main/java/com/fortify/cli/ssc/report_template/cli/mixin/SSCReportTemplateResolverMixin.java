@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.report_template.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.report_template.helper.SSCReportTemplateDescriptor;
 import com.fortify.cli.ssc.report_template.helper.SSCReportTemplateHelper;
 
@@ -28,11 +29,11 @@ public class SSCReportTemplateResolverMixin {
         }
     }
     public static class PositionalParameterSingle extends AbstractSSCReportTemplateResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "reportTemplateNameOrId")
+        @EnvSuffix("REPORT_TEMPLATE") @Parameters(index = "0", arity = "1", descriptionKey = "reportTemplateNameOrId")
         @Getter private String reportTemplateNameOrId;
     }
     public static class RequiredOption extends AbstractSSCReportTemplateResolverMixin {
-        @Option(names="--report-template", required=true, descriptionKey = "reportTemplateNameOrId")
+        @EnvSuffix("REPORT_TEMPLATE") @Option(names="--report-template", required=true, descriptionKey = "reportTemplateNameOrId")
         @Getter private String reportTemplateNameOrId;
     }
     

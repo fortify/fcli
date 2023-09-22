@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 
@@ -61,12 +62,12 @@ public class FoDScanResolverMixin {
     }
 
     public static class PositionalParameter extends AbstractFoDScanResolverMixin {
-        @Parameters(index = "0", arity = "1", paramLabel="scan-id", descriptionKey = "fcli.fod.scan.scan-id")
+        @EnvSuffix("SCAN") @Parameters(index = "0", arity = "1", paramLabel="scan-id", descriptionKey = "fcli.fod.scan.scan-id")
         @Getter private String scanId;
     }
 
     public static class PositionalParameterMulti extends AbstractFoDMultiScanResolverMixin {
-        @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's", descriptionKey = "fcli.fod.scan.scan-id")
+        @EnvSuffix("SCANS") @Parameters(index = "0", arity = "1..", paramLabel = "scan-id's", descriptionKey = "fcli.fod.scan.scan-id")
         @Getter private String[] scanIds;
     }
 

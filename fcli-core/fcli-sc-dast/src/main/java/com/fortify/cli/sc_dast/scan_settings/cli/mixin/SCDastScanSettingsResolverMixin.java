@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.sc_dast.scan_settings.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsDescriptor;
 import com.fortify.cli.sc_dast.scan_settings.helper.SCDastScanSettingsHelper;
 
@@ -44,7 +45,7 @@ public class SCDastScanSettingsResolverMixin {
     }
     
     public static class PositionalParameter extends AbstractSSCDastScanSettingsResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.sc-dast.scan-settings.resolver.cicdTokenOrId")
+        @EnvSuffix("SETTINGS") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.sc-dast.scan-settings.resolver.cicdTokenOrId")
         @Getter private String scanSettingsCicdTokenOrId;
     }
 }

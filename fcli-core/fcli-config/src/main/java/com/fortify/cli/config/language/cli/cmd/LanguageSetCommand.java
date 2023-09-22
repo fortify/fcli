@@ -13,6 +13,7 @@
 package com.fortify.cli.config.language.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.i18n.helper.LanguageHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -26,7 +27,7 @@ import picocli.CommandLine.Parameters;
 @Command(name = OutputHelperMixins.Set.CMD_NAME)
 public class LanguageSetCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     @Mixin @Getter private OutputHelperMixins.Set outputHelper;
-    @Parameters(index = "0", descriptionKey = "fcli.config.language.set.language")
+    @EnvSuffix("LANGUAGE") @Parameters(index = "0", descriptionKey = "fcli.config.language.set.language")
     private String language;
     
     @Override

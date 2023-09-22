@@ -13,6 +13,7 @@
 package com.fortify.cli.config.proxy.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -29,7 +30,7 @@ import picocli.CommandLine.Parameters;
 @Command(name=OutputHelperMixins.Delete.CMD_NAME)
 public class ProxyDeleteCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier, IRecordTransformer {
     @Mixin @Getter private OutputHelperMixins.Delete outputHelper;
-    @Parameters(arity="1", descriptionKey = "fcli.config.proxy.delete.name", paramLabel = "NAME")
+    @EnvSuffix("NAME") @Parameters(arity="1", descriptionKey = "fcli.config.proxy.delete.name", paramLabel = "NAME")
     private String name;
     
     @Override

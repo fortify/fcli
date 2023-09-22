@@ -17,6 +17,7 @@ import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
@@ -33,7 +34,7 @@ public abstract class AbstractFoDReleaseImportCommand extends AbstractFoDJsonNod
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
 
-    @Parameters(index = "0", arity = "1")
+    @EnvSuffix("FILE") @Parameters(index = "0", arity = "1")
     private File scanFile;
     
     @Override

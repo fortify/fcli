@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
@@ -41,7 +42,7 @@ public class SSCAppVersionResolverMixin {
     }
     
     public static class PositionalParameter extends AbstractSSCAppVersionResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
+        @EnvSuffix("APPVERSION") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
         @Getter private String appVersionNameOrId;
     }
 }

@@ -13,6 +13,7 @@
 
 package com.fortify.cli.fod.user.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.fod.user.helper.FoDUserDescriptor;
 import com.fortify.cli.fod.user.helper.FoDUserHelper;
 
@@ -45,7 +46,7 @@ public class FoDUserResolverMixin {
     }
 
     public static class PositionalParameter extends AbstractFoDUserResolverMixin {
-        @Parameters(index = "0", descriptionKey = "fcli.fod.user.user-name-or-id")
+        @EnvSuffix("USER") @Parameters(index = "0", descriptionKey = "fcli.fod.user.user-name-or-id")
         @Getter private String userNameOrId;
     }
 }

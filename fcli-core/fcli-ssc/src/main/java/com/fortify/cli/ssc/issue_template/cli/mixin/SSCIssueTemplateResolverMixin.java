@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.issue_template.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateHelper;
@@ -44,7 +45,7 @@ public class SSCIssueTemplateResolverMixin {
     }
     
     public static class PositionalParameterSingle extends AbstractSSCIssueTemplateResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.issue-template.resolver.nameOrId")
+        @EnvSuffix("ISSUE_TEMPLATE") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.issue-template.resolver.nameOrId")
         @Getter private String issueTemplateNameOrId;
     }
 }

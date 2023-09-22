@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobDescriptor;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
@@ -59,12 +60,12 @@ public class SCSastScanJobResolverMixin {
     }
     
     public static class PositionalParameter extends AbstractSCSastScanJobResolverMixin {
-        @Parameters(index = "0", arity = "1", paramLabel="scan-job-token", descriptionKey = "fcli.sc-sast.scan-job.resolver.jobToken")
+        @EnvSuffix("JOB_TOKEN") @Parameters(index = "0", arity = "1", paramLabel="scan-job-token", descriptionKey = "fcli.sc-sast.scan-job.resolver.jobToken")
         @Getter private String scanJobToken;
     }
     
     public static class PositionalParameterMulti extends AbstractSCSastMultiScanJobResolverMixin {
-        @Parameters(index = "0", arity = "1..", paramLabel = "scan-job-tokens", descriptionKey = "fcli.sc-sast.scan-job.resolver.jobToken")
+        @EnvSuffix("JOB_TOKENS") @Parameters(index = "0", arity = "1..", paramLabel = "scan-job-tokens", descriptionKey = "fcli.sc-sast.scan-job.resolver.jobToken")
         @Getter private String[] scanJobTokens;
     }
 }

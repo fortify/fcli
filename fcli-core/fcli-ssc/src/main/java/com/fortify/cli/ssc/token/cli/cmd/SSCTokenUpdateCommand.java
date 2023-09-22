@@ -15,6 +15,7 @@ package com.fortify.cli.ssc.token.cli.cmd;
 import java.time.OffsetDateTime;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
@@ -34,7 +35,7 @@ import picocli.CommandLine.Parameters;
 public class SSCTokenUpdateCommand extends AbstractSSCTokenCommand implements IRecordTransformer {
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.MINUTES, Period.DAYS);
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
-    @Parameters(arity="1", paramLabel = "token-id", descriptionKey = "fcli.ssc.token.update.token-id") private String tokenId;
+    @EnvSuffix("ID") @Parameters(arity="1", paramLabel = "token-id", descriptionKey = "fcli.ssc.token.update.token-id") private String tokenId;
     @Option(names="--expire-in") private String expireIn;
     @Option(names="--description") private String description;    
     

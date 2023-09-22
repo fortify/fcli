@@ -14,6 +14,8 @@ package com.fortify.cli.fod.app.attr.cli.mixin;
 
 import java.util.Map;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
+
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -31,7 +33,7 @@ public class FoDAttributeUpdateOptions {
     }
 
     public static class RequiredPositionalParameter extends AbstractFoDAppAttributeUpdateMixin {
-        @Parameters(index = "0..*", arity = "1..*", paramLabel = PARAM_LABEL, descriptionKey = "fcli.fod.app.update.attr")
+        @EnvSuffix("ATTRS") @Parameters(index = "0..*", arity = "1..*", paramLabel = PARAM_LABEL, descriptionKey = "fcli.fod.app.update.attr")
         @Getter private Map<String, String> attributes;
     }
 

@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -51,7 +52,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
 
-    @Parameters(index = "0", arity = "1", descriptionKey = "fcli.fod.app.app-name")
+    @EnvSuffix("NAME") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.fod.app.app-name")
     private String applicationName;
     @Option(names = {"--description", "-d"})
     protected String description;

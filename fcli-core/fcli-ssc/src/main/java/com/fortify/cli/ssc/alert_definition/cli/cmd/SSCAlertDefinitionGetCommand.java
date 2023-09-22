@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.alert_definition.cli.cmd;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
@@ -27,7 +28,7 @@ import picocli.CommandLine.Parameters;
 public class SSCAlertDefinitionGetCommand extends AbstractSSCBaseRequestOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Get outputHelper; 
     // TODO Add support for resolving alert definitions by name (if unique) using a ResolverMixin
-    @Parameters(arity="1", descriptionKey="fcli.ssc.alert-definition.get.id")
+    @EnvSuffix("ALERT_DEFINITION") @Parameters(arity="1", descriptionKey="fcli.ssc.alert-definition.get.id")
     private String alertDefinitionId;
     
     @Override

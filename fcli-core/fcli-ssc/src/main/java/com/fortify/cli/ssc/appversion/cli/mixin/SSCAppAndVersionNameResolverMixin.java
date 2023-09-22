@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.appversion.helper.SSCAppAndVersionNameDescriptor;
 
 import lombok.Getter;
@@ -35,7 +36,7 @@ public class SSCAppAndVersionNameResolverMixin {
     }
     
     public static class PositionalParameter extends AbstractSSCAppAndVersionNameResolverMixin {
-        @Parameters(index = "0", arity = "1", paramLabel="<app>:<version>", descriptionKey = "fcli.ssc.appversion.resolver.name")
+        @EnvSuffix("APPVERSION") @Parameters(index = "0", arity = "1", paramLabel="<app>:<version>", descriptionKey = "fcli.ssc.appversion.resolver.name")
         @Getter private String appAndVersionName;
     }
 }

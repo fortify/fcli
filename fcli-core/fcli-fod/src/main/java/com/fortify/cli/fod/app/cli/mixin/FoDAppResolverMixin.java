@@ -13,6 +13,7 @@
 
 package com.fortify.cli.fod.app.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.app.helper.FoDAppDescriptor;
 import com.fortify.cli.fod.app.helper.FoDAppHelper;
@@ -50,7 +51,7 @@ public class FoDAppResolverMixin {
     }
 
     public static class PositionalParameter extends AbstractFoDAppResolverMixin {
-        @Parameters(index = "0", descriptionKey = "fcli.fod.app.app-name-or-id")
+        @EnvSuffix("APP") @Parameters(index = "0", descriptionKey = "fcli.fod.app.app-name-or-id")
         @Getter private String appNameOrId;
     }
 }

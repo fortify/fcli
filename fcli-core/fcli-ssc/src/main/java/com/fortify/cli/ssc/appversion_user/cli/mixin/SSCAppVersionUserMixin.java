@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion_user.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
+
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -32,7 +34,7 @@ public class SSCAppVersionUserMixin {
     }
     
     public static class RequiredPositionalParameter extends AbstractSSCAppVersionAuthEntityMixin {
-        @Parameters(index = "0..*", arity = "1..*", descriptionKey = "fcli.ssc.appversion-auth-entity.specs")
+        @EnvSuffix("USERS") @Parameters(index = "0..*", arity = "1..*", descriptionKey = "fcli.ssc.appversion-auth-entity.specs")
         @Getter private String[] authEntitySpecs;
     }
     

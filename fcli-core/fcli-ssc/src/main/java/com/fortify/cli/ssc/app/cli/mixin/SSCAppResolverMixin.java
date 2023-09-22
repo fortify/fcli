@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.app.cli.mixin;
 
+import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 
@@ -40,7 +41,7 @@ public class SSCAppResolverMixin {
     
     // delete|update <app>
     public static class PositionalParameter extends AbstractSSCAppResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.app.resolver.nameOrId")
+        @EnvSuffix("APP") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.app.resolver.nameOrId")
         @Getter private String appNameOrId;
     }
 }
