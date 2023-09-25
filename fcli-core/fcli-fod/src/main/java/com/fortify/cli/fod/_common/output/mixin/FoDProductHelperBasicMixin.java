@@ -20,7 +20,7 @@ import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.session.cli.mixin.AbstractSessionUnirestInstanceSupplierMixin;
-import com.fortify.cli.fod._common.rest.helper.FoDRateLimitRetryStrategy;
+import com.fortify.cli.fod._common.rest.helper.FoDRetryStrategy;
 import com.fortify.cli.fod._common.session.helper.FoDSessionDescriptor;
 import com.fortify.cli.fod._common.session.helper.FoDSessionHelper;
 
@@ -57,6 +57,6 @@ public class FoDProductHelperBasicMixin extends AbstractSessionUnirestInstanceSu
     }
     
     private void configureClient(HttpClientBuilder cb) {
-        cb.setServiceUnavailableRetryStrategy(new FoDRateLimitRetryStrategy());
+        cb.setServiceUnavailableRetryStrategy(new FoDRetryStrategy());
     }
 }

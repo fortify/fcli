@@ -35,24 +35,31 @@ import org.apache.http.protocol.HttpContext;
  * that will retry a request if the server responds with an HTTP 429 (TOO_MANY_REQUESTS)
  * response.
  */
-public final class FoDRateLimitRetryStrategy implements ServiceUnavailableRetryStrategy {
-	private static final Log LOG = LogFactory.getLog(FoDRateLimitRetryStrategy.class);
+public final class FoDRetryStrategy implements ServiceUnavailableRetryStrategy {
+	private static final Log LOG = LogFactory.getLog(FoDRetryStrategy.class);
 	private final String HEADER_NAME = "X-Rate-Limit-Reset";
 	private int maxRetries = 2;
 	private final ThreadLocal<Long> interval = new ThreadLocal<Long>();
 	
-	public FoDRateLimitRetryStrategy maxRetries(int maxRetries) {
+	public FoDRetryStrategy maxRetries(int maxRetries) {
 		this.maxRetries = maxRetries;
 		return this;
 	}
 
-	public boolean retryRequest(HttpResponse response, int executionCount, HttpContext context) { 
-		if ( executionCount < maxRetries+1 && response.getStatusLine().getStatusCode()==429 ) {
-			int retrySeconds = Integer.parseInt(response.getFirstHeader(HEADER_NAME).getValue());
-			LOG.debug("Rate-limited request will be retried after "+retrySeconds+" seconds");
-			interval.set((long)retrySeconds*1000);
-			return true;
-		}
+	public boolean retryRequest(HttpResponse response, int executionCount, HttpContext context) {
+	    if ( executionCount < maxRetries+1 ) {
+	        if ( response.getStatusLine().getStatusCode()==404 ) {
+	            // Sometimes it can take a bit of time for FoD to properly register a scan request and
+	            // possibly other newly created resources, hence we also retry on 404 errors.
+	            interval.set((long)5000);
+	            return true;
+	        } else if ( response.getStatusLine().getStatusCode()==429 ) {
+    			int retrySeconds = Integer.parseInt(response.getFirstHeader(HEADER_NAME).getValue());
+    			LOG.debug("Rate-limited request will be retried after "+retrySeconds+" seconds");
+    			interval.set((long)retrySeconds*1000);
+    			return true;
+    		}
+	    }
 		return false;
 	}
 
