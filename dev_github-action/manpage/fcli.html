@@ -1,0 +1,127 @@
+---
+title: fcli(1)
+fcli_version: fcli version 0.20230926.113021-dev_github-action, built on 2023-09-26 11 30 36
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230926.113021-dev_github-action" %}
+
+
+<div id="header">
+<h1>fcli(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_commands">Commands</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli - Command-line interface for working with various Fortify products.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli</strong> [<strong>-hV</strong>] [COMMAND]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As the name implies, Fortify CLI (fcli) is a general-purpose command-line utility for working with the various Fortify products.</p>
+</div>
+<div class="paragraph">
+<p>Fortify CLI is structured using sub-commands, based on the following convention: 'fcli &lt;module&gt; &lt;entity&gt; &lt;action&gt;'. Every sub-command provides its own detailed usage instructions, accessible through the -h or --help option on each sub-command. Where applicable, the usage instructions include the list of sub-commands. For example, the Commands section below displays the sub-commands representing the various fcli modules. A list of all available fcli commands can be obtained through the 'fcli util all-commands list' command.</p>
+</div>
+<div class="paragraph">
+<p>It is highly recommended to review the fcli user documentation, which both explains general fcli concepts and provides detailed instructions on particular topics like common command line options and use of environment variables and fcli variables. The link to the online documentation can be found at the bottom of the help output for every individual fcli command, as seen below.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>-V</strong>, <strong>--version</strong></dt>
+<dd>
+<p>Print version information and exit.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_commands"><a class="anchor" href="#_commands"></a>Commands</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="fcli-config.html"><strong>config</strong>, <strong>cfg</strong></a></dt>
+<dd>
+<p>Manage fcli configuration settings (proxy, trust store, &#8230;&#8203;).</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-fod.html"><strong>fod</strong></a></dt>
+<dd>
+<p>Interact with Fortify on Demand (FoD).</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-sc-dast.html"><strong>sc-dast</strong></a></dt>
+<dd>
+<p>Interact with Fortify ScanCentral DAST (SC-DAST).</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-sc-sast.html"><strong>sc-sast</strong></a></dt>
+<dd>
+<p>Interact with Fortify ScanCentral SAST (SC-SAST).</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc.html"><strong>ssc</strong></a></dt>
+<dd>
+<p>Interact with Fortify Software Security Center (SSC).</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-tool.html"><strong>tool</strong></a></dt>
+<dd>
+<p>Install and manage other Fortify tools and utilities.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-license.html"><strong>license</strong></a></dt>
+<dd>
+<p>License-related commands, like license reporting</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-util.html"><strong>util</strong></a></dt>
+<dd>
+<p>Utility commands that don&#8217;t fit in any of the other modules.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version fcli version 0.20230926.113021-dev_github-action, built on 2023-09-26 11 30 36<br>
+Last updated 2023-09-26 11:32:08 UTC
+</div>
+</div>
+</body>
+</html>
