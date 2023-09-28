@@ -1,19 +1,21 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 
 package com.fortify.cli.fod.release.helper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,6 +33,8 @@ import lombok.Getter;
 
 public class FoDReleaseHelper {
     @Getter private static ObjectMapper objectMapper = new ObjectMapper();
+
+    private static String[] defaultFields = {"releaseId", "releaseName", "applicationName", "microserviceName"};
 
     public static final JsonNode renameFields(JsonNode record) {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
@@ -77,10 +81,13 @@ public class FoDReleaseHelper {
                 .body(body).asObject(JsonNode.class).getBody();
         return getReleaseDescriptorFromId(unirest, Integer.parseInt(relId), true);
     }
-    
+
     private static final GetRequest addFieldsParam(GetRequest req, String... fields) {
         if ( fields!=null && fields.length>0 ) {
-            req = req.queryString("fields", String.join(",", fields));
+            ArrayList<String> allFields = new ArrayList<>(Arrays.asList(fields));
+            allFields.removeAll(List.of(defaultFields));
+            allFields.addAll(List.of(defaultFields));
+            req = req.queryString("fields", String.join(",", allFields));
         }
         return req;
     }

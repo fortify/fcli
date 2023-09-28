@@ -16,9 +16,13 @@ import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.fod._common.session.cli.cmd.FoDSessionCommands;
 import com.fortify.cli.fod.app.cli.cmd.FoDAppCommands;
 import com.fortify.cli.fod.assessment_type.cli.cmd.FoDAssessmentTypeCommands;
+import com.fortify.cli.fod.dast_scan.cli.cmd.FoDDastScanCommands;
+import com.fortify.cli.fod.mast_scan.cli.cmd.FoDMastScanCommands;
 import com.fortify.cli.fod.microservice.cli.cmd.FoDMicroserviceCommands;
+import com.fortify.cli.fod.oss_scan.cli.cmd.FoDOssScanCommands;
 import com.fortify.cli.fod.release.cli.cmd.FoDReleaseCommands;
 import com.fortify.cli.fod.rest.cli.cmd.FoDRestCommands;
+import com.fortify.cli.fod.sast_scan.cli.cmd.FoDSastScanCommands;
 import com.fortify.cli.fod.scan.cli.cmd.FoDScanCommands;
 import com.fortify.cli.fod.scan_config.cli.cmd.FoDScanConfigCommands;
 import com.fortify.cli.fod.user.cli.cmd.FoDUserCommands;
@@ -42,10 +46,14 @@ import picocli.CommandLine.Command;
                 //   and release
                 FoDSessionCommands.class,
                 FoDAppCommands.class,
+                FoDAssessmentTypeCommands.class,
                 FoDMicroserviceCommands.class,
                 FoDReleaseCommands.class,
-                FoDAssessmentTypeCommands.class,
                 FoDScanCommands.class,
+                FoDSastScanCommands.class,
+                FoDDastScanCommands.class,
+                FoDMastScanCommands.class,
+                FoDOssScanCommands.class,
                 FoDScanConfigCommands.class,
                 FoDUserCommands.class,
                 FoDUserGroupCommands.class,

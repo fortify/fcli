@@ -32,6 +32,9 @@ public class FoDOutputHelperMixins {
     public static class SetupMobile extends OutputHelperMixins.DetailsNoQuery {
         public static final String CMD_NAME = "setup-mobile";
     }
+    public static class GetConfig extends OutputHelperMixins.DetailsNoQuery {
+        public static final String CMD_NAME = "get-config";
+    }
     public static class GetSast extends OutputHelperMixins.DetailsNoQuery {
         public static final String CMD_NAME = "get-sast";
     }
@@ -55,7 +58,7 @@ public class FoDOutputHelperMixins {
     public static class ImportScan extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "import-scan";
     }
-    
+
     public static class ImportSast extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "import-sast";
     }
@@ -73,8 +76,12 @@ public class FoDOutputHelperMixins {
     public static class Lookup extends OutputHelperMixins.TableWithQuery {
         public static final String CMD_NAME = "lookup";
     }
-    
-    public static class DownloadFpr extends OutputHelperMixins.TableNoQuery {
-        public static final String CMD_NAME = "download-fpr";
+
+    public static class DownloadResults extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "download-results";
+    }
+
+    public static class AssessmentType extends OutputHelperMixins.TableWithQuery {
+        public static final String CMD_NAME = "assessment-type";
     }
 }

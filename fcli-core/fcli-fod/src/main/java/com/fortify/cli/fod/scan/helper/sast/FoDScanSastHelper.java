@@ -29,7 +29,7 @@ import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.FoDStartScanResponse;
-import com.fortify.cli.fod.scan_config.helper.FoDScanConfigSastDescriptor;
+import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastDescriptor;
 
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;

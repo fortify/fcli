@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 
@@ -28,8 +28,8 @@ import picocli.CommandLine.Mixin;
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
 public abstract class AbstractFoDScanConfigGetCommand extends AbstractFoDJsonNodeOutputCommand {
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.PositionalParameter releaseResolver;
-    
+    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
+
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
         var releaseId = releaseResolver.getReleaseId(unirest);
@@ -38,7 +38,7 @@ public abstract class AbstractFoDScanConfigGetCommand extends AbstractFoDJsonNod
                 ? new ObjectMapper().createObjectNode().put("state", "Not configured")
                 : result;
     }
-    
+
     protected abstract JsonNodeHolder getDescriptor(UnirestInstance unirest, String releaseId);
 
     @Override

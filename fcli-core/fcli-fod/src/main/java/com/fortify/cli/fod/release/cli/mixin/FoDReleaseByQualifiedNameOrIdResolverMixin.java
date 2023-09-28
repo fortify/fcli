@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 
@@ -34,10 +34,10 @@ public class FoDReleaseByQualifiedNameOrIdResolverMixin {
         public FoDReleaseDescriptor getReleaseDescriptor(UnirestInstance unirest, String... fields) {
             var qualifiedReleaseNameOrId = getQualifiedReleaseNameOrId();
             return StringUtils.isBlank(qualifiedReleaseNameOrId)
-                    ? null 
+                    ? null
                     : FoDReleaseHelper.getReleaseDescriptor(unirest, qualifiedReleaseNameOrId, delimiterMixin.getDelimiter(), true, fields);
         }
-        
+
         public String getReleaseId(UnirestInstance unirest) {
             var descriptor = getReleaseDescriptor(unirest, "releaseId");
             return descriptor==null ? null : descriptor.getReleaseId();
@@ -48,17 +48,17 @@ public class FoDReleaseByQualifiedNameOrIdResolverMixin {
         @Option(names = {"--release"}, required = true, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id")
         @Getter private String qualifiedReleaseNameOrId;
     }
-    
+
     public static class OptionalOption extends AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
         @Option(names = {"--release"}, required = false, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id")
         @Getter private String qualifiedReleaseNameOrId;
     }
-    
+
     public static class PositionalParameter extends AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
         @EnvSuffix("RELEASE") @Parameters(index = "0", paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id")
         @Getter private String qualifiedReleaseNameOrId;
     }
-    
+
     public static class OptionalCopyFromOption extends AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
         @Option(names = {"--copy-from"}, required = false, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.copy-from.nameOrId")
         @Getter private String qualifiedReleaseNameOrId;

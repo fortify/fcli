@@ -17,12 +17,12 @@ import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
-@Command(name = "scan-config",
+@Command(name = "scan-config", hidden = true,
         subcommands = {
-                FoDScanConfigGetDastCommand.class,
-                FoDScanConfigGetMobileCommand.class,
-                FoDScanConfigGetSastCommand.class,
-                FoDScanConfigSetupSastCommand.class,
+                //FoDDastScanGetConfigCommand.class,
+                //FoDMastScanGetConfigCommand.class,
+                //FoDSastScanGetConfigCommand.class,
+                //FoDSastScanSetupCommand.class,
         }
 )
 public class FoDScanConfigCommands extends AbstractContainerCommand {
