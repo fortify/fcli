@@ -15,6 +15,8 @@ package com.fortify.cli.fod.scan.helper;
 
 import static java.util.function.Predicate.not;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,6 +38,9 @@ import lombok.Getter;
 public class FoDScanHelper {
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    // max retention period (in years) of FPRs
+    public static int MAX_RETENTION_PERIOD = 2;
 
     public static final JsonNode renameFields(JsonNode record) {
         return new RenameFieldsTransformer(new String[]{}).transform(record);
@@ -77,6 +82,16 @@ public class FoDScanHelper {
         } else {
             // default to UTC
             return "UTC";
+        }
+    }
+
+    public static void validateScanDate(FoDScanDescriptor scanDescriptor, int retentionPeriod) throws RuntimeException {
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.YEAR, -retentionPeriod);
+        if (scanDescriptor.getCompletedDateTime() == null ||
+                scanDescriptor.getCompletedDateTime().before(cal.getTime())) {
+            throw new RuntimeException(
+                    String.format("The last scan date was over %d years ago and results are no longer available to be downloaded.", retentionPeriod));
         }
     }
 

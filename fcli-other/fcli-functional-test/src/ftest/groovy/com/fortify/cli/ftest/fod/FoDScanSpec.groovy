@@ -22,9 +22,9 @@ class FoDScanSpec extends FcliBaseSpec {
     //@Shared @TestResource("runtime/shared/iwa_net_scandata.fpr") String dastResults
     //@Shared @TestResource("runtime/shared/iwa_net_cyclonedx.json") String ossResults
     @Shared @AutoCleanup FoDWebAppSupplier app = new FoDWebAppSupplier()
-    
+
     def "list"() {
-        def args = "fod scan list --store scans"
+        def args = "fod sast-scan list --store scans"
         when:
             def result = Fcli.run(args)
         then:
@@ -33,9 +33,9 @@ class FoDScanSpec extends FcliBaseSpec {
                 it[0].replace(' ', '').equals("IdTypeAnalysisStatusApplicationMicroserviceReleaseStartedCompletedScanMethod")
             }
     }
-    
+
     def "get.byId"() {
-        def args = "fod scan get ::scans::get(0).scanId"
+        def args = "fod sast-scan get ::scans::get(0).scanId"
         when:
             def result = Fcli.run(args)
         then:
@@ -57,7 +57,7 @@ class FoDScanSpec extends FcliBaseSpec {
                 it[1].startsWith("startedByUserId: ")
             }
     }
-    
+
     def "wait-for-import-sast"() {
         def args = "fod scan wait-for ::upload:: -i 2s --until=all-match --any-scan-state=COMPLETED,CANCELLED,FAILED,RUNNING"
         when:
@@ -67,8 +67,8 @@ class FoDScanSpec extends FcliBaseSpec {
                 //
             }
     }*/
-    
-    /*the manpages description of scan-id is "Scan id(s)" implying the posibility 
+
+    /*the manpages description of scan-id is "Scan id(s)" implying the posibility
       of providing multiple ids, this does not seem to work
     def "get.byIdMultiple"() {
         def scanId1= Fcli.run("util var contents scans -q scanId==#var('scans').get(0).scanId -o expr={scanId}");
@@ -82,7 +82,7 @@ class FoDScanSpec extends FcliBaseSpec {
                 it[1].startsWith("userId: ")
             }
     }*/
-    
-    
+
+
 }
 

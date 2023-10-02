@@ -14,7 +14,7 @@ import spock.lang.Shared
 
 
 @Prefix("fod.import-scan") @FcliSession(FOD)
-class FoDReleaseImportSpec extends FcliBaseSpec {
+class FoDScanImportSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/shared/EightBall-22.1.0.fpr") String sastResults
     @Shared @TestResource("runtime/shared/iwa_net_scandata.fpr") String dastResults
     @Shared @TestResource("runtime/shared/iwa_net_cyclonedx.json") String ossResults
@@ -22,9 +22,9 @@ class FoDReleaseImportSpec extends FcliBaseSpec {
     @Shared @AutoCleanup FoDWebAppSupplier webApp = new FoDWebAppSupplier()
     @Shared @AutoCleanup FoDMobileAppSupplier mobileApp = new FoDMobileAppSupplier()
 
-    
+
     def "import-mobile"() {
-        def args = "fod release import-mobile --release ${mobileApp.get().qualifiedRelease} $mobileResults --store upload"
+        def args = "fod mast-scan import --release ${mobileApp.get().qualifiedRelease} $mobileResults --store upload"
         when:
             def result = Fcli.run(args)
         then:
@@ -33,9 +33,9 @@ class FoDReleaseImportSpec extends FcliBaseSpec {
                 it.last().contains("IMPORT_REQUESTED")
             }
     }
-    
+
     def "import-sast"() {
-        def args = "fod release import-sast --release ${webApp.get().qualifiedRelease} $sastResults --store upload"
+        def args = "fod sast-scan import --release ${webApp.get().qualifiedRelease} $sastResults --store upload"
         when:
             def result = Fcli.run(args)
         then:
@@ -44,9 +44,9 @@ class FoDReleaseImportSpec extends FcliBaseSpec {
                 it.last().contains("IMPORT_REQUESTED")
             }
     }
-    
+
     def "import-dast"() {
-        def args = "fod release import-dast --release ${webApp.get().qualifiedRelease} $dastResults --store upload"
+        def args = "fod dast-scan import --release ${webApp.get().qualifiedRelease} $dastResults --store upload"
         when:
             def result = Fcli.run(args)
         then:
@@ -55,9 +55,9 @@ class FoDReleaseImportSpec extends FcliBaseSpec {
                 it.last().contains("IMPORT_REQUESTED")
             }
     }
-    
+
     def "import-oss"() {
-        def args = "fod release import-oss --release ${webApp.get().qualifiedRelease} $ossResults --store upload"
+        def args = "fod oss-scan import --release ${webApp.get().qualifiedRelease} $ossResults --store upload"
         when:
             def result = Fcli.run(args)
         then:
@@ -66,7 +66,7 @@ class FoDReleaseImportSpec extends FcliBaseSpec {
                 it.last().contains("IMPORT_REQUESTED")
             }
     }
-    
+
     def "waitForScans"() {
         when:
             def relScanurl = Fcli.run("fod release get ${webApp.get().qualifiedRelease} -o expr=/api/v3/releases/{releaseId}/scans --store relId").stdout[0]
@@ -86,7 +86,7 @@ class FoDReleaseImportSpec extends FcliBaseSpec {
         then:
             success
     }
-    
+
     def "waitForScans2"() {
         when:
             def relScanurl = Fcli.run("fod release get ${mobileApp.get().qualifiedRelease} -o expr=/api/v3/releases/{releaseId}/scans --store relId").stdout[0]
@@ -106,6 +106,6 @@ class FoDReleaseImportSpec extends FcliBaseSpec {
         then:
             success
     }
-    
+
 }
 
