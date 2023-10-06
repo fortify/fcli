@@ -18,7 +18,7 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod.scan.cli.cmd.FoDScanGetCommand;
 import picocli.CommandLine.Command;
 
-@Command(name = OutputHelperMixins.Get.CMD_NAME, hidden = false)
+@Command(name = OutputHelperMixins.Get.CMD_NAME, hidden = true)
 public class FoDDastScanGetCommand extends FoDScanGetCommand implements IRecordTransformer {
 
 }

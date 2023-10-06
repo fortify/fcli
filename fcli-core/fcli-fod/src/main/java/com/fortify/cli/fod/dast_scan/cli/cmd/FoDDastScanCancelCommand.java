@@ -19,7 +19,7 @@ import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod.scan.cli.cmd.FoDScanCancelCommand;
 import picocli.CommandLine.Command;
 
-@Command(name = OutputHelperMixins.Cancel.CMD_NAME, hidden = false)
+@Command(name = OutputHelperMixins.Cancel.CMD_NAME, hidden = true)
 public class FoDDastScanCancelCommand extends FoDScanCancelCommand implements IRecordTransformer, IActionCommandResultSupplier {
 
 }

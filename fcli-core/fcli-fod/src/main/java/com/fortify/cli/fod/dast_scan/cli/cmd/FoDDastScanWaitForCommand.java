@@ -17,7 +17,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.fod.scan.cli.cmd.FoDScanWaitForCommand;
 import picocli.CommandLine.Command;
 
-@Command(name = OutputHelperMixins.WaitFor.CMD_NAME, hidden = false)
+@Command(name = OutputHelperMixins.WaitFor.CMD_NAME, hidden = true)
 public class FoDDastScanWaitForCommand extends FoDScanWaitForCommand {
 
 }
