@@ -20,16 +20,12 @@ import picocli.CommandLine.Command;
 
 @Command(name = "release",
         subcommands = {
-                FoDReleaseCreateCommand.class,
-                FoDReleaseGetCommand.class,
                 FoDReleaseListCommand.class,
-                FoDReleaseDownloadFprCommand.class,
-                FoDReleaseImportDastCommand.class,                
-                FoDReleaseImportMobileCommand.class,
-                FoDReleaseImportOpenSourceCommand.class,
-                FoDReleaseImportSastCommand.class,
+                FoDReleaseGetCommand.class,
+                FoDReleaseCreateCommand.class,
                 FoDReleaseUpdateCommand.class,
-                FoDReleaseDeleteCommand.class
+                FoDReleaseDeleteCommand.class,
+                FoDReleaseDownloadResultsCommand.class
         }
 )
 @DefaultVariablePropertyName("releaseId")

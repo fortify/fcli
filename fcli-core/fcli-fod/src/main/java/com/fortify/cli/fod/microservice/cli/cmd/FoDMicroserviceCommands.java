@@ -20,9 +20,9 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "microservice",
         subcommands = {
-                FoDMicroserviceCreateCommand.class,
                 FoDMicroserviceListCommand.class,
                 //FoDAppMicroserviceGetCommand.class,
+                FoDMicroserviceCreateCommand.class,
                 FoDMicroserviceUpdateCommand.class,
                 FoDMicroserviceDeleteCommand.class
         }
