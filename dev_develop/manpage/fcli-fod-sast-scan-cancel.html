@@ -1,5 +1,5 @@
 ---
-title: fcli-fod-release-import-mobile(1)
+title: fcli-fod-sast-scan-cancel(1)
 fcli_version: 
 ---
 
@@ -9,24 +9,23 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-fod-release-import-mobile(1)</title>
+<title>fcli-fod-sast-scan-cancel(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230925.230408-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231009.140034-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-fod-release-import-mobile(1) Manual Page</h1>
+<h1>fcli-fod-sast-scan-cancel(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
-<li><a href="#_options">Options</a></li>
 <li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
@@ -35,7 +34,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-release-import-mobile - Import existing mobile scan results.</p>
+<p>fcli-fod-sast-scan-cancel - Cancel a SAST scan.</p>
 </div>
 </div>
 <div id="content">
@@ -43,13 +42,11 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod release import-mobile</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>--release</strong>=<em>id|app[:ms]:rel</em>
-                               [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                               [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                               [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
-                         _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                   _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                               <em>&lt;scanFile&gt;</em></p>
+<p><strong>fcli fod sast-scan cancel</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                          [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                          [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                          [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                          [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] <em>scan-id</em></p>
 </div>
 </div>
 </div>
@@ -57,23 +54,6 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 
-</div>
-</div>
-<div class="sect1">
-<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
-<dd>
-<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
-</dd>
-<dt class="hdlist1"><strong>--release</strong>=<em>id|app[:ms]:rel</em></dt>
-<dd>
-<p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
-</dd>
-</dl>
-</div>
 </div>
 </div>
 <div class="sect1">
@@ -140,9 +120,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><em>&lt;scanFile&gt;</em></dt>
+<dt class="hdlist1"><em>scan-id</em></dt>
 <dd>
-<p>File containing existing mobile scan results to be imported.</p>
+<p>Scan id(s).</p>
 </dd>
 </dl>
 </div>
@@ -152,7 +132,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-09-25 23:06:26 UTC
+Last updated 2023-10-09 14:03:00 UTC
 </div>
 </div>
 </body>

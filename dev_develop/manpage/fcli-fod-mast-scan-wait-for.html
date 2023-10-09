@@ -1,5 +1,5 @@
 ---
-title: fcli-fod-scan-config-setup-sast(1)
+title: fcli-fod-mast-scan-wait-for(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-fod-scan-config-setup-sast(1)</title>
+<title>fcli-fod-mast-scan-wait-for(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230925.230408-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231009.140034-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-fod-scan-config-setup-sast(1) Manual Page</h1>
+<h1>fcli-fod-mast-scan-wait-for(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-scan-config-setup-sast - Configure the release for enabling SAST scans (PREVIEW).</p>
+<p>fcli-fod-mast-scan-wait-for - Wait for one or more MAST scans to reach or exit specified scan statuses.</p>
 </div>
 </div>
 <div id="content">
@@ -43,23 +43,19 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod scan-config setup-sast</strong> [<strong>--include-third-party-libs</strong>] [<strong>--oss</strong>]
-                                [<strong>--use-source-control</strong>]
-                                <strong>--assessment-type</strong>=<em>&lt;staticAssessmentType&gt;</em>
-                                <strong>--audit-preference</strong>=<em>&lt;auditPreferenceType&gt;</em>
-                                [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                                [<strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em>]
-                                <strong>--frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em>
-                                [<strong>--language-level</strong>=<em>&lt;languageLevel&gt;</em>]
-                                [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
-                                <strong>--technology-stack</strong>=<em>&lt;technologyStack&gt;</em> [[<strong>-h</strong>]
-                                [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                                [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
-                          _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                    _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                                <em>id|app[:ms]:rel</em></p>
+<p><strong>fcli fod mast-scan wait-for</strong> [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
+                            [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
+                            [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
+                            [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
+                            [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequest</em>
+      _                      ed&gt;_] [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>]
+                            [<strong>-s</strong>=<em>&lt;states&gt;</em>[,<em>&lt;states&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                            [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                            [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                            [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                            [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] [<strong>-u</strong>=<em>any-match|all-match</em> |
+                            <strong>-w</strong>=<em>any-match|all-match</em>] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
+                            <em>scan-id&#8217;s</em>&#8230;&#8203;</p>
 </div>
 </div>
 </div>
@@ -67,7 +63,11 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command is not fully implemented and is intended for preview only. Command name, options and behavior may change at any time, even between patch or minor releases, potentially affecting any workflows in which this command is being used.</p>
+<p>Although this command offers a lot of options to cover many different use cases, you can simply pass a scan id (possibly stored using --store on one of the 'scan start-*' commands) to wait for scan completion. If any error state or unknown state is detected, an exception will be thrown.</p>
+</div>
+<div class="paragraph">
+<p>The following states are currently known by fcli:
+${fcli.fod.scan.states:-See fcli help output}</p>
 </div>
 </div>
 </div>
@@ -76,49 +76,45 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--assessment-type</strong>=<em>&lt;staticAssessmentType&gt;</em></dt>
+<dt class="hdlist1"><strong>-i</strong>, <strong>--interval</strong>=<em>&lt;intervalPeriod&gt;</em></dt>
 <dd>
-<p>The type of Static assessment to carry out. Valid values:</p>
+<p>Polling interval, for example 5s (5 seconds) or 1m (1 minute).</p>
 </dd>
-<dt class="hdlist1"><strong>--audit-preference</strong>=<em>&lt;auditPreferenceType&gt;</em></dt>
+<dt class="hdlist1"><strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em></dt>
 <dd>
-<p>Audit preference, e.g. Manual or Automated</p>
+<p>Action to take when a failure state is returned for any of the records: wait, terminate, fail.</p>
 </dd>
-<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dt class="hdlist1"><strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em></dt>
 <dd>
-<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
+<p>Action to take when timeout occurs: terminate, fail.</p>
 </dd>
-<dt class="hdlist1"><strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em></dt>
+<dt class="hdlist1"><strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em></dt>
 <dd>
-<p>Entitlement Id to use. If not specified Frequency and Assessment Type will be used to find one.</p>
+<p>Action to take when an unknown state is returned for any of the records: wait, terminate, fail.</p>
 </dd>
-<dt class="hdlist1"><strong>--frequency, --entitlement-frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em></dt>
+<dt class="hdlist1"><strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequested&gt;</em></dt>
 <dd>
-<p>The entitlement frequency type to use. Valid values: SingleScan, Subscription.</p>
-</dd>
-<dt class="hdlist1"><strong>--include-third-party-libs</strong></dt>
-<dd>
-<p>Indicates if third party libraries should be included.</p>
-</dd>
-<dt class="hdlist1"><strong>--language-level</strong>=<em>&lt;languageLevel&gt;</em></dt>
-<dd>
-<p>The language level of the technology stack (if needed).</p>
-</dd>
-<dt class="hdlist1"><strong>--oss</strong></dt>
-<dd>
-<p>Perform Open Source Analysis scan.</p>
+<p>Action to take when an unknown state is passed in any of the --while or --until options: ignore, fail.</p>
 </dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
 <p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
-<dt class="hdlist1"><strong>--technology-stack</strong>=<em>&lt;technologyStack&gt;</em></dt>
+<dt class="hdlist1"><strong>-s</strong>, <strong>--any-state</strong>=<em>&lt;states&gt;</em>[,<em>&lt;states&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>The technology stack of the application.</p>
+<p>One or more scan states against which to match the given scans.</p>
 </dd>
-<dt class="hdlist1"><strong>--use-source-control</strong></dt>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--timeout</strong>=<em>&lt;timeoutPeriod&gt;</em></dt>
 <dd>
-<p>Indicates if source control should be used.</p>
+<p>Time-out, for example 30s (30 seconds), 5m (5 minutes), 1h (1 hour).</p>
+</dd>
+<dt class="hdlist1"><strong>-u</strong>, <strong>--until</strong>=<em>any-match|all-match</em></dt>
+<dd>
+<p>Wait until either any or all scans match. If neither --until or --while are specified, default is to wait until all scans match.</p>
+</dd>
+<dt class="hdlist1"><strong>-w</strong>, <strong>--while</strong>=<em>any-match|all-match</em></dt>
+<dd>
+<p>Wait while either any or all scans match.</p>
 </dd>
 </dl>
 </div>
@@ -188,9 +184,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><em>id|app[:ms]:rel</em></dt>
+<dt class="hdlist1"><em>scan-id&#8217;s</em>&#8230;&#8203;</dt>
 <dd>
-<p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
+<p>Scan id(s).</p>
 </dd>
 </dl>
 </div>
@@ -200,7 +196,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-09-25 23:06:26 UTC
+Last updated 2023-10-09 14:03:00 UTC
 </div>
 </div>
 </body>

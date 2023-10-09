@@ -1,5 +1,5 @@
 ---
-title: fcli-fod-scan-start-dast(1)
+title: fcli-fod-sast-scan-setup(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-fod-scan-start-dast(1)</title>
+<title>fcli-fod-sast-scan-setup(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230925.230408-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231009.140034-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-fod-scan-start-dast(1) Manual Page</h1>
+<h1>fcli-fod-sast-scan-setup(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -30,12 +30,11 @@ fcli_version:
 <li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
-<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-scan-start-dast - Start a new DAST scan (PREVIEW).</p>
+<p>fcli-fod-sast-scan-setup - Configure SAST scan details for the release (PREVIEW).</p>
 </div>
 </div>
 <div id="content">
@@ -43,19 +42,20 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod scan start-dast</strong> <strong>--assessment-type</strong>=<em>&lt;dynamicAssessmentType&gt;</em>
+<p><strong>fcli fod sast-scan setup</strong> [<strong>--include-third-party-libs</strong>] [<strong>--oss</strong>]
+                         [<strong>--use-source-control</strong>]
+                         <strong>--assessment-type</strong>=<em>&lt;staticAssessmentType&gt;</em>
+                         <strong>--audit-preference</strong>=<em>&lt;auditPreferenceType&gt;</em>
                          [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                          [<strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em>]
                          <strong>--frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em>
-                         [<strong>--in-progress</strong>=<em>&lt;inProgressScanActionType&gt;</em>]
-                         [<strong>--notes</strong>=<em>&lt;notes&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
-                         [<strong>--remediation</strong>=<em>&lt;remediationScanPreferenceType&gt;</em>]
-                         [<strong>--start-date</strong>=<em>&lt;startDate&gt;</em>] [[<strong>-h</strong>]
+                         [<strong>--language-level</strong>=<em>&lt;languageLevel&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                         <strong>--release</strong>=<em>id|app[:ms]:rel</em>
+                         <strong>--technology-stack</strong>=<em>&lt;technologyStack&gt;</em> [[<strong>-h</strong>]
                          [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                          [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                          <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-             _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] <em>id|app[:</em>
-                 _        ms]:rel_</p>
+             _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -63,7 +63,10 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command is not fully implemented and is intended for preview only. It can only be used for starting a configured Dynamic scan and does not support file uploads (i.e. API definitions or workflows). Command name, options and behavior may change at any time, even between patch or minor releases, potentially affecting any workflows in which this command is being used.</p>
+<p>This command is not fully implemented and is intended for preview only. Command name, options and behavior may change at any time, even between patch or minor releases, potentially affecting any workflows in which this command is being used.
+To correctly setup a scan you will need to provide the name of the assessment type using the '--assessment-type=xxx' option. Since assessment types can potentially be configured differently for each tenant, you can find the correct name using the 'fod assessment-type list' command.
+If you know the Id of an entitlement that you want to use then you can supply it to the '--entitlement-id=xxx' option. If not, you can supply both '--assessment-type' and '--entitlement-frequency' options and the command will try to find an appropriate entitlement.
+For the '--technology-stack' and '--language-level' options it is recommended to examine the drop-down list values in the FoD UI. However, you can also use the 'fod rest lookup' command. For example, to list all the technology stacks you would use 'fod rest lookup TechnologyTypes' and then for the language levels (if appropriate) you would use the 'Value' field returned in 'fod rest lookup LanguageLevels'. For example, for Java which is typically value '7', you would use 'fod rest lookup LanguageLevels -q "group=='7'".</p>
 </div>
 </div>
 </div>
@@ -72,9 +75,13 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--assessment-type</strong>=<em>&lt;dynamicAssessmentType&gt;</em></dt>
+<dt class="hdlist1"><strong>--assessment-type</strong>=<em>&lt;staticAssessmentType&gt;</em></dt>
 <dd>
-<p>The type of Dynamic assessment to carry out. Valid values:</p>
+<p>The type of Static assessment to carry out. Use 'assessment-type list' to find valid values.</p>
+</dd>
+<dt class="hdlist1"><strong>--audit-preference</strong>=<em>&lt;auditPreferenceType&gt;</em></dt>
+<dd>
+<p>Audit preference, e.g. Manual or Automated</p>
 </dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
@@ -82,31 +89,39 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em></dt>
 <dd>
-<p>The Id of the entitlement to use for the scan.</p>
+<p>Entitlement Id to use. If not specified Frequency and Assessment Type will be used to find one.</p>
 </dd>
 <dt class="hdlist1"><strong>--frequency, --entitlement-frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em></dt>
 <dd>
 <p>The entitlement frequency type to use. Valid values: SingleScan, Subscription.</p>
 </dd>
-<dt class="hdlist1"><strong>--in-progress, --in-progress-action</strong>=<em>&lt;inProgressScanActionType&gt;</em></dt>
+<dt class="hdlist1"><strong>--include-third-party-libs</strong></dt>
 <dd>
-<p>The action to use if a scan is already in progress. Valid values: DoNotStartScan, CancelInProgressScan, Queue.</p>
+<p>Indicates if third party libraries should be included.</p>
 </dd>
-<dt class="hdlist1"><strong>--notes</strong>=<em>&lt;notes&gt;</em></dt>
+<dt class="hdlist1"><strong>--language-level</strong>=<em>&lt;languageLevel&gt;</em></dt>
 <dd>
-<p>Scan notes.</p>
+<p>The language level of the technology stack (if needed).</p>
+</dd>
+<dt class="hdlist1"><strong>--oss</strong></dt>
+<dd>
+<p>Perform Open Source Analysis scan.</p>
 </dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
 <p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
-<dt class="hdlist1"><strong>--remediation, --remediation-preference</strong>=<em>&lt;remediationScanPreferenceType&gt;</em></dt>
+<dt class="hdlist1"><strong>--release</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
-<p>The remediation preference to use. Valid values: RemediationScanIfAvailable, RemediationScanOnly, NonRemediationScanOnly.</p>
+<p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
 </dd>
-<dt class="hdlist1"><strong>--start-date</strong>=<em>&lt;startDate&gt;</em></dt>
+<dt class="hdlist1"><strong>--technology-stack</strong>=<em>&lt;technologyStack&gt;</em></dt>
 <dd>
-<p>Date to start the scan (in MM/dd/yyyy HH:mm format).</p>
+<p>The technology stack of the application.</p>
+</dd>
+<dt class="hdlist1"><strong>--use-source-control</strong></dt>
+<dd>
+<p>Indicates if source control should be used.</p>
 </dd>
 </dl>
 </div>
@@ -171,24 +186,11 @@ fcli_version:
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><em>id|app[:ms]:rel</em></dt>
-<dd>
-<p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-09-25 23:06:26 UTC
+Last updated 2023-10-09 14:03:00 UTC
 </div>
 </div>
 </body>

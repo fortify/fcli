@@ -1,5 +1,5 @@
 ---
-title: fcli-fod-scan-config(1)
+title: fcli-fod-mast-scan(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-fod-scan-config(1)</title>
+<title>fcli-fod-mast-scan(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230925.230408-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231009.140034-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-fod-scan-config(1) Manual Page</h1>
+<h1>fcli-fod-mast-scan(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -32,7 +32,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-scan-config - Setup scan configurations on FoD (PREVIEW).</p>
+<p>fcli-fod-mast-scan - Manage FoD MAST scans.</p>
 </div>
 </div>
 <div id="content">
@@ -40,16 +40,14 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod scan-config</strong> [<strong>-h</strong>] [COMMAND]</p>
+<p><strong>fcli fod mast-scan</strong> [<strong>-h</strong>] [COMMAND]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>This command and all sub-commands are intended for preview purposes only. Command names, options and behavior may change at any time, even between patch or minor releases, potentially affecting any workflows in which these commands are being used.</p>
-</div>
+
 </div>
 </div>
 <div class="sect1">
@@ -70,21 +68,37 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-fod-scan-config-get-dast.html"><strong>get-dast</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-fod-mast-scan-list.html"><strong>list</strong></a></dt>
 <dd>
-<p>Get current DAST scan configuration (PREVIEW).</p>
+<p>List MAST scans.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-fod-scan-config-get-mobile.html"><strong>get-mobile</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-fod-mast-scan-get.html"><strong>get</strong></a></dt>
 <dd>
-<p>Get current Mobile scan configuration (UNAVAILABLE).</p>
+<p>Get MAST scan details.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-fod-scan-config-get-sast.html"><strong>get-sast</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-fod-mast-scan-get-config.html"><strong>get-config</strong></a></dt>
 <dd>
-<p>Get current SAST scan configuration (PREVIEW).</p>
+<p>Get current MAST scan configuration (PREVIEW).</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-fod-scan-config-setup-sast.html"><strong>setup-sast</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-fod-mast-scan-start.html"><strong>start</strong></a></dt>
 <dd>
-<p>Configure the release for enabling SAST scans (PREVIEW).</p>
+<p>Start a new MAST scan (PREVIEW).</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-fod-mast-scan-cancel.html"><strong>cancel</strong></a></dt>
+<dd>
+<p>Cancel a MAST scan.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-fod-mast-scan-wait-for.html"><strong>wait-for</strong></a></dt>
+<dd>
+<p>Wait for one or more MAST scans to reach or exit specified scan statuses.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-fod-mast-scan-import.html"><strong>import</strong></a></dt>
+<dd>
+<p>Import existing MAST scan results (from an FPR file).</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-fod-mast-scan-download.html"><strong>download</strong></a></dt>
+<dd>
+<p>Download previous scan results (as an FPR file).</p>
 </dd>
 </dl>
 </div>
@@ -94,7 +108,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-09-25 23:06:26 UTC
+Last updated 2023-10-09 14:03:00 UTC
 </div>
 </div>
 </body>

@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230925.230408-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231009.140034-dev_develop" %}
 
 
 <div id="header">
@@ -48,7 +48,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The commands listed below allow for starting and managing scans on FoD. Commands for setting up scans and importing existing scan results can be found on the 'fcli fod scan-setup' and 'fcli fod scan-import' commands respectively.</p>
+<p>The commands listed below allow for generically managing scans on FoD. Commands for setting up, starting, downloading and importing existing scan results can be found on the relevant 'fcli fod xxx-scan' entities, for example SAST scan setup and start can be found in 'fcli fod sast-scan'.</p>
 </div>
 </div>
 </div>
@@ -70,33 +70,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-fod-scan-cancel.html"><strong>cancel</strong></a></dt>
-<dd>
-<p>Cancel a scan.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-fod-scan-get.html"><strong>get</strong></a></dt>
-<dd>
-<p>Get scan details.</p>
-</dd>
 <dt class="hdlist1"><a href="fcli-fod-scan-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
 <dd>
 <p>List scans.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-fod-scan-start-sast.html"><strong>start-sast</strong></a></dt>
-<dd>
-<p>Start a new SAST scan.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-fod-scan-start-dast.html"><strong>start-dast</strong></a></dt>
-<dd>
-<p>Start a new DAST scan (PREVIEW).</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-fod-scan-start-mobile.html"><strong>start-mobile</strong></a></dt>
-<dd>
-<p>Start a new Mobile scan (PREVIEW).</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-fod-scan-wait-for.html"><strong>wait-for</strong></a></dt>
-<dd>
-<p>Wait for one or more scans to reach or exit specified scan statuses.</p>
 </dd>
 </dl>
 </div>
@@ -106,7 +82,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-09-25 23:06:26 UTC
+Last updated 2023-10-09 14:03:00 UTC
 </div>
 </div>
 </body>
