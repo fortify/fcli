@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/fortify/fcli/compare/v1.3.1...v1.3.2) (2023-10-12)
+
+
+### Bug Fixes
+
+* `fcli tool vuln-exporter install`: Add support for latest (2.0.4) version ([a44ddc3](https://github.com/fortify/fcli/commit/a44ddc3d74b1a2ad92a2fb41c65a0c7c5dbcc0aa))
+
 ## [1.3.1](https://github.com/fortify/fcli/compare/v1.3.0...v1.3.1) (2023-09-20)
 
 
