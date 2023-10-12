@@ -1,5 +1,7 @@
 = Fortify CLI (fcli) Installation & Usage
 
+== Introduction
+
 The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the
 man-pages as listed in the link:#_manual_pages[Manual Pages] section.
 
@@ -26,10 +28,17 @@ The following Fortify products are currently supported by fcli:
 ** Support for listing scan policies and settings 
 ** Support for listing and managing sensors 
 * Fortify on Demand (FoD) 
-** Currently in preview mode 
-** No link:#_manual_pages[manual pages] available 
-** `+fod+` command is hidden from `+fcli -h+` output 
-** View available FoD commands by running `+fcli fod -h+`
+** Support for creating and managing applications, microservices and releases
+** Support for starting and managing SAST & OSS scans
+** Partial/preview support for starting and managing DAST & MAST scans
+** Partial/preview support for managing users, groups and their assignments
+
+Some commands and options are either hidden or marked as `PREVIEW`; these may change at any time, even between minor fcli versions. Any fcli invocations using these commands or options may break when upgrading to a future fcli 2.x version, so if possible you should refrain from using these in pipelines for example. Most notably, this includes the following functionalities:
+
+* Commands for configuring and running FoD DAST & MAST scans will change significantly, based on upcoming FoD API changes & improvements
+* Commands and options for managing and assigning users and groups for both FoD and SSC will likely change; see https://github.com/fortify/fcli/issues/369 for details.
+
+Hidden commands are not listed in fcli help output and not included in the link:#_manual_pages[Manual Pages]. If needed, you can view the list of hidden commands using the `+fcli util all-commands list -q hidden+` command.
 
 == Installation
 
@@ -370,9 +379,11 @@ Note: variable-related syntax and behavior was changed in fcli version 2.0.0. If
 
 == Manual Pages
 
-The manual pages for this fcli release can be found here: link:manpage/fcli.html[fcli (1)]. If you are viewing this documentation offline, please make sure that you have fully extracted the docs-html.zip file to access the manual pages.
+Manual pages are automatically generated and contain the same information as fcli help output. Manual pages in HTML and Linux man-page formats can be downloaded for offline use from the fcli releases page at https://github.com/fortify/fcli/releases, or can be viewed online at https://fortify.github.io/fcli. 
 
-Manual pages for each fcli release are automatically generated as new fcli releases are being built, and are available in HTML and Linux man-page formats. The manual pages in man-page format can be downloaded from the fcli releases page at https://github.com/fortify/fcli/releases. The HTML-formatted manual pages, including this documentation page, can also be downloaded from the fcli release page or viewed online at https://fortify.github.io/fcli.
+Please select the proper fcli version from the links above to access the corresponding manual pages. When using the offline HTML documentation bundle, please make sure to extract the full documentation archive to allow for hyperlinks to work correctly.
+
+The manual pages for the currently selected fcli release can be found here: link:manpage/fcli.html[fcli (1)]. 
 
 == Troubleshooting
 
