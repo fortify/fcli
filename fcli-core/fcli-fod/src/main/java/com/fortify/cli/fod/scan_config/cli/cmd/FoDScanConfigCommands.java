@@ -19,7 +19,7 @@ import picocli.CommandLine.Command;
 
 @Command(name = "scan-config", hidden = true,
         subcommands = {
-                //FoDDastScanGetConfigCommand.class,
+                //FoDDastScanGetConfigLegacyCommand.class,
                 //FoDMastScanGetConfigCommand.class,
                 //FoDSastScanGetConfigCommand.class,
                 //FoDSastScanSetupCommand.class,

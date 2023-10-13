@@ -22,8 +22,8 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = FoDOutputHelperMixins.GetConfig.CMD_NAME, hidden = true)
-public class FoDDastScanGetConfigCommand extends AbstractFoDScanConfigGetCommand {
+@Command(name = FoDOutputHelperMixins.GetConfigLegacy.CMD_NAME, hidden = true)
+public class FoDDastScanGetConfigLegacyCommand extends AbstractFoDScanConfigGetCommand {
     @Getter @Mixin private FoDOutputHelperMixins.GetConfig outputHelper;
 
     @Override

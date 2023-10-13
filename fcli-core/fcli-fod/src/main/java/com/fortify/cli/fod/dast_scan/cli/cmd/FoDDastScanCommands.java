@@ -21,9 +21,9 @@ import picocli.CommandLine;
         subcommands = {
                 FoDDastScanListCommand.class,
                 FoDDastScanGetCommand.class,
-                FoDDastScanGetConfigCommand.class,
+                FoDDastScanGetConfigLegacyCommand.class,
                 //FoDDastScanSetupCommand.class,
-                FoDDastScanStartCommand.class,
+                FoDDastScanStartLegacyCommand.class,
                 FoDDastScanCancelCommand.class,
                 FoDDastScanWaitForCommand.class,
                 FoDDastScanImportCommand.class,

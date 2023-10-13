@@ -24,7 +24,7 @@ class FoDScanSpec extends FcliBaseSpec {
     @Shared @AutoCleanup FoDWebAppSupplier app = new FoDWebAppSupplier()
 
     def "list"() {
-        def args = "fod sast-scan list --store scans"
+        def args = "fod scan list --store scans"
         when:
             def result = Fcli.run(args)
         then:

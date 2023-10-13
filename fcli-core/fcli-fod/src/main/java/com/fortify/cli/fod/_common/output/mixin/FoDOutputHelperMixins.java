@@ -84,4 +84,11 @@ public class FoDOutputHelperMixins {
     public static class AssessmentType extends OutputHelperMixins.TableWithQuery {
         public static final String CMD_NAME = "assessment-type";
     }
+
+    public static class StartLegacy extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "start-legacy";
+    }
+    public static class GetConfigLegacy extends OutputHelperMixins.DetailsNoQuery {
+        public static final String CMD_NAME = "get-config-legacy";
+    }
 }
