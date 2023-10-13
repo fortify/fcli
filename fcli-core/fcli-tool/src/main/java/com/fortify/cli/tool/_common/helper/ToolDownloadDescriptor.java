@@ -39,11 +39,15 @@ public class ToolDownloadDescriptor {
     }
     
     public final ToolVersionDownloadDescriptor getVersion(String version) {
-        Optional<ToolVersionDownloadDescriptor> exactMatch = getVersionsStream().filter(v->v.getVersion().equals(version).findFirst();
+        if(version.startsWith("v")) {
+            version.replace("v", "");
+        }
+        Optional<ToolVersionDownloadDescriptor> exactMatch = getVersionsStream().filter(v->v.getVersion().equals(version)).findFirst();
         if(exactMatch.isPresent()) {
             return exactMatch.get();
         }
-        if(version.indexOf('.')==-1 || version.indexOf('.')==version.lastIndexOf('.')) {
+        //add a dot to the input to avoid selecting wrong versions (i.e. 2.10 instead of 2.1.x for input "2.1")
+        if(version.indexOf('.')==-1 || (version.indexOf('.')==version.lastIndexOf('.') && !version.endsWith("."))) {
             version.concat(".");
         }
         return getVersionsStream()
