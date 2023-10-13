@@ -38,13 +38,14 @@ public class ToolDownloadDescriptor {
     }
     
     public final ToolVersionDownloadDescriptor getVersion(String version) {
+        var lookupVersion = version.replaceFirst("^v", "")+".";
         return getVersionsStream()
-                .filter(v->v.getVersion().equals(version))
+                .filter(v->(v.getVersion()+".").startsWith(lookupVersion))
                 .findFirst().orElseThrow(()->new IllegalArgumentException("Version "+version+" not defined"));
     }
     
     public final ToolVersionDownloadDescriptor getVersionOrDefault(String versionName) {
-        if ( StringUtils.isBlank(versionName) || "default".equals(versionName) ) {
+        if ( StringUtils.isBlank(versionName) || "default".equals(versionName) || "latest".equals(versionName) ) {
             versionName = defaultVersion;
         }
         return getVersion(versionName);

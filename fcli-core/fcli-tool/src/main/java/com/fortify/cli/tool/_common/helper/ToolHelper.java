@@ -45,6 +45,7 @@ public final class ToolHelper {
     }
     
     public static final ToolVersionCombinedDescriptor loadToolVersionCombinedDescriptor(String toolName, String version) {
+        version = getToolDownloadDescriptor(toolName).getVersionOrDefault(version).getVersion();
         ToolVersionInstallDescriptor installDescriptor = loadToolVersionInstallDescriptor(toolName, version);
         return installDescriptor==null ? null : new ToolVersionCombinedDescriptor(toolName, getToolDownloadDescriptor(toolName).getVersion(version), installDescriptor);
     }
