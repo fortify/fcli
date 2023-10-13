@@ -38,7 +38,7 @@ public class ToolDownloadDescriptor {
     }
     
     public final ToolVersionDownloadDescriptor getVersion(String version) {
-        var lookupVersion = version.replaceFirst("^v", "")+".";
+        var lookupVersion = (version.replaceFirst("^v", "")+".").replaceFirst("\\.\\.$", ".");
         return getVersionsStream()
                 .filter(v->(v.getVersion()+".").startsWith(lookupVersion))
                 .findFirst().orElseThrow(()->new IllegalArgumentException("Version "+version+" not defined"));
