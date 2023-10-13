@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20231012.134940-dev_develop
+fcli_version: 0.20231013.103811-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20231012.134940-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231012.134940-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231013.103811-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20231012.134940-dev_develop</span>
+<span id="revnumber">version 0.20231013.103811-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -274,6 +274,9 @@ simple wrapper script/batch file or shell alias to make it slightly easier to in
 </div>
 <div class="paragraph">
 <p>To see what top-level fcli commands are available, you can use the <code>fcli --help</code> command. You can drill down into the command tree to see what sub-commands are available within a particular parent command, for example by running <code>fcli ssc --help</code> to see all <code>fcli ssc</code> sub-commands, or <code>fcli ssc session --help</code> to see all SSC session management commands.</p>
+</div>
+<div class="paragraph">
+<p>Note that the <code>--help</code> option must be specified <em>after</em> the sub-command for which you want view usage instructions, i.e. <code>fcli ssc --help</code> and <em>not</em> <code>fcli --help ssc</code>. A listing of all available fcli commands can be viewed using the <code>fcli util all-commands list</code> command.</p>
 </div>
 <div class="paragraph">
 <p>If you don’t have fcli up and running yet, you can also refer to the downloadable or online manual pages; refer to the <a href="#_manual_pages">Manual Pages</a> section for more information.</p>
@@ -946,8 +949,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20231012.134940-dev_develop<br>
-Last updated 2023-10-12 13:51:45 UTC
+Version 0.20231013.103811-dev_develop<br>
+Last updated 2023-10-13 10:40:06 UTC
 </div>
 </div>
 </body>
