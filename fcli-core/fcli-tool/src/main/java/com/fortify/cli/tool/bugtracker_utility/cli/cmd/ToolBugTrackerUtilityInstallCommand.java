@@ -46,6 +46,8 @@ public class ToolBugTrackerUtilityInstallCommand extends AbstractToolInstallComm
         String version = descriptor.getOriginalDownloadDescriptor().getVersion();
         String jarName = String.format("FortifyBugTrackerUtility-%s.jar", version);
         
+        //we are renaming the jar to remove the version reference
+        //this allows us to use pre-written bat/bash wrappers rather than having to dynamically generate those
         descriptor.getInstallPath().resolve(jarName).toFile().renameTo(
                 descriptor.getInstallPath().resolve("FortifyBugTrackerUtility.jar").toFile());
         

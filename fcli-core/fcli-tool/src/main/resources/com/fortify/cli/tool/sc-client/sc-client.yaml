@@ -1,4 +1,4 @@
-#Versions must be listed in descending order
+#Versions must be listed in descending order to guarantee proper version selection when users provide a partial version number
 defaultDownloadUrl: https://tools.fortify.com/scancentral/Fortify_ScanCentral_Client_{toolVersion}_x64.zip
 defaultVersion: 23.1.0
 versions:

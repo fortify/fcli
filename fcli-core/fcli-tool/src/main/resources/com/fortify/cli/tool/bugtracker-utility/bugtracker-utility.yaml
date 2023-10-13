@@ -1,4 +1,4 @@
-#Versions must be listed in descending order
+#Versions must be listed in descending order to guarantee proper version selection when users provide a partial version number
 defaultDownloadUrl: https://github.com/fortify-ps/FortifyBugTrackerUtility/releases/download/{toolVersion}/FortifyBugTrackerUtility-{toolVersion}-dist.zip
 defaultVersion: 4.12
 versions:

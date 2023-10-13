@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.tool._common.helper;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -38,6 +39,13 @@ public class ToolDownloadDescriptor {
     }
     
     public final ToolVersionDownloadDescriptor getVersion(String version) {
+        Optional<ToolVersionDownloadDescriptor> exactMatch = getVersionsStream().filter(v->v.getVersion().equals(version).findFirst();
+        if(exactMatch.isPresent()) {
+            return exactMatch.get();
+        }
+        if(version.indexOf('.')==-1 || version.indexOf('.')==version.lastIndexOf('.')) {
+            version.concat(".");
+        }
         return getVersionsStream()
                 .filter(v->v.getVersion().startsWith(version))
                 .findFirst().orElseThrow(()->new IllegalArgumentException("Version "+version+" not defined"));

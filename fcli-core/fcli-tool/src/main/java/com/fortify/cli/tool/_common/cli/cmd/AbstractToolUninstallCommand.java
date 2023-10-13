@@ -37,7 +37,6 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
     @Override
     public final JsonNode getJsonNode() {
         String toolName = getToolName();
-        version = ToolHelper.getToolDownloadDescriptor(toolName).getVersionOrDefault(version).getVersion();
         ToolVersionCombinedDescriptor descriptor = ToolHelper.loadToolVersionCombinedDescriptor(toolName, version);
         if ( descriptor==null ) {
             throw new IllegalArgumentException("Tool installation not found");

@@ -1,4 +1,4 @@
-#Versions must be listed in descending order
+#Versions must be listed in descending order to guarantee proper version selection when users provide a partial version number
 defaultDownloadUrl: https://github.com/fortify/FortifyVulnerabilityExporter/releases/download/v{toolVersion}/FortifyVulnerabilityExporter.zip
 defaultVersion: 2.0.3
 versions:
