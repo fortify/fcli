@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-plugin-enable(1)
+title: fcli-fod-oss-scan-start(1)
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-plugin-enable(1)</title>
+<title>fcli-fod-oss-scan-start(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,21 +20,21 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-ssc-plugin-enable(1) Manual Page</h1>
+<h1>fcli-fod-oss-scan-start(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
 <li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
-<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-plugin-enable - Enable a plugin.</p>
+<p>fcli-fod-oss-scan-start - Start a new OSS scan (PREVIEW).</p>
 </div>
 </div>
 <div id="content">
@@ -42,18 +42,42 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc plugin enable</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
-                       <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-           _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                       <em>&lt;numericPluginId&gt;</em></p>
+<p><strong>fcli fod oss-scan start</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>-f</strong>=<em>&lt;scanFile&gt;</em> <strong>--release</strong>=<em>id|app[:</em>
+                _        ms]:rel_ [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                        [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                        [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                        [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>This command is not fully implemented and is intended for preview only. Command name, options and behavior may change at any time, even between patch or minor releases, potentially affecting any workflows in which this command is being used.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;scanFile&gt;</em></dt>
+<dd>
+<p>Absolute path of the ScanCentral package (.Zip) file to upload.</p>
+</dd>
+<dt class="hdlist1"><strong>--release</strong>=<em>id|app[:ms]:rel</em></dt>
+<dd>
+<p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
+</dd>
+</dl>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -63,7 +87,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
 <dd>
-<p>Name of the SSC session to use for executing this command. Default value: default.</p>
+<p>Name of the FoD session to use for executing this command. Default value: default.</p>
 </dd>
 </dl>
 </div>
@@ -110,19 +134,6 @@ fcli_version:
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
 <p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><em>&lt;numericPluginId&gt;</em></dt>
-<dd>
-<p>Numeric plugin id.</p>
 </dd>
 </dl>
 </div>
