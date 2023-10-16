@@ -33,7 +33,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Download.CMD_NAME)
 public class SSCIssueTemplateDownloadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Download outputHelper;
-    @Mixin private CommonOptionMixins.OptionalOutputFile outputFileMixin;
+    @Mixin private CommonOptionMixins.OptionalFile fileMixin;
 
     @CommandLine.Mixin
     private SSCIssueTemplateResolverMixin.PositionalParameterSingle issueTemplateResolver;
@@ -42,7 +42,7 @@ public class SSCIssueTemplateDownloadCommand extends AbstractSSCJsonNodeOutputCo
     public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCIssueTemplateDescriptor descriptor = issueTemplateResolver.getIssueTemplateDescriptor(unirest);
         String issueTemplateId = descriptor.getId();
-        File destination = outputFileMixin.getOutputFile();
+        File destination = fileMixin.getFile();
         if (destination==null ) {
             destination = new File(String.format("./%s", descriptor.getOriginalFileName()));
         }

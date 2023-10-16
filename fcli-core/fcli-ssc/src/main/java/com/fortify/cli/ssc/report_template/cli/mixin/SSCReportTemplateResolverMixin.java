@@ -33,7 +33,7 @@ public class SSCReportTemplateResolverMixin {
         @Getter private String reportTemplateNameOrId;
     }
     public static class RequiredOption extends AbstractSSCReportTemplateResolverMixin {
-        @EnvSuffix("REPORT_TEMPLATE") @Option(names="--report-template", required=true, descriptionKey = "reportTemplateNameOrId")
+        @Option(names="--report-template", required=true, descriptionKey = "reportTemplateNameOrId")
         @Getter private String reportTemplateNameOrId;
     }
     

@@ -12,11 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.issue_template.cli.cmd;
 
-import java.io.File;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
@@ -28,15 +26,12 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class SSCIssueTemplateCreateCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper; 
-    @EnvSuffix("ISSUE_TEMPLATE") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.issue-template.name")
-    private String issueTemplateName;
-    @Option(names={"--issue-template-file","-f"}, required = true)
-    private String fileName;
+    @Option(names={"--name","-n"}, required = true) private String issueTemplateName;
+    @Mixin private CommonOptionMixins.RequiredFile fileMixin;
     @Option(names={"--description","-d"}, required = false, defaultValue = "")
     private String description;
     @Option(names={"--set-as-default"})
@@ -49,7 +44,7 @@ public class SSCIssueTemplateCreateCommand extends AbstractSSCJsonNodeOutputComm
                 .queryString("description", description)
                 .queryString("confirmIgnoreCustomTagUpdates", "true")
                 .multiPartContent()
-                .field("file", new File(fileName))
+                .field("file", fileMixin.getFile())
                 .asObject(JsonNode.class).getBody();
         if ( setAsDefault ) {
             ObjectNode data = (ObjectNode)body.get("data").deepCopy();

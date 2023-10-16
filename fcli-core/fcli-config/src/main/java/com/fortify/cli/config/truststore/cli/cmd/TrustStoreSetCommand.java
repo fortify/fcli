@@ -16,7 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
@@ -30,24 +30,22 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @Command(name=OutputHelperMixins.Set.CMD_NAME)
 public class TrustStoreSetCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier, IRecordTransformer {
     @Mixin @Getter private OutputHelperMixins.Set outputHelper;
     
-    @EnvSuffix("PATH") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.config.truststore.set.trustStorePath")
-    private Path trustStorePath;
+    @Mixin CommonOptionMixins.RequiredFile fileMixin;
     
-    @Option(names = {"-p", "--truststore-password"})
+    @Option(names = {"-p", "--password"})
     private String trustStorePassword;
     
-    @Option(names = {"-t", "--truststore-type"}, defaultValue = "jks")
+    @Option(names = {"-t", "--type"}, defaultValue = "jks")
     private String trustStoreType;
     
     @Override
     public JsonNode getJsonNode() {
-    	Path absolutePath = trustStorePath.toAbsolutePath();
+    	Path absolutePath = fileMixin.getFile().toPath().toAbsolutePath();
     	if ( !Files.exists(absolutePath) ) {
     		throw new IllegalArgumentException("Trust store cannot be found: "+absolutePath);
     	}

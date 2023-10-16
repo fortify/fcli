@@ -165,7 +165,8 @@ public class FortifyCLITest {
         var descriptionArray = optionSpec.description();
         if ( descriptionArray.length==0 || Stream.of(descriptionArray).allMatch(StringUtils::isBlank) ) {
             String descriptionKey = StringUtils.isBlank(optionSpec.descriptionKey()) ? "<default>" : optionSpec.descriptionKey();
-            results.add(TestType.OPT_EMPTY_DESCRIPTION, Level.ERROR, cmdSpec, optionSpec, String.format("%s: Option has an empty description (descriptionKey=%s)", getBundleName(cmdSpec), descriptionKey));
+            String cmd = cmdSpec.qualifiedName();
+            results.add(TestType.OPT_EMPTY_DESCRIPTION, Level.ERROR, cmdSpec, optionSpec, String.format("%s: Option has an empty description (%s, descriptionKey=%s)", getBundleName(cmdSpec), cmd, descriptionKey));
         }
     }
 

@@ -34,12 +34,12 @@ import picocli.CommandLine.Mixin;
 public class SSCReportTemplateDownloadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Download outputHelper;
     @Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
-    @Mixin private CommonOptionMixins.OptionalOutputFile outputFileMixin;
+    @Mixin private CommonOptionMixins.OptionalFile fileMixin;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         SSCReportTemplateDescriptor descriptor = reportTemplateResolver.getReportTemplateDescriptor(unirest);
-        var destination = outputFileMixin.getOutputFile();
+        var destination = fileMixin.getFile();
         if ( destination==null ) {
             destination = new File(String.format("./%s", descriptor.getFileName()));
         }

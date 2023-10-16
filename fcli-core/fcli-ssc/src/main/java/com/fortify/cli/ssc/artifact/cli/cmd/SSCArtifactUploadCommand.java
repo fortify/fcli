@@ -14,20 +14,18 @@ package com.fortify.cli.ssc.artifact.cli.cmd;
 
 import java.io.File;
 
-import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @Command(name = OutputHelperMixins.Upload.CMD_NAME)
 public class SSCArtifactUploadCommand extends AbstractSSCArtifactUploadCommand {
     @Getter @Mixin private OutputHelperMixins.Upload outputHelper; 
-    @EnvSuffix("FILE") @Getter @Parameters(arity="1", descriptionKey = "fcli.ssc.artifact.upload.file") 
-    private File file;
+    @Mixin private CommonOptionMixins.RequiredFile fileMixin;
     
     @Option(names = {"-e", "--engine-type"})
     @Getter private String engineType;
@@ -35,5 +33,10 @@ public class SSCArtifactUploadCommand extends AbstractSSCArtifactUploadCommand {
     @Override
     public boolean isSingular() {
         return true;
+    }
+    
+    @Override
+    protected File getFile() {
+        return fileMixin.getFile();
     }
 }

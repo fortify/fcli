@@ -39,7 +39,7 @@ public class SSCArtifactDownloadCommand extends AbstractSSCArtifactOutputCommand
     public JsonNode getJsonNode() {
         var unirest = getUnirestInstance();
         SSCArtifactDescriptor descriptor = artifactResolver.getArtifactDescriptor(unirest);
-        File destination = downloadOptions.getDestination().getOutputFile();
+        File destination = downloadOptions.getDestination().getFile();
         if ( destination==null ) {
             destination = new File(String.format("./artifact_%s.fpr", descriptor.getId()));
         }

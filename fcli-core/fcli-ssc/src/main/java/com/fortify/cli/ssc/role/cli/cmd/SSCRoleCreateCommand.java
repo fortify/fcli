@@ -39,7 +39,7 @@ public class SSCRoleCreateCommand extends AbstractSSCBaseRequestOutputCommand im
  */
 
     @Getter
-    @EnvSuffix("NAME")@Parameters(index = "0", descriptionKey = "fcli.ssc.role.name")
+    @EnvSuffix("NAME") @Parameters(index = "0", descriptionKey = "fcli.ssc.role.name")
     private String name;
 
     @Getter

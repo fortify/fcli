@@ -39,7 +39,7 @@ import picocli.CommandLine.Option;
 public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Download outputHelper;
     @Mixin private SCDastScanResolverMixin.PositionalParameter scanResolver;
-    @Mixin private CommonOptionMixins.OptionalOutputFile optionalDestination;
+    @Mixin private CommonOptionMixins.OptionalFile optionalDestination;
     @Option(names = {"-t", "--type"}, required=true, converter = DownloadTypeConverter.class, completionCandidates = DownloadTypeIterable.class)
     @Getter private DownloadType type;
     
@@ -47,7 +47,7 @@ public class SCDastScanDownloadCommand extends AbstractSCDastOutputCommand imple
     public JsonNode getJsonNode() {
         var unirest = getUnirestInstance();
         SCDastScanDescriptor descriptor = scanResolver.getScanDescriptor(unirest);
-        File downloadPath = optionalDestination.getOutputFile();
+        File downloadPath = optionalDestination.getFile();
         if ( downloadPath==null ) {
             String identifier = StringUtils.isBlank(descriptor.getName()) 
                     ? String.format("scan-%s", descriptor.getId())

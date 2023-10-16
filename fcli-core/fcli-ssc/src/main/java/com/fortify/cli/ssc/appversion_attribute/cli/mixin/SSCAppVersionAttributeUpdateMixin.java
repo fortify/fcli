@@ -14,11 +14,8 @@ package com.fortify.cli.ssc.appversion_attribute.cli.mixin;
 
 import java.util.Map;
 
-import com.fortify.cli.common.cli.util.EnvSuffix;
-
 import lombok.Getter;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 public class SSCAppVersionAttributeUpdateMixin {
     private static final String PARAM_LABEL = "[CATEGORY:]ATTR=VALUE[,VALUE...]";
@@ -32,10 +29,8 @@ public class SSCAppVersionAttributeUpdateMixin {
         @Getter private Map<String,String> attributes;
     }
     
-    public static class RequiredPositionalParameter extends AbstractSSCAppVersionAttributeUpdateMixin {
-        @EnvSuffix("ATTRS") @Parameters(index = "0..*", arity = "1..*", paramLabel = PARAM_LABEL, descriptionKey = "fcli.ssc.appversion-attribute.update.param")
+    public static class RequiredAttrOption extends AbstractSSCAppVersionAttributeUpdateMixin {
+        @Option(names = {"--attrs", "--attributes"}, required = true, split = ",", paramLabel = PARAM_LABEL, descriptionKey = "fcli.ssc.appversion-attribute.update.option")
         @Getter private Map<String,String> attributes;
     }
-    
-    
 }

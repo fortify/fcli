@@ -42,7 +42,7 @@ public class SSCAppVersionDownloadStateCommand extends AbstractSSCOutputCommand 
     public JsonNode getJsonNode() {
         var unirest = getUnirestInstance();
         SSCAppVersionDescriptor av = parentResolver.getAppVersionDescriptor(unirest);
-        File destination = downloadOptions.getDestination().getOutputFile();
+        File destination = downloadOptions.getDestination().getFile();
         if ( destination==null ) {
             destination = new File(String.format("./%s_%s.fpr", av.getApplicationName(), av.getVersionName()));
         }

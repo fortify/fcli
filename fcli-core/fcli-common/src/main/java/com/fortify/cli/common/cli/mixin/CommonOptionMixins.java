@@ -26,9 +26,14 @@ import picocli.CommandLine.ParameterException;
 public class CommonOptionMixins {
     private CommonOptionMixins() {}
     
-    public static class OptionalOutputFile {
-        @Option(names = {"-f", "--output-file"})
-        @Getter private File outputFile;
+    public static class OptionalFile {
+        @Option(names = {"-f", "--file"})
+        @Getter private File file;
+    }
+    
+    public static class RequiredFile {
+        @Option(names = {"-f", "--file"}, required=true)
+        @Getter private File file;
     }
     
     public static class RequireConfirmation {

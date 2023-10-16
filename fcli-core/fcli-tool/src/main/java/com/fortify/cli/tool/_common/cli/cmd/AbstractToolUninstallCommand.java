@@ -27,10 +27,10 @@ import com.fortify.cli.tool._common.util.FileUtils;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Option;
 
 public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
-    @Getter @Parameters(index="0", arity="1", descriptionKey="fcli.tool.uninstall.version") 
+    @Getter @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.uninstall.version", defaultValue = "default")
     private String version;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     

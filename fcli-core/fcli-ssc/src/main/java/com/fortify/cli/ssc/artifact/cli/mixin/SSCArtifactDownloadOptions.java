@@ -20,6 +20,6 @@ import picocli.CommandLine.Option;
 
 @Getter
 public class SSCArtifactDownloadOptions {
-    @Mixin private CommonOptionMixins.OptionalOutputFile destination;
+    @Mixin private CommonOptionMixins.OptionalFile destination;
     @Option(names = "--no-include-sources", negatable = true, descriptionKey = "download.no-include-sources") private boolean includeSources = true;
 }

@@ -12,11 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.seed_bundle.cli.cmd;
 
-import java.io.File;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
@@ -26,23 +24,21 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
 
 @Command(name = OutputHelperMixins.Upload.CMD_NAME)
 public class SSCSeedBundleUploadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Upload outputHelper;
-    @EnvSuffix("FILE") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.seed-bundle.upload.seedBundle")
-    private File seedBundle;
+    @Mixin private CommonOptionMixins.RequiredFile fileMixin;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         unirest.post(SSCUrls.SEED_BUNDLES)
             .multiPartContent()
-            .field("file", seedBundle)
+            .field("file", fileMixin.getFile())
             .asObject(JsonNode.class).getBody();
         return new ObjectMapper().createObjectNode()
                 .put("type", "SeedBundle")
-                .put("file", seedBundle.getAbsolutePath());
+                .put("file", fileMixin.getFile().getAbsolutePath());
     }
     
     @Override

@@ -29,7 +29,7 @@ import picocli.CommandLine.Mixin;
 @Command(name = OutputHelperMixins.Set.CMD_NAME)
 public class SSCAppVersionAttributeSetCommand extends AbstractSSCJsonNodeOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Set outputHelper;
-    @Mixin private SSCAppVersionAttributeUpdateMixin.RequiredPositionalParameter attrUpdateMixin;
+    @Mixin private SSCAppVersionAttributeUpdateMixin.RequiredAttrOption attrUpdateMixin;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     
     @Override

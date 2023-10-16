@@ -47,12 +47,11 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 public abstract class AbstractToolInstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractToolInstallCommand.class);
     private static final Set<PosixFilePermission> binPermissions = PosixFilePermissions.fromString("rwxr-xr-x");
-    @Getter @Parameters(index="0", arity="0..1", descriptionKey="fcli.tool.install.version", defaultValue = "default") 
+    @Getter @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.install.version", defaultValue = "default") 
     private String version;
     @Getter @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
     private File installDir;
