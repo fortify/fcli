@@ -13,10 +13,10 @@
 
 package com.fortify.cli.fod.sast_scan.cli.cmd;
 
-import java.io.File;
 import java.util.Properties;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -24,14 +24,13 @@ import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastDescriptor;
 import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastStartRequest;
-import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -48,8 +47,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
 
     @Option(names = {"--notes"})
     private String notes;
-    @Option(names = {"-f", "--file"}, required = true)
-    private File scanFile;
+    @Mixin private CommonOptionMixins.RequiredFile scanFileMixin;
 
     @Mixin
     private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
@@ -79,7 +77,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                 .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"))
                 .build();
 
-        return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFile).asJsonNode();
+        return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile()).asJsonNode();
     }
 
     @Override

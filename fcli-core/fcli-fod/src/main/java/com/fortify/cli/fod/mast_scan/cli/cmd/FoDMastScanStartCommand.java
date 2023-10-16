@@ -13,7 +13,6 @@
 
 package com.fortify.cli.fod.mast_scan.cli.cmd;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -22,6 +21,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
@@ -29,7 +29,6 @@ import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeHelper;
@@ -68,8 +67,7 @@ public class FoDMastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
     private String startDate;
     @Option(names = {"--notes"})
     private String notes;
-    @Option(names = {"-f", "--file"}, required = true)
-    private File scanFile;
+    @Mixin private CommonOptionMixins.RequiredFile scanFileMixin;
     @Mixin private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
     @Mixin private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
 
@@ -154,7 +152,7 @@ public class FoDMastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                     .scanTool(fcliProperties.getProperty("projectName", "fcli"))
                     .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
 
-            return FoDScanMobileHelper.startScan(unirest, progressWriter, releaseDescriptor, startScanRequest, scanFile).asJsonNode();
+            return FoDScanMobileHelper.startScan(unirest, progressWriter, releaseDescriptor, startScanRequest, scanFileMixin.getFile()).asJsonNode();
         }
     }
 

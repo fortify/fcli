@@ -16,7 +16,6 @@ package com.fortify.cli.fod.scan.helper;
 import static java.util.function.Predicate.not;
 
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;

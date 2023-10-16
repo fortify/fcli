@@ -12,6 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.fod.scan.cli.cmd;
 
+import java.io.File;
+import java.nio.file.StandardCopyOption;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
@@ -21,18 +24,12 @@ import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolv
 import com.fortify.cli.fod.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
+
 import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.io.File;
-import java.nio.file.StandardCopyOption;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
-import java.util.Date;
 
 @Command(name = FoDOutputHelperMixins.DownloadResults.CMD_NAME)
 public abstract class AbstractFoDDownloadScanCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {

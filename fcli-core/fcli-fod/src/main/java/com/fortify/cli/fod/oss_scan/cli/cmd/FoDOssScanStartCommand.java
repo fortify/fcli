@@ -14,30 +14,21 @@
 package com.fortify.cli.fod.oss_scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
-import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
-import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
-import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.oss.FoDScanOssHelper;
 import com.fortify.cli.fod.scan.helper.oss.FoDScanOssStartRequest;
-import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
-import com.fortify.cli.fod.scan.helper.sast.FoDScanSastStartRequest;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
-
-import java.io.File;
-import java.util.Properties;
 
 @Command(name = OutputHelperMixins.Start.CMD_NAME, hidden = false)
 public class FoDOssScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
@@ -46,17 +37,16 @@ public class FoDOssScanStartCommand extends AbstractFoDJsonNodeOutputCommand imp
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
 
-    @Option(names = {"-f", "--file"}, required = true)
-    private File scanFile;
+    @Mixin private CommonOptionMixins.RequiredFile scanFileMixin;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
-        String relId = releaseDescriptor.getReleaseId();
+        //String relId = releaseDescriptor.getReleaseId();
 
         FoDScanOssStartRequest startScanRequest = FoDScanOssStartRequest.builder().build();
 
-        return FoDScanOssHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFile).asJsonNode();
+        return FoDScanOssHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile()).asJsonNode();
     }
 
     @Override

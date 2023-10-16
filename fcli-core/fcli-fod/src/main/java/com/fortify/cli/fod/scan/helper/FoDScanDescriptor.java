@@ -13,6 +13,8 @@
 
 package com.fortify.cli.fod.scan.helper;
 
+import java.util.Date;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
@@ -20,8 +22,6 @@ import com.fortify.cli.common.json.JsonNodeHolder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.util.Date;
 
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)

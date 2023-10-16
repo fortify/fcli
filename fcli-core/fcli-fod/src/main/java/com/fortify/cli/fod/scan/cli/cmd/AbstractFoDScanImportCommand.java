@@ -13,11 +13,9 @@
 
 package com.fortify.cli.fod.scan.cli.cmd;
 
-import java.io.File;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
@@ -27,19 +25,14 @@ import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolv
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import picocli.CommandLine;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 public abstract class AbstractFoDScanImportCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
 
-    @EnvSuffix("FILE") @Option(names = {"-f", "--file"}, required = true, descriptionKey = "fcli.fod.scan.import.scan-file")
-    private File scanFile;
-
+    @Mixin private CommonOptionMixins.RequiredFile scanFileMixin;
+    
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
         var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
@@ -47,8 +40,8 @@ public abstract class AbstractFoDScanImportCommand extends AbstractFoDJsonNodeOu
         var importScanSessionId = getImportScanSessionId(unirest, releaseId);
         HttpRequest<?> baseRequest = getBaseRequest(unirest, releaseId)
                 .queryString("importScanSessionId", importScanSessionId)
-                .queryString("fileLength", scanFile.length());
-        FoDFileTransferHelper.uploadChunked(unirest, baseRequest, scanFile);
+                .queryString("fileLength", scanFileMixin.getFile().length());
+        FoDFileTransferHelper.uploadChunked(unirest, baseRequest, scanFileMixin.getFile());
         return releaseDescriptor.asObjectNode()
                 .put("importScanSessionId", importScanSessionId)
                 .put("scanType", getImportScanType());

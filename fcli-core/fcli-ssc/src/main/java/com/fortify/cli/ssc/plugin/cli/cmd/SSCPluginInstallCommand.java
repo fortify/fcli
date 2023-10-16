@@ -12,9 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.plugin.cli.cmd;
 
-import java.io.File;
-
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -34,8 +33,7 @@ import picocli.CommandLine.Option;
 public class SSCPluginInstallCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Install outputHelper;
 
-    @Option(names = {"-f", "--file"}, required = true)
-    private File pluginJarFile;
+    @Mixin private CommonOptionMixins.RequiredFile pluginFileMixin;
 
     @Option(names = {"--no-auto-enable"}, negatable = true)
     private boolean autoEnable = true;
@@ -45,7 +43,7 @@ public class SSCPluginInstallCommand extends AbstractSSCJsonNodeOutputCommand im
         JsonNode pluginBody = SSCFileTransferHelper.upload(
                 unirest,
                 SSCUrls.PLUGINS,
-                pluginJarFile,
+                pluginFileMixin.getFile(),
                 ISSCAddUploadTokenFunction.QUERYSTRING_MAT,
                 JsonNode.class
         );
