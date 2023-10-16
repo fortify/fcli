@@ -26,7 +26,7 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.Set.CMD_NAME)
+@Command(name = OutputHelperMixins.Update.CMD_NAME)
 public class SSCAppVersionAttributeUpdateCommand extends AbstractSSCJsonNodeOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Update outputHelper;
     @Mixin private SSCAppVersionAttributeUpdateMixin.RequiredAttrOption attrUpdateMixin;
