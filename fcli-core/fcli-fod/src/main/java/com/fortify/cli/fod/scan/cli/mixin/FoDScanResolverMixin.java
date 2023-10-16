@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 package com.fortify.cli.fod.scan.cli.mixin;
@@ -57,8 +57,13 @@ public class FoDScanResolverMixin {
     }
 
     public static class RequiredOption extends AbstractFoDScanResolverMixin {
-        @Option(names = {"--scan"}, required = true)
+        @EnvSuffix("SCAN") @Option(names = {"--scan"}, required = true)
         @Getter private String scanId;
+    }
+
+    public static class RequiredOptionMulti extends AbstractFoDMultiScanResolverMixin {
+        @EnvSuffix("SCANS") @Option(names = {"--scans"}, required=true, split=",", descriptionKey = "fcli.fod.scan.scan-id")
+        @Getter private String[] scanIds;
     }
 
     public static class PositionalParameter extends AbstractFoDScanResolverMixin {

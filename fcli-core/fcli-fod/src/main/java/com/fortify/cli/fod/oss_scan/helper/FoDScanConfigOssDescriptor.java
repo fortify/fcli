@@ -11,19 +11,16 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.scan_config.cli.cmd;
+package com.fortify.cli.fod.oss_scan.helper;
 
-import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.json.JsonNodeHolder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-import picocli.CommandLine.Command;
-
-@Command(name = "scan-config", hidden = true,
-        subcommands = {
-                //FoDDastScanGetConfigLegacyCommand.class,
-                //FoDMastScanGetConfigCommand.class,
-                //FoDSastScanGetConfigCommand.class,
-                //FoDSastScanSetupCommand.class,
-        }
-)
-public class FoDScanConfigCommands extends AbstractContainerCommand {
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper=false)
+public class FoDScanConfigOssDescriptor extends JsonNodeHolder {
+    private Integer releaseId;
 }

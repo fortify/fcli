@@ -51,5 +51,7 @@ public class FoDUrls {
     public static final String MOBILE_SCANS_SETUP = MOBILE_SCANS + "/scan-setup";
     public static final String MOBILE_SCANS_START = MOBILE_SCANS + "/start-scan";
     public static final String ENTITLEMENTS = ApiBase + "/tenant-entitlements";
+    public static final String OSS_SCANS = ApiBase + "/releases/{relId}/open-source-scans";
+    public static final String OSS_SCANS_START = OSS_SCANS + "/start-scan";
 
 }

@@ -15,7 +15,7 @@ import spock.lang.Stepwise
 @Prefix("fod.release") @FcliSession(FOD) @Stepwise
 class FoDReleaseSpec extends FcliBaseSpec {
     @Shared @AutoCleanup FoDMicroservicesAppSupplier app = new FoDMicroservicesAppSupplier()
-    
+
     def "list"() {
         def args = "fod release list"
         when:
@@ -26,7 +26,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
                 it[0].replace(' ', '').equals("IdNameMicroserviceApplicationSDLCStatus")
             }
     }
-    
+
     def "create"() {
         def args = "fod release create ${app.get().qualifiedMicroserviceName}:testrel --sdlc-status=Development --store testrel"
         when:
@@ -35,7 +35,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
             }
     }
-    
+
     def "verifyCreated"() {
         def args = "fod release list --store releases"
         when:
@@ -47,7 +47,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
                     && it.contains("testrel") }
             }
     }
-    
+
     def "get.byId"() {
         def args = "fod release get ::testrel::releaseId"
         when:
@@ -59,7 +59,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
                 it.any { it.contains("applicationName: \"${app.get().appName}\"") }
             }
     }
-    
+
     def "get.byName"() {
         def args = "fod release get ${app.get().qualifiedMicroserviceName}:testrel"
         when:
@@ -71,8 +71,8 @@ class FoDReleaseSpec extends FcliBaseSpec {
                 it.any { it.contains("applicationName: \"${app.get().appName}\"") }
             }
     }
-    
-    
+
+
     def "update"() {
         def args = "fod release update ${app.get().qualifiedMicroserviceName}:testrel --sdlc-status QA"
         when:
@@ -82,7 +82,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
                 size()==2
             }
     }
-    
+
     def "verifyUpdated"() {
         def args = "fod release get ::testrel::releaseId"
         when:
@@ -92,7 +92,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
                 it.any {it.equals("sdlcStatusType: \"QA\"") }
             }
     }
-    
+
     def "delete"() {
         def args = "fod release delete ${app.get().qualifiedMicroserviceName}:testrel"
         when:
@@ -102,7 +102,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
                 size()==2
             }
     }
-    
+
     def "verifyDeleted"() {
         def args = "fod release list --app ${app.get().appName}"
         when:
@@ -112,6 +112,6 @@ class FoDReleaseSpec extends FcliBaseSpec {
                 !it.any { it.contains("testrel") }
             }
     }
-    
+
 }
 

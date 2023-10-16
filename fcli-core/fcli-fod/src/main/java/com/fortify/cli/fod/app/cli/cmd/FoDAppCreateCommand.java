@@ -53,7 +53,8 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
     @Spec CommandSpec spec;
 
     @EnvSuffix("NAME") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.fod.app.app-name")
-    private String applicationName;
+    protected String applicationName;
+
     @Option(names = {"--description", "-d"})
     protected String description;
     @DisableTest(MULTI_OPT_PLURAL_NAME)
@@ -85,7 +86,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
         validateMicroserviceName(microserviceName);
 
         var ownerId = FoDUserHelper.getUserDescriptor(unirest, owner, true).getUserId();
-        List<String> microservices = StringUtils.isBlank(microserviceName) 
+        List<String> microservices = StringUtils.isBlank(microserviceName)
                 ? Collections.emptyList() : new ArrayList<>(Arrays.asList(microserviceName));
         FoDAppCreateRequest appCreateRequest = FoDAppCreateRequest.builder()
                 .applicationName(applicationName)
