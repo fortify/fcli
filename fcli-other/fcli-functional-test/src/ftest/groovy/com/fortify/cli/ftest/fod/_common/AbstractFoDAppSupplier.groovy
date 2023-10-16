@@ -30,7 +30,7 @@ public abstract class AbstractFoDAppSupplier extends AbstractCloseableEntitySupp
         final String owner = "fcli-functional-test";
 
         public FoDApp createWebApp() {
-            Fcli.run("fod app create --name=$appName "+
+            Fcli.run("fod app create $appName "+
                 "--description Auto\\ created\\ by\\ test " +
                 "--sdlc-status=Development " +
                 "--release=$releaseName "+
@@ -44,7 +44,7 @@ public abstract class AbstractFoDAppSupplier extends AbstractCloseableEntitySupp
         }
 
         public FoDApp createMobileApp() {
-            Fcli.run("fod app create --name=$appName "+
+            Fcli.run("fod app create $appName "+
                 "--description Auto\\ created\\ by\\ test " +
                 "--sdlc-status=Development " +
                 "--release=$releaseName "+
@@ -58,7 +58,7 @@ public abstract class AbstractFoDAppSupplier extends AbstractCloseableEntitySupp
         }
 
         public FoDApp createMicroservicesApp() {
-            Fcli.run("fod app create --name=$appName "+
+            Fcli.run("fod app create $appName "+
                 "--description Auto\\ created\\ by\\ test " +
                 "--sdlc-status=Development " +
                 "--release=$microserviceName:$releaseName "+

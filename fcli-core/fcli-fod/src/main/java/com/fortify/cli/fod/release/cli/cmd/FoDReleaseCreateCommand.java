@@ -36,7 +36,7 @@ import picocli.CommandLine.Option;
 public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDReleaseByQualifiedNameResolverMixin.RequiredOption releaseNameResolver;
+    @Mixin private FoDReleaseByQualifiedNameResolverMixin.PositionalParameter releaseNameResolver;
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.OptionalCopyFromOption copyFromReleaseResolver;
 
     @Option(names = {"--description", "-d"})

@@ -28,7 +28,7 @@ public class FoDUserGroupSupplier extends AbstractCloseableEntitySupplier<FoDUse
         final String groupName = "fcli-"+random
 
         public FoDUserGroup create() {
-            Fcli.run("fod user-group create --groupname=$groupName "+
+            Fcli.run("fod user-group create $groupName "+
                 "--store $variableName",
                 {it.expectSuccess(true, "Unable to create user-group")})
             return this

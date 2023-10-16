@@ -52,7 +52,7 @@ public class FoDAppCreateCommand extends AbstractFoDJsonNodeOutputCommand implem
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Spec CommandSpec spec;
 
-    @EnvSuffix("NAME")  @Option(names = {"--name"}, required = true, descriptionKey = "fcli.fod.app.app-name")
+    @EnvSuffix("NAME") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.fod.app.app-name")
     protected String applicationName;
 
     @Option(names = {"--description", "-d"})

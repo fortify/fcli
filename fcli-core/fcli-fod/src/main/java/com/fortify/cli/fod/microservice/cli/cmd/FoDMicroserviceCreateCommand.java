@@ -36,7 +36,7 @@ public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputComma
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
 
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDMicroserviceByQualifiedNameResolverMixin.RequiredOption qualifiedMicroserviceNameResolver;
+    @Mixin private FoDMicroserviceByQualifiedNameResolverMixin.PositionalParameter qualifiedMicroserviceNameResolver;
 
     @Option(names={"--skip-if-exists"})
     private boolean skipIfExists = false;

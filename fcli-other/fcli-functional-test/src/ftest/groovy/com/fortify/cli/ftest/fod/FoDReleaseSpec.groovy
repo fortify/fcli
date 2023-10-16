@@ -28,7 +28,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
     }
 
     def "create"() {
-        def args = "fod release create --release=${app.get().qualifiedMicroserviceName}:testrel --sdlc-status=Development --store testrel"
+        def args = "fod release create ${app.get().qualifiedMicroserviceName}:testrel --sdlc-status=Development --store testrel"
         when:
             def result = Fcli.run(args)
         then:

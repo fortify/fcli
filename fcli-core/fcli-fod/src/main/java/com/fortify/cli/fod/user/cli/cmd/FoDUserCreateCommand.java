@@ -36,7 +36,7 @@ import picocli.CommandLine.Parameters;
 public class FoDUserCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
 
-    @EnvSuffix("NAME") @Option(names = {"--username", "-u"}, required = true, descriptionKey = "user-name")
+    @EnvSuffix("NAME") @Parameters(index = "0", descriptionKey = "user-name")
     private String userName;
     @Option(names = {"--email"}, required = true)
     private String email;

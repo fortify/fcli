@@ -32,7 +32,7 @@ class FoDMicroserviceSpec extends FcliBaseSpec {
     }
 
     def "create"() {
-        def args = "fod microservice create --microservice=${app.get().appName}:testservice"
+        def args = "fod microservice create ${app.get().appName}:testservice"
         when:
             def result = Fcli.run(args)
         then:
