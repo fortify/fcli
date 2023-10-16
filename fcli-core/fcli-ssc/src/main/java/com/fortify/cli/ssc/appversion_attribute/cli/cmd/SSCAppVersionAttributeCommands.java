@@ -20,7 +20,7 @@ import picocli.CommandLine.Command;
         name = "appversion-attribute",
         subcommands = {
             SSCAppVersionAttributeListCommand.class,
-            SSCAppVersionAttributeSetCommand.class
+            SSCAppVersionAttributeUpdateCommand.class
         }
 )
 public class SSCAppVersionAttributeCommands extends AbstractContainerCommand {

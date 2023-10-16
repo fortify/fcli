@@ -29,8 +29,8 @@ class SSCAppVersionAttributeSpec extends FcliBaseSpec {
     }
     
     def "set"() {
-        def args = "ssc appversion-attribute set --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName +
-                    " BusinessRisk=High BusinessUnit=Corporate"
+        def args = "ssc appversion-attribute update --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName +
+                    " --attrs BusinessRisk=High,BusinessUnit=Corporate"
         when:
             def result = Fcli.run(args)
         then:

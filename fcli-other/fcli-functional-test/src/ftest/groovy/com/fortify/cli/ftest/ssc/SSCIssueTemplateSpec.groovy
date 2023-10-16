@@ -44,7 +44,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     }
     
     def "create"() {
-        def args = "ssc issue-template create $templateName -f $templateFile -d auto\\ created\\ by\\ test"
+        def args = "ssc issue-template create -n $templateName -f $templateFile -d auto\\ created\\ by\\ test"
         when:
             def result = Fcli.run(args)
         then:

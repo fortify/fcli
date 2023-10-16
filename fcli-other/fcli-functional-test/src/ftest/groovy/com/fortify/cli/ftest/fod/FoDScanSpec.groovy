@@ -30,7 +30,7 @@ class FoDScanSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=3
-                it[0].replace(' ', '').equals("IdAnalysisStatusApplicationMicroserviceReleaseStartedCompletedScanMethod")
+                it[0].replace(' ', '').equals("IdTypeAnalysisStatusApplicationMicroserviceReleaseStartedCompletedScanMethod")
             }
     }
 

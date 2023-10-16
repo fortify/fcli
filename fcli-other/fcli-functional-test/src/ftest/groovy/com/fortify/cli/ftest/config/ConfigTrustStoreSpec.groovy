@@ -37,7 +37,7 @@ class ConfigTrustStoreSpec extends FcliBaseSpec {
     }
     
     def "set"() {
-        def args = "config truststore set ${dummyStore}"
+        def args = "config truststore set -f ${dummyStore}"
         when:
             def result = Fcli.run(args)
         then:

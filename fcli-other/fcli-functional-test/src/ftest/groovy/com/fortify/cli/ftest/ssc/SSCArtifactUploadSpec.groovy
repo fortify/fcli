@@ -23,7 +23,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     @Shared String uploadVariableRef = "::$uploadVariableName::"
     
     def "upload"() {
-        def args = "ssc artifact upload $fpr --appversion "+ 
+        def args = "ssc artifact upload -f $fpr --appversion "+ 
             "${versionSupplier.version.variableRef} --store $uploadVariableName"
         when:
             def result = Fcli.run(args)
@@ -58,7 +58,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     
     
     def "upload-dif"() {
-        def args = "ssc artifact upload $diffpr --appversion "+
+        def args = "ssc artifact upload -f $diffpr --appversion "+
             "${versionSupplier.version.variableRef} --store upload"
         when:
             def result = Fcli.run(args)
