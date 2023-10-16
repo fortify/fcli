@@ -24,7 +24,7 @@ class FoDScanImportSpec extends FcliBaseSpec {
 
 
     def "import-mobile"() {
-        def args = "fod mast-scan import --release ${mobileApp.get().qualifiedRelease} $mobileResults --store upload"
+        def args = "fod mast-scan import --release=${mobileApp.get().qualifiedRelease} --file=$mobileResults --store upload"
         when:
             def result = Fcli.run(args)
         then:
@@ -35,7 +35,7 @@ class FoDScanImportSpec extends FcliBaseSpec {
     }
 
     def "import-sast"() {
-        def args = "fod sast-scan import --release ${webApp.get().qualifiedRelease} $sastResults --store upload"
+        def args = "fod sast-scan import --release=${webApp.get().qualifiedRelease} --file=$sastResults --store upload"
         when:
             def result = Fcli.run(args)
         then:
@@ -46,7 +46,7 @@ class FoDScanImportSpec extends FcliBaseSpec {
     }
 
     def "import-dast"() {
-        def args = "fod dast-scan import --release ${webApp.get().qualifiedRelease} $dastResults --store upload"
+        def args = "fod dast-scan import --release=${webApp.get().qualifiedRelease} --file=$dastResults --store upload"
         when:
             def result = Fcli.run(args)
         then:
@@ -57,7 +57,7 @@ class FoDScanImportSpec extends FcliBaseSpec {
     }
 
     def "import-oss"() {
-        def args = "fod oss-scan import --release ${webApp.get().qualifiedRelease} $ossResults --store upload"
+        def args = "fod oss-scan import --release=${webApp.get().qualifiedRelease} --file=$ossResults --store upload"
         when:
             def result = Fcli.run(args)
         then:

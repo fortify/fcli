@@ -34,9 +34,9 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class FoDMicroserviceCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
-    
+
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDMicroserviceByQualifiedNameResolverMixin.PositionalParameter qualifiedMicroserviceNameResolver;
+    @Mixin private FoDMicroserviceByQualifiedNameResolverMixin.RequiredOption qualifiedMicroserviceNameResolver;
 
     @Option(names={"--skip-if-exists"})
     private boolean skipIfExists = false;

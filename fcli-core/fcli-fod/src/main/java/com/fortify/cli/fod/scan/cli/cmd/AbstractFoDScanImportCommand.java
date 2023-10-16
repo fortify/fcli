@@ -28,14 +28,16 @@ import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolv
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import picocli.CommandLine;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public abstract class AbstractFoDScanImportCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
 
-    @EnvSuffix("FILE") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.fod.scan.import.scan-file")
+    @EnvSuffix("FILE") @Option(names = {"-f", "--file"}, required = true, descriptionKey = "fcli.fod.scan.import.scan-file")
     private File scanFile;
 
     @Override

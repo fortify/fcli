@@ -36,7 +36,7 @@ import picocli.CommandLine.Option;
 public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDReleaseByQualifiedNameResolverMixin.PositionalParameter releaseNameResolver;
+    @Mixin private FoDReleaseByQualifiedNameResolverMixin.RequiredOption releaseNameResolver;
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.OptionalCopyFromOption copyFromReleaseResolver;
 
     @Option(names = {"--description", "-d"})
@@ -52,8 +52,8 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
     public JsonNode getJsonNode(UnirestInstance unirest) {
         if (skipIfExists) {
             var descriptor = releaseNameResolver.getReleaseDescriptor(unirest, false);
-            if (descriptor != null) { 
-                return descriptor.asObjectNode().put(IActionCommandResultSupplier.actionFieldName, "SKIPPED_EXISTING"); 
+            if (descriptor != null) {
+                return descriptor.asObjectNode().put(IActionCommandResultSupplier.actionFieldName, "SKIPPED_EXISTING");
             }
         }
         // Ensure app exists
@@ -64,7 +64,7 @@ public class FoDReleaseCreateCommand extends AbstractFoDJsonNodeOutputCommand im
         if ( appDescriptor.isHasMicroservices() && microserviceDescriptor==null ) {
             throw new IllegalArgumentException("Microservice name must be specified for microservices application");
         }
-        
+
         String simpleReleaseName = releaseNameResolver.getSimpleReleaseName();
         String copyReleaseId = copyFromReleaseResolver.getReleaseId(unirest);
 

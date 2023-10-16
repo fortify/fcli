@@ -15,10 +15,10 @@ import spock.lang.Stepwise
 @Prefix("fod.microservice") @FcliSession(FOD) @Stepwise
 class FoDMicroserviceSpec extends FcliBaseSpec {
     @Shared @AutoCleanup FoDMicroservicesAppSupplier app = new FoDMicroservicesAppSupplier()
-    
-    @Shared 
+
+    @Shared
     boolean appsExist = false;
-    
+
     def "list"() {
         def args = "fod microservice list --app=${app.get().appName}"
         when:
@@ -30,16 +30,16 @@ class FoDMicroserviceSpec extends FcliBaseSpec {
                 it[1].contains(app.get().appName)
             }
     }
-    
+
     def "create"() {
-        def args = "fod microservice create ${app.get().appName}:testservice"
+        def args = "fod microservice create --microservice=${app.get().appName}:testservice"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
             }
     }
-    
+
     def "verifyCreated"() {
         def args = "fod microservice list --app=${app.get().appName}"
         when:
@@ -49,7 +49,7 @@ class FoDMicroserviceSpec extends FcliBaseSpec {
                 it.any { it.contains("testservice") }
             }
     }
-    
+
     def "update"() {
         def args = "fod microservice update ${app.get().appName}:testservice --name=updatedtestservice"
         when:
@@ -59,7 +59,7 @@ class FoDMicroserviceSpec extends FcliBaseSpec {
                 size()==2
             }
     }
-    
+
     def "verifyUpdated"() {
         def args = "fod microservice list --app=${app.get().appName}"
         when:
@@ -69,7 +69,7 @@ class FoDMicroserviceSpec extends FcliBaseSpec {
                 it.any { it.contains(app.get().appName) && it.contains("updatedtestservice") }
             }
     }
-    
+
     def "delete"() {
         def args = "fod microservice delete ${app.get().appName}:updatedtestservice"
         when:
@@ -79,7 +79,7 @@ class FoDMicroserviceSpec extends FcliBaseSpec {
                 size()==2
             }
     }
-    
+
     def "verifyDeleted"() {
         def args = "fod microservice list --app=${app.get().appName}"
         when:
@@ -89,6 +89,6 @@ class FoDMicroserviceSpec extends FcliBaseSpec {
                 !it.any { it.contains("updatedtestservice") }
             }
     }
-    
+
 }
 

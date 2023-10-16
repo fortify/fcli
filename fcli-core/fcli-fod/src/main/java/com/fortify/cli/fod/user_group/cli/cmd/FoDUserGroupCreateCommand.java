@@ -36,7 +36,8 @@ import picocli.CommandLine.Parameters;
 public class FoDUserGroupCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
 
-    @EnvSuffix("NAME") @Parameters(index = "0", descriptionKey = "fcli.fod.user-group.create.name")
+    @EnvSuffix("NAME") @Option(names = {"--groupname", "--group", "-g"}, required = true, descriptionKey = "fcli.fod.user-group.create.name")
+    //@Parameters(index = "0", descriptionKey = "fcli.fod.user-group.create.name")
     private String groupName;
     @Option(names = {"--add-all-users"})
     private Boolean addAllUsers = false;
