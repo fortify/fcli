@@ -139,7 +139,7 @@ jobs:
   native_mac:
     name: native-image-mac
     needs: build
-    runs-on: macos-12
+    runs-on: macos-latest
     steps:
       - name: Check-out source code
         uses: actions/checkout@v3
