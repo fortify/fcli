@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-role-permission(1)
+title: fcli-ssc-issue(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-role-permission(1)</title>
+<title>fcli-ssc-issue(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.062607-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.135109-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-ssc-role-permission(1) Manual Page</h1>
+<h1>fcli-ssc-issue(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -32,7 +32,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-role-permission - Manage SSC role permissions.</p>
+<p>fcli-ssc-issue - Manage SSC issues (vulnerabilities) and related entities like filter sets and issue groups.</p>
 </div>
 </div>
 <div id="content">
@@ -40,7 +40,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc role-permission</strong> [<strong>-h</strong>] [COMMAND]</p>
+<p><strong>fcli ssc issue</strong> [<strong>-h</strong>] [COMMAND]</p>
 </div>
 </div>
 </div>
@@ -68,13 +68,25 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-ssc-role-permission-get.html"><strong>get</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-ssc-issue-get-filterset.html"><strong>get-filterset</strong>, <strong>get-fs</strong></a></dt>
 <dd>
-<p>Get role permission details.</p>
+<p>Get filter set details.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-ssc-role-permission-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-ssc-issue-list-filtersets.html"><strong>list-filtersets</strong>, <strong>list-fs</strong>, <strong>lsfs</strong></a></dt>
 <dd>
-<p>List role permissions.</p>
+<p>List application version filter sets.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-issue-get-group.html"><strong>get-group</strong></a></dt>
+<dd>
+<p>Get issue group details.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-issue-list-groups.html"><strong>list-groups</strong>, <strong>lsg</strong></a></dt>
+<dd>
+<p>List application version issue groups.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-issue-count.html"><strong>count</strong></a></dt>
+<dd>
+<p>Count application version vulnerabilities by grouping.</p>
 </dd>
 </dl>
 </div>
@@ -84,7 +96,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-17 06:28:02 UTC
+Last updated 2023-10-17 13:53:04 UTC
 </div>
 </div>
 </body>

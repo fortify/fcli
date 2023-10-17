@@ -1,5 +1,5 @@
 ---
-title: fcli-license-msp-report-generate-config(1)
+title: fcli-license-ncd-report-create(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-license-msp-report-generate-config(1)</title>
+<title>fcli-license-ncd-report-create(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.062607-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.135109-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-license-msp-report-generate-config(1) Manual Page</h1>
+<h1>fcli-license-ncd-report-create(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -33,7 +33,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-license-msp-report-generate-config - Generate a sample configuration file for use by the 'generate' command.</p>
+<p>fcli-license-ncd-report-create - Generate a 'Number of Contributing Developers' (NCD) report.</p>
 </div>
 </div>
 <div id="content">
@@ -41,20 +41,30 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli license msp-report generate-config</strong> [<strong>-y</strong>] [<strong>-c</strong>=<em>&lt;outputFileName&gt;</em>] [[<strong>-h</strong>]
-                                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format_
-                                  _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                            _            <em class="=&lt;propertyNames&gt;">]
-                                        [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+<p><strong>fcli license ncd-report create</strong> [<strong>-y</strong>] [<strong>-c</strong>=<em>&lt;configFile&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [[<strong>-h</strong>]
+                               [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                               [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                               (<strong>-z</strong>=<em>&lt;reportZipName&gt;</em> | <strong>-d</strong>=<em>&lt;reportDirName&gt;</em>)
+                               <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                   _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>This command generates a 'Number of Contributing Developers' (NCD) report based on configuration settings defined in a configuration file. A sample configuration file can be generated using the 'fcli util ncd-report create-config' command.</p>
+</div>
+<div class="paragraph">
+<p>The configuration file includes rich settings for specifying the source code repositories from which to load contributing developer data (supporting multiple Source Code Management (SCM) systems), and for ignoring and de-duplicating contributing authors.</p>
+</div>
+<div class="paragraph">
+<p>The generated report consists of multiple files, written to either a directory or zip-file. The primary output file is 'summary.txt' that contains various statistics, including the de-duplicated count of contributing developers. Various CSV files are generated with supporting proof, like the list of contributing authors, the list of commits that have been processed, and the list of repositories that have been processed.</p>
+</div>
+<div class="paragraph">
+<p>The generated 'checksums.sha256' file can be used to verify integrity of all generated files, using a command like 'sha256sum -c checksums.sha256'.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -62,13 +72,25 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-c</strong>, <strong>--config</strong>=<em>&lt;outputFileName&gt;</em></dt>
+<dt class="hdlist1"><strong>-c</strong>, <strong>--config</strong>=<em>&lt;configFile&gt;</em></dt>
 <dd>
-<p>Name of the sample configuration file to be generated.</p>
+<p>Configuration file; sample can be generated using the 'create-config' command.</p>
+</dd>
+<dt class="hdlist1"><strong>-d</strong>, <strong>--report-dir</strong>=<em>&lt;reportDirName&gt;</em></dt>
+<dd>
+<p>Write report output to the given directory.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
 <dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
 <dd>
-<p>Confirm overwrite of existing configuration file.</p>
+<p>Confirm delete of existing report output location.</p>
+</dd>
+<dt class="hdlist1"><strong>-z</strong>, <strong>--report-zip</strong>=<em>&lt;reportZipName&gt;</em></dt>
+<dd>
+<p>Write report output to the given zip-file.</p>
 </dd>
 </dl>
 </div>
@@ -124,7 +146,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-17 06:28:02 UTC
+Last updated 2023-10-17 13:53:04 UTC
 </div>
 </div>
 </body>

@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-report-template-create(1)
+title: fcli-ssc-attribute-list-definitions(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-report-template-create(1)</title>
+<title>fcli-ssc-attribute-list-definitions(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.062607-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.135109-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-ssc-report-template-create(1) Manual Page</h1>
+<h1>fcli-ssc-attribute-list-definitions(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -34,7 +34,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-report-template-create - Create/upload a report template.</p>
+<p>fcli-ssc-attribute-list-definitions - List attribute definitions.</p>
 </div>
 </div>
 <div id="content">
@@ -42,13 +42,15 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc report-template create</strong> [<strong>-c</strong>=<em>&lt;answerFile&gt;</em>] <strong>-t</strong>=<em>&lt;templatePath&gt;</em> [[<strong>-h</strong>]
-                                [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                                [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
-                          _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                    _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+<p><strong>fcli ssc attribute list-definitions</strong> [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>] [[<strong>-h</strong>]
+                                    [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                                    [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                              _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                        _            <em class="=&lt;propertyNames&gt;">]
+                                    [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
+                              _      expression&gt;</em>]</p>
 </div>
 </div>
 </div>
@@ -63,13 +65,13 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-c</strong>, <strong>--config</strong>=<em>&lt;answerFile&gt;</em></dt>
+<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
-<p>File containing report template configuration, like report parameters. You can use the 'generate-config' command to create a new configuration file template.</p>
+<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
 </dd>
-<dt class="hdlist1"><strong>-t</strong>, <strong>--template</strong>=<em>&lt;templatePath&gt;</em></dt>
+<dt class="hdlist1"><strong>--q-param</strong>=<em>&lt;qParam&gt;</em></dt>
 <dd>
-<p>BIRT report template to be uploaded to SSC.</p>
+<p>Server-side queries are automatically generated from the -q / --query option if possible; generated queries can be viewed in the debug log. The --q-param option can be used to override the automatically generated query, for example to further optimize the request. See SSC REST API documentation for information on supported formats.</p>
 </dd>
 </dl>
 </div>
@@ -138,7 +140,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-17 06:28:02 UTC
+Last updated 2023-10-17 13:53:04 UTC
 </div>
 </div>
 </body>

@@ -1,5 +1,5 @@
 ---
-title: fcli-license-msp-report-generate(1)
+title: fcli-license-msp-report-create(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-license-msp-report-generate(1)</title>
+<title>fcli-license-msp-report-create(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.062607-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.135109-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-license-msp-report-generate(1) Manual Page</h1>
+<h1>fcli-license-msp-report-create(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -33,7 +33,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-license-msp-report-generate - Generate a 'Managed Service Provider' (MSP) report.</p>
+<p>fcli-license-msp-report-create - Generate a 'Managed Service Provider' (MSP) report.</p>
 </div>
 </div>
 <div id="content">
@@ -41,14 +41,13 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli license msp-report generate</strong> [<strong>-y</strong>] [<strong>-c</strong>=<em>&lt;configFile&gt;</em>] <strong>-e</strong>=<em>&lt;reportingEndDate&gt;</em>
-                                 [<strong>--progress</strong>=<em>&lt;type&gt;</em>] <strong>-s</strong>=<em>&lt;reportingStartDate&gt;</em>
-                                 [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                                 [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                 [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] (<strong>-z</strong>=<em>&lt;reportZipName&gt;</em>
-                                 | <strong>-d</strong>=<em>&lt;reportDirName&gt;</em>) <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                                 [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                                 [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
+<p><strong>fcli license msp-report create</strong> [<strong>-y</strong>] [<strong>-c</strong>=<em>&lt;configFile&gt;</em>] <strong>-e</strong>=<em>&lt;reportingEndDate&gt;</em>
+                               [<strong>--progress</strong>=<em>&lt;type&gt;</em>] <strong>-s</strong>=<em>&lt;reportingStartDate&gt;</em>
+                               [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                               [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                               (<strong>-z</strong>=<em>&lt;reportZipName&gt;</em> | <strong>-d</strong>=<em>&lt;reportDirName&gt;</em>)
+                               <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                   _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -56,7 +55,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command generates a 'Managed Service Provider' (MSP) report based on configuration settings defined in a configuration file. A sample configuration file can be generated using the 'fcli util msp-report generate-config' command.</p>
+<p>This command generates a 'Managed Service Provider' (MSP) report based on configuration settings defined in a configuration file. A sample configuration file can be generated using the 'fcli util msp-report create-config' command.</p>
 </div>
 <div class="paragraph">
 <p>The configuration file includes settings for specifying one or more SSC instances from which to load MSP reporting data, and for specifying MSP (contract) information.</p>
@@ -85,7 +84,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>-c</strong>, <strong>--config</strong>=<em>&lt;configFile&gt;</em></dt>
 <dd>
-<p>Configuration file; sample can be generated using the 'generate-config' command.</p>
+<p>Configuration file; sample can be generated using the 'create-config' command.</p>
 </dd>
 <dt class="hdlist1"><strong>-d</strong>, <strong>--report-dir</strong>=<em>&lt;reportDirName&gt;</em></dt>
 <dd>
@@ -165,7 +164,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-17 06:28:02 UTC
+Last updated 2023-10-17 13:53:04 UTC
 </div>
 </div>
 </body>

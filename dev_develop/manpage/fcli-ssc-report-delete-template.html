@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-appversion-filterset-list(1)
+title: fcli-ssc-report-delete-template(1)
 fcli_version: 
 ---
 
@@ -9,32 +9,32 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-appversion-filterset-list(1)</title>
+<title>fcli-ssc-report-delete-template(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.062607-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.135109-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-ssc-appversion-filterset-list(1) Manual Page</h1>
+<h1>fcli-ssc-report-delete-template(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
-<li><a href="#_options">Options</a></li>
 <li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-appversion-filterset-list - List application version filter sets.</p>
+<p>fcli-ssc-report-delete-template - Delete a report template.</p>
 </div>
 </div>
 <div id="content">
@@ -42,16 +42,13 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion-filterset list</strong> <strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em>
-                                   [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [[<strong>-h</strong>]
-                                   [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                                   [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                                   [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
-                             _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                       _            <em class="=&lt;propertyNames&gt;">]
-                                   [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
-                             _      expression&gt;</em>]</p>
+<p><strong>fcli ssc report delete-template</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                                [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                          _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                    _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                <em>&lt;reportTemplateNameOrId&gt;</em></p>
 </div>
 </div>
 </div>
@@ -59,27 +56,6 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 
-</div>
-</div>
-<div class="sect1">
-<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
-<dd>
-<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
-</dd>
-<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
-<dd>
-<p>Change the default delimiter character when using options that accept "application:version" as an argument or parameter.</p>
-</dd>
-<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
-<dd>
-<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
-</dd>
-</dl>
-</div>
 </div>
 </div>
 <div class="sect1">
@@ -141,11 +117,24 @@ fcli_version:
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><em>&lt;reportTemplateNameOrId&gt;</em></dt>
+<dd>
+<p>The name or ID of the report template definition.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-17 06:28:02 UTC
+Last updated 2023-10-17 13:53:04 UTC
 </div>
 </div>
 </body>

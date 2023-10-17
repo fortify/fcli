@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-alert-definition(1)
+title: fcli-ssc-attribute(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-alert-definition(1)</title>
+<title>fcli-ssc-attribute(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.062607-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.135109-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-ssc-alert-definition(1) Manual Page</h1>
+<h1>fcli-ssc-attribute(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -32,7 +32,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-alert-definition - Manage SSC alert definitions.</p>
+<p>fcli-ssc-attribute - Manage SSC application version attributes & definitions.</p>
 </div>
 </div>
 <div id="content">
@@ -40,7 +40,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc alert-definition</strong> [<strong>-h</strong>] [COMMAND]</p>
+<p><strong>fcli ssc attribute</strong> [<strong>-h</strong>] [COMMAND]</p>
 </div>
 </div>
 </div>
@@ -68,13 +68,21 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-ssc-alert-definition-get.html"><strong>get</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-ssc-attribute-get-definition.html"><strong>get-definition</strong>, <strong>getdef</strong></a></dt>
 <dd>
-<p>Get alert definition details.</p>
+<p>Get attribute definition details.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-ssc-alert-definition-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-ssc-attribute-list-definitions.html"><strong>list-definitions</strong>, <strong>listdef</strong>, <strong>lsd</strong></a></dt>
 <dd>
-<p>List alert definitions.</p>
+<p>List attribute definitions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-attribute-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
+<dd>
+<p>List application version attributes.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-attribute-update.html"><strong>update</strong></a></dt>
+<dd>
+<p>Update application version attributes.</p>
 </dd>
 </dl>
 </div>
@@ -84,7 +92,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-17 06:28:02 UTC
+Last updated 2023-10-17 13:53:04 UTC
 </div>
 </div>
 </body>

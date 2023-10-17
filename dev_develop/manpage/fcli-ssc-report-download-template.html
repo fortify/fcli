@@ -1,5 +1,5 @@
 ---
-title: fcli-license-ncd-report-generate-config(1)
+title: fcli-ssc-report-download-template(1)
 fcli_version: 
 ---
 
@@ -9,31 +9,33 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-license-ncd-report-generate-config(1)</title>
+<title>fcli-ssc-report-download-template(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.062607-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231017.135109-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-license-ncd-report-generate-config(1) Manual Page</h1>
+<h1>fcli-ssc-report-download-template(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
 <li><a href="#_options">Options</a></li>
+<li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-license-ncd-report-generate-config - Generate a sample configuration file for use by the 'generate' command.</p>
+<p>fcli-ssc-report-download-template - Download a report template file.</p>
 </div>
 </div>
 <div id="content">
@@ -41,13 +43,13 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli license ncd-report generate-config</strong> [<strong>-y</strong>] [<strong>-c</strong>=<em>&lt;outputFileName&gt;</em>] [[<strong>-h</strong>]
-                                        [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                                        [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                        [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format_
-                                  _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                            _            <em class="=&lt;propertyNames&gt;">]
-                                        [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+<p><strong>fcli ssc report download-template</strong> [<strong>-f</strong>=<em>&lt;file&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                  [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                  [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                                  [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                            _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                      _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                  <em>&lt;reportTemplateNameOrId&gt;</em></p>
 </div>
 </div>
 </div>
@@ -62,13 +64,22 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-c</strong>, <strong>--config</strong>=<em>&lt;outputFileName&gt;</em></dt>
+<dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;file&gt;</em></dt>
 <dd>
-<p>Name of the sample configuration file to be generated.</p>
+<p>Optional issue template file path.</p>
 </dd>
-<dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_session_options"><a class="anchor" href="#_session_options"></a>Session options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
 <dd>
-<p>Confirm overwrite of existing configuration file.</p>
+<p>Name of the SSC session to use for executing this command. Default value: default.</p>
 </dd>
 </dl>
 </div>
@@ -120,11 +131,24 @@ fcli_version:
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><em>&lt;reportTemplateNameOrId&gt;</em></dt>
+<dd>
+<p>The name or ID of the report template definition.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-17 06:28:02 UTC
+Last updated 2023-10-17 13:53:04 UTC
 </div>
 </div>
 </body>
