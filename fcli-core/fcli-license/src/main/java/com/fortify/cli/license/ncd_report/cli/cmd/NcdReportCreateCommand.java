@@ -26,9 +26,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = OutputHelperMixins.Create.CMD_NAME)
+@Command(name = OutputHelperMixins.CreateWithDetailsOutput.CMD_NAME)
 public final class NcdReportCreateCommand extends AbstractConfigurableReportGenerateCommand<NcdReportConfig, NcdReportResultsCollector> {
-    @Getter @Mixin private OutputHelperMixins.Create outputHelper;
+    @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
     @Option(names = {"-c","--config"}, required = true, defaultValue = "NcdReportConfig.yml")
     @Getter private File configFile;
     

@@ -85,6 +85,9 @@ public class OutputHelperMixins {
     public static class Create extends TableNoQuery {
         public static final String CMD_NAME = "create";
     }
+    public static class CreateWithDetailsOutput extends DetailsNoQuery {
+        public static final String CMD_NAME = "create";
+    }
     
     public static class CreateConfig extends TableNoQuery {
         public static final String CMD_NAME = "create-config";

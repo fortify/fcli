@@ -14,11 +14,11 @@ import spock.lang.Shared
 import spock.lang.Stepwise
 
 @Prefix("ssc.appversion-filterset") @FcliSession(SSC) @Stepwise
-class SSCAppVersionFiltersetSpec extends FcliBaseSpec {
+class SSCIssueFilterSetSpec extends FcliBaseSpec {
     @Shared @AutoCleanup SSCAppVersionSupplier versionSupplier = new SSCAppVersionSupplier()
     
     def "list"() {
-        def args = "ssc appversion-filterset list --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName + " --store filtersets"
+        def args = "ssc issue list-filtersets --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName + " --store filtersets"
         when:
             def result = Fcli.run(args)
         then:
@@ -30,7 +30,7 @@ class SSCAppVersionFiltersetSpec extends FcliBaseSpec {
     }
     
     def "get.byId"() {
-        def args = "ssc appversion-filterset get ::filtersets::get(0).guid --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName 
+        def args = "ssc issue get-filterset ::filtersets::get(0).guid --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName 
         when:
             def result = Fcli.run(args)
         then:
@@ -41,7 +41,7 @@ class SSCAppVersionFiltersetSpec extends FcliBaseSpec {
     }
     
     def "get.byTitle"() {
-        def args = "ssc appversion-filterset get Security\\ Auditor\\ View --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName 
+        def args = "ssc issue get-filterset Security\\ Auditor\\ View --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName 
         when:
             def result = Fcli.run(args)
         then:

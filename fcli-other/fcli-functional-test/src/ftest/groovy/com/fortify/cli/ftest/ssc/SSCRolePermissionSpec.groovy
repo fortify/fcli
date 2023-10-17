@@ -33,7 +33,7 @@ class SSCRolePermissionSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("IdNameDependsonpermissionDescription")
+                it[0].replace(' ', '').equals("IdNameDescription")
                 it.any { it.startsWith(" user_manage") }
             }
     }
@@ -50,7 +50,7 @@ class SSCRolePermissionSpec extends FcliBaseSpec {
     }
     
     def "get.byName"() {
-        def args = "ssc role-permission get View\\ users"
+        def args = "ssc role get-permission View\\ users"
         when:
             def result = Fcli.run(args)
         then:

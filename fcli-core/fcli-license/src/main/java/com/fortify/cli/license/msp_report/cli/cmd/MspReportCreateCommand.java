@@ -27,9 +27,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = OutputHelperMixins.Create.CMD_NAME)
+@Command(name = OutputHelperMixins.CreateWithDetailsOutput.CMD_NAME)
 public final class MspReportCreateCommand extends AbstractConfigurableReportGenerateCommand<MspReportConfig, MspReportResultsCollector> {
-    @Getter @Mixin private OutputHelperMixins.Create outputHelper;
+    @Getter @Mixin private OutputHelperMixins.CreateWithDetailsOutput outputHelper;
     @Option(names = {"-c","--config"}, required = true, defaultValue = "MspReportConfig.yml")
     @Getter private File configFile;
     @Option(names = {"-s","--start-date"}, required = true)
