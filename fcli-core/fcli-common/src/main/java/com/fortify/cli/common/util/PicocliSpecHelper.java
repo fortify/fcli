@@ -16,6 +16,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
 import java.util.ResourceBundle;
 
+import com.fortify.cli.common.cli.util.CommandGroup;
+
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.Messages;
@@ -47,16 +49,30 @@ public class PicocliSpecHelper {
         return null;
     }
     
+    public static final String getCommandGroup(CommandSpec cmdSpec) {
+        var annotation = getAnnotation(cmdSpec, CommandGroup.class);
+        return annotation==null ? null : annotation.value();
+    }
+    
     public static final String getMessageString(CommandSpec commandSpec, String keySuffix) {
+        var group = getCommandGroup(commandSpec);
         Messages messages = getMessages(commandSpec);
         String value = null;
         while ( commandSpec!=null && value==null ) {
-            String key = commandSpec.qualifiedName(".")+"."+keySuffix;
-            value = messages.getString(key, null);
+            String pfx = commandSpec.qualifiedName(".")+".";
+            value = getMessageString(messages, pfx, group, keySuffix);
             commandSpec = commandSpec.parent();
         }
         // If value is still null, try without any prefix
-        return value!=null ? value : messages.getString(keySuffix, null);
+        return value!=null ? value : getMessageString(messages, "", group, keySuffix);
+    }
+        
+    private static final String getMessageString(Messages messages, String pfx, String group, String sfx) {
+        String value = null;
+        if ( StringUtils.isNotBlank(group) ) {
+            value = messages.getString(pfx+group+"."+sfx, null);
+        }
+        return value!=null ? value : messages.getString(pfx+sfx, null);
     }
     
     public static final String getRequiredMessageString(CommandSpec commandSpec, String keySuffix) {

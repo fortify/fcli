@@ -28,7 +28,7 @@ import spock.lang.Stepwise
 class SSCTokenDefinitionSpec extends FcliBaseSpec {
     
     def "list"() {
-        def args = "ssc token-definition list"
+        def args = "ssc token list-definitions"
         when:
             def result = Fcli.run(args)
         then:

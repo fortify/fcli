@@ -27,10 +27,10 @@ import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder.SSCBulkRespon
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
-import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
-import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateBuilder;
 import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionUserMixin;
 import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionUserUpdateBuilder;
+import com.fortify.cli.ssc.attribute.cli.mixin.SSCAttributeUpdateMixin;
+import com.fortify.cli.ssc.attribute.helper.SSCAttributeUpdateBuilder;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 
@@ -46,7 +46,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     @Getter @Mixin private OutputHelperMixins.Update outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
     @Mixin private SSCIssueTemplateResolverMixin.OptionalOption issueTemplateResolver;
-    @Mixin private SSCAppVersionAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
+    @Mixin private SSCAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
     @Mixin private SSCAppVersionUserMixin.OptionalUserAddOption userAddMixin;
     @Mixin private SSCAppVersionUserMixin.OptionalUserRemoveOption userDelMixin;
     @Option(names={"--name","-n"}, required = false)
@@ -91,7 +91,7 @@ public class SSCAppVersionUpdateCommand extends AbstractSSCJsonNodeOutputCommand
     private final HttpRequest<?> getAttrUpdateRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
         Map<String, String> attributes = attrUpdateMixin.getAttributes();
         if ( attributes==null || attributes.isEmpty() ) { return null; }
-        SSCAppVersionAttributeUpdateBuilder attrUpdateHelper = new SSCAppVersionAttributeUpdateBuilder(unirest).add(attributes);
+        SSCAttributeUpdateBuilder attrUpdateHelper = new SSCAttributeUpdateBuilder(unirest).add(attributes);
         return attrUpdateHelper.buildRequest(descriptor.getVersionId());
     }
     

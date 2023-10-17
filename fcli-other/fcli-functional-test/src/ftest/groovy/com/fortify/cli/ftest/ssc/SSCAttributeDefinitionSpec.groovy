@@ -28,7 +28,7 @@ import spock.lang.Stepwise
 class SSCAttributeDefinitionSpec extends FcliBaseSpec {
     
     def "list"() {
-        def args = "ssc attribute-definition list --store definitions"
+        def args = "ssc attribute lsd --store definitions"
         when:
             def result = Fcli.run(args)
         then:
@@ -40,7 +40,7 @@ class SSCAttributeDefinitionSpec extends FcliBaseSpec {
     }
     
     def "get.byId"() {
-        def args = "ssc attribute-definition get ::definitions::get(0).id"
+        def args = "ssc attribute getdef ::definitions::get(0).id"
         when:
             def result = Fcli.run(args)
         then:
@@ -51,7 +51,7 @@ class SSCAttributeDefinitionSpec extends FcliBaseSpec {
     }
     
     def "get.byName"() {
-        def args = "ssc attribute-definition get ::definitions::get(0).guid"
+        def args = "ssc attribute getdef ::definitions::get(0).guid"
         when:
             def result = Fcli.run(args)
         then:

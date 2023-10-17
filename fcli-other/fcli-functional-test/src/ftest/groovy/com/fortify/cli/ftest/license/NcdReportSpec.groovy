@@ -30,7 +30,7 @@ class NcdReportSpec extends FcliBaseSpec {
     @Shared @TempFile("ncd-report.zip") String reportOutputZip;
     
     def "generate-config"() {
-        def args = "license ncd-report generate-config -y -c ${sampleConfigOutputFile} -o yaml"
+        def args = "license ncd-report create-config -y -c ${sampleConfigOutputFile} -o yaml"
         when:
             def result = Fcli.run(args)
         then:
@@ -44,7 +44,7 @@ class NcdReportSpec extends FcliBaseSpec {
     
     @Requires({env.FCLI_FT_GITHUB_TOKEN && env.FCLI_FT_GITLAB_TOKEN})
     def "generate-dir"() {
-        def args = "license ncd-report generate -y -c ${configFile} -d ${reportOutputDir}"
+        def args = "license ncd-report create -y -c ${configFile} -d ${reportOutputDir}"
         when:
             def result = Fcli.run(args)
         then:
@@ -69,7 +69,7 @@ class NcdReportSpec extends FcliBaseSpec {
     
     @Requires({env.FCLI_FT_GITHUB_TOKEN && env.FCLI_FT_GITLAB_TOKEN})
     def "generate-zip"() {
-        def args = "license ncd-report generate -y -c ${configFile} -z ${reportOutputZip}"
+        def args = "license ncd-report create -y -c ${configFile} -z ${reportOutputZip}"
         when:
             def result = Fcli.run(args)
         then:

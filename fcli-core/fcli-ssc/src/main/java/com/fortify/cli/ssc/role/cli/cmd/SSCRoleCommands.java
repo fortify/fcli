@@ -22,7 +22,9 @@ import picocli.CommandLine.Command;
                 SSCRoleCreateCommand.class,
                 SSCRoleDeleteCommand.class,
                 SSCRoleGetCommand.class,
-                SSCRoleListCommand.class
+                SSCRoleListCommand.class,
+                SSCRolePermissionGetCommand.class,
+                SSCRolePermissionListCommand.class
         }
 
 )

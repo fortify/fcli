@@ -19,8 +19,8 @@ import picocli.CommandLine.Command;
 @Command(
         name = "ncd-report",
         subcommands = {
-            NcdReportGenerateCommand.class,
-            NcdReportGenerateConfigCommand.class
+            NcdReportCreateCommand.class,
+            NcdReportCreateConfigCommand.class
         }
 )
 public class NcdReportCommands extends AbstractContainerCommand {}

@@ -31,10 +31,10 @@ import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppAndVersionNameResolverMixi
 import com.fortify.cli.ssc.appversion.helper.SSCAppAndVersionNameDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
-import com.fortify.cli.ssc.appversion_attribute.cli.mixin.SSCAppVersionAttributeUpdateMixin;
-import com.fortify.cli.ssc.appversion_attribute.helper.SSCAppVersionAttributeUpdateBuilder;
 import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionUserMixin;
 import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionUserUpdateBuilder;
+import com.fortify.cli.ssc.attribute.cli.mixin.SSCAttributeUpdateMixin;
+import com.fortify.cli.ssc.attribute.helper.SSCAttributeUpdateBuilder;
 import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
 
@@ -51,7 +51,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mixin private SSCAppAndVersionNameResolverMixin.PositionalParameter sscAppAndVersionNameResolver;
     @Mixin private SSCIssueTemplateResolverMixin.OptionalOption issueTemplateResolver;
-    @Mixin private SSCAppVersionAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
+    @Mixin private SSCAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
     @Mixin private SSCAppVersionUserMixin.OptionalUserAddOption userAddMixin;
     @Option(names={"--description","-d"}, required = false)
     private String description;
@@ -69,7 +69,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
             SSCAppVersionDescriptor descriptor = SSCAppVersionHelper.getOptionalAppVersionFromAppAndVersionName(unirest, sscAppAndVersionNameResolver.getAppAndVersionNameDescriptor());
             if ( descriptor!=null ) { return descriptor.asObjectNode().put(IActionCommandResultSupplier.actionFieldName, "SKIPPED_EXISTING"); }
         }
-        SSCAppVersionAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
+        SSCAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
         SSCAppVersionUserUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);
         
         SSCAppVersionDescriptor descriptor = createUncommittedAppVersion(unirest);
@@ -102,9 +102,9 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
                 .add(false, userAddMixin.getAuthEntitySpecs());
     }
     
-    private final SSCAppVersionAttributeUpdateBuilder getAttrUpdateBuilder(UnirestInstance unirest) {
+    private final SSCAttributeUpdateBuilder getAttrUpdateBuilder(UnirestInstance unirest) {
         Map<String, String> attributes = attrUpdateMixin.getAttributes();
-        return new SSCAppVersionAttributeUpdateBuilder(unirest)
+        return new SSCAttributeUpdateBuilder(unirest)
                 .add(attributes)
                 .addRequiredAttrs(autoRequiredAttrs)
                 .checkRequiredAttrs(true)

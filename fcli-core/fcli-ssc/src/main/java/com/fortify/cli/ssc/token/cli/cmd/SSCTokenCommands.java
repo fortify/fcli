@@ -19,6 +19,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "token",
         subcommands = {
+                SSCTokenDefinitionListCommand.class,
                 SSCTokenCreateCommand.class,
                 SSCTokenListCommand.class,
                 SSCTokenRevokeCommand.class,

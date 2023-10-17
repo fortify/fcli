@@ -31,7 +31,7 @@ class SSCAlertDefinitionSpec extends FcliBaseSpec {
     static boolean definitionsExist = false;
     
     def "list"() {
-        def args = "ssc alert-definition list --store alertdefinitions"
+        def args = "ssc alert lsd --store alertdefinitions"
         given:
             def result = Fcli.run(args)
         when:
@@ -50,7 +50,7 @@ class SSCAlertDefinitionSpec extends FcliBaseSpec {
     
     def "get.byId"() {
         
-            def args = "ssc alert-definition get ::alertdefinitions::get(0).id"
+            def args = "ssc alert getdef ::alertdefinitions::get(0).id"
             when:
                 if(!definitionsExist) {return;}
                 def result = Fcli.run(args)

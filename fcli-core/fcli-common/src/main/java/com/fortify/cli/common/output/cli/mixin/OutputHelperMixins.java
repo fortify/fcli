@@ -85,10 +85,27 @@ public class OutputHelperMixins {
     public static class Create extends TableNoQuery {
         public static final String CMD_NAME = "create";
     }
+    
+    public static class CreateConfig extends TableNoQuery {
+        public static final String CMD_NAME = "create-config";
+    }
+    
+    public static class CreateTemplate extends TableNoQuery {
+        public static final String CMD_NAME = "create-template";
+    }
+    
+    public static class CreateTemplateConfig extends TableNoQuery {
+        public static final String CMD_NAME = "create-template-config";
+    }
 
-     @Command(aliases = {"rm"})
+    @Command(aliases = {"rm"})
     public static class Delete extends TableNoQuery {
         public static final String CMD_NAME = "delete";
+    }
+    
+    @Command(aliases = {"rm-template", "rmt"})
+    public static class DeleteTemplate extends TableNoQuery {
+        public static final String CMD_NAME = "delete-template";
     }
 
     public static class Clear extends TableNoQuery {
@@ -99,29 +116,38 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "revoke";
     }
 
-    @Command(name = "list", aliases = {"ls"})
+    @Command(aliases = {"ls"})
     public static class List extends TableWithQuery {
         public static final String CMD_NAME = "list";
     }
-
+    
+    @Command(aliases = {"listdef", "lsd"})
+    public static class ListDefinitions extends TableWithQuery {
+        public static final String CMD_NAME = "list-definitions";
+    }
+    
+    @Command(aliases = {"lst"})
+    public static class ListTemplates extends TableWithQuery {
+        public static final String CMD_NAME = "list-templates";
+    }
 
     public static class Get extends DetailsNoQuery {
         public static final String CMD_NAME = "get";
     }
-
-    public static class Generate extends DetailsNoQuery {
-        public static final String CMD_NAME = "generate";
+    
+    @Command(aliases = {"getdef"})
+    public static class GetDefinition extends DetailsNoQuery {
+        public static final String CMD_NAME = "get-definition";
     }
-
-    public static class GenerateConfig extends TableNoQuery {
-        public static final String CMD_NAME = "generate-config";
+    
+    public static class GetTemplate extends DetailsNoQuery {
+        public static final String CMD_NAME = "get-template";
     }
 
     public static class Status extends TableNoQuery {
         public static final String CMD_NAME = "status";
     }
-
-
+    
     public static class Set extends TableNoQuery {
         public static final String CMD_NAME = "set";
    }
@@ -169,6 +195,10 @@ public class OutputHelperMixins {
 
     public static class Download extends TableNoQuery {
         public static final String CMD_NAME = "download";
+    }
+    
+    public static class DownloadTemplate extends TableNoQuery {
+        public static final String CMD_NAME = "download-template";
     }
 
 

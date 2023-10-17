@@ -19,6 +19,8 @@ import picocli.CommandLine.Command;
 @Command(
         name = "alert",
         subcommands = {
+                SSCAlertDefinitionGetCommand.class,
+                SSCAlertDefinitionListCommand.class,
                 SSCAlertListCommand.class
         }
 )

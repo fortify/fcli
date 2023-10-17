@@ -17,7 +17,7 @@ import com.fortify.cli.common.report.collector.IReportResultsCollector;
 import com.fortify.cli.common.report.logger.IReportLogger;
 import com.fortify.cli.common.report.logger.ReportLogger;
 import com.fortify.cli.common.report.writer.IReportWriter;
-import com.fortify.cli.license.ncd_report.cli.cmd.NcdReportGenerateCommand;
+import com.fortify.cli.license.ncd_report.cli.cmd.NcdReportCreateCommand;
 import com.fortify.cli.license.ncd_report.config.NcdReportConfig;
 import com.fortify.cli.license.ncd_report.writer.NcdReportResultsWriters;
 
@@ -27,7 +27,7 @@ import lombok.experimental.Accessors;
 
 /**
  * This class is the primary entry point for collecting and outputting report data.
- * An instance of this class is created by the {@link NcdReportGenerateCommand}
+ * An instance of this class is created by the {@link NcdReportCreateCommand}
  * and passed to the source-specific generators. Source-specific generators can use
  * this class to access the {@link IReportLogger} and 
  * {@link NcdReportRepositoryProcessor} instances.

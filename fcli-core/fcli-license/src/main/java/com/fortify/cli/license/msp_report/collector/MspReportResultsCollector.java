@@ -20,7 +20,7 @@ import com.fortify.cli.common.report.logger.IReportLogger;
 import com.fortify.cli.common.report.logger.ReportLogger;
 import com.fortify.cli.common.report.writer.IReportWriter;
 import com.fortify.cli.common.rest.unirest.config.IUrlConfig;
-import com.fortify.cli.license.msp_report.cli.cmd.MspReportGenerateCommand;
+import com.fortify.cli.license.msp_report.cli.cmd.MspReportCreateCommand;
 import com.fortify.cli.license.msp_report.config.MspReportConfig;
 import com.fortify.cli.license.msp_report.generator.ssc.MspReportSSCAppDescriptor;
 import com.fortify.cli.license.msp_report.writer.MspReportResultsWriters;
@@ -31,7 +31,7 @@ import lombok.experimental.Accessors;
 
 /**
  * This class is the primary entry point for collecting and outputting report data.
- * An instance of this class is created by the {@link MspReportGenerateCommand}
+ * An instance of this class is created by the {@link MspReportCreateCommand}
  * and passed to the source-specific generators. Source-specific generators can use
  * this class to access the {@link IReportLogger} and various result collectors.
  * 

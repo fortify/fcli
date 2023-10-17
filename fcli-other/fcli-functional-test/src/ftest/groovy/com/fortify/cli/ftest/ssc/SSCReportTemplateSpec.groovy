@@ -32,7 +32,7 @@ class SSCReportTemplateSpec extends FcliBaseSpec {
     private String reportName = "fcli-test-report"
     
     def "list"() {
-        def args = "ssc report-template list --store reports"
+        def args = "ssc report list-templates --store reports"
         when:
             def result = Fcli.run(args)
         then:
@@ -43,7 +43,7 @@ class SSCReportTemplateSpec extends FcliBaseSpec {
     }    
     
     def "create"() {
-        def args = "ssc report-template create --template $sampleTemplate --config $sampleConfig"
+        def args = "ssc report create-template --template $sampleTemplate --config $sampleConfig"
         when:
             def result = Fcli.run(args)
         then:
@@ -54,7 +54,7 @@ class SSCReportTemplateSpec extends FcliBaseSpec {
     }
     
     def "generate-config"() {
-        def args = "ssc report-template generate-config -y"
+        def args = "ssc report create-template-config -y"
         when:
             def result = Fcli.run(args)
         then:
@@ -65,7 +65,7 @@ class SSCReportTemplateSpec extends FcliBaseSpec {
     }
     
     def "get.byName"() {
-        def args = "ssc report-template get $reportName --store report"
+        def args = "ssc report get-template $reportName --store report"
         when:
             def result = Fcli.run(args)
         then:
@@ -76,7 +76,7 @@ class SSCReportTemplateSpec extends FcliBaseSpec {
     }
     
     def "get.byId"() {
-        def args = "ssc report-template get ::report::id"
+        def args = "ssc report get-template ::report::id"
         when:
             def result = Fcli.run(args)
         then:
@@ -87,7 +87,7 @@ class SSCReportTemplateSpec extends FcliBaseSpec {
     }
     
     def "download"() {
-        def args = "ssc report-template download ::report::id"
+        def args = "ssc report download-template ::report::id"
         when:
             def result = Fcli.run(args)
         then:
@@ -98,7 +98,7 @@ class SSCReportTemplateSpec extends FcliBaseSpec {
     }
     
     def "delete"() {
-        def args = "ssc report-template delete ::report::id"
+        def args = "ssc report delete-template ::report::id"
         when:
             def result = Fcli.run(args)
         then:
@@ -109,7 +109,7 @@ class SSCReportTemplateSpec extends FcliBaseSpec {
     }
     
     def "verifyDeleted"() {
-            def args = "ssc report-template list"
+            def args = "ssc report list-templates"
             when:
                 def result = Fcli.run(args)
             then:

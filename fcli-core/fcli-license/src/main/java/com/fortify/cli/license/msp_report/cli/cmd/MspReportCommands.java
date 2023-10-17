@@ -19,8 +19,8 @@ import picocli.CommandLine.Command;
 @Command(
         name = "msp-report",
         subcommands = {
-            MspReportGenerateCommand.class,
-            MspReportGenerateConfigCommand.class
+            MspReportCreateCommand.class,
+            MspReportCreateConfigCommand.class
         }
 )
 public class MspReportCommands extends AbstractContainerCommand {}

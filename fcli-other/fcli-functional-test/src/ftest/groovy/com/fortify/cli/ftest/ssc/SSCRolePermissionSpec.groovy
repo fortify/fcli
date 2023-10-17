@@ -27,7 +27,7 @@ import spock.lang.Shared
 class SSCRolePermissionSpec extends FcliBaseSpec {
     
     def "list"() {
-        def args = "ssc role-permission list"
+        def args = "ssc role list-permissions"
         when:
             def result = Fcli.run(args)
         then:
@@ -39,7 +39,7 @@ class SSCRolePermissionSpec extends FcliBaseSpec {
     }
     
     def "get.byId"() {
-        def args = "ssc role-permission get user_view"
+        def args = "ssc role get-permission user_view"
         when:
             def result = Fcli.run(args)
         then:

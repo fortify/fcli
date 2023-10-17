@@ -24,7 +24,6 @@ import com.fortify.cli.fod.release.cli.cmd.FoDReleaseCommands;
 import com.fortify.cli.fod.rest.cli.cmd.FoDRestCommands;
 import com.fortify.cli.fod.sast_scan.cli.cmd.FoDSastScanCommands;
 import com.fortify.cli.fod.scan.cli.cmd.FoDScanCommands;
-import com.fortify.cli.fod.scan_config.cli.cmd.FoDScanConfigCommands;
 import com.fortify.cli.fod.user.cli.cmd.FoDUserCommands;
 import com.fortify.cli.fod.user_group.cli.cmd.FoDUserGroupCommands;
 
@@ -54,7 +53,6 @@ import picocli.CommandLine.Command;
                 FoDDastScanCommands.class,
                 FoDMastScanCommands.class,
                 FoDOssScanCommands.class,
-                FoDScanConfigCommands.class,
                 FoDUserCommands.class,
                 FoDUserGroupCommands.class,
                 FoDRestCommands.class,

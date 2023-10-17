@@ -19,6 +19,7 @@ import com.fortify.cli.ssc.role.helper.SSCRoleHelper;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class SSCRoleResolverMixin {
@@ -34,6 +35,11 @@ public class SSCRoleResolverMixin {
         public String getRoleId(UnirestInstance unirestInstance) {
             return getRoleDescriptor(unirestInstance, "id").getRoleId();
         }
+    }
+    
+    public static class OptionalOption extends AbstractSSCRoleMixin {
+        @Getter @Option(names = "--role", descriptionKey = "fcli.ssc.role.resolver.nameOrId")
+        private String roleNameOrId;
     }
 
     public static class PositionalParameter extends AbstractSSCRoleMixin {

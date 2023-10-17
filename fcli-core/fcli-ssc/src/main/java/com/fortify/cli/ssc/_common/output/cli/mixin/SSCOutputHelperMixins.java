@@ -14,6 +14,10 @@ package com.fortify.cli.ssc._common.output.cli.mixin;
 
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins.DetailsNoQuery;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins.TableWithQuery;
+
+import picocli.CommandLine.Command;
 
 /**
  * <p>This class provides SSC-specific {@link IOutputHelper} implementations.</p>
@@ -41,11 +45,41 @@ public class SSCOutputHelperMixins {
         public static final String CMD_NAME = "purge";
     }
     
-     public static class ImportDebricked extends OutputHelperMixins.TableNoQuery {
+    public static class ImportDebricked extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "import-debricked";
     }
     
-     public static class VulnCount extends OutputHelperMixins.TableWithQuery {
+    @Command(aliases = {"list-fs", "lsfs"})
+    public static class ListFilterSets extends TableWithQuery {
+        public static final String CMD_NAME = "list-filtersets";
+    }
+
+    @Command(aliases = {"get-fs"})
+    public static class GetFilterSet extends DetailsNoQuery {
+        public static final String CMD_NAME = "get-filterset";
+    }
+    
+    @Command(aliases = {"lsg"})
+    public static class ListGroups extends TableWithQuery {
+        public static final String CMD_NAME = "list-groups";
+    }
+
+    public static class GetGroup extends DetailsNoQuery {
+        public static final String CMD_NAME = "get-group";
+    }
+    
+    @Command(aliases = {"lsp"})
+    public static class ListPermissions extends TableWithQuery {
+        public static final String CMD_NAME = "list-permissions";
+    }
+
+    public static class GetPermission extends DetailsNoQuery {
+        public static final String CMD_NAME = "get-permission";
+    }
+    
+    public static class VulnCount extends OutputHelperMixins.TableWithQuery {
         public static final String CMD_NAME = "count";
     }
+     
+     
 }
