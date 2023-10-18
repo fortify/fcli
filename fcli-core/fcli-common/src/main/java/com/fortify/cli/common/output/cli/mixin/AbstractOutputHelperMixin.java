@@ -34,12 +34,16 @@ import com.fortify.cli.common.output.writer.IOutputWriterFactorySupplier;
 import com.fortify.cli.common.output.writer.output.IOutputWriter;
 import com.fortify.cli.common.output.writer.output.IOutputWriterFactory;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputConfig;
+import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
+import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.IHttpRequestUpdater;
+import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.util.JavaHelper;
 
 import kong.unirest.HttpRequest;
+import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
 public abstract class AbstractOutputHelperMixin implements IOutputHelper {
@@ -64,8 +68,12 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     @Override
     public final void write(HttpRequest<?> baseRequest) {
         HttpRequest<?> request = updateRequest(baseRequest);
-        INextPageUrlProducer nextPageUrlProducer = getNextPageUrlProducer(request);
-        createOutputWriter().write(request, nextPageUrlProducer);
+        INextPageRequestProducer nextPageRequestProducer = getNextPageRequestProducer();
+        if ( nextPageRequestProducer!=null ) {
+            createOutputWriter().write(request, nextPageRequestProducer);
+        } else {
+            createOutputWriter().write(request, getNextPageUrlProducer());
+        }
     }
 
     /**
@@ -108,6 +116,10 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
         return request;
     }
     
+    protected final INextPageRequestProducer getNextPageRequestProducer() {
+        return PagingHelper.asNextPageRequestProducer(getUnirestInstance(), getNextPageUrlProducer());
+    }
+    
     /**
      * This method returns a next page url producer retrieved from either the command
      * being invoked, or the configured {@link IProductHelper}, in this order, if
@@ -115,9 +127,22 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @param request
      * @return
      */
-    protected final INextPageUrlProducer getNextPageUrlProducer(HttpRequest<?> request) {
+    protected final INextPageUrlProducer getNextPageUrlProducer() {
         return Stream.of(commandHelper.getCommand(), getProductHelper())
-                .map(obj->getNextPageUrlProducerFromObject(obj, request))
+                .map(AbstractOutputHelperMixin::getNextPageUrlProducerFromObject)
+                .filter(Objects::nonNull)
+                .findFirst().orElse(null);
+    }
+    
+    /**
+     * This method returns a UnirestInstance retrieved from the command being invoked, 
+     * if it implements the {@link IUnirestInstanceSupplier} interface.
+     * @param request
+     * @return
+     */
+    protected final UnirestInstance getUnirestInstance() {
+        return Stream.of(commandHelper.getCommand())
+                .map(AbstractOutputHelperMixin::getUnirestInstanceFromObject)
                 .filter(Objects::nonNull)
                 .findFirst().orElse(null);
     }
@@ -177,15 +202,25 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
     }
     
     /**
-     * Utility method used by {@link #getNextPageUrlProducer(HttpRequest)}, returning a
+     * Utility method used by {@link #getNextPageUrlProducer()}, returning a
      * next page producer retrieved from the given object if that object implements 
      * {@link INextPageUrlProducerSupplier}, or null otherwise.
      * @param obj
-     * @param request
      * @return
      */
-    private static final INextPageUrlProducer getNextPageUrlProducerFromObject(Object obj, final HttpRequest<?> request) {
-        return apply(obj, INextPageUrlProducerSupplier.class, supplier->supplier.getNextPageUrlProducer(request));
+    private static final INextPageUrlProducer getNextPageUrlProducerFromObject(Object obj) {
+        return apply(obj, INextPageUrlProducerSupplier.class, supplier->supplier.getNextPageUrlProducer());
+    }
+    
+    /**
+     * Utility method used by {@link #getUnirestInstance()}, returning a UnirestInstance
+     * retrieved from the given object if that object implements {@link IUnirestInstanceSupplier}, 
+     * or null otherwise.
+     * @param obj
+     * @return
+     */
+    private static final UnirestInstance getUnirestInstanceFromObject(Object obj) {
+        return apply(obj, IUnirestInstanceSupplier.class, supplier->supplier.getUnirestInstance());
     }
     
     /**

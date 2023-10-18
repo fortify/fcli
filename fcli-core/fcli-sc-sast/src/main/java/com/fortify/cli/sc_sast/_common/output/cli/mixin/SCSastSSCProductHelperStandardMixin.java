@@ -19,8 +19,6 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc._common.rest.helper.SSCPagingHelper;
 
-import kong.unirest.HttpRequest;
-
 public class SCSastSSCProductHelperStandardMixin extends SCSastSSCProductHelperBasicMixin
     implements IInputTransformer, INextPageUrlProducerSupplier
 {
@@ -30,7 +28,7 @@ public class SCSastSSCProductHelperStandardMixin extends SCSastSSCProductHelperB
     }
     
     @Override
-    public INextPageUrlProducer getNextPageUrlProducer(HttpRequest<?> originalRequest) {
+    public INextPageUrlProducer getNextPageUrlProducer() {
         return SSCPagingHelper.nextPageUrlProducer();
     }
 }

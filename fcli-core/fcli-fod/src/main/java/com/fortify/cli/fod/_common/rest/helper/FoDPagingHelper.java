@@ -22,21 +22,18 @@ import kong.unirest.PagedList;
 
 public class FoDPagingHelper {
     public static final PagedList<JsonNode> pagedRequest(HttpRequest<?> request) {
-        return PagingHelper.pagedRequest(request, nextPageUrlProducer(request));
+        return PagingHelper.pagedRequest(request, nextPageUrlProducer());
     }
-    public static final INextPageUrlProducer nextPageUrlProducer(HttpRequest<?> originalRequest) {
-        return nextPageUrlProducer(originalRequest.getUrl());
-    }
-    public static final INextPageUrlProducer nextPageUrlProducer(String uri) {
-        return r -> {
-            JsonNode body = r.getBody();
+    public static final INextPageUrlProducer nextPageUrlProducer() {
+        return (req,resp) -> {
+            JsonNode body = resp.getBody();
             if ( body.has("offset") && body.has("totalCount") && body.has("limit") ) {
                 int offset = body.get("offset").asInt();
                 int totalCount = body.get("totalCount").asInt();
                 int limit = body.get("limit").asInt();
                 int newOffset = offset + limit;
                 if (newOffset < totalCount) {
-                    return URIHelper.addOrReplaceParam(uri, "offset", newOffset);
+                    return URIHelper.addOrReplaceParam(req.getUrl(), "offset", newOffset);
                 }
                 return null;
             }

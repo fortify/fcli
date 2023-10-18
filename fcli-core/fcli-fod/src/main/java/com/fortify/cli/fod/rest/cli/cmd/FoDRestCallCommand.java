@@ -22,7 +22,6 @@ import com.fortify.cli.fod._common.output.mixin.FoDProductHelperBasicMixin;
 import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 
-import kong.unirest.HttpRequest;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -34,8 +33,8 @@ public final class FoDRestCallCommand extends AbstractRestCallCommand {
     @Getter @Mixin private FoDProductHelperBasicMixin productHelper;
     
     @Override
-    protected INextPageUrlProducer _getNextPageUrlProducer(HttpRequest<?> originalRequest) {
-        return FoDPagingHelper.nextPageUrlProducer(originalRequest);
+    protected INextPageUrlProducer _getNextPageUrlProducer() {
+        return FoDPagingHelper.nextPageUrlProducer();
     }
     
     @Override

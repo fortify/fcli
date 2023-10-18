@@ -108,17 +108,17 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     }
 
     @Override
-    public final INextPageUrlProducer getNextPageUrlProducer(HttpRequest<?> originalRequest) {
+    public final INextPageUrlProducer getNextPageUrlProducer() {
         INextPageUrlProducer result = null;
         if ( !noPaging ) {
-            result = _getNextPageUrlProducer(originalRequest);
+            result = _getNextPageUrlProducer();
         }
         return result;
     }
 
     protected abstract JsonNode _transformRecord(JsonNode input);
     protected abstract JsonNode _transformInput(JsonNode input);
-    protected abstract INextPageUrlProducer _getNextPageUrlProducer(HttpRequest<?> originalRequest);
+    protected abstract INextPageUrlProducer _getNextPageUrlProducer();
 
     @SneakyThrows
     protected final HttpRequest<?> prepareRequest(UnirestInstance unirest) {

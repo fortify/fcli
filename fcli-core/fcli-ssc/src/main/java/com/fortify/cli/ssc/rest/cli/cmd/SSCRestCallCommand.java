@@ -22,7 +22,6 @@ import com.fortify.cli.ssc._common.output.cli.mixin.SSCProductHelperBasicMixin;
 import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc._common.rest.helper.SSCPagingHelper;
 
-import kong.unirest.HttpRequest;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -34,7 +33,7 @@ public final class SSCRestCallCommand extends AbstractRestCallCommand {
     @Getter @Mixin private SSCProductHelperBasicMixin productHelper;
     
     @Override
-    protected INextPageUrlProducer _getNextPageUrlProducer(HttpRequest<?> originalRequest) {
+    protected INextPageUrlProducer _getNextPageUrlProducer() {
         return SSCPagingHelper.nextPageUrlProducer();
     }
     

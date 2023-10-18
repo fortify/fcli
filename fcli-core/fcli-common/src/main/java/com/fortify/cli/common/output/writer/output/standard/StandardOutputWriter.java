@@ -37,6 +37,7 @@ import com.fortify.cli.common.output.writer.record.IRecordWriter;
 import com.fortify.cli.common.output.writer.record.IRecordWriterFactory;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig;
 import com.fortify.cli.common.output.writer.record.RecordWriterConfig.RecordWriterConfigBuilder;
+import com.fortify.cli.common.rest.paging.INextPageRequestProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.PagingHelper;
 import com.fortify.cli.common.rest.unirest.IfFailureHandler;
@@ -86,7 +87,9 @@ public class StandardOutputWriter implements IOutputWriter {
      */
     @Override
     public void write(HttpRequest<?> httpRequest) {
-        write(httpRequest, null);
+        try ( IRecordWriter recordWriter = new OutputAndVariableRecordWriter() ) {
+            writeRecords(recordWriter, httpRequest);
+        }
     }
     
     /**
@@ -101,6 +104,22 @@ public class StandardOutputWriter implements IOutputWriter {
                 writeRecords(recordWriter, httpRequest);
             } else {
                 writeRecords(recordWriter, httpRequest, nextPageUrlProducer);
+            }
+        }
+    }
+    
+    /**
+     * Write the output of the given, potentially paged {@link HttpRequest}, to the 
+     * configured output(s), invoking the given {@link INextPageRequestProducer} to retrieve 
+     * all pages
+     */
+    @Override
+    public void write(HttpRequest<?> httpRequest, INextPageRequestProducer nextPageRequestProducer) {
+        try ( IRecordWriter recordWriter = new OutputAndVariableRecordWriter() ) {
+            if ( nextPageRequestProducer==null ) {
+                writeRecords(recordWriter, httpRequest);
+            } else {
+                writeRecords(recordWriter, httpRequest, nextPageRequestProducer);
             }
         }
     }
@@ -139,6 +158,22 @@ public class StandardOutputWriter implements IOutputWriter {
         PagingHelper.pagedRequest(httpRequest, nextPageUrlProducer)
             .ifSuccess(r->writeRecords(recordWriter, r))
             .ifFailure(IfFailureHandler::handle); // Just in case no error interceptor was registered for this request
+    }
+    
+    /**
+     * Write records returned by the given, potentially paged {@link HttpRequest}
+     * to the given {@link IRecordWriter}, invoking the given {@link INextPageRequestProducer} 
+     * to retrieve all pages
+     * @param recordWriter
+     * @param httpRequest
+     * @param nextPageRequestProducer
+     */
+    private final void writeRecords(IRecordWriter recordWriter, HttpRequest<?> httpRequest, INextPageRequestProducer nextPageRequestProducer) {
+        while ( httpRequest!=null ) {
+            HttpResponse<JsonNode> response = httpRequest.asObject(JsonNode.class);
+            writeRecords(recordWriter, response); 
+            httpRequest = nextPageRequestProducer.getNextPageRequest(httpRequest, response);
+        }
     }
 
     /**

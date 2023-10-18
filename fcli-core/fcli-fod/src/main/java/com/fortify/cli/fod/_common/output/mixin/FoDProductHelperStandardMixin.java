@@ -19,16 +19,14 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
 
-import kong.unirest.HttpRequest;
-
 // IMPORTANT: When updating/adding any methods in this class, FoDRestCallCommand
 // also likely needs to be updated
 public class FoDProductHelperStandardMixin extends FoDProductHelperBasicMixin 
     implements IInputTransformer, INextPageUrlProducerSupplier 
 {
     @Override
-    public INextPageUrlProducer getNextPageUrlProducer(HttpRequest<?> originalRequest) {
-        return FoDPagingHelper.nextPageUrlProducer(originalRequest);
+    public INextPageUrlProducer getNextPageUrlProducer() {
+        return FoDPagingHelper.nextPageUrlProducer();
     }
     
     @Override

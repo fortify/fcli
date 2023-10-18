@@ -12,20 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.paging;
 
-import java.util.Optional;
-import java.util.regex.Pattern;
-
-public class LinkHeaderNextPageUrlProducerFactory {
-    private static final Pattern linkHeaderPattern = Pattern.compile("<([^>]*)>; *rel=\"([^\"]*)\"");
-    
-    public static final INextPageUrlProducer nextPageUrlProducer(String headerName, String relName) {
-        return (req,resp) -> {
-            String linkHeader = resp.getHeaders().getFirst(headerName);
-            Optional<String> nextLink = linkHeaderPattern.matcher(linkHeader).results()
-                .filter(r1->relName.equals(r1.group(2)))
-                .findFirst()
-                .map(r2->r2.group(1));
-            return nextLink.orElse(null);
-        };
-    }
+public interface INextPageRequestProducerSupplier {
+    INextPageRequestProducer getNextPageRequestProducer();
 }

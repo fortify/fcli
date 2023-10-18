@@ -22,14 +22,11 @@ import kong.unirest.PagedList;
 
 public class SCDastPagingHelper {
     public static final PagedList<JsonNode> pagedRequest(HttpRequest<?> request) {
-        return PagingHelper.pagedRequest(request, nextPageUrlProducer(request));
+        return PagingHelper.pagedRequest(request, nextPageUrlProducer());
     }
-    public static final INextPageUrlProducer nextPageUrlProducer(HttpRequest<?> originalRequest) {
-        return nextPageUrlProducer(originalRequest.getUrl());
-    }
-    public static final INextPageUrlProducer nextPageUrlProducer(String uriString) {
-        return r -> {
-            JsonNode body = r.getBody();
+    public static final INextPageUrlProducer nextPageUrlProducer() {
+        return (req,resp) -> {
+            JsonNode body = resp.getBody();
             if ( body.has("offset") && body.has("totalItems") && body.has("limit") ) {
                 int offset = body.get("offset").asInt();
                 int totalCount = body.get("totalItems").asInt();
@@ -38,7 +35,7 @@ public class SCDastPagingHelper {
                 // In exceptional cases, SC-DAST may return MAXINT for limit, in which case
                 // newOffset will become negative, hence we check whether newOffset > 0
                 if (newOffset>0 && newOffset < totalCount) {
-                    return URIHelper.addOrReplaceParam(uriString, "offset", newOffset);
+                    return URIHelper.addOrReplaceParam(req.getUrl(), "offset", newOffset);
                 }
             }
             return null;

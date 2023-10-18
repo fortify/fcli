@@ -22,7 +22,6 @@ import com.fortify.cli.sc_dast._common.output.cli.mixin.SCDastProductHelperBasic
 import com.fortify.cli.sc_dast._common.rest.helper.SCDastInputTransformer;
 import com.fortify.cli.sc_dast._common.rest.helper.SCDastPagingHelper;
 
-import kong.unirest.HttpRequest;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -34,8 +33,8 @@ public final class SCDastRestCallCommand extends AbstractRestCallCommand {
     @Getter @Mixin SCDastProductHelperBasicMixin productHelper;
     
     @Override
-    protected INextPageUrlProducer _getNextPageUrlProducer(HttpRequest<?> originalRequest) {
-        return SCDastPagingHelper.nextPageUrlProducer(originalRequest);
+    protected INextPageUrlProducer _getNextPageUrlProducer() {
+        return SCDastPagingHelper.nextPageUrlProducer();
     }
     
     @Override

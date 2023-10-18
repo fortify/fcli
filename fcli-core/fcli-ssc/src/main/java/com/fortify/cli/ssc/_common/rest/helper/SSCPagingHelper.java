@@ -35,9 +35,9 @@ public class SSCPagingHelper {
         return nextPageUrlProducer(continueNextPageSupplier);
     }
     public static final INextPageUrlProducer nextPageUrlProducer(Supplier<Boolean> continueSupplier) {
-        return r -> {
+        return (req,resp) -> {
             if ( continueSupplier.get() ) {
-                JsonNode body = r.getBody();
+                JsonNode body = resp.getBody();
                 try {
                     return JsonHelper.evaluateSpelExpression(body, "links.next.href", String.class);
                 } catch ( Exception e ) {} // TODO will JsonHelper.evaluatePath throw an exception if path not found?
