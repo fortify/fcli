@@ -13,13 +13,6 @@
 
 package com.fortify.cli.fod.mast_scan.cli.cmd;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -39,15 +32,24 @@ import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.mobile.FoDScanMobileHelper;
 import com.fortify.cli.fod.scan.helper.mobile.FoDScanMobileStartRequest;
-
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
+
 @Command(name = OutputHelperMixins.Start.CMD_NAME)
 public class FoDMastScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+    private static final Log LOG = LogFactory.getLog(FoDMastScanStartCommand.class);
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
 
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
@@ -96,7 +98,7 @@ public class FoDMastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
             // NOTE: there is currently no GET method for retrieving scan setup so the following cannot be used:
             // FoDMobileScanSetupDescriptor foDMobileScanSetupDescriptor = FoDMobileScanHelper.getSetupDescriptor(unirest, relId);
 
-            progressWriter.writeI18nProgress("fcli.fod.finding-entitlement");
+            LOG.info("Finding appropriate entitlement to use.");
 
             // find an appropriate assessment type to use
             Optional<FoDAssessmentTypeDescriptor> atd = Arrays.stream(
@@ -127,11 +129,11 @@ public class FoDMastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                 //    }
                 // }
             }
-            progressWriter.writeI18nProgress("fcli.fod.using-entitlement", entitlementIdToUse);
+            LOG.info("Configuring release to use entitlement " + entitlementIdToUse);
 
             // check if the entitlement is still valid
-            FoDAssessmentTypeHelper.validateEntitlement(progressWriter, relId, atd.get());
-            progressWriter.writeI18nProgress("fcli.fod.valid-entitlement", entitlementIdToUse);
+            FoDAssessmentTypeHelper.validateEntitlement(relId, atd.get());
+            LOG.info("The entitlement " + entitlementIdToUse + " is valid");
 
             // validate timezone (if specified)
             String timeZoneToUse = FoDScanHelper.validateTimezone(unirest, timezone);

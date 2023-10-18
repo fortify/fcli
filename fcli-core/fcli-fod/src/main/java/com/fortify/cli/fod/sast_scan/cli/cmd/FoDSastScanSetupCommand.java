@@ -13,10 +13,6 @@
 
 package com.fortify.cli.fod.sast_scan.cli.cmd;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -43,16 +39,22 @@ import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
 import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
-
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+
 @Command(name = OutputHelperMixins.Setup.CMD_NAME, hidden = false)
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
 public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+    private static final Log LOG = LogFactory.getLog(FoDSastScanSetupCommand.class);
     @Getter @Mixin private OutputHelperMixins.Setup outputHelper;
 
     @Mixin
@@ -96,7 +98,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
             // get current setup
             FoDScanConfigSastDescriptor currentSetup = FoDScanSastHelper.getSetupDescriptor(unirest, relId);
 
-            progressWriter.writeI18nProgress("fcli.fod.finding-entitlement");
+            LOG.info("Finding appropriate entitlement to use.");
 
             // find an appropriate assessment type to use
             Optional<FoDAssessmentTypeDescriptor> atd = Arrays.stream(
@@ -122,15 +124,15 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
                 if (currentSetup.getEntitlementId() != null && currentSetup.getEntitlementId() > 0) {
                     // check if "entitlement id" is already configured
                     if (!Objects.equals(entitlementIdToUse, currentSetup.getEntitlementId())) {
-                        progressWriter.writeI18nWarning("fcli.fod.changing-entitlement");
+                        LOG.warn("Changing current release entitlement from " + currentSetup.getEntitlementId());
                     }
                 }
             }
-            progressWriter.writeI18nProgress("fcli.fod.using-entitlement", entitlementIdToUse);
+            LOG.info("Configuring release to use entitlement " + entitlementIdToUse);
 
             // check if the entitlement is still valid
-            FoDAssessmentTypeHelper.validateEntitlement(progressWriter, relId, atd.get());
-            progressWriter.writeI18nProgress("fcli.fod.valid-entitlement", entitlementIdToUse);
+            FoDAssessmentTypeHelper.validateEntitlement(relId, atd.get());
+            LOG.info("The entitlement " + entitlementIdToUse + " is valid.");
 
             // find/check technology stack / language level
             FoDLookupDescriptor lookupDescriptor = null;

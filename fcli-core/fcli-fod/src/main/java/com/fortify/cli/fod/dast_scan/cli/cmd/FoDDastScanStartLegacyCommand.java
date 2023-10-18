@@ -13,13 +13,6 @@
 
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -32,6 +25,8 @@ import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeDescriptor;
 import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeHelper;
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastDescriptor;
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
 import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
@@ -40,17 +35,24 @@ import com.fortify.cli.fod.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
 import com.fortify.cli.fod.scan.helper.dast.FoDScanDastHelper;
 import com.fortify.cli.fod.scan.helper.dast.FoDScanDastStartRequest;
-import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastDescriptor;
-import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastHelper;
-
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
+
 @Command(name = FoDOutputHelperMixins.StartLegacy.CMD_NAME, hidden = true)
 public class FoDDastScanStartLegacyCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+    private static final Log LOG = LogFactory.getLog(FoDDastScanStartLegacyCommand.class);
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
 
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
@@ -102,7 +104,7 @@ public class FoDDastScanStartLegacyCommand extends AbstractFoDJsonNodeOutputComm
                         "' has not been setup correctly - 'Assessment Type' is missing or empty.");
             }
 
-            progressWriter.writeI18nProgress("fcli.fod.finding-entitlement");
+            LOG.info("Finding appropriate entitlement to use.");
 
             // find an appropriate assessment type to use
             Optional<FoDAssessmentTypeDescriptor> atd = Arrays.stream(
@@ -128,15 +130,15 @@ public class FoDDastScanStartLegacyCommand extends AbstractFoDJsonNodeOutputComm
                 if (currentSetup.getEntitlementId() != null && currentSetup.getEntitlementId() > 0) {
                     // check if "entitlement id" is already configured
                     if (!Objects.equals(entitlementIdToUse, currentSetup.getEntitlementId())) {
-                        progressWriter.writeI18nWarning("fcli.fod.changing-entitlement");
+                        LOG.warn("Changing current release entitlement from " + currentSetup.getEntitlementId());
                     }
                 }
             }
-            progressWriter.writeI18nProgress("fcli.fod.using-entitlement", entitlementIdToUse);
+            LOG.info("Configuring release to use entitlement " + entitlementIdToUse);
 
             // check if the entitlement is still valid
-            FoDAssessmentTypeHelper.validateEntitlement(progressWriter, relId, atd.get());
-            progressWriter.writeI18nProgress("fcli.fod.valid-entitlement", entitlementIdToUse);
+            FoDAssessmentTypeHelper.validateEntitlement(relId, atd.get());
+            LOG.info("The entitlement " + entitlementIdToUse + " is valid.");
 
             String startDateStr = (startDate == null || startDate.isEmpty())
                     ? LocalDateTime.now().format(dtf)
