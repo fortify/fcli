@@ -12,23 +12,24 @@
  */
 package com.fortify.cli.fod.assessment_type.helper;
 
-import java.time.Instant;
-import java.util.Date;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.scan.helper.FoDScanType;
-
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.time.Instant;
+import java.util.Date;
 
 public final class FoDAssessmentTypeHelper {
+    private static final Log LOG = LogFactory.getLog(FoDAssessmentTypeHelper.class);
     @Getter
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private FoDAssessmentTypeHelper() {}
@@ -52,7 +53,7 @@ public final class FoDAssessmentTypeHelper {
         return JsonHelper.treeToValue(assessmentTypes, FoDAssessmentTypeDescriptor[].class);
     }
 
-    public final static void validateEntitlement(IProgressWriterI18n progressWriter, String relId,
+    public final static void validateEntitlement(String relId,
                                                  FoDAssessmentTypeDescriptor atd) {
         if (atd == null || atd.getAssessmentTypeId() == null || atd.getAssessmentTypeId() <= 0) {
             throw new IllegalStateException("Invalid or empty FODAssessmentTypeDescriptor.");
@@ -60,11 +61,13 @@ public final class FoDAssessmentTypeHelper {
         // check entitlement has not expired
         if (atd.getSubscriptionEndDate() == null ||
                 atd.getSubscriptionEndDate().before(Date.from(Instant.now()))) {
-            progressWriter.writeI18nWarning("fcli.fod.entitlement-expired");
+            LOG.debug("Current Date: " + Date.from(Instant.now()).toString());
+            LOG.debug("Subscription End Date: " + atd.getSubscriptionEndDate());
+            LOG.warn("Warning: the entitlement has expired.");
         }
         // warn if all units are consumed or not enough for "new" scan
         if (atd.getUnitsAvailable() == 0) {
-            progressWriter.writeI18nWarning("fcli.fod.entitlement-consumed");
+            LOG.warn("Warning: all units of the entitlement have been consumed.");
         }
     }
 }
