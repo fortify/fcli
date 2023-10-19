@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231019.123324-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231019.140015-dev_develop" %}
 
 
 <div id="header">
@@ -32,7 +32,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-issue - Manage SSC issues (vulnerabilities) and related entities like filter sets and issue groups.</p>
+<p>fcli-ssc-issue - Manage SSC issues (vulnerabilities) and related entities like issue templates, filters and groups.</p>
 </div>
 </div>
 <div id="content">
@@ -68,11 +68,35 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-ssc-issue-get-filterset.html"><strong>get-filterset</strong>, <strong>get-fs</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-ssc-issue-create-template.html"><strong>create-template</strong></a></dt>
+<dd>
+<p>Create/upload an issue template.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-issue-delete-template.html"><strong>delete-template</strong>, <strong>rmt</strong></a></dt>
+<dd>
+<p>Delete an issue template.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-issue-download-template.html"><strong>download-template</strong></a></dt>
+<dd>
+<p>Download an issue template.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-issue-get-template.html"><strong>get-template</strong></a></dt>
+<dd>
+<p>Get issue template details.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-issue-list-templates.html"><strong>list-templates</strong>, <strong>lst</strong></a></dt>
+<dd>
+<p>List issue templates.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-issue-update-template.html"><strong>update-template</strong></a></dt>
+<dd>
+<p>Update an issue template.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-issue-get-filterset.html"><strong>get-filterset</strong></a></dt>
 <dd>
 <p>Get filter set details.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-ssc-issue-list-filtersets.html"><strong>list-filtersets</strong>, <strong>list-fs</strong>, <strong>lsfs</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-ssc-issue-list-filtersets.html"><strong>list-filtersets</strong>, <strong>lsfs</strong></a></dt>
 <dd>
 <p>List application version filter sets.</p>
 </dd>
@@ -104,7 +128,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-19 12:35:17 UTC
+Last updated 2023-10-19 14:02:02 UTC
 </div>
 </div>
 </body>

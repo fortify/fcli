@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-issue-template-list(1)
+title: fcli-ssc-issue-create-template(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-issue-template-list(1)</title>
+<title>fcli-ssc-issue-create-template(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231019.123324-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231019.140015-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-ssc-issue-template-list(1) Manual Page</h1>
+<h1>fcli-ssc-issue-create-template(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -34,7 +34,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-issue-template-list - List issue templates.</p>
+<p>fcli-ssc-issue-create-template - Create/upload an issue template.</p>
 </div>
 </div>
 <div id="content">
@@ -42,13 +42,13 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc issue-template list</strong> [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>] [[<strong>-h</strong>]
-                             [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                             [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                             [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
-                       _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                 _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                             [<strong>-q</strong>=<em>&lt;SpEL expression&gt;</em>]</p>
+<p><strong>fcli ssc issue create-template</strong> [<strong>--set-as-default</strong>] [<strong>-d</strong>=<em>&lt;description&gt;</em>] <strong>-f</strong>=<em>&lt;file&gt;</em>
+                               <strong>-n</strong>=<em>&lt;issueTemplateName&gt;</em> [[<strong>-h</strong>]
+                               [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                               [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                               [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                         _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                   _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -63,13 +63,21 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
+<dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
 <dd>
-<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+<p>Issue template description.</p>
 </dd>
-<dt class="hdlist1"><strong>--q-param</strong>=<em>&lt;qParam&gt;</em></dt>
+<dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;file&gt;</em></dt>
 <dd>
-<p>Server-side queries are automatically generated from the -q / --query option if possible; generated queries can be viewed in the debug log. The --q-param option can be used to override the automatically generated query, for example to further optimize the request. See SSC REST API documentation for information on supported formats.</p>
+<p>Issue template file path.</p>
+</dd>
+<dt class="hdlist1"><strong>-n</strong>, <strong>--name</strong>=<em>&lt;issueTemplateName&gt;</em></dt>
+<dd>
+<p>Issue template name.</p>
+</dd>
+<dt class="hdlist1"><strong>--set-as-default</strong></dt>
+<dd>
+<p>Set this issue template as the default issue template.</p>
 </dd>
 </dl>
 </div>
@@ -138,7 +146,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-19 12:35:17 UTC
+Last updated 2023-10-19 14:02:02 UTC
 </div>
 </div>
 </body>
