@@ -20,13 +20,15 @@ import picocli.CommandLine.Command;
         name = "system-state", 
         aliases="state",
         subcommands = {
-                SSCActivityFeedListCommand.class,
-                SSCEventListCommand.class,
-                SSCJobCancelCommand.class,
-                SSCJobGetCommand.class,
-                SSCJobListCommand.class,
-                SSCJobUpdateCommand.class,
-                SSCSeedBundleUploadCommand.class
+                SSCStateActivitiesListCommand.class,
+                SSCStateEventListCommand.class,
+                SSCStateSettingsListCommand.class,
+                SSCStateSeedBundleUploadCommand.class,
+                SSCStateRulepackListCommand.class,
+                SSCStateJobCancelCommand.class,
+                SSCStateJobGetCommand.class,
+                SSCStateJobListCommand.class,
+                SSCStateJobUpdateCommand.class,
         }
 )
 public class SSCSystemStateCommands extends AbstractContainerCommand {

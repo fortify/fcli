@@ -13,39 +13,24 @@
 package com.fortify.cli.ssc.system_state.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.system_state.cli.mixin.SSCJobResolverMixin;
-import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
-@Command(name = SSCOutputHelperMixins.UpdateJob.CMD_NAME) @CommandGroup("job")
-public class SSCJobUpdateCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.UpdateJob outputHelper;
+@Command(name = SSCOutputHelperMixins.GetJob.CMD_NAME) @CommandGroup("job")
+public class SSCStateJobGetCommand extends AbstractSSCJsonNodeOutputCommand {
+    @Getter @Mixin private SSCOutputHelperMixins.GetJob outputHelper; 
     @Mixin private SSCJobResolverMixin.PositionalParameter jobResolver;
-    @Option(names="--priority", required = true) Integer priority;
-
-    @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        SSCJobDescriptor descriptor = jobResolver.getJobDescriptor(unirest);
-        ObjectNode job = descriptor.asObjectNode();
-        job.put("priority", priority);
-        unirest.put(SSCUrls.JOB(descriptor.getJobName())).body(job).asObject(JsonNode.class).getBody();
-        return jobResolver.getJobDescriptor(unirest).asJsonNode();
-    }
     
     @Override
-    public String getActionCommandResult() {
-        return "UPDATED";
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return jobResolver.getJobDescriptor(unirest).asJsonNode();
     }
     
     @Override

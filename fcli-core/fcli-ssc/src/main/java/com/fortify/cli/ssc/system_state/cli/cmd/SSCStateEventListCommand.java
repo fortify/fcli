@@ -31,7 +31,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = SSCOutputHelperMixins.ListEvents.CMD_NAME) @CommandGroup("event")
-public class SSCEventListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
+public class SSCStateEventListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.ListEvents outputHelper; 
     @Mixin private SSCQParamMixin qParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()

@@ -120,4 +120,14 @@ public class SSCOutputHelperMixins {
     public static class UploadSeedBundle extends TableNoQuery {
         public static final String CMD_NAME = "upload-seed-bundle";
     }
+    
+    @Command(aliases = {"lss"})
+    public static class ListSettings extends TableWithQuery {
+        public static final String CMD_NAME = "list-settings";
+    } 
+    
+    @Command(aliases = {"lsr"})
+    public static class ListRulepacks extends TableWithQuery {
+        public static final String CMD_NAME = "list-rulepacks";
+    } 
 }

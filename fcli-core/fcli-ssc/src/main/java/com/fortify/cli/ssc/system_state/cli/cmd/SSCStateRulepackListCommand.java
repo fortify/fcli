@@ -12,29 +12,27 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.system_state.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
-import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
+import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
 import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
-import com.fortify.cli.ssc.system_state.cli.mixin.SSCJobResolverMixin;
 
+import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.GetJob.CMD_NAME) @CommandGroup("job")
-public class SSCJobGetCommand extends AbstractSSCJsonNodeOutputCommand {
-    @Getter @Mixin private SSCOutputHelperMixins.GetJob outputHelper; 
-    @Mixin private SSCJobResolverMixin.PositionalParameter jobResolver;
+@Command(name = SSCOutputHelperMixins.ListRulepacks.CMD_NAME) @CommandGroup("rulepack")
+public class SSCStateRulepackListCommand extends AbstractSSCBaseRequestOutputCommand {
+    @Getter @Mixin private SSCOutputHelperMixins.ListRulepacks outputHelper; 
     
     @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        return jobResolver.getJobDescriptor(unirest).asJsonNode();
+    public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
+        return unirest.get("/api/v1/coreRulepacks");
     }
     
     @Override
     public boolean isSingular() {
-        return true;
+        return false;
     }
 }

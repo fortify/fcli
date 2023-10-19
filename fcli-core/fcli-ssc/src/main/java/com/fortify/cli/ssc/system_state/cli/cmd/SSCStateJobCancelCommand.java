@@ -29,7 +29,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = SSCOutputHelperMixins.CancelJob.CMD_NAME) @CommandGroup("job")
-public class SSCJobCancelCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
+public class SSCStateJobCancelCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private SSCOutputHelperMixins.CancelJob outputHelper; 
     @Mixin private SSCJobResolverMixin.PositionalParameter jobResolver;
     
