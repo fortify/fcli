@@ -35,8 +35,8 @@ import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionUserMixin;
 import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionUserUpdateBuilder;
 import com.fortify.cli.ssc.attribute.cli.mixin.SSCAttributeUpdateMixin;
 import com.fortify.cli.ssc.attribute.helper.SSCAttributeUpdateBuilder;
-import com.fortify.cli.ssc.issue_template.cli.mixin.SSCIssueTemplateResolverMixin;
-import com.fortify.cli.ssc.issue_template.helper.SSCIssueTemplateDescriptor;
+import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueTemplateResolverMixin;
+import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateDescriptor;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;

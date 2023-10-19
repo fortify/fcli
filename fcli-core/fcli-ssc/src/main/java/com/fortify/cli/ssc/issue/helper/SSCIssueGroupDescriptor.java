@@ -12,9 +12,12 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.issue.helper;
 
-import com.formkiq.graalvm.annotations.*;
-import com.fortify.cli.common.json.*;
-import lombok.*;
+import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.json.JsonNodeHolder;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=true)

@@ -12,12 +12,14 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.issue.helper;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.json.*;
-import com.fortify.cli.ssc._common.rest.*;
-import kong.unirest.*;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.util.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.ssc._common.rest.SSCUrls;
+
+import kong.unirest.UnirestInstance;
 
 public final class SSCIssueGroupHelper {
     private final Map<String, SSCIssueGroupDescriptor> descriptorsByGuid = new HashMap<>();

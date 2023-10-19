@@ -14,23 +14,19 @@ package com.fortify.cli.ssc._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.ssc._common.session.cli.cmd.SSCSessionCommands;
-import com.fortify.cli.ssc.activity_feed.cli.cmd.SSCActivityFeedCommands;
 import com.fortify.cli.ssc.alert.cli.cmd.SSCAlertCommands;
 import com.fortify.cli.ssc.app.cli.cmd.SSCAppCommands;
 import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
 import com.fortify.cli.ssc.appversion_user.cli.cmd.SSCAppVersionUserCommands;
 import com.fortify.cli.ssc.artifact.cli.cmd.SSCArtifactCommands;
 import com.fortify.cli.ssc.attribute.cli.cmd.SSCAttributeCommands;
-import com.fortify.cli.ssc.event.cli.cmd.SSCEventCommands;
 import com.fortify.cli.ssc.issue.cli.cmd.SSCIssueCommands;
-import com.fortify.cli.ssc.issue_template.cli.cmd.SSCIssueTemplateCommands;
-import com.fortify.cli.ssc.job.cli.cmd.SSCJobCommands;
 import com.fortify.cli.ssc.performance_indicator.cli.cmd.SSCPerformanceIndicatorCommands;
 import com.fortify.cli.ssc.plugin.cli.cmd.SSCPluginCommands;
 import com.fortify.cli.ssc.report.cli.cmd.SSCReportCommands;
 import com.fortify.cli.ssc.rest.cli.cmd.SSCRestCommands;
 import com.fortify.cli.ssc.role.cli.cmd.SSCRoleCommands;
-import com.fortify.cli.ssc.seed_bundle.cli.cmd.SSCSeedBundleCommands;
+import com.fortify.cli.ssc.system_state.cli.cmd.SSCSystemStateCommands;
 import com.fortify.cli.ssc.token.cli.cmd.SSCTokenCommands;
 import com.fortify.cli.ssc.user.cli.cmd.SSCUserCommands;
 
@@ -49,22 +45,18 @@ import picocli.CommandLine.Command;
                 //   'rest' has a different header ('Interact with' compared to most 
                 //   other commands ('Manage').
                 SSCSessionCommands.class,
-                SSCActivityFeedCommands.class,
                 SSCAlertCommands.class,
                 SSCAppCommands.class,
                 SSCAppVersionCommands.class,
                 SSCAppVersionUserCommands.class,
                 SSCArtifactCommands.class,
                 SSCAttributeCommands.class,
-                SSCEventCommands.class,
                 SSCIssueCommands.class,
-                SSCIssueTemplateCommands.class,
-                SSCJobCommands.class,
                 SSCPerformanceIndicatorCommands.class,
                 SSCPluginCommands.class,
                 SSCReportCommands.class,
                 SSCRoleCommands.class,
-                SSCSeedBundleCommands.class,
+                SSCSystemStateCommands.class,
                 SSCTokenCommands.class,
                 SSCUserCommands.class,
                 SSCRestCommands.class,

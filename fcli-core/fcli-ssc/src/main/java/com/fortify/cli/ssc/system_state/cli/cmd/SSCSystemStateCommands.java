@@ -10,29 +10,24 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.issue.cli.cmd;
+package com.fortify.cli.ssc.system_state.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "issue", aliases = "vulnerability",
+        name = "system-state", 
+        aliases="state",
         subcommands = {
-                SSCIssueTemplateCreateCommand.class,
-                SSCIssueTemplateDeleteCommand.class,
-                SSCIssueTemplateDownloadCommand.class,
-                SSCIssueTemplateGetCommand.class,
-                SSCIssueTemplateListCommand.class,
-                SSCIssueTemplateUpdateCommand.class,
-                SSCIssueFilterSetGetCommand.class,
-                SSCIssueFilterSetListCommand.class,
-                SSCIssueFilterGetCommand.class,
-                SSCIssueFiltersListCommand.class,
-                SSCIssueGroupGetCommand.class,
-                SSCIssueGroupListCommand.class,
-                SSCIssueCountCommand.class,
+                SSCActivityFeedListCommand.class,
+                SSCEventListCommand.class,
+                SSCJobCancelCommand.class,
+                SSCJobGetCommand.class,
+                SSCJobListCommand.class,
+                SSCJobUpdateCommand.class,
+                SSCSeedBundleUploadCommand.class
         }
 )
-public class SSCIssueCommands extends AbstractContainerCommand {
+public class SSCSystemStateCommands extends AbstractContainerCommand {
 }

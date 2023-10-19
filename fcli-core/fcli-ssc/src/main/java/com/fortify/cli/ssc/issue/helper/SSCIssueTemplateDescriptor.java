@@ -10,19 +10,23 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.performance_indicator.cli.cmd;
+package com.fortify.cli.ssc.issue.helper;
 
-import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.json.JsonNodeHolder;
 
-import picocli.CommandLine.Command;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@Command(
-        name = "performance-indicator", aliases = "pi",
-        hidden = true,
-        subcommands =  {
-                SSCPerformanceIndicatorGetCommand.class,
-                SSCPerformanceIndicatorListCommand.class
-        }
-)
-public class SSCPerformanceIndicatorCommands extends AbstractContainerCommand {
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper=true)
+public class SSCIssueTemplateDescriptor extends JsonNodeHolder {
+    private String id;
+    private String name;
+    private String description;
+    private boolean inUse;
+    private boolean defaultTemplate;
+    private String publishVersion;
+    private String originalFileName;
 }

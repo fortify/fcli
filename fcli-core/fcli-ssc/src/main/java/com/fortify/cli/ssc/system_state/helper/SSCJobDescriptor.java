@@ -10,19 +10,20 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.performance_indicator.cli.cmd;
+package com.fortify.cli.ssc.system_state.helper;
 
-import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.json.JsonNodeHolder;
 
-import picocli.CommandLine.Command;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-@Command(
-        name = "performance-indicator", aliases = "pi",
-        hidden = true,
-        subcommands =  {
-                SSCPerformanceIndicatorGetCommand.class,
-                SSCPerformanceIndicatorListCommand.class
-        }
-)
-public class SSCPerformanceIndicatorCommands extends AbstractContainerCommand {
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper=true)
+public class SSCJobDescriptor extends JsonNodeHolder {
+    private String jobName;
+    private String jobGroup;
+    private Integer priority;
+    private String jobState;
 }
