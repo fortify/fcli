@@ -10,19 +10,19 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.performance_indicator.helper;
+package com.fortify.cli.ssc.variable.cli.cmd;
 
-import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import picocli.CommandLine.Command;
 
-@Reflectable @NoArgsConstructor
-@Data @EqualsAndHashCode(callSuper=true)
-public class SSCPerformanceIndicatorDescriptor extends JsonNodeHolder {
-    private String id;
-    private String guid;
-    private String name;
+@Command(
+        name = "variable", aliases = "var",
+        subcommands =  {
+                SSCVariableDefinitionListCommand.class,
+                SSCVariableGetCommand.class,
+                SSCVariableListCommand.class
+        }
+)
+public class SSCVariableCommands extends AbstractContainerCommand {
 }

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.performance_indicator.helper;
+package com.fortify.cli.ssc.variable.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=true)
-public class SSCPerformanceIndicatorDescriptor extends JsonNodeHolder {
+public class SSCVariableDescriptor extends JsonNodeHolder {
     private String id;
     private String guid;
     private String name;

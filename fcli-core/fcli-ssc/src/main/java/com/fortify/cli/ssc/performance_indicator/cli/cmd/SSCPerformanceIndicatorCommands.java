@@ -18,8 +18,8 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "performance-indicator", aliases = "pi",
-        hidden = true,
         subcommands =  {
+                SSCPerformanceIndicatorDefinitionListCommand.class,
                 SSCPerformanceIndicatorGetCommand.class,
                 SSCPerformanceIndicatorListCommand.class
         }

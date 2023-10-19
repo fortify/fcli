@@ -29,6 +29,7 @@ import com.fortify.cli.ssc.role.cli.cmd.SSCRoleCommands;
 import com.fortify.cli.ssc.system_state.cli.cmd.SSCSystemStateCommands;
 import com.fortify.cli.ssc.token.cli.cmd.SSCTokenCommands;
 import com.fortify.cli.ssc.user.cli.cmd.SSCUserCommands;
+import com.fortify.cli.ssc.variable.cli.cmd.SSCVariableCommands;
 
 import picocli.CommandLine.Command;
 
@@ -53,6 +54,7 @@ import picocli.CommandLine.Command;
                 SSCAttributeCommands.class,
                 SSCIssueCommands.class,
                 SSCPerformanceIndicatorCommands.class,
+                SSCVariableCommands.class,
                 SSCPluginCommands.class,
                 SSCReportCommands.class,
                 SSCRoleCommands.class,
