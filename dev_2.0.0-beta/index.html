@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20230912.132649-dev_2.0.0-beta
+fcli_version: 0.20231019.090451-dev_2.0.0-beta
 ---
 
 <!DOCTYPE html>
@@ -16,17 +16,18 @@ fcli_version: 0.20230912.132649-dev_2.0.0-beta
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230912.132649-dev_2.0.0-beta" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231019.090451-dev_2.0.0-beta" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20230912.132649-dev_2.0.0-beta</span>
+<span id="revnumber">version 0.20231019.090451-dev_2.0.0-beta</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
+<li><a href="#_introduction">Introduction</a></li>
 <li><a href="#_installation">Installation</a></li>
 <li><a href="#_command_structure">Command Structure</a></li>
 <li><a href="#_common_options">Common Options</a>
@@ -64,7 +65,8 @@ fcli_version: 0.20230912.132649-dev_2.0.0-beta
 </div>
 </div>
 <div id="content">
-<div id="preamble">
+<div class="sect1">
+<h2 id="_introduction"><a class="anchor" href="#_introduction"></a>Introduction</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>The fcli utility can be used to interact with various Fortify products, like Fortify on Demand (FoD), Software Security Center (SSC), ScanCentral SAST and ScanCentral DAST. This document describes installation and general usage of fcli. For a full listing of fcli commands and corresponding command line options, please see the
@@ -150,21 +152,40 @@ man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p
 <div class="ulist">
 <ul>
 <li>
-<p>Currently in preview mode</p>
+<p>Support for creating and managing applications, microservices and releases</p>
 </li>
 <li>
-<p>No <a href="#_manual_pages">manual pages</a> available</p>
+<p>Support for starting and managing SAST &amp; OSS scans</p>
 </li>
 <li>
-<p><code>fod</code> command is hidden from <code>fcli -h</code> output</p>
+<p>Support for importing/downloading SAST/DAST/MAST &amp; OSS results</p>
 </li>
 <li>
-<p>View available FoD commands by running <code>fcli fod -h</code></p>
+<p>Partial/preview support for starting and managing DAST &amp; MAST scans</p>
+</li>
+<li>
+<p>Partial/preview support for managing users, groups and their assignments</p>
 </li>
 </ul>
 </div>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>Some commands and options are either hidden or marked as <code>PREVIEW</code> or <code>LEGACY</code>; these may change at any time, even between minor fcli versions. Any fcli invocations using these commands or options may break when upgrading to a future fcli 2.x version, so if possible you should refrain from using these in pipelines for example. Most notably, this includes the following functionalities:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Commands for configuring and running FoD DAST &amp; MAST scans will change significantly, based on upcoming FoD API changes &amp; improvements</p>
+</li>
+<li>
+<p>Commands and options for managing and assigning users and groups for both FoD and SSC will likely change; see <a href="https://github.com/fortify/fcli/issues/369" class="bare">https://github.com/fortify/fcli/issues/369</a> for details.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Hidden commands are not listed in fcli help output and not included in the <a href="#_manual_pages">Manual Pages</a>. If needed, you can view the list of hidden commands using the <code>fcli util all-commands list -q hidden</code> command.</p>
 </div>
 </div>
 </div>
@@ -256,6 +277,9 @@ simple wrapper script/batch file or shell alias to make it slightly easier to in
 </div>
 <div class="paragraph">
 <p>To see what top-level fcli commands are available, you can use the <code>fcli --help</code> command. You can drill down into the command tree to see what sub-commands are available within a particular parent command, for example by running <code>fcli ssc --help</code> to see all <code>fcli ssc</code> sub-commands, or <code>fcli ssc session --help</code> to see all SSC session management commands.</p>
+</div>
+<div class="paragraph">
+<p>Note that the <code>--help</code> option must be specified <em>after</em> the sub-command for which you want view usage instructions, i.e. <code>fcli ssc --help</code> and <em>not</em> <code>fcli --help ssc</code>. A listing of all available fcli commands can be viewed using the <code>fcli util all-commands list</code> command.</p>
 </div>
 <div class="paragraph">
 <p>If you don’t have fcli up and running yet, you can also refer to the downloadable or online manual pages; refer to the <a href="#_manual_pages">Manual Pages</a> section for more information.</p>
@@ -843,10 +867,13 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <h2 id="_manual_pages"><a class="anchor" href="#_manual_pages"></a>Manual Pages</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The manual pages for this fcli release can be found here: <a href="manpage/fcli.html">fcli (1)</a>. If you are viewing this documentation offline, please make sure that you have fully extracted the docs-html.zip file to access the manual pages.</p>
+<p>Manual pages are automatically generated and contain the same information as fcli help output. Manual pages in HTML and Linux man-page formats can be downloaded for offline use from the fcli releases page at <a href="https://github.com/fortify/fcli/releases" class="bare">https://github.com/fortify/fcli/releases</a>, or can be viewed online at <a href="https://fortify.github.io/fcli" class="bare">https://fortify.github.io/fcli</a>.</p>
 </div>
 <div class="paragraph">
-<p>Manual pages for each fcli release are automatically generated as new fcli releases are being built, and are available in HTML and Linux man-page formats. The manual pages in man-page format can be downloaded from the fcli releases page at <a href="https://github.com/fortify/fcli/releases" class="bare">https://github.com/fortify/fcli/releases</a>. The HTML-formatted manual pages, including this documentation page, can also be downloaded from the fcli release page or viewed online at <a href="https://fortify.github.io/fcli" class="bare">https://fortify.github.io/fcli</a>.</p>
+<p>Please select the proper fcli version from the links above to access the corresponding manual pages. When using the offline HTML documentation bundle, please make sure to extract the full documentation archive to allow for hyperlinks to work correctly.</p>
+</div>
+<div class="paragraph">
+<p>The manual pages for the currently selected fcli release can be found here: <a href="manpage/fcli.html">fcli (1)</a>.</p>
 </div>
 </div>
 </div>
@@ -925,8 +952,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20230912.132649-dev_2.0.0-beta<br>
-Last updated 2023-09-12 13:28:43 UTC
+Version 0.20231019.090451-dev_2.0.0-beta<br>
+Last updated 2023-10-19 09:07:27 UTC
 </div>
 </div>
 </body>

@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20230912.132649-dev_2.0.0-beta" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231019.090451-dev_2.0.0-beta" %}
 
 
 <div id="header">
@@ -30,7 +30,6 @@ fcli_version:
 <li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
-<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
@@ -44,13 +43,13 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli sc-dast scan start</strong> [<strong>-l</strong>=<em>&lt;loginMacroBinaryFileId&gt;</em>] [<strong>-m</strong>=<em>&lt;scanMode&gt;</em>]
-                        [<strong>--overrides-file</strong>=<em>&lt;overridesFile&gt;</em>]
+                        <strong>-n</strong>=<em>&lt;scanName&gt;</em> [<strong>--overrides-file</strong>=<em>&lt;overridesFile&gt;</em>]
                         [<strong>-p</strong>=<em>&lt;scanPolicyNameOrId&gt;</em>]
                         <strong>-s</strong>=<em>&lt;scanSettingsCicdTokenOrId&gt;</em> [[<strong>-h</strong>]
                         [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                         [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                         <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-            _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] <em>name</em></p>
+            _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
 </div>
 </div>
 </div>
@@ -72,6 +71,10 @@ fcli_version:
 <dt class="hdlist1"><strong>-m</strong>, <strong>--mode</strong>=<em>&lt;scanMode&gt;</em></dt>
 <dd>
 <p>Overrides the scan mode. Accepted values are: CrawlOnly, CrawlAndAudit, AuditOnly.</p>
+</dd>
+<dt class="hdlist1"><strong>-n</strong>, <strong>--name</strong>=<em>&lt;scanName&gt;</em></dt>
+<dd>
+<p>The name for this scan.</p>
 </dd>
 <dt class="hdlist1"><strong>--overrides-file</strong>=<em>&lt;overridesFile&gt;</em></dt>
 <dd>
@@ -148,24 +151,11 @@ fcli_version:
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><em>name</em></dt>
-<dd>
-<p>The name for this scan.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-09-12 13:28:43 UTC
+Last updated 2023-10-19 09:07:27 UTC
 </div>
 </div>
 </body>
