@@ -21,6 +21,8 @@ import picocli.CommandLine.Command;
         subcommands = {
                 SSCIssueFilterSetGetCommand.class,
                 SSCIssueFilterSetListCommand.class,
+                SSCIssueFilterGetCommand.class,
+                SSCIssueFiltersListCommand.class,
                 SSCIssueGroupGetCommand.class,
                 SSCIssueGroupListCommand.class,
                 SSCIssueCountCommand.class,

@@ -59,6 +59,15 @@ public class SSCOutputHelperMixins {
         public static final String CMD_NAME = "get-filterset";
     }
     
+    @Command(aliases = {"lsf"})
+    public static class ListFilters extends TableWithQuery {
+        public static final String CMD_NAME = "list-filters";
+    }
+    
+    public static class GetFilter extends DetailsNoQuery {
+        public static final String CMD_NAME = "get-filter";
+    }
+    
     @Command(aliases = {"lsg"})
     public static class ListGroups extends TableWithQuery {
         public static final String CMD_NAME = "list-groups";
