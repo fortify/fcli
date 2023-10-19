@@ -30,12 +30,12 @@ public class SSCPerformanceIndicatorResolverMixin {
     }
     
     public static class PerformanceIndicatorOption extends AbstractSSCPerformanceIndicatorResolverMixin {
-        @Option(names="--performanceindicator", descriptionKey = "fcli.ssc.performance-indicator.resolver.NameOrIdOrGuid")
+        @Option(names="--performanceindicator", descriptionKey = "fcli.ssc.performance-indicator.resolver.nameOrIdOrGuid")
         @Getter private String performanceIndicatorNameOrIdOrGuid;
     }
     
     public static class PositionalParameterSingle extends AbstractSSCPerformanceIndicatorResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.performance-indicator.resolver.NameOrIdOrGuid")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.performance-indicator.resolver.nameOrIdOrGuid")
         @Getter private String performanceIndicatorNameOrIdOrGuid;
     }
 }

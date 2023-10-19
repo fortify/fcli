@@ -30,12 +30,12 @@ public class SSCVariableResolverMixin {
     }
     
     public static class VariableOption extends AbstractSSCVariableResolverMixin {
-        @Option(names="--Variable", descriptionKey = "fcli.ssc.variable.resolver.NameOrIdOrGuid")
+        @Option(names="--Variable", descriptionKey = "fcli.ssc.variable.resolver.nameOrIdOrGuid")
         @Getter private String VariableNameOrIdOrGuid;
     }
     
     public static class PositionalParameterSingle extends AbstractSSCVariableResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.variable.resolver.NameOrIdOrGuid")
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.variable.resolver.nameOrIdOrGuid")
         @Getter private String VariableNameOrIdOrGuid;
     }
 }
