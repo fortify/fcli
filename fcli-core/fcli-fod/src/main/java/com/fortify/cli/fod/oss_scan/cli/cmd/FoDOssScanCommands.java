@@ -25,7 +25,7 @@ import picocli.CommandLine;
                 //FoDOssScanSetupCommand.class,
                 FoDOssScanStartCommand.class,
                 //FoDOssScanCancelCommand.class,
-                //FoDOssScanWaitForCommand.class
+                FoDOssScanWaitForCommand.class,
                 FoDOssScanImportCommand.class,
                 FoDOSSScanDownloadCommand.class
         }
