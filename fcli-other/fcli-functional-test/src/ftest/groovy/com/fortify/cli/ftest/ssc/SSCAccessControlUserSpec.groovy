@@ -47,7 +47,7 @@ class SSCAccessControlUserSpec extends FcliBaseSpec {
     }
     
     def "create"() {
-        def args = "ssc ac create-user --username $userName --password P@ssW._ord123 --pne --suspend --rpc --firstname fName --lastname lName --email $random@mail.mail --roles viewonly --store user"
+        def args = "ssc ac create-local-user --username $userName --password P@ssW._ord123 --pne --suspend --rpc --firstname fName --lastname lName --email $random@mail.mail --roles viewonly --store user"
         when:
             def result = Fcli.run(args)
         then:

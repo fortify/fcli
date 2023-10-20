@@ -44,7 +44,7 @@ class SSCAccessControlTokenSpec extends FcliBaseSpec {
     }
     
     def "verifyCreated"() {
-        def args = "ssc ac list-tokens -q id==#var('token').id --user=$user --password=$pass"
+        def args = "ssc ac list-tokens -q id==#var('token').id --user=$user --password=$pass -o table=id,username,type,creationDate,terminalDate,timeRemaining,description"
         when:
             def result = Fcli.run(args)
         then:
