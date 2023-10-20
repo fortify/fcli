@@ -14,12 +14,12 @@ package com.fortify.cli.ssc.system_state.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc._common.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc._common.rest.query.SSCQParamValueGenerators;
@@ -31,9 +31,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.ListActivities.CMD_NAME) @CommandGroup("activity")
+@Command(name = "list-activities", aliases = {"lsa"}) @CommandGroup("activity")
 public class SSCStateActivitiesListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.ListActivities outputHelper; 
+    @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper; 
     @Mixin private SSCQParamMixin qParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
             .add("userName", SSCQParamValueGenerators::wrapInQuotes)
@@ -43,7 +43,7 @@ public class SSCStateActivitiesListCommand extends AbstractSSCBaseRequestOutputC
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.ACTIVITY_FEED_EVENTS).queryString("limit","100");
+        return unirest.get(SSCUrls.ACTIVITY_FEED_EVENTS);
     }
     
     @Override

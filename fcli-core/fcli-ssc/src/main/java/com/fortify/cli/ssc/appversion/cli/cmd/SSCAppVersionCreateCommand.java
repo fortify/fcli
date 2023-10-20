@@ -25,14 +25,14 @@ import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputComma
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder;
 import com.fortify.cli.ssc._common.rest.bulk.SSCBulkRequestBuilder.SSCBulkResponse;
+import com.fortify.cli.ssc.access_control.cli.mixin.SSCAppVersionUserMixin;
+import com.fortify.cli.ssc.access_control.helper.SSCAppVersionUserUpdateBuilder;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppAndVersionNameResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppAndVersionNameDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
-import com.fortify.cli.ssc.appversion_user.cli.mixin.SSCAppVersionUserMixin;
-import com.fortify.cli.ssc.appversion_user.helper.SSCAppVersionUserUpdateBuilder;
 import com.fortify.cli.ssc.attribute.cli.mixin.SSCAttributeUpdateMixin;
 import com.fortify.cli.ssc.attribute.helper.SSCAttributeUpdateBuilder;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueTemplateResolverMixin;

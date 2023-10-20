@@ -13,10 +13,10 @@
 package com.fortify.cli.ssc.system_state.cli.cmd;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc._common.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc._common.rest.query.SSCQParamValueGenerators;
@@ -28,9 +28,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.ListJobs.CMD_NAME) @CommandGroup("job")
+@Command(name = "list-jobs", aliases = {"lsj"}) @CommandGroup("job")
 public class SSCStateJobListCommand extends AbstractSSCBaseRequestOutputCommand implements IServerSideQueryParamGeneratorSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.ListJobs outputHelper; 
+    @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper; 
     @Mixin private SSCQParamMixin qParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
                 .add("jobClass", SSCQParamValueGenerators::wrapInQuotes)

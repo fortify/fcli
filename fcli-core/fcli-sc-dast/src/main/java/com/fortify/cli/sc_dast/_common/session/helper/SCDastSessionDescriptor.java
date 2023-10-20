@@ -33,10 +33,10 @@ import com.fortify.cli.sc_dast._common.util.SCDastConstants;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc._common.session.helper.ISSCCredentialsConfig;
 import com.fortify.cli.ssc._common.session.helper.ISSCUserCredentialsConfig;
-import com.fortify.cli.ssc.token.helper.SSCTokenCreateRequest;
-import com.fortify.cli.ssc.token.helper.SSCTokenCreateResponse;
-import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
-import com.fortify.cli.ssc.token.helper.SSCTokenCreateResponse.SSCTokenData;
+import com.fortify.cli.ssc.access_control.helper.SSCTokenCreateRequest;
+import com.fortify.cli.ssc.access_control.helper.SSCTokenCreateResponse;
+import com.fortify.cli.ssc.access_control.helper.SSCTokenHelper;
+import com.fortify.cli.ssc.access_control.helper.SSCTokenCreateResponse.SSCTokenData;
 
 import kong.unirest.UnirestInstance;
 import lombok.Data;

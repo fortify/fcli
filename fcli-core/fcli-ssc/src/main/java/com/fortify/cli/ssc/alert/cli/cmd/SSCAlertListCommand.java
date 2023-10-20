@@ -44,7 +44,7 @@ public class SSCAlertListCommand extends AbstractSSCBaseRequestOutputCommand imp
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.ALERTS).queryString("limit","-1");
+        return unirest.get(SSCUrls.ALERTS);
     }
     
     @Override

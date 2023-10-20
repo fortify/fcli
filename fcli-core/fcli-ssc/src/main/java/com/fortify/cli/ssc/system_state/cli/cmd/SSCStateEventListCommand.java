@@ -14,12 +14,12 @@ package com.fortify.cli.ssc.system_state.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamGeneratorSupplier;
 import com.fortify.cli.common.rest.query.IServerSideQueryParamValueGenerator;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc._common.rest.query.SSCQParamGenerator;
 import com.fortify.cli.ssc._common.rest.query.SSCQParamValueGenerators;
 import com.fortify.cli.ssc._common.rest.query.cli.mixin.SSCQParamMixin;
@@ -30,9 +30,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.ListEvents.CMD_NAME) @CommandGroup("event")
+@Command(name = "list-events", aliases = {"lse"}) @CommandGroup("event")
 public class SSCStateEventListCommand extends AbstractSSCBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.ListEvents outputHelper; 
+    @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper; 
     @Mixin private SSCQParamMixin qParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
                 .add("userName", SSCQParamValueGenerators::wrapInQuotes)

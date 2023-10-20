@@ -17,9 +17,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.system_state.cli.mixin.SSCJobResolverMixin;
 
@@ -28,9 +28,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.CancelJob.CMD_NAME) @CommandGroup("job")
+@Command(name = "cancel-job") @CommandGroup("job")
 public class SSCStateJobCancelCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.CancelJob outputHelper; 
+    @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper; 
     @Mixin private SSCJobResolverMixin.PositionalParameter jobResolver;
     
     @Override

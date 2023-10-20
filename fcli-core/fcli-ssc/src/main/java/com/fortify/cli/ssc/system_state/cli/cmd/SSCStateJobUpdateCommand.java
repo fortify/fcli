@@ -15,9 +15,9 @@ package com.fortify.cli.ssc.system_state.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.system_state.cli.mixin.SSCJobResolverMixin;
 import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
@@ -28,9 +28,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = SSCOutputHelperMixins.UpdateJob.CMD_NAME) @CommandGroup("job")
+@Command(name = "update-job") @CommandGroup("job")
 public class SSCStateJobUpdateCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.UpdateJob outputHelper;
+    @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Mixin private SSCJobResolverMixin.PositionalParameter jobResolver;
     @Option(names="--priority", required = true) Integer priority;
 

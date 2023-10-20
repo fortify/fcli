@@ -14,8 +14,8 @@ package com.fortify.cli.ssc.issue.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueGroupResolverMixin;
 
@@ -24,9 +24,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.GetGroup.CMD_NAME) @CommandGroup("group")
+@Command(name = "get-group") @CommandGroup("group")
 public class SSCIssueGroupGetCommand extends AbstractSSCJsonNodeOutputCommand {
-    @Getter @Mixin private SSCOutputHelperMixins.GetGroup outputHelper;
+    @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper;
     @Mixin SSCIssueGroupResolverMixin.PositionalParameterSingle groupSetResolver;
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     

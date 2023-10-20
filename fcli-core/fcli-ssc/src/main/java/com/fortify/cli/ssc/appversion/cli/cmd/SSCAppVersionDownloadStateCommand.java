@@ -16,10 +16,10 @@ import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
@@ -32,9 +32,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.AppVersionDownloadState.CMD_NAME)
+@Command(name = "download-state")
 public class SSCAppVersionDownloadStateCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.AppVersionDownloadState outputHelper;
+    @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Mixin private SSCArtifactDownloadOptions downloadOptions;
     @Mixin private SSCAppVersionResolverMixin.PositionalParameter parentResolver;
     

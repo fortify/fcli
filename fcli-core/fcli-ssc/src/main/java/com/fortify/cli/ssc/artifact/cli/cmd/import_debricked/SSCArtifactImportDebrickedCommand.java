@@ -24,13 +24,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.artifact.cli.cmd.AbstractSSCArtifactUploadCommand;
 import com.fortify.cli.ssc.artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAccessTokenCredentialOptions;
 import com.fortify.cli.ssc.artifact.cli.cmd.import_debricked.DebrickedLoginOptions.DebrickedAuthOptions;
@@ -43,9 +43,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = SSCOutputHelperMixins.ImportDebricked.CMD_NAME)
+@Command(name = "import-debricked")
 public class SSCArtifactImportDebrickedCommand extends AbstractSSCArtifactUploadCommand {
-    @Mixin @Getter private SSCOutputHelperMixins.ImportDebricked outputHelper;
+    @Mixin @Getter private OutputHelperMixins.TableNoQuery outputHelper;
     @Mixin private DebrickedLoginOptions debrickedLoginOptions; 
     
     @Option(names = {"-e", "--engine-type"}, required = true, defaultValue = "DEBRICKED")

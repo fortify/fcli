@@ -13,8 +13,8 @@
 package com.fortify.cli.ssc.system_state.cli.cmd;
 
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -22,9 +22,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.ListRulepacks.CMD_NAME) @CommandGroup("rulepack")
+@Command(name = "list-rulepacks", aliases = {"lsr"}) @CommandGroup("rulepack")
 public class SSCStateRulepackListCommand extends AbstractSSCBaseRequestOutputCommand {
-    @Getter @Mixin private SSCOutputHelperMixins.ListRulepacks outputHelper; 
+    @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper; 
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {

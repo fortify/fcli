@@ -15,8 +15,8 @@ package com.fortify.cli.ssc.issue.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.cli.util.EnvSuffix;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterHelper;
 
@@ -26,9 +26,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
-@Command(name = SSCOutputHelperMixins.GetFilter.CMD_NAME) @CommandGroup("filter")
+@Command(name = "get-filter") @CommandGroup("filter")
 public class SSCIssueFilterGetCommand extends AbstractSSCJsonNodeOutputCommand {
-    @Getter @Mixin private SSCOutputHelperMixins.GetFilter outputHelper; 
+    @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @EnvSuffix("FILTER") @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.issue.filter")
     @Getter private String filter;

@@ -12,8 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.issue.cli.cmd;
 
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueFilterSetResolverMixin;
@@ -30,9 +30,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = SSCOutputHelperMixins.VulnCount.CMD_NAME)
+@Command(name = "count")
 public class SSCIssueCountCommand extends AbstractSSCBaseRequestOutputCommand {
-    @Getter @Mixin private SSCOutputHelperMixins.VulnCount outputHelper; 
+    @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @Mixin private SSCIssueGroupResolverMixin.GroupByOption groupSetResolver;
     @Mixin private SSCIssueFilterSetResolverMixin.FilterSetOption filterSetResolver;

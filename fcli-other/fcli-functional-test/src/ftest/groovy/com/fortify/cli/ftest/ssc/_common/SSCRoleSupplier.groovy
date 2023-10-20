@@ -38,7 +38,7 @@ public class SSCRoleSupplier implements Closeable, AutoCloseable {
         private final String roleName = "fcli-temp-role"+random
         
         public SSCRole create() {
-            Fcli.run("ssc role create $roleName" + 
+            Fcli.run("ssc ac create-role $roleName" + 
                 " --description auto\\ created\\ by\\ test" + 
                 " --permission-ids user_view,user_manage" + 
                 " --store $fcliVariableName",
@@ -61,7 +61,7 @@ public class SSCRoleSupplier implements Closeable, AutoCloseable {
         }
         
         public void close() {
-            Fcli.run("ssc role delete ::$fcliVariableName::id",
+            Fcli.run("ssc ac delete-role ::$fcliVariableName::id",
                 {it.expectSuccess(true, "Unable to delete role")}) 
         }
     }

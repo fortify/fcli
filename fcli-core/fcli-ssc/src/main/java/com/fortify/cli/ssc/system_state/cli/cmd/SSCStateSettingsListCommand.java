@@ -14,17 +14,17 @@ package com.fortify.cli.ssc.system_state.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.ListSettings.CMD_NAME) @CommandGroup("settings")
+@Command(name = "list-settings", aliases = {"lss"}) @CommandGroup("settings")
 public class SSCStateSettingsListCommand extends AbstractSSCJsonNodeOutputCommand {
-    @Getter @Mixin private SSCOutputHelperMixins.ListSettings outputHelper; 
+    @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper; 
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {

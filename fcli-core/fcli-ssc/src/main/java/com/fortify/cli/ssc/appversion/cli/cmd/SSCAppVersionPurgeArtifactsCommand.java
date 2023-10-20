@@ -16,13 +16,13 @@ import java.time.OffsetDateTime;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper.Period;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
@@ -35,9 +35,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = SSCOutputHelperMixins.AppVersionPurgeArtifacts.CMD_NAME)
+@Command(name = "purge-artifacts")
 public class SSCAppVersionPurgeArtifactsCommand extends AbstractSSCOutputCommand implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.AppVersionPurgeArtifacts outputHelper;
+    @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     // TODO We should also support weeks/months/years, but this is broken (see comments in DateTimePeriodHelper)
     private static final DateTimePeriodHelper PERIOD_HELPER = DateTimePeriodHelper.byRange(Period.DAYS, Period.DAYS);
     @Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;

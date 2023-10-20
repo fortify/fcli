@@ -16,7 +16,7 @@ import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.session.cli.mixin.AbstractSessionUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc._common.session.helper.SSCSessionDescriptor;
 import com.fortify.cli.ssc._common.session.helper.SSCSessionHelper;
-import com.fortify.cli.ssc.token.helper.SSCTokenHelper;
+import com.fortify.cli.ssc.access_control.helper.SSCTokenHelper;
 
 import kong.unirest.UnirestInstance;
 

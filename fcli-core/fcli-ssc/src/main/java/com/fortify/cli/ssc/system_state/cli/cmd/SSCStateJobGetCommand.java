@@ -14,8 +14,8 @@ package com.fortify.cli.ssc.system_state.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.system_state.cli.mixin.SSCJobResolverMixin;
 
 import kong.unirest.UnirestInstance;
@@ -23,9 +23,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.GetJob.CMD_NAME) @CommandGroup("job")
+@Command(name = "get-job") @CommandGroup("job")
 public class SSCStateJobGetCommand extends AbstractSSCJsonNodeOutputCommand {
-    @Getter @Mixin private SSCOutputHelperMixins.GetJob outputHelper; 
+    @Getter @Mixin private OutputHelperMixins.DetailsNoQuery outputHelper; 
     @Mixin private SSCJobResolverMixin.PositionalParameter jobResolver;
     
     @Override

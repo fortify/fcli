@@ -13,7 +13,7 @@
 package com.fortify.cli.sc_sast._common.session.cli.mixin;
 
 import com.fortify.cli.ssc._common.session.helper.ISSCCredentialsConfig;
-import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
+import com.fortify.cli.ssc.access_control.helper.SSCTokenConverter;
 
 import lombok.Getter;
 import picocli.CommandLine.ArgGroup;

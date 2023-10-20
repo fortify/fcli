@@ -30,7 +30,7 @@ public class SSCReportTemplateListCommand extends AbstractSSCBaseRequestOutputCo
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.REPORT_DEFINITIONS).queryString("limit","-1");
+        return unirest.get(SSCUrls.REPORT_DEFINITIONS);
     }
     
     @Override

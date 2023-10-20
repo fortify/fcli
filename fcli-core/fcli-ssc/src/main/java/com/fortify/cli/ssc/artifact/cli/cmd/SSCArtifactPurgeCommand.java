@@ -14,8 +14,8 @@ package com.fortify.cli.ssc.artifact.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc.artifact.cli.mixin.SSCArtifactResolverMixin;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactHelper;
 
@@ -23,9 +23,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.ArtifactPurge.CMD_NAME)
+@Command(name = "purge")
 public class SSCArtifactPurgeCommand extends AbstractSSCArtifactOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.ArtifactPurge outputHelper;
+    @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Mixin private SSCArtifactResolverMixin.PositionalParameter artifactResolver;
     
     @Override

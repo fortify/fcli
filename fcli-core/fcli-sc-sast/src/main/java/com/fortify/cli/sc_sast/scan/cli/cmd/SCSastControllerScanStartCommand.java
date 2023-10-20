@@ -28,8 +28,8 @@ import com.fortify.cli.sc_sast.scan.cli.mixin.SCSastScanStartOptionsArgGroup;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerJobType;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobHelper.StatusEndpointVersion;
+import com.fortify.cli.ssc.access_control.helper.SSCTokenConverter;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin.AbstractSSCAppVersionResolverMixin;
-import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 
 import kong.unirest.MultipartBody;
 import kong.unirest.UnirestInstance;

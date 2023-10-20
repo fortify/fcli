@@ -16,9 +16,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCOutputHelperMixins;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 
 import kong.unirest.UnirestInstance;
@@ -26,9 +26,9 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = SSCOutputHelperMixins.UploadSeedBundle.CMD_NAME) @CommandGroup("seed-bundle")
+@Command(name = "upload-seed-bundle") @CommandGroup("seed-bundle")
 public class SSCStateSeedBundleUploadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private SSCOutputHelperMixins.UploadSeedBundle outputHelper;
+    @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper;
     @Mixin private CommonOptionMixins.RequiredFile fileMixin;
     
     @Override

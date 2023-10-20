@@ -13,7 +13,7 @@
 package com.fortify.cli.ftest.ssc._common
 
 import com.fortify.cli.ftest._common.Fcli
-import com.fortify.cli.ftest.ssc._common.SSCUserSupplier.SSCUser
+import com.fortify.cli.ftest.ssc._common.SSCLocalUserSupplier.SSCUser
 
 public class SSCAppVersionSupplier implements Closeable, AutoCloseable  {
     private SSCAppVersion version;

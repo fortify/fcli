@@ -29,10 +29,10 @@ import com.fortify.cli.ssc._common.rest.bulk.SSCBulkEmbedder;
 import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
 import com.fortify.cli.ssc._common.rest.helper.SSCPagingHelper;
 import com.fortify.cli.ssc._common.rest.helper.SSCPagingHelper.SSCContinueNextPageSupplier;
+import com.fortify.cli.ssc.access_control.helper.SSCTokenConverter;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionEmbedderSupplier;
 import com.fortify.cli.ssc.attribute.domain.SSCAttributeDefinitionType;
 import com.fortify.cli.ssc.attribute.helper.SSCAttributeDefinitionHelper;
-import com.fortify.cli.ssc.token.helper.SSCTokenConverter;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;

@@ -37,7 +37,7 @@ public class SSCAppListCommand extends AbstractSSCBaseRequestOutputCommand imple
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get(SSCUrls.PROJECTS).queryString("limit","100");
+        return unirest.get(SSCUrls.PROJECTS);
     }
     
     @Override
