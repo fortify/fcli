@@ -22,20 +22,20 @@ import picocli.CommandLine.Parameters;
 
 public class SSCPerformanceIndicatorResolverMixin {
     private static abstract class AbstractSSCPerformanceIndicatorResolverMixin {
-        public abstract String getPerformanceIndicatorNameOrId();
+        public abstract String getPerformanceIndicatorNameOrIdOrGuid();
         
         public SSCPerformanceIndicatorDescriptor getPerformanceIndicatorDescriptor(UnirestInstance unirest, String appVersionId) {
-            return new SSCPerformanceIndicatorHelper(unirest, appVersionId).getDescriptorByNameOrId(getPerformanceIndicatorNameOrId(), true);
+            return new SSCPerformanceIndicatorHelper(unirest, appVersionId).getDescriptorByNameOrIdOrGuid(getPerformanceIndicatorNameOrIdOrGuid(), true);
         }
     }
     
     public static class PerformanceIndicatorOption extends AbstractSSCPerformanceIndicatorResolverMixin {
-        @Option(names="--performanceindicator", descriptionKey = "fcli.ssc.performance-indicator.resolver.nameOrId")
-        @Getter private String performanceIndicatorNameOrId;
+        @Option(names="--performanceindicator", descriptionKey = "fcli.ssc.performance-indicator.resolver.nameOrIdOrGuid")
+        @Getter private String performanceIndicatorNameOrIdOrGuid;
     }
     
     public static class PositionalParameterSingle extends AbstractSSCPerformanceIndicatorResolverMixin {
-        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.performance-indicator.resolver.nameOrId")
-        @Getter private String performanceIndicatorNameOrId;
+        @Parameters(index = "0", arity = "1", descriptionKey = "fcli.ssc.performance-indicator.resolver.nameOrIdOrGuid")
+        @Getter private String performanceIndicatorNameOrIdOrGuid;
     }
 }

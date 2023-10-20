@@ -15,6 +15,7 @@ package com.fortify.cli.ssc._common.output.cli.mixin;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins.DetailsNoQuery;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins.TableNoQuery;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins.TableWithQuery;
 
 import picocli.CommandLine.Command;
@@ -49,14 +50,22 @@ public class SSCOutputHelperMixins {
         public static final String CMD_NAME = "import-debricked";
     }
     
-    @Command(aliases = {"list-fs", "lsfs"})
+    @Command(aliases = {"lsfs"})
     public static class ListFilterSets extends TableWithQuery {
         public static final String CMD_NAME = "list-filtersets";
     }
 
-    @Command(aliases = {"get-fs"})
     public static class GetFilterSet extends DetailsNoQuery {
         public static final String CMD_NAME = "get-filterset";
+    }
+    
+    @Command(aliases = {"lsf"})
+    public static class ListFilters extends TableWithQuery {
+        public static final String CMD_NAME = "list-filters";
+    }
+    
+    public static class GetFilter extends DetailsNoQuery {
+        public static final String CMD_NAME = "get-filter";
     }
     
     @Command(aliases = {"lsg"})
@@ -81,5 +90,44 @@ public class SSCOutputHelperMixins {
         public static final String CMD_NAME = "count";
     }
      
-     
+    @Command(aliases = {"lsa"})
+    public static class ListActivities extends TableWithQuery {
+        public static final String CMD_NAME = "list-activities";
+    } 
+    
+    @Command(aliases = {"lse"})
+    public static class ListEvents extends TableWithQuery {
+        public static final String CMD_NAME = "list-events";
+    } 
+    
+    @Command(aliases = {"lsj"})
+    public static class ListJobs extends TableWithQuery {
+        public static final String CMD_NAME = "list-jobs";
+    } 
+    
+    public static class CancelJob extends TableNoQuery {
+        public static final String CMD_NAME = "cancel-job";
+    }
+    
+    public static class UpdateJob extends TableNoQuery {
+        public static final String CMD_NAME = "update-job";
+    }
+    
+    public static class GetJob extends DetailsNoQuery {
+        public static final String CMD_NAME = "get-job";
+    }
+    
+    public static class UploadSeedBundle extends TableNoQuery {
+        public static final String CMD_NAME = "upload-seed-bundle";
+    }
+    
+    @Command(aliases = {"lss"})
+    public static class ListSettings extends TableWithQuery {
+        public static final String CMD_NAME = "list-settings";
+    } 
+    
+    @Command(aliases = {"lsr"})
+    public static class ListRulepacks extends TableWithQuery {
+        public static final String CMD_NAME = "list-rulepacks";
+    } 
 }

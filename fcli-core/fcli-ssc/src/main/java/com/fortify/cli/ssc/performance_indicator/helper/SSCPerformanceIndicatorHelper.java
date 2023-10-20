@@ -25,6 +25,7 @@ import kong.unirest.UnirestInstance;
 
 public final class SSCPerformanceIndicatorHelper {
     private final Map<String, SSCPerformanceIndicatorDescriptor> descriptorsById = new HashMap<>();
+    private final Map<String, SSCPerformanceIndicatorDescriptor> descriptorsByGuid = new HashMap<>();
     private final Map<String, SSCPerformanceIndicatorDescriptor> descriptorsByName = new HashMap<>();
     
     /**
@@ -41,16 +42,20 @@ public final class SSCPerformanceIndicatorHelper {
     private void processPerformanceIndicator(JsonNode issueTemplate) {
         SSCPerformanceIndicatorDescriptor descriptor = JsonHelper.treeToValue(issueTemplate, SSCPerformanceIndicatorDescriptor.class);
         descriptorsById.put(descriptor.getId(), descriptor);
+        descriptorsByGuid.put(descriptor.getGuid(), descriptor);
         descriptorsByName.put(descriptor.getName(), descriptor);
     }
     
-    public SSCPerformanceIndicatorDescriptor getDescriptorByNameOrId(String performanceIndicatorNameOrId, boolean failIfNotFound) {
-        SSCPerformanceIndicatorDescriptor descriptor = StringUtils.isBlank(performanceIndicatorNameOrId) ? null : descriptorsById.get(performanceIndicatorNameOrId);
+    public SSCPerformanceIndicatorDescriptor getDescriptorByNameOrIdOrGuid(String performanceIndicatorNameOrIdOrGuid, boolean failIfNotFound) {
+        SSCPerformanceIndicatorDescriptor descriptor = StringUtils.isBlank(performanceIndicatorNameOrIdOrGuid) ? null : descriptorsById.get(performanceIndicatorNameOrIdOrGuid);
         if ( descriptor==null ) {
-            descriptor = descriptorsByName.get(performanceIndicatorNameOrId);
+            descriptor = descriptorsByGuid.get(performanceIndicatorNameOrIdOrGuid);
+        }
+        if ( descriptor==null ) {
+            descriptor = descriptorsByName.get(performanceIndicatorNameOrIdOrGuid);
         }
         if ( failIfNotFound && descriptor==null ) {
-            throw new IllegalArgumentException("No Performance Indicator found with name or id "+performanceIndicatorNameOrId);
+            throw new IllegalArgumentException("No Performance Indicator found with name, id or guid "+performanceIndicatorNameOrIdOrGuid);
         }
         return descriptor;
     }

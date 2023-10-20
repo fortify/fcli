@@ -13,12 +13,13 @@
 package com.fortify.cli.ssc.performance_indicator.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+
 import picocli.CommandLine.Command;
 
 @Command(
         name = "performance-indicator", aliases = "pi",
-        hidden = true,
         subcommands =  {
+                SSCPerformanceIndicatorDefinitionListCommand.class,
                 SSCPerformanceIndicatorGetCommand.class,
                 SSCPerformanceIndicatorListCommand.class
         }

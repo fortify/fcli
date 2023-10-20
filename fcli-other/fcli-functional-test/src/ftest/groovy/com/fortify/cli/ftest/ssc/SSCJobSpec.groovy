@@ -92,7 +92,7 @@ class SSCJobSpec extends FcliBaseSpec {
     }
     */
     def "list"() {
-        def args = "ssc job list --store jobs"
+        def args = "ssc state list-jobs --store jobs"
         when:
             def result = Fcli.run(args)
         then:
@@ -106,7 +106,7 @@ class SSCJobSpec extends FcliBaseSpec {
     def "get.byName"() {
 
         Thread.sleep(1000)
-        def args = "ssc job get ::jobs::get(0).jobName"
+        def args = "ssc state get-job ::jobs::get(0).jobName"
         when:
             def result = Fcli.run(args)
         then:

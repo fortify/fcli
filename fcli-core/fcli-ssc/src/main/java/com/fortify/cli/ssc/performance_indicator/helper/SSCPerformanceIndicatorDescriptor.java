@@ -23,5 +23,6 @@ import lombok.NoArgsConstructor;
 @Data @EqualsAndHashCode(callSuper=true)
 public class SSCPerformanceIndicatorDescriptor extends JsonNodeHolder {
     private String id;
+    private String guid;
     private String name;
 }

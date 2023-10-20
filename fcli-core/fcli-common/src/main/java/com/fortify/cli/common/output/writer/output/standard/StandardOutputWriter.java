@@ -168,11 +168,12 @@ public class StandardOutputWriter implements IOutputWriter {
      * @param httpRequest
      * @param nextPageRequestProducer
      */
-    private final void writeRecords(IRecordWriter recordWriter, HttpRequest<?> httpRequest, INextPageRequestProducer nextPageRequestProducer) {
-        while ( httpRequest!=null ) {
-            HttpResponse<JsonNode> response = httpRequest.asObject(JsonNode.class);
+    private final void writeRecords(IRecordWriter recordWriter, HttpRequest<?> originalRequest, INextPageRequestProducer nextPageRequestProducer) {
+        var currentRequest = originalRequest;
+        while ( currentRequest!=null ) {
+            HttpResponse<JsonNode> response = currentRequest.asObject(JsonNode.class);
             writeRecords(recordWriter, response); 
-            httpRequest = nextPageRequestProducer.getNextPageRequest(httpRequest, response);
+            currentRequest = nextPageRequestProducer.getNextPageRequest(originalRequest, response);
         }
     }
 

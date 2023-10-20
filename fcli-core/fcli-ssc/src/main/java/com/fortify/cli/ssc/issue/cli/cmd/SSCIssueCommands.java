@@ -19,8 +19,16 @@ import picocli.CommandLine.Command;
 @Command(
         name = "issue", aliases = "vulnerability",
         subcommands = {
+                SSCIssueTemplateCreateCommand.class,
+                SSCIssueTemplateDeleteCommand.class,
+                SSCIssueTemplateDownloadCommand.class,
+                SSCIssueTemplateGetCommand.class,
+                SSCIssueTemplateListCommand.class,
+                SSCIssueTemplateUpdateCommand.class,
                 SSCIssueFilterSetGetCommand.class,
                 SSCIssueFilterSetListCommand.class,
+                SSCIssueFilterGetCommand.class,
+                SSCIssueFiltersListCommand.class,
                 SSCIssueGroupGetCommand.class,
                 SSCIssueGroupListCommand.class,
                 SSCIssueCountCommand.class,

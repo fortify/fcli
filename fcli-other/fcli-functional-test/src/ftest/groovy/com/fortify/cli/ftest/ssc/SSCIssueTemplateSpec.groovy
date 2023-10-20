@@ -32,7 +32,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     private static final String templateName = "fcli-test-Template"+random
     
     def "list"() {
-        def args = "ssc issue-template list"
+        def args = "ssc issue list-templates"
         when:
             def result = Fcli.run(args)
         then:
@@ -44,7 +44,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     }
     
     def "create"() {
-        def args = "ssc issue-template create -n $templateName -f $templateFile -d auto\\ created\\ by\\ test"
+        def args = "ssc issue create-template -n $templateName -f $templateFile -d auto\\ created\\ by\\ test"
         when:
             def result = Fcli.run(args)
         then:
@@ -57,7 +57,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     }
     
     def "get.byName"() {
-        def args = "ssc issue-template get $templateName --store template"
+        def args = "ssc issue get-template $templateName --store template"
         when:
             def result = Fcli.run(args)
         then:
@@ -68,7 +68,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     }
     
     def "get.byId"() {
-        def args = "ssc issue-template get ::template::id"
+        def args = "ssc issue get-template ::template::id"
         when:
             def result = Fcli.run(args)
         then:
@@ -79,7 +79,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     }
     
     def "update"() {
-        def args = "ssc issue-template update ::template::id -n updatedName -d updatedDescr --set-as-default"
+        def args = "ssc issue update-template ::template::id -n updatedName -d updatedDescr --set-as-default"
         when:
             def result = Fcli.run(args)
         then:
@@ -91,7 +91,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     }
     
     def "verifyUpdate"() {
-        def args = "ssc issue-template get ::template::id"
+        def args = "ssc issue get-template ::template::id"
         when:
             def result = Fcli.run(args)
         then:
@@ -102,7 +102,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     }
     
     def "download"() {
-        def args = "ssc issue-template download ::template::id"
+        def args = "ssc issue download-template ::template::id"
         when:
             def result = Fcli.run(args)
         then:
@@ -113,7 +113,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     }
     
     def "delete"() {
-        def args = "ssc issue-template delete ::template::id"
+        def args = "ssc issue delete-template ::template::id"
         when:
             def result = Fcli.run(args)
         then:

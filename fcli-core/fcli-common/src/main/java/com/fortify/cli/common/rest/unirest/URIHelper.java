@@ -32,8 +32,13 @@ public class URIHelper {
 
     @SneakyThrows
     public static final URI addOrReplaceParam(URI uri, String param, Object newValue) {
-        //var pattern = String.format("([&?])(%s=)([^&]*)", param);
-        var pattern = String.format("&?%s=[^&]+", param);
+        // Match and remove param, either:
+        // - At the start of the query string, also removing the trailing & if present
+        // - After an &, also removing the leading &
+        // Note that this only works for simple parameter names, not parameter names that
+        // contain characters that have a special meaning in regex. For example, if param
+        // contains a dot like in a.c=value, we'd also match and remove abc=value.
+        var pattern = String.format("^%s=[^&]+&?|&%s=[^&]", param, param);
         var query = uri.getQuery();
         if (StringUtils.isNotBlank(query)) { query = query.replaceAll(pattern, ""); }
         var newParamAndValue = String.format("%s=%s", param, URLEncoder.encode(newValue.toString(), StandardCharsets.UTF_8));

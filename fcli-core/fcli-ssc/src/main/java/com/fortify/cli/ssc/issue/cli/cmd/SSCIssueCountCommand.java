@@ -18,6 +18,7 @@ import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueFilterSetResolverMixin;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueGroupResolverMixin;
+import com.fortify.cli.ssc.issue.helper.SSCIssueFilterHelper;
 import com.fortify.cli.ssc.issue.helper.SSCIssueFilterSetDescriptor;
 import com.fortify.cli.ssc.issue.helper.SSCIssueGroupDescriptor;
 
@@ -27,6 +28,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 
 @Command(name = SSCOutputHelperMixins.VulnCount.CMD_NAME)
 public class SSCIssueCountCommand extends AbstractSSCBaseRequestOutputCommand {
@@ -34,6 +36,7 @@ public class SSCIssueCountCommand extends AbstractSSCBaseRequestOutputCommand {
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @Mixin private SSCIssueGroupResolverMixin.GroupByOption groupSetResolver;
     @Mixin private SSCIssueFilterSetResolverMixin.FilterSetOption filterSetResolver;
+    @Option(names="--filter", required=false) private String filter;
 
     // TODO Include options for includeRemoved/Hidden/Suppressed?
     
@@ -48,6 +51,9 @@ public class SSCIssueCountCommand extends AbstractSSCBaseRequestOutputCommand {
                 .queryString("groupingtype", groupSetDescriptor.getGuid());
         if ( filterSetDescriptor!=null ) {
             request.queryString("filterset", filterSetDescriptor.getGuid());
+        }
+        if ( filter!=null ) {
+            request.queryString("filter", new SSCIssueFilterHelper(unirest, appVersionId).getFilter(filter));
         }
         return request;
     }

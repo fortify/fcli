@@ -106,7 +106,7 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "delete";
     }
     
-    @Command(aliases = {"rm-template", "rmt"})
+    @Command(aliases = {"rmt"})
     public static class DeleteTemplate extends TableNoQuery {
         public static final String CMD_NAME = "delete-template";
     }
@@ -124,7 +124,7 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "list";
     }
     
-    @Command(aliases = {"listdef", "lsd"})
+    @Command(aliases = {"lsd"})
     public static class ListDefinitions extends TableWithQuery {
         public static final String CMD_NAME = "list-definitions";
     }
@@ -138,7 +138,6 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "get";
     }
     
-    @Command(aliases = {"getdef"})
     public static class GetDefinition extends DetailsNoQuery {
         public static final String CMD_NAME = "get-definition";
     }
@@ -158,6 +157,10 @@ public class OutputHelperMixins {
 
     public static class Update extends TableNoQuery {
         public static final String CMD_NAME = "update";
+    }
+    
+    public static class UpdateTemplate extends TableNoQuery {
+        public static final String CMD_NAME = "update-template";
     }
 
 

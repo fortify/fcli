@@ -18,5 +18,5 @@ import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 
 public interface INextPageRequestProducer {
-    HttpRequest<?> getNextPageRequest(HttpRequest<?> previousRequest, HttpResponse<? extends JsonNode> jsonResponse);
+    HttpRequest<?> getNextPageRequest(HttpRequest<?> originalRequest, HttpResponse<? extends JsonNode> jsonResponse);
 }
