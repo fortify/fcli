@@ -25,10 +25,10 @@ import spock.lang.Shared
 import spock.lang.Stepwise
 
 @Prefix("ssc.token-definitions") @FcliSession(SSC) @Stepwise
-class SSCTokenDefinitionSpec extends FcliBaseSpec {
+class SSCAccessControlTokenDefinitionSpec extends FcliBaseSpec {
     
     def "list"() {
-        def args = "ssc token list-definitions"
+        def args = "ssc ac list-token-definitions"
         when:
             def result = Fcli.run(args)
         then:

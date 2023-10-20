@@ -26,13 +26,13 @@ import spock.lang.Stepwise
 
 @Prefix("ssc.token") @FcliSession(SSC) @Stepwise
 @Requires({System.getProperty('ft.ssc.user') && System.getProperty('ft.ssc.password')})
-class SSCTokenSpec extends FcliBaseSpec {
+class SSCAccessControlTokenSpec extends FcliBaseSpec {
     String user = System.getProperty('ft.ssc.user');
     String pass = System.getProperty('ft.ssc.password');
     
     
     def "create"() {
-        def args = "ssc token create CIToken --expire-in='5m' --user=$user --password=$pass --store token"
+        def args = "ssc ac create-token CIToken --expire-in='5m' --user=$user --password=$pass --store token"
         when:
             def result = Fcli.run(args)
         then:
@@ -44,7 +44,7 @@ class SSCTokenSpec extends FcliBaseSpec {
     }
     
     def "verifyCreated"() {
-        def args = "ssc token list -q id==#var('token').id --user=$user --password=$pass"
+        def args = "ssc ac list-tokens -q id==#var('token').id --user=$user --password=$pass"
         when:
             def result = Fcli.run(args)
         then:
@@ -56,7 +56,7 @@ class SSCTokenSpec extends FcliBaseSpec {
     }
 
     def "update"() {
-        def args = "ssc token update --description=updatedDescription --user=$user --password=$pass ::token::id -o table=id,description"
+        def args = "ssc ac update-token --description=updatedDescription --user=$user --password=$pass ::token::id -o table=id,description"
         when:
             def result = Fcli.run(args)
         then:
@@ -68,7 +68,7 @@ class SSCTokenSpec extends FcliBaseSpec {
     }
     
     def "verifyUpdated"() {
-        def args = "ssc token list -q id==#var('token').id --user=$user --password=$pass -o table=id,description"
+        def args = "ssc ac list-tokens -q id==#var('token').id --user=$user --password=$pass -o table=id,description"
         when:
             def result = Fcli.run(args)
         then:
@@ -80,7 +80,7 @@ class SSCTokenSpec extends FcliBaseSpec {
     }
     
     def "revoke"() {
-        def args = "ssc token revoke ::token::restToken --user=$user --password=$pass"
+        def args = "ssc ac revoke-token ::token::restToken --user=$user --password=$pass"
         when:
             def result = Fcli.run(args)
         then:
@@ -92,7 +92,7 @@ class SSCTokenSpec extends FcliBaseSpec {
     }
     
     def "verifyRevoked"() {
-        def args = "ssc token list -q id==#var('token').id --user=$user --password=$pass"
+        def args = "ssc ac list-tokens -q id==#var('token').id --user=$user --password=$pass"
         when:
             def result = Fcli.run(args)
         then:

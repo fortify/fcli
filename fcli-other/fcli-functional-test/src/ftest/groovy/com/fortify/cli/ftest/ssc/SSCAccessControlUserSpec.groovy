@@ -26,7 +26,7 @@ import spock.lang.Shared
 import spock.lang.Stepwise
 
 @Prefix("ssc.user") @FcliSession(SSC) @Stepwise
-class SSCUserSpec extends FcliBaseSpec {
+class SSCAccessControlUserSpec extends FcliBaseSpec {
     @Shared private final String random = System.currentTimeMillis()
     @Shared private final String userName = "fclitemporarytestuser"+random
     
@@ -35,7 +35,7 @@ class SSCUserSpec extends FcliBaseSpec {
     @Shared private String mailval = "email: \"$random@mail.mail\""
     
     def "list"() {
-        def args = "ssc user list --store users"
+        def args = "ssc ac list-users --store users"
         when:
             def result = Fcli.run(args)
         then:
@@ -47,7 +47,7 @@ class SSCUserSpec extends FcliBaseSpec {
     }
     
     def "create"() {
-        def args = "ssc user create --username $userName --password P@ssW._ord123 --pne --suspend --rpc --firstname fName --lastname lName --email $random@mail.mail --roles viewonly --store user"
+        def args = "ssc ac create-user --username $userName --password P@ssW._ord123 --pne --suspend --rpc --firstname fName --lastname lName --email $random@mail.mail --roles viewonly --store user"
         when:
             def result = Fcli.run(args)
         then:
@@ -62,7 +62,7 @@ class SSCUserSpec extends FcliBaseSpec {
     }
     
     def "get.byId"() {
-        def args = "ssc user get ::user::id"
+        def args = "ssc ac get-user ::user::id"
         when:
             def result = Fcli.run(args)
         then:
@@ -73,7 +73,7 @@ class SSCUserSpec extends FcliBaseSpec {
     }
     
     def "get.byName"() {
-        def args = "ssc user get ::user::userName"
+        def args = "ssc ac get-user ::user::userName"
         when:
             def result = Fcli.run(args)
         then:
@@ -84,7 +84,7 @@ class SSCUserSpec extends FcliBaseSpec {
     }
     
     def "get.byMail"() {
-        def args = "ssc user get ::user::email"
+        def args = "ssc ac get-user ::user::email"
         when:
             def result = Fcli.run(args)
         then:
@@ -95,7 +95,7 @@ class SSCUserSpec extends FcliBaseSpec {
     }
     
     def "delete"() {
-        def args = "ssc user delete ::user::id"
+        def args = "ssc ac delete-user ::user::id"
         when:
             def result = Fcli.run(args)
         then:
@@ -106,7 +106,7 @@ class SSCUserSpec extends FcliBaseSpec {
     }
     
     def "verifyDeleted"() {
-        def args = "ssc user list --store users"
+        def args = "ssc ac list-users --store users"
         when:
             def result = Fcli.run(args)
         then:
