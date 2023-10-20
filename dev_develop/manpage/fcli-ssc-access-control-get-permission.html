@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-role-get-permission(1)
+title: fcli-ssc-access-control-get-permission(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-role-get-permission(1)</title>
+<title>fcli-ssc-access-control-get-permission(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231019.151437-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231020.152645-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-ssc-role-get-permission(1) Manual Page</h1>
+<h1>fcli-ssc-access-control-get-permission(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -34,7 +34,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-role-get-permission - Get role permission details.</p>
+<p>fcli-ssc-access-control-get-permission - Get permission details.</p>
 </div>
 </div>
 <div id="content">
@@ -42,12 +42,14 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc role get-permission</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                             [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                             [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
-                       _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-                 _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                             <em>&lt;rolePermissionNameOrId&gt;</em></p>
+<p><strong>fcli ssc access-control get-permission</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                       [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                                       [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                                 _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                           _            <em class="=&lt;propertyNames&gt;">]
+                                       [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                       <em>&lt;permissionNameOrId&gt;</em></p>
 </div>
 </div>
 </div>
@@ -121,9 +123,9 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><em>&lt;rolePermissionNameOrId&gt;</em></dt>
+<dt class="hdlist1"><em>&lt;permissionNameOrId&gt;</em></dt>
 <dd>
-<p>Role permission name or id.</p>
+<p>Permission name or id.</p>
 </dd>
 </dl>
 </div>
@@ -133,7 +135,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-19 15:16:33 UTC
+Last updated 2023-10-20 15:28:35 UTC
 </div>
 </div>
 </body>
