@@ -47,7 +47,7 @@ class SSCAppSpec extends FcliBaseSpec {
     }
     
     def "update"() {
-        def args = "ssc app update "+versionSupplier.version.appName + " --description updateddescription"
+        def args = "ssc app update "+versionSupplier.version.appName + " --description updateddescription -o table=name,description"
         when:
             def result = Fcli.run(args)
         then:

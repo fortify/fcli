@@ -36,7 +36,7 @@ class SSCAccessControlRoleSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("IdNameBuiltinAllapplicationroleDescription")
+                it[0].replace(' ', '').equals("IdNameBuiltinAllapplicationrole")
                 it.any { it.startsWith(" admin") }
             }
     }

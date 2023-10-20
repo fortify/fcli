@@ -38,7 +38,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("IdNameInuseDefaulttemplatePublishversionOriginalfilenameDescription")
+                it[0].replace(' ', '').equals("IdNameInuseDefaulttemplatePublishversionOriginalfilename")
                 it.any { it.startsWith(" PCI") }
             }
     }
@@ -50,7 +50,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("IdNameInuseDefaulttemplatePublishversionOriginalfilenameDescriptionAction")
+                it[0].replace(' ', '').equals("IdNameInuseDefaulttemplatePublishversionOriginalfilenameAction")
                 it[1].contains(templateName)
                 
             }
@@ -119,7 +119,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("IdNameInuseDefaulttemplatePublishversionOriginalfilenameDescriptionAction")
+                it[0].replace(' ', '').equals("IdNameInuseDefaulttemplatePublishversionOriginalfilenameAction")
                 it[1].contains("DELETED")
             }
     }

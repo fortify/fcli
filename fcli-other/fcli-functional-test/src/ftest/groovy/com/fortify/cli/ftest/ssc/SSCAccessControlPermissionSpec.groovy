@@ -33,7 +33,7 @@ class SSCAccessControlPermissionSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("IdNameDescription")
+                it[0].replace(' ', '').equals("IdName")
                 it.any { it.startsWith(" user_manage") }
             }
     }

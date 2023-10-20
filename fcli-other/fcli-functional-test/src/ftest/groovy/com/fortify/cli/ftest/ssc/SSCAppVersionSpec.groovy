@@ -50,7 +50,7 @@ class SSCAppVersionSpec extends FcliBaseSpec {
     }
     
     def "updateName"() {
-        def args = "ssc appversion update " + versionSupplier.version.get("id") + " --name updatedVersionName --description updated1"
+        def args = "ssc appversion update " + versionSupplier.version.get("id") + " --name updatedVersionName --description updated1 -o table=name,description"
         when:
             def result = Fcli.run(args)
         then:
@@ -61,7 +61,7 @@ class SSCAppVersionSpec extends FcliBaseSpec {
     }
     
     def "updateNameWithMatchingAppName"() {
-        def args = "ssc appversion update " + versionSupplier.version.get("id") + " --name " + versionSupplier.version.appName + ":updatedVersionName2 --description updated2"
+        def args = "ssc appversion update " + versionSupplier.version.get("id") + " --name " + versionSupplier.version.appName + ":updatedVersionName2 --description updated2 -o table=name,description"
         when:
             def result = Fcli.run(args)
         then:
@@ -72,7 +72,7 @@ class SSCAppVersionSpec extends FcliBaseSpec {
     }
     
     def "updateNameWithMatchingAppNameAndCustomDelimiter"() {
-        def args = "ssc appversion update " + versionSupplier.version.get("id") + " --name " + versionSupplier.version.appName + "|updatedVersionName3 --description updated2 --delim |"
+        def args = "ssc appversion update " + versionSupplier.version.get("id") + " --name " + versionSupplier.version.appName + "|updatedVersionName3 --description updated2 --delim | -o table=name,description"
         when:
             def result = Fcli.run(args)
         then:

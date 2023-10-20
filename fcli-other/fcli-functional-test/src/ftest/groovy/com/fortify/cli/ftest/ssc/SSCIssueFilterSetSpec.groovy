@@ -24,7 +24,7 @@ class SSCIssueFilterSetSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                it[0].replace(" ","").equals("GuidTitleDefaultfiltersetDescription");
+                it[0].replace(" ","").equals("GuidTitleDefaultfilterset");
                 it.any { it.contains("Security Auditor View") }
             }
     }
