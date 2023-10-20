@@ -159,7 +159,7 @@ jobs:
       # file to include native libraries for all platforms; we override this to include only the MacOS 
       # libraries
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifact/release-assets/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} -march=compatibility -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifact/release-assets/fcli.jar fcli
 
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
