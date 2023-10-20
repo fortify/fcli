@@ -32,7 +32,7 @@ class SSCAccessControlTokenSpec extends FcliBaseSpec {
     
     
     def "create"() {
-        def args = "ssc ac create-token CIToken --expire-in='5m' --user=$user --password=$pass --store token -o table=id,username,type,creationDate,terminalDate,timeRemaining,description"
+        def args = "ssc ac create-token CIToken --expire-in='5m' --user=$user --password=$pass --store token -o table=id,username,type,restToken,applicationToken,terminalDate,timeRemaining,description"
         when:
             def result = Fcli.run(args)
         then:

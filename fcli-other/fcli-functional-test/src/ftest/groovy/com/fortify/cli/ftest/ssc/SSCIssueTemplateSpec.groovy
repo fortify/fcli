@@ -79,7 +79,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     }
     
     def "update"() {
-        def args = "ssc issue update-template ::template::id -n updatedName -d updatedDescr --set-as-default"
+        def args = "ssc issue update-template ::template::id -n updatedName -d updatedDescr --set-as-default -o table=id,name,inUse,defaultTemplate,publishVersion,originalFileName,description"
         when:
             def result = Fcli.run(args)
         then:
