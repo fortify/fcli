@@ -19,6 +19,7 @@ import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import picocli.CommandLine.Command;
 
 @Command(name = "release",
+         aliases = "rel",
         subcommands = {
                 FoDReleaseListCommand.class,
                 FoDReleaseGetCommand.class,

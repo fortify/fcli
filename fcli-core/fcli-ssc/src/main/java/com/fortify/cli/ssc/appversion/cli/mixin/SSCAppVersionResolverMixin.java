@@ -37,7 +37,7 @@ public class SSCAppVersionResolverMixin {
     }
     
     public static class RequiredOption extends AbstractSSCAppVersionResolverMixin {
-        @Option(names = {"--appversion"}, required = true, descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
+        @Option(names = {"--appversion", "--av"}, required = true, descriptionKey = "fcli.ssc.appversion.resolver.nameOrId")
         @Getter private String appVersionNameOrId;
     }
     

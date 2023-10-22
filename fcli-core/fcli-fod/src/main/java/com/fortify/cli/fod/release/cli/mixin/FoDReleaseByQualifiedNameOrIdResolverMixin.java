@@ -45,12 +45,12 @@ public class FoDReleaseByQualifiedNameOrIdResolverMixin {
     }
 
     public static class RequiredOption extends AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
-        @Option(names = {"--release"}, required = true, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id")
+        @Option(names = {"--release", "--rel"}, required = true, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id")
         @Getter private String qualifiedReleaseNameOrId;
     }
 
     public static class OptionalOption extends AbstractFoDQualifiedReleaseNameOrIdResolverMixin {
-        @Option(names = {"--release"}, required = false, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id")
+        @Option(names = {"--release", "--rel"}, required = false, paramLabel = "id|app[:ms]:rel", descriptionKey = "fcli.fod.release.resolver.name-or-id")
         @Getter private String qualifiedReleaseNameOrId;
     }
 
