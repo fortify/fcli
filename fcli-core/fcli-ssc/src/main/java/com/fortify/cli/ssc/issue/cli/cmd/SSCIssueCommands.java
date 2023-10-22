@@ -17,7 +17,7 @@ import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "issue", aliases = "vulnerability",
+        name = "issue",
         subcommands = {
                 SSCIssueTemplateCreateCommand.class,
                 SSCIssueTemplateDeleteCommand.class,

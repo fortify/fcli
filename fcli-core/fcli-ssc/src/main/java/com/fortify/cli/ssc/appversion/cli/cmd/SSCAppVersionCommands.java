@@ -19,6 +19,7 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "appversion",
+        aliases = "av",
         subcommands = {
             SSCAppVersionCreateCommand.class,
             SSCAppVersionDeleteCommand.class,
