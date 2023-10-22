@@ -18,7 +18,7 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = ToolBugTrackerUtilityCommands.TOOL_NAME,
-        aliases = {"bugtrackerutility"},
+        aliases = {"fbtu"},
         subcommands = {
                 ToolBugTrackerUtilityInstallCommand.class,
                 ToolBugTrackerUtilityListCommand.class,

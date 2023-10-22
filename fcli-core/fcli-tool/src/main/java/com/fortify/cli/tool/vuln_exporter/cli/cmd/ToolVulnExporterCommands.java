@@ -18,7 +18,7 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = ToolVulnExporterCommands.TOOL_NAME,
-        aliases = {"fortify-vulnerability-exporter"},
+        aliases = {"fve"},
         subcommands = {
                 ToolVulnExporterInstallCommand.class,
                 ToolVulnExporterListCommand.class,
