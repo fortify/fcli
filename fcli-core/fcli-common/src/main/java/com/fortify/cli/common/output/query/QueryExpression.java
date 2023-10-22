@@ -29,7 +29,12 @@ public class QueryExpression {
         try {
             return SpelEvaluator.JSON_QUERY.evaluate(expression, record, Boolean.class);
         } catch ( Exception e ) {
-            throw new IllegalStateException(String.format("Error evaluating query expression:\n\tMessage: %s\n\tExpression: %s\n\tRecord: %s", e.getMessage(), expression.getExpressionString(), record.toPrettyString().replace("\n", "\n\t\t")), e);
+            var msg = e.getMessage();
+            if ( msg.startsWith("EL1008E") ) {
+                msg += "\n\t         Please check that the property exists. Note that literal values must be enclosed in single or double quotes."
+                      +"\n\t         Potentially the quotes need to be escaped to avoid them from being removed by the shell.";
+            }
+            throw new IllegalStateException(String.format("Error evaluating query expression:\n\tMessage: %s\n\tExpression: %s\n\tRecord: %s", msg, expression.getExpressionString(), record.toPrettyString().replace("\n", "\n\t\t")), e);
         }
     }
 }
