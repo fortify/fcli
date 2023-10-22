@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231020.181648-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231022.102411-dev_develop" %}
 
 
 <div id="header">
@@ -50,7 +50,7 @@ fcli_version:
                          [<strong>--entitlement-id</strong>=<em>&lt;entitlementId&gt;</em>]
                          <strong>--frequency</strong>=<em>&lt;entitlementFrequencyType&gt;</em>
                          [<strong>--language-level</strong>=<em>&lt;languageLevel&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
-                         <strong>--release</strong>=<em>id|app[:ms]:rel</em>
+                         <strong>--rel</strong>=<em>id|app[:ms]:rel</em>
                          <strong>--technology-stack</strong>=<em>&lt;technologyStack&gt;</em> [[<strong>-h</strong>]
                          [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                          [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
@@ -111,7 +111,7 @@ For the '--technology-stack' and '--language-level' options it is recommended to
 <dd>
 <p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
-<dt class="hdlist1"><strong>--release</strong>=<em>id|app[:ms]:rel</em></dt>
+<dt class="hdlist1"><strong>--rel, --release</strong>=<em>id|app[:ms]:rel</em></dt>
 <dd>
 <p>Release id or &lt;application&gt;[:&lt;microservice&gt;]:&lt;release&gt; name.</p>
 </dd>
@@ -190,7 +190,7 @@ For the '--technology-stack' and '--language-level' options it is recommended to
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-20 18:18:39 UTC
+Last updated 2023-10-22 10:26:05 UTC
 </div>
 </div>
 </body>

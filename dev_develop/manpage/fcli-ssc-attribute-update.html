@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231020.181648-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231022.102411-dev_develop" %}
 
 
 <div id="header">
@@ -42,15 +42,15 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc attribute update</strong> <strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em>
-                          [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] <strong>--attrs</strong>=<em>[CATEGORY:]ATTR=VALUE[,</em>
-   _                       VALUE&#8230;&#8203;]<em>[,</em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]<em>&#8230;&#8203;]
-                          [<strong>--attrs</strong>=</em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]<em>[,</em>[CATEGORY:]_
-               _           ATTR=VALUE[,VALUE&#8230;&#8203;]<em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
-                          [<strong>--env-prefix</strong>=</em>&lt;envPrefix&gt;_] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                          [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
-                          <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-              _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]</p>
+<p><strong>fcli ssc attribute update</strong> <strong>--av</strong>=<em>&lt;appVersionNameOrId&gt;</em> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+                          <strong>--attrs</strong>=<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>[,<em>[CATEGORY:]</em>
+               _           ATTR=VALUE[,VALUE&#8230;&#8203;]<em>&#8230;&#8203;] [<strong>--attrs</strong>=</em>[CATEGORY:]_
+               _           ATTR=VALUE[,VALUE&#8230;&#8203;]<em>[,</em>[CATEGORY:]ATTR=VALUE[,_
+   _                       VALUE&#8230;&#8203;]<em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=</em>&lt;envPrefix&gt;_]
+                          [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                          [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                          [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                          [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
 </div>
 </div>
@@ -65,13 +65,13 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
-<dd>
-<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
-</dd>
 <dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>[,<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>&#8230;&#8203;]</dt>
 <dd>
 <p>Set values for one or more attributes. This option accepts a comma-separated list of attribute value assignments.</p>
+</dd>
+<dt class="hdlist1"><strong>--av, --appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dd>
+<p>Application version id or &lt;application&gt;:&lt;version&gt; name.</p>
 </dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
@@ -144,7 +144,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-20 18:18:39 UTC
+Last updated 2023-10-22 10:26:05 UTC
 </div>
 </div>
 </body>
