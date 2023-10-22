@@ -54,7 +54,7 @@ public abstract class AbstractSessionLoginCommand<D extends ISessionDescriptor> 
             try {
                 logoutBeforeNewLogin(sessionName, sessionHelper.get(sessionName, false));
             } catch ( Exception e ) {
-                LOG.warn("Error logging out previous session");
+                LOG.debug("Error logging out previous session");
                 LOG.debug("Exception details:", e);
             } finally {
                 sessionHelper.destroy(sessionName);
