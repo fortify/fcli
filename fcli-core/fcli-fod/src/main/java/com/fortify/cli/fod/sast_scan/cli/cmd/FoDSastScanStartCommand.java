@@ -24,13 +24,13 @@ import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
+import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod._common.scan.helper.sast.FoDScanSastHelper;
+import com.fortify.cli.fod._common.scan.helper.sast.FoDScanSastStartRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
 import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastDescriptor;
-import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
-import com.fortify.cli.fod.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
-import com.fortify.cli.fod.scan.helper.sast.FoDScanSastStartRequest;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

@@ -13,10 +13,10 @@
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanImportCommand;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 
-import com.fortify.cli.fod.scan.cli.cmd.AbstractFoDScanImportCommand;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -33,7 +33,7 @@ public class FoDDastScanImportCommand extends AbstractFoDScanImportCommand {
     }
 
     @Override
-    protected String getImportScanType() {
-        return "Dynamic";
+    protected FoDScanType getScanType() {
+        return FoDScanType.Dynamic;
     }
 }

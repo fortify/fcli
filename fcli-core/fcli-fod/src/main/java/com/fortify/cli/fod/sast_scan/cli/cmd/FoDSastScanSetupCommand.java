@@ -24,10 +24,14 @@ import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
+import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod._common.scan.helper.sast.FoDScanSastHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeDescriptor;
-import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
+import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
@@ -35,10 +39,7 @@ import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
 import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastDescriptor;
 import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastHelper;
 import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastSetupRequest;
-import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
-import com.fortify.cli.fod.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod.scan.helper.FoDScanType;
-import com.fortify.cli.fod.scan.helper.sast.FoDScanSastHelper;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import org.apache.commons.logging.Log;
@@ -101,8 +102,8 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
             LOG.info("Finding appropriate entitlement to use.");
 
             // find an appropriate assessment type to use
-            Optional<FoDAssessmentTypeDescriptor> atd = Arrays.stream(
-                            FoDAssessmentTypeHelper.getAssessmentTypes(unirest,
+            Optional<FoDReleaseAssessmentTypeDescriptor> atd = Arrays.stream(
+                            FoDReleaseAssessmentTypeHelper.getAssessmentTypes(unirest,
                                     relId, FoDScanType.Static,
                                     entitlementFrequencyTypeMixin.getEntitlementFrequencyType(),
                                     false, true)
@@ -131,7 +132,7 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
             LOG.info("Configuring release to use entitlement " + entitlementIdToUse);
 
             // check if the entitlement is still valid
-            FoDAssessmentTypeHelper.validateEntitlement(relId, atd.get());
+            FoDReleaseAssessmentTypeHelper.validateEntitlement(relId, atd.get());
             LOG.info("The entitlement " + entitlementIdToUse + " is valid.");
 
             // find/check technology stack / language level

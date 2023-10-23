@@ -61,7 +61,7 @@ public class FoDMicroserviceByQualifiedNameResolverMixin {
     }
 
     public static class RequiredOption extends AbstractFoDAppAndMicroserviceNameResolverMixin {
-        @Option(names = {"--microservice"}, required = true, paramLabel="app:ms", descriptionKey = "fcli.fod.microservice.resolver.name")
+        @Option(names = {"--microservice", "--ms"}, required = true, paramLabel="app:ms", descriptionKey = "fcli.fod.microservice.resolver.name")
         @Getter private String qualifiedMicroserviceName;
     }
 

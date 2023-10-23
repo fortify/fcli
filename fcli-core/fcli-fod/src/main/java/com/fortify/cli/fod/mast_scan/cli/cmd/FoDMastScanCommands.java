@@ -15,10 +15,10 @@ package com.fortify.cli.fod.mast_scan.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
-import com.fortify.cli.fod.dast_scan.cli.cmd.*;
+
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "mast-scan", hidden = false,
+@CommandLine.Command(name = "mast-scan", aliases = "mast",
         subcommands = {
                 FoDMastScanListCommand.class,
                 FoDMastScanGetCommand.class,
@@ -28,7 +28,8 @@ import picocli.CommandLine;
                 FoDMastScanCancelCommand.class,
                 FoDMastScanWaitForCommand.class,
                 FoDMastScanImportCommand.class,
-                FoDMastScanDownloadCommand.class
+                FoDMastScanDownloadCommand.class,
+                FoDMastScanDownloadLatestCommand.class
         }
 )
 @DefaultVariablePropertyName("scanId")

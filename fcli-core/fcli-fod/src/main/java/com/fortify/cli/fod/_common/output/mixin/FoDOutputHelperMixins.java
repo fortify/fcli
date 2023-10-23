@@ -23,6 +23,9 @@ import picocli.CommandLine.Command;
  * @author rsenden
  */
 public class FoDOutputHelperMixins {
+    public static class DownloadLatest extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "download-latest";
+    }
     public static class SetupSast extends OutputHelperMixins.DetailsNoQuery {
         public static final String CMD_NAME = "setup-sast";
     }

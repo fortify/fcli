@@ -14,7 +14,9 @@ package com.fortify.cli.fod.sast_scan.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod.scan.cli.cmd.AbstractFoDScanImportCommand;
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanImportCommand;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -31,7 +33,7 @@ public class FoDSastScanImportCommand extends AbstractFoDScanImportCommand {
     }
 
     @Override
-    protected String getImportScanType() {
-        return "Static";
+    protected FoDScanType getScanType() {
+        return FoDScanType.Static;
     }
 }

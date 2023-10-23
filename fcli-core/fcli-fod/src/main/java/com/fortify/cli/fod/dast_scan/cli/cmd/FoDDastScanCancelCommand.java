@@ -14,12 +14,19 @@
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.fod.scan.cli.cmd.FoDScanCancelCommand;
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanCancelCommand;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.Cancel.CMD_NAME, hidden = true)
-public class FoDDastScanCancelCommand extends FoDScanCancelCommand implements IRecordTransformer, IActionCommandResultSupplier {
-
+@Command(name = OutputHelperMixins.Cancel.CMD_NAME)
+public class FoDDastScanCancelCommand extends AbstractFoDScanCancelCommand {
+    @Getter @Mixin private OutputHelperMixins.Cancel outputHelper;
+    
+    @Override
+    protected FoDScanType getScanType() {
+        return FoDScanType.Dynamic;
+    }
 }

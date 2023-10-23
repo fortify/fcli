@@ -20,10 +20,10 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod._common.scan.helper.oss.FoDScanOssHelper;
+import com.fortify.cli.fod._common.scan.helper.oss.FoDScanOssStartRequest;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
-import com.fortify.cli.fod.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod.scan.helper.oss.FoDScanOssHelper;
-import com.fortify.cli.fod.scan.helper.oss.FoDScanOssStartRequest;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

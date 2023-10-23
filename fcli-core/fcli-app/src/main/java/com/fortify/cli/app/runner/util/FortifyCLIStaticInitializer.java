@@ -25,7 +25,7 @@ import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescrip
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.i18n.helper.LanguageHelper;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.fod.scan.helper.FoDScanStatus;
+import com.fortify.cli.fod._common.scan.helper.FoDScanStatus;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobArtifactState;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobState;

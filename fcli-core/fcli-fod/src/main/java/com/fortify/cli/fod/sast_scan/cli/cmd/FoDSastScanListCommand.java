@@ -12,23 +12,21 @@
  *******************************************************************************/
 package com.fortify.cli.fod.sast_scan.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.fod.scan.cli.cmd.FoDScanListCommand;
-import com.fortify.cli.fod.scan.helper.FoDScanType;
-import picocli.CommandLine.Command;
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanListCommand;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 
-import java.util.function.Predicate;
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME, hidden = false)
-public class FoDSastScanListCommand extends FoDScanListCommand implements IRecordTransformer {
-
+public class FoDSastScanListCommand extends AbstractFoDScanListCommand implements IRecordTransformer {
+    @Getter @Mixin private OutputHelperMixins.List outputHelper;
+    
     @Override
-    protected Predicate<JsonNode> getFilterPredicate() {
-        Predicate<JsonNode> result = o->true;
-        result = and(result, "scanType", FoDScanType.Static);
-        result = and(result, "analysisStatusType", super.getStatus());
-        return result;
+    protected FoDScanType getScanType() {
+        return FoDScanType.Static;
     }
 }

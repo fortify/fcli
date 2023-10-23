@@ -23,7 +23,8 @@ import picocli.CommandLine;
                 FoDAppGetCommand.class,
                 FoDAppCreateCommand.class,
                 FoDAppUpdateCommand.class,
-                FoDAppDeleteCommand.class
+                FoDAppDeleteCommand.class,
+                FoDAppScanListCommand.class
         }
 )
 @DefaultVariablePropertyName("applicationId")

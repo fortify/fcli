@@ -22,19 +22,20 @@ import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
+import com.fortify.cli.fod._common.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
+import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
+import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastHelper;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastStartRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeDescriptor;
-import com.fortify.cli.fod.assessment_type.helper.FoDAssessmentTypeHelper;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastDescriptor;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastHelper;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
-import com.fortify.cli.fod.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
-import com.fortify.cli.fod.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
-import com.fortify.cli.fod.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
-import com.fortify.cli.fod.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod.scan.helper.FoDScanType;
-import com.fortify.cli.fod.scan.helper.dast.FoDScanDastHelper;
-import com.fortify.cli.fod.scan.helper.dast.FoDScanDastStartRequest;
+import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
+import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import org.apache.commons.logging.Log;
@@ -107,8 +108,8 @@ public class FoDDastScanStartLegacyCommand extends AbstractFoDJsonNodeOutputComm
             LOG.info("Finding appropriate entitlement to use.");
 
             // find an appropriate assessment type to use
-            Optional<FoDAssessmentTypeDescriptor> atd = Arrays.stream(
-                            FoDAssessmentTypeHelper.getAssessmentTypes(unirest,
+            Optional<FoDReleaseAssessmentTypeDescriptor> atd = Arrays.stream(
+                            FoDReleaseAssessmentTypeHelper.getAssessmentTypes(unirest,
                                     relId, FoDScanType.Dynamic,
                                     entitlementFrequencyTypeMixin.getEntitlementFrequencyType(),
                                     isRemediation, true)
@@ -137,7 +138,7 @@ public class FoDDastScanStartLegacyCommand extends AbstractFoDJsonNodeOutputComm
             LOG.info("Configuring release to use entitlement " + entitlementIdToUse);
 
             // check if the entitlement is still valid
-            FoDAssessmentTypeHelper.validateEntitlement(relId, atd.get());
+            FoDReleaseAssessmentTypeHelper.validateEntitlement(relId, atd.get());
             LOG.info("The entitlement " + entitlementIdToUse + " is valid.");
 
             String startDateStr = (startDate == null || startDate.isEmpty())

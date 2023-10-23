@@ -19,6 +19,7 @@ import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "microservice",
+        aliases = "ms",
         subcommands = {
                 FoDMicroserviceListCommand.class,
                 //FoDAppMicroserviceGetCommand.class,

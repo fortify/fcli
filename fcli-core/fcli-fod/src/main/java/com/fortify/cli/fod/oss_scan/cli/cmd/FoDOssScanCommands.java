@@ -15,9 +15,10 @@ package com.fortify.cli.fod.oss_scan.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
+
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "oss-scan", hidden = false,
+@CommandLine.Command(name = "oss-scan", aliases = "oss",
         subcommands = {
                 FoDOssScanListCommand.class,
                 FoDOssScanGetCommand.class,
@@ -27,7 +28,8 @@ import picocli.CommandLine;
                 //FoDOssScanCancelCommand.class,
                 FoDOssScanWaitForCommand.class,
                 FoDOssScanImportCommand.class,
-                FoDOSSScanDownloadCommand.class
+                FoDOssScanDownloadCommand.class,
+                FoDOssScanDownloadLatestCommand.class
         }
 )
 @DefaultVariablePropertyName("scanId")

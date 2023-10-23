@@ -15,9 +15,10 @@ package com.fortify.cli.fod.sast_scan.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
+
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "sast-scan", hidden = false,
+@CommandLine.Command(name = "sast-scan", aliases = "sast",
         subcommands = {
                 FoDSastScanListCommand.class,
                 FoDSastScanGetCommand.class,
@@ -27,7 +28,8 @@ import picocli.CommandLine;
                 FoDSastScanCancelCommand.class,
                 FoDSastScanWaitForCommand.class,
                 FoDSastScanImportCommand.class,
-                FoDSastScanDownloadCommand.class
+                FoDSastScanDownloadCommand.class,
+                FoDSastScanDownloadLatestCommand.class
         }
 )
 @DefaultVariablePropertyName("scanId")

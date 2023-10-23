@@ -16,8 +16,9 @@ import java.util.function.BiFunction;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanImportCommand;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 
-import com.fortify.cli.fod.scan.cli.cmd.AbstractFoDScanImportCommand;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -39,8 +40,8 @@ public class FoDOssScanImportCommand extends AbstractFoDScanImportCommand {
     }
 
     @Override
-    protected String getImportScanType() {
-        return "OpenSource";
+    protected FoDScanType getScanType() {
+        return FoDScanType.OpenSource;
     }
 
     @RequiredArgsConstructor

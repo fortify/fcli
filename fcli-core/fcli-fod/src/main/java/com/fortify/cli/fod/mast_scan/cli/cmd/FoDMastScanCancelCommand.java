@@ -14,12 +14,20 @@
 package com.fortify.cli.fod.mast_scan.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.fod.scan.cli.cmd.FoDScanCancelCommand;
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanCancelCommand;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.Cancel.CMD_NAME, hidden = false)
-public class FoDMastScanCancelCommand extends FoDScanCancelCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDMastScanCancelCommand extends AbstractFoDScanCancelCommand {
+    @Getter @Mixin private OutputHelperMixins.Cancel outputHelper;
+    
+    @Override
+    protected FoDScanType getScanType() {
+        return FoDScanType.Mobile;
+    }
 
 }

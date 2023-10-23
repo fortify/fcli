@@ -15,10 +15,19 @@ package com.fortify.cli.fod.dast_scan.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.fod.scan.cli.cmd.FoDScanGetCommand;
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanGetCommand;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+
+import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.Get.CMD_NAME, hidden = true)
-public class FoDDastScanGetCommand extends FoDScanGetCommand implements IRecordTransformer {
-
+public class FoDDastScanGetCommand extends AbstractFoDScanGetCommand implements IRecordTransformer {
+    @Getter @Mixin private OutputHelperMixins.Get outputHelper;
+    
+    @Override
+    protected FoDScanType getScanType() {
+        return FoDScanType.Dynamic;
+    }
 }

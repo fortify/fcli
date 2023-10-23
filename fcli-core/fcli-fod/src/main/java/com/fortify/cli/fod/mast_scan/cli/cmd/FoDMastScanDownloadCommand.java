@@ -14,17 +14,19 @@
 package com.fortify.cli.fod.mast_scan.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.fod.scan.cli.cmd.AbstractFoDDownloadScanCommand;
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanDownloadFprCommand;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.Download.CMD_NAME)
-public class FoDMastScanDownloadCommand extends AbstractFoDDownloadScanCommand {
+public class FoDMastScanDownloadCommand extends AbstractFoDScanDownloadFprCommand {
     @Getter @Mixin private OutputHelperMixins.Download outputHelper;
 
     @Override
-    protected String getDownloadScanType() {
-        return "Mobile";
+    protected FoDScanType getScanType() {
+        return FoDScanType.Mobile;
     }
 }
