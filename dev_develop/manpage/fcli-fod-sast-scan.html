@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231022.102411-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231023.105540-dev_develop" %}
 
 
 <div id="header">
@@ -68,9 +68,17 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="fcli-fod-sast-scan-list.html"><strong>list</strong></a></dt>
+<dt class="hdlist1"><a href="fcli-fod-sast-scan-cancel.html"><strong>cancel</strong></a></dt>
 <dd>
-<p>List SAST scans.</p>
+<p>Cancel a SAST scan.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-fod-sast-scan-download.html"><strong>download</strong></a></dt>
+<dd>
+<p>Download scan results.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-fod-sast-scan-download-latest.html"><strong>download-latest</strong></a></dt>
+<dd>
+<p>Download latest scan results from release.</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-fod-sast-scan-get.html"><strong>get</strong></a></dt>
 <dd>
@@ -80,6 +88,14 @@ fcli_version:
 <dd>
 <p>(PREVIEW) Get current SAST scan configuration.</p>
 </dd>
+<dt class="hdlist1"><a href="fcli-fod-sast-scan-import.html"><strong>import</strong></a></dt>
+<dd>
+<p>Import existing SAST scan results (from an FPR file).</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-fod-sast-scan-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
+<dd>
+<p>List SAST scans.</p>
+</dd>
 <dt class="hdlist1"><a href="fcli-fod-sast-scan-setup.html"><strong>setup</strong></a></dt>
 <dd>
 <p>(PREVIEW) Configure SAST scan details for the release.</p>
@@ -88,21 +104,9 @@ fcli_version:
 <dd>
 <p>Start a new SAST scan.</p>
 </dd>
-<dt class="hdlist1"><a href="fcli-fod-sast-scan-cancel.html"><strong>cancel</strong></a></dt>
-<dd>
-<p>Cancel a SAST scan.</p>
-</dd>
 <dt class="hdlist1"><a href="fcli-fod-sast-scan-wait-for.html"><strong>wait-for</strong></a></dt>
 <dd>
 <p>Wait for one or more SAST scans to reach or exit specified scan statuses.</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-fod-sast-scan-import.html"><strong>import</strong></a></dt>
-<dd>
-<p>Import existing SAST scan results (from an FPR file).</p>
-</dd>
-<dt class="hdlist1"><a href="fcli-fod-sast-scan-download.html"><strong>download</strong></a></dt>
-<dd>
-<p>Download previous scan results (as an FPR file).</p>
 </dd>
 </dl>
 </div>
@@ -112,7 +116,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-22 10:26:05 UTC
+Last updated 2023-10-23 10:58:02 UTC
 </div>
 </div>
 </body>
