@@ -19,6 +19,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "access-control",
         aliases = "ac",
         subcommands = {
+                FoDRoleListCommand.class,
                 FoDGroupListCommand.class,
                 FoDGroupGetCommand.class,
                 FoDGroupCreateCommand.class,
