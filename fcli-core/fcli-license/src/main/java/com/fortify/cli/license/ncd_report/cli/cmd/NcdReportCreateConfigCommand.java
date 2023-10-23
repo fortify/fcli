@@ -23,7 +23,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.CreateConfig.CMD_NAME)
 public class NcdReportCreateConfigCommand extends AbstractGenerateConfigCommand {
     @Getter @Mixin private OutputHelperMixins.CreateConfig outputHelper;
-    @Getter private final String resourceFileName = "com/fortify/cli/util/ncd_report/NcdReportConfig.yml";
+    @Getter private final String resourceFileName = "com/fortify/cli/license/ncd_report/NcdReportConfig.yml";
 
     @Option(names = {"-c", "--config"}, defaultValue = "NcdReportConfig.yml") 
     @Getter private String outputFileName;

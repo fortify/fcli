@@ -23,7 +23,7 @@ import picocli.CommandLine.Option;
 @Command(name = OutputHelperMixins.CreateConfig.CMD_NAME)
 public class MspReportCreateConfigCommand extends AbstractGenerateConfigCommand {
     @Getter @Mixin private OutputHelperMixins.CreateConfig outputHelper;
-    @Getter private final String resourceFileName = "com/fortify/cli/util/msp_report/MspReportConfig.yml";
+    @Getter private final String resourceFileName = "com/fortify/cli/license/msp_report/MspReportConfig.yml";
 
     @Option(names = {"-c", "--config"}, defaultValue = "MspReportConfig.yml") 
     @Getter private String outputFileName;

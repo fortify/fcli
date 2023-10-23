@@ -19,7 +19,8 @@
 # - lcEmailDomain: Lowercase author email domain name
 # - lcEmailName: Lowercase author email name (everything before '@') 
 # - cleanName: Lowercase author name with all non-letters removed
-# - cleanEmailName: Lowercase author email name with all non-letters removed
+# - cleanEmailName: Lowercase author email name with all special characters 
+#                   and leading digits removed
 contributor:
   # Ignore all contributors matching the given Spring Expression Language
   # expression, based on the author properties listed above. Commonly used 
