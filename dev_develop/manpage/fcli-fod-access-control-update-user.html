@@ -1,5 +1,5 @@
 ---
-title: fcli-fod-user-update(1)
+title: fcli-fod-access-control-update-user(1)
 fcli_version: 
 ---
 
@@ -9,18 +9,18 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-fod-user-update(1)</title>
+<title>fcli-fod-access-control-update-user(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231023.105540-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231023.133523-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-fod-user-update(1) Manual Page</h1>
+<h1>fcli-fod-access-control-update-user(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -35,7 +35,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-user-update - (PREVIEW) Update a user.</p>
+<p>fcli-fod-access-control-update-user - Update a user.</p>
 </div>
 </div>
 <div id="content">
@@ -43,21 +43,28 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod user update</strong> [<strong>--must-change</strong>] [<strong>--password-never-expires</strong>] [<strong>--suspended</strong>]
-                     [<strong>--email</strong>=<em>&lt;email&gt;</em>] [<strong>--firstname</strong>=<em>&lt;firstName&gt;</em>]
-                     [<strong>--lastname</strong>=<em>&lt;lastName&gt;</em>] [<strong>--password</strong>=<em>&lt;password&gt;</em>]
-                     [<strong>--phone</strong>=<em>&lt;phoneNumber&gt;</em>] [<strong>--role</strong>=<em>&lt;roleNameOrId&gt;</em>]
-                     [<strong>--add-apps</strong>=<em>&lt;addApplications&gt;</em>[,<em>&lt;addApplications&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
-                     [<strong>--add-groups</strong>=<em>&lt;addUserGroups&gt;</em>[,<em>&lt;addUserGroups&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
-                     [<strong>--remove-apps</strong>=<em>&lt;removeApplications&gt;</em>[,
-                     <em>&lt;removeApplications&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
-                     [<strong>--remove-groups</strong>=<em>&lt;removeUserGroups&gt;</em>[,
-                     <em>&lt;removeUserGroups&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
-                     [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
-                     <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-         _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
-                     <em>&lt;userNameOrId&gt;</em></p>
+<p><strong>fcli fod access-control update-user</strong> [<strong>--must-change</strong>] [<strong>--password-never-expires</strong>]
+                                    [<strong>--suspended</strong>] [<strong>--email</strong>=<em>&lt;email&gt;</em>]
+                                    [<strong>--firstname</strong>=<em>&lt;firstName&gt;</em>]
+                                    [<strong>--lastname</strong>=<em>&lt;lastName&gt;</em>]
+                                    [<strong>--password</strong>=<em>&lt;password&gt;</em>]
+                                    [<strong>--phone</strong>=<em>&lt;phoneNumber&gt;</em>]
+                                    [<strong>--role</strong>=<em>&lt;roleNameOrId&gt;</em>]
+                                    [<strong>--add-apps</strong>=<em>&lt;addApplications&gt;</em>[,
+                                    <em>&lt;addApplications&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                                    [<strong>--add-groups</strong>=<em>&lt;addUserGroups&gt;</em>[,
+                                    <em>&lt;addUserGroups&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                                    [<strong>--remove-apps</strong>=<em>&lt;removeApplications&gt;</em>[,
+                                    <em>&lt;removeApplications&gt;</em>&#8230;&#8203;]]&#8230;&#8203;
+                                    [<strong>--remove-groups</strong>=<em>&lt;removeUserGroups&gt;</em>[,
+                                    <em>&lt;removeUserGroups&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
+                                    [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                                    [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                              _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+                        _            <em class="=&lt;propertyNames&gt;">]
+                                    [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] <em>&lt;userNameOrId&gt;</em></p>
 </div>
 </div>
 </div>
@@ -74,11 +81,11 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><strong>--add-apps, --add-applications</strong>=<em>&lt;addApplications&gt;</em>[,<em>&lt;addApplications&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>(DEPRECATED) One or more comma-separated application id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric application names, you will need to specify the application id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
+<p>One or more comma-separated application id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric application names, you will need to specify the application id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
 </dd>
 <dt class="hdlist1"><strong>--add-groups</strong>=<em>&lt;addUserGroups&gt;</em>[,<em>&lt;addUserGroups&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>(DEPRECATED) One or more comma-separated group id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric group names, you will need to specify the group id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
+<p>One or more comma-separated group id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric group names, you will need to specify the group id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
 </dd>
 <dt class="hdlist1"><strong>--email</strong>=<em>&lt;email&gt;</em></dt>
 <dd>
@@ -110,11 +117,11 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--remove-apps, --remove-applications</strong>=<em>&lt;removeApplications&gt;</em>[,<em>&lt;removeApplications&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>(DEPRECATED) One or more comma-separated application id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric application names, you will need to specify the application id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
+<p>One or more comma-separated application id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric application names, you will need to specify the application id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
 </dd>
 <dt class="hdlist1"><strong>--remove-groups</strong>=<em>&lt;removeUserGroups&gt;</em>[,<em>&lt;removeUserGroups&gt;</em>&#8230;&#8203;]</dt>
 <dd>
-<p>(DEPRECATED) One or more comma-separated group id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric group names, you will need to specify the group id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
+<p>One or more comma-separated group id&#8217;s or name&#8217;s. Note that numeric values are always interpreted as id&#8217;s. If you have numeric group names, you will need to specify the group id. This functionality will likely be moved to a different command in an upcoming minor fcli release, potentially affecting any workflows in which this option is being used.</p>
 </dd>
 <dt class="hdlist1"><strong>--role</strong>=<em>&lt;roleNameOrId&gt;</em></dt>
 <dd>
@@ -204,7 +211,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-23 10:58:02 UTC
+Last updated 2023-10-23 13:37:19 UTC
 </div>
 </div>
 </body>
