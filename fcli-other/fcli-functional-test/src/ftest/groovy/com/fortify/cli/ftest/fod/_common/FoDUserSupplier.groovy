@@ -29,7 +29,7 @@ public class FoDUserSupplier extends AbstractCloseableEntitySupplier<FoDUser> {
 
         public FoDUser create() {
             Fcli.run("fod rest lookup Roles --store roles")
-            Fcli.run("fod user create $userName --email=test@test.test --firstname=test --lastname=user --phone=1234 --role=::roles::get(0).value " +
+            Fcli.run("fod ac create-user $userName --email=test@test.test --firstname=test --lastname=user --phone=1234 --role=::roles::get(0).value " +
                 "--store $variableName",
                 {it.expectSuccess(true, "Unable to create user")})
             return this
@@ -37,12 +37,12 @@ public class FoDUserSupplier extends AbstractCloseableEntitySupplier<FoDUser> {
 
         public String get(String propertyPath) {
             Fcli.run("util var contents $variableName -o expr={$propertyPath}",
-                {it.expectSuccess(true, "Error getting application release property "+propertyPath)})
+                {it.expectSuccess(true, "Error getting user property "+propertyPath)})
                 .stdout[0]
         }
 
         public void close() {
-            Fcli.run("fod user delete $userName",
+            Fcli.run("fod ac rm-user $userName",
                 {it.expectSuccess(true, "Unable to delete user")})
         }
     }

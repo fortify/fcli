@@ -28,7 +28,7 @@ public class FoDUserGroupSupplier extends AbstractCloseableEntitySupplier<FoDUse
         final String groupName = "fcli-"+random
 
         public FoDUserGroup create() {
-            Fcli.run("fod user-group create $groupName "+
+            Fcli.run("fod ac create-group $groupName "+
                 "--store $variableName",
                 {it.expectSuccess(true, "Unable to create user-group")})
             return this
@@ -36,12 +36,12 @@ public class FoDUserGroupSupplier extends AbstractCloseableEntitySupplier<FoDUse
 
         public String get(String propertyPath) {
             Fcli.run("util var contents $variableName -o expr={$propertyPath}",
-                {it.expectSuccess(true, "Error getting application release property "+propertyPath)})
+                {it.expectSuccess(true, "Error getting user group property "+propertyPath)})
                 .stdout[0]
         }
 
         public void close() {
-            Fcli.run("fod user-group delete $groupName",
+            Fcli.run("fod ac rm-group $groupName",
                 {it.expectSuccess(true, "Unable to delete user-group")})
         }
     }
