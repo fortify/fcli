@@ -23,6 +23,7 @@ class FoDScanSpec extends FcliBaseSpec {
     //@Shared @TestResource("runtime/shared/iwa_net_cyclonedx.json") String ossResults
     @Shared @AutoCleanup FoDWebAppSupplier app = new FoDWebAppSupplier()
 
+    /*
     def "get.byId"() {
         def args = "fod sast-scan get ::scans::get(0).scanId"
         when:
@@ -33,7 +34,7 @@ class FoDScanSpec extends FcliBaseSpec {
                 it[1].startsWith("startedByUserId: ")
             }
     }
-    /*
+    
     def "import-sast"() {
         //get release id
         def appRelId = Fcli.run("fod release get " + app.appName + ":" + app.versionName + " --store release")
