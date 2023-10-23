@@ -20,16 +20,16 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "sast-scan", aliases = "sast",
         subcommands = {
-                FoDSastScanListCommand.class,
+                FoDSastScanCancelCommand.class,
+                FoDSastScanDownloadCommand.class,
+                FoDSastScanDownloadLatestCommand.class,
                 FoDSastScanGetCommand.class,
                 FoDSastScanGetConfigCommand.class,
+                FoDSastScanImportCommand.class,
+                FoDSastScanListCommand.class,
                 FoDSastScanSetupCommand.class,
                 FoDSastScanStartCommand.class,
-                FoDSastScanCancelCommand.class,
                 FoDSastScanWaitForCommand.class,
-                FoDSastScanImportCommand.class,
-                FoDSastScanDownloadCommand.class,
-                FoDSastScanDownloadLatestCommand.class
         }
 )
 @DefaultVariablePropertyName("scanId")

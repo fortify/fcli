@@ -15,11 +15,11 @@ package com.fortify.cli.fod._common.scan.cli.cmd;
 
 import java.util.Set;
 
+import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
 import com.fortify.cli.fod._common.output.mixin.FoDProductHelperStandardMixin;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDScanResolverMixin;
-import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanStatus;
 import com.fortify.cli.fod._common.scan.helper.FoDScanStatus.FoDScanStatusIterable;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
@@ -29,6 +29,7 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+@CommandGroup("*-scan")
 public abstract class AbstractFoDScanWaitForCommand extends AbstractWaitForCommand {
     @Getter @Mixin FoDProductHelperStandardMixin productHelper;
     @Mixin private FoDScanResolverMixin.PositionalParameterMulti scansResolver;
@@ -39,7 +40,6 @@ public abstract class AbstractFoDScanWaitForCommand extends AbstractWaitForComma
     protected final WaitHelperBuilder configure(UnirestInstance unirest, WaitHelperBuilder builder) {
         return builder
                 .recordsSupplier(scansResolver::getScanDescriptorJsonNodes)
-                .recordTransformer(FoDScanHelper::renameFields)
                 .currentStateProperty("analysisStatusType")
                 .knownStates(FoDScanStatus.getKnownStateNames())
                 .failureStates(FoDScanStatus.getFailureStateNames())

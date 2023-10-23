@@ -15,20 +15,21 @@ package com.fortify.cli.fod.dast_scan.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
+
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "dast-scan", aliases = "dast",
         subcommands = {
-                FoDDastScanListCommand.class,
+                FoDDastScanCancelCommand.class,
+                FoDDastScanDownloadCommand.class,
+                FoDDastScanDownloadLatestCommand.class,
                 FoDDastScanGetCommand.class,
                 FoDDastScanGetConfigLegacyCommand.class,
+                FoDDastScanImportCommand.class,
+                FoDDastScanListCommand.class,
                 //FoDDastScanSetupCommand.class,
                 FoDDastScanStartLegacyCommand.class,
-                FoDDastScanCancelCommand.class,
                 FoDDastScanWaitForCommand.class,
-                FoDDastScanImportCommand.class,
-                FoDDastScanDownloadCommand.class,
-                FoDDastScanDownloadLatestCommand.class
         }
 )
 @DefaultVariablePropertyName("scanId")

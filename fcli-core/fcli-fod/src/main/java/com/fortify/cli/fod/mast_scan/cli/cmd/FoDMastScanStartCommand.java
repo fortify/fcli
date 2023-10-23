@@ -13,34 +13,6 @@
 
 package com.fortify.cli.fod.mast_scan.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
-import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
-import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
-import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
-import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
-import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod._common.scan.helper.FoDScanType;
-import com.fortify.cli.fod._common.scan.helper.mobile.FoDScanMobileHelper;
-import com.fortify.cli.fod._common.scan.helper.mobile.FoDScanMobileStartRequest;
-import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
-import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
-import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
-
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -48,15 +20,39 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
+import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
+import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
+import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
+import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod._common.scan.helper.mobile.FoDScanMobileHelper;
+import com.fortify.cli.fod._common.scan.helper.mobile.FoDScanMobileStartRequest;
+import com.fortify.cli.fod._common.util.FoDEnums;
+import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
+import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
+import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
+
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+
 @Command(name = OutputHelperMixins.Start.CMD_NAME)
-public class FoDMastScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDMastScanStartCommand extends AbstractFoDScanStartCommand {
     private static final Log LOG = LogFactory.getLog(FoDMastScanStartCommand.class);
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
 
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
 
-    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     @Option(names = {"--assessment-type"}, required = true)
     private String mobileAssessmentType;
     @Option(names = {"--entitlement-id"})
@@ -76,12 +72,10 @@ public class FoDMastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
 
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
 
-    // TODO Split into multiple methods
     @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
+    protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         try ( var progressWriter = progressWriterFactory.create() ) {
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
-            var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
             String relId = releaseDescriptor.getReleaseId();
             Integer entitlementIdToUse = 0;
             Integer assessmentTypeId = 0;
@@ -155,23 +149,7 @@ public class FoDMastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                     .scanTool(fcliProperties.getProperty("projectName", "fcli"))
                     .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
 
-            return FoDScanMobileHelper.startScan(unirest, progressWriter, releaseDescriptor, startScanRequest, scanFileMixin.getFile()).asJsonNode();
+            return FoDScanMobileHelper.startScan(unirest, progressWriter, releaseDescriptor, startScanRequest, scanFileMixin.getFile());
         }
     }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDScanHelper.renameFields(record);
-    }
-
-    @Override
-    public String getActionCommandResult() {
-        return "STARTED";
-    }
-
-    @Override
-    public boolean isSingular() {
-        return true;
-    }
-
 }

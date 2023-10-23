@@ -14,6 +14,7 @@
 package com.fortify.cli.fod._common.scan.helper.oss;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

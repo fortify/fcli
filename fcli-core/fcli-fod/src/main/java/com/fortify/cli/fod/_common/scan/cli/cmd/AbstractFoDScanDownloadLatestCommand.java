@@ -16,6 +16,7 @@ import java.nio.file.StandardCopyOption;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
@@ -30,6 +31,7 @@ import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
+@CommandGroup("*-scan-download")
 public abstract class AbstractFoDScanDownloadLatestCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;

@@ -20,7 +20,7 @@ import kong.unirest.UnirestInstance;
 public abstract class AbstractFoDScanDownloadFprCommand extends AbstractFoDScanDownloadCommand {
     @Override
     protected GetRequest getDownloadRequest(UnirestInstance unirest, FoDScanDescriptor scanDescriptor) {
-        return unirest.get("GET /api/v3/scans/{scanId}/fpr")
+        return unirest.get("/api/v3/scans/{scanId}/fpr")
                 .routeParam("scanId", scanDescriptor.getScanId())
                 .accept("application/octet-stream")
                 .queryString("scanType", scanDescriptor.getScanType());

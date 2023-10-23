@@ -15,21 +15,17 @@ package com.fortify.cli.fod.sast_scan.cli.cmd;
 
 import java.util.Properties;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
-import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
-import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
+import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod._common.scan.helper.sast.FoDScanSastHelper;
 import com.fortify.cli.fod._common.scan.helper.sast.FoDScanSastStartRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastDescriptor;
 
 import kong.unirest.UnirestInstance;
@@ -39,23 +35,18 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Start.CMD_NAME, hidden = false)
-public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDSastScanStartCommand extends AbstractFoDScanStartCommand {
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
-
-    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
 
     @Option(names = {"--notes"})
     private String notes;
     @Mixin private CommonOptionMixins.RequiredFile scanFileMixin;
 
-    @Mixin
-    private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
-
+    @Mixin private FoDRemediationScanPreferenceTypeMixins.OptionalOption remediationScanType;
+    
     @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
+    protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
-        var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
         String relId = releaseDescriptor.getReleaseId();
         Boolean isRemediation = false;
 
@@ -77,22 +68,7 @@ public class FoDSastScanStartCommand extends AbstractFoDJsonNodeOutputCommand im
                 .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown"))
                 .build();
 
-        return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile()).asJsonNode();
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDScanHelper.renameFields(record);
-    }
-
-    @Override
-    public String getActionCommandResult() {
-        return "STARTED";
-    }
-
-    @Override
-    public boolean isSingular() {
-        return true;
+        return FoDScanSastHelper.startScanWithDefaults(unirest, releaseDescriptor, startScanRequest, scanFileMixin.getFile());
     }
 
     private void validateScanSetup(UnirestInstance unirest, String relId) {

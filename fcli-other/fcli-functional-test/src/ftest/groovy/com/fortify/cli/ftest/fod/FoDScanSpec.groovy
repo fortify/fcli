@@ -23,17 +23,6 @@ class FoDScanSpec extends FcliBaseSpec {
     //@Shared @TestResource("runtime/shared/iwa_net_cyclonedx.json") String ossResults
     @Shared @AutoCleanup FoDWebAppSupplier app = new FoDWebAppSupplier()
 
-    def "list"() {
-        def args = "fod scan list --store scans"
-        when:
-            def result = Fcli.run(args)
-        then:
-            verifyAll(result.stdout) {
-                size()>=3
-                it[0].replace(' ', '').equals("IdTypeAnalysisStatusApplicationMicroserviceReleaseStartedCompletedScanMethod")
-            }
-    }
-
     def "get.byId"() {
         def args = "fod sast-scan get ::scans::get(0).scanId"
         when:

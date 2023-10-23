@@ -20,16 +20,16 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "oss-scan", aliases = "oss",
         subcommands = {
-                FoDOssScanListCommand.class,
+                FoDOssScanDownloadCommand.class,
+                FoDOssScanDownloadLatestCommand.class,
                 FoDOssScanGetCommand.class,
+                FoDOssScanImportCommand.class,
+                FoDOssScanListCommand.class,
                 //FoDOssScanGetConfigCommand.class,
                 //FoDOssScanSetupCommand.class,
                 FoDOssScanStartCommand.class,
                 //FoDOssScanCancelCommand.class,
                 FoDOssScanWaitForCommand.class,
-                FoDOssScanImportCommand.class,
-                FoDOssScanDownloadCommand.class,
-                FoDOssScanDownloadLatestCommand.class
         }
 )
 @DefaultVariablePropertyName("scanId")

@@ -14,16 +14,16 @@
 package com.fortify.cli.fod._common.scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDScanResolverMixin;
-import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractFoDScanGetCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer {
+@CommandGroup("*-scan")
+public abstract class AbstractFoDScanGetCommand extends AbstractFoDJsonNodeOutputCommand {
     @Mixin private FoDScanResolverMixin.PositionalParameter scanResolver;
 
     @Override
@@ -32,11 +32,6 @@ public abstract class AbstractFoDScanGetCommand extends AbstractFoDJsonNodeOutpu
     }
     
     protected abstract FoDScanType getScanType();
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDScanHelper.renameFields(record);
-    }
 
     @Override
     public boolean isSingular() {

@@ -13,6 +13,13 @@
 
 package com.fortify.cli.fod.sast_scan.cli.cmd;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -25,7 +32,6 @@ import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
-import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.sast.FoDScanSastHelper;
 import com.fortify.cli.fod._common.util.FoDEnums;
@@ -42,15 +48,9 @@ import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastSetupRequest;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
 
 @Command(name = OutputHelperMixins.Setup.CMD_NAME, hidden = false)
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT)
@@ -172,12 +172,10 @@ public class FoDSastScanSetupCommand extends AbstractFoDJsonNodeOutputCommand im
     @Override
     public JsonNode transformRecord(JsonNode record) {
         FoDReleaseDescriptor releaseDescriptor = releaseResolver.getReleaseDescriptor(getUnirestInstance());
-        return FoDScanHelper.renameFields(
-                ((ObjectNode)record)
+        return ((ObjectNode)record)
                         .put("applicationName", releaseDescriptor.getApplicationName())
                         .put("releaseName", releaseDescriptor.getReleaseName())
-                        .put("microserviceName", releaseDescriptor.getMicroserviceName())
-        );
+                        .put("microserviceName", releaseDescriptor.getMicroserviceName());
     }
 
     @Override

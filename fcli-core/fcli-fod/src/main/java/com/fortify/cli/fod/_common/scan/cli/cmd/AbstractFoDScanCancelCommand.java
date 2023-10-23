@@ -14,19 +14,19 @@
 package com.fortify.cli.fod._common.scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDScanResolverMixin;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
-import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractFoDScanCancelCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+@CommandGroup("*-scan")
+public abstract class AbstractFoDScanCancelCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Mixin private FoDScanResolverMixin.PositionalParameter scanResolver;
 
     @Override
@@ -39,10 +39,6 @@ public abstract class AbstractFoDScanCancelCommand extends AbstractFoDJsonNodeOu
     }
     
     protected abstract FoDScanType getScanType();
-
-    public final JsonNode transformRecord(JsonNode record) {
-        return FoDScanHelper.renameFields(record);
-    }
 
     @Override
     public final String getActionCommandResult() {

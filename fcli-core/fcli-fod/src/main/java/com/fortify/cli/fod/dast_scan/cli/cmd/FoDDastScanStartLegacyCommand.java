@@ -13,37 +13,6 @@
 
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
-import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
-import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
-import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
-import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
-import com.fortify.cli.fod._common.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
-import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
-import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
-import com.fortify.cli.fod._common.scan.helper.FoDScanType;
-import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastHelper;
-import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastStartRequest;
-import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastDescriptor;
-import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastHelper;
-import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
-import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
-import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
-
-import kong.unirest.UnirestInstance;
-import lombok.Getter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -51,15 +20,41 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
+import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
+import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
+import com.fortify.cli.fod._common.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
+import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
+import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
+import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastHelper;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastStartRequest;
+import com.fortify.cli.fod._common.util.FoDEnums;
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastDescriptor;
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastHelper;
+import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
+import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
+import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
+
+import kong.unirest.UnirestInstance;
+import lombok.Getter;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
+
 @Command(name = FoDOutputHelperMixins.StartLegacy.CMD_NAME, hidden = true)
-public class FoDDastScanStartLegacyCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDDastScanStartLegacyCommand extends AbstractFoDScanStartCommand {
     private static final Log LOG = LogFactory.getLog(FoDDastScanStartLegacyCommand.class);
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
 
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
 
-    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
-    @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
     @Option(names = {"--assessment-type"}, required = true)
     //private DynamicAssessmentTypes dynamicAssessmentType;
     private String dynamicAssessmentType;
@@ -78,13 +73,11 @@ public class FoDDastScanStartLegacyCommand extends AbstractFoDJsonNodeOutputComm
     private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
 
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
-
-    // TODO Method too long, consider splitting into multiple methods
+    
     @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
+    protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         try ( var progressWriter = progressWriterFactory.create() ) {
             Properties fcliProperties = FcliBuildPropertiesHelper.getBuildProperties();
-            var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
             String relId = releaseDescriptor.getReleaseId();
             Integer entitlementIdToUse = 0;
             Integer assessmentTypeId = 0;
@@ -156,22 +149,7 @@ public class FoDDastScanStartLegacyCommand extends AbstractFoDJsonNodeOutputComm
                     .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
 
             //System.out.println(startScanRequest);
-            return FoDScanDastHelper.startScan(unirest, releaseDescriptor, startScanRequest).asJsonNode();
+            return FoDScanDastHelper.startScan(unirest, releaseDescriptor, startScanRequest);
         }
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDScanHelper.renameFields(record);
-    }
-
-    @Override
-    public String getActionCommandResult() {
-        return "STARTED";
-    }
-
-    @Override
-    public boolean isSingular() {
-        return true;
     }
 }

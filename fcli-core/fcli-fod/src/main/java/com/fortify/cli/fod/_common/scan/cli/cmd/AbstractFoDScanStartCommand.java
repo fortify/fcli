@@ -15,31 +15,33 @@ package com.fortify.cli.fod._common.scan.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
-import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.DisableTest.TestType;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
 
 import kong.unirest.UnirestInstance;
 import picocli.CommandLine.Mixin;
 
-@DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT) @CommandGroup("*-scan-config")
-public abstract class AbstractFoDScanConfigGetCommand extends AbstractFoDJsonNodeOutputCommand {
+@CommandGroup("*-scan")
+public abstract class AbstractFoDScanStartCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDReleaseByQualifiedNameOrIdResolverMixin.RequiredOption releaseResolver;
 
     @Override
     public final JsonNode getJsonNode(UnirestInstance unirest) {
-        var releaseId = releaseResolver.getReleaseId(unirest);
-        var result = getDescriptor(unirest, releaseId).asObjectNode();
-        return result.get("assessmentTypeId").asText().equals("0")
-                ? result.put("state", "Not configured")
-                : result.put("state", "Configured");
+        var releaseDescriptor = releaseResolver.getReleaseDescriptor(unirest);
+        return startScan(unirest, releaseDescriptor).asJsonNode();
     }
 
-    protected abstract JsonNodeHolder getDescriptor(UnirestInstance unirest, String releaseId);
+    protected abstract FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor);
+
+    @Override
+    public final String getActionCommandResult() {
+        return "STARTED";
+    }
 
     @Override
     public final boolean isSingular() {

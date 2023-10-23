@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
@@ -41,10 +40,6 @@ public class FoDScanHelper {
 
     // max retention period (in years) of FPRs
     public static int MAX_RETENTION_PERIOD = 2;
-
-    public static final JsonNode renameFields(JsonNode record) {
-        return new RenameFieldsTransformer(new String[]{}).transform(record);
-    }
 
     public static final FoDScanDescriptor getScanDescriptor(UnirestInstance unirest, String scanId) {
         var result = unirest.get(FoDUrls.SCAN + "/summary")
