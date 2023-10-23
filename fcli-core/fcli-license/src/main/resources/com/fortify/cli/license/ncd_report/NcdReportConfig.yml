@@ -30,9 +30,7 @@ contributor:
     
   # This expression allows for authors 'a1' and 'a2' to be marked as 
   # duplicates if the expression returns true. The sample expression 
-  # listed here usually gives pretty good results, unless uniqueness
-  # of author names or emails is based on non-letters, i.e., if you
-  # have email addresses like user1@my.org, user2@my.org, ...
+  # listed here usually gives pretty good results.
   duplicateExpression: >
     a1.cleanName==a2.cleanName ||
     a1.cleanEmailName==a2.cleanEmailName ||
