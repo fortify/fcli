@@ -19,11 +19,13 @@ import spock.lang.Unroll
 
 @Prefix("fod.scan") @FcliSession(FOD) @Stepwise
 class FoDScanSpec extends FcliBaseSpec {
+    /*
     @Shared @TestResource("runtime/shared/EightBall-22.1.0.fpr") String sastResults
     @Shared @TestResource("runtime/shared/iwa_net_scandata.fpr") String dastResults
     @Shared @TestResource("runtime/shared/iwa_net_cyclonedx.json") String ossResults
     @Shared @TestResource("runtime/shared/iwa_mobile.fpr") String mobileResults
-    @Shared FoDWebAppSupplier webApp = new FoDWebAppSupplier()
+    @Shared @TestResource("runtime/shared/EightBall-package.zip") String sastpackage
+    @Shared @AutoCleanup FoDWebAppSupplier webApp = new FoDWebAppSupplier()
     @Shared @AutoCleanup FoDMobileAppSupplier mobileApp = new FoDMobileAppSupplier()
 
     
@@ -38,7 +40,7 @@ class FoDScanSpec extends FcliBaseSpec {
                 it.last().contains("IMPORT_REQUESTED")
             }
     }
-    /*
+    
     def "import-mobile"() {
         def args = "fod mast-scan import --release=${mobileApp.get().qualifiedRelease} --file=$mobileResults --store uploadmast"
         when:
@@ -70,29 +72,93 @@ class FoDScanSpec extends FcliBaseSpec {
                 size()>2
                 it.last().contains("IMPORT_REQUESTED")
             }
-    }*/
-
-    def "waitForSast"() {
-        def args = "fod sast-scan wait-for ::uploadsast::"
+    }
+    
+    
+    def "waitForScans"() {
         when:
-            def result = Fcli.run(args)
-        then:
-            verifyAll(result.stdout) {
-                size()>2
-                it[1].startsWith("startedByUserId: ")
+            def relScanurl = Fcli.run("fod release get ${webApp.get().qualifiedRelease} -o expr=/api/v3/releases/{releaseId}/scans --store relId").stdout[0]
+            def timeoutMs = 60000
+            def start = System.currentTimeMillis()
+            def success = true;
+            while(true){
+                def result = Fcli.run("fod rest call ${relScanurl}")
+                if(result.stdout.findAll{element -> element.contains("analysisStatusType: \"Completed\"")}.size()==3) {
+                    success=true;
+                    break;
+                } else if(System.currentTimeMillis()-start > timeoutMs) {
+                    break;
+                }
+                sleep(3000)
             }
+        then:
+            success
     }
 
     
-    def "get.byId"() {
-        //def args = "fod sast-scan get ::scans::get(0).scanId"
-        def args = "util all-commands list"
+    def "list.sast-scans"() {
+        def args = "fod sast-scan list --release=fcli-1698140484524:v1698140484524 --store sastscans"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()>2
-                it[1].startsWith("startedByUserId: ")
+                size()>=2
+                it[1].contains("FPRImport")
+            }
+    }
+    
+    def "get.sast-scan"() {
+        def args = "fod sast-scan get ::sastscans::get(0).scanId"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                //it.any {it.contains("applicationName: \"${webApp.get().appName}\"")}
+            }
+    }
+    
+    def "get-config.sast-scan"() {
+        def args = "fod sast-scan get-config --release=fcli-1698140484524:v1698140484524"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it.last().contains("state: \"Not configured\"")
+            }
+    }
+    
+    def "download.sast-scan-byId"() {
+        def args = "fod sast-scan download ::sastscans::get(0).scanId -f=byId.fpr"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it[1].contains("SCAN_DOWNLOADED")
+            }
+    }
+    
+    def "download-latest.sast-scan"() {
+        def args = "fod sast-scan download-latest --release=fcli-1698140484524:v1698140484524 -f=latest.fpr"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it[1].contains("SCAN_DOWNLOADED")
+            }
+    }
+    
+    def "start.sast-scan"() {
+        def args = "fod sast-scan download-latest --release=fcli-1698140484524:v1698140484524 -f=latest.fpr"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it[1].contains("SCAN_DOWNLOADED")
             }
     }
     /*
