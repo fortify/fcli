@@ -44,7 +44,12 @@ public interface INcdReportAuthorDescriptor {
         var lcEmailDomain = StringUtils.substringAfter(lcEmail, "@");
         var lcEmailName = StringUtils.substringBefore(lcEmail, "@");
         var cleanName = lcName.replaceAll("[^a-z]", "");
-        var cleanEmailName = lcEmailName.replaceAll("[^a-z]", "");
+        // Remove all special characters, then remove leading digits unless remaining string contains only digits
+        // TODO Any better way of doing this instead of having to iterate through the string 3 times?
+        var cleanEmailName = lcEmailName.replaceAll("[^a-z0-9]", "");
+        if ( !cleanEmailName.matches("[0-9]+") ) {
+            cleanEmailName = cleanEmailName.replaceAll("^[0-9]+", "");
+        }
         return JsonHelper.getObjectMapper().createObjectNode()
             .put("name", name)
             .put("email", email)
