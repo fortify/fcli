@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.helper;
 
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,8 +30,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum SSCAppVersionEmbedderSupplier implements ISSCEntityEmbedderSupplier {
     attrs(SSCAppVersionAttributesEmbedder::new),
-    attrsByName(SSCAppVersionAttributesByNameEmbedder::new),
-    attrsByGuid(SSCAppVersionAttributesByGuidEmbedder::new),
     attrValuesByName(SSCAppVersionAttributeValuesByNameEmbedder::new),
     attrValuesByGuid(SSCAppVersionAttributeValuesByGuidEmbedder::new),
     bugtracker(SSCAppVersionBugTrackerEmbedder::new),
@@ -163,20 +160,6 @@ public enum SSCAppVersionEmbedderSupplier implements ISSCEntityEmbedderSupplier 
         }
     }
     
-    private static final class SSCAppVersionAttributesByNameEmbedder extends AbstractSSCAppVersionAttributeEmbedder {
-        @Override
-        protected void update(ObjectNode record, JsonNode attrs) {
-            record.set("attrsByName", getAttributeHelper().getAttributesBy(attrs, "name", Function.identity()));
-        }
-    }
-    
-    private static final class SSCAppVersionAttributesByGuidEmbedder extends AbstractSSCAppVersionAttributeEmbedder {
-        @Override
-        protected void update(ObjectNode record, JsonNode attrs) {
-            record.set("attrsByGuid", getAttributeHelper().getAttributesBy(attrs, "guid", Function.identity()));
-        }
-    }
-    
     private static final class SSCAppVersionAttributeValuesByNameEmbedder extends AbstractSSCAppVersionAttributeEmbedder {
         @Override
         protected void update(ObjectNode record, JsonNode attrs) {
@@ -190,6 +173,4 @@ public enum SSCAppVersionEmbedderSupplier implements ISSCEntityEmbedderSupplier 
             record.set("attrValuesByGuid", getAttributeHelper().getAttributesBy(attrs, "guid", SSCAttributeHelper::getValuesForAttribute));
         }
     }
-    
-    
 }
