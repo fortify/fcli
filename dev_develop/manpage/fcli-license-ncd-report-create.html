@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231025.074903-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231025.123659-dev_develop" %}
 
 
 <div id="header">
@@ -54,7 +54,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command generates a 'Number of Contributing Developers' (NCD) report based on configuration settings defined in a configuration file. A sample configuration file can be generated using the 'fcli util ncd-report create-config' command.</p>
+<p>This command generates a 'Number of Contributing Developers' (NCD) report based on configuration settings defined in a configuration file. A sample configuration file can be generated using the 'fcli license ncd-report create-config' command.</p>
 </div>
 <div class="paragraph">
 <p>The configuration file includes rich settings for specifying the source code repositories from which to load contributing developer data (supporting multiple Source Code Management (SCM) systems), and for ignoring and de-duplicating contributing authors.</p>
@@ -107,7 +107,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
 <dd>
-<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
 </dd>
 <dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
@@ -146,7 +146,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-25 07:51:17 UTC
+Last updated 2023-10-25 12:39:18 UTC
 </div>
 </div>
 </body>
