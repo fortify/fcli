@@ -1,0 +1,221 @@
+---
+title: fcli-fod-session-login(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-fod-session-login(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231025.130132-dev_main" %}
+
+
+<div id="header">
+<h1>fcli-fod-session-login(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_output_options">Output options:</a></li>
+<li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-fod-session-login - Login to FoD.</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli fod session login</strong> [<strong>-k</strong>] [<strong>--connect-timeout</strong>=<em>&lt;connectTimeout&gt;</em>]
+                       [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
+                       [<strong>--socket-timeout</strong>=<em>&lt;socketTimeout&gt;</em>] <strong>--url</strong>=<em>&lt;url&gt;</em> [[<strong>-h</strong>]
+                       [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                       [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
+                       [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] ([<strong>--scopes</strong>=<em>&lt;scopes&gt;</em>[,
+                       <em>&lt;scopes&gt;</em>&#8230;&#8203;]]&#8230;&#8203; <strong>-u</strong>=<em>&lt;user&gt;</em> <strong>-p</strong>[=<em>&lt;password&gt;</em>]                        <strong>-t</strong>=<em>&lt;tenant&gt;</em>) | (<strong>--client-id</strong>=<em>&lt;clientId&gt;</em> <strong>--client-secret</strong>                        [=<em>&lt;clientSecret&gt;</em>])</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This command stores the FoD URL and authentication token in an encrypted session file in the fcli state data folder, for use by other 'fcli fod' commands to connect to the specified FoD instance. Option values may be passed on the command line or specified through environment variables (common for CI/CD pipeline use) as listed below.</p>
+</div>
+<div class="paragraph">
+<p>For interactive use, you may choose to keep the session open until it expires. For CI/CD integrations and other automations, you should always issue a logout command once work is complete. On shared/non-containerized systems, consider setting FCLI_STATE_DIR or FCLI_DATA_DIR environment variables to prevent unexpected interactions between different pipelines.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
+<dd>
+<p>Name for this FoD session. Default value: default.</p>
+</dd>
+<dt class="hdlist1"><strong>--scopes</strong>=<em>&lt;scopes&gt;</em>[,<em>&lt;scopes&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>FoD scopes to request. Default value: api-tenant</p>
+</dd>
+<dt class="hdlist1"><strong>-u</strong>, <strong>--user</strong>=<em>&lt;user&gt;</em></dt>
+<dd>
+<p>FoD user.</p>
+<div class="paragraph">
+<p>Environment variable:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_FOD_USER</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;password&gt;</em>]</dt>
+<dd>
+<p>FoD password.</p>
+<div class="paragraph">
+<p>Environment variable:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_FOD_PASSWORD</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--tenant</strong>=<em>&lt;tenant&gt;</em></dt>
+<dd>
+<p>FoD tenant.</p>
+<div class="paragraph">
+<p>Environment variable:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_FOD_TENANT</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>--client-id</strong>=<em>&lt;clientId&gt;</em></dt>
+<dd>
+<p>FoD client id.</p>
+<div class="paragraph">
+<p>Environment variable:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_FOD_CLIENT_ID</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>--client-secret</strong>[=<em>&lt;clientSecret&gt;</em>]</dt>
+<dd>
+<p>FoD client secret.</p>
+<div class="paragraph">
+<p>Environment variable:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_FOD_CLIENT_SECRET</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>--url</strong>=<em>&lt;url&gt;</em></dt>
+<dd>
+<p>FoD API URL, for example <a href="https://api.emea.fortify.com/" class="bare">https://api.emea.fortify.com/</a>.</p>
+<div class="paragraph">
+<p>Environment variable:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>FCLI_DEFAULT_FOD_URL</pre>
+</div>
+</div>
+</dd>
+<dt class="hdlist1"><strong>-k</strong>, <strong>--insecure</strong></dt>
+<dd>
+<p>Disable SSL checks.</p>
+</dd>
+<dt class="hdlist1"><strong>--socket-timeout</strong>=<em>&lt;socketTimeout&gt;</em></dt>
+<dd>
+<p>Socket timeout for this session, for example 30s (30 seconds), 5m (5 minutes). Default value: null.</p>
+</dd>
+<dt class="hdlist1"><strong>--connect-timeout</strong>=<em>&lt;connectTimeout&gt;</em></dt>
+<dd>
+<p>Connection timeout for this session, for example 30s (30 seconds), 5m (5 minutes). Default value: null.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_output_options"><a class="anchor" href="#_output_options"></a>Output options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
+<dd>
+<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
+</dd>
+<dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
+<dd>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
+</dd>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dd>
+<p>Write command output to the specified file instead of stdout.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_generic_fcli_options"><a class="anchor" href="#_generic_fcli_options"></a>Generic fcli options:</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+<dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
+<dd>
+<p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
+<dd>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
+</dd>
+<dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
+<dd>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2023-10-25 13:03:24 UTC
+</div>
+</div>
+</body>
+</html>

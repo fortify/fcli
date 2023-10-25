@@ -1,6 +1,6 @@
 ---
 title: fcli-ssc-plugin-get(1)
-fcli_version: fcli version 0.20231012.133324-dev_main, built on 2023-10-12 13 34 01
+fcli_version: 
 ---
 
 <!DOCTYPE html>
@@ -16,7 +16,7 @@ fcli_version: fcli version 0.20231012.133324-dev_main, built on 2023-10-12 13 34
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231012.133324-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231025.130132-dev_main" %}
 
 
 <div id="header">
@@ -34,7 +34,7 @@ fcli_version: fcli version 0.20231012.133324-dev_main, built on 2023-10-12 13 34
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-plugin-get - Get plugin details</p>
+<p>fcli-ssc-plugin-get - Get plugin details.</p>
 </div>
 </div>
 <div id="content">
@@ -43,9 +43,9 @@ fcli_version: fcli version 0.20231012.133324-dev_main, built on 2023-10-12 13 34
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli ssc plugin get</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]
+                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                     <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
-        _            <em class="=&lt;propertyNames&gt;">] [<strong>--output-to-file</strong>=</em>&lt;outputFile&gt;_]]
+        _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
                     <em>&lt;numericPluginId&gt;</em></p>
 </div>
 </div>
@@ -63,7 +63,7 @@ fcli_version: fcli version 0.20231012.133324-dev_main, built on 2023-10-12 13 34
 <dl>
 <dt class="hdlist1"><strong>--session</strong>=<em>&lt;sessionName&gt;</em></dt>
 <dd>
-<p>Session name to use</p>
+<p>Name of the SSC session to use for executing this command. Default value: default.</p>
 </dd>
 </dl>
 </div>
@@ -76,15 +76,15 @@ fcli_version: fcli version 0.20231012.133324-dev_main, built on 2023-10-12 13 34
 <dl>
 <dt class="hdlist1"><strong>-o</strong>, <strong>--output</strong>=<em>format[=&lt;options&gt;]</em></dt>
 <dd>
-<p>Output format: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'json-properties' format ignores any options. The 'expr' output format takes a string containing '{&lt;propertyPath&gt;}' placeholders, other output formats take an optional, comma-separated list of property paths. Use '-o json-properties' on the current command to see available '&lt;prop&gt;' values.</p>
+<p>Specify output format and options. Available output formats: csv, csv-plain, json, json-flat, table, table-plain, tree, tree-flat, xml, xml-flat, yaml, yaml-flat, expr, json-properties. The 'expr' output format takes a string containing '{property}' placeholders, other output formats take an optional, comma-separated list of properties to include in the output. Use '-o json-properties' on the current command to see available properties.</p>
 </dd>
 <dt class="hdlist1"><strong>--store</strong>=<em>variableName[=&lt;propertyNames&gt;]</em></dt>
 <dd>
-<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli config variable' command, and can be referenced using {?variableName:property} on any subsequent command. Most commands that return a single record (get, start, create, &#8230;&#8203;) also support '?' to store the record identifier in a predefined variable, which can later be referenced using '?' on options/parameters that take the id of such records as input.</p>
+<p>Store the JSON results of this command in a variable. Variables can be managed through the 'fcli util variable' command, and can be referenced using ::variable::[property] on any subsequent command.</p>
 </dd>
-<dt class="hdlist1"><strong>--output-to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
+<dt class="hdlist1"><strong>--to-file</strong>=<em>&lt;outputFile&gt;</em></dt>
 <dd>
-<p>Write results to the specified files in the given output format. By default, results will be written to stdout</p>
+<p>Write command output to the specified file instead of stdout.</p>
 </dd>
 </dl>
 </div>
@@ -95,21 +95,21 @@ fcli_version: fcli version 0.20231012.133324-dev_main, built on 2023-10-12 13 34
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
-<dd>
-<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
-</dd>
 <dt class="hdlist1"><strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em></dt>
 <dd>
 <p>Environment variable prefix for resolving default option and parameter values. Default value is FCLI_DEFAULT.</p>
 </dd>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
 <dt class="hdlist1"><strong>--log-file</strong>=<em>&lt;logFile&gt;</em></dt>
 <dd>
-<p>File where logging data will be written. If not specified, no logging data will be written.</p>
+<p>File where logging data will be written. Defaults to fcli.log in current directory if --log-level is specified.</p>
 </dd>
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
-<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR</p>
+<p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
 </dd>
 </dl>
 </div>
@@ -121,6 +121,9 @@ fcli_version: fcli version 0.20231012.133324-dev_main, built on 2023-10-12 13 34
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><em>&lt;numericPluginId&gt;</em></dt>
+<dd>
+<p>Numeric plugin id.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -128,8 +131,8 @@ fcli_version: fcli version 0.20231012.133324-dev_main, built on 2023-10-12 13 34
 </div>
 <div id="footer">
 <div id="footer-text">
-Version fcli version 0.20231012.133324-dev_main, built on 2023-10-12 13 34 01<br>
-Last updated 2023-10-12 13:35:21 UTC
+Version <br>
+Last updated 2023-10-25 13:03:24 UTC
 </div>
 </div>
 </body>
