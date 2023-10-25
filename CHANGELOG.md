@@ -1,5 +1,62 @@
 # Changelog
 
+## [2.0.0](https://github.com/fortify/fcli/compare/v1.3.2...v2.0.0) (2023-10-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* Core: Most commands/options now use case-sensitive matching to avoid inconsistent behavior between server-side and client-side matching
+* Core: Change fcli variable syntax & behavior for easier use
+* Core: Change query expression syntax to allow for advanced queries
+* Core: Restructure fcli home/data directories. Configuration & session data stored by earlier fcli versions will not be available after upgrading, and will not be automatically removed. It's recommended to manually delete the `~/.fortify/fcli` folder when upgrading, and then use the new fcli version to re-apply configuration settings.
+* Core: Change environment variable names for better clarity and avoiding conflicts with other Fortify command-line utilities
+* Core: The .jar version of fcli now requires Java 17 or higher to run
+* `fcli config`: Restructure command tree & options for consistency & ease of use
+* `fcli config`: Move variable-related commands to `fcli util`
+* `fcli fod`: Restructure existing commands & options for consistency & ease of use
+* `fcli sc-dast`: Minor restructuring of command tree & options for consistency & ease of use
+* `fcli sc-sast`: Minor restructuring of command options for consistency & ease of use
+* `fcli ssc`: Restructure existing commands & options for consistency & ease of use
+* `fcli tool`: Minor restructuring of command options for consistency & ease of use
+
+### Features
+
+* `fcli config`: Move variable-related commands to `fcli util` ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli config`: Restructure command tree & options for consistency & ease of use ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli fod`: Fixes, usability improvements & new commands for managing applications, microservices, releases, scans & scan results ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli fod`: Move out of preview mode, now officially supported ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli fod`: Restructure existing commands & options for consistency & ease of use ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli fod`: Various other fixes & usability improvements ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli license`: New command, adding support for generating MSP & NCD license usage reports ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli sc-dast`: Minor restructuring of command tree & options for consistency & ease of use ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli sc-dast`: Various fixes & usability improvements ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli sc-sast`: Minor restructuring of command options for consistency & ease of use ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli sc-sast`: New command for listing ScanCentral SAST sensors ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli sc-sast`: Various fixes & usability improvements ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli ssc`: Add support for applying filters on issue counts ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli ssc`: Add support for embedding additional data on `fcli ssc appversion get/list` commands ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli ssc`: New commands for creating local users, refreshing metrics, listing rule packs & listing SSC configuration settings ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli ssc`: New commands for managing performance indicators & variables (PREVIEW) ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli ssc`: Restructure existing commands & options for consistency & ease of use ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli ssc`: Various other fixes & usability improvements ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli tool`: Add support for FortifyBugTrackerUtility ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli tool`: Improve tool version & digest handling ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli tool`: Minor restructuring of command options for consistency & ease of use ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli util`: Add variable-related commands (moved from `fcli config`) ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* `fcli util`: Add various other utility commands ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* Core: Add support for interactive confirmation on commands that require confirmation ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* Core: Change environment variable names for better clarity and avoiding conflicts with other Fortify command-line utilities ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* Core: Change fcli variable syntax & behavior for easier use ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* Core: Change query expression syntax to allow for advanced queries ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* Core: Restructure fcli home/data directories. Configuration & session data stored by earlier fcli versions will not be available after upgrading, and will not be automatically removed. It's recommended to manually delete the `~/.fortify/fcli` folder when upgrading, and then use the new fcli version to re-apply configuration settings. ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* Core: The .jar version of fcli now requires Java 17 or higher to run ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+
+
+### Bug Fixes
+
+* Core: Most commands/options now use case-sensitive matching to avoid inconsistent behavior between server-side and client-side matching ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+* Core: Various bug fixes and many other improvements ([ae7ad75](https://github.com/fortify/fcli/commit/ae7ad75a1572cd1933334821730a4ea4e471f03b))
+
 ## [1.3.2](https://github.com/fortify/fcli/compare/v1.3.1...v1.3.2) (2023-10-12)
 
 
