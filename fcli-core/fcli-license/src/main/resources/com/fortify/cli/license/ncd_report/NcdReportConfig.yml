@@ -1,0 +1,189 @@
+# This configuration file specifies configuration settings for the 
+# 'fcli util ncd-report generate' command. For documentation purposes,
+# a copy of the configuration file used to generate an NCD report is
+# included in the report output.
+#
+# When customizing this configuration file, it is recommended to stick  
+# to the original Yaml structure. In particular, note the '>' in 
+# 'someExpression: >', with the expression itself on subsequent lines. 
+# The '>' serves two puposes; it allows for expressions to be spread 
+# across multiple lines, and it avoids any special characters like hashes 
+# and quotes in the expression to be interpreted by the Yaml processor.
+
+# Define contributor processing settings. 
+# Expressions in this section can reference the following author properties:
+# - name: Author name
+# - email: Author email address
+# - lcName: Lowercase author name for case-insensitive comparisons
+# - lcEmail: Lowercase author email address
+# - lcEmailDomain: Lowercase author email domain name
+# - lcEmailName: Lowercase author email name (everything before '@') 
+# - cleanName: Lowercase author name with all non-letters removed
+# - cleanEmailName: Lowercase author email name with all special characters 
+#                   and leading digits removed
+contributor:
+  # Ignore all contributors matching the given Spring Expression Language
+  # expression, based on the author properties listed above. Commonly used 
+  # to ignore bot users, like in this example. 
+  ignoreExpression: >
+    lcName matches '.*\[bot\]'
+    
+  # This expression allows for authors 'a1' and 'a2' to be marked as 
+  # duplicates if the expression returns true. The sample expression 
+  # listed here usually gives pretty good results.
+  duplicateExpression: >
+    a1.cleanName==a2.cleanName ||
+    a1.cleanEmailName==a2.cleanEmailName ||
+    a1.cleanName==a2.cleanEmailName
+
+# Sources for the NCD report 
+sources: 
+  # Optional global setting to specify whether forked repositories should be 
+  # included in the report. By default, forks will not be included. 
+  # includeForks: true                             
+  
+  # Optionally configure one or more GitHub sources
+  github:                              
+    # Optional GitHub API URL. If not defined, 'https://api.github.com' will be used.
+  - apiUrl: https://api.github.com
+    # Optional GitHub token expression to authenticate with the given GitHub API URL. 
+    # If not specified, only public repositories will be loaded, and low GitHub rate 
+    # limits may affect report generation. Common approaches for configuring the GitHub 
+    # token:
+    #  #env("GITHUB_TOKEN")       : Read token from the given environment variable
+    #                               during report generation
+    #  #decrypt("EncryptedToken") : Decrypt the given token previously encrypted
+    #                               using the 'fcli util crypto encrypt' command 
+    #  'PlainTextToken'           : Plain-text token value (not recommended)
+    #
+    # GitHub tokens can be generated at https://github.com/settings/tokens, and require
+    # the following (classic) scopes: read:org, read:user, repo
+    tokenExpression: >                          
+      #env("GITHUB_TOKEN")
+      
+    # Optionally override the global includeForks setting for this 
+    # GitHub instance.
+    # includeForks: true 
+    
+    # By default, all organization repositories for the organizations
+    # listed below and accessible by the configured GitHub token will 
+    # be included in the report. This setting allows for selectively 
+    # including only repositories for which the given Spring Expression 
+    # Language expression returns true. The expression is evaluated on 
+    # the repository JSON representation as returned by GitHub; most
+    # common queries include:
+    # - Include only repositories that have the 'scanned-by-fortify' topic:
+    #   topics.contains("scanned-by-fortify") 
+    # - Include only repositories for which the name doesn't contain 'test':
+    #   !(name matches "(?i).*test.*")
+    # - Include only repositories with specific names:
+    #   name matches "repo1|repo2"
+    # For this example configuration to produce some useful results,
+    # we use a topic that exists in the Fortify organization.
+    repositoryIncludeExpression: >
+      topics.contains("fortify-integration")
+    
+    # Configure one or more GitHub organizations to be processed
+    organizations:                      
+      # Required organization name
+    - name: fortify
+      
+      # Optionally override the includeForks setting for this organization 
+      # includeForks: false
+      
+      # Optionally override the repositoryIncludeExpression defined above
+      # for this organization.
+      # repositoryIncludeExpression: > 
+      #  name matches "fcli|FortifyVulnerabilityExporter"
+    
+    # Second organization on same GitHub instance to be included in the report.    
+    # We override the default repositoryIncludeExpression to include all
+    # repositories in this organization.
+    - name: fod-dev 
+      repositoryIncludeExpression: >
+        true
+  
+  # Optionally configure additional GitHub instances       
+  #- apiUrl: https://api.github.mycompany.com
+  #  tokenExpression: >-                          
+  #    #env("MYCOMPANY_GITHUB_TOKEN")
+  #  organizations:
+  #  - name: org1
+  #  - name: org2
+  #    includeForks: true
+  #    repositoryIncludeExpression: >
+  #      !(name matches "test.*") 
+        
+  # Optionally configure one or more GitLab sources
+  gitlab:                               
+    # Optional GitLab base URL. If not defined, 'https://gitlab.com' will be used.
+  - baseUrl: https://gitlab.com
+    # Optional GitLab token expression to authenticate with the given GitLab API URL. 
+    # See GitHub comments above for different ways to retrieve the token value.
+    #
+    # GitLab tokens can be generated at https://gitlab.com/-/profile/personal_access_tokens, 
+    # and require the following scopes: read_api, read_repository
+    tokenExpression: >                          
+      #env("GITLAB_TOKEN")
+      
+    # Optionally override the global includeForks setting for this 
+    # GitLab instance.
+    # includeForks: true 
+    
+    # By default, sub-groups of all the groups listed below will be included
+    # in the report. This setting can be used to override this behavior for
+    # all groups processed by this GitLab configuration.
+    # includeSubgroups: false 
+    
+    # By default, all group repositories for the groups listed below and 
+    # accessible by the configured GitLab token will be included in the report. 
+    # This setting allows for selectively including only repositories for which 
+    # the given Spring Expression Language expression returns true. The expression 
+    # is evaluated on the repository JSON representation as returned by GitLab;
+    # most common queries include:
+    # - Include only repositories that have the 'scanned-by-fortify' topic:
+    #   topics.contains("scanned-by-fortify") 
+    # - Include only repositories for which the name doesn't contain 'test':
+    #   !(name matches "(?i).*test.*")
+    # - Include only repositories with specific names:
+    #   name matches "repo1|repo2"
+    # For this example configuration to produce some useful results,
+    # we use a topic that exists in the Fortify group.
+    repositoryIncludeExpression: >
+      topics.contains("vulnerable-sample-app")
+    
+    # Configure one or more GitLab groups to be processed
+    groups:                      
+      # Required group id. This can either be specified as the numeric
+      # group id as shown in the GitLab UI, or the group path as shown
+      # in the browser URL bar. When using the numeric id, it's recommended
+      # to state the corresponding group name in a comment for documentation
+      # purposes.
+    - id: Fortify
+      
+      # Optionally override the includeForks setting for this group
+      # includeForks: false
+      
+      # Optionally override the includeSubgroups setting for this group
+      # includeSubgroups: false
+      
+      # Optionally override the repositoryIncludeExpression defined above
+      # for this group.
+      # repositoryIncludeExpression: > 
+      #   name matches "(?i)iwa-.*"
+        
+    # Second group on same GitHub instance to be included in the report
+    # - name: MyGroup/SubGroup
+  
+  # Optionally configure additional GitLab instances       
+  #- baseUrl: https://gitlab.mycompany.com
+  #  tokenExpression: >-                          
+  #    #env("MYCOMPANY_GITLAB_TOKEN")
+  #  groups:
+  #  - name: group1
+  #  - name: group2/subgroup
+  #    includeForks: true
+  #    repositoryIncludeExpression: >
+  #      !(name matches "test.*") 
+                                    
+    

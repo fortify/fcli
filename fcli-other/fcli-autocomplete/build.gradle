@@ -1,0 +1,21 @@
+apply plugin: 'java'
+
+dependencies {
+	runtimeOnly project("${fcliAppRef}")
+    // TODO May need to re-enable once patch for #2068 has been released,
+    //      but potentially the necessary dependency for picocli.AutoComplete 
+    //      is already available through the project dependency above. 
+	//runtimeOnly 'info.picocli:picocli-codegen'
+}
+
+task distAutoComplete(type: JavaExec) {
+    dependsOn(createDistDir)
+    description = "Generate fcli autocomplete"
+    classpath(configurations.runtimeClasspath, configurations.annotationProcessor)
+    main 'picocli.AutoComplete'
+    args fcliRootCommandsClassName, "-f", "--completionScript=${distDir}/fcli_completion"
+}
+
+task dist {
+    dependsOn distAutoComplete
+}

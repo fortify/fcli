@@ -1,0 +1,156 @@
+[{
+  "name" : "org.springframework.integration.json.JsonPropertyAccessor$ArrayNodeAsList",
+  "allPublicMethods" : true
+},{
+  "name" : "org.springframework.integration.json.JsonPropertyAccessor$ComparableJsonNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.Base",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.JsonNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.BaseJsonNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.ContainerNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.ArrayNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.ObjectNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.ValueNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.BinaryNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.BooleanNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.MissingNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.NullNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.NumericNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.BigIntegerNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.DecimalNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.DoubleNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.FloatNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.IntNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.LongNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.ShortNode",
+  "allPublicMethods" : true
+},{
+  "name" : "com.fasterxml.jackson.databind.node.TextNode",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Boolean",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Double",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Float",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Integer",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Long",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.Short",
+  "allPublicMethods" : true
+},{
+  "name" : "java.lang.String",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.ArrayList",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.LinkedHashMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.HashSet",
+  "allPublicMethods" : true,
+  "allPublicConstructors" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableCollection",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableSet",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableSortedSet",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableNavigableSet",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableList",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableRandomAccessList",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableSortedMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$UnmodifiableNavigableMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptyEnumeration",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptyIterator",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptyList",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptyListIterator",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptyMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$EmptySet",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$SetFromMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$SingletonList",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$SingletonMap",
+  "allPublicMethods" : true
+},{
+  "name" : "java.util.Collections$SingletonSet",
+  "allPublicMethods" : true
+}
+]

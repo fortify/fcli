@@ -1,0 +1,55 @@
+// Enable Spock-based functional tests.
+apply plugin: "groovy"
+testing {
+    suites {
+        ftest(JvmTestSuite) {
+            useJUnitJupiter()
+            dependencies {
+                implementation platform('org.apache.groovy:groovy-bom:4.0.13')
+                implementation 'org.apache.groovy:groovy'
+                implementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
+                implementation "org.spockframework:spock-core"
+                implementation 'org.junit.platform:junit-platform-launcher:1.9.3'
+                if ( !project.hasProperty('ftest.fcli') || project.property('ftest.fcli')=='build' ) {
+                    implementation project("${fcliAppRef}")
+                }
+            }
+            targets {
+                all {
+                    testTask.configure {
+                        // Pass all ftest.* properties to tests as system properties
+                        systemProperties System.properties.findAll { 
+                            it.key.startsWith("ft.")
+                        }
+                        options {
+                            testLogging {
+                                showStandardStreams = false
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+task ftestShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    archiveBaseName.set('fcli')
+    archiveClassifier.set('ftest')
+    archiveVersion.set('')
+    from(sourceSets.ftest.output)
+    configurations = [project.configurations.ftestRuntimeClasspath]
+    manifest {
+        attributes 'Main-Class': 'com.fortify.cli.ftest.TestRunner'
+    }
+}
+
+task distFtest(type: Copy) {
+    dependsOn(ftestShadowJar)
+    dependsOn(createDistDir)
+    into "${distDir}"
+    from("${buildDir}/libs") {
+        include "fcli-ftest.jar"
+    }
+}

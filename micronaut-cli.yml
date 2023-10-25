@@ -1,6 +1,0 @@
-applicationType: cli
-defaultPackage: com.fortify.cli
-testFramework: junit
-sourceLanguage: java
-buildTool: gradle
-features: [annotation-api, app-name, graalvm, gradle, jackson-xml, java, jib, junit, log4j2, picocli, picocli-java-application, picocli-junit, readme, shade, yaml]

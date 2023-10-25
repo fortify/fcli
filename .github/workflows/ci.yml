@@ -1,13 +1,15 @@
 name: Build and release
 on:
+  workflow_dispatch:
+  
   push:
     branches:
       - '**'
        
 env:
   native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization
-  graal_version: 22.3.1
-  graal_java_version: 11
+  graal_distribution: graalvm-community
+  graal_java_version: 17
           
 jobs:
   build:
@@ -16,6 +18,10 @@ jobs:
     steps:
       - name: Check-out source code
         uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: PROD - Prepare GitHub release
         id: create_prod_release
@@ -24,8 +30,8 @@ jobs:
         with:
           command: github-release
           release-type: simple
-          package-name: ${{ github.event.repository.name }} 
-          default-branch: main 
+          package-name: ${{ github.event.repository.name }}  
+          default-branch: main
           
       - name: PROD - Define release info
         if: steps.create_prod_release.outputs.release_created
@@ -62,7 +68,7 @@ jobs:
       
       - name: Build release ${{env.RELEASE_VERSION}}
         if: env.DO_BUILD
-        run: ./gradlew clean build dist distThirdParty -Pversion=${{env.RELEASE_VERSION}}
+        run: ./gradlew clean build dist distThirdPartyReleaseAsset distFtest -Pversion=${{env.RELEASE_VERSION}}
         
       - name: Check fcli version
         if: env.DO_BUILD
@@ -71,7 +77,7 @@ jobs:
       - name: Publish build artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: build/dist/*
+          path: build/dist/**/*
           
     outputs:
       do_release: ${{ env.DO_RELEASE }}
@@ -92,7 +98,7 @@ jobs:
 
       - uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ env.graal_version }}
+          distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
           components: 'native-image'
           native-image-musl: true
@@ -110,7 +116,7 @@ jobs:
       # at build time (see https://www.graalvm.org/22.1/reference-manual/native-image/Properties/). 
       # We also exclude the native Jansi library resources, as these are now no longer needed.
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.app.FortifyCLI -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.app.FortifyCLI -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifact/release-assets/fcli.jar fcli
 
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -124,23 +130,23 @@ jobs:
         run: ./fcli --version | tee /dev/stderr | grep -E '[0-9]+\.[0-9]+\.[0-9]+' >/dev/null || (echo "fcli --version doesn't output proper version number"; exit 1)
 
       - name: Package native fcli
-        run: tar -zcvf fcli-linux.tgz fcli -C ./artifact fcli_completion
+        run: tar -zcvf artifact/release-assets/fcli-linux.tgz fcli -C ./artifact fcli_completion
 
       - uses: actions/upload-artifact@v3
         with:
-          path: ./fcli-linux.tgz
+          path: ./artifact/**/fcli-linux.tgz
 
   native_mac:
     name: native-image-mac
     needs: build
-    runs-on: macos-12
+    runs-on: macos-latest
     steps:
       - name: Check-out source code
         uses: actions/checkout@v3
 
       - uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ env.graal_version }}
+          distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
           components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -153,7 +159,7 @@ jobs:
       # file to include native libraries for all platforms; we override this to include only the MacOS 
       # libraries
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifact/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} -march=compatibility -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifact/release-assets/fcli.jar fcli
 
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -164,11 +170,11 @@ jobs:
         run: ./fcli --help && ./fcli get --help
 
       - name: Package native fcli
-        run: tar -zcvf fcli-mac.tgz fcli -C ./artifact fcli_completion
+        run: tar -zcvf ./artifact/release-assets/fcli-mac.tgz fcli -C ./artifact fcli_completion
 
       - uses: actions/upload-artifact@v3
         with:
-          path: ./fcli-mac.tgz
+          path: ./artifact/**/fcli-mac.tgz
 
   native_win:
     name: native-image-win
@@ -177,7 +183,7 @@ jobs:
     steps:
       - uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ env.graal_version }}
+          distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
           components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -192,7 +198,7 @@ jobs:
       - name: Create native fcli
         run: >-
           "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-          ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Mac/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar .\artifact\fcli.jar fcli
+          ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Mac/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar .\artifact\release-assets\fcli.jar fcli
         shell: cmd
 
 # We don't compress the Windows binary for now as this is incompatible with current Graal version.
@@ -208,11 +214,11 @@ jobs:
           .\fcli.exe get --help
 
       - name: Package native fcli
-        run: 7z a fcli-windows.zip fcli*.exe
+        run: 7z a artifact\release-assets\fcli-windows.zip fcli*.exe
 
       - uses: actions/upload-artifact@v3
         with:
-          path: ./fcli-windows.zip
+          path: ./artifact/**/fcli-windows.zip
         
   release:
     name: release
@@ -227,9 +233,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: ./
-          
-      - name: Remove fcli_completion script
-        run: rm -f artifact/fcli_completion
           
       - name: PROD - Prepare release PR
         if: github.ref == 'refs/heads/main'
@@ -259,7 +262,7 @@ jobs:
       - name: Upload assets to release
         if: needs.build.outputs.do_release
         run: |
-          files=$(find "./artifact" -type f -printf "%p ")
+          files=$(find "./artifact/release-assets" -type f -printf "%p ")
           gh release upload "${{ needs.build.outputs.release_tag }}" $files --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -315,15 +318,3 @@ jobs:
           publish_dir: ./docs
           enable_jekyll: true
           
-          
-  cleanup:
-    name: cleanup
-    if: needs.build.outputs.do_release 
-    needs: [release, publishPages] 
-    runs-on: ubuntu-latest 
-    steps:
-      - name: Delete artifacts if uploaded to release
-        uses: geekyeggo/delete-artifact@v1
-        with:
-          name: artifact
-          failOnError: false   

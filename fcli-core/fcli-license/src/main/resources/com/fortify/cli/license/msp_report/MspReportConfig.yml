@@ -1,0 +1,39 @@
+# This configuration file specifies configuration settings for the 
+# 'fcli util msp-report generate' command. For documentation purposes,
+# a copy of the configuration file used to generate an MSP report is
+# included in the report output.
+#
+# When customizing this configuration file, it is recommended to stick  
+# to the original Yaml structure. In particular, note the '>' in 
+# 'someExpression: >', with the expression itself on subsequent lines. 
+# The '>' serves two puposes; it allows for expressions to be spread 
+# across multiple lines, and it avoids any special characters like hashes 
+# and quotes in the expression to be interpreted by the Yaml processor.
+
+# Required MSP name
+mspName: My MSP
+
+# Required MSP contract start date
+contractStartDate: 2021-01-01
+
+# Sources for the MSP report 
+sources:                       
+  # Configure one or more SSC sources
+  ssc:                              
+    # SSC base URL, for example: https://ssc.mycompany.com/ssc
+  - baseUrl: http://localhost:2220/ssc
+    # SSC token expression to authenticate with the given SSC base URL. 
+    # Common approaches for configuring the SSC token:
+    #  #env("SSC_TOKEN")          : Read token from the given environment variable
+    #                               during report generation
+    #  #decrypt("EncryptedToken") : Decrypt the given token previously encrypted
+    #                               using the 'fcli util crypto encrypt' command 
+    #  'PlainTextToken'           : Plain-text token value (not recommended)
+    #
+    # SSC tokens can be generated using the 'fcli ssc token create' command
+    # or through the SSC web interface. Most commonly, a CIToken should be used.
+    # Both encoded and decoded tokens are accepted.
+    tokenExpression: >                          
+      '004746ed-e15b-47cf-a680-224d12ee0c9d'
+      
+    

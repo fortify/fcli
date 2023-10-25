@@ -1,0 +1,156 @@
+name: Functional Tests
+
+on:
+  workflow_dispatch:
+    inputs: 
+      runNumber: # Accessible through ${{ inputs.runNumber }}
+        description: 'Required "Build and release"" workflow run number from which to get artifacts to be tested'
+        required: true
+        type: number
+  workflow_run:
+    workflows: [Build and release]
+    types: [completed]
+        
+
+jobs:
+  ft-core:
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        type: [java, jar, native]
+    
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # Java is required for running the functional tests
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          
+      - name: Get artifacts from triggering workflow
+        if: github.event_name == 'workflow_run'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+      - name: Get artifacts from specified workflow
+        if: github.event_name == 'workflow_dispatch'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          run_number: ${{ inputs.runNumber }}
+          workflow: ci.yml
+          
+      - name: List artifact contents
+        shell: bash
+        run: ls -lR
+          
+      - name: Run Tests
+        shell: bash
+        run: |
+          mv artifact/release-assets/* .
+          mv artifact/fcli-ftest.jar .
+          case "${{ matrix.type }}" in
+            "java" )
+              java -jar fcli-ftest.jar -Dft.fcli=build -Dft.run=core,config ;;
+            "jar" )
+              java -jar fcli-ftest.jar -Dft.fcli=fcli.jar -Dft.run=core,config ;;
+            "native" )
+              case "${{ matrix.os }}" in
+                "ubuntu-latest" ) 
+                  tar -zxvf fcli-linux.tgz
+                  java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=core,config ;;
+                "windows-latest" )
+                  7z e fcli-windows.zip
+                  java -jar fcli-ftest.jar -Dft.fcli=fcli.exe -Dft.run=core,config ;;
+                "macos-latest" )
+                  tar -zxvf fcli-mac.tgz
+                  java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=core,config ;;
+              esac ;;
+          esac 
+            
+      - name: Rename test log
+        if: always()
+        shell: bash
+        run: mv test.log "test-${{ matrix.os }}-${{ matrix.type }}.log"
+        
+      - name: Publish test logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-log
+          path: test-*.log
+          
+  ft-product:
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        type: [fod, ssc, sc-sast, sc-dast, report]
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      # Java is required for running the functional tests
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          
+      - name: Get artifacts from triggering workflow
+        if: github.event_name == 'workflow_run'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+      - name: Get artifacts from specified workflow
+        if: github.event_name == 'workflow_dispatch'
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          run_number: ${{ inputs.runNumber }}
+          workflow: ci.yml
+          
+      - name: Run Tests
+        shell: bash
+        run: |
+          mv artifact/release-assets/* .
+          mv artifact/fcli-ftest.jar .
+          tar -zxvf fcli-linux.tgz
+          # Although we only run the current matrix entry type, we pass connection
+          # options for all session types, as some SC-SAST/SC-DAST tests may also
+          # require an SSC session.
+          java -jar fcli-ftest.jar -Dft.fcli=./fcli -Dft.run=$type \
+            -Dft.fod.url=$fod_url -Dft.fod.tenant=$fod_tenant -Dft.fod.user=$fod_user -Dft.fod.password=$fod_pwd \
+            -Dft.ssc.url=$ssc_url -Dft.ssc.user=$ssc_user -Dft.ssc.password=$ssc_pwd \
+            -Dft.sc-sast.ssc-url=$ssc_url -Dft.sc-sast.ssc-user=$ssc_user -Dft.sc-sast.ssc-password=$ssc_pwd \
+            -Dft.sc-dast.ssc-url=$ssc_url -Dft.sc-dast.ssc-user=$ssc_user -Dft.sc-dast.ssc-password=$ssc_pwd \
+            -Dft.sc-sast.client-auth-token=$scsast_token
+        env:
+          type: ${{ matrix.type }}
+          fod_url: ${{ secrets.FCLI_FT_FOD_URL }}
+          fod_tenant: ${{ secrets.FCLI_FT_FOD_TENANT }}
+          fod_user: ${{ secrets.FCLI_FT_FOD_USER }}
+          fod_pwd: ${{ secrets.FCLI_FT_FOD_PWD }}
+          ssc_url: ${{ secrets.FCLI_FT_SSC_URL }}
+          ssc_user: ${{ secrets.FCLI_FT_SSC_USER }}
+          ssc_pwd: ${{ secrets.FCLI_FT_SSC_PWD }}
+          scsast_token: ${{ secrets.FCLI_FT_SCSAST_TOKEN }}
+          # Pass GitHub and GitLab tokens for use by NCD license report tests
+          FCLI_FT_GITHUB_TOKEN: ${{ secrets.FCLI_FT_GITHUB_TOKEN }}
+          FCLI_FT_GITLAB_TOKEN: ${{ secrets.FCLI_FT_GITLAB_TOKEN }}
+            
+      - name: Rename test log
+        if: always()
+        shell: bash
+        run: mv test.log "test-${{ matrix.os }}-${{ matrix.type }}.log"
+        
+      - name: Publish test logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-log
+          path: test-*.log
+          
+                   
