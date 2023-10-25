@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231023.172013-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231025.074903-dev_develop" %}
 
 
 <div id="header">
@@ -65,7 +65,7 @@ fcli_version:
 <div class="paragraph">
 <p>This command is not fully implemented and is intended for preview only. Command name, options and behavior may change at any time, even between patch or minor releases, potentially affecting any workflows in which this command is being used.
 The scan will need to have been previously setup using the FoD UI or the 'fod mast-scan setup' command.
-To correctly start a scan you will need to provide the name of the assessment type using the '--assessment-type=xxx' option. Since assessment types can potentially be configured differently for each tenant, you can find the correct name using the 'fod assessment-type list --scan-types=Mobile' command.
+To correctly start a scan you will need to provide the name of the assessment type using the '--assessment-type=xxx' option. Since assessment types can potentially be configured differently for each tenant, you can find the correct name using the 'fod release list-assessment-types --scan-types=Mobile' command.
 The scan will need to have been previously setup using the FoD UI or the 'fod dast-scan setup' command.
 If you know the Id of an entitlement that you want to use then you can supply it to the '--entitlement-id=xxx' option. If not, you can supply both '--assessment-type' and '--entitlement-frequency' options and the command will try to find an appropriate entitlement.</p>
 </div>
@@ -78,7 +78,7 @@ If you know the Id of an entitlement that you want to use then you can supply it
 <dl>
 <dt class="hdlist1"><strong>--assessment-type</strong>=<em>&lt;mobileAssessmentType&gt;</em></dt>
 <dd>
-<p>The type of MAST assessment to carry out. Use 'assessment-type list' to find valid values.</p>
+<p>The type of MAST assessment to carry out. Use 'release list-assessment-types' to find valid values.</p>
 </dd>
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
@@ -191,7 +191,7 @@ If you know the Id of an entitlement that you want to use then you can supply it
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-23 17:22:23 UTC
+Last updated 2023-10-25 07:51:17 UTC
 </div>
 </div>
 </body>
