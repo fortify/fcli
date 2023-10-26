@@ -17,10 +17,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.ToolHelper;
 import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
-import com.fortify.cli.tool._common.util.FileUtils;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;

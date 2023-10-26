@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.tool._common.util;
+package com.fortify.cli.common.util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -53,6 +53,15 @@ public final class FileUtils {
             return bytesToHex(DigestUtils.digest(digestInstance, file));
         } catch ( IOException | NoSuchAlgorithmException e ) {
             throw new RuntimeException("Error calculating file digest for file "+file.getAbsolutePath(), e);
+        }
+    }
+    
+    public static final String getDigest(String inputName, InputStream input, String algorithm) {
+        try {
+            MessageDigest digestInstance = MessageDigest.getInstance(algorithm);
+            return bytesToHex(DigestUtils.digest(digestInstance, input));
+        } catch ( IOException | NoSuchAlgorithmException e ) {
+            throw new RuntimeException("Error calculating file digest for file "+inputName, e);
         }
     }
     

@@ -21,9 +21,9 @@ import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.helper.ToolHelper;
 import com.fortify.cli.tool._common.helper.ToolVersionCombinedDescriptor;
-import com.fortify.cli.tool._common.util.FileUtils;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;

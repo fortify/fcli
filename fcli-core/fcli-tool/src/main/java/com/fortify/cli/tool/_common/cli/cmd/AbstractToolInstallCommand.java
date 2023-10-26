@@ -35,12 +35,12 @@ import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.util.FcliDataHelper;
+import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.helper.ToolHelper;
 import com.fortify.cli.tool._common.helper.ToolVersionCombinedDescriptor;
 import com.fortify.cli.tool._common.helper.ToolVersionDownloadDescriptor;
 import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
-import com.fortify.cli.tool._common.util.FileUtils;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

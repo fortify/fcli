@@ -20,6 +20,8 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.rest.github.GitHubPagingHelper;
+import com.fortify.cli.common.rest.gitlab.GitLabPagingHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.license.ncd_report.collector.INcdReportRepositoryBranchCommitCollector;
 import com.fortify.cli.license.ncd_report.collector.INcdReportRepositoryProcessor;
@@ -29,7 +31,6 @@ import com.fortify.cli.license.ncd_report.config.NcdReportGitLabGroupConfig;
 import com.fortify.cli.license.ncd_report.config.NcdReportGitLabSourceConfig;
 import com.fortify.cli.license.ncd_report.descriptor.NcdReportBranchCommitDescriptor;
 import com.fortify.cli.license.ncd_report.generator.AbstractNcdReportUnirestResultsGenerator;
-import com.fortify.cli.license.ncd_report.generator.github.GitHubPagingHelper;
 
 import kong.unirest.GetRequest;
 import kong.unirest.HttpRequest;

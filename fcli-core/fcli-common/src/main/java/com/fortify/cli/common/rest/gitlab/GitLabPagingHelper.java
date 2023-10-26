@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.license.ncd_report.generator.github;
+package com.fortify.cli.common.rest.gitlab;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
@@ -21,18 +21,18 @@ import kong.unirest.HttpRequest;
 import kong.unirest.PagedList;
 
 /**
- * This class provides utility methods for handling GitHub paging.
+ * This class provides utility methods for handling GitLab paging.
  * 
  * @author rsenden
  */
-public class GitHubPagingHelper {
-    private GitHubPagingHelper() {}
+public class GitLabPagingHelper {
+    private GitLabPagingHelper() {}
     
     public static final <R extends JsonNode> PagedList<R> pagedRequest(HttpRequest<?> request, Class<R> returnType) {
         return PagingHelper.pagedRequest(request, nextPageUrlProducer(), returnType);
     }
     
     public static final INextPageUrlProducer nextPageUrlProducer() {
-        return LinkHeaderNextPageUrlProducerFactory.nextPageUrlProducer("Link", "next");
+        return LinkHeaderNextPageUrlProducerFactory.nextPageUrlProducer("link", "next");
     }
 }
