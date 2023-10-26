@@ -4,3 +4,27 @@ defaultVersion: 4.12
 versions:
   - version: 4.12
     digest: SHA-256:3c5142c63be6a6338f827e26ee79fdb70566dffd5a31680dce05544452c8a56a
+  - version: 4.11
+    digest: SHA-256:7beec363d7395cc44e3ffc305bec3f879be506e7b55c79b9852522760da67ea8
+  - version: 4.10
+    digest: SHA-256:5fd23f7a341eccb36cdc33c47cef3bdc9aef439f3cb474879945872744c38ac2
+  - version: 4.9
+    digest: SHA-256:01b039972acdc894ba18e80801e6dad363849b19c2e01cb4f502bd068879ade8
+  - version: 4.8
+    digest: SHA-256:1de4e7dcbbbb8e92d37c8d31093e1b96fb3f7deb1182c734c0c72c999bb3b663
+  - version: 4.7
+    digest: SHA-256:06d965ae7b239ed26339eb7f06105399b60de2ef7fd9f7c2eed8c22f5b875869
+  - version: 4.6
+    digest: SHA-256:d4be8fb28120223a0d150b3e32f996d334fc1156a0667f146614a7a3b91f875d
+  - version: 4.5
+    digest: SHA-256:c4211194c496dd9a1e6eb5989502034a7513fef6888690012e9fe4d407f3159d
+  - version: 4.4
+    digest: SHA-256:3795100a6f52dcd1a2a69ee62c6350e6c99fc7252ba924142f03b417b8ba398d
+  - version: 4.3
+    digest: SHA-256:36193b3706efaebc68a6d88a335a816b891971e1685037bb0a3b5c3a5d13d63f
+  - version: 4.2
+    digest: SHA-256:842abff06c181a3a3d2953b3ef8903909c09cbd07b9907ca7dec164f4811d9e9
+  - version: 4.1
+    digest: SHA-256:2507565e372d4d805f02081cc2b3d5f21a872369adaacddad93bc1d8994876a1
+  - version: 4.0
+    digest: SHA-256:db3cb473c555ca33ef01cc21833164a6a5cd78a9aa901ca1cfde359bcd652636
