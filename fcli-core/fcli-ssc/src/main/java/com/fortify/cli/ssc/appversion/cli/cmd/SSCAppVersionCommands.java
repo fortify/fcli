@@ -21,14 +21,15 @@ import picocli.CommandLine.Command;
         name = "appversion",
         aliases = "av",
         subcommands = {
-            SSCAppVersionCreateCommand.class,
-            SSCAppVersionDeleteCommand.class,
-            SSCAppVersionDownloadStateCommand.class,
-            SSCAppVersionGetCommand.class,
-            SSCAppVersionListCommand.class,
-            SSCAppVersionPurgeArtifactsCommand.class,
-            SSCAppVersionRefreshMetricsCommand.class,
-            SSCAppVersionUpdateCommand.class
+                SSCAppVersionCreateCommand.class,
+                SSCAppVersionDeleteCommand.class,
+                SSCAppVersionCopyStateCommand.class,
+                SSCAppVersionDownloadStateCommand.class,
+                SSCAppVersionGetCommand.class,
+                SSCAppVersionListCommand.class,
+                SSCAppVersionPurgeArtifactsCommand.class,
+                SSCAppVersionRefreshMetricsCommand.class,
+                SSCAppVersionUpdateCommand.class
         }
 )
 @DefaultVariablePropertyName("id")
