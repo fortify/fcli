@@ -23,6 +23,7 @@ import picocli.CommandLine.Command;
         subcommands = {
             SSCAppVersionCreateCommand.class,
             SSCAppVersionDeleteCommand.class,
+            SSCAppVersionCopyStateCommand.class,
             SSCAppVersionDownloadStateCommand.class,
             SSCAppVersionGetCommand.class,
             SSCAppVersionListCommand.class,
