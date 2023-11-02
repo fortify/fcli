@@ -30,7 +30,9 @@ import com.fortify.cli.ssc.access_control.helper.SSCAppVersionUserUpdateBuilder;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppAndVersionNameResolverMixin;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionCopyFromMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppAndVersionNameDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionCreateCopyFromBuilder;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.attribute.cli.mixin.SSCAttributeUpdateMixin;
@@ -47,7 +49,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.Create outputHelper; 
+    @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Mixin private SSCAppAndVersionNameResolverMixin.PositionalParameter sscAppAndVersionNameResolver;
     @Mixin private SSCIssueTemplateResolverMixin.OptionalOption issueTemplateResolver;
@@ -57,11 +59,11 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     private String description;
     @Option(names={"--active"}, required = false, defaultValue="true", arity="1")
     private boolean active;
+    @Mixin private SSCAppVersionCopyFromMixin copyFromMixin;
     @Option(names={"--auto-required-attrs"}, required = false)
     private boolean autoRequiredAttrs = false;
     @Option(names={"--skip-if-exists"}, required = false)
     private boolean skipIfExists = false;
-    
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -71,37 +73,51 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         }
         SSCAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
         SSCAppVersionUserUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);
-        
+        SSCAppVersionCreateCopyFromBuilder copyFromBuilder = getCopyFromBuilder(unirest);
+
         SSCAppVersionDescriptor descriptor = createUncommittedAppVersion(unirest);
         SSCBulkResponse bulkResponse = new SSCBulkRequestBuilder()
             .request("attrUpdate", attrUpdateBuilder.buildRequest(descriptor.getVersionId()))
             .request("userUpdate", authUpdateBuilder.buildRequest(descriptor.getVersionId()))
+            .request("copyFrom", copyFromBuilder.buildCopyFromPartialRequest(descriptor.getVersionId()))
             .request("commit", getCommitRequest(unirest, descriptor))
+            .request("copyState", copyFromBuilder.buildCopyStateRequest(descriptor.getVersionId()))
             .request("updatedVersion", unirest.get(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())))
             .execute(unirest);
         return bulkResponse.body("updatedVersion");
     }
-    
+
     @Override
     public JsonNode transformRecord(JsonNode input) {
         return SSCAppVersionHelper.renameFields(input);
     }
-    
+
     @Override
     public String getActionCommandResult() {
         return "CREATED";
     }
-    
+
     @Override
     public boolean isSingular() {
         return true;
     }
-    
+
+    private final SSCAppVersionCreateCopyFromBuilder getCopyFromBuilder(UnirestInstance unirest) {
+         SSCAppVersionCreateCopyFromBuilder builder = new SSCAppVersionCreateCopyFromBuilder(unirest);
+         if(copyFromMixin.isCopyRequested()) {
+             builder .setCopyRequested(true)
+                     .setCopyFrom(SSCAppVersionHelper.getRequiredAppVersion(unirest, copyFromMixin.getAppVersionNameOrId(), sscAppAndVersionNameResolver.getDelimiter()))
+                     .setCopyOptions(copyFromMixin.getCopyOptions());
+         }
+
+        return builder;
+    }
+
     private final SSCAppVersionUserUpdateBuilder getAuthUpdateBuilder(UnirestInstance unirest) {
         return new SSCAppVersionUserUpdateBuilder(unirest)
                 .add(false, userAddMixin.getAuthEntitySpecs());
     }
-    
+
     private final SSCAttributeUpdateBuilder getAttrUpdateBuilder(UnirestInstance unirest) {
         Map<String, String> attributes = attrUpdateMixin.getAttributes();
         return new SSCAttributeUpdateBuilder(unirest)
@@ -114,11 +130,11 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     private SSCAppVersionDescriptor createUncommittedAppVersion(UnirestInstance unirest) {
         SSCIssueTemplateDescriptor issueTemplateDescriptor = issueTemplateResolver.getIssueTemplateDescriptorOrDefault(unirest);
         SSCAppAndVersionNameDescriptor appAndVersionNameDescriptor = sscAppAndVersionNameResolver.getAppAndVersionNameDescriptor();
-        
+
         if ( issueTemplateDescriptor==null ) {
             throw new IllegalArgumentException("--issue-template is required, as no default template is configured on SSC");
         }
-        
+
         ObjectNode body = objectMapper.createObjectNode();
         body.put("name", appAndVersionNameDescriptor.getVersionName())
             .put("description", description==null ? "" : description)
@@ -129,7 +145,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         JsonNode response = unirest.post(SSCUrls.PROJECT_VERSIONS).body(body).asObject(JsonNode.class).getBody().get("data");
         return JsonHelper.treeToValue(response, SSCAppVersionDescriptor.class);
     }
-    
+
     private JsonNode getProjectNode(UnirestInstance unirest, String appName, SSCIssueTemplateDescriptor issueTemplateDescriptor) {
         SSCAppDescriptor appDescriptor = SSCAppHelper.getApp(unirest, appName, false, "id");
         if ( appDescriptor!=null ) {
@@ -141,7 +157,7 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
             return appNode;
         }
     }
-    
+
     private final HttpRequest<?> getCommitRequest(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
         ObjectNode body = objectMapper.createObjectNode().put("committed", true);
         return unirest.put(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())).body(body);

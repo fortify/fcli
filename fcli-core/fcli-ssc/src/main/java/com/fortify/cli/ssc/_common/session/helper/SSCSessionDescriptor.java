@@ -24,8 +24,8 @@ import com.fortify.cli.common.session.helper.SessionSummary;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenCreateRequest;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenCreateResponse;
-import com.fortify.cli.ssc.access_control.helper.SSCTokenHelper;
 import com.fortify.cli.ssc.access_control.helper.SSCTokenCreateResponse.SSCTokenData;
+import com.fortify.cli.ssc.access_control.helper.SSCTokenHelper;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

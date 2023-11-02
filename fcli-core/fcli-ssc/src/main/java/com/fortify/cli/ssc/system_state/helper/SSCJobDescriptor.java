@@ -12,9 +12,15 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.system_state.helper;
 
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 
+import kong.unirest.UnirestInstance;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -26,4 +32,12 @@ public class SSCJobDescriptor extends JsonNodeHolder {
     private String jobGroup;
     private Integer priority;
     private String jobState;
+
+    public SSCJobDescriptor[] getJobDescriptors(UnirestInstance unirest){
+        String col = jobName;
+        return Stream.of(col).map(id-> SSCJobHelper.getJobDescriptor(unirest, id)).toArray(SSCJobDescriptor[]::new);
+    }
+    public Collection<JsonNode> getJobDescriptorJsonNodes(UnirestInstance unirest){
+        return Stream.of(getJobDescriptors(unirest)).map(SSCJobDescriptor::asJsonNode).collect(Collectors.toList());
+    }
 }

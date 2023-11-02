@@ -18,6 +18,8 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
+import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
@@ -73,15 +75,15 @@ public class SSCAppVersionHelper {
         return versions.size()==0 ? null : JsonHelper.treeToValue(versions.get(0), SSCAppVersionDescriptor.class);
     }
     
-    public static final String refreshMetrics(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
+    public static final SSCJobDescriptor refreshMetrics(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
         if ( !descriptor.isRefreshRequired() ) {
-            return "NO_REFRESH_REQUIRED";
+            return null;
         } else {
-            unirest.post(SSCUrls.PROJECT_VERSIONS_ACTION_REFRESH)
+            JsonNode response = unirest.post(SSCUrls.PROJECT_VERSIONS_ACTION_REFRESH)
                 .body(new SSCAppVersionRefreshRequest(descriptor.getVersionId()))
                 .asObject(ObjectNode.class)
                 .getBody();
-            return "REFRESH_REQUESTED";
+            return SSCJobHelper.getJobDescriptor(unirest, response.get("data").get("data").get("id").textValue());
         }
     }
     
