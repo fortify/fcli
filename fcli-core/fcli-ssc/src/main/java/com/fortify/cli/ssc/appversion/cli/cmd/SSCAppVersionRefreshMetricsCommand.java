@@ -16,17 +16,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionBulkEmbedMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionResolverMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
+import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = "refresh-metrics")
+@DefaultVariablePropertyName("job.jobName")
 public class SSCAppVersionRefreshMetricsCommand extends AbstractSSCJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.TableNoQuery outputHelper; 
     @Mixin private SSCAppVersionResolverMixin.PositionalParameter appVersionResolver;
@@ -35,8 +38,14 @@ public class SSCAppVersionRefreshMetricsCommand extends AbstractSSCJsonNodeOutpu
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         var descriptor = appVersionResolver.getAppVersionDescriptor(unirest);
-        return descriptor.asObjectNode()
-                .put(IActionCommandResultSupplier.actionFieldName, SSCAppVersionHelper.refreshMetrics(unirest, descriptor));
+        SSCJobDescriptor refreshJobDescriptor = SSCAppVersionHelper.refreshMetrics(unirest, descriptor);
+        if(refreshJobDescriptor == null){
+            return descriptor.asObjectNode()
+                    .put(IActionCommandResultSupplier.actionFieldName, "NO_REFRESH_REQUIRED");
+        } else {
+            return descriptor.asObjectNode().set("job", refreshJobDescriptor.asJsonNode());
+        }
+
     }
     
     @Override

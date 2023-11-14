@@ -29,6 +29,7 @@ import picocli.CommandLine.Command;
                 SSCStateJobGetCommand.class,
                 SSCStateJobListCommand.class,
                 SSCStateJobUpdateCommand.class,
+                SSCStateJobWaitForCommand.class
         }
 )
 public class SSCSystemStateCommands extends AbstractContainerCommand {
