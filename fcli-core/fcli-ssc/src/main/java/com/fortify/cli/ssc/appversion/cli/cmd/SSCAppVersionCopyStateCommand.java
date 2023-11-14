@@ -18,11 +18,10 @@ import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppAndVersionNameResolverMixin;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCCopyFromAppVersionResolverMixin;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionCopyFromMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import kong.unirest.UnirestInstance;
@@ -32,7 +31,7 @@ import picocli.CommandLine.Mixin;
 
 import java.util.HashMap;
 
-@Command(name = "copy-issues")
+@Command(name = "copy-state")
 public class SSCAppVersionCopyStateCommand extends AbstractSSCJsonNodeOutputCommand implements IJsonNodeSupplier, IRecordTransformer, IActionCommandResultSupplier {
     @Getter
     @Mixin
@@ -40,7 +39,7 @@ public class SSCAppVersionCopyStateCommand extends AbstractSSCJsonNodeOutputComm
     @Mixin
     private SSCAppAndVersionNameResolverMixin.PositionalParameter sscAppAndVersionNameResolver;
     @Mixin
-    private SSCCopyFromAppVersionResolverMixin.RequiredOption fromAppVersionResolver;
+    private SSCAppVersionCopyFromMixin fromAppVersionResolver;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -71,21 +70,11 @@ public class SSCAppVersionCopyStateCommand extends AbstractSSCJsonNodeOutputComm
         HashMap<String, String> appVersionIds = new HashMap<String, String>();
         appVersionIds.put("previousProjectVersionId", sourceAppVersion.getVersionId());
         appVersionIds.put("projectVersionId", targetAppVersion.getVersionId());
-        String action = "COPY_REQUESTED";
-        try {
-            JsonNode response = unirest.post(SSCUrls.PROJECT_VERSIONS_ACTION_COPY_CURRENT_STATE)
-                    .body(appVersionIds)
-                    .asObject(JsonNode.class).getBody();
-            if (response.has("responseCode")) {
-                if (response.get("responseCode").intValue() != 200) {
-                    action = "UNKNOWN";
-                }
-            }
-        } catch (UnexpectedHttpResponseException e) {
-            action = "COPY_FAILED";
-        }
 
-        appVersionIds.put(IActionCommandResultSupplier.actionFieldName, action);
+        JsonNode response = unirest.post(SSCUrls.PROJECT_VERSIONS_ACTION_COPY_CURRENT_STATE)
+                .body(appVersionIds)
+                .asObject(JsonNode.class).getBody();
+
         return appVersionIds;
     }
 

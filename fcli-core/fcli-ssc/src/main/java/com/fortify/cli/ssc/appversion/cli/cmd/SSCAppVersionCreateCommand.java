@@ -30,9 +30,11 @@ import com.fortify.cli.ssc.access_control.helper.SSCAppVersionUserUpdateBuilder;
 import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppAndVersionNameResolverMixin;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCCopyFromAppVersionResolverMixin;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCCopyOptions;
-import com.fortify.cli.ssc.appversion.helper.*;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionCopyFromMixin;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionCreateCopyFromBuilder;
+import com.fortify.cli.ssc.appversion.helper.SSCAppAndVersionNameDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.attribute.cli.mixin.SSCAttributeUpdateMixin;
 import com.fortify.cli.ssc.attribute.helper.SSCAttributeUpdateBuilder;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueTemplateResolverMixin;
@@ -57,14 +59,11 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     private String description;
     @Option(names={"--active"}, required = false, defaultValue="true", arity="1")
     private boolean active;
-    @Mixin private SSCCopyFromAppVersionResolverMixin.RequiredOption fromAppVersionResolver;
+    @Mixin private SSCAppVersionCopyFromMixin copyFromMixin;
     @Option(names={"--auto-required-attrs"}, required = false)
     private boolean autoRequiredAttrs = false;
     @Option(names={"--skip-if-exists"}, required = false)
     private boolean skipIfExists = false;
-    @Mixin
-    protected SSCCopyOptions.copyOptions copyOptions;
-
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
@@ -74,19 +73,15 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         }
         SSCAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
         SSCAppVersionUserUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);
+        SSCAppVersionCreateCopyFromBuilder copyFromBuilder = getCopyFromBuilder(unirest);
 
         SSCAppVersionDescriptor descriptor = createUncommittedAppVersion(unirest);
-        SSCBulkRequestBuilder builder = new SSCBulkRequestBuilder();
-        if(fromAppVersionResolver.getAppVersionNameOrId() != null) {
-            SSCAppVersionCreateCopyFromBuilder copyFromBuilder = getCopyFromBuilder(unirest);
-            builder.request("copyFrom", copyFromBuilder.buildCopyFromPartialRequest(descriptor.getVersionId()));
-            if(copyFromBuilder.copyStateEnabled()){
-                builder.request("copyState", copyFromBuilder.buildCopyStateRequest(descriptor.getVersionId()));
-            }
-        }
-        SSCBulkResponse bulkResponse = builder.request("attrUpdate", attrUpdateBuilder.buildRequest(descriptor.getVersionId()))
+        SSCBulkResponse bulkResponse = new SSCBulkRequestBuilder()
+            .request("attrUpdate", attrUpdateBuilder.buildRequest(descriptor.getVersionId()))
             .request("userUpdate", authUpdateBuilder.buildRequest(descriptor.getVersionId()))
+            .request("copyFrom", copyFromBuilder.buildCopyFromPartialRequest(descriptor.getVersionId()))
             .request("commit", getCommitRequest(unirest, descriptor))
+            .request("copyState", copyFromBuilder.buildCopyStateRequest(descriptor.getVersionId()))
             .request("updatedVersion", unirest.get(SSCUrls.PROJECT_VERSION(descriptor.getVersionId())))
             .execute(unirest);
         return bulkResponse.body("updatedVersion");
@@ -108,9 +103,14 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     }
 
     private final SSCAppVersionCreateCopyFromBuilder getCopyFromBuilder(UnirestInstance unirest) {
-        return new SSCAppVersionCreateCopyFromBuilder(unirest)
-                .setCopyFrom(fromAppVersionResolver.getAppVersionId(unirest, sscAppAndVersionNameResolver.getDelimiter()))
-                .setCopyOptions(copyOptions.getCopyOptions());
+         SSCAppVersionCreateCopyFromBuilder builder = new SSCAppVersionCreateCopyFromBuilder(unirest);
+         if(copyFromMixin.isCopyRequested()) {
+             builder .setCopyRequested(true)
+                     .setCopyFrom(SSCAppVersionHelper.getRequiredAppVersion(unirest, copyFromMixin.getAppVersionNameOrId(), sscAppAndVersionNameResolver.getDelimiter()))
+                     .setCopyOptions(copyFromMixin.getCopyOptions());
+         }
+
+        return builder;
     }
 
     private final SSCAppVersionUserUpdateBuilder getAuthUpdateBuilder(UnirestInstance unirest) {
