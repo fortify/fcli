@@ -66,7 +66,7 @@ public class SSCJobResolverMixin {
     }
 
     public static class PositionalParameterMulti extends  SSCJobResolverMixin.AbstractSSCAppVersionMultiJobResolverMixin {
-        @EnvSuffix("JOB") @Parameters(index = "0", arity = "1..", paramLabel = "job-names", descriptionKey = "fcli.ssc.job.resolver.names")
+        @EnvSuffix("JOB") @Parameters(index = "0", arity = "1..", paramLabel = "job-names", descriptionKey = "fcli.ssc.system-state.job.resolver.names")
         @Getter private String[] jobNames;
     }
 }

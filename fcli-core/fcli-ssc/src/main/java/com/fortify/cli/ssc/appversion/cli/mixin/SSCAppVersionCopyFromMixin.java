@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.mixin;
 
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import kong.unirest.UnirestInstance;
@@ -42,6 +44,7 @@ public class SSCAppVersionCopyFromMixin {
     private static class SSCAppVersionCopyFromArgGroup {
         @Option(names = {"--copy-from", "--from"}, required = false, descriptionKey = "fcli.ssc.appversion.resolver.copy-from.nameOrId")
         @Getter private String appVersionNameOrId;
+        @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
         @Option(names = {"--copy"}, required = false, split = ",", descriptionKey = "fcli.ssc.appversion.create.copy-options")
         @Getter private SSCCopyOption[] copyOptions;
     }
