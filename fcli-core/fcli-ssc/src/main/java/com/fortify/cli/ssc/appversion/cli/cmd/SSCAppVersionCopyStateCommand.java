@@ -20,13 +20,13 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppAndVersionNameResolverMixin;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionCopyFromMixin;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCDelimiterMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Mixin;
 
 import java.util.HashMap;
@@ -36,18 +36,26 @@ public class SSCAppVersionCopyStateCommand extends AbstractSSCJsonNodeOutputComm
     @Getter
     @Mixin
     private OutputHelperMixins.TableNoQuery outputHelper;
+
+    @Getter
     @Mixin
-    private SSCAppAndVersionNameResolverMixin.PositionalParameter sscAppAndVersionNameResolver;
-    @Mixin
-    private SSCAppVersionCopyFromMixin fromAppVersionResolver;
+    private SSCDelimiterMixin delimiterMixin;
+
+    @Option(names = {"--copy-from", "--from"}, required = true, descriptionKey = "fcli.ssc.appversion.resolver.copy-from.nameOrId")
+    @Getter
+    private String fromAppVersionNameOrId;
+
+    @Option(names = {"--copy-to", "--to"}, required = true, descriptionKey = "fcli.ssc.appversion.resolver.copy-to.nameOrId")
+    @Getter
+    private String toAppVersionNameOrId;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         ObjectMapper mapper = new ObjectMapper();
-        SSCAppVersionDescriptor targetAppVersionDescriptor = SSCAppVersionHelper.getRequiredAppVersion(unirest, sscAppAndVersionNameResolver.getAppAndVersionName(), sscAppAndVersionNameResolver.getDelimiter());
-        SSCAppVersionDescriptor sourceAppVersionDescriptor = fromAppVersionResolver.getAppVersionDescriptor(unirest, sscAppAndVersionNameResolver.getDelimiter());
+        SSCAppVersionDescriptor fromAppVersionDescriptor = SSCAppVersionHelper.getRequiredAppVersion(unirest, getFromAppVersionNameOrId(), delimiterMixin.getDelimiter());
+        SSCAppVersionDescriptor toAppVersionDescriptor = SSCAppVersionHelper.getRequiredAppVersion(unirest, getToAppVersionNameOrId(), delimiterMixin.getDelimiter());
 
-        return mapper.valueToTree(copyState(unirest, sourceAppVersionDescriptor, targetAppVersionDescriptor));
+        return mapper.valueToTree(copyState(unirest, fromAppVersionDescriptor, toAppVersionDescriptor));
 
     }
 

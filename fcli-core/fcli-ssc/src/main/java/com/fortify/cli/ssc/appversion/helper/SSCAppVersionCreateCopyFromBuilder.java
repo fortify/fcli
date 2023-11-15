@@ -13,7 +13,6 @@
 package com.fortify.cli.ssc.appversion.helper;
 
 import com.fortify.cli.ssc._common.rest.SSCUrls;
-import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionCopyFromMixin.SSCCopyOption;
 import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
 import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 import kong.unirest.HttpRequest;

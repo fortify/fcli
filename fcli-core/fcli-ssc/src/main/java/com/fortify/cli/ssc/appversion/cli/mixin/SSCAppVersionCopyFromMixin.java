@@ -16,6 +16,7 @@ import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
+import com.fortify.cli.ssc.appversion.helper.SSCCopyOption;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
@@ -25,7 +26,7 @@ import java.util.stream.Stream;
 
 public class SSCAppVersionCopyFromMixin {
 
-    @ArgGroup(exclusive=false, multiplicity = "0..1", heading = "Copy from options:\n")
+    @ArgGroup(exclusive=false, multiplicity = "0..1")
     private SSCAppVersionCopyFromArgGroup argGroup;
 
     public boolean isCopyRequested() { return argGroup!=null; }
@@ -42,33 +43,10 @@ public class SSCAppVersionCopyFromMixin {
     }
 
     private static class SSCAppVersionCopyFromArgGroup {
-        @Option(names = {"--copy-from", "--from"}, required = false, descriptionKey = "fcli.ssc.appversion.resolver.copy-from.nameOrId")
+        @Option(names = {"--copy-from", "--from"}, required = true, descriptionKey = "fcli.ssc.appversion.resolver.copy-from.nameOrId")
         @Getter private String appVersionNameOrId;
         @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
         @Option(names = {"--copy"}, required = false, split = ",", descriptionKey = "fcli.ssc.appversion.create.copy-options")
         @Getter private SSCCopyOption[] copyOptions;
-    }
-    public enum SSCCopyOption {
-        AnalysisProcessingRules("copyAnalysisProcessingRules"),
-        BugTrackerConfiguration("copyBugTrackerConfiguration"),
-        CustomTags("copyCustomTags"),
-        State("copyState");
-
-        private final String sscValue;
-
-        private SSCCopyOption(String sscValue) {
-            this.sscValue = sscValue;
-        }
-
-        public String getSscValue() {
-            return this.sscValue;
-        }
-
-        public static final SSCCopyOption fromSscValue(String sscValue) {
-            return Stream.of(SSCCopyOption.values())
-                    .filter(v->v.getSscValue().equals(sscValue))
-                    .findFirst()
-                    .orElseThrow(()->new IllegalStateException("Unknown SSC copyFrom option: "+sscValue));
-        }
     }
 }
