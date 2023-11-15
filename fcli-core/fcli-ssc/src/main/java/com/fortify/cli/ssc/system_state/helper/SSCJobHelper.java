@@ -13,6 +13,7 @@
 package com.fortify.cli.ssc.system_state.helper;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -59,7 +60,7 @@ public final class SSCJobHelper   {
                 .onUnknownState(null)
                 .onUnknownStateRequested(null);
 
-        builder .recordsSupplier(descriptor::getJobDescriptorJsonNodes)
+        builder .recordsSupplier(u->Collections.singletonList(getJobJsonNode(u, descriptor.getJobName())))
                 .currentStateProperty("state")
                 .knownStates(SSCJobStatus.getKnownStateNames())
                 .failureStates(SSCJobStatus.getFailureStateNames())
