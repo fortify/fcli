@@ -1,5 +1,5 @@
 ---
-title: fcli-ssc-access-control-list-roles(1)
+title: fcli-ssc-system-state-wait-for-job(1)
 fcli_version: 
 ---
 
@@ -9,7 +9,7 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-ssc-access-control-list-roles(1)</title>
+<title>fcli-ssc-system-state-wait-for-job(1)</title>
 
 {% include asciidoc-head.html %}
 
@@ -20,7 +20,7 @@ fcli_version:
 
 
 <div id="header">
-<h1>fcli-ssc-access-control-list-roles(1) Manual Page</h1>
+<h1>fcli-ssc-system-state-wait-for-job(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -30,11 +30,12 @@ fcli_version:
 <li><a href="#_session_options">Session options:</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-access-control-list-roles - List roles.</p>
+<p>fcli-ssc-system-state-wait-for-job - Wait for multiple system jobs</p>
 </div>
 </div>
 <div id="content">
@@ -42,15 +43,23 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc access-control list-roles</strong> [<strong>--q-param</strong>=<em>&lt;qParam&gt;</em>] [[<strong>-h</strong>]
+<p><strong>fcli ssc system-state wait-for-job</strong> [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
+                                   [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
+                                   [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
+                                   [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
+                                   [<strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownState</em>
+                    _               Requested&gt;_] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                                   [<strong>-t</strong>=<em>&lt;timeoutPeriod&gt;</em>] [<strong>-s</strong>=<em>&lt;states&gt;</em>[,
+                                   <em>&lt;states&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                                    [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
-                                   [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format_
+                                   [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format_
                              _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
                        _            <em class="=&lt;propertyNames&gt;">]
-                                   [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
-                             _      expression&gt;</em>]</p>
+                                   [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                                   [<strong>-u</strong>=<em>any-match|all-match</em> |
+                                   <strong>-w</strong>=<em>any-match|all-match</em>]
+                                   [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em>job-names</em>&#8230;&#8203;</p>
 </div>
 </div>
 </div>
@@ -65,13 +74,45 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
+<dt class="hdlist1"><strong>-i</strong>, <strong>--interval</strong>=<em>&lt;intervalPeriod&gt;</em></dt>
 <dd>
-<p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+<p>Polling interval, for example 5s (5 seconds) or 1m (1 minute).</p>
 </dd>
-<dt class="hdlist1"><strong>--q-param</strong>=<em>&lt;qParam&gt;</em></dt>
+<dt class="hdlist1"><strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em></dt>
 <dd>
-<p>Server-side queries are automatically generated from the -q / --query option if possible; generated queries can be viewed in the debug log. The --q-param option can be used to override the automatically generated query, for example to further optimize the request. See SSC REST API documentation for information on supported formats.</p>
+<p>Action to take when a failure state is returned for any of the records: wait, terminate, fail.</p>
+</dd>
+<dt class="hdlist1"><strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em></dt>
+<dd>
+<p>Action to take when timeout occurs: terminate, fail.</p>
+</dd>
+<dt class="hdlist1"><strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em></dt>
+<dd>
+<p>Action to take when an unknown state is returned for any of the records: wait, terminate, fail.</p>
+</dd>
+<dt class="hdlist1"><strong>--on-unknown-state-requested</strong>=<em>&lt;onUnknownStateRequested&gt;</em></dt>
+<dd>
+<p>Action to take when an unknown state is passed in any of the --while or --until options: ignore, fail.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+</dd>
+<dt class="hdlist1"><strong>-s</strong>, <strong>--any-state</strong>=<em>&lt;states&gt;</em>[,<em>&lt;states&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>One or more processing states against which to match the given jobs.</p>
+</dd>
+<dt class="hdlist1"><strong>-t</strong>, <strong>--timeout</strong>=<em>&lt;timeoutPeriod&gt;</em></dt>
+<dd>
+<p>Time-out, for example 30s (30 seconds), 5m (5 minutes), 1h (1 hour).</p>
+</dd>
+<dt class="hdlist1"><strong>-u</strong>, <strong>--until</strong>=<em>any-match|all-match</em></dt>
+<dd>
+<p>Wait until either any or all jobs match. If neither --until or --while are specified, default is to wait until all jobs match.</p>
+</dd>
+<dt class="hdlist1"><strong>-w</strong>, <strong>--while</strong>=<em>any-match|all-match</em></dt>
+<dd>
+<p>Wait while either any or all jobs match.</p>
 </dd>
 </dl>
 </div>
@@ -131,6 +172,19 @@ fcli_version:
 <dt class="hdlist1"><strong>--log-level</strong>=<em>&lt;logLevel&gt;</em></dt>
 <dd>
 <p>Set logging level. Note that DEBUG and TRACE levels may result in sensitive data being written to the log file. Allowed values: TRACE, DEBUG, INFO, WARN, ERROR.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><em>job-names</em>&#8230;&#8203;</dt>
+<dd>
+<p>One or more job names</p>
 </dd>
 </dl>
 </div>

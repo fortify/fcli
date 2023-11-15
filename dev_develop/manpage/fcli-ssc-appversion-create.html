@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231026.121625-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231115.131803-dev_develop" %}
 
 
 <div id="header">
@@ -54,7 +54,9 @@ fcli_version:
                            [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
                            [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                            [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                           [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]] <em>&lt;app&gt;:&lt;version&gt;</em></p>
+                           [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]]
+                           [<strong>--from</strong>=<em>&lt;appVersionNameOrId&gt;</em> [<strong>--copy</strong>=<em>&lt;copyOptions&gt;</em>[,
+                           <em>&lt;copyOptions&gt;</em>&#8230;&#8203;]]&#8230;&#8203;] <em>&lt;app&gt;:&lt;version&gt;</em></p>
 </div>
 </div>
 </div>
@@ -85,6 +87,10 @@ fcli_version:
 <dd>
 <p>Automatically set a default value for required application version attributes.</p>
 </dd>
+<dt class="hdlist1"><strong>--copy</strong>=<em>&lt;copyOptions&gt;</em>[,<em>&lt;copyOptions&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Comma separated list of elements to copy (Requires --copy-from). By default, all are copied. Allowed values: AnalysisProcessingRules, BugTrackerConfiguration, CustomTags, State.</p>
+</dd>
 <dt class="hdlist1"><strong>-d</strong>, <strong>--description</strong>=<em>&lt;description&gt;</em></dt>
 <dd>
 <p>Application version description.</p>
@@ -92,6 +98,13 @@ fcli_version:
 <dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
 <dd>
 <p>Change the default delimiter character when using options that accept "application:version" as an argument or parameter.</p>
+</dd>
+<dt class="hdlist1"><strong>--from, --copy-from</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
+<dd>
+<p>Copy FROM application version:</p>
+<div class="paragraph">
+<p>id or &lt;application&gt;:&lt;version&gt; name.</p>
+</div>
 </dd>
 <dt class="hdlist1"><strong>--issue-template</strong>=<em>&lt;issueTemplateNameOrId&gt;</em></dt>
 <dd>
@@ -181,7 +194,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-10-26 12:18:17 UTC
+Last updated 2023-11-15 13:19:31 UTC
 </div>
 </div>
 </body>
