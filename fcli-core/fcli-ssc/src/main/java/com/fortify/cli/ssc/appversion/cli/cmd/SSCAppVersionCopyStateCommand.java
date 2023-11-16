@@ -22,10 +22,13 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionRefreshOptions;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCDelimiterMixin;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 
+import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
+import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -37,15 +40,13 @@ public class SSCAppVersionCopyStateCommand extends AbstractSSCJsonNodeOutputComm
     @Getter
     @Mixin
     private OutputHelperMixins.TableNoQuery outputHelper;
-
     @Getter
     @Mixin
     private SSCDelimiterMixin delimiterMixin;
-
+    @Mixin private SSCAppVersionRefreshOptions refreshOptions;
     @Option(names = {"--copy-from", "--from"}, required = true, descriptionKey = "fcli.ssc.appversion.resolver.copy-from.nameOrId")
     @Getter
     private String fromAppVersionNameOrId;
-
     @Option(names = {"--copy-to", "--to"}, required = true, descriptionKey = "fcli.ssc.appversion.resolver.copy-to.nameOrId")
     @Getter
     private String toAppVersionNameOrId;
@@ -55,6 +56,11 @@ public class SSCAppVersionCopyStateCommand extends AbstractSSCJsonNodeOutputComm
         ObjectMapper mapper = new ObjectMapper();
         SSCAppVersionDescriptor fromAppVersionDescriptor = SSCAppVersionHelper.getRequiredAppVersion(unirest, getFromAppVersionNameOrId(), delimiterMixin.getDelimiter());
         SSCAppVersionDescriptor toAppVersionDescriptor = SSCAppVersionHelper.getRequiredAppVersion(unirest, getToAppVersionNameOrId(), delimiterMixin.getDelimiter());
+
+        if(refreshOptions.isRefresh() && fromAppVersionDescriptor.isRefreshRequired()){
+            SSCJobDescriptor refreshJobDesc = SSCAppVersionHelper.refreshMetrics(unirest, fromAppVersionDescriptor);
+            SSCJobHelper.waitForJob(unirest,refreshJobDesc);
+        }
 
         return mapper.valueToTree(copyState(unirest, fromAppVersionDescriptor, toAppVersionDescriptor));
 
