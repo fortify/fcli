@@ -31,6 +31,7 @@ import com.fortify.cli.ssc.app.helper.SSCAppDescriptor;
 import com.fortify.cli.ssc.app.helper.SSCAppHelper;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppAndVersionNameResolverMixin;
 import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionCopyFromMixin;
+import com.fortify.cli.ssc.appversion.cli.mixin.SSCAppVersionRefreshOptions;
 import com.fortify.cli.ssc.appversion.helper.SSCAppAndVersionNameDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionCreateCopyFromBuilder;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
@@ -40,6 +41,8 @@ import com.fortify.cli.ssc.attribute.helper.SSCAttributeUpdateBuilder;
 import com.fortify.cli.ssc.issue.cli.mixin.SSCIssueTemplateResolverMixin;
 import com.fortify.cli.ssc.issue.helper.SSCIssueTemplateDescriptor;
 
+import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
+import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -49,17 +52,18 @@ import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
 public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    @Getter @Mixin private OutputHelperMixins.Create outputHelper;
     @Mixin private SSCAppAndVersionNameResolverMixin.PositionalParameter sscAppAndVersionNameResolver;
     @Mixin private SSCIssueTemplateResolverMixin.OptionalOption issueTemplateResolver;
     @Mixin private SSCAttributeUpdateMixin.OptionalAttrOption attrUpdateMixin;
     @Mixin private SSCAppVersionUserMixin.OptionalUserAddOption userAddMixin;
+    @Mixin private SSCAppVersionCopyFromMixin copyFromMixin;
+    @Mixin private SSCAppVersionRefreshOptions refreshOptions;
     @Option(names={"--description","-d"}, required = false)
     private String description;
     @Option(names={"--active"}, required = false, defaultValue="true", arity="1")
     private boolean active;
-    @Mixin private SSCAppVersionCopyFromMixin copyFromMixin;
     @Option(names={"--auto-required-attrs"}, required = false)
     private boolean autoRequiredAttrs = false;
     @Option(names={"--skip-if-exists"}, required = false)
@@ -73,9 +77,11 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         }
         SSCAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
         SSCAppVersionUserUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);
-        SSCAppVersionCreateCopyFromBuilder copyFromBuilder = getCopyFromBuilder(unirest);
 
         SSCAppVersionDescriptor descriptor = createUncommittedAppVersion(unirest);
+
+        SSCAppVersionCreateCopyFromBuilder copyFromBuilder = getCopyFromBuilder(unirest);
+
         SSCBulkResponse bulkResponse = new SSCBulkRequestBuilder()
             .request("attrUpdate", attrUpdateBuilder.buildRequest(descriptor.getVersionId()))
             .request("userUpdate", authUpdateBuilder.buildRequest(descriptor.getVersionId()))
@@ -105,9 +111,19 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
     private final SSCAppVersionCreateCopyFromBuilder getCopyFromBuilder(UnirestInstance unirest) {
          SSCAppVersionCreateCopyFromBuilder builder = new SSCAppVersionCreateCopyFromBuilder(unirest);
          if(copyFromMixin.isCopyRequested()) {
+             SSCAppVersionDescriptor fromAppVersionDesc = SSCAppVersionHelper.getRequiredAppVersion(unirest, copyFromMixin.getAppVersionNameOrId(), sscAppAndVersionNameResolver.getDelimiter());
+
              builder .setCopyRequested(true)
-                     .setCopyFrom(SSCAppVersionHelper.getRequiredAppVersion(unirest, copyFromMixin.getAppVersionNameOrId(), sscAppAndVersionNameResolver.getDelimiter()))
+                     .setCopyFrom(fromAppVersionDesc)
                      .setCopyOptions(copyFromMixin.getCopyOptions());
+
+             // refreshMetrics if the source PV is required to fully copy the tags, audit or comments
+             if(builder.copyStateEnabled()
+                     && refreshOptions.isRefresh()
+                     && fromAppVersionDesc.isRefreshRequired()){
+                 SSCJobDescriptor refreshJobDesc = SSCAppVersionHelper.refreshMetrics(unirest, fromAppVersionDesc);
+                 SSCJobHelper.waitForJob(unirest,refreshJobDesc);
+             }
          }
 
         return builder;

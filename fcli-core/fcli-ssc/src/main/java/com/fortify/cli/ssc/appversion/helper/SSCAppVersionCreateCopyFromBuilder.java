@@ -62,11 +62,7 @@ public final class SSCAppVersionCreateCopyFromBuilder {
         if(!copyState || !copyRequested){
             return null;
         }
-        // refreshMetrics if the source PV is required to fully copy the tags, audit or comments
-        if(this.previousProjectVersion.isRefreshRequired()){
-            SSCJobDescriptor refreshJobDesc = SSCAppVersionHelper.refreshMetrics(unirest, this.previousProjectVersion);
-            SSCJobHelper.waitForJob(unirest,refreshJobDesc);
-        }
+
         this.copyStateOptions.put("projectVersionId", projectVersionId);
         return unirest
                 .post(SSCUrls.PROJECT_VERSIONS_ACTION_COPY_CURRENT_STATE)
