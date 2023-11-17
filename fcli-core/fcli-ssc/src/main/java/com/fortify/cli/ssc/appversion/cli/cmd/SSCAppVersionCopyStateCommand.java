@@ -12,8 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.cmd;
 
-import java.util.HashMap;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -92,7 +90,7 @@ public class SSCAppVersionCopyStateCommand extends AbstractSSCJsonNodeOutputComm
         body    .put("type", "copy_current_state")
                 .set("values", copyStateOptions);
 
-        unirest .post(SSCUrls.PROJECT_VERSION_ACTION(toAppVersionDescriptor.getVersionId()))
+        unirest .post(SSCUrls.PROJECT_VERSIONS_ACTION(toAppVersionDescriptor.getVersionId()))
                 .body(body)
                 .asObject(JsonNode.class).getBody();
 

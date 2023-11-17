@@ -236,7 +236,7 @@ public class SSCUrls {
     }
     public static final String PORTLETS_ISSUE_AGING = ApiBase + "/portlets/issueaging";
     public static final String PROJECT_VERSIONS = ApiBase + "/projectVersions";
-    public static String PROJECT_VERSION_ACTION(String projectVersionId) {
+    public static String PROJECT_VERSIONS_ACTION(String projectVersionId) {
         return String.format(ApiBase + "/projectVersions/%s/action", projectVersionId);
     }
     public static final String PROJECT_VERSIONS_ACTION_AUDIT_BY_AUDIT_ASSISTANT = ApiBase + "/projectVersions/action/auditByAuditAssistant";

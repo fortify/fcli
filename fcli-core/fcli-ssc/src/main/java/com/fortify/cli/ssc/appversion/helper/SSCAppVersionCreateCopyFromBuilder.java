@@ -12,8 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.helper;
 
-import java.util.HashMap;
-
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
@@ -60,7 +58,7 @@ public final class SSCAppVersionCreateCopyFromBuilder {
                 .set("values", copyStateOptions);
 
         return unirest
-                .post(SSCUrls.PROJECT_VERSION_ACTION(projectVersionId))
+                .post(SSCUrls.PROJECT_VERSIONS_ACTION(projectVersionId))
                 .body(body);
     }
 
