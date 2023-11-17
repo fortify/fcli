@@ -16,6 +16,8 @@ import java.util.HashMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -81,16 +83,19 @@ public class SSCAppVersionCopyStateCommand extends AbstractSSCJsonNodeOutputComm
         return true;
     }
 
-    private static final HashMap<String, String> copyState(UnirestInstance unirest, SSCAppVersionDescriptor sourceAppVersion, SSCAppVersionDescriptor targetAppVersion) {
-        HashMap<String, String> appVersionIds = new HashMap<String, String>();
-        appVersionIds.put("previousProjectVersionId", sourceAppVersion.getVersionId());
-        appVersionIds.put("projectVersionId", targetAppVersion.getVersionId());
+    private static final JsonNode copyState(UnirestInstance unirest, SSCAppVersionDescriptor fromAppVersionDescriptor, SSCAppVersionDescriptor toAppVersionDescriptor) {
+        ObjectNode copyStateOptions =  JsonHelper.getObjectMapper().createObjectNode();
+        copyStateOptions.put("previousProjectVersionId", fromAppVersionDescriptor.getIntVersionId());
+        copyStateOptions.put("projectVersionId", toAppVersionDescriptor.getIntVersionId());
 
-        unirest.post(SSCUrls.PROJECT_VERSIONS_ACTION_COPY_CURRENT_STATE)
-                .body(appVersionIds)
+        ObjectNode body = JsonHelper.getObjectMapper().createObjectNode();
+        body    .put("type", "copy_current_state")
+                .set("values", copyStateOptions);
+
+        unirest .post(SSCUrls.PROJECT_VERSION_ACTION(toAppVersionDescriptor.getVersionId()))
+                .body(body)
                 .asObject(JsonNode.class).getBody();
 
-        return appVersionIds;
+        return copyStateOptions;
     }
-
 }

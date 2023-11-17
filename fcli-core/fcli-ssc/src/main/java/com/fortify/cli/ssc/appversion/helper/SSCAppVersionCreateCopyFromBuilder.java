@@ -14,9 +14,9 @@ package com.fortify.cli.ssc.appversion.helper;
 
 import java.util.HashMap;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
-import com.fortify.cli.ssc.system_state.helper.SSCJobDescriptor;
-import com.fortify.cli.ssc.system_state.helper.SSCJobHelper;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -24,27 +24,16 @@ import kong.unirest.UnirestInstance;
 public final class SSCAppVersionCreateCopyFromBuilder {
     private final UnirestInstance unirest;
 
-    private HashMap<String, String> copyFromPartialOptions = new HashMap<String, String>();
-    private HashMap<String, String> copyStateOptions = new HashMap<String, String>();
+    private ObjectNode copyFromPartialOptions = JsonHelper.getObjectMapper().createObjectNode();
+    private ObjectNode copyStateOptions = JsonHelper.getObjectMapper().createObjectNode();
     private SSCAppVersionDescriptor previousProjectVersion;
 
     private boolean copyRequested = false;
 
-    private boolean copyState;
+    private boolean copyState = false;
 
     public SSCAppVersionCreateCopyFromBuilder(UnirestInstance unirest) {
         this.unirest = unirest;
-    }
-
-    public final HttpRequest<?> buildCopyFromRefreshRequest(String projectVersionId) {
-        if(!copyState || !copyRequested){
-            return null;
-        }
-
-        this.copyFromPartialOptions.put("projectVersionId", projectVersionId);
-        return unirest
-                .post(SSCUrls.PROJECT_VERSIONS_ACTION_COPY_FROM_PARTIAL)
-                .body(copyFromPartialOptions);
     }
 
     public final HttpRequest<?> buildCopyFromPartialRequest(String projectVersionId) {
@@ -58,21 +47,27 @@ public final class SSCAppVersionCreateCopyFromBuilder {
                 .body(copyFromPartialOptions);
     }
 
+
     public final HttpRequest<?> buildCopyStateRequest(String projectVersionId) {
         if(!copyState || !copyRequested){
             return null;
         }
 
-        this.copyStateOptions.put("projectVersionId", projectVersionId);
+        this.copyStateOptions.put("projectVersionId", Integer.parseInt(projectVersionId));
+
+        ObjectNode body = JsonHelper.getObjectMapper().createObjectNode();
+        body    .put("type", "copy_current_state")
+                .set("values", copyStateOptions);
+
         return unirest
-                .post(SSCUrls.PROJECT_VERSIONS_ACTION_COPY_CURRENT_STATE)
-                .body(copyStateOptions);
+                .post(SSCUrls.PROJECT_VERSION_ACTION(projectVersionId))
+                .body(body);
     }
 
     public final SSCAppVersionCreateCopyFromBuilder setCopyFrom(SSCAppVersionDescriptor previousProjectVersionDescriptor) {
         this.previousProjectVersion = previousProjectVersionDescriptor;
         this.copyFromPartialOptions.put("previousProjectVersionId", previousProjectVersionDescriptor.getVersionId());
-        this.copyStateOptions.put("previousProjectVersionId", previousProjectVersionDescriptor.getVersionId());
+        this.copyStateOptions.put("previousProjectVersionId", previousProjectVersionDescriptor.getIntVersionId());
         return this;
     }
 
