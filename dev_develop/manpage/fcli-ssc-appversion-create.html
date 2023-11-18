@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231115.141001-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231118.134422-dev_develop" %}
 
 
 <div id="header">
@@ -43,9 +43,9 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc appversion create</strong> [<strong>--auto-required-attrs</strong>] [<strong>--skip-if-exists</strong>]
-                           [<strong>--active</strong>=<em>&lt;active&gt;</em>] [<strong>-d</strong>=<em>&lt;description&gt;</em>]
-                           [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
+<p><strong>fcli ssc appversion create</strong> [<strong>--auto-required-attrs</strong>] [<strong>--[no-]refresh</strong>]
+                           [<strong>--skip-if-exists</strong>] [<strong>--active</strong>=<em>&lt;active&gt;</em>]
+                           [<strong>-d</strong>=<em>&lt;description&gt;</em>] [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
                            [<strong>--issue-template</strong>=<em>&lt;issueTemplateNameOrId&gt;</em>]
                            [<strong>--add-users</strong>=<em>&lt;authEntitySpecs&gt;</em>[,
                            <em>&lt;authEntitySpecs&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [<strong>--attrs</strong>=<em>[CATEGORY:]</em>
@@ -109,6 +109,10 @@ fcli_version:
 <dt class="hdlist1"><strong>--issue-template</strong>=<em>&lt;issueTemplateNameOrId&gt;</em></dt>
 <dd>
 <p>Issue template name or id.</p>
+</dd>
+<dt class="hdlist1"><strong>--[no-]refresh</strong></dt>
+<dd>
+<p>By default, this command will refresh the  source application version&#8217;s metrics when copying from it. Note that for large applications this can lead to an error if the timeout expires.</p>
 </dd>
 <dt class="hdlist1"><strong>--skip-if-exists</strong></dt>
 <dd>
@@ -194,7 +198,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-11-15 14:11:28 UTC
+Last updated 2023-11-18 13:45:42 UTC
 </div>
 </div>
 </body>
