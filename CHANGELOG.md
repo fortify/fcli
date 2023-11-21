@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.1.0](https://github.com/fortify/fcli/compare/v2.0.0...v2.1.0) (2023-11-21)
+
+
+### Features
+
+* `fcli ssc appversion create`: Add options for copying existing application version ([75461db](https://github.com/fortify/fcli/commit/75461db9be93425365fff9e07046ae074da36241))
+* Add `fcli ssc appversion copy-state` command ([75461db](https://github.com/fortify/fcli/commit/75461db9be93425365fff9e07046ae074da36241))
+* Add `fcli system-state wait-for-job` command ([75461db](https://github.com/fortify/fcli/commit/75461db9be93425365fff9e07046ae074da36241))
+
+
+### Bug Fixes
+
+* rename new SSC_URL `PROJECT_VERSION_ACTION`-&gt; `PROJECT_VERSIONS_ACTION` ([55178be](https://github.com/fortify/fcli/commit/55178be0d90a6e42e9ccf7f5acd9a632492b1e1a))
+
 ## [2.0.0](https://github.com/fortify/fcli/compare/v1.3.2...v2.0.0) (2023-10-25)
 
 
