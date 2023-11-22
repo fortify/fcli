@@ -17,13 +17,43 @@ class FoDReleaseSpec extends FcliBaseSpec {
     @Shared @AutoCleanup FoDMicroservicesAppSupplier app = new FoDMicroservicesAppSupplier()
 
     def "list"() {
-        def args = "fod release list"
+        def args = "fod release list --store=releases"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>=1
                 it[0].replace(' ', '').equals("IdNameMicroserviceApplicationSDLCStatus")
+            }
+    }
+    
+    def "list-scans"() {
+        def args = "fod release list-scans --rel=::releases::get(0).releaseId"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=0
+                if(size()>1) {
+                    it[0].replace(' ', '').equals("IdTypeAnalysisStatusApplicationMicroserviceNameStartedCompletedScanMethod")
+                } else {
+                it[0].equals("No data")
+                }
+            }
+    }
+    
+    def "list-assessment-types"() {
+        def args = "fod release lsat --rel=::releases::get(0).releaseId"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=0
+                if(size()>1) {
+                    it[0].replace(' ', '').equals("IdNameScantypeFrequencytypeUnitsEntitlementidEntitlementdescription")
+                } else {
+                it[0].equals("No data")
+                }
             }
     }
 

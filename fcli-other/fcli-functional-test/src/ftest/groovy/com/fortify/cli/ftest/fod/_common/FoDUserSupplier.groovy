@@ -29,7 +29,7 @@ public class FoDUserSupplier extends AbstractCloseableEntitySupplier<FoDUser> {
 
         public FoDUser create() {
             Fcli.run("fod rest lookup Roles --store roles")
-            Fcli.run("fod ac create-user $userName --email=test@test.test --firstname=test --lastname=user --phone=1234 --role=::roles::get(0).value " +
+            Fcli.run("fod ac create-user $userName --email=$random@test.test --firstname=test --lastname=user --phone=1234 --role=::roles::get(0).value " +
                 "--store $variableName",
                 {it.expectSuccess(true, "Unable to create user")})
             return this
