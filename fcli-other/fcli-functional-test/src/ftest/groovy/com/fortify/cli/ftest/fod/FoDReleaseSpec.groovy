@@ -41,6 +41,21 @@ class FoDReleaseSpec extends FcliBaseSpec {
                 }
             }
     }
+    
+    def "list-assessment-types"() {
+        def args = "fod release lsat --rel=::releases::get(0).releaseId"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=0
+                if(size()>1) {
+                    it[0].replace(' ', '').equals("IdNameScantypeFrequencytypeUnitsEntitlementidEntitlementdescription")
+                } else {
+                it[0].equals("No data")
+                }
+            }
+    }
 
     def "create"() {
         def args = "fod release create ${app.get().qualifiedMicroserviceName}:testrel --sdlc-status=Development --store testrel"
