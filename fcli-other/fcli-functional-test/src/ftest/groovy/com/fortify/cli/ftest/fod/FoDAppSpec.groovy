@@ -22,7 +22,7 @@ class FoDAppSpec extends FcliBaseSpec {
     @Shared FoDWebApp
     
     def "list"() {
-        def args = "fod app list"
+        def args = "fod app list --store=apps"
         when:
             def result = Fcli.run(args)
         then:
@@ -32,6 +32,21 @@ class FoDAppSpec extends FcliBaseSpec {
                     it[0].replace(' ', '').equals("IdNameTypeCriticality")
                 } else {
                     it[0].equals("No data")
+                }
+            }
+    }
+    
+    def "list-scans"() {
+        def args = "fod app list-scans --app=::apps::get(0).applicationId"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=0
+                if(size()>1) {
+                    it[0].replace(' ', '').equals("IdTypeAnalysisStatusNameMicroserviceReleaseStartedCompletedScanMethod")
+                } else {
+                it[0].equals("No data")
                 }
             }
     }
