@@ -2,24 +2,16 @@ package com.fortify.cli.ftest.fod;
 
 import static com.fortify.cli.ftest._common.spec.FcliSessionType.FOD
 
-import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest._common.spec.TestResource
-import com.fortify.cli.ftest.fod._common.FoDWebAppSupplier
-import com.fortify.cli.ftest.fod._common.FoDUserSupplier
 import com.fortify.cli.ftest.fod._common.FoDMobileAppSupplier
-import com.fortify.cli.ftest.fod._common.FoDUserGroupSupplier
-import com.fortify.cli.ftest._common.Fcli.UnexpectedFcliResultException
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
+import com.fortify.cli.ftest.fod._common.FoDWebAppSupplier
 
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Stepwise
-import spock.lang.Unroll
 
 @Prefix("fod.scan") @FcliSession(FOD) @Stepwise
 class FoDScanSpec extends FcliBaseSpec {
@@ -37,11 +29,6 @@ class FoDScanSpec extends FcliBaseSpec {
     
     /*
     def "import-sast"() {
-        //randomize file name to avoid server side file in use error
-        Path src = Path.of(sastResults);
-        String random = System.currentTimeMillis();
-        Path tar = Path.of(sastResults.replace("EightBall-22.1.0.fpr", "${random}.fpr"));
-        Files.copy(src, tar);
         def args = "fod sast-scan import --release=${webApp.get().qualifiedRelease} --file=$tar --store uploadsast"
         when:
             def result = Fcli.run(args)
