@@ -20,9 +20,12 @@ import java.util.stream.Stream;
  */
 public enum SSCAppVersionCopyType {
     AnalysisProcessingRules("copyAnalysisProcessingRules"),
+    VersionAttributes("copyVersionAttributes"),
     BugTrackerConfiguration("copyBugTrackerConfiguration"),
     CustomTags("copyCustomTags"),
-    State("copyState");
+    IssueTemplate("copyIssueTemplate"),
+    State("copyState"),
+    UserAccess("copyUserAccessSettings");
 
     private final String sscValue;
 

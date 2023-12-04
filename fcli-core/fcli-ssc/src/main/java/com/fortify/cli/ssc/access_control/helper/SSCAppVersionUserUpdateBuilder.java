@@ -12,9 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.access_control.helper;
 
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,6 +21,11 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.access_control.helper.SSCUserSpecPredicate.MatchMode;
 
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionCopyType;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionCreateCopyFromBuilder;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
+import com.fortify.cli.ssc.attribute.helper.SSCAttributeUpdateBuilder;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Data;
@@ -93,6 +96,21 @@ public final class SSCAppVersionUserUpdateBuilder {
         this.allowMultipleMatchesForRemove |= allowMultipleMatches;
         if ( authEntitySpecs!=null && authEntitySpecs.length>0 ) {
         	authEntitySpecsToRemove.addAll(Arrays.asList(authEntitySpecs));
+        }
+        return this;
+    }
+
+    public SSCAppVersionUserUpdateBuilder getUsersFrom(SSCAppVersionCreateCopyFromBuilder copyFromBuilder) {
+        if(copyFromBuilder.isCopyTypeRequested(SSCAppVersionCopyType.UserAccess)) {
+            Set<String> users = new LinkedHashSet<>();
+            SSCAppVersionDescriptor fromDescriptor = copyFromBuilder.getPreviousProjectVersionDescriptor();
+            JsonNode fromUsers = SSCAppVersionHelper.getUsers(unirest, fromDescriptor);
+
+            for (JsonNode fromUser : fromUsers) {
+                users.add(fromUser.get("id").toString());
+            }
+
+            return add(false, users.toArray(new String[0]));
         }
         return this;
     }

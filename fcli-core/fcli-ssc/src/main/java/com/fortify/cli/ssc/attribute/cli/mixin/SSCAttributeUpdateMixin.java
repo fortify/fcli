@@ -25,12 +25,12 @@ public class SSCAttributeUpdateMixin {
     }
     
     public static class OptionalAttrOption extends AbstractSSCAppVersionAttributeUpdateMixin {
-        @Option(names = {"--attrs", "--attributes"}, required = false, split = ",", paramLabel = PARAM_LABEL, descriptionKey = "fcli.ssc.attribute.update.option")
+        @Option(names = {"--attrs", "--attributes"}, required = false, split = ";", paramLabel = PARAM_LABEL, descriptionKey = "fcli.ssc.attribute.update.option")
         @Getter private Map<String,String> attributes;
     }
     
     public static class RequiredAttrOption extends AbstractSSCAppVersionAttributeUpdateMixin {
-        @Option(names = {"--attrs", "--attributes"}, required = true, split = ",", paramLabel = PARAM_LABEL, descriptionKey = "fcli.ssc.attribute.update.option")
+        @Option(names = {"--attrs", "--attributes"}, required = true, split = ";", paramLabel = PARAM_LABEL, descriptionKey = "fcli.ssc.attribute.update.option")
         @Getter private Map<String,String> attributes;
     }
 }

@@ -37,6 +37,10 @@ public class SSCIssueTemplateResolverMixin {
             SSCIssueTemplateDescriptor descriptor = getIssueTemplateDescriptor(unirest);
             return descriptor!=null ? descriptor : SSCIssueTemplateHelper.getDefaultIssueTemplateDescriptor(unirest);
         }
+
+        public SSCIssueTemplateDescriptor getDefaultIssueTemplateDescriptor(UnirestInstance unirest) {
+            return SSCIssueTemplateHelper.getDefaultIssueTemplateDescriptor(unirest);
+        }
     }
     
     public static class OptionalOption extends AbstractSSCIssueTemplateResolverMixin {

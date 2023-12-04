@@ -26,6 +26,9 @@ import kong.unirest.UnirestInstance;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class SSCAppVersionHelper {
     public static final JsonNode renameFields(JsonNode record) {
         return new RenameFieldsTransformer(new String[] {"project:application"}).transform(record);
@@ -86,7 +89,31 @@ public class SSCAppVersionHelper {
             return SSCJobHelper.getJobDescriptor(unirest, response.get("data").get("data").get("id").textValue());
         }
     }
-    
+
+    public static final JsonNode getAttributes(UnirestInstance unirest, String appVersionNameOrId, String delimiter) {
+        return getAttributes(unirest, getOptionalAppVersion(unirest, appVersionNameOrId, delimiter));
+    }
+
+    public static final JsonNode getAttributes(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
+        Map<String,String> attributes = new LinkedHashMap<>();
+
+        JsonNode response = unirest.get(SSCUrls.PROJECT_VERSION_ATTRIBUTES(descriptor.getVersionId()))
+                .asObject(ObjectNode.class)
+                .getBody();
+
+        return response.get("data");
+    }
+
+    public static final JsonNode getUsers(UnirestInstance unirest, SSCAppVersionDescriptor descriptor) {
+        Map<String,String> attributes = new LinkedHashMap<>();
+
+        JsonNode response = unirest.get(SSCUrls.PROJECT_VERSION_AUTH_ENTITIES(descriptor.getVersionId()))
+                .asObject(ObjectNode.class)
+                .getBody();
+
+        return response.get("data");
+    }
+
     @Data
     @Reflectable @AllArgsConstructor
     private static final class SSCAppVersionRefreshRequest {
