@@ -44,10 +44,10 @@ public final class ToolHelper {
         return FcliDataHelper.readFile(getInstallDescriptorPath(toolName, version), ToolVersionInstallDescriptor.class, false);
     }
     
-    public static final ToolVersionCombinedDescriptor loadToolVersionCombinedDescriptor(String toolName, String version) {
-        version = getToolDownloadDescriptor(toolName).getVersionOrDefault(version).getVersion();
+    public static final ToolVersionCombinedDescriptor loadToolVersionCombinedDescriptor(String toolName, String version, String cpuArchitecture) {
+        version = getToolDownloadDescriptor(toolName).getVersionOrDefault(version, cpuArchitecture).getVersion();
         ToolVersionInstallDescriptor installDescriptor = loadToolVersionInstallDescriptor(toolName, version);
-        return installDescriptor==null ? null : new ToolVersionCombinedDescriptor(toolName, getToolDownloadDescriptor(toolName).getVersion(version), installDescriptor);
+        return installDescriptor==null ? null : new ToolVersionCombinedDescriptor(toolName, getToolDownloadDescriptor(toolName).getVersion(version, cpuArchitecture), installDescriptor);
     }
     
     public static final void deleteToolVersionInstallDescriptor(String toolName, String version) {

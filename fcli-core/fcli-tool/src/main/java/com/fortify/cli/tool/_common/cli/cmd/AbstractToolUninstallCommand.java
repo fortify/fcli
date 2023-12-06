@@ -37,7 +37,7 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
     @Override
     public final JsonNode getJsonNode() {
         String toolName = getToolName();
-        ToolVersionCombinedDescriptor descriptor = ToolHelper.loadToolVersionCombinedDescriptor(toolName, version);
+        ToolVersionCombinedDescriptor descriptor = ToolHelper.loadToolVersionCombinedDescriptor(toolName, version, getCpuArchitecture());
         if ( descriptor==null ) {
             throw new IllegalArgumentException("Tool installation not found");
         }
@@ -67,4 +67,7 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
     }
     
     protected abstract String getToolName();
+    protected String getCpuArchitecture() {
+        return "";
+    }
 }

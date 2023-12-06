@@ -66,7 +66,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     @Override
     public final JsonNode getJsonNode() {
         String toolName = getToolName();
-        ToolVersionDownloadDescriptor descriptor = ToolHelper.getToolDownloadDescriptor(toolName).getVersionOrDefault(version);
+        ToolVersionDownloadDescriptor descriptor = ToolHelper.getToolDownloadDescriptor(toolName).getVersionOrDefault(version, getCpuArchitecture());
         return downloadAndInstall(toolName, descriptor);
     }
     
@@ -118,6 +118,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         // TODO Clean this up
         case COPY: Files.copy(downloadedFile.toPath(), installPath.resolve(StringUtils.substringAfterLast(descriptor.getOriginalDownloadDescriptor().getDownloadUrl(), "/")), StandardCopyOption.REPLACE_EXISTING); break;
         case EXTRACT_ZIP: FileUtils.extractZip(downloadedFile, installPath); break;
+        case EXTRACT_TGZ: FileUtils.extractTarGZ(downloadedFile, installPath); break;
         default: throw new RuntimeException("Unknown install type: "+installType.name());
         }
         downloadedFile.delete();
@@ -140,6 +141,9 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     protected abstract String getToolName();
     protected abstract InstallType getInstallType();
     protected abstract void postInstall(ToolVersionInstallDescriptor installDescriptor) throws IOException;
+    protected String getCpuArchitecture() {
+        return "";
+    }
     
     private final void emptyExistingInstallPath(Path installPath) throws IOException {
         if ( Files.exists(installPath) && Files.list(installPath).findFirst().isPresent() ) {
@@ -178,6 +182,6 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     }
     
     protected static enum InstallType {
-        EXTRACT_ZIP, COPY
+        EXTRACT_ZIP, EXTRACT_TGZ, COPY
     }
 }

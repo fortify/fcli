@@ -24,10 +24,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Comparator;
 import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 // TODO For now, methods provided in this class are only used by the tools module,
 //      but potentially some methods or the full class could be moved to the common module.
@@ -90,6 +93,23 @@ public final class FileUtils {
                 } else {
                     Files.createDirectories(resolvedPath.getParent());
                     Files.copy(zipIn, resolvedPath);
+                }
+            }
+        }
+    }
+    
+    public static final void extractTarGZ(File tgzFile, Path targetDir) throws IOException {
+        try (InputStream source = Files.newInputStream(tgzFile.toPath());
+                GZIPInputStream gzip = new GZIPInputStream(source);
+                TarArchiveInputStream tar = new TarArchiveInputStream(gzip)) {
+
+            TarArchiveEntry entry;
+            while ((entry = tar.getNextEntry()) != null) {
+                Path extractTo = targetDir.resolve(entry.getName());
+                if(entry.isDirectory()) {
+                    Files.createDirectories(extractTo);
+                } else {
+                    Files.copy(tar, extractTo);
                 }
             }
         }

@@ -26,6 +26,8 @@ public final class ToolVersionDownloadDescriptor {
     private String downloadUrl;
     private String digest;
     private String isDefaultVersion = "No";
+    private String operatingSystem;
+    private String cpuArchitecture;
     
     @JsonIgnore
     public final String getDigestAlgorithm() {

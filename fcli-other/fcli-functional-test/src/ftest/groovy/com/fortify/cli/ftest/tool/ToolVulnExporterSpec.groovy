@@ -29,7 +29,7 @@ import spock.lang.Stepwise
 class ToolVulnExporterSpec extends FcliBaseSpec {
     
     def "install"() {
-        def args = "tool vuln-exporter install -y latest"
+        def args = "tool vuln-exporter install -y -v=latest"
         when:
             def result = Fcli.run(args)
         then:
@@ -55,7 +55,7 @@ class ToolVulnExporterSpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool vuln-exporter uninstall -y default"
+        def args = "tool vuln-exporter uninstall -y -v=default"
         when:
             def result = Fcli.run(args)
         then:

@@ -29,7 +29,7 @@ import spock.lang.Stepwise
 class ToolFoDUploaderSpec extends FcliBaseSpec {
     
     def "install"() {
-        def args = "tool fod-uploader install -y latest"
+        def args = "tool fod-uploader install -y -v=latest"
         when:
             def result = Fcli.run(args)
         then:
@@ -55,7 +55,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool fod-uploader uninstall -y default"
+        def args = "tool fod-uploader uninstall -y -v=default"
         when:
             def result = Fcli.run(args)
         then:
