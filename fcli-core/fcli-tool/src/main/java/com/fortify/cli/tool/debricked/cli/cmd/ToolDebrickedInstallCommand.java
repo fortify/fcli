@@ -29,7 +29,7 @@ import picocli.CommandLine.Option;
 public class ToolDebrickedInstallCommand extends AbstractToolInstallCommand {
     @Getter @Mixin private OutputHelperMixins.Install outputHelper;
     @Getter private String toolName = ToolDebrickedCommands.TOOL_NAME;
-    @Getter @Option(names={"-a", "--cpuArchitecture"}, required = true, descriptionKey="fcli.tool.debricked.install.cpuArchitecture", defaultValue = "x86_64") 
+    @Getter @Option(names={"-a", "--cpu-architecture"}, required = true, descriptionKey="fcli.tool.debricked.install.cpuArchitecture", defaultValue = "x86_64") 
     private String _cpuArchitecture;
     
     @Override
