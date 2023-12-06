@@ -10,26 +10,21 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.tool._main.cli.cmd;
+package com.fortify.cli.tool.debricked.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
-import com.fortify.cli.tool.bugtracker_utility.cli.cmd.ToolBugTrackerUtilityCommands;
-import com.fortify.cli.tool.debricked.cli.cmd.ToolDebrickedCommands;
-import com.fortify.cli.tool.fod_uploader.cli.cmd.ToolFoDUploaderCommands;
-import com.fortify.cli.tool.sc_client.cli.cmd.ToolSCClientCommands;
-import com.fortify.cli.tool.vuln_exporter.cli.cmd.ToolVulnExporterCommands;
 
 import picocli.CommandLine.Command;
 
 @Command(
-        name = "tool",
-        resourceBundle = "com.fortify.cli.tool.i18n.ToolMessages",
+        name = ToolDebrickedCommands.TOOL_NAME,
         subcommands = {
-            ToolBugTrackerUtilityCommands.class,
-            ToolDebrickedCommands.class,
-            ToolFoDUploaderCommands.class,
-            ToolSCClientCommands.class,
-            ToolVulnExporterCommands.class
+                ToolDebrickedInstallCommand.class,
+                ToolDebrickedListCommand.class,
+                ToolDebrickedUninstallCommand.class
         }
+
 )
-public class ToolCommands extends AbstractContainerCommand {}
+public class ToolDebrickedCommands extends AbstractContainerCommand {
+    static final String TOOL_NAME = "debricked";
+}

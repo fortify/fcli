@@ -29,7 +29,7 @@ import spock.lang.Stepwise
 class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
     
     def "install"() {
-        def args = "tool bugtracker-utility install -y latest"
+        def args = "tool bugtracker-utility install -y -v=latest"
         when:
             def result = Fcli.run(args)
         then:
@@ -55,7 +55,7 @@ class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool bugtracker-utility uninstall -y default"
+        def args = "tool bugtracker-utility uninstall -y -v=default"
         when:
             def result = Fcli.run(args)
         then:

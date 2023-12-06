@@ -69,6 +69,14 @@ public class ToolVersionCombinedDescriptor {
         return getPath(ToolVersionInstallDescriptor::getBinPath);
     }
     
+    public String getOperatingSystem() {
+        return getDownloadDescriptor().getOperatingSystem();
+    }
+    
+    public String getCpuArchitecture() {
+        return getDownloadDescriptor().getCpuArchitecture();
+    }
+    
     private String getDir(Function<ToolVersionInstallDescriptor, String> f) {
         if ( installDescriptor!=null ) {
             String dir = f.apply(installDescriptor);

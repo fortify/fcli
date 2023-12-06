@@ -25,6 +25,8 @@ import lombok.NoArgsConstructor;
 public class ToolDownloadDescriptor {
     private String defaultDownloadUrl;
     private String defaultVersion;
+    private String defaultOperatingSystem;
+    private String defaultCpuArchitecture;
     private ToolVersionDownloadDescriptor[] versions;
     
     public final ToolVersionDownloadDescriptor[] getVersions() {
@@ -37,18 +39,30 @@ public class ToolDownloadDescriptor {
                 .map(this::addIsDefaultVersion);
     }
     
-    public final ToolVersionDownloadDescriptor getVersion(String version) {
+    public final ToolVersionDownloadDescriptor getVersion(String version, String cpuArchitecture) {
         var lookupVersion = (version.replaceFirst("^v", "")+".").replaceFirst("\\.\\.$", ".");
-        return getVersionsStream()
-                .filter(v->(v.getVersion()+".").startsWith(lookupVersion))
-                .findFirst().orElseThrow(()->new IllegalArgumentException("Version "+version+" not defined"));
+        var osString = getOSString();
+        var versionResult = getVersionsStream()
+                .filter(v->(v.getVersion()+".").startsWith(lookupVersion) && 
+                        (v.getCpuArchitecture()==null || v.getCpuArchitecture().equals(cpuArchitecture)) &&
+                        (v.getOperatingSystem()==null || v.getOperatingSystem().equals(osString)))
+                .findFirst();
+        if (versionResult.isPresent()) {
+            return versionResult.get();
+        } else {
+            if(cpuArchitecture==null) {
+                throw new IllegalArgumentException("Version "+version+" not defined");
+            } else {
+                throw new IllegalArgumentException("Version "+version+" not defined for architecture "+cpuArchitecture);
+            }
+        }
     }
     
-    public final ToolVersionDownloadDescriptor getVersionOrDefault(String versionName) {
+    public final ToolVersionDownloadDescriptor getVersionOrDefault(String versionName, String cpuArchitecture) {
         if ( StringUtils.isBlank(versionName) || "default".equals(versionName) || "latest".equals(versionName) ) {
             versionName = defaultVersion;
         }
-        return getVersion(versionName);
+        return getVersion(versionName, cpuArchitecture);
     }
     
     private final ToolVersionDownloadDescriptor updateDownloadUrl(ToolVersionDownloadDescriptor versionDescriptor) {
@@ -56,13 +70,31 @@ public class ToolDownloadDescriptor {
             versionDescriptor.setDownloadUrl(defaultDownloadUrl);
         }
         versionDescriptor.setDownloadUrl(versionDescriptor.getDownloadUrl().replaceAll("\\{toolVersion\\}", versionDescriptor.getVersion()));
+        versionDescriptor.setDownloadUrl(versionDescriptor.getDownloadUrl().replaceAll("\\{operatingSystem\\}", versionDescriptor.getOperatingSystem()));
+        versionDescriptor.setDownloadUrl(versionDescriptor.getDownloadUrl().replaceAll("\\{cpuArchitecture\\}", versionDescriptor.getCpuArchitecture()));
         return versionDescriptor;
     }
     
     private final ToolVersionDownloadDescriptor addIsDefaultVersion(ToolVersionDownloadDescriptor versionDescriptor) {
-        if ( versionDescriptor.getVersion().equals(defaultVersion) ) {
+        if ( versionDescriptor.getVersion().equals(defaultVersion) &&
+                (versionDescriptor.getOperatingSystem()==null || versionDescriptor.getOperatingSystem().equals(defaultOperatingSystem)) &&
+                (versionDescriptor.getCpuArchitecture()==null || versionDescriptor.getCpuArchitecture().equals(defaultCpuArchitecture))) {
             versionDescriptor.setIsDefaultVersion("Yes");
         }
         return versionDescriptor;
     }
+    
+    private final String getOSString() {
+        String OS = System.getProperty("os.name", "generic").toLowerCase();
+        if ((OS.indexOf("mac") >= 0) || (OS.indexOf("darwin") >= 0)) {
+          return "macOS";
+        } else if (OS.indexOf("win") >= 0) {
+          return "windows";
+        } else if (OS.indexOf("nux") >= 0) {
+          return "linux";
+        } else {
+          throw new RuntimeException("Unexpected OS detected: '" + OS + "'");
+        }
+    }
+    
 }

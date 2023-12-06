@@ -1,0 +1,41 @@
+#Versions must be listed in descending order to guarantee proper version selection when users provide a partial version number
+defaultDownloadUrl: https://github.com/debricked/cli/releases/download/v{toolVersion}/cli_{operatingSystem}_{cpuArchitecture}.tar.gz
+defaultVersion: 1.5.1
+defaultOperatingSystem: windows
+defaultCpuArchitecture: x86_64
+versions:
+  - version: 1.5.1
+    operatingSystem: linux
+    cpuArchitecture: x86_64
+    digest: SHA-256:2d7614d4161a6259c287ec92317bb39a793af82be053926b43e36428c60a3d94
+  - version: 1.5.1
+    operatingSystem: linux
+    cpuArchitecture: arm64
+    digest: SHA-256:87c686d709b62078e1bf4b4e7f21f6c7cf6737e5dc7ff30f1b04017f86928a31
+  - version: 1.5.1
+    operatingSystem: linux
+    cpuArchitecture: i386
+    digest: SHA-256:cd1e076ff4f42dff3145b87f928b17610353f162cb79b250851550b60cf313cb
+  - version: 1.5.1
+    operatingSystem: macOS
+    cpuArchitecture: x86_64
+    digest: SHA-256:4fb928d02c87c922ff0bc63dd2d0592a1e567cf0c86b6b1e681388017d29f968
+  - version: 1.5.1
+    operatingSystem: macOS
+    cpuArchitecture: arm64
+    digest: SHA-256:61b6215780687a38af82873f48962d868b23fd13c8863910c56e60d51d2bffed
+  - version: 1.5.1
+    operatingSystem: windows
+    cpuArchitecture: x86_64
+    digest: SHA-256:d7cf92f12a66bdcd26d1a12b33555348c1d50a4dd57640680b1986cf66e75a73
+  - version: 1.5.1
+    operatingSystem: windows
+    cpuArchitecture: arm64
+    digest: SHA-256:2dc8379db38b6f9c250e3fb31fbb035e6d05d034df5b3bdf3e172617b3289d93
+  - version: 1.5.1
+    operatingSystem: windows
+    cpuArchitecture: i386
+    digest: SHA-256:cf7dc59d01b9bbb3d830a56cba2cc1e8cb4bae7744805e30703b62f600902e97
+
+    
+

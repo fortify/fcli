@@ -25,44 +25,44 @@ import spock.lang.Requires
 import spock.lang.Shared
 import spock.lang.Stepwise
 
-@Prefix("tool.sc-client") @Stepwise
-class ToolScClientSpec extends FcliBaseSpec {
-    
+@Prefix("tool.debricked") @Stepwise
+class ToolDebrickedSpec extends FcliBaseSpec {
+
     def "install"() {
-        def args = "tool sc-client install -y -v=latest"
+        def args = "tool debricked install -y -v=latest"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
+                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirOperatingsystemCpuarchitectureAction")
                 it[1].replace(" ", "").contains("YesYes")
                 it[1].contains("INSTALLED")
             }
     }
     
     def "listVersions"() {
-        def args = "tool sc-client list"
+        def args = "tool debricked list"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindir")
-                it[1].replace(" ", "").startsWith("sc-client")
-                it[1].replace(" ", "").contains("YesYes")
+                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirOperatingsystemCpuarchitecture")
+                it[11].replace(" ", "").startsWith("debricked")
+                it[11].replace(" ", "").contains("YesYes")
             }
     }
     
     def "uninstall"() {
-        def args = "tool sc-client uninstall -y -v=default"
+        def args = "tool debricked uninstall -y -v=default -a=x86_64"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
-                it[1].replace(" ", "").contains("YesNoN/AN/AUNINSTALLED")
+                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirOperatingsystemCpuarchitectureAction")
+                it[1].replace(" ", "").contains("YesNoN/AN/Awindowsx86_64UNINSTALLED")
             }
     }
     
