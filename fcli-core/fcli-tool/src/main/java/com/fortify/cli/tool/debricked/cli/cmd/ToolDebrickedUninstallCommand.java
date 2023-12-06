@@ -24,7 +24,7 @@ import picocli.CommandLine.Option;
 public class ToolDebrickedUninstallCommand extends AbstractToolUninstallCommand {
     @Getter @Mixin private OutputHelperMixins.Uninstall outputHelper;
     @Getter private String toolName = ToolDebrickedCommands.TOOL_NAME;
-    @Getter @Option(names={"-a", "--cpuArchitecture"}, required = true, descriptionKey="fcli.tool.debricked.uninstall.cpuArchitecture", defaultValue = "x86_64") 
+    @Getter @Option(names={"-a", "--cpu-architecture"}, required = true, descriptionKey="fcli.tool.debricked.uninstall.cpuArchitecture", defaultValue = "x86_64") 
     private String _cpuArchitecture;
 
     @Override
