@@ -23,15 +23,15 @@ public class VersionHandlingTest {
         try (InputStream file = classLoader.getResourceAsStream(resourceFile)) {
 
             var downloadDescriptor = yamlObjectMapper.readValue(file, ToolDownloadDescriptor.class); 
-            var d = downloadDescriptor.getVersion("20");
-            var d2 = downloadDescriptor.getVersion("20.");
-            var d3 = downloadDescriptor.getVersion("21.1");
-            var d4 = downloadDescriptor.getVersion("21.1.2");
+            var d = downloadDescriptor.getVersion("20", "");
+            var d2 = downloadDescriptor.getVersion("20.", "");
+            var d3 = downloadDescriptor.getVersion("21.1", "");
+            var d4 = downloadDescriptor.getVersion("21.1.2", "");
             
-            Assertions.assertEquals(d.getVersion(), "20.2.4");
-            Assertions.assertEquals(d2.getVersion(), "20.2.4");
-            Assertions.assertEquals(d3.getVersion(), "21.1.4");
-            Assertions.assertEquals(d4.getVersion(), "21.1.2");
+            Assertions.assertEquals(d.getVersion(), "20.2.4", "");
+            Assertions.assertEquals(d2.getVersion(), "20.2.4", "");
+            Assertions.assertEquals(d3.getVersion(), "21.1.4", "");
+            Assertions.assertEquals(d4.getVersion(), "21.1.2", "");
         } catch(Exception e) {
             throw e;
         }
