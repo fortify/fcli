@@ -48,7 +48,9 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
     @Option(names = "--notify") private String email; // TODO Add email address validation
     @Mixin private PublishToAppVersionResolverMixin sscAppVersionResolver;
     @Option(names = "--ssc-ci-token") private String ciToken;
-    
+    @Getter @Option(names = {"--sargs","--scan-args"})
+    private String scaRuntimeArgs = "";
+
     // TODO Add options for specifying (custom) rules file(s), filter file(s) and project template
     // TODO Add options for pool selection
     
@@ -61,7 +63,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
             .field("username", userName, "text/plain")
             .field("scaVersion", sensorVersion, "text/plain")
             .field("clientVersion", sensorVersion, "text/plain")
-            .field("scaRuntimeArgs", optionsProvider.getScanStartOptions().getScaRuntimeArgs(), "text/plain")
+            .field("scaRuntimeArgs", scaRuntimeArgs, "text/plain")
             .field("jobType", optionsProvider.getScanStartOptions().getJobType().name(), "text/plain");
         body = updateBody(body, "email", email);
         body = updateBody(body, "buildId", optionsProvider.getScanStartOptions().getBuildId());

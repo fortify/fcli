@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.sc_sast.scan.cli.mixin;
 
+import lombok.Getter;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.ArgGroup;
 
 public class SCSastScanStartOptionsArgGroup {
