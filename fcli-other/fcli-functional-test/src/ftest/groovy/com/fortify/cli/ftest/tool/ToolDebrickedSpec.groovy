@@ -36,7 +36,7 @@ class ToolDebrickedSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>0
                 it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirOperatingsystemCpuarchitectureAction")
-                it[1].replace(" ", "").contains("YesYes") || it[1].replace(" ", "").contains("YesYes")
+                it[1].replace(" ", "").contains("YesYes") || it[1].replace(" ", "").contains("NoYes")
                 it[1].contains("INSTALLED")
             }
     }
