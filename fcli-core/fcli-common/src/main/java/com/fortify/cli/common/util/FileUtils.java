@@ -20,6 +20,7 @@ import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Comparator;
@@ -92,7 +93,7 @@ public final class FileUtils {
                     Files.createDirectories(resolvedPath);
                 } else {
                     Files.createDirectories(resolvedPath.getParent());
-                    Files.copy(zipIn, resolvedPath);
+                    Files.copy(zipIn, resolvedPath, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
         }
@@ -109,7 +110,7 @@ public final class FileUtils {
                 if(entry.isDirectory()) {
                     Files.createDirectories(extractTo);
                 } else {
-                    Files.copy(tar, extractTo);
+                    Files.copy(tar, extractTo, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
         }

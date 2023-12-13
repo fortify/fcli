@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.tool._common.helper;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -23,8 +24,19 @@ import com.fortify.cli.common.util.FcliDataHelper;
 
 public final class ToolHelper {
     private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
+    private static final Path toolversionsPath = FcliDataHelper.getFcliConfigPath().resolve("toolversions");
     
     public static final ToolDownloadDescriptor getToolDownloadDescriptor(String toolName) {
+        //check if an updated yaml from the config tool-versions update command exists
+        var tvp = toolversionsPath.resolve(String.format("%s.yaml", toolName)).toFile();
+        if(tvp.exists()) {
+            try (InputStream file = new FileInputStream(tvp)) {
+                return yamlObjectMapper.readValue(file, ToolDownloadDescriptor.class);
+            } catch (IOException e) {
+                throw new RuntimeException("Error loading resource file: "+tvp.getPath(), e);
+            }
+        }
+        //fall back to included resource file
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         String resourceFile = getResourceFile(toolName, String.format("%s.yaml", toolName));
         try ( InputStream file = classLoader.getResourceAsStream(resourceFile) ) { 

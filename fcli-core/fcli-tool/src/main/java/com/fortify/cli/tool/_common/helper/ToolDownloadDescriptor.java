@@ -25,8 +25,8 @@ import lombok.NoArgsConstructor;
 public class ToolDownloadDescriptor {
     private String defaultDownloadUrl;
     private String defaultVersion;
-    private String defaultOperatingSystem;
-    private String defaultCpuArchitecture;
+    private String defaultOperatingSystem = "windows";
+    private String defaultCpuArchitecture = "x86_64";
     private ToolVersionDownloadDescriptor[] versions;
     
     public final ToolVersionDownloadDescriptor[] getVersions() {
