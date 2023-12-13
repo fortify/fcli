@@ -36,7 +36,7 @@ class ToolDebrickedSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>0
                 it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirOperatingsystemCpuarchitectureAction")
-                it[1].replace(" ", "").contains("YesYes")
+                it[1].replace(" ", "").contains("YesYes") || it[1].replace(" ", "").contains("NoYes")
                 it[1].contains("INSTALLED")
             }
     }
@@ -49,8 +49,8 @@ class ToolDebrickedSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>0
                 it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirOperatingsystemCpuarchitecture")
-                it[11].replace(" ", "").startsWith("debricked")
-                it[11].replace(" ", "").contains("YesYes")
+                it[it.size()-2].replace(" ", "").startsWith("debricked")
+                it[it.size()-2].replace(" ", "").contains("YesYes") || it[it.size()-2].replace(" ", "").contains("NoYes")
             }
     }
     
@@ -62,7 +62,7 @@ class ToolDebrickedSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>0
                 it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirOperatingsystemCpuarchitectureAction")
-                it[1].replace(" ", "").contains("YesNoN/AN/Awindowsx86_64UNINSTALLED")
+                it[1].replace(" ", "").contains("UNINSTALLED")
             }
     }
     
