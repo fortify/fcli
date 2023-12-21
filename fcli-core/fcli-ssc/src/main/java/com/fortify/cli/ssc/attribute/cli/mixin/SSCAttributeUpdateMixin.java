@@ -18,7 +18,7 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 
 public class SSCAttributeUpdateMixin {
-    private static final String PARAM_LABEL = "[CATEGORY:]ATTR=VALUE[,VALUE...]";
+    private static final String PARAM_LABEL = "CATEGORY:ATTR=[VAL1;VAL2],ATTR=VAL3...";
     public static abstract class AbstractSSCAppVersionAttributeUpdateMixin {
         public abstract Map<String,String> getAttributes();
 
