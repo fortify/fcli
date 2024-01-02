@@ -31,7 +31,7 @@ import java.util.Set;
 @Command(name = OutputHelperMixins.WaitFor.CMD_NAME)
 public class FoDReportWaitForCommand extends AbstractWaitForCommand {
     @Getter @Mixin FoDProductHelperStandardMixin productHelper;
-    @Mixin private FoDReportResolverMixin.PositionalParameter reportResolver;
+    @Mixin private FoDReportResolverMixin.PositionalParameterMulti reportResolver;
     @Option(names={"-s", "--any-state"}, required=true, split=",", defaultValue="Completed", completionCandidates = FoDReportStatusIterable.class)
     private Set<String> states;
 

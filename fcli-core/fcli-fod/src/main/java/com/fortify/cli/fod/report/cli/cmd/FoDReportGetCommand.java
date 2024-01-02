@@ -24,18 +24,13 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.Get.CMD_NAME)
-public class FoDReportGetCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer {
+public class FoDReportGetCommand extends AbstractFoDJsonNodeOutputCommand {
     @Getter @Mixin private OutputHelperMixins.Get outputHelper;
     @Mixin private FoDReportResolverMixin.PositionalParameter reportResolver;
 
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
         return reportResolver.getReportDescriptor(unirest).asJsonNode();
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDReportHelper.transformRecord(record);
     }
 
     @Override

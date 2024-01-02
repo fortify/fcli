@@ -29,7 +29,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.List.CMD_NAME)
-public class FoDReportListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer, IServerSideQueryParamGeneratorSupplier {
+public class FoDReportListCommand extends AbstractFoDBaseRequestOutputCommand implements IServerSideQueryParamGeneratorSupplier {
     @Getter @Mixin private OutputHelperMixins.List outputHelper;
     @Mixin private FoDFiltersParamMixin filterParamMixin;
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new FoDFiltersParamGenerator()
@@ -41,11 +41,6 @@ public class FoDReportListCommand extends AbstractFoDBaseRequestOutputCommand im
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         return unirest.get(FoDUrls.REPORTS);
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDReportHelper.transformRecord(record);
     }
 
     @Override

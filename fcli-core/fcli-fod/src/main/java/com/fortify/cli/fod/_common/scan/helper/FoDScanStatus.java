@@ -20,10 +20,16 @@ import java.util.ArrayList;
 import java.util.stream.Stream;
 
 public enum FoDScanStatus {
-    Not_Started, In_Progress, Completed, Canceled, Waiting, Scheduled, Queued;
+    Not_Started(1), In_Progress(2), Completed(3), Canceled(4), Waiting(5), Scheduled(6), Queued(7);
 
-    public int getScanStatusType() {
-        return ordinal()+1;
+    private int statusValue;
+
+    FoDScanStatus(int i) {
+        this.statusValue = i;
+    }
+
+    public int getValue() {
+        return statusValue;
     }
 
     public static FoDScanStatus valueOf(Integer index){

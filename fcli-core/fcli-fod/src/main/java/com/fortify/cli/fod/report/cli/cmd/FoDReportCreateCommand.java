@@ -34,7 +34,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @Command(name = OutputHelperMixins.Create.CMD_NAME)
-public class FoDReportCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDReportCreateCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Create outputHelper;
 
     @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
@@ -66,11 +66,6 @@ public class FoDReportCreateCommand extends AbstractFoDJsonNodeOutputCommand imp
                 .build();
 
         return FoDReportHelper.createReport(unirest, reportCreateRequest).asJsonNode();
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDReportHelper.transformRecord(record);
     }
 
     @Override

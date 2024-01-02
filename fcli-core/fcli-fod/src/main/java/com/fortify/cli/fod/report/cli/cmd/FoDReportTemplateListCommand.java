@@ -27,7 +27,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@Command(name = "list-templates", aliases = "lsrt") @CommandGroup("report-template")
+@Command(name = "list-templates", aliases = "lst") @CommandGroup("report-template")
 public final class FoDReportTemplateListCommand extends AbstractFoDBaseRequestOutputCommand implements IRecordTransformer {
     @Getter @Mixin private FoDOutputHelperMixins.Lookup outputHelper;
 

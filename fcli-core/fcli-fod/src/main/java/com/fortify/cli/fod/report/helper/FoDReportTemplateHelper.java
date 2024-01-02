@@ -79,7 +79,7 @@ public class FoDReportTemplateHelper {
     }
 
     private static final FoDReportTemplateDescriptor getEmptyDescriptor() {
-        return JsonHelper.treeToValue(getObjectMapper().createObjectNode(), FoDReportTemplateDescriptor.class);
+        return JsonHelper.treeToValue(objectMapper.createObjectNode(), FoDReportTemplateDescriptor.class);
     }
 
 }

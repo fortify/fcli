@@ -34,20 +34,42 @@ public class FoDReportResolverMixin {
             return FoDReportHelper.getReportDescriptor(unirest, getReportId());
         }
 
-        public Collection<JsonNode> getReportDescriptorJsonNodes(UnirestInstance unirest) {
-            return Stream.of(getReportDescriptor(unirest)).map(FoDReportDescriptor::asJsonNode).collect(Collectors.toList());
+    }
+
+    public static abstract class AbstractFoDMultiReportResolverMixin {
+        public abstract String[] getReportIds();
+
+        public FoDReportDescriptor[] getReportDescriptors(UnirestInstance unirest) {
+            return Stream.of(getReportIds()).map(id->FoDReportHelper.getReportDescriptor(unirest, id)).toArray(FoDReportDescriptor[]::new);
         }
 
+        public Collection<JsonNode> getReportDescriptorJsonNodes(UnirestInstance unirest) {
+            return Stream.of(getReportDescriptors(unirest)).map(FoDReportDescriptor::asJsonNode).collect(Collectors.toList());
+        }
+
+        public Integer[] getReportIds(UnirestInstance unirest) {
+            return Stream.of(getReportDescriptors(unirest)).map(FoDReportDescriptor::getReportId).toArray(Integer[]::new);
+        }
     }
 
     public static class RequiredOption extends AbstractFoDReportResolverMixin {
-        @EnvSuffix("report") @Option(names = {"--report-id"}, required = true)
+        @EnvSuffix("REPORT") @Option(names = {"--report-id"}, required = true)
         @Getter private String reportId;
     }
 
+    public static class RequiredOptionMulti extends AbstractFoDMultiReportResolverMixin {
+        @EnvSuffix("REPORTS") @Option(names = {"--report-ids"}, required = true, split=",", descriptionKey = "fcli.fod.report.report-id")
+        @Getter private String[] reportIds;
+    }
+
     public static class PositionalParameter extends AbstractFoDReportResolverMixin {
-        @EnvSuffix("report") @Parameters(index = "0", arity = "1", paramLabel="report-id", descriptionKey = "fcli.fod.report.report-id")
+        @EnvSuffix("REPORT") @Parameters(index = "0", arity = "1", paramLabel="report-id", descriptionKey = "fcli.fod.report.report-id")
         @Getter private String reportId;
+    }
+
+    public static class PositionalParameterMulti extends AbstractFoDMultiReportResolverMixin {
+        @EnvSuffix("REPORTS") @Parameters(index = "0", arity = "1..", paramLabel="report-id's", descriptionKey = "fcli.fod.report.report-id")
+        @Getter private String[] reportIds;
     }
 
 }

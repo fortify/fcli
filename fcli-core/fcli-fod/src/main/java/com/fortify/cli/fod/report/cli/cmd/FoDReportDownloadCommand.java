@@ -32,7 +32,7 @@ import picocli.CommandLine.Mixin;
 import java.nio.file.StandardCopyOption;
 
 @Command(name = OutputHelperMixins.Download.CMD_NAME)
-public class FoDReportDownloadCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDReportDownloadCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Download outputHelper;
     @Mixin private FoDReportResolverMixin.PositionalParameter reportResolver;
 
@@ -53,11 +53,6 @@ public class FoDReportDownloadCommand extends AbstractFoDJsonNodeOutputCommand i
             if ( status==202 ) { Thread.sleep(30000L); }
         }
         return reportDescriptor.asObjectNode().put("file", file);
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDReportHelper.transformRecord(record);
     }
 
     @Override

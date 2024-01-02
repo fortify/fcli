@@ -27,7 +27,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.Delete.CMD_NAME)
-public class FoDReportDeleteCommand extends AbstractFoDJsonNodeOutputCommand implements IRecordTransformer, IActionCommandResultSupplier {
+public class FoDReportDeleteCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Delete outputHelper;
     @Mixin private FoDReportResolverMixin.PositionalParameter reportResolver;
 
@@ -38,11 +38,6 @@ public class FoDReportDeleteCommand extends AbstractFoDJsonNodeOutputCommand imp
                 .routeParam("reportId", reportResolver.getReportId())
                 .asObject(JsonNode.class).getBody();
         return reportDescriptor.asObjectNode();
-    }
-
-    @Override
-    public JsonNode transformRecord(JsonNode record) {
-        return FoDReportHelper.transformRecord(record);
     }
 
     @Override

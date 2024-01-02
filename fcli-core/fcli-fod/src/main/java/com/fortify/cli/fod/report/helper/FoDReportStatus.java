@@ -19,10 +19,16 @@ import java.util.ArrayList;
 import java.util.stream.Stream;
 
 public enum FoDReportStatus {
-    Started, Completed, Failed, Queued;
+    Started(1), Completed(2), Failed(3), Queued(4);
 
-    public int getReportStatusType() {
-        return ordinal();
+    private int statusValue;
+
+    FoDReportStatus(int i) {
+        this.statusValue = i;
+    }
+
+    public int getValue() {
+        return statusValue;
     }
 
     public static FoDReportStatus valueOf(Integer index){
