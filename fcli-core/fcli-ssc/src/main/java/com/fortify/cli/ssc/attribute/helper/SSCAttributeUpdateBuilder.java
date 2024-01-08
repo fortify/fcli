@@ -222,7 +222,7 @@ public final class SSCAttributeUpdateBuilder {
     }
 
     private static ArrayNode getOptionValues(SSCAttributeDefinitionHelper helper, SSCAttributeDefinitionDescriptor descriptor, String value) {
-        return Stream.of(value.split(","))
+        return Stream.of(value.split("[\\[\\];]"))
                 .filter(StringUtils::isNotBlank)
                 .map(v->helper.getOptionGuid(descriptor.getGuid(), v))
                 .map(SSCAttributeUpdateBuilder::createAttrValueNode)
