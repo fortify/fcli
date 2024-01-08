@@ -24,6 +24,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
 
 public class FoDReportTemplateHelper {
@@ -51,20 +52,12 @@ public class FoDReportTemplateHelper {
         FoDReportTemplateDescriptor result = null;
         try {
             int templateId = Integer.parseInt(reportTemplateNameOrId);
-            Optional<JsonNode> template = JsonHelper.stream(
-                    (ArrayNode) unirest.get(FoDUrls.LOOKUP_ITEMS)
-                            .queryString("type", LOOKUP_TYPE)
-                            .asObject(ObjectNode.class).getBody().get("items")
-                    )
+            Optional<JsonNode> template = getReportTemplatesStream(unirest)
                     .filter(n -> n.get("value").asInt() == templateId)
                     .findFirst();
             result = (template.isEmpty() ? getEmptyDescriptor() : getDescriptor(template.get()));
         } catch (NumberFormatException nfe) {
-            Optional<JsonNode> template = JsonHelper.stream(
-                    (ArrayNode) unirest.get(FoDUrls.LOOKUP_ITEMS)
-                                    .queryString("type", LOOKUP_TYPE)
-                                    .asObject(ObjectNode.class).getBody().get("items")
-                    )
+            Optional<JsonNode> template = getReportTemplatesStream(unirest)
                     .filter(n -> n.get("text").asText().equals(reportTemplateNameOrId))
                     .findFirst();
             result = (template.isEmpty() ? getEmptyDescriptor() : getDescriptor(template.get()));        }
@@ -72,6 +65,11 @@ public class FoDReportTemplateHelper {
             throw new IllegalArgumentException("No report template found for name or id: " + reportTemplateNameOrId);
         }
         return result;
+    }
+
+    private static Stream<JsonNode> getReportTemplatesStream(UnirestInstance unirest) {
+        return JsonHelper.stream((ArrayNode)unirest.get(FoDUrls.LOOKUP_ITEMS)
+                .queryString("type", LOOKUP_TYPE).asObject(ObjectNode.class).getBody().get("items"));
     }
 
     private static final FoDReportTemplateDescriptor getDescriptor(JsonNode node) {

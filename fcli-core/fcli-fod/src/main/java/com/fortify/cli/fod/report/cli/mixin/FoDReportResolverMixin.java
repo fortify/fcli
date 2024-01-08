@@ -53,22 +53,22 @@ public class FoDReportResolverMixin {
     }
 
     public static class RequiredOption extends AbstractFoDReportResolverMixin {
-        @EnvSuffix("REPORT") @Option(names = {"--report-id"}, required = true)
+        @Option(names = {"--report-id"}, required = true)
         @Getter private String reportId;
     }
 
     public static class RequiredOptionMulti extends AbstractFoDMultiReportResolverMixin {
-        @EnvSuffix("REPORTS") @Option(names = {"--report-ids"}, required = true, split=",", descriptionKey = "fcli.fod.report.report-id")
+        @Option(names = {"--report-ids"}, required = true, split=",", descriptionKey = "fcli.fod.report.report-id")
         @Getter private String[] reportIds;
     }
 
     public static class PositionalParameter extends AbstractFoDReportResolverMixin {
-        @EnvSuffix("REPORT") @Parameters(index = "0", arity = "1", paramLabel="report-id", descriptionKey = "fcli.fod.report.report-id")
+        @Parameters(index = "0", arity = "1", paramLabel="report-id", descriptionKey = "fcli.fod.report.report-id")
         @Getter private String reportId;
     }
 
     public static class PositionalParameterMulti extends AbstractFoDMultiReportResolverMixin {
-        @EnvSuffix("REPORTS") @Parameters(index = "0", arity = "1..", paramLabel="report-id's", descriptionKey = "fcli.fod.report.report-id")
+        @Parameters(index = "0", arity = "1..", paramLabel="report-id's", descriptionKey = "fcli.fod.report.report-id")
         @Getter private String[] reportIds;
     }
 
