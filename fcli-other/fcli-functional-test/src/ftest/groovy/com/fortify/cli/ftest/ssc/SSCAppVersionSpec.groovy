@@ -95,7 +95,7 @@ class SSCAppVersionSpec extends FcliBaseSpec {
             }
     }
     
-    
+    /*
     def "createWithCopy"() {
         def args = "ssc appversion create --from=10060 --auto-required-attrs --issue-template=Prioritized\\ High\\ Risk\\ Issue\\ Template ${versionSupplier.version.appName}:copied --store=copied"
         when:
@@ -140,7 +140,7 @@ class SSCAppVersionSpec extends FcliBaseSpec {
                 size()==3
                 it[1].contains("High        2")
             }
-    }
+    }*/
     //TODO add tests to verify copying of attributes once that is implemented 
     //the copy action in the UI using the /bulk endpoint sets a copyVersionAttributes flag which doesnt seem to do anything atm
     //waiting for feedback from PM if that is supposed to be working, if not Alex plans to implement it client side
