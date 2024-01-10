@@ -26,5 +26,5 @@ import picocli.CommandLine.Command;
 
 )
 public class ToolDebrickedCommands extends AbstractContainerCommand {
-    static final String TOOL_NAME = "debricked";
+    static final String TOOL_NAME = "debricked-cli";
 }

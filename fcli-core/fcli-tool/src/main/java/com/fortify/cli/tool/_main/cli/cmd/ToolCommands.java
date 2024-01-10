@@ -14,7 +14,9 @@ package com.fortify.cli.tool._main.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.tool.bugtracker_utility.cli.cmd.ToolBugTrackerUtilityCommands;
+import com.fortify.cli.tool.config.cli.cmd.ToolConfigCommands;
 import com.fortify.cli.tool.debricked.cli.cmd.ToolDebrickedCommands;
+import com.fortify.cli.tool.fcli.cli.cmd.ToolFcliCommands;
 import com.fortify.cli.tool.fod_uploader.cli.cmd.ToolFoDUploaderCommands;
 import com.fortify.cli.tool.sc_client.cli.cmd.ToolSCClientCommands;
 import com.fortify.cli.tool.vuln_exporter.cli.cmd.ToolVulnExporterCommands;
@@ -27,9 +29,11 @@ import picocli.CommandLine.Command;
         subcommands = {
             ToolBugTrackerUtilityCommands.class,
             ToolDebrickedCommands.class,
+            ToolFcliCommands.class,
             ToolFoDUploaderCommands.class,
             ToolSCClientCommands.class,
-            ToolVulnExporterCommands.class
+            ToolVulnExporterCommands.class, 
+            ToolConfigCommands.class
         }
 )
 public class ToolCommands extends AbstractContainerCommand {}

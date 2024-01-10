@@ -32,11 +32,6 @@ public class ToolFoDUploaderInstallCommand extends AbstractToolInstallCommand {
     @Getter private String toolName = ToolFoDUploaderCommands.TOOL_NAME;
     
     @Override
-    protected InstallType getInstallType() {
-        return InstallType.COPY;
-    }
-    
-    @Override
     protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
         Path binPath = descriptor.getBinPath();
         Files.createDirectories(binPath);
