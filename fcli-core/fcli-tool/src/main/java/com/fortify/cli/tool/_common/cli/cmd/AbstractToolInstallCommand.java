@@ -22,9 +22,6 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -37,7 +34,10 @@ import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.tool._common.helper.OsAndArchHelper;
+import com.fortify.cli.tool._common.helper.SignatureHelper;
 import com.fortify.cli.tool._common.helper.ToolHelper;
+import com.fortify.cli.tool._common.helper.ToolVersionArtifactDescriptor;
 import com.fortify.cli.tool._common.helper.ToolVersionCombinedDescriptor;
 import com.fortify.cli.tool._common.helper.ToolVersionDownloadDescriptor;
 import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
@@ -49,12 +49,13 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 public abstract class AbstractToolInstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractToolInstallCommand.class);
     private static final Set<PosixFilePermission> binPermissions = PosixFilePermissions.fromString("rwxr-xr-x");
     @Getter @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.install.version", defaultValue = "default") 
     private String version;
     @Getter @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
     private File installDir;
+    @Getter @Option(names={"--type"}, required = false, descriptionKey="fcli.tool.install.type") 
+    private String type;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Getter @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
     private DigestMismatchAction onDigestMismatch;
@@ -66,7 +67,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     @Override
     public final JsonNode getJsonNode() {
         String toolName = getToolName();
-        ToolVersionDownloadDescriptor descriptor = ToolHelper.getToolDownloadDescriptor(toolName).getVersionOrDefault(version, getCpuArchitecture());
+        ToolVersionDownloadDescriptor descriptor = ToolHelper.getToolDownloadDescriptor(toolName).getVersionOrDefault(version);
         return downloadAndInstall(toolName, descriptor);
     }
     
@@ -86,8 +87,9 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
             Path binPath = getBinPath(downloadDescriptor);
             ToolVersionInstallDescriptor installDescriptor = new ToolVersionInstallDescriptor(downloadDescriptor, installPath, binPath);
             emptyExistingInstallPath(installDescriptor.getInstallPath());
-            File downloadedFile = download(downloadDescriptor);
-            checkDigest(downloadDescriptor, downloadedFile);
+            ToolVersionArtifactDescriptor artifactDescriptor = getArtifactDescriptor(downloadDescriptor, type);
+            File downloadedFile = download(artifactDescriptor);
+            SignatureHelper.verifyFileSignature(artifactDescriptor.getRsa_sha256(), downloadedFile, onDigestMismatch == DigestMismatchAction.fail);
             install(installDescriptor, downloadedFile);
             ToolVersionCombinedDescriptor combinedDescriptor = ToolHelper.saveToolVersionInstallDescriptor(toolName, installDescriptor);
             return new ObjectMapper().<ObjectNode>valueToTree(combinedDescriptor);            
@@ -96,11 +98,26 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         }
     }
 
-    private final File download(ToolVersionDownloadDescriptor descriptor) throws IOException {
+    private final File download(ToolVersionArtifactDescriptor artifactDescriptor) throws IOException {
         File tempDownloadFile = File.createTempFile("fcli-tool-download", null);
         tempDownloadFile.deleteOnExit();
-        download(descriptor.getDownloadUrl(), tempDownloadFile);
+        download(artifactDescriptor.getDownloadUrl(), tempDownloadFile);
         return tempDownloadFile;
+    }
+    
+    private final ToolVersionArtifactDescriptor getArtifactDescriptor(ToolVersionDownloadDescriptor downloadDescriptor, String type) {
+        if(type==null || type.isBlank()) {
+            String OSString = OsAndArchHelper.getOSString();
+            String archString = OsAndArchHelper.getArchString();
+            type = OSString + "/" + archString;
+        }
+        if(downloadDescriptor.getArtifacts().containsKey(type)) {
+            return downloadDescriptor.getArtifacts().get(type);
+        } else if(downloadDescriptor.getArtifacts().containsKey("default")) {
+            return downloadDescriptor.getArtifacts().get("default");
+        } else {
+            throw new RuntimeException("No default or matching artifact found for type " + type);
+        }
     }
     
     private final Void download(String downloadUrl, File destFile) {
@@ -113,10 +130,10 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     protected void install(ToolVersionInstallDescriptor descriptor, File downloadedFile) throws IOException {
         Path installPath = descriptor.getInstallPath();
         Files.createDirectories(installPath);
-        InstallType installType = getInstallType();
+        InstallType installType = getInstallType(descriptor.getOriginalDownloadDescriptor());
         switch (installType) {
         // TODO Clean this up
-        case COPY: Files.copy(downloadedFile.toPath(), installPath.resolve(StringUtils.substringAfterLast(descriptor.getOriginalDownloadDescriptor().getDownloadUrl(), "/")), StandardCopyOption.REPLACE_EXISTING); break;
+        case COPY: Files.copy(downloadedFile.toPath(), installPath.resolve(StringUtils.substringAfterLast(getArtifactDescriptor(descriptor.getOriginalDownloadDescriptor(), type).getDownloadUrl(), "/")), StandardCopyOption.REPLACE_EXISTING); break;
         case EXTRACT_ZIP: FileUtils.extractZip(downloadedFile, installPath); break;
         case EXTRACT_TGZ: FileUtils.extractTarGZ(downloadedFile, installPath); break;
         default: throw new RuntimeException("Unknown install type: "+installType.name());
@@ -139,7 +156,16 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     }
     
     protected abstract String getToolName();
-    protected abstract InstallType getInstallType();
+    protected InstallType getInstallType(ToolVersionDownloadDescriptor descriptor) {
+        ToolVersionArtifactDescriptor artifact = getArtifactDescriptor(descriptor, type);
+        if(artifact.getName().endsWith("gz")) {
+            return InstallType.EXTRACT_TGZ;
+        } else if(artifact.getName().endsWith("zip")) {
+            return InstallType.EXTRACT_ZIP;
+        } else {
+            return InstallType.COPY;
+        }
+    };
     protected abstract void postInstall(ToolVersionInstallDescriptor installDescriptor) throws IOException;
     protected String getCpuArchitecture() {
         return "";
@@ -149,20 +175,6 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         if ( Files.exists(installPath) && Files.list(installPath).findFirst().isPresent() ) {
             requireConfirmation.checkConfirmed();
             FileUtils.deleteRecursive(installPath);
-        }
-    }
-    
-    private final void checkDigest(ToolVersionDownloadDescriptor descriptor, File downloadedFile) {
-        String actualDigest = FileUtils.getFileDigest(downloadedFile, descriptor.getDigestAlgorithm());
-        String expectedDigest = descriptor.getExpectedDigest();
-        if ( !actualDigest.equals(expectedDigest) ) {
-            String msg = "Digest mismatch"
-                    +"\n Expected: "+expectedDigest
-                    +"\n Actual:   "+actualDigest;
-            switch(onDigestMismatch) {
-            case fail: throw new IllegalStateException(msg);
-            case warn: LOG.warn(msg);
-            }
         }
     }
     

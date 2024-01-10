@@ -35,11 +35,6 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     @Option(names= {"-t", "--client-auth-token"}) private String clientAuthToken; 
     
     @Override
-    protected InstallType getInstallType() {
-        return InstallType.EXTRACT_ZIP;
-    }
-    
-    @Override
     protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
         // Updating bin permissions is handled by parent class
         updateClientAuthToken(descriptor.getInstallPath());

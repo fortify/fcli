@@ -25,11 +25,11 @@ import spock.lang.Requires
 import spock.lang.Shared
 import spock.lang.Stepwise
 
-@Prefix("tool.debricked") @Stepwise
-class ToolDebrickedSpec extends FcliBaseSpec {
+@Prefix("tool.fcli") @Stepwise
+class ToolFcliSpec extends FcliBaseSpec {
 
     def "install"() {
-        def args = "tool debricked-cli install -y -v=latest"
+        def args = "tool fcli install -y -v=latest"
         when:
             def result = Fcli.run(args)
         then:
@@ -42,20 +42,20 @@ class ToolDebrickedSpec extends FcliBaseSpec {
     }
     
     def "listVersions"() {
-        def args = "tool debricked-cli list"
+        def args = "tool fcli list"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
                 it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindir")
-                it[1].replace(" ", "").startsWith("debricked")
+                it[1].replace(" ", "").startsWith("fcli")
                 it[1].replace(" ", "").contains("YesYes")
             }
     }
     
     def "uninstall"() {
-        def args = "tool debricked-cli uninstall -y -v=default"
+        def args = "tool fcli uninstall -y -v=default"
         when:
             def result = Fcli.run(args)
         then:

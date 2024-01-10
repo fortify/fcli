@@ -15,6 +15,7 @@ package com.fortify.cli.tool._common.helper;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -34,19 +35,11 @@ public class ToolVersionCombinedDescriptor {
         return getInstalledOrDefaultDownloadDescriptor().getVersion();
     }
     
-    public String getDownloadUrl() {
-        return getInstalledOrDefaultDownloadDescriptor().getDownloadUrl();
-    }
-    
-    public String getDigest() {
-        return getInstalledOrDefaultDownloadDescriptor().getDigest();
-    }
-    
     public String getIsDefaultVersion() {
         // To determine whether a version is the default version, we
         // need to use the configured download descriptor, not the
         // download descriptor stored during tool installation.
-        return getDownloadDescriptor().getIsDefaultVersion();
+        return Arrays.stream(getDownloadDescriptor().getAliases()).anyMatch("latest"::equals) ? "Yes" : "No";
     }
     
     public String getInstalled() {
@@ -67,14 +60,6 @@ public class ToolVersionCombinedDescriptor {
     
     public Path getBinPath() {
         return getPath(ToolVersionInstallDescriptor::getBinPath);
-    }
-    
-    public String getOperatingSystem() {
-        return getDownloadDescriptor().getOperatingSystem();
-    }
-    
-    public String getCpuArchitecture() {
-        return getDownloadDescriptor().getCpuArchitecture();
     }
     
     private String getDir(Function<ToolVersionInstallDescriptor, String> f) {

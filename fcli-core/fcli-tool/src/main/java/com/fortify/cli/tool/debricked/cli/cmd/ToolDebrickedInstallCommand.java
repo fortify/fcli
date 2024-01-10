@@ -23,19 +23,12 @@ import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.Install.CMD_NAME)
 public class ToolDebrickedInstallCommand extends AbstractToolInstallCommand {
     @Getter @Mixin private OutputHelperMixins.Install outputHelper;
     @Getter private String toolName = ToolDebrickedCommands.TOOL_NAME;
-    @Getter @Option(names={"-a", "--cpu-architecture"}, required = true, descriptionKey="fcli.tool.debricked.install.cpuArchitecture", defaultValue = "x86_64") 
-    private String _cpuArchitecture;
-    
-    @Override
-    protected InstallType getInstallType() {
-        return InstallType.EXTRACT_TGZ;
-    }
+
     
     @Override
     protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
@@ -43,8 +36,4 @@ public class ToolDebrickedInstallCommand extends AbstractToolInstallCommand {
         Files.createDirectories(binPath);
     }
     
-    @Override
-    protected String getCpuArchitecture() {
-        return _cpuArchitecture;
-    }
 }

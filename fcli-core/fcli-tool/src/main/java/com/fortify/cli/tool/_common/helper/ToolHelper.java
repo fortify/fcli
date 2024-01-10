@@ -12,25 +12,44 @@
  *******************************************************************************/
 package com.fortify.cli.tool._common.helper;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Enumeration;
 import java.util.stream.Stream;
-
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.util.FcliDataHelper;
 
 public final class ToolHelper {
     private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
+    private static final Path toolversionsBundle = FcliDataHelper.getFcliConfigPath().resolve("tool-definitions.yaml.zip");
     
     public static final ToolDownloadDescriptor getToolDownloadDescriptor(String toolName) {
+        //check if an updated yaml from the config tool-versions update command exists
+        if(toolversionsBundle.toFile().exists()) {
+            try {
+                return loadDescriptorFromZipBundle(toolName);
+            } catch (IOException e) {
+                throw new RuntimeException("Error loading resource file from bundle: "+toolversionsBundle.toString(), e);
+            }
+        }
+        //fall back to included resource file
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        String resourceFile = getResourceFile(toolName, String.format("%s.yaml", toolName));
-        try ( InputStream file = classLoader.getResourceAsStream(resourceFile) ) { 
-            return yamlObjectMapper.readValue(file, ToolDownloadDescriptor.class);
+        String resourceFile = "com/fortify/cli/tool/tool-definitions.yaml.zip";
+        try ( InputStream stream = classLoader.getResourceAsStream(resourceFile) ) { 
+            if(!FcliDataHelper.getFcliConfigPath().toFile().exists()) {
+                Files.createDirectories(FcliDataHelper.getFcliConfigPath());
+            }
+            Files.copy(stream, toolversionsBundle, StandardCopyOption.REPLACE_EXISTING);
+            return loadDescriptorFromZipBundle(toolName);
         } catch (IOException e) {
-            throw new RuntimeException("Error loading resource file: "+resourceFile, e);
+            throw new RuntimeException("Error loading included resource file: "+resourceFile, e);
         }
     }
     
@@ -44,10 +63,10 @@ public final class ToolHelper {
         return FcliDataHelper.readFile(getInstallDescriptorPath(toolName, version), ToolVersionInstallDescriptor.class, false);
     }
     
-    public static final ToolVersionCombinedDescriptor loadToolVersionCombinedDescriptor(String toolName, String version, String cpuArchitecture) {
-        version = getToolDownloadDescriptor(toolName).getVersionOrDefault(version, cpuArchitecture).getVersion();
+    public static final ToolVersionCombinedDescriptor loadToolVersionCombinedDescriptor(String toolName, String version) {
+        version = getToolDownloadDescriptor(toolName).getVersionOrDefault(version).getVersion();
         ToolVersionInstallDescriptor installDescriptor = loadToolVersionInstallDescriptor(toolName, version);
-        return installDescriptor==null ? null : new ToolVersionCombinedDescriptor(toolName, getToolDownloadDescriptor(toolName).getVersion(version, cpuArchitecture), installDescriptor);
+        return installDescriptor==null ? null : new ToolVersionCombinedDescriptor(toolName, getToolDownloadDescriptor(toolName).getVersion(version), installDescriptor);
     }
     
     public static final void deleteToolVersionInstallDescriptor(String toolName, String version) {
@@ -74,5 +93,23 @@ public final class ToolHelper {
     
     private static final Path getInstallDescriptorPath(String toolName, String version) {
         return FcliDataHelper.getFcliStatePath().resolve("tools").resolve(toolName).resolve(version);
+    }
+    
+    private static final ToolDownloadDescriptor loadDescriptorFromZipBundle(String toolName) throws IOException {
+        ZipFile bundle = new ZipFile(toolversionsBundle.toString());
+        Enumeration<? extends ZipEntry> entries = bundle.entries();
+
+        while(entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            if(entry.getName().equals(String.format("%s.yaml", toolName))) {
+
+                try (InputStream file = bundle.getInputStream(entry)) {
+                    return yamlObjectMapper.readValue(file, ToolDownloadDescriptor.class);
+                } catch (IOException e) {
+                    throw e;
+                }
+            }
+        }
+        throw new FileNotFoundException(String.format("%s.yaml", toolName));
     }
 }

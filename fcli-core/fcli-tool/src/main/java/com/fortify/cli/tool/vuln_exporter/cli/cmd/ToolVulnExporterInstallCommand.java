@@ -32,11 +32,6 @@ public class ToolVulnExporterInstallCommand extends AbstractToolInstallCommand {
     @Getter private String toolName = ToolVulnExporterCommands.TOOL_NAME;
     
     @Override
-    protected InstallType getInstallType() {
-        return InstallType.EXTRACT_ZIP;
-    }
-    
-    @Override
     protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
         Path binPath = descriptor.getBinPath();
         Files.createDirectories(binPath);

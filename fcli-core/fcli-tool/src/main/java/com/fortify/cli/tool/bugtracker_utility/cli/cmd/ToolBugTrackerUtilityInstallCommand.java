@@ -32,11 +32,6 @@ public class ToolBugTrackerUtilityInstallCommand extends AbstractToolInstallComm
     @Getter private String toolName = ToolBugTrackerUtilityCommands.TOOL_NAME;
     
     @Override
-    protected InstallType getInstallType() {
-        return InstallType.EXTRACT_ZIP;
-    }
-    
-    @Override
     protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
         Path binPath = descriptor.getBinPath();
         Files.createDirectories(binPath);

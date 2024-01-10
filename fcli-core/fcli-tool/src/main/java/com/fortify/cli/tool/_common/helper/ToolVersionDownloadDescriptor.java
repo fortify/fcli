@@ -12,10 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.tool._common.helper;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.util.StringUtils;
+import java.util.Map;
 
+import com.formkiq.graalvm.annotations.Reflectable;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -23,19 +22,7 @@ import lombok.NoArgsConstructor;
 @Data
 public final class ToolVersionDownloadDescriptor {
     private String version;
-    private String downloadUrl;
-    private String digest;
-    private String isDefaultVersion = "No";
-    private String operatingSystem;
-    private String cpuArchitecture;
-    
-    @JsonIgnore
-    public final String getDigestAlgorithm() {
-        return StringUtils.substringBefore(digest, ":");
-    }
-    
-    @JsonIgnore
-    public final String getExpectedDigest() {
-        return StringUtils.substringAfter(digest, ":");
-    }
+    private String[] aliases;
+    private boolean stable;
+    private Map<String, ToolVersionArtifactDescriptor> artifacts;
 }
