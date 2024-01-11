@@ -89,7 +89,7 @@ public final class ToolHelper {
     }
     
     public static final String getResourceFile(String toolName, String fileName) {
-        return String.format("%s/%s", getResourceDir(toolName), fileName);
+        return String.format("%s/%s", getResourceDir(toolName.replace('-', '_')), fileName);
     }
     
     private static final Path getInstallDescriptorPath(String toolName, String version) {
