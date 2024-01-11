@@ -28,29 +28,14 @@ import com.fortify.cli.common.util.FcliDataHelper;
 
 public final class ToolHelper {
     private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
-    private static final Path toolversionsBundle = FcliDataHelper.getFcliConfigPath().resolve("tool-definitions.yaml.zip");
+    private static final Path toolversionsBundle = FcliDataHelper.getFcliConfigPath().resolve("tool/tool-definitions.yaml.zip");
     
-    public static final ToolDownloadDescriptor getToolDownloadDescriptor(String toolName) {
-        //check if an updated yaml from the config tool-versions update command exists
-        if(toolversionsBundle.toFile().exists()) {
-            try {
-                return loadDescriptorFromZipBundle(toolName);
-            } catch (IOException e) {
-                throw new RuntimeException("Error loading resource file from bundle: "+toolversionsBundle.toString(), e);
-            }
-        }
-        // fall back to included resource file, which is automatically downloaded
-        // during Gradle build (see fcli-core/fcli-tool/build.gradle)
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        String resourceFile = "com/fortify/cli/tool/config/tool-definitions.yaml.zip";
-        try ( InputStream stream = classLoader.getResourceAsStream(resourceFile) ) { 
-            if(!FcliDataHelper.getFcliConfigPath().toFile().exists()) {
-                Files.createDirectories(FcliDataHelper.getFcliConfigPath());
-            }
-            Files.copy(stream, toolversionsBundle, StandardCopyOption.REPLACE_EXISTING);
+    public static final ToolDefinitionsDescriptor getToolDownloadDescriptor(String toolName) {
+        try {
+            initializeZipBundle();
             return loadDescriptorFromZipBundle(toolName);
         } catch (IOException e) {
-            throw new RuntimeException("Error loading included resource file: "+resourceFile, e);
+            throw new RuntimeException("Error loading tool definitions", e);
         }
     }
     
@@ -92,11 +77,26 @@ public final class ToolHelper {
         return String.format("%s/%s", getResourceDir(toolName.replace('-', '_')), fileName);
     }
     
+    private static final void initializeZipBundle() throws IOException {
+        if(!toolversionsBundle.toFile().exists()) {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            String resourceFile = "com/fortify/cli/tool/tool-definitions.yaml.zip";
+            try ( InputStream stream = classLoader.getResourceAsStream(resourceFile) ) { 
+                if(!FcliDataHelper.getFcliConfigPath().resolve("tool").toFile().exists()) {
+                    Files.createDirectories(FcliDataHelper.getFcliConfigPath().resolve("tool"));
+                }
+                Files.copy(stream, toolversionsBundle, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw e;
+            }
+        }
+    }
+    
     private static final Path getInstallDescriptorPath(String toolName, String version) {
         return FcliDataHelper.getFcliStatePath().resolve("tools").resolve(toolName).resolve(version);
     }
     
-    private static final ToolDownloadDescriptor loadDescriptorFromZipBundle(String toolName) throws IOException {
+    private static final ToolDefinitionsDescriptor loadDescriptorFromZipBundle(String toolName) throws IOException {
         ZipFile bundle = new ZipFile(toolversionsBundle.toString());
         Enumeration<? extends ZipEntry> entries = bundle.entries();
 
@@ -105,7 +105,7 @@ public final class ToolHelper {
             if(entry.getName().equals(String.format("%s.yaml", toolName))) {
 
                 try (InputStream file = bundle.getInputStream(entry)) {
-                    return yamlObjectMapper.readValue(file, ToolDownloadDescriptor.class);
+                    return yamlObjectMapper.readValue(file, ToolDefinitionsDescriptor.class);
                 } catch (IOException e) {
                     throw e;
                 }

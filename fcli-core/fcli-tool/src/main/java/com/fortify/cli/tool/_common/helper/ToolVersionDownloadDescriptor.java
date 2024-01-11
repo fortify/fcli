@@ -25,4 +25,9 @@ public final class ToolVersionDownloadDescriptor {
     private String[] aliases;
     private boolean stable;
     private Map<String, ToolVersionArtifactDescriptor> artifacts;
+    
+    //old fields for backwards compatibility
+    private String downloadUrl;
+    private String digest;
+    private String isDefaultVersion = "No";
 }

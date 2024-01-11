@@ -16,7 +16,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.util.FcliDataHelper;
-import com.fortify.cli.tool.config.cli.mixin.ToolConfigUriMixin;
+import com.fortify.cli.tool.config.cli.mixin.ToolConfigSourceMixin;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -28,8 +28,8 @@ import picocli.CommandLine.Mixin;
 public class ToolConfigUpdateCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier{
     @Mixin @Getter private OutputHelperMixins.Update outputHelper;
     @ArgGroup(exclusive=true, multiplicity="0..1")
-    ToolConfigUriMixin paramGroup;
-    private String defaultDownloadUrl= "https://github.com/fortify-ps/tool-definitions/blob/main/v1/tool-definitions.yaml.zip";
+    private ToolConfigSourceMixin toolConfigSourceMixin;
+    private String defaultDownloadUrl= "https://github.com/fortify-ps/tool-definitions/raw/main/v1/tool-definitions.yaml.zip";
     
     @Override
     public boolean isSingular() {
@@ -39,35 +39,35 @@ public class ToolConfigUpdateCommand extends AbstractOutputCommand implements IJ
     @Override
     public JsonNode getJsonNode() {
         try {
-            return updateToolDefinitions();
+            return new ObjectMapper().<ObjectNode>valueToTree(updateToolDefinitions());
         } catch (IOException e) {
             throw new RuntimeException("Error updating tool definitions", e);
         }
     }
     
-    private JsonNode updateToolDefinitions() throws IOException {
-        if(!FcliDataHelper.getFcliConfigPath().toFile().exists()) {
-            Files.createDirectories(FcliDataHelper.getFcliConfigPath());
+    private ToolBundleDownloadDescriptor updateToolDefinitions() throws IOException {
+        if(!getZipPath().toFile().exists()) {
+            Files.createDirectories(getZipPath());
         }
-        if(paramGroup!=null) {
-            if(paramGroup.get_file()!=null) {
-                return getFromLocalPath(paramGroup.get_file());
+        if(toolConfigSourceMixin!=null) {
+            if(toolConfigSourceMixin.getFile()!=null) {
+                return getFromLocalPath(toolConfigSourceMixin.getFile());
             }
-            if(paramGroup.get_url()!=null) {
-                return downloadFromWeblink(paramGroup.get_url());
+            if(toolConfigSourceMixin.getUrl()!=null) {
+                return downloadFromWeblink(toolConfigSourceMixin.getUrl());
             }
         }
         return downloadFromWeblink(defaultDownloadUrl);
     }
     
-    private JsonNode downloadFromWeblink(String url) throws IOException {
-        File pkg = download(url, FcliDataHelper.getFcliConfigPath().resolve("tool-definitions.yaml.zip").toFile());
-        return new ObjectMapper().<ObjectNode>valueToTree(new ToolBundleDownloadDescriptor(url, pkg.getPath()));
+    private ToolBundleDownloadDescriptor downloadFromWeblink(String url) throws IOException {
+        File pkg = download(url, getZipPath().toFile());
+        return new ToolBundleDownloadDescriptor(url, pkg.getPath());
     }
     
-    private JsonNode getFromLocalPath(String path) throws IOException {
-        Path pkg = Files.copy(Path.of(path), FcliDataHelper.getFcliConfigPath().resolve("tool-definitions.yaml.zip"), StandardCopyOption.REPLACE_EXISTING);
-        return new ObjectMapper().<ObjectNode>valueToTree(new ToolBundleDownloadDescriptor(path, pkg.toString()));
+    private ToolBundleDownloadDescriptor getFromLocalPath(String path) throws IOException {
+        Path pkg = Files.copy(Path.of(path), getZipPath(), StandardCopyOption.REPLACE_EXISTING);
+        return new ToolBundleDownloadDescriptor(path, pkg.toString());
     }
 
     private final File download(String downloadUrl, File destFile) {
@@ -75,6 +75,10 @@ public class ToolConfigUpdateCommand extends AbstractOutputCommand implements IJ
                 u->ProxyHelper.configureProxy(u, "toolversions", downloadUrl));
         unirest.get(downloadUrl).asFile(destFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
         return destFile;
+    }
+    
+    private Path getZipPath() {
+        return FcliDataHelper.getFcliConfigPath().resolve("tool/tool-definitions.yaml.zip");
     }
     
     private class ToolBundleDownloadDescriptor{

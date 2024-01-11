@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.tool.debricked.cli.cmd;
+package com.fortify.cli.tool.debricked_cli.cli.cmd;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolUninstallCommand;
@@ -20,8 +20,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.Uninstall.CMD_NAME)
-public class ToolDebrickedUninstallCommand extends AbstractToolUninstallCommand {
+public class ToolDebrickedCliUninstallCommand extends AbstractToolUninstallCommand {
     @Getter @Mixin private OutputHelperMixins.Uninstall outputHelper;
-    @Getter private String toolName = ToolDebrickedCommands.TOOL_NAME;
+    @Getter private String toolName = ToolDebrickedCliCommands.TOOL_NAME;
 
 }

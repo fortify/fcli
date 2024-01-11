@@ -36,21 +36,47 @@ class ToolConfigUpdateSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>0
                 it[0].replace(' ', '').equals("RemotepathLocalpathAction")
-                it[1].replace(" ", "").contains("https://github.com/fortify-ps/tool-definitions/blob/main/v1/tool-definitions")
+                it[1].replace(" ", "").contains("https://github.com/fortify-ps/tool-definitions/raw/main/v1/tool-definitions")
                 it[1].contains("UPDATED")
             }
     }
     
+    def "listVersions"() {
+        def args = "tool debricked-cli list"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindir")
+                it[1].replace(" ", "").startsWith("debricked")
+                it[1].replace(" ", "").contains("YesNo")
+            }
+    }
+    
     def "updateWithUrl"() {
-        def args = "tool config update --url https://github.com/psmf22/tool-definitions/blob/main/v1/tool-definitions.yaml.zip"
+        def args = "tool config update --url https://github.com/psmf22/tool-definitions/raw/main/v1/tool-definitions.yaml.zip"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
                 it[0].replace(' ', '').equals("RemotepathLocalpathAction")
-                it[1].replace(" ", "").contains("https://github.com/psmf22/tool-definitions/blob/main/v1/tool-definitions")
+                it[1].replace(" ", "").contains("https://github.com/psmf22/tool-definitions/raw/main/v1/tool-definitions")
                 it[1].contains("UPDATED")
+            }
+    }
+    
+    def "listVersions2"() {
+        def args = "tool debricked-cli list"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindir")
+                it[1].replace(" ", "").startsWith("debricked")
+                it[1].replace(" ", "").contains("YesNo")
             }
     }
     /*
