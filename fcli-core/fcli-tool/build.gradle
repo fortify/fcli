@@ -1,1 +1,28 @@
+plugins {
+    id "de.undercouch.download" version "5.5.0"
+}
 apply from: "${sharedGradleScriptsDir}/fcli-module.gradle"
+
+ext.generatedToolDefinitionsDir = "${buildDir}/tool-definitions"
+tasks.register('generateToolDefinitionResources') {
+    doLast {
+        def toolDefinitionsSource = "https://raw.githubusercontent.com/fortify-ps/tool-definitions/main/v1/tool-definitions.yaml.zip"
+        def toolDefinitionsFile = "tool-definitions.yaml.zip"
+        def toolDefinitionsRelativeDir = "com/fortify/cli/tool/config"
+        def toolDefinitionsRelativeFile = "${toolDefinitionsRelativeDir}/${toolDefinitionsFile}"
+        def toolDefinitionsOutputDir = "${generatedToolDefinitionsDir}/${toolDefinitionsRelativeDir}"
+        def resourceConfigOutputDir = "${generatedToolDefinitionsDir}/META-INF/native-image/tool-definitions";
+        mkdir "${toolDefinitionsOutputDir}"
+        mkdir "${resourceConfigOutputDir}"
+        download.run {
+            src toolDefinitionsSource
+            dest toolDefinitionsOutputDir
+            onlyIfModified true
+            useETag 'all'
+        }
+        def resourceConfigContents = '{"resources":[{"pattern":"'+toolDefinitionsRelativeFile+'"}]}';
+        file("${resourceConfigOutputDir}/resource-config.json").text = resourceConfigContents;
+        println resourceConfigContents
+    }
+}
+sourceSets.main.output.dir generatedToolDefinitionsDir, builtBy: generateToolDefinitionResources

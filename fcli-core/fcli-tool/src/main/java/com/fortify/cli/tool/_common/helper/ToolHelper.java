@@ -39,9 +39,10 @@ public final class ToolHelper {
                 throw new RuntimeException("Error loading resource file from bundle: "+toolversionsBundle.toString(), e);
             }
         }
-        //fall back to included resource file
+        // fall back to included resource file, which is automatically downloaded
+        // during Gradle build (see fcli-core/fcli-tool/build.gradle)
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        String resourceFile = "com/fortify/cli/tool/tool-definitions.yaml.zip";
+        String resourceFile = "com/fortify/cli/tool/config/tool-definitions.yaml.zip";
         try ( InputStream stream = classLoader.getResourceAsStream(resourceFile) ) { 
             if(!FcliDataHelper.getFcliConfigPath().toFile().exists()) {
                 Files.createDirectories(FcliDataHelper.getFcliConfigPath());
