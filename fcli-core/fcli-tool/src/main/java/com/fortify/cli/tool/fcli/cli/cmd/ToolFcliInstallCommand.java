@@ -12,9 +12,11 @@
  *******************************************************************************/
 package com.fortify.cli.tool.fcli.cli.cmd;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
@@ -33,5 +35,10 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
         Path binPath = descriptor.getBinPath();
         Files.createDirectories(binPath);
+        for(File f : descriptor.getInstallPath().toFile().listFiles()) {
+            if(f.getAbsolutePath()!=binPath.toString() && !f.getAbsolutePath().endsWith("jar")) {
+                Files.move(f.toPath(), binPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
     }
 }

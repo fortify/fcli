@@ -28,7 +28,7 @@ public class OsAndArchHelper {
             return "linux";
         }
         if (value.startsWith("hpux")) {
-            return "linux";
+            return "hpux";
         }
         if (value.startsWith("os400")) {
             // Avoid the names such as os4000

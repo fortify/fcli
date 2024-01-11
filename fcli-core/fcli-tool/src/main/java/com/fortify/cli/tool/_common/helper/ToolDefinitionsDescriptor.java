@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
 @Data
-public class ToolDownloadDescriptor {
+public class ToolDefinitionsDescriptor {
     private String schema_version;
     private ToolVersionDownloadDescriptor[] versions;
     
@@ -36,14 +36,10 @@ public class ToolDownloadDescriptor {
     }
     
     public final ToolVersionDownloadDescriptor getVersion(String version) {
-        var versionResult = getVersionsStream()
+        return getVersionsStream()
                 .filter(v-> (v.getVersion().equals(version) || Arrays.stream(v.getAliases()).anyMatch(version::equals)) )
-                .findFirst();
-        if (versionResult.isPresent()) {
-            return versionResult.get();
-        } else {
-            throw new IllegalArgumentException("Version "+version+" not defined");
-        }
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Version "+version+" not defined"));
     }
     
     public final ToolVersionDownloadDescriptor getVersionOrDefault(String versionName) {

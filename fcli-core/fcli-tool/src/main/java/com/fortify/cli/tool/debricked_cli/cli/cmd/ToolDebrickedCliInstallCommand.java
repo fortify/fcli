@@ -10,11 +10,13 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.tool.debricked.cli.cmd;
+package com.fortify.cli.tool.debricked_cli.cli.cmd;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
@@ -25,15 +27,20 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = OutputHelperMixins.Install.CMD_NAME)
-public class ToolDebrickedInstallCommand extends AbstractToolInstallCommand {
+public class ToolDebrickedCliInstallCommand extends AbstractToolInstallCommand {
     @Getter @Mixin private OutputHelperMixins.Install outputHelper;
-    @Getter private String toolName = ToolDebrickedCommands.TOOL_NAME;
+    @Getter private String toolName = ToolDebrickedCliCommands.TOOL_NAME;
 
     
     @Override
     protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
         Path binPath = descriptor.getBinPath();
         Files.createDirectories(binPath);
+        for(File f : descriptor.getInstallPath().toFile().listFiles()) {
+            if(f.getAbsolutePath()!=binPath.toString()) {
+                Files.move(f.toPath(), binPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
     }
     
 }

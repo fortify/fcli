@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+ * Copyright 2021, 2022 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -10,17 +10,21 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.tool.debricked.cli.cmd;
+package com.fortify.cli.tool.debricked_cli.cli.cmd;
 
-import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.tool._common.cli.cmd.AbstractToolListCommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
-import lombok.Getter;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.List.CMD_NAME)
-public class ToolDebrickedListCommand extends AbstractToolListCommand {
-    @Getter @Mixin private OutputHelperMixins.List outputHelper;
-    @Getter private String toolName = ToolDebrickedCommands.TOOL_NAME;
+@Command(
+        name = ToolDebrickedCliCommands.TOOL_NAME,
+        subcommands = {
+                ToolDebrickedCliInstallCommand.class,
+                ToolDebrickedCliListCommand.class,
+                ToolDebrickedCliUninstallCommand.class
+        }
+
+)
+public class ToolDebrickedCliCommands extends AbstractContainerCommand {
+    static final String TOOL_NAME = "debricked-cli";
 }
