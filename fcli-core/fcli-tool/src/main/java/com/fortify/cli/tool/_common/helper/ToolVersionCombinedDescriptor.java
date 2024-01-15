@@ -19,13 +19,11 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Data;
 
-@JsonIgnoreProperties(ignoreUnknown=true)
 @Reflectable // We only serialize, not de-serialize, so no need for no-args contructor
 @Data
 public class ToolVersionCombinedDescriptor {
