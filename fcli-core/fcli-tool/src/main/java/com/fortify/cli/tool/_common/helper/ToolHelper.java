@@ -80,7 +80,7 @@ public final class ToolHelper {
     private static final void initializeZipBundle() throws IOException {
         if(!toolversionsBundle.toFile().exists()) {
             ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            String resourceFile = "com/fortify/cli/tool/tool-definitions.yaml.zip";
+            String resourceFile = "com/fortify/cli/tool/config/tool-definitions.yaml.zip";
             try ( InputStream stream = classLoader.getResourceAsStream(resourceFile) ) { 
                 if(!FcliDataHelper.getFcliConfigPath().resolve("tool").toFile().exists()) {
                     Files.createDirectories(FcliDataHelper.getFcliConfigPath().resolve("tool"));
