@@ -16,22 +16,24 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 @Reflectable @NoArgsConstructor 
 @Data
 public class ToolVersionInstallDescriptor {
-    private ToolVersionDownloadDescriptor originalDownloadDescriptor;
+    private ToolVersionDescriptor originalDownloadDescriptor;
     private String installDir;
     private String binDir;
     @JsonIgnore Path installPath;
     @JsonIgnore Path binPath;
     
-    public ToolVersionInstallDescriptor(ToolVersionDownloadDescriptor originalDownloadDescriptor, Path installPath, Path binPath) {
+    public ToolVersionInstallDescriptor(ToolVersionDescriptor originalDownloadDescriptor, Path installPath, Path binPath) {
         this.originalDownloadDescriptor = originalDownloadDescriptor;
         this.installPath = installPath.toAbsolutePath();
         this.installDir = installPath.toString();

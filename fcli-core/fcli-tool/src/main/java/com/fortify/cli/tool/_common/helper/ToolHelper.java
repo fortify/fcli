@@ -40,7 +40,7 @@ public final class ToolHelper {
     }
     
     public static final ToolVersionCombinedDescriptor saveToolVersionInstallDescriptor(String toolName, ToolVersionInstallDescriptor installDescriptor) {
-        ToolVersionDownloadDescriptor downloadDescriptor = installDescriptor.getOriginalDownloadDescriptor();
+        ToolVersionDescriptor downloadDescriptor = installDescriptor.getOriginalDownloadDescriptor();
         FcliDataHelper.saveFile(getInstallDescriptorPath(toolName, downloadDescriptor.getVersion()), installDescriptor, true);
         return new ToolVersionCombinedDescriptor(toolName, downloadDescriptor, installDescriptor);
     }

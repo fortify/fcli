@@ -39,7 +39,7 @@ import com.fortify.cli.tool._common.helper.SignatureHelper;
 import com.fortify.cli.tool._common.helper.ToolHelper;
 import com.fortify.cli.tool._common.helper.ToolVersionArtifactDescriptor;
 import com.fortify.cli.tool._common.helper.ToolVersionCombinedDescriptor;
-import com.fortify.cli.tool._common.helper.ToolVersionDownloadDescriptor;
+import com.fortify.cli.tool._common.helper.ToolVersionDescriptor;
 import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
 
 import kong.unirest.UnirestInstance;
@@ -67,7 +67,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     @Override
     public final JsonNode getJsonNode() {
         String toolName = getToolName();
-        ToolVersionDownloadDescriptor descriptor = ToolHelper.getToolDownloadDescriptor(toolName).getVersionOrDefault(version);
+        ToolVersionDescriptor descriptor = ToolHelper.getToolDownloadDescriptor(toolName).getVersionOrDefault(version);
         return downloadAndInstall(toolName, descriptor);
     }
     
@@ -81,7 +81,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         return true;
     }
     
-    private final JsonNode downloadAndInstall(String toolName, ToolVersionDownloadDescriptor downloadDescriptor) {
+    private final JsonNode downloadAndInstall(String toolName, ToolVersionDescriptor downloadDescriptor) {
         try {
             Path installPath = getInstallPathOrDefault(downloadDescriptor);
             Path binPath = getBinPath(downloadDescriptor);
@@ -105,7 +105,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         return tempDownloadFile;
     }
     
-    private final ToolVersionArtifactDescriptor getArtifactDescriptor(ToolVersionDownloadDescriptor downloadDescriptor, String type) {
+    private final ToolVersionArtifactDescriptor getArtifactDescriptor(ToolVersionDescriptor downloadDescriptor, String type) {
         if(type==null || type.isBlank()) {
             String OSString = OsAndArchHelper.getOSString();
             String archString = OsAndArchHelper.getArchString();
@@ -144,19 +144,19 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     }
 
     @SneakyThrows
-    protected Path getInstallPathOrDefault(ToolVersionDownloadDescriptor descriptor) {
+    protected Path getInstallPathOrDefault(ToolVersionDescriptor descriptor) {
         if ( installDir == null ) {
             installDir = FcliDataHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", getToolName(), descriptor.getVersion())).toFile();
         }
         return installDir.getCanonicalFile().toPath();
     }
     
-    protected Path getBinPath(ToolVersionDownloadDescriptor descriptor) {
+    protected Path getBinPath(ToolVersionDescriptor descriptor) {
         return getInstallPathOrDefault(descriptor).resolve("bin");
     }
     
     protected abstract String getToolName();
-    protected InstallType getInstallType(ToolVersionDownloadDescriptor descriptor) {
+    protected InstallType getInstallType(ToolVersionDescriptor descriptor) {
         ToolVersionArtifactDescriptor artifact = getArtifactDescriptor(descriptor, type);
         if(artifact.getName().endsWith("gz")) {
             return InstallType.EXTRACT_TGZ;
