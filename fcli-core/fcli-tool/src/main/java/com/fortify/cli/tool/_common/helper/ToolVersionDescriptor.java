@@ -14,20 +14,17 @@ package com.fortify.cli.tool._common.helper;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 @Reflectable @NoArgsConstructor 
 @Data
-public final class ToolVersionDownloadDescriptor {
+public final class ToolVersionDescriptor {
     private String version;
     private String[] aliases;
     private boolean stable;
     private Map<String, ToolVersionArtifactDescriptor> artifacts;
-    
-    //old fields for backwards compatibility
-    private String downloadUrl;
-    private String digest;
-    private String isDefaultVersion = "No";
 }
