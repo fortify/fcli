@@ -28,7 +28,7 @@ import spock.lang.Stepwise
 @Prefix("tool.fod-uploader") @Stepwise
 class ToolFoDUploaderSpec extends FcliBaseSpec {
     
-    def "install"() {
+    def "installLatest"() {
         def args = "tool fod-uploader install -y -v=latest"
         when:
             def result = Fcli.run(args)
@@ -63,6 +63,45 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
                 size()>0
                 it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
                 it[1].replace(" ", "").contains("YesNoN/AN/AUNINSTALLED")
+            }
+    }
+    
+    def "installV5"() {
+        def args = "tool fod-uploader install -y -v=5"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
+                it[1].replace(" ", "").contains("5.4.0")
+                it[1].contains("INSTALLED")
+            }
+    }
+    
+    def "installV50"() {
+        def args = "tool fod-uploader install -y -v=5.0"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
+                it[1].replace(" ", "").contains("5.0.1")
+                it[1].contains("INSTALLED")
+            }
+    }
+    
+    def "installV500"() {
+        def args = "tool fod-uploader install -y -v=5.0.0"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
+                it[1].replace(" ", "").contains("5.0.0")
+                it[1].contains("INSTALLED")
             }
     }
     
