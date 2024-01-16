@@ -20,6 +20,9 @@ build/
 # We want to include everything in our functional test resources
 !**/ftest/resources/runtime/**/*
 
+# automatically downloaded during gradle build
+fcli-core/fcli-tool/src/main/resources/com/fortify/cli/tool/config/tool-definitions.yaml.zip
+
 ### STS ###
 .apt_generated
 .classpath
@@ -60,4 +63,3 @@ fcli.log
 /ReportTemplateDefAnswerTemplate.y*ml*
 /*.rptdesign
 *.log
-fcli-core/fcli-tool/src/main/resources/com/fortify/cli/tool/config/tool-definitions.yaml.zip
