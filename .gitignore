@@ -60,3 +60,4 @@ fcli.log
 /ReportTemplateDefAnswerTemplate.y*ml*
 /*.rptdesign
 *.log
+fcli-core/fcli-tool/src/main/resources/com/fortify/cli/tool/config/tool-definitions.yaml.zip
