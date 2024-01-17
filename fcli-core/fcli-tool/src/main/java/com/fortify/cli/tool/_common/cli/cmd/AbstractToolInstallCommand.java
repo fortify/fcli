@@ -89,7 +89,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
             emptyExistingInstallPath(installDescriptor.getInstallPath());
             ToolVersionArtifactDescriptor artifactDescriptor = getArtifactDescriptor(downloadDescriptor, type);
             File downloadedFile = download(artifactDescriptor);
-            SignatureHelper.verifyFileSignature(artifactDescriptor.getRsa_sha256(), downloadedFile, onDigestMismatch == DigestMismatchAction.fail);
+            SignatureHelper.verifyFileSignature(downloadedFile, artifactDescriptor.getRsa_sha256(), onDigestMismatch == DigestMismatchAction.fail);
             install(installDescriptor, downloadedFile);
             ToolVersionCombinedDescriptor combinedDescriptor = ToolHelper.saveToolVersionInstallDescriptor(toolName, installDescriptor);
             return new ObjectMapper().<ObjectNode>valueToTree(combinedDescriptor);            
