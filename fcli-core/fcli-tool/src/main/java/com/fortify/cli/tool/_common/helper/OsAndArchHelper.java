@@ -4,22 +4,11 @@ import java.util.Locale;
 
 public class OsAndArchHelper {
     public static final String getOSString() {
-        String OS = normalizeOs(System.getProperty("os.name", "generic"));
-        if (OS.equals("linux") || OS.equals("windows") || OS.equals("darwin")) {
-          return OS;
-        } else {
-          throw new RuntimeException("Unexpected OS detected: '" + OS + "'");
-        }
+        return normalizeOs(System.getProperty("os.name", "unknown"));
     }
     
     public static final String getArchString() {
-        String arch = normalizeArch(System.getProperty("os.arch", "generic"));
-        
-        if(arch.equals("x86") || arch.equals("x64") || arch.equals("arm64")) {
-            return arch;
-        } else {
-            throw new RuntimeException("Unexpected cpu architecture detected: '" + arch + "'");
-        }
+        return normalizeArch(System.getProperty("os.arch", "unknown"));
     }
     
     private static String normalizeOs(String value) {
@@ -39,7 +28,7 @@ public class OsAndArchHelper {
         if (value.startsWith("linux")) {
             return "linux";
         }
-        if (value.startsWith("mac") || value.startsWith("osx")) {
+        if (value.startsWith("mac") || value.startsWith("osx") || value.contains("darwin")) {
             return "darwin";
         }
         if (value.startsWith("freebsd")) {
@@ -60,11 +49,7 @@ public class OsAndArchHelper {
         if (value.startsWith("zos")) {
             return "linux";
         }
-        if(value.contains("darwin")) {
-            return "darwin";
-        }
-
-        return "unknown";
+        return value;
     }
 
     private static String normalizeArch(String value) {
@@ -135,7 +120,7 @@ public class OsAndArchHelper {
         if ("loongarch64".equals(value)) {
             return "loongarch_64";
         }
-        return "unknown";
+        return value;
     }
 
     private static String normalize(String value) {
