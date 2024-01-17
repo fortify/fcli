@@ -19,9 +19,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.util.FcliDataHelper;
@@ -30,7 +30,7 @@ public final class ToolHelper {
     private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
     private static final Path toolversionsBundle = FcliDataHelper.getFcliConfigPath().resolve("tool/tool-definitions.yaml.zip");
     
-    public static final ToolDefinitionsDescriptor getToolDownloadDescriptor(String toolName) {
+    public static final ToolDefinitionRootDescriptor getToolDefinitionRootDescriptor(String toolName) {
         try {
             initializeZipBundle();
             return loadDescriptorFromZipBundle(toolName);
@@ -39,34 +39,16 @@ public final class ToolHelper {
         }
     }
     
-    public static final ToolVersionCombinedDescriptor saveToolVersionInstallDescriptor(String toolName, ToolVersionInstallDescriptor installDescriptor) {
-        ToolVersionDescriptor downloadDescriptor = installDescriptor.getOriginalDownloadDescriptor();
-        FcliDataHelper.saveFile(getInstallDescriptorPath(toolName, downloadDescriptor.getVersion()), installDescriptor, true);
-        return new ToolVersionCombinedDescriptor(toolName, downloadDescriptor, installDescriptor);
+    public static final void saveToolInstallationDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
+        FcliDataHelper.saveFile(getInstallDescriptorPath(toolName, versionDescriptor.getVersion()), installationDescriptor, true);
     }
     
-    public static final ToolVersionInstallDescriptor loadToolVersionInstallDescriptor(String toolName, String version) {
-        return FcliDataHelper.readFile(getInstallDescriptorPath(toolName, version), ToolVersionInstallDescriptor.class, false);
+    public static final ToolInstallationDescriptor loadToolInstallationDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
+        return FcliDataHelper.readFile(getInstallDescriptorPath(toolName, versionDescriptor.getVersion()), ToolInstallationDescriptor.class, false);
     }
     
-    public static final ToolVersionCombinedDescriptor loadToolVersionCombinedDescriptor(String toolName, String version) {
-        version = getToolDownloadDescriptor(toolName).getVersionOrDefault(version).getVersion();
-        ToolVersionInstallDescriptor installDescriptor = loadToolVersionInstallDescriptor(toolName, version);
-        return installDescriptor==null ? null : new ToolVersionCombinedDescriptor(toolName, getToolDownloadDescriptor(toolName).getVersion(version), installDescriptor);
-    }
-    
-    public static final void deleteToolVersionInstallDescriptor(String toolName, String version) {
-        FcliDataHelper.deleteFile(getInstallDescriptorPath(toolName, version), true);
-    }
-    
-    public static final ToolVersionCombinedDescriptor[] getToolVersionCombinedDescriptors(String toolName) {
-        return getToolVersionCombinedDescriptorsStream(toolName)
-            .toArray(ToolVersionCombinedDescriptor[]::new);
-    }
-
-    public static final Stream<ToolVersionCombinedDescriptor> getToolVersionCombinedDescriptorsStream(String toolName) {
-        return getToolDownloadDescriptor(toolName).getVersionsStream()
-            .map(d->new ToolVersionCombinedDescriptor(toolName, d, loadToolVersionInstallDescriptor(toolName, d.getVersion())));
+    public static final void deleteToolInstallDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
+        FcliDataHelper.deleteFile(getInstallDescriptorPath(toolName, versionDescriptor.getVersion()), true);
     }
     
     public static final String getResourceDir(String toolName) {
@@ -96,7 +78,7 @@ public final class ToolHelper {
         return FcliDataHelper.getFcliStatePath().resolve("tools").resolve(toolName).resolve(version);
     }
     
-    private static final ToolDefinitionsDescriptor loadDescriptorFromZipBundle(String toolName) throws IOException {
+    private static final ToolDefinitionRootDescriptor loadDescriptorFromZipBundle(String toolName) throws IOException {
         ZipFile bundle = new ZipFile(toolversionsBundle.toString());
         Enumeration<? extends ZipEntry> entries = bundle.entries();
 
@@ -105,7 +87,7 @@ public final class ToolHelper {
             if(entry.getName().equals(String.format("%s.yaml", toolName))) {
 
                 try (InputStream file = bundle.getInputStream(entry)) {
-                    return yamlObjectMapper.readValue(file, ToolDefinitionsDescriptor.class);
+                    return yamlObjectMapper.readValue(file, ToolDefinitionRootDescriptor.class);
                 } catch (IOException e) {
                     throw e;
                 }

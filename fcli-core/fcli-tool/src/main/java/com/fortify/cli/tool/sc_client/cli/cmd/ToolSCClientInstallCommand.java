@@ -21,7 +21,9 @@ import java.nio.file.StandardOpenOption;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
-import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
+import com.fortify.cli.tool._common.helper.ToolDefinitionArtifactDescriptor;
+import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -35,9 +37,9 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     @Option(names= {"-t", "--client-auth-token"}) private String clientAuthToken; 
     
     @Override
-    protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
+    protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {
         // Updating bin permissions is handled by parent class
-        updateClientAuthToken(descriptor.getInstallPath());
+        updateClientAuthToken(installationDescriptor.getInstallPath());
     }
     
     private void updateClientAuthToken(Path installPath) throws IOException {

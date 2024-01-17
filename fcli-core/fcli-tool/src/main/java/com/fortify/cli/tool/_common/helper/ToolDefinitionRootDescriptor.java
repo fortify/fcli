@@ -22,33 +22,37 @@ import com.fortify.cli.common.util.StringUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * This class represents the contents of a tool definition YAML file, usually
+ * deserialized from [tool-name].yaml loaded from tool-definitions.yaml.zip. 
+ */
 @JsonIgnoreProperties(ignoreUnknown=true)
 @Reflectable @NoArgsConstructor
 @Data
-public class ToolDefinitionsDescriptor {
+public class ToolDefinitionRootDescriptor {
     private String schema_version;
-    private ToolVersionDescriptor[] versions;
+    private ToolDefinitionVersionDescriptor[] versions;
     
-    public final ToolVersionDescriptor[] getVersions() {
-        return getVersionsStream().toArray(ToolVersionDescriptor[]::new);
+    public final ToolDefinitionVersionDescriptor[] getVersions() {
+        return getVersionsStream().toArray(ToolDefinitionVersionDescriptor[]::new);
     }
     
-    public final Stream<ToolVersionDescriptor> getVersionsStream() {
+    public final Stream<ToolDefinitionVersionDescriptor> getVersionsStream() {
         return Stream.of(versions);
     }
     
-    public final ToolVersionDescriptor getVersion(String version) {
+    public final ToolDefinitionVersionDescriptor getVersion(String versionOrAlias) {
         return getVersionsStream()
-                .filter(v-> (v.getVersion().equals(version) || Arrays.stream(v.getAliases()).anyMatch(version::equals)) )
+                .filter(v-> (v.getVersion().equals(versionOrAlias) || Arrays.stream(v.getAliases()).anyMatch(versionOrAlias::equals)) )
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Version "+version+" not defined"));
+                .orElseThrow(() -> new IllegalArgumentException("Version or alias "+versionOrAlias+" not found"));
     }
     
-    public final ToolVersionDescriptor getVersionOrDefault(String versionName) {
-        if ( StringUtils.isBlank(versionName) || "default".equals(versionName)) {
-            versionName = "latest";
+    public final ToolDefinitionVersionDescriptor getVersionOrDefault(String versionOrAlias) {
+        if ( StringUtils.isBlank(versionOrAlias) || "default".equals(versionOrAlias)) {
+            versionOrAlias = "latest";
         }
-        return getVersion(versionName);
+        return getVersion(versionOrAlias);
     }
     
 }

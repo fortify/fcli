@@ -22,6 +22,9 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -37,10 +40,10 @@ import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.helper.OsAndArchHelper;
 import com.fortify.cli.tool._common.helper.SignatureHelper;
 import com.fortify.cli.tool._common.helper.ToolHelper;
-import com.fortify.cli.tool._common.helper.ToolVersionArtifactDescriptor;
-import com.fortify.cli.tool._common.helper.ToolVersionCombinedDescriptor;
-import com.fortify.cli.tool._common.helper.ToolVersionDescriptor;
-import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
+import com.fortify.cli.tool._common.helper.ToolDefinitionArtifactDescriptor;
+import com.fortify.cli.tool._common.helper.ToolOutputDescriptor;
+import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -49,8 +52,9 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 public abstract class AbstractToolInstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractToolInstallCommand.class);
     private static final Set<PosixFilePermission> binPermissions = PosixFilePermissions.fromString("rwxr-xr-x");
-    @Getter @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.install.version", defaultValue = "default") 
+    @Getter @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.install.version", defaultValue = "latest") 
     private String version;
     @Getter @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
     private File installDir;
@@ -66,9 +70,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     
     @Override
     public final JsonNode getJsonNode() {
-        String toolName = getToolName();
-        ToolVersionDescriptor descriptor = ToolHelper.getToolDownloadDescriptor(toolName).getVersionOrDefault(version);
-        return downloadAndInstall(toolName, descriptor);
+        return new ObjectMapper().<ObjectNode>valueToTree(downloadAndInstall()); 
     }
     
     @Override
@@ -81,101 +83,121 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         return true;
     }
     
-    private final JsonNode downloadAndInstall(String toolName, ToolVersionDescriptor downloadDescriptor) {
+    private final ToolOutputDescriptor downloadAndInstall() {
         try {
-            Path installPath = getInstallPathOrDefault(downloadDescriptor);
-            Path binPath = getBinPath(downloadDescriptor);
-            ToolVersionInstallDescriptor installDescriptor = new ToolVersionInstallDescriptor(downloadDescriptor, installPath, binPath);
-            emptyExistingInstallPath(installDescriptor.getInstallPath());
-            ToolVersionArtifactDescriptor artifactDescriptor = getArtifactDescriptor(downloadDescriptor, type);
+            String toolName = getToolName();
+            ToolDefinitionVersionDescriptor versionDescriptor = ToolHelper.getToolDefinitionRootDescriptor(toolName).getVersionOrDefault(version);
+            var installationDescriptor = createInstallationDescriptor(toolName, getVersion());
+            warnIfDifferentInstallPath(installationDescriptor, ToolHelper.loadToolInstallationDescriptor(toolName, versionDescriptor));
+            emptyExistingInstallPath(installationDescriptor.getInstallPath());
+            ToolDefinitionArtifactDescriptor artifactDescriptor = getArtifactDescriptor(versionDescriptor, this.type);
             File downloadedFile = download(artifactDescriptor);
             SignatureHelper.verifyFileSignature(downloadedFile, artifactDescriptor.getRsa_sha256(), onDigestMismatch == DigestMismatchAction.fail);
-            install(installDescriptor, downloadedFile);
-            ToolVersionCombinedDescriptor combinedDescriptor = ToolHelper.saveToolVersionInstallDescriptor(toolName, installDescriptor);
-            return new ObjectMapper().<ObjectNode>valueToTree(combinedDescriptor);            
+            install(versionDescriptor, artifactDescriptor, installationDescriptor, downloadedFile);
+            ToolHelper.saveToolInstallationDescriptor(toolName, versionDescriptor, installationDescriptor);
+            return new ToolOutputDescriptor(toolName, version, versionDescriptor, installationDescriptor);            
         } catch ( IOException e ) {
             throw new RuntimeException("Error installing "+getToolName(), e);
         }
     }
+    
+    private final void install(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor, File downloadedFile) throws IOException {
+        Path installPath = installationDescriptor.getInstallPath();
+        Files.createDirectories(installPath);
+        InstallType installType = getInstallType(versionDescriptor, artifactDescriptor);
+        switch (installType) {
+        // TODO Clean this up
+        case COPY: Files.copy(downloadedFile.toPath(), installPath.resolve(artifactDescriptor.getName()), StandardCopyOption.REPLACE_EXISTING); 
+            break;
+        case EXTRACT_ZIP: FileUtils.extractZip(downloadedFile, installPath); 
+            break;
+        case EXTRACT_TGZ: FileUtils.extractTarGZ(downloadedFile, installPath); 
+            break;
+        default: throw new RuntimeException("Unknown install type: "+installType.name());
+        }
+        downloadedFile.delete();
+        postInstall(versionDescriptor, artifactDescriptor, installationDescriptor);
+        updateBinPermissions(installationDescriptor.getBinPath());
+    }
+    
+    private ToolInstallationDescriptor createInstallationDescriptor(String toolName, String version) {
+        var installPath = getInstallPath(toolName, version);
+        var binPath = getBinPath(toolName, version);
+        var installationDescriptor = new ToolInstallationDescriptor(installPath, binPath);
+        return installationDescriptor;
+    }
 
-    private final File download(ToolVersionArtifactDescriptor artifactDescriptor) throws IOException {
+    @SneakyThrows
+    private final Path getInstallPath(String toolName, String version) {
+        var result = this.installDir;
+        if ( result == null ) {
+            result = FcliDataHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", toolName, version)).toFile();
+        }
+        return result.getCanonicalFile().toPath();
+    }
+    
+    private final Path getBinPath(String toolName, String version) {
+        return getInstallPath(toolName, version).resolve("bin");
+    }
+    
+    protected abstract String getToolName();
+    
+    protected InstallType getInstallType(ToolDefinitionVersionDescriptor descriptor, ToolDefinitionArtifactDescriptor artifactDescriptor) {
+        String artifactName = artifactDescriptor.getName();
+        if(artifactName.endsWith("gz") || artifactName.endsWith(".tar.gz")) {
+            return InstallType.EXTRACT_TGZ;
+        } else if(artifactDescriptor.getName().endsWith("zip")) {
+            return InstallType.EXTRACT_ZIP;
+        } else {
+            return InstallType.COPY;
+        }
+    };
+    protected abstract void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installDescriptor) throws IOException;
+    
+    private final void emptyExistingInstallPath(Path path) throws IOException {
+        if ( Files.exists(path) && Files.list(path).findFirst().isPresent() ) {
+            requireConfirmation.checkConfirmed();
+            FileUtils.deleteRecursive(path);
+        }
+    }
+    
+    @SneakyThrows
+    private static final void warnIfDifferentInstallPath(ToolInstallationDescriptor newDescriptor, ToolInstallationDescriptor oldDescriptor) {
+        if ( oldDescriptor!=null && !oldDescriptor.getInstallPath().toAbsolutePath().equals(newDescriptor.getInstallPath().toAbsolutePath()) ) {
+            String msg = "WARN: This tool version was previously installed in another directory." +
+                       "\n      Fcli will only track the latest installation directory; you may" +
+                       "\n      want to manually remove the old installation directory." +
+                       "\n        Old: "+oldDescriptor.getInstallDir() +
+                       "\n        New: "+newDescriptor.getInstallDir();
+            LOG.warn(msg);
+        }
+    }
+    
+    private static final File download(ToolDefinitionArtifactDescriptor artifactDescriptor) throws IOException {
         File tempDownloadFile = File.createTempFile("fcli-tool-download", null);
         tempDownloadFile.deleteOnExit();
         download(artifactDescriptor.getDownloadUrl(), tempDownloadFile);
         return tempDownloadFile;
     }
     
-    private final ToolVersionArtifactDescriptor getArtifactDescriptor(ToolVersionDescriptor downloadDescriptor, String type) {
-        if(type==null || type.isBlank()) {
+    private static final void download(String downloadUrl, File destFile) {
+        UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance("tool",
+                u->ProxyHelper.configureProxy(u, "tool", downloadUrl));
+        unirest.get(downloadUrl).asFile(destFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
+    }
+    
+    private static final ToolDefinitionArtifactDescriptor getArtifactDescriptor(ToolDefinitionVersionDescriptor downloadDescriptor, String type) {
+        if(StringUtils.isBlank(type)) {
             String OSString = OsAndArchHelper.getOSString();
             String archString = OsAndArchHelper.getArchString();
             type = OSString + "/" + archString;
         }
-        if(downloadDescriptor.getArtifacts().containsKey(type)) {
-            return downloadDescriptor.getArtifacts().get(type);
-        } else if(downloadDescriptor.getArtifacts().containsKey("default")) {
-            return downloadDescriptor.getArtifacts().get("default");
-        } else {
+        var artifacts = downloadDescriptor.getArtifacts();
+        var result = artifacts.computeIfAbsent(type, t->artifacts.get("default"));
+        if ( result==null ) {
             throw new RuntimeException("No default or matching artifact found for type " + type);
         }
-    }
-    
-    private final Void download(String downloadUrl, File destFile) {
-        UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance("tool",
-                u->ProxyHelper.configureProxy(u, "tool", downloadUrl));
-        unirest.get(downloadUrl).asFile(destFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
-        return null;
-    }
-    
-    protected void install(ToolVersionInstallDescriptor descriptor, File downloadedFile) throws IOException {
-        Path installPath = descriptor.getInstallPath();
-        Files.createDirectories(installPath);
-        InstallType installType = getInstallType(descriptor.getOriginalDownloadDescriptor());
-        switch (installType) {
-        // TODO Clean this up
-        case COPY: Files.copy(downloadedFile.toPath(), installPath.resolve(StringUtils.substringAfterLast(getArtifactDescriptor(descriptor.getOriginalDownloadDescriptor(), type).getDownloadUrl(), "/")), StandardCopyOption.REPLACE_EXISTING); break;
-        case EXTRACT_ZIP: FileUtils.extractZip(downloadedFile, installPath); break;
-        case EXTRACT_TGZ: FileUtils.extractTarGZ(downloadedFile, installPath); break;
-        default: throw new RuntimeException("Unknown install type: "+installType.name());
-        }
-        downloadedFile.delete();
-        postInstall(descriptor);
-        updateBinPermissions(descriptor.getBinPath());
-    }
-
-    @SneakyThrows
-    protected Path getInstallPathOrDefault(ToolVersionDescriptor descriptor) {
-        if ( installDir == null ) {
-            installDir = FcliDataHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", getToolName(), descriptor.getVersion())).toFile();
-        }
-        return installDir.getCanonicalFile().toPath();
-    }
-    
-    protected Path getBinPath(ToolVersionDescriptor descriptor) {
-        return getInstallPathOrDefault(descriptor).resolve("bin");
-    }
-    
-    protected abstract String getToolName();
-    protected InstallType getInstallType(ToolVersionDescriptor descriptor) {
-        ToolVersionArtifactDescriptor artifact = getArtifactDescriptor(descriptor, type);
-        if(artifact.getName().endsWith("gz")) {
-            return InstallType.EXTRACT_TGZ;
-        } else if(artifact.getName().endsWith("zip")) {
-            return InstallType.EXTRACT_ZIP;
-        } else {
-            return InstallType.COPY;
-        }
-    };
-    protected abstract void postInstall(ToolVersionInstallDescriptor installDescriptor) throws IOException;
-    protected String getCpuArchitecture() {
-        return "";
-    }
-    
-    private final void emptyExistingInstallPath(Path installPath) throws IOException {
-        if ( Files.exists(installPath) && Files.list(installPath).findFirst().isPresent() ) {
-            requireConfirmation.checkConfirmed();
-            FileUtils.deleteRecursive(installPath);
-        }
+        return result;
     }
     
     private static final void updateBinPermissions(Path binPath) throws IOException {

@@ -19,8 +19,10 @@ import java.nio.file.Path;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
+import com.fortify.cli.tool._common.helper.ToolDefinitionArtifactDescriptor;
+import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.tool._common.helper.ToolHelper;
-import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -32,19 +34,18 @@ public class ToolBugTrackerUtilityInstallCommand extends AbstractToolInstallComm
     @Getter private String toolName = ToolBugTrackerUtilityCommands.TOOL_NAME;
     
     @Override
-    protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
-        Path binPath = descriptor.getBinPath();
+    protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {
+        Path binPath = installationDescriptor.getBinPath();
         Files.createDirectories(binPath);
         FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FortifyBugTrackerUtility"), binPath);
         FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FortifyBugTrackerUtility.bat"), binPath);
         
-        String version = descriptor.getOriginalDownloadDescriptor().getVersion();
-        String jarName = String.format("FortifyBugTrackerUtility-%s.jar", version);
-        
-        //we are renaming the jar to remove the version reference
-        //this allows us to use pre-written bat/bash wrappers rather than having to dynamically generate those
-        descriptor.getInstallPath().resolve(jarName).toFile().renameTo(
-                descriptor.getInstallPath().resolve("FortifyBugTrackerUtility.jar").toFile());
-        
+        var jarFiles = Files.find(installationDescriptor.getInstallPath(), 0, 
+                (p,a)->p.toFile().getName().matches("FortifyBugTrackerUtility.*\\.jar"))
+            .toList();
+        if ( jarFiles.size()!=1 ) {
+            throw new IllegalStateException("Unexpected number of files matching FortifyBugTrackerUtility*.jar: "+jarFiles.size());
+        }
+        jarFiles.get(0).toFile().renameTo(installationDescriptor.getInstallPath().resolve("FortifyBugTrackerUtility.jar").toFile());
     }
 }

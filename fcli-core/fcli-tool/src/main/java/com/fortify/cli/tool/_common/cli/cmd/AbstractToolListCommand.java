@@ -12,21 +12,25 @@
  *******************************************************************************/
 package com.fortify.cli.tool._common.cli.cmd;
 
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.tool._common.helper.ToolHelper;
+import com.fortify.cli.tool._common.helper.ToolOutputDescriptor;
 
 public abstract class AbstractToolListCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     
     @Override
     public final JsonNode getJsonNode() {
-        String toolName = getToolName();
-        return ToolHelper.getToolVersionCombinedDescriptorsStream(toolName)
+        return ToolHelper.getToolDefinitionRootDescriptor(getToolName()).getVersionsStream()
+                .flatMap(this::getToolOutputDescriptors)
                 .map(objectMapper::<ObjectNode>valueToTree)
                 .collect(JsonHelper.arrayNodeCollector());
     }
@@ -37,4 +41,11 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
     }
     
     protected abstract String getToolName();
+    
+    private Stream<ToolOutputDescriptor> getToolOutputDescriptors(ToolDefinitionVersionDescriptor versionDescriptor) {
+        var toolName = getToolName();
+        var installationDescriptor = ToolHelper.loadToolInstallationDescriptor(toolName, versionDescriptor);
+        return Stream.concat(Stream.of(versionDescriptor.getAliases()), Stream.of(versionDescriptor.getVersion()))
+                .map(alias->new ToolOutputDescriptor(toolName, alias, versionDescriptor, installationDescriptor));
+    }
 }

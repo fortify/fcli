@@ -22,40 +22,32 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.FileUtils;
+import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.tool._common.helper.ToolHelper;
-import com.fortify.cli.tool._common.helper.ToolVersionCombinedDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolOutputDescriptor;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
-    @Getter @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.uninstall.version", defaultValue = "default")
+    @Getter @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.uninstall.version", defaultValue = "latest")
     private String version;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     
     @Override
     public final JsonNode getJsonNode() {
         String toolName = getToolName();
-        ToolVersionCombinedDescriptor descriptor = ToolHelper.loadToolVersionCombinedDescriptor(toolName, version);
-        if ( descriptor==null ) {
-            throw new IllegalArgumentException("Tool installation not found");
-        }
-        Path installPath = descriptor.getInstallPath();
-        if ( installPath==null ) {
-            throw new IllegalStateException("Tool installation path not found");
-        }
+        var versionDescriptor = ToolHelper.getToolDefinitionRootDescriptor(toolName).getVersion(version);
+        var installationDescriptor = getInstallationDescriptor(toolName, versionDescriptor);
+        Path installPath = getInstallPath(installationDescriptor);
         requireConfirmation.checkConfirmed();
-        try {
-            FileUtils.deleteRecursive(installPath);
-        } catch ( IOException e ) {
-            throw new RuntimeException("Error deleting tool installation; please manually delete the "+installPath+" directory", e);
-        } finally {
-            ToolHelper.deleteToolVersionInstallDescriptor(toolName, version);
-        }
-        return new ObjectMapper().valueToTree(descriptor);
+        deleteToolInstallation(toolName, versionDescriptor, installPath);
+        var outputDescriptor = new ToolOutputDescriptor(toolName, version, versionDescriptor, installationDescriptor);
+        return new ObjectMapper().valueToTree(outputDescriptor);
     }
-    
+
     @Override
     public String getActionCommandResult() {
         return "UNINSTALLED";
@@ -67,4 +59,30 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
     }
     
     protected abstract String getToolName();
+    
+    private static final ToolInstallationDescriptor getInstallationDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
+        var installationDescriptor = ToolHelper.loadToolInstallationDescriptor(toolName, versionDescriptor);
+        if ( installationDescriptor==null ) {
+            throw new IllegalArgumentException("Tool installation not found");
+        }
+        return installationDescriptor;
+    }
+    
+    private static final Path getInstallPath(ToolInstallationDescriptor installationDescriptor) {
+        Path installPath = installationDescriptor.getInstallPath();
+        if ( installPath==null ) {
+            throw new IllegalStateException("Tool installation path not found");
+        }
+        return installPath;
+    }
+    
+    private static final void deleteToolInstallation(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, Path installPath) {
+        try {
+            FileUtils.deleteRecursive(installPath);
+        } catch ( IOException e ) {
+            throw new RuntimeException("Error deleting tool installation; please manually delete the "+installPath+" directory", e);
+        } finally {
+            ToolHelper.deleteToolInstallDescriptor(toolName, versionDescriptor);
+        }
+    }
 }

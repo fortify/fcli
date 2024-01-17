@@ -16,15 +16,20 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * This class represents the contents of an artifact definition in a tool 
+ * definition YAML file.
+ */
 @JsonIgnoreProperties(ignoreUnknown=true)
 @Reflectable @NoArgsConstructor 
 @Data
-public final class ToolVersionDescriptor {
+public final class ToolDefinitionVersionDescriptor {
     private String version;
     private String[] aliases;
     private boolean stable;
-    private Map<String, ToolVersionArtifactDescriptor> artifacts;
+    private Map<String, ToolDefinitionArtifactDescriptor> artifacts;
 }

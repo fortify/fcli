@@ -19,8 +19,10 @@ import java.nio.file.Path;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
+import com.fortify.cli.tool._common.helper.ToolDefinitionArtifactDescriptor;
+import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.tool._common.helper.ToolHelper;
-import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -32,8 +34,8 @@ public class ToolFoDUploaderInstallCommand extends AbstractToolInstallCommand {
     @Getter private String toolName = ToolFoDUploaderCommands.TOOL_NAME;
     
     @Override
-    protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
-        Path binPath = descriptor.getBinPath();
+    protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {
+        Path binPath = installationDescriptor.getBinPath();
         Files.createDirectories(binPath);
         FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FoDUpload"), binPath);
         FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FoDUpload.bat"), binPath);

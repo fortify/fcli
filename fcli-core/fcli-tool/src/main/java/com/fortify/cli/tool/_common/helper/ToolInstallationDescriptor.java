@@ -23,18 +23,22 @@ import com.fortify.cli.common.util.StringUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * This class represents a single tool installation, containing information about the 
+ * installation location. It doesn't include the actual tool name or version, as this 
+ * is represented by the directory name (tool name) and file name (version) where the 
+ * serialized installation descriptors are stored. 
+ */
 @JsonIgnoreProperties(ignoreUnknown=true)
 @Reflectable @NoArgsConstructor 
 @Data
-public class ToolVersionInstallDescriptor {
-    private ToolVersionDescriptor originalDownloadDescriptor;
+public class ToolInstallationDescriptor {
     private String installDir;
     private String binDir;
     @JsonIgnore Path installPath;
     @JsonIgnore Path binPath;
     
-    public ToolVersionInstallDescriptor(ToolVersionDescriptor originalDownloadDescriptor, Path installPath, Path binPath) {
-        this.originalDownloadDescriptor = originalDownloadDescriptor;
+    public ToolInstallationDescriptor(Path installPath, Path binPath) {
         this.installPath = installPath.toAbsolutePath();
         this.installDir = installPath.toString();
         this.binPath = binPath.toAbsolutePath();
