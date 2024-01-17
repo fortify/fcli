@@ -39,7 +39,7 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
     @Override
     public final JsonNode getJsonNode() {
         String toolName = getToolName();
-        var versionDescriptor = ToolHelper.getToolDefinitionRootDescriptor(toolName).getVersion(version);
+        var versionDescriptor = ToolHelper.getToolDefinitionRootDescriptor(toolName).getVersionOrDefault(version);
         var installationDescriptor = getInstallationDescriptor(toolName, versionDescriptor);
         Path installPath = getInstallPath(installationDescriptor);
         requireConfirmation.checkConfirmed();

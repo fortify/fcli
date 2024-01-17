@@ -37,7 +37,7 @@ class ToolConfigUpdateSpec extends FcliBaseSpec {
                 size()>0
                 it[0].replace(' ', '').equals("RemotepathLocalpathAction")
                 it[1].replace(" ", "").contains("https://github.com/fortify-ps/tool-definitions/raw/main/v1/tool-definitions")
-                it[1].contains("UPDATED")
+                it[1].contains(" UPDATED")
             }
     }
     
@@ -48,9 +48,8 @@ class ToolConfigUpdateSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindir")
+                it[0].replace(' ', '').equals("NameVersionAliasforStableInstalldir")
                 it[1].replace(" ", "").startsWith("debricked")
-                it[1].replace(" ", "").contains("YesNo")
             }
     }
     
@@ -63,7 +62,7 @@ class ToolConfigUpdateSpec extends FcliBaseSpec {
                 size()>0
                 it[0].replace(' ', '').equals("RemotepathLocalpathAction")
                 it[1].replace(" ", "").contains("https://github.com/psmf22/tool-definitions/raw/main/v1/tool-definitions")
-                it[1].contains("UPDATED")
+                it[1].contains(" UPDATED")
             }
     }
     
@@ -74,9 +73,8 @@ class ToolConfigUpdateSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindir")
+                it[0].replace(' ', '').equals("NameVersionAliasforStableInstalldir")
                 it[1].replace(" ", "").startsWith("debricked")
-                it[1].replace(" ", "").contains("YesNo")
             }
     }
     /*

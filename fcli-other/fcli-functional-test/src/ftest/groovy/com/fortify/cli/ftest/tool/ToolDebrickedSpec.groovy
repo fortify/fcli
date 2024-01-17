@@ -35,9 +35,8 @@ class ToolDebrickedSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
-                it[1].replace(" ", "").contains("YesYes")
-                it[1].contains("INSTALLED")
+                it[0].replace(' ', '').equals("NameVersionAliasforStableInstalldirAction")
+                it[1].contains(" INSTALLED")
             }
     }
     
@@ -48,9 +47,8 @@ class ToolDebrickedSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindir")
+                it[0].replace(' ', '').equals("NameVersionAliasforStableInstalldir")
                 it[1].replace(" ", "").startsWith("debricked")
-                it[1].replace(" ", "").contains("YesYes")
             }
     }
     
@@ -61,8 +59,8 @@ class ToolDebrickedSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
-                it[1].replace(" ", "").contains("UNINSTALLED")
+                it[0].replace(' ', '').equals("NameVersionAliasforStableInstalldirAction")
+                it[1].contains(" UNINSTALLED")
             }
     }
     

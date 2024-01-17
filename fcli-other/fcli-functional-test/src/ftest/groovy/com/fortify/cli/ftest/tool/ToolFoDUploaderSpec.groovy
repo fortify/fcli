@@ -35,9 +35,8 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
-                it[1].replace(" ", "").contains("YesYes")
-                it[1].contains("INSTALLED")
+                it[0].replace(' ', '').equals("NameVersionAliasforStableInstalldirAction")
+                it[1].contains(" INSTALLED")
             }
     }
     
@@ -48,9 +47,8 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindir")
+                it[0].replace(' ', '').equals("NameVersionAliasforStableInstalldir")
                 it[1].replace(" ", "").startsWith("fod-uploader")
-                it[1].replace(" ", "").contains("YesYes")
             }
     }
     
@@ -61,8 +59,8 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
-                it[1].replace(" ", "").contains("YesNoN/AN/AUNINSTALLED")
+                it[0].replace(' ', '').equals("NameVersionAliasforStableInstalldirAction")
+                it[1].contains(" UNINSTALLED")
             }
     }
     
@@ -73,9 +71,9 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
-                it[1].replace(" ", "").contains("5.4.0")
-                it[1].contains("INSTALLED")
+                it[0].replace(' ', '').equals("NameVersionAliasforStableInstalldirAction")
+                it[1].contains("5.4.0")
+                it[1].contains(" INSTALLED")
             }
     }
     
@@ -86,9 +84,9 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
-                it[1].replace(" ", "").contains("5.0.1")
-                it[1].contains("INSTALLED")
+                it[0].replace(' ', '').equals("NameVersionAliasforStableInstalldirAction")
+                it[1].contains("5.0.1")
+                it[1].contains(" INSTALLED")
             }
     }
     
@@ -99,9 +97,9 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
-                it[1].replace(" ", "").contains("5.0.0")
-                it[1].contains("INSTALLED")
+                it[0].replace(' ', '').equals("NameVersionAliasforStableInstalldirAction")
+                it[1].contains("5.0.0")
+                it[1].contains(" INSTALLED")
             }
     }
     

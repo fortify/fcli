@@ -40,7 +40,7 @@ public class ToolBugTrackerUtilityInstallCommand extends AbstractToolInstallComm
         FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FortifyBugTrackerUtility"), binPath);
         FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FortifyBugTrackerUtility.bat"), binPath);
         
-        var jarFiles = Files.find(installationDescriptor.getInstallPath(), 0, 
+        var jarFiles = Files.find(installationDescriptor.getInstallPath(), 1, 
                 (p,a)->p.toFile().getName().matches("FortifyBugTrackerUtility.*\\.jar"))
             .toList();
         if ( jarFiles.size()!=1 ) {
