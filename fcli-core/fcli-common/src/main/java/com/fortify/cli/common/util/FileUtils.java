@@ -49,6 +49,11 @@ public final class FileUtils {
     }
     
     public static final void copyResourceToDir(String resourcePath, Path destinationPath, CopyOption... options) {
+        try {
+            Files.createDirectories(destinationPath);
+        } catch (IOException e) {
+            throw new RuntimeException(String.format("Error creating directory %s", destinationPath), e);
+        }
         String fileName = Paths.get(resourcePath).getFileName().toString();
         copyResource(resourcePath, destinationPath.resolve(fileName), options);
     }
@@ -63,9 +68,12 @@ public final class FileUtils {
         }
     }
     
-    @SneakyThrows
     public static final void move(Path source, Path target) {
-        Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        try {
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException(String.format("Error moving %s to %s", source, target), e);
+        }
     }
     
     public static final String getFileDigest(File file, String algorithm) {

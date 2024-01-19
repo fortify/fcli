@@ -13,7 +13,6 @@
 package com.fortify.cli.tool.fod_uploader.cli.cmd;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -36,7 +35,6 @@ public class ToolFoDUploaderInstallCommand extends AbstractToolInstallCommand {
     @Override
     protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {
         Path binPath = installationDescriptor.getBinPath();
-        Files.createDirectories(binPath);
         FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FoDUpload"), binPath);
         FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FoDUpload.bat"), binPath);
     }
