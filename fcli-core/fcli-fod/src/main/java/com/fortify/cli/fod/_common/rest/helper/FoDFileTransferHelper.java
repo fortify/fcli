@@ -1,13 +1,13 @@
 /*******************************************************************************
  * Copyright 2021, 2023 Open Text.
  *
- * The only warranties for products and services of Open Text 
- * and its affiliates and licensors ("Open Text") are as may 
- * be set forth in the express warranty statements accompanying 
- * such products and services. Nothing herein should be construed 
- * as constituting an additional warranty. Open Text shall not be 
- * liable for technical or editorial errors or omissions contained 
- * herein. The information contained herein is subject to change 
+ * The only warranties for products and services of Open Text
+ * and its affiliates and licensors ("Open Text") are as may
+ * be set forth in the express warranty statements accompanying
+ * such products and services. Nothing herein should be construed
+ * as constituting an additional warranty. Open Text shall not be
+ * liable for technical or editorial errors or omissions contained
+ * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
 
@@ -32,11 +32,31 @@ import kong.unirest.UnirestInstance;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
-// TODO Based on some recent messages on FortifySSC, potentially we may need 
+// TODO Based on some recent messages on FortifySSC, potentially we may need
 //      chunked uploads for SC DAST as well, so consider refactoring into a
 //      generic class in fcli-common.
 public final class FoDFileTransferHelper {
     private static final int chunkSize = FoDConstants.DEFAULT_CHUNK_SIZE;
+
+    @SneakyThrows
+    public static final JsonNode upload(UnirestInstance unirest, HttpRequest<?> baseRequest, File f) {
+        if (!f.exists() || !f.canRead()) {
+            throw new IllegalArgumentException("Could not read file: " + f.getPath());
+        }
+        String body = null;
+        try ( FoDProgressMonitor uploadMonitor = new FoDProgressMonitor("Upload") ) {
+            body =  unirest.request(baseRequest.getHttpMethod().name(), baseRequest.getUrl())
+                    .noCharset()
+                    .multiPartContent()
+                    .field("file", f)
+                    .uploadMonitor(uploadMonitor)
+                    .asString()
+                    .getBody();
+        } catch (Exception e) {
+            throw new RuntimeException("Error uploading file", e);
+        }
+        return new ObjectMapper().readTree(body);
+    }
 
     @SneakyThrows
     public static final JsonNode uploadChunked(UnirestInstance unirest, HttpRequest<?> baseRequest, File f) {
@@ -64,7 +84,7 @@ public final class FoDFileTransferHelper {
                 }
 
                 lastBody = unirest.request(
-                                String.valueOf(baseRequest.getHttpMethod()), 
+                                String.valueOf(baseRequest.getHttpMethod()),
                                 getUri(baseRequest, fragmentNumber++, offset))
                         .contentType("application/octet-stream")
                         .header("Accept", "application/json")

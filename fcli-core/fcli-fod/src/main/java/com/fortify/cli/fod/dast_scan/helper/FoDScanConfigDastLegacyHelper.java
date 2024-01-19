@@ -13,22 +13,18 @@
 
 package com.fortify.cli.fod.dast_scan.helper;
 
-import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.json.JsonNodeHolder;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.fod._common.rest.FoDUrls;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import kong.unirest.UnirestInstance;
 
-@Reflectable @NoArgsConstructor
-@Data @ToString
-@EqualsAndHashCode(callSuper=false)
-public class FoDScanConfigDastDescriptor extends JsonNodeHolder {
-    private Integer assessmentTypeId;
-    private Integer entitlementId;
-    private String entitlementDescription;
-    private String entitlementFrequencyType;
-    private Integer entitlementFrequencyTypeId;
-    private String dynamicSiteURL;
+public class FoDScanConfigDastLegacyHelper {
+    public static final FoDScanConfigDastLegacyDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
+        var body = unirest.get(FoDUrls.DYNAMIC_SCANS + "/scan-setup")
+                .routeParam("relId", relId)
+                .asObject(ObjectNode.class)
+                .getBody();
+        return JsonHelper.treeToValue(body, FoDScanConfigDastLegacyDescriptor.class);
+    }
 }

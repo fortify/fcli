@@ -13,29 +13,23 @@
 
 package com.fortify.cli.fod._common.scan.helper.dast;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.formkiq.graalvm.annotations.Reflectable;
-
+import com.fortify.cli.fod._common.util.FoDEnums;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
+
+@EqualsAndHashCode(callSuper = true)
 @Reflectable @NoArgsConstructor @AllArgsConstructor
-@Getter @ToString @Builder
-public class FoDScanDastStartRequest {
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MM/dd/yyyy HH:mm")
+@Data @SuperBuilder
+public class FoDScanDastAutomatedSetupGrpcRequest extends FoDScanDastAutomatedSetupApiRequest {
 
-    private String startDate;
-    private Integer assessmentTypeId;
-    private Integer entitlementId;
-    private String entitlementFrequencyType;
-    private Boolean isRemediationScan;
-    //private Boolean isBundledAssessment;
-    //private Integer parentAssessmentTypeId;
-    private Boolean applyPreviousScanSettings;
-    private String scanMethodType;
-    private String scanTool;
-    private String scanToolVersion;
+  public Integer fileId;
+  public FoDEnums.ApiSchemeType schemeType;
+  public String host;
+  public String servicePath;
+
 }
