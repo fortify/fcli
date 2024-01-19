@@ -46,7 +46,7 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
         Path installPath = getInstallPath(installationDescriptor);
         requireConfirmation.checkConfirmed(installPath);
         deleteToolInstallation(toolName, versionDescriptor, installPath);
-        var outputDescriptor = new ToolOutputDescriptor(toolName, version, versionDescriptor, installationDescriptor);
+        var outputDescriptor = new ToolOutputDescriptor(toolName, versionDescriptor, installationDescriptor);
         return new ObjectMapper().valueToTree(outputDescriptor);
     }
 

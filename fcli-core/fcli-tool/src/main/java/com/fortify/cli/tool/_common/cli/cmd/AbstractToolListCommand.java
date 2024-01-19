@@ -12,8 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.tool._common.cli.cmd;
 
-import java.util.stream.Stream;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -30,7 +28,7 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
     @Override
     public final JsonNode getJsonNode() {
         return ToolHelper.getToolDefinitionRootDescriptor(getToolName()).getVersionsStream()
-                .flatMap(this::getToolOutputDescriptors)
+                .map(this::createToolOutputDescriptor)
                 .map(objectMapper::<ObjectNode>valueToTree)
                 .collect(JsonHelper.arrayNodeCollector());
     }
@@ -42,10 +40,9 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
     
     protected abstract String getToolName();
     
-    private Stream<ToolOutputDescriptor> getToolOutputDescriptors(ToolDefinitionVersionDescriptor versionDescriptor) {
+    private ToolOutputDescriptor createToolOutputDescriptor(ToolDefinitionVersionDescriptor versionDescriptor) {
         var toolName = getToolName();
         var installationDescriptor = ToolHelper.loadToolInstallationDescriptor(toolName, versionDescriptor);
-        return Stream.concat(Stream.of(versionDescriptor.getAliases()), Stream.of(versionDescriptor.getVersion()))
-                .map(alias->new ToolOutputDescriptor(toolName, alias, versionDescriptor, installationDescriptor));
+        return new ToolOutputDescriptor(toolName, versionDescriptor, installationDescriptor);
     }
 }

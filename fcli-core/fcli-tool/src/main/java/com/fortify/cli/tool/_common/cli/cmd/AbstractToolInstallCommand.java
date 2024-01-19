@@ -111,7 +111,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         try {
             String toolName = getToolName();
             ToolDefinitionVersionDescriptor versionDescriptor = ToolHelper.getToolDefinitionRootDescriptor(toolName).getVersionOrDefault(version);
-            var installationDescriptor = createInstallationDescriptor(toolName, getVersion());
+            var installationDescriptor = createInstallationDescriptor(toolName, versionDescriptor.getVersion());
             warnIfDifferentInstallPath(installationDescriptor, ToolHelper.loadToolInstallationDescriptor(toolName, versionDescriptor));
             emptyExistingInstallPath(installationDescriptor.getInstallPath());
             ToolDefinitionArtifactDescriptor artifactDescriptor = getArtifactDescriptor(versionDescriptor, this.platform);
@@ -119,7 +119,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
             SignatureHelper.verifyFileSignature(downloadedFile, artifactDescriptor.getRsa_sha256(), onDigestMismatch == DigestMismatchAction.fail);
             install(versionDescriptor, artifactDescriptor, installationDescriptor, downloadedFile);
             ToolHelper.saveToolInstallationDescriptor(toolName, versionDescriptor, installationDescriptor);
-            return new ToolOutputDescriptor(toolName, version, versionDescriptor, installationDescriptor);            
+            return new ToolOutputDescriptor(toolName, versionDescriptor, installationDescriptor);            
         } catch ( IOException e ) {
             throw new RuntimeException("Error installing "+getToolName(), e);
         }

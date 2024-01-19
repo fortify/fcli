@@ -30,25 +30,21 @@ import lombok.Data;
 public class ToolOutputDescriptor {
     private final String name;
     private final String version;
-    private final String aliasFor;
-    private final boolean stable;
+    private final String[] aliases;
+    private final String stable;
     private Map<String, ToolDefinitionArtifactDescriptor> binaries;
     private final String installDir;
     private final String binDir;
     private final String installed;
     
-    public ToolOutputDescriptor(String toolName, String version, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
+    public ToolOutputDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
         this.name = toolName;
-        this.version = version;
-        this.aliasFor = versionDescriptor.getVersion();
-        this.stable = versionDescriptor.isStable();
+        this.version = versionDescriptor.getVersion();
+        this.aliases = versionDescriptor.getAliases();
+        this.stable = versionDescriptor.isStable()?"Yes":"No";
         this.binaries = versionDescriptor.getBinaries();
         this.installDir = installationDescriptor==null ? null : installationDescriptor.getInstallDir();
         this.binDir = installationDescriptor==null ? null : installationDescriptor.getBinDir();
         this.installed = StringUtils.isBlank(this.installDir) ? "No" : "Yes";
-    }
-    
-    public ToolOutputDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
-        this(toolName, versionDescriptor.getVersion(), versionDescriptor, installationDescriptor);
     }
 }
