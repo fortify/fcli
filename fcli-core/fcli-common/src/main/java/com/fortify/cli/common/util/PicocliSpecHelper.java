@@ -54,7 +54,7 @@ public class PicocliSpecHelper {
         return annotation==null ? null : annotation.value();
     }
     
-    public static final String getMessageString(CommandSpec commandSpec, String keySuffix) {
+    public static final String getMessageString(CommandSpec commandSpec, String keySuffix, Object... args) {
         var group = getCommandGroup(commandSpec);
         Messages messages = getMessages(commandSpec);
         String value = null;
@@ -64,7 +64,8 @@ public class PicocliSpecHelper {
             commandSpec = commandSpec.parent();
         }
         // If value is still null, try without any prefix
-        return value!=null ? value : getMessageString(messages, "", group, keySuffix);
+        value = value!=null ? value : getMessageString(messages, "", group, keySuffix);
+        return formatMessage(value, args);
     }
         
     private static final String getMessageString(Messages messages, String pfx, String group, String sfx) {
@@ -75,8 +76,12 @@ public class PicocliSpecHelper {
         return value!=null ? value : messages.getString(pfx+sfx, null);
     }
     
-    public static final String getRequiredMessageString(CommandSpec commandSpec, String keySuffix) {
-        String result = getMessageString(commandSpec, keySuffix);
+    private static final String formatMessage(String msg, Object... args) {
+        return msg==null || args==null || args.length==0 ? msg : String.format(msg, args);
+    }
+    
+    public static final String getRequiredMessageString(CommandSpec commandSpec, String keySuffix, Object... args) {
+        String result = getMessageString(commandSpec, keySuffix, args);
         if ( StringUtils.isBlank(result) ) {
             throw new RuntimeException("No resource bundle entry found for required key suffix: "+keySuffix);
         }

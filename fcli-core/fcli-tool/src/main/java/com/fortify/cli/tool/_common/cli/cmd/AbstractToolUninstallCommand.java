@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -31,6 +32,7 @@ import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+@CommandGroup("uninstall")
 public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.uninstall.version", defaultValue = "latest")
     private String version;
@@ -42,7 +44,7 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
         var versionDescriptor = ToolHelper.getToolDefinitionRootDescriptor(toolName).getVersionOrDefault(version);
         var installationDescriptor = getInstallationDescriptor(toolName, versionDescriptor);
         Path installPath = getInstallPath(installationDescriptor);
-        requireConfirmation.checkConfirmed();
+        requireConfirmation.checkConfirmed(installPath);
         deleteToolInstallation(toolName, versionDescriptor, installPath);
         var outputDescriptor = new ToolOutputDescriptor(toolName, version, versionDescriptor, installationDescriptor);
         return new ObjectMapper().valueToTree(outputDescriptor);

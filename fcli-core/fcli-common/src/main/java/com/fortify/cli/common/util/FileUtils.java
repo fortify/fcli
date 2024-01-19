@@ -33,8 +33,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
-import lombok.SneakyThrows;
-
 // TODO For now, methods provided in this class are only used by the tools module,
 //      but potentially some methods or the full class could be moved to the common module.
 public final class FileUtils {

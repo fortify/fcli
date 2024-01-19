@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
+import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -51,6 +52,7 @@ import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+@CommandGroup("install")
 public abstract class AbstractToolInstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractToolInstallCommand.class);
     private static final Set<PosixFilePermission> binPermissions = PosixFilePermissions.fromString("rwxr-xr-x");
@@ -99,7 +101,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     
     private final void emptyExistingInstallPath(Path path) throws IOException {
         if ( Files.exists(path) && Files.list(path).findFirst().isPresent() ) {
-            requireConfirmation.checkConfirmed();
+            requireConfirmation.checkConfirmed(path);
             FileUtils.deleteRecursive(path);
         }
     }
