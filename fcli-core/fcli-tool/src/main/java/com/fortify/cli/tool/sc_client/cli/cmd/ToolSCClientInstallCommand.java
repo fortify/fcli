@@ -37,6 +37,11 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     @Option(names= {"-t", "--client-auth-token"}) private String clientAuthToken; 
     
     @Override
+    protected String getDefaultArtifactType() {
+        return "java";
+    }
+    
+    @Override
     protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {
         // Updating bin permissions is handled by parent class
         updateClientAuthToken(installationDescriptor.getInstallPath());

@@ -34,6 +34,11 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     @Getter private String toolName = ToolFcliCommands.TOOL_NAME;
     
     @Override
+    protected String getDefaultArtifactType() {
+        return "java";
+    }
+    
+    @Override
     protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {
         Path installPath = installationDescriptor.getInstallPath();
         Path binPath = installationDescriptor.getBinPath();

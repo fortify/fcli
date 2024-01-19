@@ -31,6 +31,10 @@ public class ToolDebrickedCliInstallCommand extends AbstractToolInstallCommand {
     @Getter @Mixin private OutputHelperMixins.Install outputHelper;
     @Getter private String toolName = ToolDebrickedCliCommands.TOOL_NAME;
 
+    @Override
+    protected String getDefaultArtifactType() {
+        return "";
+    }
     
     @Override
     protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {

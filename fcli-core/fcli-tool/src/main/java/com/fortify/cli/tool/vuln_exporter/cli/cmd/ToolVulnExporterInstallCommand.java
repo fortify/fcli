@@ -33,6 +33,11 @@ public class ToolVulnExporterInstallCommand extends AbstractToolInstallCommand {
     @Getter private String toolName = ToolVulnExporterCommands.TOOL_NAME;
     
     @Override
+    protected String getDefaultArtifactType() {
+        return "java";
+    }
+    
+    @Override
     protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {
         Path binPath = installationDescriptor.getBinPath();
         FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FortifyVulnerabilityExporter"), binPath);

@@ -85,6 +85,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     
     protected abstract String getToolName();
     protected abstract void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installDescriptor) throws IOException;
+    protected abstract String getDefaultArtifactType();
     protected InstallType getInstallType(ToolDefinitionVersionDescriptor descriptor, ToolDefinitionArtifactDescriptor artifactDescriptor) {
         String artifactName = artifactDescriptor.getName();
         if(artifactName.endsWith("gz") || artifactName.endsWith(".tar.gz")) {
@@ -161,6 +162,27 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         return getInstallPath(toolName, version).resolve("bin");
     }
     
+    private final ToolDefinitionArtifactDescriptor getArtifactDescriptor(ToolDefinitionVersionDescriptor downloadDescriptor, String type) {
+        var artifacts = downloadDescriptor.getArtifacts();
+        if(!StringUtils.isBlank(this.type)) {
+            return checkNonNull(artifacts.get(this.type), String.format("No matching artifact found for type %s", type));
+        } else {
+            String OSString = OsAndArchHelper.getOSString();
+            String archString = OsAndArchHelper.getArchString();
+            var computedType = OSString + "/" + archString;
+            var defaultType = getDefaultArtifactType();
+            return checkNonNull(artifacts.computeIfAbsent(computedType, t->artifacts.get(defaultType)), 
+                    "Appropriate artifact type for system platform cannot be determined automatically, please use --type option");
+        }
+    }
+
+    private ToolDefinitionArtifactDescriptor checkNonNull(ToolDefinitionArtifactDescriptor result, String msgIfNull) {
+        if ( result==null ) {
+            throw new RuntimeException(msgIfNull);
+        }
+        return result;
+    }
+    
     @SneakyThrows
     private static final void warnIfDifferentInstallPath(ToolInstallationDescriptor newDescriptor, ToolInstallationDescriptor oldDescriptor) {
         if ( oldDescriptor!=null && !oldDescriptor.getInstallPath().toAbsolutePath().equals(newDescriptor.getInstallPath().toAbsolutePath()) ) {
@@ -184,20 +206,6 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance("tool",
                 u->ProxyHelper.configureProxy(u, "tool", downloadUrl));
         unirest.get(downloadUrl).asFile(destFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
-    }
-    
-    private static final ToolDefinitionArtifactDescriptor getArtifactDescriptor(ToolDefinitionVersionDescriptor downloadDescriptor, String type) {
-        if(StringUtils.isBlank(type)) {
-            String OSString = OsAndArchHelper.getOSString();
-            String archString = OsAndArchHelper.getArchString();
-            type = OSString + "/" + archString;
-        }
-        var artifacts = downloadDescriptor.getArtifacts();
-        var result = artifacts.computeIfAbsent(type, t->artifacts.get("default"));
-        if ( result==null ) {
-            throw new RuntimeException("No default or matching artifact found for type " + type);
-        }
-        return result;
     }
     
     private static final void updateBinPermissions(Path binPath) throws IOException {
