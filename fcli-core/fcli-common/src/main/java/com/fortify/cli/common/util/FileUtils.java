@@ -21,15 +21,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Comparator;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
@@ -72,36 +69,6 @@ public final class FileUtils {
         } catch (IOException e) {
             throw new RuntimeException(String.format("Error moving %s to %s", source, target), e);
         }
-    }
-    
-    public static final String getFileDigest(File file, String algorithm) {
-        try {
-            MessageDigest digestInstance = MessageDigest.getInstance(algorithm);
-            return bytesToHex(DigestUtils.digest(digestInstance, file));
-        } catch ( IOException | NoSuchAlgorithmException e ) {
-            throw new RuntimeException("Error calculating file digest for file "+file.getAbsolutePath(), e);
-        }
-    }
-    
-    public static final String getDigest(String inputName, InputStream input, String algorithm) {
-        try {
-            MessageDigest digestInstance = MessageDigest.getInstance(algorithm);
-            return bytesToHex(DigestUtils.digest(digestInstance, input));
-        } catch ( IOException | NoSuchAlgorithmException e ) {
-            throw new RuntimeException("Error calculating file digest for file "+inputName, e);
-        }
-    }
-    
-    private static final String bytesToHex(byte[] bytes) {
-        StringBuilder hexString = new StringBuilder(2 * bytes.length);
-        for (int i = 0; i < bytes.length; i++) {
-            String hex = Integer.toHexString(0xff & bytes[i]);
-            if(hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-        }
-        return hexString.toString();
     }
     
     public static final void extractZip(File zipFile, Path targetDir) throws IOException {
