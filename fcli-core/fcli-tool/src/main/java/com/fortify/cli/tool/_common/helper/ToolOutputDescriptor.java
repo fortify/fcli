@@ -32,7 +32,7 @@ public class ToolOutputDescriptor {
     private final String version;
     private final String aliasFor;
     private final boolean stable;
-    private Map<String, ToolDefinitionArtifactDescriptor> artifacts;
+    private Map<String, ToolDefinitionArtifactDescriptor> binaries;
     private final String installDir;
     private final String binDir;
     private final String installed;
@@ -42,7 +42,7 @@ public class ToolOutputDescriptor {
         this.version = version;
         this.aliasFor = versionDescriptor.getVersion();
         this.stable = versionDescriptor.isStable();
-        this.artifacts = versionDescriptor.getArtifacts();
+        this.binaries = versionDescriptor.getBinaries();
         this.installDir = installationDescriptor==null ? null : installationDescriptor.getInstallDir();
         this.binDir = installationDescriptor==null ? null : installationDescriptor.getBinDir();
         this.installed = StringUtils.isBlank(this.installDir) ? "No" : "Yes";

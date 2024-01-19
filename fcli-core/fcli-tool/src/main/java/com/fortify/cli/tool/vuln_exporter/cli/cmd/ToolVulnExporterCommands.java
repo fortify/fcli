@@ -22,6 +22,7 @@ import picocli.CommandLine.Command;
         subcommands = {
                 ToolVulnExporterInstallCommand.class,
                 ToolVulnExporterListCommand.class,
+                ToolVulnExporterListPlatformsCommand.class,
                 ToolVulnExporterUninstallCommand.class
         }
 

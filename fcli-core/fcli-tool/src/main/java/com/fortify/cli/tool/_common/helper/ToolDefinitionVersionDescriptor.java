@@ -31,5 +31,5 @@ public final class ToolDefinitionVersionDescriptor {
     private String version;
     private String[] aliases;
     private boolean stable;
-    private Map<String, ToolDefinitionArtifactDescriptor> artifacts;
+    private Map<String, ToolDefinitionArtifactDescriptor> binaries;
 }

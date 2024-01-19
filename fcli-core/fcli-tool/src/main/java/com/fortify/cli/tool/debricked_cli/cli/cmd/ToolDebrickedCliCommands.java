@@ -18,9 +18,11 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = ToolDebrickedCliCommands.TOOL_NAME,
+        aliases = {"dcli"},
         subcommands = {
                 ToolDebrickedCliInstallCommand.class,
                 ToolDebrickedCliListCommand.class,
+                ToolDebrickedCliListPlatformsCommand.class,
                 ToolDebrickedCliUninstallCommand.class
         }
 

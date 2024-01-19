@@ -9,6 +9,7 @@ import picocli.CommandLine.Command;
         subcommands = {
                 ToolFcliInstallCommand.class,
                 ToolFcliListCommand.class,
+                ToolFcliListPlatformsCommand.class,
                 ToolFcliUninstallCommand.class
         }
 

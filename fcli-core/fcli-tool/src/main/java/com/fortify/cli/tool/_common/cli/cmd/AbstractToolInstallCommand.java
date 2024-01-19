@@ -60,8 +60,8 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private String version;
     @Getter @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
     private File installDir;
-    @Getter @Option(names={"--type"}, required = false, descriptionKey="fcli.tool.install.type") 
-    private String type;
+    @Getter @Option(names={"-p", "--platform"}, required = false, descriptionKey="fcli.tool.install.platform") 
+    private String platform;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Getter @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
     private DigestMismatchAction onDigestMismatch;
@@ -114,7 +114,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
             var installationDescriptor = createInstallationDescriptor(toolName, getVersion());
             warnIfDifferentInstallPath(installationDescriptor, ToolHelper.loadToolInstallationDescriptor(toolName, versionDescriptor));
             emptyExistingInstallPath(installationDescriptor.getInstallPath());
-            ToolDefinitionArtifactDescriptor artifactDescriptor = getArtifactDescriptor(versionDescriptor, this.type);
+            ToolDefinitionArtifactDescriptor artifactDescriptor = getArtifactDescriptor(versionDescriptor, this.platform);
             File downloadedFile = download(artifactDescriptor);
             SignatureHelper.verifyFileSignature(downloadedFile, artifactDescriptor.getRsa_sha256(), onDigestMismatch == DigestMismatchAction.fail);
             install(versionDescriptor, artifactDescriptor, installationDescriptor, downloadedFile);
@@ -164,17 +164,17 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         return getInstallPath(toolName, version).resolve("bin");
     }
     
-    private final ToolDefinitionArtifactDescriptor getArtifactDescriptor(ToolDefinitionVersionDescriptor downloadDescriptor, String type) {
-        var artifacts = downloadDescriptor.getArtifacts();
-        if(!StringUtils.isBlank(this.type)) {
-            return checkNonNull(artifacts.get(this.type), String.format("No matching artifact found for type %s", type));
+    private final ToolDefinitionArtifactDescriptor getArtifactDescriptor(ToolDefinitionVersionDescriptor versionDescriptor, String type) {
+        var artifacts = versionDescriptor.getBinaries();
+        if(!StringUtils.isBlank(this.platform)) {
+            return checkNonNull(artifacts.get(this.platform), String.format("No matching artifact found for platform %s", type));
         } else {
             String OSString = OsAndArchHelper.getOSString();
             String archString = OsAndArchHelper.getArchString();
             var computedType = OSString + "/" + archString;
             var defaultType = getDefaultArtifactType();
             return checkNonNull(artifacts.computeIfAbsent(computedType, t->artifacts.get(defaultType)), 
-                    "Appropriate artifact type for system platform cannot be determined automatically, please use --type option");
+                    "Appropriate artifact for system platform cannot be determined automatically, please use --platform option");
         }
     }
 
