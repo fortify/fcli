@@ -49,12 +49,12 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
     }
 
     @Override
-    public String getActionCommandResult() {
+    public final String getActionCommandResult() {
         return "UNINSTALLED";
     }
     
     @Override
-    public boolean isSingular() {
+    public final boolean isSingular() {
         return true;
     }
     

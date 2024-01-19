@@ -36,7 +36,7 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
     }
     
     @Override
-    public boolean isSingular() {
+    public final boolean isSingular() {
         return false;
     }
     

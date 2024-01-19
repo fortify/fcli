@@ -33,6 +33,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
+import lombok.SneakyThrows;
+
 // TODO For now, methods provided in this class are only used by the tools module,
 //      but potentially some methods or the full class could be moved to the common module.
 public final class FileUtils {
@@ -49,6 +51,21 @@ public final class FileUtils {
     public static final void copyResourceToDir(String resourcePath, Path destinationPath, CopyOption... options) {
         String fileName = Paths.get(resourcePath).getFileName().toString();
         copyResource(resourcePath, destinationPath.resolve(fileName), options);
+    }
+    
+    public static final void moveFiles(Path sourcePath, Path targetPath, String regex) throws IOException {
+        Files.createDirectories(targetPath);
+        try ( var ls = Files.list(sourcePath) ) {
+            ls.map(Path::toFile)
+                .map(File::getName)
+                .filter(name->name.matches(regex))
+                .forEach(name->move(sourcePath.resolve(name), targetPath.resolve(name)));
+        }
+    }
+    
+    @SneakyThrows
+    public static final void move(Path source, Path target) {
+        Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
     }
     
     public static final String getFileDigest(File file, String algorithm) {

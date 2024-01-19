@@ -74,14 +74,35 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     }
     
     @Override
-    public String getActionCommandResult() {
+    public final String getActionCommandResult() {
         return "INSTALLED";
     }
     
     @Override
-    public boolean isSingular() {
+    public final boolean isSingular() {
         return true;
     }
+    
+    protected abstract String getToolName();
+    protected abstract void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installDescriptor) throws IOException;
+    protected InstallType getInstallType(ToolDefinitionVersionDescriptor descriptor, ToolDefinitionArtifactDescriptor artifactDescriptor) {
+        String artifactName = artifactDescriptor.getName();
+        if(artifactName.endsWith("gz") || artifactName.endsWith(".tar.gz")) {
+            return InstallType.EXTRACT_TGZ;
+        } else if(artifactDescriptor.getName().endsWith("zip")) {
+            return InstallType.EXTRACT_ZIP;
+        } else {
+            return InstallType.COPY;
+        }
+    };
+    
+    private final void emptyExistingInstallPath(Path path) throws IOException {
+        if ( Files.exists(path) && Files.list(path).findFirst().isPresent() ) {
+            requireConfirmation.checkConfirmed();
+            FileUtils.deleteRecursive(path);
+        }
+    }
+    
     
     private final ToolOutputDescriptor downloadAndInstall() {
         try {
@@ -138,27 +159,6 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     
     private final Path getBinPath(String toolName, String version) {
         return getInstallPath(toolName, version).resolve("bin");
-    }
-    
-    protected abstract String getToolName();
-    
-    protected InstallType getInstallType(ToolDefinitionVersionDescriptor descriptor, ToolDefinitionArtifactDescriptor artifactDescriptor) {
-        String artifactName = artifactDescriptor.getName();
-        if(artifactName.endsWith("gz") || artifactName.endsWith(".tar.gz")) {
-            return InstallType.EXTRACT_TGZ;
-        } else if(artifactDescriptor.getName().endsWith("zip")) {
-            return InstallType.EXTRACT_ZIP;
-        } else {
-            return InstallType.COPY;
-        }
-    };
-    protected abstract void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installDescriptor) throws IOException;
-    
-    private final void emptyExistingInstallPath(Path path) throws IOException {
-        if ( Files.exists(path) && Files.list(path).findFirst().isPresent() ) {
-            requireConfirmation.checkConfirmed();
-            FileUtils.deleteRecursive(path);
-        }
     }
     
     @SneakyThrows

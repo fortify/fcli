@@ -12,13 +12,11 @@
  *******************************************************************************/
 package com.fortify.cli.tool.fcli.cli.cmd;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.ToolDefinitionArtifactDescriptor;
 import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
@@ -35,12 +33,8 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     
     @Override
     protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {
+        Path installPath = installationDescriptor.getInstallPath();
         Path binPath = installationDescriptor.getBinPath();
-        Files.createDirectories(binPath);
-        for(File f : installationDescriptor.getInstallPath().toFile().listFiles()) {
-            if(f.getAbsolutePath()!=binPath.toString() && !f.getAbsolutePath().endsWith("jar")) {
-                Files.move(f.toPath(), binPath, StandardCopyOption.REPLACE_EXISTING);
-            }
-        }
+        FileUtils.moveFiles(installPath, binPath, "fcli(\\.exe)?");
     }
 }
