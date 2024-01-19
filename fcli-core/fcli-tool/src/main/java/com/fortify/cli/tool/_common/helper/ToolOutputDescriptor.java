@@ -12,6 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.tool._common.helper;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -31,6 +34,7 @@ public class ToolOutputDescriptor {
     private final String name;
     private final String version;
     private final String[] aliases;
+    private final String aliasesString;
     private final String stable;
     private Map<String, ToolDefinitionArtifactDescriptor> binaries;
     private final String installDir;
@@ -40,11 +44,18 @@ public class ToolOutputDescriptor {
     public ToolOutputDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
         this.name = toolName;
         this.version = versionDescriptor.getVersion();
-        this.aliases = versionDescriptor.getAliases();
+        this.aliases = reverse(versionDescriptor.getAliases());
+        this.aliasesString = String.join(", ", aliases);
         this.stable = versionDescriptor.isStable()?"Yes":"No";
         this.binaries = versionDescriptor.getBinaries();
         this.installDir = installationDescriptor==null ? null : installationDescriptor.getInstallDir();
         this.binDir = installationDescriptor==null ? null : installationDescriptor.getBinDir();
         this.installed = StringUtils.isBlank(this.installDir) ? "No" : "Yes";
+    }
+    
+    private static final String[] reverse(String[] array) {
+        List<String> list = Arrays.asList(array);
+        Collections.reverse(list);
+        return list.toArray(String[]::new);
     }
 }
