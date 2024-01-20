@@ -35,8 +35,12 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 public final class FileUtils {
     private FileUtils() {}
     
+    public static final InputStream getResourceInputStream(String resourcePath) {
+        return Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);
+    }
+    
     public static final void copyResource(String resourcePath, Path destinationFilePath, CopyOption... options) {
-        try ( InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath) ) {
+        try ( InputStream in = getResourceInputStream(resourcePath) ) {
             Files.copy( in, destinationFilePath, options);
         } catch ( IOException e ) {
             throw new RuntimeException(String.format("Error copying resource %s to %s", resourcePath, destinationFilePath), e);
