@@ -13,23 +13,26 @@
 package com.fortify.cli.tool._common.helper;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
+import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
 
 public final class ToolHelper {
+    public static final Path DEFINITIONS_STATE_DIR = FcliDataHelper.getFcliStatePath().resolve("tool");
+    public static final Path DEFINITIONS_STATE_ZIP = DEFINITIONS_STATE_DIR.resolve("tool-definitions.yaml.zip");
+    private static final String DEFINITIONS_INTERNAL_ZIP = "com/fortify/cli/tool/config/tool-definitions.yaml.zip";
     private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
-    private static final String internalToolDefinitionsLocation = "com/fortify/cli/tool/config/tool-definitions.yaml.zip";
-    private static final File configuredToolDefinitionsFile = FcliDataHelper.getFcliConfigPath().resolve("tool/tool-definitions.yaml.zip").toFile();
     
     public static final ToolDefinitionRootDescriptor getToolDefinitionRootDescriptor(String toolName) {
         String yamlFileName = toolName + ".yaml";
@@ -66,48 +69,19 @@ public final class ToolHelper {
         return String.format("%s/%s", getResourceDir(toolName.replace('-', '_')), fileName);
     }
     
+    public static final File download(String url, File dest) {
+        GenericUnirestFactory.getUnirestInstance("tool", u->ProxyHelper.configureProxy(u, "tool", url))
+                .get(url).asFile(dest.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
+        return dest;
+    }
+    
     private static final Path getInstallDescriptorPath(String toolName, String version) {
         return FcliDataHelper.getFcliStatePath().resolve("tools").resolve(toolName).resolve(version);
     }
     
-    private static final InputStream getToolDefinitionsInputStream() throws FileNotFoundException {
-        return configuredToolDefinitionsFile.exists() 
-                ? new FileInputStream(configuredToolDefinitionsFile) 
-                : FileUtils.getResourceInputStream(internalToolDefinitionsLocation);
+    private static final InputStream getToolDefinitionsInputStream() throws IOException {
+        return Files.exists(DEFINITIONS_STATE_ZIP) 
+                ? Files.newInputStream(DEFINITIONS_STATE_ZIP) 
+                : FileUtils.getResourceInputStream(DEFINITIONS_INTERNAL_ZIP);
     }
-    
-    /*
-    private static final void initializeZipBundle() throws IOException {
-        if(!toolDefinitions.toFile().exists()) {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            String resourceFile = "com/fortify/cli/tool/config/tool-definitions.yaml.zip";
-            try ( InputStream stream = classLoader.getResourceAsStream(resourceFile) ) { 
-                if(!FcliDataHelper.getFcliConfigPath().resolve("tool").toFile().exists()) {
-                    Files.createDirectories(FcliDataHelper.getFcliConfigPath().resolve("tool"));
-                }
-                Files.copy(stream, toolDefinitions, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                throw e;
-            }
-        }
-    }
-    
-    private static final ToolDefinitionRootDescriptor loadDescriptorFromZipBundle(String toolName) throws IOException {
-        ZipFile bundle = new ZipFile(toolDefinitions.toString());
-        Enumeration<? extends ZipEntry> entries = bundle.entries();
-
-        while(entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-            if(entry.getName().equals(String.format("%s.yaml", toolName))) {
-
-                try (InputStream file = bundle.getInputStream(entry)) {
-                    return yamlObjectMapper.readValue(file, ToolDefinitionRootDescriptor.class);
-                } catch (IOException e) {
-                    throw e;
-                }
-            }
-        }
-        throw new FileNotFoundException(String.format("%s.yaml", toolName));
-    }
-    */
 }

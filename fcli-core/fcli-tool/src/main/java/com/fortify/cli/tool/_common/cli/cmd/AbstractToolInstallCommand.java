@@ -30,11 +30,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.CommandGroup;
-import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.helper.OsAndArchHelper;
@@ -45,7 +43,6 @@ import com.fortify.cli.tool._common.helper.ToolHelper;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolOutputDescriptor;
 
-import kong.unirest.UnirestInstance;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -205,14 +202,8 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private static final File download(ToolDefinitionArtifactDescriptor artifactDescriptor) throws IOException {
         File tempDownloadFile = File.createTempFile("fcli-tool-download", null);
         tempDownloadFile.deleteOnExit();
-        download(artifactDescriptor.getDownloadUrl(), tempDownloadFile);
+        ToolHelper.download(artifactDescriptor.getDownloadUrl(), tempDownloadFile);
         return tempDownloadFile;
-    }
-    
-    private static final void download(String downloadUrl, File destFile) {
-        UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance("tool",
-                u->ProxyHelper.configureProxy(u, "tool", downloadUrl));
-        unirest.get(downloadUrl).asFile(destFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
     }
     
     private static final void updateBinPermissions(Path binPath) throws IOException {
