@@ -35,19 +35,17 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
-import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.helper.OsAndArchHelper;
 import com.fortify.cli.tool._common.helper.SignatureHelper;
-import com.fortify.cli.tool._common.helper.ToolHelper;
 import com.fortify.cli.tool._common.helper.ToolDefinitionArtifactDescriptor;
-import com.fortify.cli.tool._common.helper.ToolOutputDescriptor;
 import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.tool._common.helper.ToolHelper;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolOutputDescriptor;
 
 import kong.unirest.UnirestInstance;
-import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -56,14 +54,16 @@ import picocli.CommandLine.Option;
 public abstract class AbstractToolInstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractToolInstallCommand.class);
     private static final Set<PosixFilePermission> binPermissions = PosixFilePermissions.fromString("rwxr-xr-x");
-    @Getter @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.install.version", defaultValue = "latest") 
+    @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.install.version", defaultValue = "latest") 
     private String version;
-    @Getter @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
+    @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
     private File installDir;
-    @Getter @Option(names={"-p", "--platform"}, required = false, descriptionKey="fcli.tool.install.platform") 
+    @Option(names={"-b", "--base-dir"}, required = false, descriptionKey="fcli.tool.install.base-dir") 
+    private File baseDir;
+    @Option(names={"-p", "--platform"}, required = false, descriptionKey="fcli.tool.install.platform") 
     private String platform;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
-    @Getter @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
+    @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
     private DigestMismatchAction onDigestMismatch;
     
     private static enum DigestMismatchAction {
@@ -151,13 +151,18 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         return installationDescriptor;
     }
 
-    @SneakyThrows
     private final Path getInstallPath(String toolName, String version) {
-        var result = this.installDir;
-        if ( result == null ) {
-            result = FcliDataHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", toolName, version)).toFile();
+        Path result = null;
+        if ( this.installDir!=null ) {
+            LOG.warn("WARN: --install-dir option is deprecated");
+            result = this.installDir.toPath();
+        } else {
+            var basePath = this.baseDir!=null
+                    ? this.baseDir.toPath()
+                    : Path.of(System.getProperty("user.home"),"fortify");
+            result = basePath.resolve(String.format("%s/%s", toolName, version));
         }
-        return result.getCanonicalFile().toPath();
+        return result.normalize().toAbsolutePath();
     }
     
     private final Path getBinPath(String toolName, String version) {
