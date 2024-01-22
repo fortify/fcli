@@ -29,7 +29,7 @@ import spock.lang.Stepwise
 class ToolDebrickedSpec extends FcliBaseSpec {
 
     def "install"() {
-        def args = "tool debricked-cli install -y -v=latest"
+        def args = "tool debricked-cli install -y -v=latest --progress=none"
         when:
             def result = Fcli.run(args)
         then:

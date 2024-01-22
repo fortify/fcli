@@ -29,7 +29,7 @@ import spock.lang.Stepwise
 class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
     
     def "install"() {
-        def args = "tool bugtracker-utility install -y -v=latest"
+        def args = "tool bugtracker-utility install -y -v=latest --progress=none"
         when:
             def result = Fcli.run(args)
         then:

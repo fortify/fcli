@@ -29,7 +29,7 @@ import spock.lang.Stepwise
 class ToolFoDUploaderSpec extends FcliBaseSpec {
     
     def "installLatest"() {
-        def args = "tool fod-uploader install -y -v=latest"
+        def args = "tool fod-uploader install -y -v=latest --progress=none"
         when:
             def result = Fcli.run(args)
         then:
@@ -65,7 +65,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
     }
     
     def "installV5"() {
-        def args = "tool fod-uploader install -y -v=5"
+        def args = "tool fod-uploader install -y -v=5 --progress=none"
         when:
             def result = Fcli.run(args)
         then:
@@ -78,7 +78,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
     }
     
     def "installV50"() {
-        def args = "tool fod-uploader install -y -v=5.0"
+        def args = "tool fod-uploader install -y -v=5.0 --progress=none"
         when:
             def result = Fcli.run(args)
         then:
@@ -91,7 +91,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
     }
     
     def "installV500"() {
-        def args = "tool fod-uploader install -y -v=5.0.0"
+        def args = "tool fod-uploader install -y -v=5.0.0 --progress=none"
         when:
             def result = Fcli.run(args)
         then:

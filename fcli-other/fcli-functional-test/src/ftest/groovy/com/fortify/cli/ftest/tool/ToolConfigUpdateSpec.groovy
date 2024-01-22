@@ -25,17 +25,17 @@ import spock.lang.Requires
 import spock.lang.Shared
 import spock.lang.Stepwise
 
-@Prefix("tool.config.update") @Stepwise
+@Prefix("tool.definitions.update") @Stepwise
 class ToolConfigUpdateSpec extends FcliBaseSpec {
     
     def "updateDefault"() {
-        def args = "tool config update"
+        def args = "tool definitions update"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("RemotepathLocalpathAction")
+                it[0].replace(' ', '').equals("SourceLastupdateAction")
                 it[1].replace(" ", "").contains("https://github.com/fortify-ps/tool-definitions/raw/main/v1/tool-definitions")
                 it[1].contains(" UPDATED")
             }
@@ -53,18 +53,21 @@ class ToolConfigUpdateSpec extends FcliBaseSpec {
             }
     }
     
+    /*
+    // TODO The tool definitions hosted on this URL are no longer valid due to yaml structure changes
     def "updateWithUrl"() {
-        def args = "tool config update --url https://github.com/psmf22/tool-definitions/raw/main/v1/tool-definitions.yaml.zip"
+        def args = "tool definitions update --source https://github.com/psmf22/tool-definitions/raw/main/v1/tool-definitions.yaml.zip"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("RemotepathLocalpathAction")
+                it[0].replace(' ', '').equals("SourceLastupdateAction")
                 it[1].replace(" ", "").contains("https://github.com/psmf22/tool-definitions/raw/main/v1/tool-definitions")
                 it[1].contains(" UPDATED")
             }
     }
+    */
     
     def "listVersions2"() {
         def args = "tool debricked-cli list"

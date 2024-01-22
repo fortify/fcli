@@ -29,7 +29,7 @@ import spock.lang.Stepwise
 class ToolFcliSpec extends FcliBaseSpec {
 
     def "install"() {
-        def args = "tool fcli install -y -v=latest"
+        def args = "tool fcli install -y -v=latest --progress=none"
         when:
             def result = Fcli.run(args)
         then:

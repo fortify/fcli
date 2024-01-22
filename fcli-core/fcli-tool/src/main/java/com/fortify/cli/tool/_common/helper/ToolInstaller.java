@@ -197,6 +197,7 @@ public final class ToolInstaller {
         }
     }
     
+    // TODO Is there a standard Java class for this?
     private static final class LazyObject<T> {
         private T value = null;
         public T get(Supplier<T> supplier) {
