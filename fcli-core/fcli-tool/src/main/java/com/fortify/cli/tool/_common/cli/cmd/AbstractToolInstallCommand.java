@@ -150,7 +150,10 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         @SneakyThrows
         private final void addTargetDirPreparation(Map<String, Runnable> requiredPreparations) {
             var targetPath = installer.getTargetPath();
-            if ( Files.exists(targetPath) && Files.list(targetPath).findFirst().isPresent() ) {
+            // Check non-empty target directory exists if replace==false. If replace==true,
+            // cleaning the old installation is handled by uninstall preparations, independent
+            // of whether the old installation was in the same or different target directory.
+            if ( !replace && Files.exists(targetPath) && Files.list(targetPath).findFirst().isPresent() ) {
                 requiredPreparations.put("Clean target directory "+targetPath, ()->deleteRecursive(targetPath));
             }
         }
@@ -158,7 +161,6 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         private final void addUninstallPreparations(Map<String, Runnable> requiredPreparations) {
             if ( replace ) {
                 installer.getDefinitionRootDescriptor().getVersionsStream()
-                    .filter(v->!v.getVersion().equals(installer.getVersionDescriptor().getVersion()))
                     .forEach(versionDescriptor->addUninstallPreparation(versionDescriptor, requiredPreparations));
             }
         }
