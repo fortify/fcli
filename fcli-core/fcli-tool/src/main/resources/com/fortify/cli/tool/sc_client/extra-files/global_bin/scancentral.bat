@@ -1,0 +1,1 @@
+{{binDir}}\scancentral.bat %*

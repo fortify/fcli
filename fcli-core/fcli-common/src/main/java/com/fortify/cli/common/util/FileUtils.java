@@ -42,6 +42,12 @@ public final class FileUtils {
     }
     
     public static final void copyResource(String resourcePath, Path destinationFilePath, CopyOption... options) {
+        var parent = destinationFilePath.getParent();
+        try {
+            Files.createDirectories(parent);
+        } catch (IOException e) {
+            throw new RuntimeException(String.format("Error creating directory %s", parent), e);
+        }
         try ( InputStream in = getResourceInputStream(resourcePath) ) {
             Files.copy( in, destinationFilePath, options);
         } catch ( IOException e ) {
@@ -50,11 +56,6 @@ public final class FileUtils {
     }
     
     public static final void copyResourceToDir(String resourcePath, Path destinationPath, CopyOption... options) {
-        try {
-            Files.createDirectories(destinationPath);
-        } catch (IOException e) {
-            throw new RuntimeException(String.format("Error creating directory %s", destinationPath), e);
-        }
         String fileName = Paths.get(resourcePath).getFileName().toString();
         copyResource(resourcePath, destinationPath.resolve(fileName), options);
     }

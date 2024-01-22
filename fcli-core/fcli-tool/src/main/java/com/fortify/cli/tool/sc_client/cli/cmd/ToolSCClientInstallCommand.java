@@ -43,8 +43,9 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     @Override @SneakyThrows
     protected void postInstall(ToolInstallationResult installationResult) {
         var installationDescriptor = installationResult.getInstallationDescriptor();
-        // Updating bin permissions is handled by parent class
         updateClientAuthToken(installationDescriptor.getInstallPath());
+        copyGlobalBinResource(installationResult, "extra-files/global_bin/scancentral");
+        copyGlobalBinResource(installationResult, "extra-files/global_bin/scancentral.bat");
     }
     
     private void updateClientAuthToken(Path installPath) throws IOException {

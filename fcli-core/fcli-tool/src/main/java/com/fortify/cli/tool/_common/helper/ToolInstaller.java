@@ -188,8 +188,9 @@ public final class ToolInstaller {
         }
     }
         
+    // TODO Move this method to FileUtils or similar, as it's also used by AbstractToolInstallCommand
     @SneakyThrows
-    private static final void updateFilePermissions(Path p) {
+    public static final void updateFilePermissions(Path p) {
         try {
             Files.setPosixFilePermissions(p, binPermissions);
         } catch ( UnsupportedOperationException e ) {

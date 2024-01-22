@@ -15,6 +15,7 @@ package com.fortify.cli.tool._common.cli.cmd;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -82,6 +83,29 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     protected abstract void postInstall(ToolInstallationResult installationResult);
     protected abstract String getDefaultArtifactType();
     
+    protected final void copyBinResource(ToolInstallationResult installationResult, String resourceFile) {
+        var fullResourceFile = getFullResourceFile(installationResult, resourceFile);
+        FileUtils.copyResourceToDir(fullResourceFile, installationResult.getInstallationDescriptor().getBinPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+    
+    @SneakyThrows
+    protected final void copyGlobalBinResource(ToolInstallationResult installationResult, String resourceFile) {
+        if ( installDir==null ) {
+            // We only install global bin scripts if no explicit tool installation directory was specified
+            var fullResourceFile = getFullResourceFile(installationResult, resourceFile);
+            var destFilePath = getBasePath().resolve("bin").resolve(Path.of(resourceFile).getFileName());
+            FileUtils.copyResource(fullResourceFile, destFilePath, StandardCopyOption.REPLACE_EXISTING);
+            String content = new String(Files.readAllBytes(destFilePath), "ASCII");
+            content = content.replace("{{binDir}}", installationResult.getInstallationDescriptor().getBinDir());
+            Files.write(destFilePath, content.getBytes("ASCII"));
+            ToolInstaller.updateFilePermissions(destFilePath);
+        }
+    }
+    
+    private String getFullResourceFile(ToolInstallationResult installationResult, String resourceFile) {
+        return String.format("com/fortify/cli/tool/%s/%s", installationResult.getToolName().replace("-", "_"), resourceFile);
+    }
+    
     private final ArrayNode install() {
         try ( var progressWriter = progressWriterFactory.create() ) {
             var preparer = new ToolInstallationPreparer();
@@ -109,12 +133,16 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
             toolInstaller.getProgressWriter().writeWarning("WARN: --install-dir option is deprecated");
             result = this.installDir.toPath();
         } else {
-            var basePath = this.baseDir!=null
-                    ? this.baseDir.toPath()
-                    : Path.of(System.getProperty("user.home"),"fortify", "tools");
+            var basePath = getBasePath();
             result = basePath.resolve(String.format("%s/%s", getToolName(), toolInstaller.getToolVersion()));
         }
         return result.normalize().toAbsolutePath();
+    }
+
+    private Path getBasePath() {
+        return this.baseDir!=null
+                ? this.baseDir.toPath()
+                : Path.of(System.getProperty("user.home"),"fortify", "tools");
     }
     
     private final class ToolInstallationPreparer implements Consumer<ToolInstaller> {

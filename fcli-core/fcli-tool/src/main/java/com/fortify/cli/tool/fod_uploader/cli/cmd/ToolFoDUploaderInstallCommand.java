@@ -12,12 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.tool.fod_uploader.cli.cmd;
 
-import java.nio.file.Path;
-
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
-import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
@@ -37,9 +33,9 @@ public class ToolFoDUploaderInstallCommand extends AbstractToolInstallCommand {
     
     @Override @SneakyThrows
     protected void postInstall(ToolInstallationResult installationResult) {
-        var installationDescriptor = installationResult.getInstallationDescriptor();
-        Path binPath = installationDescriptor.getBinPath();
-        FileUtils.copyResourceToDir(ToolInstallationHelper.getToolResourceFile(getToolName(), "extra-files/bin/FoDUpload"), binPath);
-        FileUtils.copyResourceToDir(ToolInstallationHelper.getToolResourceFile(getToolName(), "extra-files/bin/FoDUpload.bat"), binPath);
+        copyBinResource(installationResult, "extra-files/bin/FoDUpload");
+        copyBinResource(installationResult, "extra-files/bin/FoDUpload.bat");
+        copyGlobalBinResource(installationResult, "extra-files/global_bin/FoDUpload");
+        copyGlobalBinResource(installationResult, "extra-files/global_bin/FoDUpload.bat");
     }
 }

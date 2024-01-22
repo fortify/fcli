@@ -40,5 +40,7 @@ public class ToolDebrickedCliInstallCommand extends AbstractToolInstallCommand {
         Path installPath = installationDescriptor.getInstallPath();
         Path binPath = installationDescriptor.getBinPath();
         FileUtils.moveFiles(installPath, binPath, "debricked(\\.exe)?");
+        copyGlobalBinResource(installationResult, "extra-files/global_bin/debricked");
+        copyGlobalBinResource(installationResult, "extra-files/global_bin/debricked.bat");
     }
 }

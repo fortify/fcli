@@ -18,7 +18,6 @@ import java.nio.file.Path;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
-import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
@@ -43,8 +42,13 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
         Path binPath = installationDescriptor.getBinPath();
         FileUtils.moveFiles(installPath, binPath, "fcli(_completion)?(\\.exe)?");
         if ( Files.exists(installPath.resolve("fcli.jar")) ) {
-            FileUtils.copyResourceToDir(ToolInstallationHelper.getToolResourceFile(getToolName(), "extra-files/bin/fcli"), binPath);
-            FileUtils.copyResourceToDir(ToolInstallationHelper.getToolResourceFile(getToolName(), "extra-files/bin/fcli.bat"), binPath);
+            copyBinResource(installationResult, "extra-files/jar/bin/fcli");
+            copyBinResource(installationResult, "extra-files/jar/bin/fcli.bat");
+            copyGlobalBinResource(installationResult, "extra-files/jar/global_bin/fcli");
+            copyGlobalBinResource(installationResult, "extra-files/jar/global_bin/fcli.bat");
+        } else {
+            copyGlobalBinResource(installationResult, "extra-files/native/global_bin/fcli");
+            copyGlobalBinResource(installationResult, "extra-files/native/global_bin/fcli.bat");
         }
     }
 }

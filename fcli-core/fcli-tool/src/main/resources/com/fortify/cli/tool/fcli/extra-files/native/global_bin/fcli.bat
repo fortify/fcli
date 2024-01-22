@@ -1,0 +1,1 @@
+{{binDir}}\fcli.exe %*
