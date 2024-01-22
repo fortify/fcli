@@ -12,17 +12,15 @@
  *******************************************************************************/
 package com.fortify.cli.tool.debricked_cli.cli.cmd;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
-import com.fortify.cli.tool._common.helper.ToolDefinitionArtifactDescriptor;
-import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
-import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -36,8 +34,9 @@ public class ToolDebrickedCliInstallCommand extends AbstractToolInstallCommand {
         return "";
     }
     
-    @Override
-    protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {
+    @Override @SneakyThrows
+    protected void postInstall(ToolInstallationResult installationResult) {
+        var installationDescriptor = installationResult.getInstallationDescriptor();
         Path installPath = installationDescriptor.getInstallPath();
         Path binPath = installationDescriptor.getBinPath();
         FileUtils.moveFiles(installPath, binPath, "debricked(\\.exe)?");

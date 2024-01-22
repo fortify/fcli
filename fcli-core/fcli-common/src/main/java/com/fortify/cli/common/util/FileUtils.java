@@ -30,6 +30,8 @@ import java.util.zip.ZipInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
+import lombok.SneakyThrows;
+
 // TODO For now, methods provided in this class are only used by the tools module,
 //      but potentially some methods or the full class could be moved to the common module.
 public final class FileUtils {
@@ -57,7 +59,8 @@ public final class FileUtils {
         copyResource(resourcePath, destinationPath.resolve(fileName), options);
     }
     
-    public static final void moveFiles(Path sourcePath, Path targetPath, String regex) throws IOException {
+    @SneakyThrows
+    public static final void moveFiles(Path sourcePath, Path targetPath, String regex) {
         Files.createDirectories(targetPath);
         try ( var ls = Files.list(sourcePath) ) {
             ls.map(Path::toFile)
@@ -75,7 +78,8 @@ public final class FileUtils {
         }
     }
     
-    public static final void extractZip(File zipFile, Path targetDir) throws IOException {
+    @SneakyThrows
+    public static final void extractZip(File zipFile, Path targetDir) {
         try (FileInputStream fis = new FileInputStream(zipFile); ZipInputStream zipIn = new ZipInputStream(fis)) {
             for (ZipEntry ze; (ze = zipIn.getNextEntry()) != null; ) {
                 Path resolvedPath = targetDir.resolve(ze.getName()).normalize();
@@ -93,7 +97,8 @@ public final class FileUtils {
         }
     }
     
-    public static final void extractTarGZ(File tgzFile, Path targetDir) throws IOException {
+    @SneakyThrows
+    public static final void extractTarGZ(File tgzFile, Path targetDir) {
         try (InputStream source = Files.newInputStream(tgzFile.toPath());
                 GZIPInputStream gzip = new GZIPInputStream(source);
                 TarArchiveInputStream tar = new TarArchiveInputStream(gzip)) {
@@ -110,7 +115,8 @@ public final class FileUtils {
         }
     }
     
-    public static final void deleteRecursive(Path installPath) throws IOException {
+    @SneakyThrows
+    public static final void deleteRecursive(Path installPath) {
         try (Stream<Path> walk = Files.walk(installPath)) {
             walk.sorted(Comparator.reverseOrder())
                 .map(Path::toFile)

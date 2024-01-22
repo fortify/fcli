@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.tool._common.helper;
+package com.fortify.cli.tool.definitions.helper;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -26,7 +26,6 @@ import lombok.NoArgsConstructor;
 public final class ToolDefinitionsStateDescriptor{
     private String source;
     private Date lastUpdate;
-    private String __action__;
     
     public final String getLastUpdateString() {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z").format(getLastUpdate());

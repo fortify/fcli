@@ -47,7 +47,7 @@ public class CommonOptionMixins {
                 if ( System.console()==null ) {
                     throw new ParameterException(spec.commandLine(), 
                             PicocliSpecHelper.getRequiredMessageString(spec, 
-                                    "error.missing.confirmation", getPlainPrompt(spec, promptArgs)));
+                                    "error.missing.confirmation", getPlainPrompt(spec, promptArgs).replace("\n", "\n  ")));
                 } else {
                     String expectedResponse = PicocliSpecHelper.getRequiredMessageString(spec, "expectedConfirmPromptResponse");
                     String response = System.console().readLine(getPrompt(spec, promptArgs));

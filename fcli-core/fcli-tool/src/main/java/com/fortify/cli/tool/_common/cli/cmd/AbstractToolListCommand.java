@@ -18,16 +18,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
-import com.fortify.cli.tool._common.helper.ToolHelper;
-import com.fortify.cli.tool._common.helper.ToolOutputDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationOutputDescriptor;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 public abstract class AbstractToolListCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     
     @Override
     public final JsonNode getJsonNode() {
-        return ToolHelper.getToolDefinitionRootDescriptor(getToolName()).getVersionsStream()
+        return ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName()).getVersionsStream()
                 .map(this::createToolOutputDescriptor)
                 .map(objectMapper::<ObjectNode>valueToTree)
                 .collect(JsonHelper.arrayNodeCollector());
@@ -40,9 +41,9 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
     
     protected abstract String getToolName();
     
-    private ToolOutputDescriptor createToolOutputDescriptor(ToolDefinitionVersionDescriptor versionDescriptor) {
+    private ToolInstallationOutputDescriptor createToolOutputDescriptor(ToolDefinitionVersionDescriptor versionDescriptor) {
         var toolName = getToolName();
-        var installationDescriptor = ToolHelper.loadToolInstallationDescriptor(toolName, versionDescriptor);
-        return new ToolOutputDescriptor(toolName, versionDescriptor, installationDescriptor);
+        var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
+        return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor);
     }
 }

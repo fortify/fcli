@@ -12,18 +12,16 @@
  *******************************************************************************/
 package com.fortify.cli.tool.fod_uploader.cli.cmd;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
-import com.fortify.cli.tool._common.helper.ToolDefinitionArtifactDescriptor;
-import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
-import com.fortify.cli.tool._common.helper.ToolHelper;
-import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
+import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -37,10 +35,11 @@ public class ToolFoDUploaderInstallCommand extends AbstractToolInstallCommand {
         return "java";
     }
     
-    @Override
-    protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {
+    @Override @SneakyThrows
+    protected void postInstall(ToolInstallationResult installationResult) {
+        var installationDescriptor = installationResult.getInstallationDescriptor();
         Path binPath = installationDescriptor.getBinPath();
-        FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FoDUpload"), binPath);
-        FileUtils.copyResourceToDir(ToolHelper.getResourceFile(getToolName(), "extra-files/bin/FoDUpload.bat"), binPath);
+        FileUtils.copyResourceToDir(ToolInstallationHelper.getToolResourceFile(getToolName(), "extra-files/bin/FoDUpload"), binPath);
+        FileUtils.copyResourceToDir(ToolInstallationHelper.getToolResourceFile(getToolName(), "extra-files/bin/FoDUpload.bat"), binPath);
     }
 }

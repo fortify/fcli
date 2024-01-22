@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.fortify.cli.tool._common.cli.cmd;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,11 +21,11 @@ import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.util.FileUtils;
-import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
-import com.fortify.cli.tool._common.helper.ToolHelper;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
-import com.fortify.cli.tool._common.helper.ToolOutputDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
+import com.fortify.cli.tool._common.helper.ToolInstallationOutputDescriptor;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
@@ -41,12 +40,12 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
     @Override
     public final JsonNode getJsonNode() {
         String toolName = getToolName();
-        var versionDescriptor = ToolHelper.getToolDefinitionRootDescriptor(toolName).getVersionOrDefault(version);
+        var versionDescriptor = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName).getVersionOrDefault(version);
         var installationDescriptor = getInstallationDescriptor(toolName, versionDescriptor);
         Path installPath = getInstallPath(installationDescriptor);
         requireConfirmation.checkConfirmed(installPath);
-        deleteToolInstallation(toolName, versionDescriptor, installPath);
-        var outputDescriptor = new ToolOutputDescriptor(toolName, versionDescriptor, installationDescriptor);
+        ToolInstallationHelper.uninstall(toolName, versionDescriptor, installationDescriptor);
+        var outputDescriptor = new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor);
         return new ObjectMapper().valueToTree(outputDescriptor);
     }
 
@@ -63,7 +62,7 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
     protected abstract String getToolName();
     
     private static final ToolInstallationDescriptor getInstallationDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
-        var installationDescriptor = ToolHelper.loadToolInstallationDescriptor(toolName, versionDescriptor);
+        var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
         if ( installationDescriptor==null ) {
             throw new IllegalArgumentException("Tool installation not found");
         }
@@ -76,15 +75,5 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
             throw new IllegalStateException("Tool installation path not found");
         }
         return installPath;
-    }
-    
-    private static final void deleteToolInstallation(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, Path installPath) {
-        try {
-            FileUtils.deleteRecursive(installPath);
-        } catch ( IOException e ) {
-            throw new RuntimeException("Error deleting tool installation; please manually delete the "+installPath+" directory", e);
-        } finally {
-            ToolHelper.deleteToolInstallDescriptor(toolName, versionDescriptor);
-        }
     }
 }

@@ -15,11 +15,13 @@ package com.fortify.cli.tool._common.helper;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -30,32 +32,47 @@ import lombok.NoArgsConstructor;
  * serialized installation descriptors are stored. 
  */
 @JsonIgnoreProperties(ignoreUnknown=true)
-@Reflectable @NoArgsConstructor 
+@Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data
 public class ToolInstallationDescriptor {
     private String installDir;
     private String binDir;
-    @JsonIgnore Path installPath;
-    @JsonIgnore Path binPath;
     
     public ToolInstallationDescriptor(Path installPath, Path binPath) {
-        this.installPath = installPath.toAbsolutePath();
-        this.installDir = installPath.toString();
-        this.binPath = binPath.toAbsolutePath();
-        this.binDir = binPath.toString();
+        this.installDir = installPath.toAbsolutePath().toString();
+        this.binDir = binPath.toAbsolutePath().toString();
+    }
+    
+    public static final ToolInstallationDescriptor load(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
+        return FcliDataHelper.readFile(getInstallDescriptorPath(toolName, versionDescriptor.getVersion()), ToolInstallationDescriptor.class, false);
+    }
+    
+    public static final void delete(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
+        FcliDataHelper.deleteFile(getInstallDescriptorPath(toolName, versionDescriptor.getVersion()), true);
+    }
+    
+    public final void save(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
+        FcliDataHelper.saveFile(getInstallDescriptorPath(toolName, versionDescriptor.getVersion()), this, true);
     }
     
     public Path getInstallPath() {
-        if ( installPath==null && StringUtils.isNotBlank(installDir) ) {
-            installPath = Paths.get(installDir).toAbsolutePath();
-        }
-        return installPath;
+        return asPath(installDir);
     }
     
     public Path getBinPath() {
-        if ( binPath==null && StringUtils.isNotBlank(binDir) ) {
-            binPath = Paths.get(binDir).toAbsolutePath();
-        }
-        return binPath;
+        return asPath(binDir);
     }
+    
+    private static final Path asPath(String dir) {
+        return StringUtils.isNotBlank(dir) ? Paths.get(dir) : null;
+    }
+    
+    private static final Path getInstallDescriptorPath(String toolName, String version) {
+        return getInstallDescriptorsDirPath(toolName).resolve(version);
+    }
+
+    private static Path getInstallDescriptorsDirPath(String toolName) {
+        return FcliDataHelper.getFcliStatePath().resolve("tools").resolve(toolName);
+    }
+
 }

@@ -19,6 +19,8 @@ import java.util.Map;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionArtifactDescriptor;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 import lombok.Data;
 
@@ -30,7 +32,7 @@ import lombok.Data;
  */
 @Reflectable // We only serialize, not de-serialize, so no need for no-args contructor
 @Data
-public class ToolOutputDescriptor {
+public class ToolInstallationOutputDescriptor {
     private final String name;
     private final String version;
     private final String[] aliases;
@@ -41,7 +43,7 @@ public class ToolOutputDescriptor {
     private final String binDir;
     private final String installed;
     
-    public ToolOutputDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
+    public ToolInstallationOutputDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
         this.name = toolName;
         this.version = versionDescriptor.getVersion();
         this.aliases = reverse(versionDescriptor.getAliases());

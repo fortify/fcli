@@ -2,13 +2,17 @@ package com.fortify.cli.tool._common.helper;
 
 import java.util.Locale;
 
-public class OsAndArchHelper {
+public class ToolPlatformHelper {
     public static final String getOSString() {
         return normalizeOs(System.getProperty("os.name", "unknown"));
     }
     
     public static final String getArchString() {
         return normalizeArch(System.getProperty("os.arch", "unknown"));
+    }
+    
+    public static final String getPlatform() {
+        return String.format("%s/%s", getOSString(), getArchString());
     }
     
     private static String normalizeOs(String value) {

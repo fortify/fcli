@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.tool._common.helper;
+package com.fortify.cli.tool.definitions.helper;
 
 import java.util.Arrays;
 import java.util.stream.Stream;

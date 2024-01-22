@@ -9,7 +9,7 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.tool._common.cli.mixin.ToolDefinitionsUpdateMixin;
+import com.fortify.cli.tool.definitions.cli.mixin.ToolDefinitionsUpdateMixin;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;

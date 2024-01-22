@@ -21,11 +21,10 @@ import java.nio.file.StandardOpenOption;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
-import com.fortify.cli.tool._common.helper.ToolDefinitionArtifactDescriptor;
-import com.fortify.cli.tool._common.helper.ToolDefinitionVersionDescriptor;
-import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -41,8 +40,9 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
         return "java";
     }
     
-    @Override
-    protected void postInstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolDefinitionArtifactDescriptor artifactDescriptor, ToolInstallationDescriptor installationDescriptor) throws IOException {
+    @Override @SneakyThrows
+    protected void postInstall(ToolInstallationResult installationResult) {
+        var installationDescriptor = installationResult.getInstallationDescriptor();
         // Updating bin permissions is handled by parent class
         updateClientAuthToken(installationDescriptor.getInstallPath());
     }

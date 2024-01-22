@@ -1,4 +1,4 @@
-package com.fortify.cli.tool._common.helper;
+package com.fortify.cli.tool.definitions.helper;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.formkiq.graalvm.annotations.Reflectable;
