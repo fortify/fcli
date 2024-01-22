@@ -24,7 +24,7 @@ class SSCAttributeSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                it[0].replace(" ","").equals("IdCategoryGuidNameValuestring");
+                it[0].replace(" ","").equals("IdCategoryGuidNameValue");
             }
     }
     
@@ -36,7 +36,7 @@ class SSCAttributeSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()==3
-                it[0].replace(" ","").equals("IdCategoryGuidNameValuestring");
+                it[0].replace(" ","").equals("IdCategoryGuidNameValue");
             }
     }
     
