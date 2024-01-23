@@ -43,7 +43,7 @@ public class ToolUninstaller {
         var action = "UNINSTALLED";
         if ( !FileUtils.isDirPathInUse(installPath) ) {
             FileUtils.deleteRecursive(installPath);
-        } else if (replacementVersion==null || SemVerHelper.compare(replacementVersion.getVersion(), "2.1.0")<0 ) {
+        } else if (replacementVersion==null || SemVerHelper.compare(replacementVersion.getVersion(), "2.2.0")<0 ) {
             action = "MANUAL_DELETE_REQUIRED";
         } else {
             action = "PENDING_FCLI_RESTART";
