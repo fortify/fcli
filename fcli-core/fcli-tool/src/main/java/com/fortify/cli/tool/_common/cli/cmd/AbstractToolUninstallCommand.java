@@ -22,8 +22,7 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
-import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
-import com.fortify.cli.tool._common.helper.ToolInstallationOutputDescriptor;
+import com.fortify.cli.tool._common.helper.ToolUninstaller;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
@@ -44,8 +43,7 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
         var installationDescriptor = getInstallationDescriptor(toolName, versionDescriptor);
         Path installPath = getInstallPath(installationDescriptor);
         requireConfirmation.checkConfirmed(installPath);
-        ToolInstallationHelper.uninstall(toolName, versionDescriptor, installationDescriptor);
-        var outputDescriptor = new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor);
+        var outputDescriptor = new ToolUninstaller(toolName).uninstall(versionDescriptor, installationDescriptor);
         return new ObjectMapper().valueToTree(outputDescriptor);
     }
 

@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.json.JsonHelper;
@@ -34,11 +33,10 @@ import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
-import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
-import com.fortify.cli.tool._common.helper.ToolInstallationOutputDescriptor;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.DigestMismatchAction;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
+import com.fortify.cli.tool._common.helper.ToolUninstaller;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 import lombok.Getter;
@@ -148,10 +146,12 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private final class ToolInstallationPreparer implements Consumer<ToolInstaller> {
         @Getter private final ArrayNode toolInstallationOutputDescriptors = OBJECTMAPPER.createArrayNode();
         private ToolInstaller installer;
+        private ToolUninstaller uninstaller;
         
         @Override
         public void accept(ToolInstaller installer) {
             this.installer = installer;
+            this.uninstaller = new ToolUninstaller(installer.getToolName());
             prepare();
         }
         
@@ -210,12 +210,10 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         private void uninstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
             var toolName = installer.getToolName();
             var toolVersion = versionDescriptor.getVersion();
-            var installDir = installationDescriptor.getInstallDir();
-            installer.getProgressWriter().writeProgress("Uninstalling %s %s from %s", toolName, toolVersion, installDir);
-            ToolInstallationHelper.uninstall(installer.getToolName(), versionDescriptor, installationDescriptor);
-            ObjectNode output = OBJECTMAPPER.valueToTree(new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor));
-            output.put("__action__", "UNINSTALLED");
-            toolInstallationOutputDescriptors.add(output);
+            var installPath = installationDescriptor.getInstallPath();
+            installer.getProgressWriter().writeProgress("Uninstalling %s %s from %s", toolName, toolVersion, installPath);
+            var outputDescriptor = uninstaller.uninstall(versionDescriptor, installationDescriptor, installer.getVersionDescriptor());
+            toolInstallationOutputDescriptors.add(OBJECTMAPPER.valueToTree(outputDescriptor));
         }
     }
 }

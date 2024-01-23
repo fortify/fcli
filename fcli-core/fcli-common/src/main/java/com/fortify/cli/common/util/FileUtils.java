@@ -16,11 +16,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.FileChannel;
 import java.nio.file.CopyOption;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
@@ -116,12 +119,41 @@ public final class FileUtils {
         }
     }
     
+    /**
+     * Recursively delete the given path. As a best practice, this method should
+     * only be invoked if {@link #isDirPathInUse(Path)} returns false. The
+     * deleteRecursive() method itself doesn't invoke {@link #isDirPathInUse(Path)}
+     * for performance reasons, as callers may wish to explicitly check whether
+     * any files are in use in order to perform some alternative action.
+     * @param path
+     */
     @SneakyThrows
-    public static final void deleteRecursive(Path installPath) {
-        try (Stream<Path> walk = Files.walk(installPath)) {
+    public static final void deleteRecursive(Path path) {
+        try (Stream<Path> walk = Files.walk(path)) {
             walk.sorted(Comparator.reverseOrder())
                 .map(Path::toFile)
                 .forEach(File::delete);
         }
+    }
+    
+    @SneakyThrows
+    public static final boolean isDirPathInUse(Path path) {
+        try (Stream<Path> walk = Files.walk(path)) {
+            return walk.anyMatch(FileUtils::isFilePathInUse);
+        }
+    }
+    
+    @SneakyThrows
+    public static final boolean isFilePathInUse(Path path) {
+        if ( path.toFile().isFile() ) {
+            try ( var fc = FileChannel.open(path, StandardOpenOption.APPEND) ) {
+                if ( fc.tryLock()==null ) {
+                    return true;
+                }
+            } catch ( FileSystemException e ) {
+                return true;
+            }
+        }
+        return false;
     }
 }

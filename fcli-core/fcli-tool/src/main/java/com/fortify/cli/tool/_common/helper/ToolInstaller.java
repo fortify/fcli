@@ -63,7 +63,7 @@ public final class ToolInstaller {
         private final ToolInstallationDescriptor installationDescriptor;
         
         public final ToolInstallationOutputDescriptor asOutputDescriptor() {
-            return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor);
+            return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor, "INSTALLED");
         }
     }
     

@@ -30,6 +30,7 @@ import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobArtifactState;
 import com.fortify.cli.sc_sast.scan.helper.SCSastControllerScanJobState;
 import com.fortify.cli.ssc.artifact.helper.SSCArtifactStatus;
+import com.fortify.cli.tool._common.helper.ToolUninstaller;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -48,6 +49,7 @@ public final class FortifyCLIStaticInitializer {
     private static final FortifyCLIStaticInitializer instance = new FortifyCLIStaticInitializer(); 
     
     public void initialize() {
+        ToolUninstaller.deleteAllPending();
         initializeTrustStore();
         initializeLocale();
         initializeFoDProperties();

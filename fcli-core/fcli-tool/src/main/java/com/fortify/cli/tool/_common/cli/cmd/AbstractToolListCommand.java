@@ -44,6 +44,6 @@ public abstract class AbstractToolListCommand extends AbstractOutputCommand impl
     private ToolInstallationOutputDescriptor createToolOutputDescriptor(ToolDefinitionVersionDescriptor versionDescriptor) {
         var toolName = getToolName();
         var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
-        return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor);
+        return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor, "");
     }
 }

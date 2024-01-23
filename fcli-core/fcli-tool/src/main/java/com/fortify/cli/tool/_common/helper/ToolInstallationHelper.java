@@ -12,8 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.tool._common.helper;
 
-import com.fortify.cli.common.util.FileUtils;
-import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import java.nio.file.Path;
+
+import com.fortify.cli.common.util.FcliDataHelper;
 
 public final class ToolInstallationHelper {
     public static final String getToolResourceDir(String toolName) {
@@ -24,12 +25,7 @@ public final class ToolInstallationHelper {
         return String.format("%s/%s", getToolResourceDir(toolName.replace('-', '_')), fileName);
     }
     
-    public static final void uninstall(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
-        var installPath = installationDescriptor.getInstallPath();
-        try {
-            FileUtils.deleteRecursive(installPath);
-        } finally {
-            ToolInstallationDescriptor.delete(toolName, versionDescriptor);
-        }
+    public static Path getToolsStatePath() {
+        return FcliDataHelper.getFcliStatePath().resolve("tools");
     }
 }

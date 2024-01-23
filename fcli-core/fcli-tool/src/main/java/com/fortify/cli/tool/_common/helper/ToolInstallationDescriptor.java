@@ -72,7 +72,7 @@ public class ToolInstallationDescriptor {
     }
 
     private static Path getInstallDescriptorsDirPath(String toolName) {
-        return FcliDataHelper.getFcliStatePath().resolve("tools").resolve(toolName);
+        return ToolInstallationHelper.getToolsStatePath().resolve(toolName);
     }
 
 }

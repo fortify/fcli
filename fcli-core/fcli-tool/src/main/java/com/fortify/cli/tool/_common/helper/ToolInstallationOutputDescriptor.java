@@ -42,8 +42,9 @@ public class ToolInstallationOutputDescriptor {
     private final String installDir;
     private final String binDir;
     private final String installed;
+    private final String __action__;
     
-    public ToolInstallationOutputDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
+    public ToolInstallationOutputDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor, String action) {
         this.name = toolName;
         this.version = versionDescriptor.getVersion();
         this.aliases = reverse(versionDescriptor.getAliases());
@@ -53,6 +54,7 @@ public class ToolInstallationOutputDescriptor {
         this.installDir = installationDescriptor==null ? null : installationDescriptor.getInstallDir();
         this.binDir = installationDescriptor==null ? null : installationDescriptor.getBinDir();
         this.installed = StringUtils.isBlank(this.installDir) ? "No" : "Yes";
+        this.__action__ = action;
     }
     
     private static final String[] reverse(String[] array) {
