@@ -21,6 +21,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -47,13 +48,15 @@ public final class ToolInstaller {
     @Getter private final String requestedVersion;
     @Getter private final String defaultPlatform;
     @Getter private final Function<ToolInstaller,Path> targetPathProvider;
+    @Getter private final Function<ToolInstaller,Path> globalBinPathProvider;
     @Getter private final DigestMismatchAction onDigestMismatch;
     @Getter private final Consumer<ToolInstaller> preInstallAction;
-    @Getter private final Consumer<ToolInstallationResult> postInstallAction;
+    @Getter private final BiConsumer<ToolInstaller, ToolInstallationResult> postInstallAction;
     @Getter private final IProgressWriterI18n progressWriter;
     private final LazyObject<ToolDefinitionRootDescriptor> _definitionRootDescriptor = new LazyObject<>();
     private final LazyObject<ToolDefinitionVersionDescriptor> _versionDescriptor = new LazyObject<>();
     private final LazyObject<Path> _targetPath = new LazyObject<>();
+    private final LazyObject<Path> _globalBinPath = new LazyObject<>();
     
     @Data
     public static final class ToolInstallationResult {
@@ -83,6 +86,14 @@ public final class ToolInstaller {
         return _targetPath.get(()->targetPathProvider.apply(this));
     }
     
+    public final Path getBinPath() {
+        return getTargetPath().resolve("bin");
+    }
+    
+    public final Path getGlobalBinPath() {
+        return _globalBinPath.get(()->globalBinPathProvider.apply(this));
+    }
+    
     public final String getToolVersion() {
         return getVersionDescriptor().getVersion();
     }
@@ -100,6 +111,29 @@ public final class ToolInstaller {
         return install(artifactDescriptor);
     }
     
+    public final void copyBinResource(String resourceFile) {
+        var fullResourceFile = getFullResourceFile(resourceFile);
+        FileUtils.copyResourceToDir(fullResourceFile, getBinPath(), StandardCopyOption.REPLACE_EXISTING);
+    }
+    
+    @SneakyThrows
+    public final void copyGlobalBinResource(String resourceFile) {
+        var globalBinPath = getGlobalBinPath();
+        if ( globalBinPath!=null ) {
+            var fullResourceFile = getFullResourceFile(resourceFile);
+            var destFilePath = globalBinPath.resolve(Path.of(resourceFile).getFileName());
+            FileUtils.copyResource(fullResourceFile, destFilePath, StandardCopyOption.REPLACE_EXISTING);
+            String content = new String(Files.readAllBytes(destFilePath), "ASCII");
+            content = content.replace("{{binDir}}", getBinPath().toString());
+            Files.write(destFilePath, content.getBytes("ASCII"));
+            ToolInstaller.updateFilePermissions(destFilePath);
+        }
+    }
+    
+    private String getFullResourceFile(String resourceFile) {
+        return String.format("com/fortify/cli/tool/%s/%s", getToolName().replace("-", "_"), resourceFile);
+    }
+    
     private final ToolInstallationResult install(ToolDefinitionArtifactDescriptor artifactDescriptor) {
         try {
             preInstallAction.accept(this);
@@ -110,7 +144,7 @@ public final class ToolInstaller {
             downloadAndExtract(artifactDescriptor);
             var result = new ToolInstallationResult(toolName, versionDescriptor, artifactDescriptor, createAndSaveInstallationDescriptor());
             progressWriter.writeProgress("Running post-install actions");
-            postInstallAction.accept(result);
+            postInstallAction.accept(this, result);
             updateBinPermissions(result.getInstallationDescriptor().getBinPath());
             return result;
         } catch ( IOException e ) {
@@ -148,9 +182,9 @@ public final class ToolInstaller {
         downloadedFile.delete();
     }
     
-    private ToolInstallationDescriptor createAndSaveInstallationDescriptor() {
+    private final ToolInstallationDescriptor createAndSaveInstallationDescriptor() {
         var installPath = getTargetPath();
-        var binPath = installPath.resolve("bin");
+        var binPath = getBinPath();
         var installationDescriptor = new ToolInstallationDescriptor(installPath, binPath);
         installationDescriptor.save(toolName, getVersionDescriptor());
         return installationDescriptor;

@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
+import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
@@ -36,19 +37,17 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     }
     
     @Override @SneakyThrows
-    protected void postInstall(ToolInstallationResult installationResult) {
-        var installationDescriptor = installationResult.getInstallationDescriptor();
-        Path installPath = installationDescriptor.getInstallPath();
-        Path binPath = installationDescriptor.getBinPath();
-        FileUtils.moveFiles(installPath, binPath, "fcli(_completion)?(\\.exe)?");
+    protected void postInstall(ToolInstaller installer, ToolInstallationResult installationResult) {
+        Path installPath = installer.getTargetPath();
+        FileUtils.moveFiles(installPath, installer.getBinPath(), "fcli(_completion)?(\\.exe)?");
         if ( Files.exists(installPath.resolve("fcli.jar")) ) {
-            copyBinResource(installationResult, "extra-files/jar/bin/fcli");
-            copyBinResource(installationResult, "extra-files/jar/bin/fcli.bat");
-            copyGlobalBinResource(installationResult, "extra-files/jar/global_bin/fcli");
-            copyGlobalBinResource(installationResult, "extra-files/jar/global_bin/fcli.bat");
+            installer.copyBinResource("extra-files/jar/bin/fcli");
+            installer.copyBinResource("extra-files/jar/bin/fcli.bat");
+            installer.copyGlobalBinResource("extra-files/jar/global_bin/fcli");
+            installer.copyGlobalBinResource("extra-files/jar/global_bin/fcli.bat");
         } else {
-            copyGlobalBinResource(installationResult, "extra-files/native/global_bin/fcli");
-            copyGlobalBinResource(installationResult, "extra-files/native/global_bin/fcli.bat");
+            installer.copyGlobalBinResource("extra-files/native/global_bin/fcli");
+            installer.copyGlobalBinResource("extra-files/native/global_bin/fcli.bat");
         }
     }
 }

@@ -12,24 +12,25 @@
  */
 package com.fortify.cli.ftest.tool
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import java.nio.file.Files
+import java.nio.file.Path
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
-import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.ssc._common.SSCRoleSupplier
-import com.fortify.cli.ftest.ssc._common.SSCRoleSupplier.SSCRole
-import spock.lang.AutoCleanup
-import spock.lang.Requires
+import com.fortify.cli.ftest._common.spec.TempDir
+
 import spock.lang.Shared
 import spock.lang.Stepwise
 
 @Prefix("tool.bugtracker-utility") @Stepwise
 class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
-    
+    @Shared @TempDir("fortify/tools") String baseDir;
+    @Shared String version = "4.12.0"
+    @Shared Path globalBinScript = Path.of(baseDir).resolve("bin/FortifyBugTrackerUtility.bat");
+    @Shared Path binScript = Path.of(baseDir).resolve("bugtracker-utility/${version}/bin/FortifyBugTrackerUtility.bat");
     def "install"() {
-        def args = "tool bugtracker-utility install -y -v=latest --progress=none"
+        def args = "tool bugtracker-utility install -y -v=${version} --progress=none -b ${baseDir}"
         when:
             def result = Fcli.run(args)
         then:
@@ -37,6 +38,8 @@ class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
                 size()>0
                 it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
                 it[1].contains(" INSTALLED")
+                Files.exists(binScript);
+                Files.exists(globalBinScript);
             }
     }
     
@@ -53,7 +56,7 @@ class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool bugtracker-utility uninstall -y -v=default"
+        def args = "tool bugtracker-utility uninstall -y -v=${version}"
         when:
             def result = Fcli.run(args)
         then:
@@ -61,6 +64,9 @@ class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
                 size()>0
                 it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
                 it[1].contains(" UNINSTALLED")
+                // TODO fcli currently doesn't delete/update global bin script
+                Files.exists(globalBinScript);
+                !Files.exists(binScript);
             }
     }
     

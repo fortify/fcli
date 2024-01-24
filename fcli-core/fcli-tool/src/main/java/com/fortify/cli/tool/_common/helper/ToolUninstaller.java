@@ -38,6 +38,7 @@ public class ToolUninstaller {
         return uninstall(versionDescriptor, installationDescriptor, null);
     }
     
+    // TODO Remove/update global bin script to point to latest remaining installation
     public final ToolInstallationOutputDescriptor uninstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor, ToolDefinitionVersionDescriptor replacementVersion) {
         var installPath = installationDescriptor.getInstallPath();
         var action = "UNINSTALLED";

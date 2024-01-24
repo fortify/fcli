@@ -15,7 +15,6 @@ package com.fortify.cli.tool._common.cli.cmd;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -41,6 +40,7 @@ import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
@@ -49,10 +49,8 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private static final ObjectMapper OBJECTMAPPER = JsonHelper.getObjectMapper();
     @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.install.version", defaultValue = "latest") 
     private String version;
-    @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
-    private File installDir;
-    @Option(names={"-b", "--base-dir"}, required = false, descriptionKey="fcli.tool.install.base-dir") 
-    private File baseDir;
+    @ArgGroup(exclusive = true)
+    private InstallOrBaseDirArgGroup installOrBaseDirArgGroup = new InstallOrBaseDirArgGroup();
     @Option(names={"-p", "--platform"}, required = false, descriptionKey="fcli.tool.install.platform") 
     private String platform;
     @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
@@ -61,6 +59,13 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private boolean replace = false;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
+    
+    private static final class InstallOrBaseDirArgGroup {
+        @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
+        private File installDir;
+        @Option(names={"-b", "--base-dir"}, required = false, descriptionKey="fcli.tool.install.base-dir") 
+        private File baseDir;
+    }
     
     @Override
     public final JsonNode getJsonNode() {
@@ -78,31 +83,8 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     }
     
     protected abstract String getToolName();
-    protected abstract void postInstall(ToolInstallationResult installationResult);
+    protected abstract void postInstall(ToolInstaller toolInstaller, ToolInstallationResult installationResult);
     protected abstract String getDefaultArtifactType();
-    
-    protected final void copyBinResource(ToolInstallationResult installationResult, String resourceFile) {
-        var fullResourceFile = getFullResourceFile(installationResult, resourceFile);
-        FileUtils.copyResourceToDir(fullResourceFile, installationResult.getInstallationDescriptor().getBinPath(), StandardCopyOption.REPLACE_EXISTING);
-    }
-    
-    @SneakyThrows
-    protected final void copyGlobalBinResource(ToolInstallationResult installationResult, String resourceFile) {
-        if ( installDir==null ) {
-            // We only install global bin scripts if no explicit tool installation directory was specified
-            var fullResourceFile = getFullResourceFile(installationResult, resourceFile);
-            var destFilePath = getBasePath().resolve("bin").resolve(Path.of(resourceFile).getFileName());
-            FileUtils.copyResource(fullResourceFile, destFilePath, StandardCopyOption.REPLACE_EXISTING);
-            String content = new String(Files.readAllBytes(destFilePath), "ASCII");
-            content = content.replace("{{binDir}}", installationResult.getInstallationDescriptor().getBinDir());
-            Files.write(destFilePath, content.getBytes("ASCII"));
-            ToolInstaller.updateFilePermissions(destFilePath);
-        }
-    }
-    
-    private String getFullResourceFile(ToolInstallationResult installationResult, String resourceFile) {
-        return String.format("com/fortify/cli/tool/%s/%s", installationResult.getToolName().replace("-", "_"), resourceFile);
-    }
     
     private final ArrayNode install() {
         try ( var progressWriter = progressWriterFactory.create() ) {
@@ -114,6 +96,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
                     .postInstallAction(this::postInstall)
                     .progressWriter(progressWriter)
                     .targetPathProvider(this::getTargetPath)
+                    .globalBinPathProvider(this::getGlobalBinPath)
                     .toolName(getToolName())
                     .requestedVersion(version)
                     .build();
@@ -124,12 +107,29 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
             return result;
         }
     }
+    
+    private final Path getInstallPath() {
+        return installOrBaseDirArgGroup.installDir==null
+                ? null 
+                : installOrBaseDirArgGroup.installDir.toPath();
+    }
+    
+    private final Path getBasePath() {
+        var basePath = installOrBaseDirArgGroup.baseDir==null
+                ? null 
+                : installOrBaseDirArgGroup.baseDir.toPath();
+        if ( getInstallPath()==null && basePath==null ) {
+            basePath = Path.of(System.getProperty("user.home"),"fortify", "tools"); 
+        }
+        return basePath; 
+    }
 
     private final Path getTargetPath(ToolInstaller toolInstaller) {
+        var installPath = getInstallPath();
         Path result = null;
-        if ( this.installDir!=null ) {
+        if ( installPath!=null ) {
             toolInstaller.getProgressWriter().writeWarning("WARN: --install-dir option is deprecated");
-            result = this.installDir.toPath();
+            result = installPath;
         } else {
             var basePath = getBasePath();
             result = basePath.resolve(String.format("%s/%s", getToolName(), toolInstaller.getToolVersion()));
@@ -137,10 +137,9 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         return result.normalize().toAbsolutePath();
     }
 
-    private Path getBasePath() {
-        return this.baseDir!=null
-                ? this.baseDir.toPath()
-                : Path.of(System.getProperty("user.home"),"fortify", "tools");
+    private final Path getGlobalBinPath(ToolInstaller toolInstaller) {
+        var basePath = getBasePath(); 
+        return basePath==null ? null : basePath.resolve("bin");
     }
     
     private final class ToolInstallationPreparer implements Consumer<ToolInstaller> {

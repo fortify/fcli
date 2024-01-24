@@ -12,11 +12,10 @@
  *******************************************************************************/
 package com.fortify.cli.tool.debricked_cli.cli.cmd;
 
-import java.nio.file.Path;
-
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
+import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
@@ -35,12 +34,9 @@ public class ToolDebrickedCliInstallCommand extends AbstractToolInstallCommand {
     }
     
     @Override @SneakyThrows
-    protected void postInstall(ToolInstallationResult installationResult) {
-        var installationDescriptor = installationResult.getInstallationDescriptor();
-        Path installPath = installationDescriptor.getInstallPath();
-        Path binPath = installationDescriptor.getBinPath();
-        FileUtils.moveFiles(installPath, binPath, "debricked(\\.exe)?");
-        copyGlobalBinResource(installationResult, "extra-files/global_bin/debricked");
-        copyGlobalBinResource(installationResult, "extra-files/global_bin/debricked.bat");
+    protected void postInstall(ToolInstaller installer, ToolInstallationResult installationResult) {
+        FileUtils.moveFiles(installer.getTargetPath(), installer.getBinPath(), "debricked(\\.exe)?");
+        installer.copyGlobalBinResource("extra-files/global_bin/debricked");
+        installer.copyGlobalBinResource("extra-files/global_bin/debricked.bat");
     }
 }
