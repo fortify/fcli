@@ -147,7 +147,6 @@ public final class FileUtils {
     @SneakyThrows
     public static final boolean isDirPathInUseByCurrentExecutable(Path path) {
         var currentExecutablePath = Path.of(FileUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-        System.out.println("Current executable path: "+currentExecutablePath);
         return currentExecutablePath.normalize().startsWith(path.normalize());
     }
     
