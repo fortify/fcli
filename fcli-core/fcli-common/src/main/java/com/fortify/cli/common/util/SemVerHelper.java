@@ -13,6 +13,7 @@
 package com.fortify.cli.common.util;
 
 import java.lang.module.ModuleDescriptor.Version;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 public final class SemVerHelper {
@@ -43,5 +44,17 @@ public final class SemVerHelper {
             var version2 = Version.parse(semver2);
             return version1.compareTo(version2);
         }
+    }
+    
+    public static final Optional<String> getMajor(String semver) {
+        var matcher = semverPattern.matcher(semver);
+        return !matcher.matches() ? Optional.empty() : Optional.of(matcher.group(1));
+    }
+    
+    public static final Optional<String> getMajorMinor(String semver) {
+        var matcher = semverPattern.matcher(semver);
+        return !matcher.matches() 
+                ? Optional.empty() 
+                : Optional.of(String.format("%s.%s", matcher.group(1), matcher.group(2)));
     }
 }

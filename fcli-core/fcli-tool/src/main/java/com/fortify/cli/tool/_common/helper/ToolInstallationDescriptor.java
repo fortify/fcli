@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.tool._common.helper;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -44,7 +45,8 @@ public class ToolInstallationDescriptor {
     }
     
     public static final ToolInstallationDescriptor load(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
-        return FcliDataHelper.readFile(getInstallDescriptorPath(toolName, versionDescriptor.getVersion()), ToolInstallationDescriptor.class, false);
+        var result = FcliDataHelper.readFile(getInstallDescriptorPath(toolName, versionDescriptor.getVersion()), ToolInstallationDescriptor.class, false);
+        return result!=null && Files.exists(result.getInstallPath()) ? result : null;
     }
     
     public static final void delete(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {

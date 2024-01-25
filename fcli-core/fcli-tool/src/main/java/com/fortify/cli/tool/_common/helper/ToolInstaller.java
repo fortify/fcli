@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -55,6 +56,7 @@ public final class ToolInstaller {
     @Getter private final IProgressWriterI18n progressWriter;
     private final LazyObject<ToolDefinitionRootDescriptor> _definitionRootDescriptor = new LazyObject<>();
     private final LazyObject<ToolDefinitionVersionDescriptor> _versionDescriptor = new LazyObject<>();
+    private final LazyObject<ToolInstallationDescriptor> _previousInstallationDescriptor = new LazyObject<>();
     private final LazyObject<Path> _targetPath = new LazyObject<>();
     private final LazyObject<Path> _globalBinPath = new LazyObject<>();
     
@@ -82,6 +84,10 @@ public final class ToolInstaller {
         return _versionDescriptor.get(()->getDefinitionRootDescriptor().getVersionOrDefault(requestedVersion));
     }
     
+    public final ToolInstallationDescriptor getPreviousInstallationDescriptor() {
+        return _previousInstallationDescriptor.get(()->ToolInstallationDescriptor.load(toolName, getVersionDescriptor()));
+    }
+    
     public final Path getTargetPath() {
         return _targetPath.get(()->targetPathProvider.apply(this));
     }
@@ -98,6 +104,13 @@ public final class ToolInstaller {
         return getVersionDescriptor().getVersion();
     }
     
+    public final boolean hasMatchingTargetPath(ToolDefinitionVersionDescriptor versionDescriptor) {
+        var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
+        var currentToolInstallPath = installationDescriptor==null ? null: installationDescriptor.getInstallPath().normalize();
+        var targetToolInstallPath = getTargetPath().normalize();
+        return targetToolInstallPath.equals(currentToolInstallPath) && Files.exists(targetToolInstallPath);
+    }
+    
     public final ToolInstallationResult install() {
         var artifactDescriptor = getArtifactDescriptor(ToolPlatformHelper.getPlatform())
                 .orElseGet(()->getArtifactDescriptor(defaultPlatform)
@@ -112,8 +125,23 @@ public final class ToolInstaller {
     }
     
     public final void copyBinResource(String resourceFile) {
-        var fullResourceFile = getFullResourceFile(resourceFile);
-        FileUtils.copyResourceToDir(fullResourceFile, getBinPath(), StandardCopyOption.REPLACE_EXISTING);
+        var fileName = Paths.get(resourceFile).getFileName().toString();
+        Path targetFilePath = getBinPath().resolve(fileName);
+        if (!Files.exists(targetFilePath)) {
+            // We don't reinstall bin resources if they already exist for two reasons:
+            // - If the script already exists, it means that we're doing an update instead
+            //   of full install, so we want to make sure that the scripts match the current
+            //   install. For example, suppose fcli was first installed using --platform linux/x64
+            //   and later 're-installed' with --platform java, we'd be installing scripts for
+            //   Java even though we didn't actually install the jar-file.
+            // - On Windows, updating existing batch files while running can cause strange behavior.
+            //   For example, suppose fcli 3.0.0 was installed from fcli 2.2.0, and a 're-install' 
+            //   for fcli 3.0.0 is done using fcli 3.0.0. If fcli 3.0.0 would overwrite the existing
+            //   batch files with different contents, this could cause incorrect behavior and likely
+            //   error messages once Windows resumes batch file execution once fcli has finished.
+            var fullResourceFile = getFullResourceFile(resourceFile);
+            FileUtils.copyResource(fullResourceFile, getBinPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
     }
     
     @SneakyThrows
@@ -138,10 +166,11 @@ public final class ToolInstaller {
         try {
             preInstallAction.accept(this);
             var versionDescriptor = getVersionDescriptor();
-            var previousInstallationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
-            warnIfDifferentTargetPath(previousInstallationDescriptor);
-            checkEmptyTargetPath();
-            downloadAndExtract(artifactDescriptor);
+            warnIfDifferentTargetPath();
+            if ( !hasMatchingTargetPath(getVersionDescriptor()) ) {
+                checkEmptyTargetPath();
+                downloadAndExtract(artifactDescriptor);
+            }
             var result = new ToolInstallationResult(toolName, versionDescriptor, artifactDescriptor, createAndSaveInstallationDescriptor());
             progressWriter.writeProgress("Running post-install actions");
             postInstallAction.accept(this, result);
@@ -197,7 +226,8 @@ public final class ToolInstaller {
     }
     
     @SneakyThrows
-    private final void warnIfDifferentTargetPath(ToolInstallationDescriptor oldDescriptor) {
+    private final void warnIfDifferentTargetPath() {
+        var oldDescriptor = getPreviousInstallationDescriptor();
         var targetPath = getTargetPath();
         if ( oldDescriptor!=null && !oldDescriptor.getInstallPath().toAbsolutePath().equals(targetPath.toAbsolutePath()) ) {
             String msg = "WARN: This tool version was previously installed in another directory." +

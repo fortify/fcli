@@ -15,9 +15,13 @@ package com.fortify.cli.tool._common.cli.cmd;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,7 +33,10 @@ import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.FileUtils;
+import com.fortify.cli.common.util.SemVerHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
@@ -55,8 +62,11 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private String platform;
     @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
     private DigestMismatchAction onDigestMismatch;
-    @Option(names={"-r", "--replace"}, required = false, negatable = true, descriptionKey="fcli.tool.install.replace")
-    private boolean replace = false;
+    @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
+    @Option(names={"-u", "--uninstall"}, required = false, split=",",  descriptionKey="fcli.tool.install.uninstall")
+    private Set<String> versionsToReplace = new HashSet<>();
+    @Option(names={"--no-global-bin"}, required = false, negatable = true, descriptionKey="fcli.tool.install.global-bin")
+    private boolean installGlobalBin = true;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
@@ -139,7 +149,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
 
     private final Path getGlobalBinPath(ToolInstaller toolInstaller) {
         var basePath = getBasePath(); 
-        return basePath==null ? null : basePath.resolve("bin");
+        return basePath==null || !installGlobalBin ? null : basePath.resolve("bin");
     }
     
     private final class ToolInstallationPreparer implements Consumer<ToolInstaller> {
@@ -177,18 +187,29 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         @SneakyThrows
         private final void addTargetDirPreparation(Map<String, Runnable> requiredPreparations) {
             var targetPath = installer.getTargetPath();
-            // Check non-empty target directory exists if replace==false. If replace==true,
-            // cleaning the old installation is handled by uninstall preparations, independent
-            // of whether the old installation was in the same or different target directory.
-            if ( !replace && Files.exists(targetPath) && Files.list(targetPath).findFirst().isPresent() ) {
-                requiredPreparations.put("Clean target directory "+targetPath, ()->deleteRecursive(targetPath));
+            if ( Files.exists(targetPath) ) {
+                var existingVersionsWithSameTargetPath = getVersionsStream()
+                            .filter(d->!isCandidateForUninstall(d))
+                            .filter(d->installer.hasMatchingTargetPath(d))
+                            .map(ToolDefinitionVersionDescriptor::getVersion)
+                            .collect(Collectors.toList());
+                var otherVersionsWithSameTargetPath = existingVersionsWithSameTargetPath.stream()
+                        .filter(v->!v.equals(installer.getToolVersion()))
+                        .collect(Collectors.toList());
+                if ( !otherVersionsWithSameTargetPath.isEmpty() ) {
+                    throw new IllegalStateException(String.format("Target path %s already in use for versions: %s\nUse --replace option to explicitly uninstall the existing versions", targetPath, String.join(", ", otherVersionsWithSameTargetPath)));
+                } else if ( existingVersionsWithSameTargetPath.isEmpty() ) {
+                    // Basically we're moving the tool installation to a different directory
+                    requiredPreparations.put("Clean target directory "+targetPath, ()->deleteRecursive(targetPath));
+                }
             }
         }
 
         private final void addUninstallPreparations(Map<String, Runnable> requiredPreparations) {
-            if ( replace ) {
-                installer.getDefinitionRootDescriptor().getVersionsStream()
-                    .forEach(versionDescriptor->addUninstallPreparation(versionDescriptor, requiredPreparations));
+            if ( !versionsToReplace.isEmpty() ) {
+                getVersionsStream()
+                    .filter(this::isCandidateForUninstall)
+                    .forEach(vd->addUninstallPreparation(vd, requiredPreparations));
             }
         }
 
@@ -201,18 +222,41 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
             }
         }
         
-        private void deleteRecursive(Path targetPath) {
+        private final void deleteRecursive(Path targetPath) {
             installer.getProgressWriter().writeProgress("Cleaning target directory %s", targetPath);
             FileUtils.deleteRecursive(targetPath);
         }
         
-        private void uninstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
+        private final void uninstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
             var toolName = installer.getToolName();
             var toolVersion = versionDescriptor.getVersion();
             var installPath = installationDescriptor.getInstallPath();
             installer.getProgressWriter().writeProgress("Uninstalling %s %s from %s", toolName, toolVersion, installPath);
             var outputDescriptor = uninstaller.uninstall(versionDescriptor, installationDescriptor, installer.getVersionDescriptor());
             toolInstallationOutputDescriptors.add(OBJECTMAPPER.valueToTree(outputDescriptor));
+        }
+        
+        private final Stream<ToolDefinitionVersionDescriptor> getVersionsStream() {
+            return installer.getDefinitionRootDescriptor().getVersionsStream();
+        }
+
+        /**
+         * The given version descriptor is considered a candidate for uninstall
+         * all of the following conditions are met:
+         * - The full version is listed in --replace
+         * - The major version is listed in --replace
+         * - The major & minor version is listed in --replace
+         * - The version doesn't match the target version to be installed, or target path is different from existing installation
+         * - An installation descriptor for the version exists
+         */
+        private final boolean isCandidateForUninstall(ToolDefinitionVersionDescriptor d) {
+            String version = d.getVersion();
+            return (versionsToReplace.contains("all") 
+                        || versionsToReplace.contains(version)
+                        || versionsToReplace.contains(SemVerHelper.getMajor(d.getVersion()).orElse("N/A"))
+                        || versionsToReplace.contains(SemVerHelper.getMajorMinor(d.getVersion()).orElse("N/A")))
+                    && !(d.getVersion().equals(installer.getToolVersion()) && installer.hasMatchingTargetPath(d))
+                    && ToolInstallationDescriptor.load(installer.getToolName(), d)!=null;
         }
     }
 }

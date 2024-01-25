@@ -138,9 +138,17 @@ public final class FileUtils {
     
     @SneakyThrows
     public static final boolean isDirPathInUse(Path path) {
+        if ( isDirPathInUseByCurrentExecutable(path) ) { return true; }
         try (Stream<Path> walk = Files.walk(path)) {
             return walk.anyMatch(FileUtils::isFilePathInUse);
         }
+    }
+    
+    @SneakyThrows
+    public static final boolean isDirPathInUseByCurrentExecutable(Path path) {
+        var currentExecutablePath = Path.of(FileUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        System.out.println("Current executable path: "+currentExecutablePath);
+        return currentExecutablePath.normalize().startsWith(path.normalize());
     }
     
     @SneakyThrows
