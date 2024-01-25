@@ -57,7 +57,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool fod-uploader uninstall -y -v=${version}"
+        def args = "tool fod-uploader uninstall -y --progress=none -v=${version}"
         when:
             def result = Fcli.run(args)
         then:

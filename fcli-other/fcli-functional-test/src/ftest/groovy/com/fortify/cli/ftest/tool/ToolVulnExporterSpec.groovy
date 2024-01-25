@@ -57,7 +57,7 @@ class ToolVulnExporterSpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool vuln-exporter uninstall -y -v=${version}"
+        def args = "tool vuln-exporter uninstall -y --progress=none -v=${version}"
         when:
             def result = Fcli.run(args)
         then:

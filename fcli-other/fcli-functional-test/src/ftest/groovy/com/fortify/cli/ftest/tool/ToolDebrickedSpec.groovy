@@ -57,7 +57,7 @@ class ToolDebrickedSpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool debricked-cli uninstall -y -v=${version}"
+        def args = "tool debricked-cli uninstall -y --progress=none -v=${version}"
         when:
             def result = Fcli.run(args)
         then:

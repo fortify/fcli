@@ -57,7 +57,7 @@ class ToolScClientSpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool sc-client uninstall -y -v=${version}"
+        def args = "tool sc-client uninstall -y --progress=none -v=${version}"
         when:
             def result = Fcli.run(args)
         then:

@@ -56,7 +56,7 @@ class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool bugtracker-utility uninstall -y -v=${version}"
+        def args = "tool bugtracker-utility uninstall -y --progress=none -v=${version}"
         when:
             def result = Fcli.run(args)
         then:
