@@ -48,6 +48,7 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
             installer.installGlobalBinScript(GlobalBinScriptType.bat, "fcli.bat", "bin/fcli.bat");
         } else {
             installer.installGlobalBinScript(GlobalBinScriptType.bash, "fcli", "bin/fcli");
+            installer.installGlobalBinScript(GlobalBinScriptType.bash, "fcli_completion", "bin/fcli_completion");
             installer.installGlobalBinScript(GlobalBinScriptType.bat, "fcli.bat", "bin/fcli.exe");
         }
     }

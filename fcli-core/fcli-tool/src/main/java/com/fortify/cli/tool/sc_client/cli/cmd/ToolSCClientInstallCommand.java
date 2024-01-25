@@ -47,6 +47,8 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
         updateClientAuthToken(installer.getTargetPath());
         installer.installGlobalBinScript(GlobalBinScriptType.bash, "scancentral", "bin/scancentral");
         installer.installGlobalBinScript(GlobalBinScriptType.bat, "scancentral.bat", "bin/scancentral.bat");
+        installer.installGlobalBinScript(GlobalBinScriptType.bash, "pwtool", "bin/pwtool");
+        installer.installGlobalBinScript(GlobalBinScriptType.bat, "pwtool.bat", "bin/pwtool.bat");
     }
     
     private void updateClientAuthToken(Path installPath) throws IOException {

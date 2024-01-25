@@ -153,12 +153,15 @@ public final class ToolInstaller {
         var globalBinPath = getGlobalBinPath();
         if ( globalBinPath!=null ) {
             var resourceFile = ToolInstallationHelper.getToolResourceLocation("extra-files/global-bin/"+type.name());
-            var destFilePath = globalBinPath.resolve(globalBinScriptName);
-            FileUtils.copyResource(resourceFile, destFilePath, StandardCopyOption.REPLACE_EXISTING);
-            String content = new String(Files.readAllBytes(destFilePath), "ASCII");
-            content = content.replace("{{target}}", getTargetPath().resolve(target).toString());
-            Files.write(destFilePath, content.getBytes("ASCII"));
-            ToolInstaller.updateFilePermissions(destFilePath);
+            var globalBinFilePath = globalBinPath.resolve(globalBinScriptName);
+            var globalBinTargetFilePath = getTargetPath().resolve(target);
+            if ( Files.exists(globalBinTargetFilePath) ) {
+                FileUtils.copyResource(resourceFile, globalBinFilePath, StandardCopyOption.REPLACE_EXISTING);
+                String content = new String(Files.readAllBytes(globalBinFilePath), "ASCII");
+                content = content.replace("{{target}}", globalBinTargetFilePath.toString());
+                Files.write(globalBinFilePath, content.getBytes("ASCII"));
+                ToolInstaller.updateFilePermissions(globalBinFilePath);
+            }
         }
     }
     
