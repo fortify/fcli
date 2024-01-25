@@ -144,7 +144,7 @@ public final class ToolInstaller {
             //   batch files with different contents, this could cause incorrect behavior and likely
             //   error messages once Windows resumes batch file execution once fcli has finished.
             var fullResourceFile = getFullResourceFile(resourceFile);
-            FileUtils.copyResource(fullResourceFile, getBinPath(), StandardCopyOption.REPLACE_EXISTING);
+            FileUtils.copyResource(fullResourceFile, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
         }
     }
     
