@@ -12,39 +12,49 @@
  *******************************************************************************/
 package com.fortify.cli.tool._common.cli.cmd;
 
-import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
 import com.fortify.cli.tool._common.helper.ToolUninstaller;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionRootDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @CommandGroup("uninstall")
 public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
-    @Getter @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.uninstall.version", defaultValue = "latest")
-    private String version;
+    private static final ObjectMapper OBJECTMAPPER = JsonHelper.getObjectMapper();
+    @Getter @Option(names={"-v", "--versions"}, required = true, split=",", descriptionKey="fcli.tool.uninstall.versions")
+    private Set<String> versionsToUninstall;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
     @Override
     public final JsonNode getJsonNode() {
-        String toolName = getToolName();
-        var versionDescriptor = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName).getVersionOrDefault(version);
-        var installationDescriptor = getInstallationDescriptor(toolName, versionDescriptor);
-        Path installPath = getInstallPath(installationDescriptor);
-        requireConfirmation.checkConfirmed(installPath);
-        var outputDescriptor = new ToolUninstaller(toolName).uninstall(versionDescriptor, installationDescriptor);
-        return new ObjectMapper().valueToTree(outputDescriptor);
+        try ( var progressWriter = progressWriterFactory.create() ) {
+            var runner = new ToolUninstallationRunner(progressWriter, getToolName());
+            runner.run();
+            return runner.getToolInstallationOutputDescriptors();
+        }
     }
 
     @Override
@@ -54,24 +64,71 @@ public abstract class AbstractToolUninstallCommand extends AbstractOutputCommand
     
     @Override
     public final boolean isSingular() {
-        return true;
+        return false;
     }
     
     protected abstract String getToolName();
     
-    private static final ToolInstallationDescriptor getInstallationDescriptor(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
-        var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
-        if ( installationDescriptor==null ) {
-            throw new IllegalArgumentException("Tool installation not found");
+    // TODO Remove code duplication between this class and AbstractToolInstallCommand::ToolInstallationPreparer
+    private final class ToolUninstallationRunner {
+        @Getter private final ArrayNode toolInstallationOutputDescriptors = OBJECTMAPPER.createArrayNode();
+        private final IProgressWriterI18n progressWriter;
+        private final String toolName;
+        private final ToolUninstaller uninstaller;
+        private final ToolDefinitionRootDescriptor definitionRootDescriptor;
+        
+        private ToolUninstallationRunner(IProgressWriterI18n progressWriter, String toolName) {
+            this.progressWriter = progressWriter;
+            this.toolName = toolName;
+            this.uninstaller = new ToolUninstaller(toolName);
+            this.definitionRootDescriptor = ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName);
         }
-        return installationDescriptor;
-    }
-    
-    private static final Path getInstallPath(ToolInstallationDescriptor installationDescriptor) {
-        Path installPath = installationDescriptor.getInstallPath();
-        if ( installPath==null ) {
-            throw new IllegalStateException("Tool installation path not found");
+        
+        @SneakyThrows
+        public final void run() {
+            Map<String, Runnable> actions = new LinkedHashMap<String, Runnable>();
+            addUninstallActions(actions);
+            run(actions);
         }
-        return installPath;
+
+        private final void run(Map<String, Runnable> actions) {
+            if ( !actions.isEmpty() ) {
+                String msg = String.format("\n  %s", String.join("\n  ", actions.keySet()));
+                requireConfirmation.checkConfirmed(msg);
+                actions.values().forEach(Runnable::run);
+            }
+        }
+
+        private final void addUninstallActions(Map<String, Runnable> actions) {
+            if ( !versionsToUninstall.isEmpty() ) {
+                getVersionsStream()
+                    .filter(this::isCandidateForUninstall)
+                    .forEach(vd->addUninstallPreparation(vd, actions));
+            }
+        }
+
+        private final void addUninstallPreparation(ToolDefinitionVersionDescriptor versionDescriptor, Map<String, Runnable> actions) {
+            var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
+            if ( installationDescriptor!=null ) {
+                var msg = String.format("Uninstall %s v%s from %s", toolName, versionDescriptor.getVersion(), installationDescriptor.getInstallDir());
+                actions.put(msg, ()->uninstall(versionDescriptor, installationDescriptor));
+            }
+        }
+        
+        private final void uninstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
+            var toolVersion = versionDescriptor.getVersion();
+            var installPath = installationDescriptor.getInstallPath();
+            progressWriter.writeProgress("Uninstalling %s %s from %s", toolName, toolVersion, installPath);
+            var outputDescriptor = uninstaller.uninstall(versionDescriptor, installationDescriptor);
+            toolInstallationOutputDescriptors.add(OBJECTMAPPER.valueToTree(outputDescriptor));
+        }
+        
+        private final Stream<ToolDefinitionVersionDescriptor> getVersionsStream() {
+            return definitionRootDescriptor.getVersionsStream();
+        }
+
+        private final boolean isCandidateForUninstall(ToolDefinitionVersionDescriptor d) {
+            return ToolInstallationHelper.isCandidateForUninstall(toolName, versionsToUninstall, d);
+        }
     }
 }

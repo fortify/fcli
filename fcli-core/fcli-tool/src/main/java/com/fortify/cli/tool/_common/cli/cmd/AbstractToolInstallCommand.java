@@ -36,9 +36,9 @@ import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.FileUtils;
-import com.fortify.cli.common.util.SemVerHelper;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
 import com.fortify.cli.tool._common.helper.ToolInstaller.DigestMismatchAction;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
@@ -64,7 +64,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
     private DigestMismatchAction onDigestMismatch;
     @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
     @Option(names={"-u", "--uninstall"}, required = false, split=",",  descriptionKey="fcli.tool.install.uninstall")
-    private Set<String> versionsToReplace = new HashSet<>();
+    private Set<String> versionsToUninstall = new HashSet<>();
     @Option(names={"--no-global-bin"}, required = false, negatable = true, descriptionKey="fcli.tool.install.global-bin")
     private boolean installGlobalBin = true;
     @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
@@ -206,7 +206,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
         }
 
         private final void addUninstallPreparations(Map<String, Runnable> requiredPreparations) {
-            if ( !versionsToReplace.isEmpty() ) {
+            if ( !versionsToUninstall.isEmpty() ) {
                 getVersionsStream()
                     .filter(this::isCandidateForUninstall)
                     .forEach(vd->addUninstallPreparation(vd, requiredPreparations));
@@ -242,21 +242,16 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
 
         /**
          * The given version descriptor is considered a candidate for uninstall
-         * all of the following conditions are met:
-         * - The full version is listed in --replace
-         * - The major version is listed in --replace
-         * - The major & minor version is listed in --replace
-         * - The version doesn't match the target version to be installed, or target path is different from existing installation
-         * - An installation descriptor for the version exists
+         * if all of the following conditions are met:
+         * - {@link ToolInstallationHelper#isCandidateForUninstall(String, Set, ToolDefinitionVersionDescriptor)}
+         *   returns true
+         * - The version doesn't match the target version to be installed, 
+         *   or target path is different from existing installation
          */
         private final boolean isCandidateForUninstall(ToolDefinitionVersionDescriptor d) {
-            String version = d.getVersion();
-            return (versionsToReplace.contains("all") 
-                        || versionsToReplace.contains(version)
-                        || versionsToReplace.contains(SemVerHelper.getMajor(d.getVersion()).orElse("N/A"))
-                        || versionsToReplace.contains(SemVerHelper.getMajorMinor(d.getVersion()).orElse("N/A")))
-                    && !(d.getVersion().equals(installer.getToolVersion()) && installer.hasMatchingTargetPath(d))
-                    && ToolInstallationDescriptor.load(installer.getToolName(), d)!=null;
+            var toolName = installer.getToolName();
+            return ToolInstallationHelper.isCandidateForUninstall(toolName, versionsToUninstall, d)
+                    && !(d.getVersion().equals(installer.getToolVersion()) && installer.hasMatchingTargetPath(d));
         }
     }
 }
