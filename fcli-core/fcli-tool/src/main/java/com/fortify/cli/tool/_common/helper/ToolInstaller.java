@@ -76,6 +76,10 @@ public final class ToolInstaller {
         fail, warn
     }
     
+    public static enum GlobalBinScriptType {
+        bash, bat
+    }
+    
     public final ToolDefinitionRootDescriptor getDefinitionRootDescriptor() {
         return _definitionRootDescriptor.get(()->ToolDefinitionsHelper.getToolDefinitionRootDescriptor(toolName));
     }
@@ -145,21 +149,21 @@ public final class ToolInstaller {
     }
     
     @SneakyThrows
-    public final void copyGlobalBinResource(String resourceFile) {
+    public final void installGlobalBinScript(GlobalBinScriptType type, String globalBinScriptName, String target) {
         var globalBinPath = getGlobalBinPath();
         if ( globalBinPath!=null ) {
-            var fullResourceFile = getFullResourceFile(resourceFile);
-            var destFilePath = globalBinPath.resolve(Path.of(resourceFile).getFileName());
-            FileUtils.copyResource(fullResourceFile, destFilePath, StandardCopyOption.REPLACE_EXISTING);
+            var resourceFile = ToolInstallationHelper.getToolResourceLocation("extra-files/global-bin/"+type.name());
+            var destFilePath = globalBinPath.resolve(globalBinScriptName);
+            FileUtils.copyResource(resourceFile, destFilePath, StandardCopyOption.REPLACE_EXISTING);
             String content = new String(Files.readAllBytes(destFilePath), "ASCII");
-            content = content.replace("{{binDir}}", getBinPath().toString());
+            content = content.replace("{{target}}", getTargetPath().resolve(target).toString());
             Files.write(destFilePath, content.getBytes("ASCII"));
             ToolInstaller.updateFilePermissions(destFilePath);
         }
     }
     
     private String getFullResourceFile(String resourceFile) {
-        return String.format("com/fortify/cli/tool/%s/%s", getToolName().replace("-", "_"), resourceFile);
+        return ToolInstallationHelper.getToolResourceLocation(String.format("%s/%s", getToolName().replace("-", "_"), resourceFile));
     }
     
     private final ToolInstallationResult install(ToolDefinitionArtifactDescriptor artifactDescriptor) {

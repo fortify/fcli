@@ -1,1 +1,0 @@
-{{binDir}}\debricked.exe %*

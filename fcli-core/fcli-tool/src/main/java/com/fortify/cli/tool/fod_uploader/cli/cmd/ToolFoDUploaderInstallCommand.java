@@ -15,6 +15,7 @@ package com.fortify.cli.tool.fod_uploader.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
+import com.fortify.cli.tool._common.helper.ToolInstaller.GlobalBinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
@@ -36,7 +37,7 @@ public class ToolFoDUploaderInstallCommand extends AbstractToolInstallCommand {
     protected void postInstall(ToolInstaller installer, ToolInstallationResult installationResult) {
         installer.copyBinResource("extra-files/bin/FoDUpload");
         installer.copyBinResource("extra-files/bin/FoDUpload.bat");
-        installer.copyGlobalBinResource("extra-files/global_bin/FoDUpload");
-        installer.copyGlobalBinResource("extra-files/global_bin/FoDUpload.bat");
+        installer.installGlobalBinScript(GlobalBinScriptType.bash, "FoDUpload", "bin/FoDUpload");
+        installer.installGlobalBinScript(GlobalBinScriptType.bat, "FoDUpload.bat", "bin/FoDUpload.bat");
     }
 }

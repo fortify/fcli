@@ -17,12 +17,8 @@ import java.nio.file.Path;
 import com.fortify.cli.common.util.FcliDataHelper;
 
 public final class ToolInstallationHelper {
-    public static final String getToolResourceDir(String toolName) {
-        return String.format("com/fortify/cli/tool/%s", toolName);
-    }
-    
-    public static final String getToolResourceFile(String toolName, String fileName) {
-        return String.format("%s/%s", getToolResourceDir(toolName.replace('-', '_')), fileName);
+    public static final String getToolResourceLocation(String subPath) {
+        return String.format("com/fortify/cli/tool/%s", subPath);
     }
     
     public static Path getToolsStatePath() {
