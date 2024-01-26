@@ -22,7 +22,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
-import com.fortify.cli.tool._common.helper.ToolInstaller.GlobalBinScriptType;
+import com.fortify.cli.tool._common.helper.ToolInstaller.BinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
@@ -45,10 +45,10 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     @Override @SneakyThrows
     protected void postInstall(ToolInstaller installer, ToolInstallationResult installationResult) {
         updateClientAuthToken(installer.getTargetPath());
-        installer.installGlobalBinScript(GlobalBinScriptType.bash, "scancentral", "bin/scancentral");
-        installer.installGlobalBinScript(GlobalBinScriptType.bat, "scancentral.bat", "bin/scancentral.bat");
-        installer.installGlobalBinScript(GlobalBinScriptType.bash, "pwtool", "bin/pwtool");
-        installer.installGlobalBinScript(GlobalBinScriptType.bat, "pwtool.bat", "bin/pwtool.bat");
+        installer.installGlobalBinScript(BinScriptType.bash, "scancentral", "bin/scancentral");
+        installer.installGlobalBinScript(BinScriptType.bat, "scancentral.bat", "bin/scancentral.bat");
+        installer.installGlobalBinScript(BinScriptType.bash, "pwtool", "bin/pwtool");
+        installer.installGlobalBinScript(BinScriptType.bat, "pwtool.bat", "bin/pwtool.bat");
     }
     
     private void updateClientAuthToken(Path installPath) throws IOException {

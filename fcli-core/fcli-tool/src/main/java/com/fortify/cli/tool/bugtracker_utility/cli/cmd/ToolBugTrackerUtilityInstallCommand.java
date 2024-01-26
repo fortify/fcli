@@ -12,12 +12,13 @@
  *******************************************************************************/
 package com.fortify.cli.tool.bugtracker_utility.cli.cmd;
 
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
-import com.fortify.cli.tool._common.helper.ToolInstaller.GlobalBinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
@@ -37,12 +38,12 @@ public class ToolBugTrackerUtilityInstallCommand extends AbstractToolInstallComm
     
     @Override @SneakyThrows
     protected void postInstall(ToolInstaller installer, ToolInstallationResult installationResult) {
-        installer.copyBinResource("extra-files/bin/FortifyBugTrackerUtility");
-        installer.copyBinResource("extra-files/bin/FortifyBugTrackerUtility.bat");
-        installer.installGlobalBinScript(GlobalBinScriptType.bash, "FortifyBugTrackerUtility", "bin/FortifyBugTrackerUtility");
-        installer.installGlobalBinScript(GlobalBinScriptType.bat, "FortifyBugTrackerUtility.bat", "bin/FortifyBugTrackerUtility.bat");
-        
         var targetPath = installer.getTargetPath();
+        renameJar(targetPath);
+        installer.installJavaBinScripts("FortifyBugTrackerUtility", "FortifyBugTrackerUtility.jar");
+    }
+
+    private void renameJar(Path targetPath) throws IOException {
         var jarFiles = Files.find(targetPath, 1, 
                 (p,a)->p.toFile().getName().matches("FortifyBugTrackerUtility.*\\.jar"))
             .toList();

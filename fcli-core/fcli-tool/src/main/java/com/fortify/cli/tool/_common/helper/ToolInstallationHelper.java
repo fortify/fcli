@@ -20,8 +20,12 @@ import com.fortify.cli.common.util.SemVerHelper;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 public final class ToolInstallationHelper {
-    public static final String getToolResourceLocation(String subPath) {
+    public static final String getResourcePath(String subPath) {
         return String.format("com/fortify/cli/tool/%s", subPath);
+    }
+    
+    public static final String getResourcePath(String toolName, String subPath) {
+        return getResourcePath(String.format("%s/%s", toolName.replace("-", "_"), subPath));
     }
     
     public static final Path getToolsStatePath() {

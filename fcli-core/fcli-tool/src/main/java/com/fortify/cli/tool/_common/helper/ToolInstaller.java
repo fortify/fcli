@@ -14,12 +14,14 @@ package com.fortify.cli.tool._common.helper;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -76,7 +78,7 @@ public final class ToolInstaller {
         fail, warn
     }
     
-    public static enum GlobalBinScriptType {
+    public static enum BinScriptType {
         bash, bat
     }
     
@@ -128,46 +130,67 @@ public final class ToolInstaller {
         return install(artifactDescriptor);
     }
     
-    public final void copyBinResource(String resourceFile) {
-        var fileName = Paths.get(resourceFile).getFileName().toString();
-        Path targetFilePath = getBinPath().resolve(fileName);
-        if (!Files.exists(targetFilePath)) {
-            // We don't reinstall bin resources if they already exist for two reasons:
-            // - If the script already exists, it means that we're doing an update instead
-            //   of full install, so we want to make sure that the scripts match the current
-            //   install. For example, suppose fcli was first installed using --platform linux/x64
-            //   and later 're-installed' with --platform java, we'd be installing scripts for
-            //   Java even though we didn't actually install the jar-file.
-            // - On Windows, updating existing batch files while running can cause strange behavior.
-            //   For example, suppose fcli 3.0.0 was installed from fcli 2.2.0, and a 're-install' 
-            //   for fcli 3.0.0 is done using fcli 3.0.0. If fcli 3.0.0 would overwrite the existing
-            //   batch files with different contents, this could cause incorrect behavior and likely
-            //   error messages once Windows resumes batch file execution once fcli has finished.
-            var fullResourceFile = getFullResourceFile(resourceFile);
-            FileUtils.copyResource(fullResourceFile, targetFilePath, StandardCopyOption.REPLACE_EXISTING);
+    /**
+     * This method can be called by Tool*InstallCommands to install bin-scripts for 
+     * Java-based tools. It will install both the tool version specific bin-scripts 
+     * and global bin-scripts (if applicable). If global bin scripts already exist, 
+     * they will be replaced. If tool version specific bin-scripts already exist, 
+     * they will not be replaced, for the following reasons:
+     * <ul>
+     *   <li>If the script already exists, it means that we're doing an update instead
+     *       of full install, so we want to make sure that the scripts match the current
+     *       install. For example, suppose fcli was first installed using --platform linux/x64
+     *       and later 're-installed' with --platform java, we'd be installing scripts for
+     *       Java even though we didn't actually install the jar-file.</li>
+     *   <li>On Windows, updating existing batch files while running can cause strange behavior.
+     *       For example, suppose fcli 3.0.0 was installed from fcli 2.2.0, and a 're-install' 
+     *       for fcli 3.0.0 is done using fcli 3.0.0. If fcli 3.0.0 would overwrite the existing
+     *       batch files with different contents, this could cause incorrect behavior and likely
+     *       error messages once Windows resumes batch file execution once fcli has finished.</li>
+     * </ul>
+     * @param scriptBaseName Base name (without extension) for the scripts to be installed
+     * @param binScriptTargetJar Path to the jar-file, relative to the tool installation directory
+     */
+    public final void installJavaBinScripts(String scriptBaseName, String binScriptTargetJar) {
+        var scriptTargetFilePath = getTargetPath().resolve(binScriptTargetJar);
+        if ( !Files.exists(scriptTargetFilePath) ) {
+            throw new IllegalStateException("Cannot install bin scripts; target jar doesn't exist: "+scriptTargetFilePath);
+        }
+        for ( var type : BinScriptType.values() ) {
+            var resourceFile = ToolInstallationHelper.getResourcePath("extra-files/java-bin/"+type.name());
+            var replacements = getResourceReplacementsMap(getTargetPath(), scriptTargetFilePath);
+            var scriptName = type==BinScriptType.bash ? scriptBaseName : scriptBaseName+".bat";
+            installResource(resourceFile, getBinPath().resolve(scriptName), false, replacements);
+            installGlobalBinScript(type, scriptName, "bin/"+scriptName);
         }
     }
     
+    /**
+     * Install a global bin-script of the given {@link BinScriptType} with the given globalBinScriptName.
+     * The installed script will invoke the given globalBinScriptTarget. The script will only be installed
+     * if a global bin path has been configured. Note that for Java-based tools, the 
+     * {@link #installJavaBinScripts(String, String)} method should be used instead, which installs
+     * both tool version specific bin-scripts and corresponding global bin-scripts.
+     * @param type Type of the bin script; bash or bat
+     * @param globalBinScriptName Name of the script to be installed to the global bin directory
+     * @param globalBinScriptTarget Target script/executable to be invoked by the global bin-script,
+     *        relative to the tool installation directory.
+     */
     @SneakyThrows
-    public final void installGlobalBinScript(GlobalBinScriptType type, String globalBinScriptName, String target) {
+    public final void installGlobalBinScript(BinScriptType type, String globalBinScriptName, String globalBinScriptTarget) {
         var globalBinPath = getGlobalBinPath();
         if ( globalBinPath!=null ) {
-            var resourceFile = ToolInstallationHelper.getToolResourceLocation("extra-files/global-bin/"+type.name());
-            var globalBinFilePath = globalBinPath.resolve(globalBinScriptName);
-            var globalBinTargetFilePath = getTargetPath().resolve(target);
-            if ( Files.exists(globalBinTargetFilePath) ) {
-                FileUtils.copyResource(resourceFile, globalBinFilePath, StandardCopyOption.REPLACE_EXISTING);
-                String content = new String(Files.readAllBytes(globalBinFilePath), "ASCII");
-                content = content.replace("{{target}}", globalBinTargetFilePath.toString());
-                Files.write(globalBinFilePath, content.getBytes("ASCII"));
-                ToolInstaller.updateFilePermissions(globalBinFilePath);
+            var resourceFile = ToolInstallationHelper.getResourcePath("extra-files/global-bin/"+type.name());
+            var globalBinScriptPath = globalBinPath.resolve(globalBinScriptName);
+            var scriptTargetFilePath = getTargetPath().resolve(globalBinScriptTarget);
+            if ( Files.exists(scriptTargetFilePath) ) {
+                var replacements = getResourceReplacementsMap(globalBinPath.getParent(), scriptTargetFilePath);
+                installResource(resourceFile, globalBinScriptPath, true, replacements);
+                updateFilePermissions(globalBinScriptPath);
             }
         }
     }
     
-    private String getFullResourceFile(String resourceFile) {
-        return ToolInstallationHelper.getToolResourceLocation(String.format("%s/%s", getToolName().replace("-", "_"), resourceFile));
-    }
     
     private final ToolInstallationResult install(ToolDefinitionArtifactDescriptor artifactDescriptor) {
         try {
@@ -279,4 +302,29 @@ public final class ToolInstaller {
             return value;
         }
     }
+    
+    @SneakyThrows
+    private final void installResource(String resourceFile, Path targetPath, boolean replaceExisting, Map<String, String> replacements) {
+        if ( replaceExisting || !Files.exists(targetPath) ) {
+            String contents = FileUtils.readResourceAsString(resourceFile, StandardCharsets.US_ASCII);
+            if ( replacements!=null ) {
+                contents = replacements.entrySet().stream()
+                    .map(entry -> (Function<String, String>) data -> data.replace(entry.getKey(), entry.getValue()))
+                    .reduce(Function.identity(), Function::andThen)
+                    .apply(contents);
+            }
+            Files.createDirectories(targetPath.getParent());
+            Files.write(targetPath, contents.getBytes("ASCII"));
+        }
+    }
+    
+    private final Map<String, String> getResourceReplacementsMap(Path basePath, Path targetPath) {
+        Map<String, String> result = new HashMap<>();
+        var relativePath = basePath.toAbsolutePath().normalize().relativize(targetPath.toAbsolutePath().normalize());
+        var relativePathString = relativePath.toString();
+        result.put("{{relativeBashTargetPath}}", relativePathString);
+        result.put("{{relativeBatTargetPath}}", relativePathString.replace('/', '\\'));
+        return result;
+    }
+    
 }

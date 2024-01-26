@@ -46,7 +46,12 @@ public class ToolInstallationDescriptor {
     
     public static final ToolInstallationDescriptor load(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
         var result = FcliDataHelper.readFile(getInstallDescriptorPath(toolName, versionDescriptor.getVersion()), ToolInstallationDescriptor.class, false);
-        return result!=null && Files.exists(result.getInstallPath()) ? result : null;
+        // Check for stale descriptor
+        if ( result!=null && !Files.exists(result.getInstallPath()) ) {
+            delete(toolName, versionDescriptor);
+            result = null;
+        }
+        return result;
     }
     
     public static final void delete(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {

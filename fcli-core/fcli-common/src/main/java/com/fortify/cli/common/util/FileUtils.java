@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.nio.file.CopyOption;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
@@ -42,6 +43,18 @@ public final class FileUtils {
     
     public static final InputStream getResourceInputStream(String resourcePath) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);
+    }
+    
+    @SneakyThrows
+    public static final String readResourceAsString(String resourcePath, Charset charset) {
+        return new String(readResourceAsBytes(resourcePath), charset);
+    }
+    
+    @SneakyThrows
+    public static final byte[] readResourceAsBytes(String resourcePath) {
+        try ( InputStream in = getResourceInputStream(resourcePath) ) {
+            return in.readAllBytes();
+        }
     }
     
     public static final void copyResource(String resourcePath, Path destinationFilePath, CopyOption... options) {

@@ -1,3 +1,4 @@
 #!/bin/bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-java -jar ${SCRIPT_DIR}/../FortifyBugTrackerUtility.jar "$@"
+TOOLS_HOME=${SCRIPT_DIR}/..
+java -jar ${TOOLS_HOME}/{{relativeBashTargetPath}} "$@"

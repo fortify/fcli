@@ -19,7 +19,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
-import com.fortify.cli.tool._common.helper.ToolInstaller.GlobalBinScriptType;
+import com.fortify.cli.tool._common.helper.ToolInstaller.BinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
@@ -42,14 +42,11 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
         Path installPath = installer.getTargetPath();
         FileUtils.moveFiles(installPath, installer.getBinPath(), "fcli(_completion)?(\\.exe)?");
         if ( Files.exists(installPath.resolve("fcli.jar")) ) {
-            installer.copyBinResource("extra-files/jar/bin/fcli");
-            installer.copyBinResource("extra-files/jar/bin/fcli.bat");
-            installer.installGlobalBinScript(GlobalBinScriptType.bash, "fcli", "bin/fcli");
-            installer.installGlobalBinScript(GlobalBinScriptType.bat, "fcli.bat", "bin/fcli.bat");
+            installer.installJavaBinScripts("fcli", "fcli.jar");
         } else {
-            installer.installGlobalBinScript(GlobalBinScriptType.bash, "fcli", "bin/fcli");
-            installer.installGlobalBinScript(GlobalBinScriptType.bash, "fcli_completion", "bin/fcli_completion");
-            installer.installGlobalBinScript(GlobalBinScriptType.bat, "fcli.bat", "bin/fcli.exe");
+            installer.installGlobalBinScript(BinScriptType.bash, "fcli", "bin/fcli");
+            installer.installGlobalBinScript(BinScriptType.bash, "fcli_completion", "bin/fcli_completion");
+            installer.installGlobalBinScript(BinScriptType.bat, "fcli.bat", "bin/fcli.exe");
         }
     }
 }

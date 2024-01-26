@@ -15,7 +15,6 @@ package com.fortify.cli.tool.vuln_exporter.cli.cmd;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
 import com.fortify.cli.tool._common.helper.ToolInstaller;
-import com.fortify.cli.tool._common.helper.ToolInstaller.GlobalBinScriptType;
 import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
@@ -35,9 +34,6 @@ public class ToolVulnExporterInstallCommand extends AbstractToolInstallCommand {
     
     @Override @SneakyThrows
     protected void postInstall(ToolInstaller installer, ToolInstallationResult installationResult) {
-        installer.copyBinResource("extra-files/bin/FortifyVulnerabilityExporter");
-        installer.copyBinResource("extra-files/bin/FortifyVulnerabilityExporter.bat");
-        installer.installGlobalBinScript(GlobalBinScriptType.bash, "FortifyVulnerabilityExporter", "bin/FortifyVulnerabilityExporter");
-        installer.installGlobalBinScript(GlobalBinScriptType.bat, "FortifyVulnerabilityExporter.bat", "bin/FortifyVulnerabilityExporter.bat");
+        installer.installJavaBinScripts("FortifyVulnerabilityExporter", "FortifyVulnerabilityExporter.jar");
     }
 }
