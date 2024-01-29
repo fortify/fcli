@@ -53,5 +53,6 @@ public class FoDUrls {
     public static final String ENTITLEMENTS = ApiBase + "/tenant-entitlements";
     public static final String OSS_SCANS = ApiBase + "/releases/{relId}/open-source-scans";
     public static final String OSS_SCANS_START = OSS_SCANS + "/start-scan";
-
+    public static final String REPORTS = ApiBase + "/reports";
+    public static final String REPORT = ApiBase + "/reports/{reportId}";
 }
