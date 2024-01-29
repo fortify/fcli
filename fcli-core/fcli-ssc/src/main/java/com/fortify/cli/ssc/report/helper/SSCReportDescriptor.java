@@ -10,26 +10,32 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.report.domain;
-
-import java.util.ArrayList;
+package com.fortify.cli.ssc.report.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.json.JsonNodeHolder;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
-public class SSCReportTemplateDef {
-    public boolean crossApp;
-    public String description;
-    public String fileName;
-    public String guid;
-    public String name;
-    public int objectVersion;
-    public ArrayList<SSCReportParameter> parameters;
-    public int publishVersion;
-    public SSCReportRenderingEngineType renderingEngine;
-    public int templateDocId;
-    public SSCReportType type;
-    public String typeDefaultText;
+@Data @EqualsAndHashCode(callSuper=true)
+public class SSCReportDescriptor extends JsonNodeHolder {
+    private int id;
+    private String name;
+    private String type;
+    //private String typeDefaultText;
+    // generationDate, startDate, finishDate
+    private String status;
+    //private String statusDefaultText;
+    private String format;
+    //private String formatDefaultText;
+    //private String note;
+    //private SSCReportApplication[] applications;
+    private SSCReportTemplateDescriptor template;
+    
+    public String getIdString() {
+        return ""+id;
+    }
 }

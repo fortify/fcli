@@ -37,8 +37,8 @@ public class SSCFileTransferHelper {
     private static final JacksonObjectMapper XMLMAPPER = new JacksonObjectMapper(new XmlMapper());
 
     @SneakyThrows
-    public static final File download(UnirestInstance unirest, String endpoint, File downloadPath, ISSCAddDownloadTokenFunction addTokenFunction) {
-        try ( SSCFileTransferTokenSupplier tokenSupplier = new SSCFileTransferTokenSupplier(unirest, SSCFileTransferTokenType.DOWNLOAD); ) {
+    public static final File download(UnirestInstance unirest, String endpoint, File downloadPath, SSCFileTransferTokenType tokenType, ISSCAddDownloadTokenFunction addTokenFunction) {
+        try ( SSCFileTransferTokenSupplier tokenSupplier = new SSCFileTransferTokenSupplier(unirest, tokenType); ) {
             try ( SSCProgressMonitor downloadMonitor = new SSCProgressMonitor("Download") ) {
                 return addTokenFunction.apply(tokenSupplier.get(), unirest.get(endpoint))
                     .downloadMonitor(downloadMonitor)
@@ -46,6 +46,11 @@ public class SSCFileTransferHelper {
                     .getBody();
             }
         }
+    }
+    
+    @SneakyThrows
+    public static final File download(UnirestInstance unirest, String endpoint, File downloadPath, ISSCAddDownloadTokenFunction addTokenFunction) {
+        return download(unirest, endpoint, downloadPath, SSCFileTransferTokenType.DOWNLOAD, addTokenFunction);
     }
 
     @SneakyThrows
@@ -108,9 +113,10 @@ public class SSCFileTransferHelper {
         }
     }
     
-    private static enum SSCFileTransferTokenType {
+    public static enum SSCFileTransferTokenType {
         UPLOAD,
-        DOWNLOAD
+        DOWNLOAD,
+        REPORT_FILE
     }
     
     private static final class SSCFileTransferTokenSupplier implements AutoCloseable, Supplier<String> {

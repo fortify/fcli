@@ -29,28 +29,13 @@ import spock.lang.Stepwise
 class SSCReportTemplateSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/ssc/project_report.rptdesign") String sampleTemplate
     @Shared @TestResource("runtime/ssc/ReportTemplateConfig.yml") String sampleConfig
-    private String reportName = "fcli-test-report"
+    @Shared String random = System.currentTimeMillis()
+    @Shared private String templateName = "fcli-${random}"
     
-    def "list"() {
-        def args = "ssc report list-templates --store reports"
-        when:
-            def result = Fcli.run(args)
-        then:
-            verifyAll(result.stdout) {
-                size()>0
-                it[0].replace(' ', '').equals("IdNameTypeTemplatedocidInuse")
-            }
-    }    
-    
-    def "create"() {
-        def args = "ssc report create-template --template $sampleTemplate --config $sampleConfig"
-        when:
-            def result = Fcli.run(args)
-        then:
-            verifyAll(result.stdout) {
-                size()>=2
-                it.last().contains("CREATED")
-            }
+    def setupSpec() {
+        def configFile = new File(sampleConfig)
+        def configContents = configFile.text.replace('${templateName}', templateName)
+        configFile.text = configContents
     }
     
     def "generate-config"() {
@@ -64,30 +49,53 @@ class SSCReportTemplateSpec extends FcliBaseSpec {
             }
     }
     
-    def "get.byName"() {
-        def args = "ssc report get-template $reportName --store report"
+    def "create"() {
+        def args = "ssc report create-template --template $sampleTemplate --config $sampleConfig"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                it[2].equals("name: \"fcli-test-report\"")
+                it.last().contains("CREATED")
+            }
+    }
+    
+    def "list"() {
+        def args = "ssc report list-templates --store templates"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("IdNameTypeTemplatedocidInuse")
+                it.any { it.contains(templateName) }
+            }
+    }
+    
+    def "get.byName"() {
+        def args = "ssc report get-template ${templateName} --store template"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>=2
+                it[2].contains(templateName)
             }
     }
     
     def "get.byId"() {
-        def args = "ssc report get-template ::report::id"
+        def args = "ssc report get-template ::template::"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>=2
-                it[2].equals("name: \"fcli-test-report\"")
+                it[2].contains(templateName)
             }
     }
     
     def "download"() {
-        def args = "ssc report download-template ::report::id"
+        def args = "ssc report download-template ::template::"
         when:
             def result = Fcli.run(args)
         then:
@@ -98,7 +106,7 @@ class SSCReportTemplateSpec extends FcliBaseSpec {
     }
     
     def "delete"() {
-        def args = "ssc report delete-template ::report::id"
+        def args = "ssc report delete-template ::template::"
         when:
             def result = Fcli.run(args)
         then:
@@ -115,7 +123,7 @@ class SSCReportTemplateSpec extends FcliBaseSpec {
             then:
                 verifyAll(result.stdout) {
                     size()>0
-                    !it.any { it.contains(reportName) }
+                    !it.any { it.contains(templateName) }
                 }
     }
     

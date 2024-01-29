@@ -1,27 +1,24 @@
 ---
-name: fcli-test-report                # The name to give to the report
-description: fcli-test-report         # Description of what your report is for and what kind of information it will contain.
-type: ISSUE                     # Possible values here are ISSUE or PROJECT.
-typeDefaultText: fcli-test-report     # This default describes the type of report this is. For example, existing values that other reports use are: "Portfolio Reports", "Application Reports", or "Issue Reports". You are free to specify some other value that fits the type of report template you have.
+name: ${templateName}           # Required: Report template name
+description: Test Description   # Optional: Report template description
+type: ISSUE                     # Required: ISSUE, PROJECT or PORTFOLIO
 parameters:
-- name: test1              # The parameter name.
-  paramOrder: 0                 # Represents the ordering of your parameters in the SSC Web UI.
-  description: test1       # Description of the parameter.
-  identifier: test1        # This is the ID/name of the report parameter in your report template.
-  type: SINGLE_SELECT_DEFAULT   # Possible values are BOOLEAN, MULTI_PROJECT, PROJECT_ATTRIBUTE, SINGLE_PROJECT, SINGLE_SELECT_DEFAULT, STRING.
-  reportParameterOptions:       # Used only when the parameter is of type "SINGLE_SELECT_DEFAULT". The options represent the different pre-defined options/values that you will allow the user to select from.
-  - index: 0
-    defaultValue: true          # Is this option the default value for the parameter.
-    description: val1     # Description for this parameter option.
-    displayValue: val1    # The value to be shown in the SSC web UI
-    reportValue: val1     # The value to actually be injected into the report parameter
-  - index: 1
-    defaultValue: false
-    description: val2
-    displayValue: val2
-    reportValue: val2
-- name: test2              # Parameters of type BOOLEAN, MULTI_PROJECT, PROJECT_ATTRIBUTE, SINGLE_PROJECT, or STRING don't need a "reportParameterOptions" section.
+- name: Param1                  # Required: Report parameter name
+  description: ParamDescription # Optional: Report parameter description
+  identifier: param1            # Required: ID/name of the report parameter in the BIRT template.
+  type: SINGLE_SELECT_DEFAULT   # Required: BOOLEAN, MULTI_PROJECT, PROJECT_ATTRIBUTE, SINGLE_PROJECT, SINGLE_SELECT_DEFAULT, STRING, or DATE
+  paramOrder: 0                 # Optional: Report parameter ordering value
+  reportParameterOptions:       # Required for parameter type "SINGLE_SELECT_DEFAULT", not allowed for other parameter types
+  - defaultValue: true          # Required: Boolean indicating whether this is the default parameter option
+    description: Opt1Desc        # Optional: Report parameter option description
+    displayValue: Option 1      # Required: Report parameter display value as shown in SSC UI
+    reportValue: 1              # Required: The value to be passed to the BIRT template
+  - defaultValue: false         # See above
+    description: Opt1Desc       # See above
+    displayValue: Option 2      # See above
+    reportValue: 2              # See above
+- name: Param2                  # Repeated section above for additional report parameter but different type 
   paramOrder: 1
-  description: test2
-  identifier: test2
+  description: Param2Description
+  identifier: param2
   type: STRING

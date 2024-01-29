@@ -29,11 +29,11 @@ public class SSCReportTemplateResolverMixin {
         }
     }
     public static class PositionalParameterSingle extends AbstractSSCReportTemplateResolverMixin {
-        @EnvSuffix("REPORT_TEMPLATE") @Parameters(index = "0", arity = "1", descriptionKey = "reportTemplateNameOrId")
+        @EnvSuffix("TEMPLATE") @Parameters(index = "0", arity = "1", descriptionKey = "reportTemplateNameOrId")
         @Getter private String reportTemplateNameOrId;
     }
     public static class RequiredOption extends AbstractSSCReportTemplateResolverMixin {
-        @Option(names="--report-template", required=true, descriptionKey = "reportTemplateNameOrId")
+        @Option(names="--template", required=true, descriptionKey = "reportTemplateNameOrId")
         @Getter private String reportTemplateNameOrId;
     }
     

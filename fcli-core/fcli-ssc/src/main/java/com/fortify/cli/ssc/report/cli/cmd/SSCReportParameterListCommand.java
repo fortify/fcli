@@ -12,39 +12,41 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.report.cli.cmd;
 
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc.report.cli.mixin.SSCReportTemplateResolverMixin;
-import com.fortify.cli.ssc.report.helper.SSCReportTemplateDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.DeleteTemplate.CMD_NAME) @CommandGroup("template")
-public class SSCReportTemplateDeleteCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.DeleteTemplate outputHelper;
-    @Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
-
-    @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        SSCReportTemplateDescriptor descriptor = reportTemplateResolver.getReportTemplateDescriptor(unirest);
-        unirest.delete(SSCUrls.REPORT_DEFINITION(descriptor.getIdString())).asObject(JsonNode.class).getBody();
-        return descriptor.asJsonNode();
-    }
+@Command(name = "list-parameters", aliases = "lsp") @CommandGroup("parameter")
+public class SSCReportParameterListCommand extends AbstractSSCJsonNodeOutputCommand  {
+    private static final ObjectMapper OBJECT_MAPPER = JsonHelper.getObjectMapper();
+    @Getter @Mixin private OutputHelperMixins.TableWithQuery outputHelper;
+    @CommandLine.Mixin private SSCReportTemplateResolverMixin.RequiredOption reportTemplateResolver;
     
     @Override
-    public String getActionCommandResult() {
-        return "DELETED";
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return Stream.of(reportTemplateResolver.getReportTemplateDescriptor(unirest).getParameters())
+                .map(this::map)
+                .collect(JsonHelper.arrayNodeCollector());
     }
     
     @Override
     public boolean isSingular() {
-        return true;
+        return false;
+    }
+    
+    private final JsonNode map(Object obj) {
+        return OBJECT_MAPPER.valueToTree(obj);
     }
 }
