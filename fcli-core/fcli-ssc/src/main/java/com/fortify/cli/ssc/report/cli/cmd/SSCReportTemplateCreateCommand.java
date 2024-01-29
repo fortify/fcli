@@ -14,9 +14,11 @@ package com.fortify.cli.ssc.report.cli.cmd;
 
 import java.io.File;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -24,12 +26,15 @@ import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCBaseRequestOutputCo
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper.ISSCAddUploadTokenFunction;
-import com.fortify.cli.ssc.report.domain.SSCReportRenderingEngineType;
-import com.fortify.cli.ssc.report.domain.SSCReportTemplateDef;
+import com.fortify.cli.ssc.report.helper.SSCReportParameterType;
+import com.fortify.cli.ssc.report.helper.SSCReportRenderingEngineType;
+import com.fortify.cli.ssc.report.helper.SSCReportType;
 
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
+import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -46,28 +51,12 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutput
     
     @Override @SneakyThrows
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        ObjectNode uploadResponse = SSCFileTransferHelper.upload(
-                unirest,
-                SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
-                templatePath,
-                ISSCAddUploadTokenFunction.ROUTEPARAM_UPLOADTOKEN,
-                ObjectNode.class
-        );
-
-        int uploadedDocId = Integer.parseInt(
-                uploadResponse
-                        .get("entityId")
-                        .toString()
-                        .replaceAll("\"","")
-        );
-
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        SSCReportTemplateDef rtd = mapper.readValue(answerFile, SSCReportTemplateDef.class);
-        rtd = processAnswerFile(rtd, templatePath.getAbsolutePath(), uploadedDocId);
-
-        return unirest.post(SSCUrls.REPORT_DEFINITIONS).body(rtd);
+        var createRequest = getCreateRequest();
+        String docId = uploadTemplateFile(unirest);
+        createRequest.setTemplateDocId(docId);
+        return unirest.post(SSCUrls.REPORT_DEFINITIONS).body(createRequest);
     }
-    
+
     @Override
     public String getActionCommandResult() {
         return "CREATED";
@@ -77,16 +66,57 @@ public class SSCReportTemplateCreateCommand extends AbstractSSCBaseRequestOutput
     public boolean isSingular() {
         return true;
     }
-
-    private int indexVal=0;
-    private int getIndexVal(){return indexVal++;}
-
-    private SSCReportTemplateDef processAnswerFile(SSCReportTemplateDef rtd, String fileName, int templateDocId){
-        rtd.templateDocId = templateDocId;
-        rtd.renderingEngine = SSCReportRenderingEngineType.BIRT;
-        rtd.fileName =  fileName;
-        rtd.parameters.stream().forEach(e -> e.index = getIndexVal());
-        rtd.guid = java.util.UUID.randomUUID().toString();
-        return rtd;
+    
+    @SneakyThrows
+    private final SSCReportTemplateCreateRequest getCreateRequest() {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        var result = mapper.readValue(answerFile, SSCReportTemplateCreateRequest.class);
+        result.setRenderingEngine(SSCReportRenderingEngineType.BIRT);
+        result.setFileName(templatePath.getName().toString());
+        return result;
+    }
+    
+    private final String uploadTemplateFile(UnirestInstance unirest) {
+        ObjectNode uploadResponse = SSCFileTransferHelper.upload(
+                unirest,
+                SSCUrls.UPLOAD_REPORT_DEFINITION_TEMPLATE,
+                templatePath,
+                ISSCAddUploadTokenFunction.ROUTEPARAM_UPLOADTOKEN,
+                ObjectNode.class
+        );
+        return uploadResponse.get("entityId").asText();
+    }
+    
+    @Reflectable @NoArgsConstructor
+    @Data
+    private static final class SSCReportTemplateCreateRequest {
+        private String name;
+        private String description = "";
+        private SSCReportType type;
+        private SSCReportRenderingEngineType renderingEngine;
+        private String fileName;
+        private SSCReportTemplateCreateRequestParameter[] parameters;
+        private String templateDocId;
+    }
+    
+    @Reflectable @NoArgsConstructor
+    @Data
+    private static final class SSCReportTemplateCreateRequestParameter {
+        private String name;
+        private String description = "";
+        private String identifier;
+        private SSCReportParameterType type;
+        private SSCReportTemplateCreateRequestParameterOption[] reportParameterOptions;
+        private int paramOrder = 0;
+    }
+    
+    @Reflectable @NoArgsConstructor
+    @Data
+    private static final class SSCReportTemplateCreateRequestParameterOption {
+        private String displayValue;
+        private String reportValue;
+        private String description = "";
+        private boolean defaultValue;
     }
 }
