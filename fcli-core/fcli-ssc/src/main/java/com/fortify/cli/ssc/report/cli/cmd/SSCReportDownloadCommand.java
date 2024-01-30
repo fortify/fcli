@@ -16,38 +16,39 @@ import java.io.File;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
-import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
 import com.fortify.cli.ssc._common.rest.SSCUrls;
 import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper;
 import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper.ISSCAddDownloadTokenFunction;
-import com.fortify.cli.ssc.report.cli.mixin.SSCReportTemplateResolverMixin;
-import com.fortify.cli.ssc.report.helper.SSCReportTemplateDescriptor;
+import com.fortify.cli.ssc._common.rest.transfer.SSCFileTransferHelper.SSCFileTransferTokenType;
+import com.fortify.cli.ssc.report.cli.mixin.SSCReportResolverMixin;
+import com.fortify.cli.ssc.report.helper.SSCReportDescriptor;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.DownloadTemplate.CMD_NAME) @CommandGroup("template")
-public class SSCReportTemplateDownloadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.DownloadTemplate outputHelper;
-    @Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
+@Command(name = OutputHelperMixins.Download.CMD_NAME)
+public class SSCReportDownloadCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
+    @Getter @Mixin private OutputHelperMixins.Download outputHelper;
+    @Mixin private SSCReportResolverMixin.PositionalParameterSingle reportResolver;
     @Mixin private CommonOptionMixins.OptionalFile fileMixin;
     
     @Override
     public JsonNode getJsonNode(UnirestInstance unirest) {
-        SSCReportTemplateDescriptor descriptor = reportTemplateResolver.getReportTemplateDescriptor(unirest);
+        SSCReportDescriptor descriptor = reportResolver.getReportDescriptor(unirest);
         var destination = fileMixin.getFile();
         if ( destination==null ) {
-            destination = new File(String.format("./%s", descriptor.getFileName()));
+            destination = new File(String.format("./%s.%s", descriptor.getName(), descriptor.getFormat().toLowerCase()));
         }
         SSCFileTransferHelper.download(
                 unirest,
-                SSCUrls.DOWNLOAD_REPORT_DEFINITION_TEMPLATE(descriptor.getIdString()),
+                SSCUrls.DOWNLOAD_REPORT(descriptor.getIdString()),
                 destination,
+                SSCFileTransferTokenType.REPORT_FILE,
                 ISSCAddDownloadTokenFunction.ROUTEPARAM_DOWNLOADTOKEN
         );
         return descriptor.asJsonNode();

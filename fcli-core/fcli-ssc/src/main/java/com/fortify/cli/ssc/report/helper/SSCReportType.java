@@ -10,18 +10,15 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.report.domain;
+package com.fortify.cli.ssc.report.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
-public enum SSCReportParameterType {
-    BOOLEAN,
-    MULTI_PROJECT,
-    PROJECT_ATTRIBUTE,
-    SINGLE_PROJECT,
-    SINGLE_SELECT_DEFAULT,
-    STRING
+public enum SSCReportType {
+    ISSUE,
+    PROJECT,
+    PORTFOLIO
 }
