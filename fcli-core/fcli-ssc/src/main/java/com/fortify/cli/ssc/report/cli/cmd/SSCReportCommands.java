@@ -13,12 +13,20 @@
 package com.fortify.cli.ssc.report.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
+import com.fortify.cli.common.variable.DefaultVariablePropertyName;
 
 import picocli.CommandLine.Command;
 
 @Command(
         name = "report",
         subcommands = {
+                SSCReportCreateCommand.class,
+                SSCReportListCommand.class,
+                SSCReportGetCommand.class,
+                SSCReportDownloadCommand.class,
+                SSCReportWaitForCommand.class,
+                SSCReportDeleteCommand.class,
+                SSCReportParameterListCommand.class,
                 SSCReportTemplateCreateCommand.class,
                 SSCReportTemplateListCommand.class,
                 SSCReportTemplateGetCommand.class,
@@ -27,5 +35,6 @@ import picocli.CommandLine.Command;
                 SSCReportTemplateDeleteCommand.class
         }
 )
+@DefaultVariablePropertyName("id")
 public class SSCReportCommands extends AbstractContainerCommand {
 }

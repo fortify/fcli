@@ -10,21 +10,13 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.report.domain;
-
-import java.util.ArrayList;
+package com.fortify.cli.ssc.report.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
-public class SSCReportParameter {
-    public int index;
-    public String name;
-    public String description;
-    public String identifier;
-    public SSCReportParameterType type;
-    public ArrayList<SSCReportParameterOption> reportParameterOptions;
-    public int paramOrder;
+public enum SSCReportRenderingEngineType {
+    BIRT
 }

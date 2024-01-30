@@ -13,34 +13,24 @@
 package com.fortify.cli.ssc.report.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.ssc._common.output.cli.cmd.AbstractSSCJsonNodeOutputCommand;
-import com.fortify.cli.ssc._common.rest.SSCUrls;
-import com.fortify.cli.ssc.report.cli.mixin.SSCReportTemplateResolverMixin;
-import com.fortify.cli.ssc.report.helper.SSCReportTemplateDescriptor;
+import com.fortify.cli.ssc.report.cli.mixin.SSCReportResolverMixin;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = OutputHelperMixins.DeleteTemplate.CMD_NAME) @CommandGroup("template")
-public class SSCReportTemplateDeleteCommand extends AbstractSSCJsonNodeOutputCommand implements IActionCommandResultSupplier {
-    @Getter @Mixin private OutputHelperMixins.DeleteTemplate outputHelper;
-    @Mixin private SSCReportTemplateResolverMixin.PositionalParameterSingle reportTemplateResolver;
-
-    @Override
-    public JsonNode getJsonNode(UnirestInstance unirest) {
-        SSCReportTemplateDescriptor descriptor = reportTemplateResolver.getReportTemplateDescriptor(unirest);
-        unirest.delete(SSCUrls.REPORT_DEFINITION(descriptor.getIdString())).asObject(JsonNode.class).getBody();
-        return descriptor.asJsonNode();
-    }
+@Command(name = OutputHelperMixins.Get.CMD_NAME)
+public class SSCReportGetCommand extends AbstractSSCJsonNodeOutputCommand  {
+    @Getter @Mixin private OutputHelperMixins.Get outputHelper; 
+    @CommandLine.Mixin private SSCReportResolverMixin.PositionalParameterSingle reportResolver;
     
     @Override
-    public String getActionCommandResult() {
-        return "DELETED";
+    public JsonNode getJsonNode(UnirestInstance unirest) {
+        return reportResolver.getReportDescriptor(unirest).asJsonNode();
     }
     
     @Override

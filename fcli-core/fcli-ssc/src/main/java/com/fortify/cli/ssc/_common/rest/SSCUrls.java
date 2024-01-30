@@ -470,6 +470,10 @@ public class SSCUrls {
     public static String DOWNLOAD_REPORT_DEFINITION_TEMPLATE(String reportTemplateId) {
         return String.format("/download/reportDefinitionTemplateDownload.html?mat={downloadToken}&id=%s", reportTemplateId);
     }
+    
+    public static String DOWNLOAD_REPORT(String reportId) {
+        return String.format("/transfer/reportDownload.html?mat={downloadToken}&id=%s", reportId);
+    }
 
     public static String DOWNLOAD_RULE_PACK(String rulePackId) {
         return String.format("/download/rulepackDownload.html?mat={downloadToken}&id=%s", rulePackId);
