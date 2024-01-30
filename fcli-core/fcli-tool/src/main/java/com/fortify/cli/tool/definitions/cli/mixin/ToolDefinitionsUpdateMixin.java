@@ -19,7 +19,7 @@ import lombok.Getter;
 import picocli.CommandLine.Option;
 
 public class ToolDefinitionsUpdateMixin {
-    private static final String DEFAULT_URL = "https://github.com/fortify-ps/tool-definitions/raw/main/v1/tool-definitions.yaml.zip";
+    private static final String DEFAULT_URL = "https://github.com/fortify-ps/tool-definitions/releases/download/v1/tool-definitions.yaml.zip";
     private static final Path DESCRIPTOR_PATH = ToolDefinitionsHelper.DEFINITIONS_STATE_DIR.resolve("state.json");
     @Getter @Option(names={"-s", "--source"}, required = false, descriptionKey="fcli.tool.definitions.update.definitions-source") 
     private String source = DEFAULT_URL;
