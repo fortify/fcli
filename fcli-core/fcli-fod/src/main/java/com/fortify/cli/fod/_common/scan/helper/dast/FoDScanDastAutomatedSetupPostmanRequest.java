@@ -25,6 +25,6 @@ import java.util.ArrayList;
 @EqualsAndHashCode(callSuper = true)
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @SuperBuilder
-public class FoDScanDastAutomatedSetupPostmanRequest extends FoDScanDastAutomatedSetupApiRequest {
+public class FoDScanDastAutomatedSetupPostmanRequest extends FoDScanDastAutomatedSetupBaseRequest {
   public ArrayList<Integer> collectionFileIds;
 }

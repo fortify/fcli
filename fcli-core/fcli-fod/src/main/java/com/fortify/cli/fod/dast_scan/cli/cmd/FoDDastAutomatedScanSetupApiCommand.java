@@ -18,7 +18,7 @@ import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanSetupCommand;
 import com.fortify.cli.fod._common.scan.helper.FoDScanAssessmentTypeDescriptor;
 import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
-import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupApiRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupBaseRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
@@ -28,6 +28,8 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 @Command(name = FoDOutputHelperMixins.SetupApi.CMD_NAME) @CommandGroup("*-scan-setup")
 public class FoDDastAutomatedScanSetupApiCommand extends AbstractFoDScanSetupCommand {
@@ -63,6 +65,8 @@ public class FoDDastAutomatedScanSetupApiCommand extends AbstractFoDScanSetupCom
     private String username;
     @Option(names = {"-p", "--network-password"})
     private String password;
+    @Option(names = {"--false-positive-removal"})
+    private Boolean requestFalsePositiveRemoval;
 
     @Override
     protected String getScanType() {
@@ -78,16 +82,16 @@ public class FoDDastAutomatedScanSetupApiCommand extends AbstractFoDScanSetupCom
         validate();
 
         FoDEnums.DastAutomatedFileTypes dastFileType = apiType.getDastFileType();
-
         boolean requiresNetworkAuthentication = false;
         Integer fileIdToUse = fileId;
+
         if (uploadFileMixin != null && uploadFileMixin.getFile() != null) {
             fileIdToUse = uploadFileToUse(unirest, releaseId, FoDScanType.Dynamic, dastFileType.name());
         }
-        FoDScanDastAutomatedSetupApiRequest.NetworkAuthenticationType networkAuthenticationSettings = null;
+        FoDScanDastAutomatedSetupBaseRequest.NetworkAuthenticationType networkAuthenticationSettings = null;
         if (networkAuthenticationType != null) {
             requiresNetworkAuthentication = true;
-            networkAuthenticationSettings = new FoDScanDastAutomatedSetupApiRequest.NetworkAuthenticationType(networkAuthenticationType, username, password);
+            networkAuthenticationSettings = new FoDScanDastAutomatedSetupBaseRequest.NetworkAuthenticationType(networkAuthenticationType, username, password);
         }
         String timeZoneToUse = FoDScanHelper.validateTimezone(unirest, timezone);
 
@@ -95,24 +99,29 @@ public class FoDDastAutomatedScanSetupApiCommand extends AbstractFoDScanSetupCom
                 assessmentType, entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), entitlementId);
         entitlementId = assessmentTypeDescriptor.getEntitlementId();
 
+        FoDScanDastAutomatedSetupBaseRequest setupBaseRequest = FoDScanDastAutomatedSetupBaseRequest.builder()
+                .dynamicScanEnvironmentFacingType(environmentFacingType != null ?
+                        environmentFacingType :
+                        FoDEnums.DynamicScanEnvironmentFacingType.Internal)
+                .requestFalsePositiveRemoval(requestFalsePositiveRemoval != null ? requestFalsePositiveRemoval : false)
+                .timeZone(timeZoneToUse)
+                .requiresNetworkAuthentication(requiresNetworkAuthentication)
+                .networkAuthenticationSettings(networkAuthenticationSettings)
+                .timeBoxInHours(timebox)
+                .assessmentTypeId(assessmentTypeDescriptor.getAssessmentTypeId())
+                .entitlementId(entitlementId)
+                .entitlementFrequencyType(FoDEnums.EntitlementFrequencyType.valueOf(assessmentTypeDescriptor.getFrequencyType()))
+                .build();
+
         if (apiType.equals(FoDEnums.DastAutomatedApiTypes.Postman)) {
-            ArrayList<Integer> collectionFileIds = new ArrayList<>();
-            collectionFileIds.add(fileIdToUse);
-            return FoDScanHelper.getPostmanSetupRequest(unirest, releaseId, timebox, timeZoneToUse, environmentFacingType, requiresNetworkAuthentication, networkAuthenticationSettings,
-                    assessmentTypeDescriptor.getAssessmentTypeId(), entitlementId, FoDEnums.EntitlementFrequencyType.valueOf(assessmentTypeDescriptor.getFrequencyType()),
-                    collectionFileIds);
+            ArrayList<Integer> collectionFileIds = new ArrayList<>(Collections.singletonList(fileIdToUse));
+            return FoDScanHelper.getPostmanSetupRequest(unirest, releaseId, setupBaseRequest, collectionFileIds);
         } else if (apiType.equals(FoDEnums.DastAutomatedApiTypes.OpenApi)) {
-            return FoDScanHelper.getOpenApiSetupRequest(unirest, releaseId, timebox, timeZoneToUse, environmentFacingType, requiresNetworkAuthentication, networkAuthenticationSettings,
-                    assessmentTypeDescriptor.getAssessmentTypeId(), entitlementId, FoDEnums.EntitlementFrequencyType.valueOf(assessmentTypeDescriptor.getFrequencyType()),
-                    fileIdToUse, apiUrl, apiKey);
+            return FoDScanHelper.getOpenApiSetupRequest(unirest, releaseId, setupBaseRequest, fileIdToUse, apiUrl, apiKey);
         } else if (apiType.equals(FoDEnums.DastAutomatedApiTypes.GraphQL)) {
-            return FoDScanHelper.getGraphQlSetupRequest(unirest, releaseId, timebox, timeZoneToUse, environmentFacingType, requiresNetworkAuthentication, networkAuthenticationSettings,
-                    assessmentTypeDescriptor.getAssessmentTypeId(), entitlementId, FoDEnums.EntitlementFrequencyType.valueOf(assessmentTypeDescriptor.getFrequencyType()),
-                    fileIdToUse, apiUrl, apiSchemeType, apiHost, apiServicePath);
+            return FoDScanHelper.getGraphQlSetupRequest(unirest, releaseId, setupBaseRequest, fileIdToUse, apiUrl, apiSchemeType, apiHost, apiServicePath);
         } else if (apiType.equals(FoDEnums.DastAutomatedApiTypes.GRPC)) {
-            return FoDScanHelper.getGrpcSetupRequest(unirest, releaseId, timebox, timeZoneToUse, environmentFacingType, requiresNetworkAuthentication, networkAuthenticationSettings,
-                    assessmentTypeDescriptor.getAssessmentTypeId(), entitlementId, FoDEnums.EntitlementFrequencyType.valueOf(assessmentTypeDescriptor.getFrequencyType()),
-                    fileIdToUse, apiSchemeType, apiHost, apiServicePath);
+            return FoDScanHelper.getGrpcSetupRequest(unirest, releaseId, setupBaseRequest, fileIdToUse, apiSchemeType, apiHost, apiServicePath);
         } else {
             throw new IllegalArgumentException("Unexpected DAST Automated API type: " + apiType);
         }

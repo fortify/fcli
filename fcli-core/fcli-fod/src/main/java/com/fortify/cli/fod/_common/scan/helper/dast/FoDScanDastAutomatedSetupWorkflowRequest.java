@@ -13,41 +13,19 @@
 
 package com.fortify.cli.fod._common.scan.helper.dast;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 
+@EqualsAndHashCode(callSuper = true)
 @Reflectable @NoArgsConstructor @AllArgsConstructor
-@Data @Builder
-public class FoDScanDastAutomatedSetupWorkflowRequest {
-
-    // common
-    @Reflectable @NoArgsConstructor @AllArgsConstructor
-    @Getter @ToString
-    public static class NetworkAuthenticationType {
-        FoDEnums.DynamicScanNetworkAuthenticationType networkAuthenticationType;
-        String userName;
-        String password;
-    }
-
-    @Builder.Default
-    private Boolean enableRedundantPageDetection = false;
-    @Builder.Default
-    public String policy = "Standard"; // ['Standard', 'Api', 'CriticalsAndHighs', 'PassiveScan']
-    public Integer assessmentTypeId;
-    public Integer entitlementId;
-    public FoDEnums.EntitlementFrequencyType entitlementFrequencyType; // ['SingleScan', 'Subscription']
-    @Builder.Default
-    public FoDEnums.DynamicScanEnvironmentFacingType dynamicScanEnvironmentFacingType = FoDEnums.DynamicScanEnvironmentFacingType.External; // ['Internal', 'External']
-    @Builder.Default
-    public String timeZone = FoDEnums.TimeZones.UTC.name();
-    @Builder.Default
-    public Boolean requiresNetworkAuthentication = false;
-    public NetworkAuthenticationType networkAuthenticationSettings;
-
-    // class specific
+@Data @SuperBuilder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class FoDScanDastAutomatedSetupWorkflowRequest extends FoDScanDastAutomatedSetupBaseRequest {
 
     @Reflectable @NoArgsConstructor @AllArgsConstructor
     @Getter @ToString
@@ -56,5 +34,7 @@ public class FoDScanDastAutomatedSetupWorkflowRequest {
         ArrayList<String> allowedHosts;
     }
 
+    @Builder.Default
+    public String policy = "Standard"; // ['Standard', 'Api', 'CriticalsAndHighs', 'PassiveScan']
     public ArrayList<WorkflowDrivenMacro> workflowDrivenMacro;
 }

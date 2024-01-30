@@ -25,7 +25,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @SuperBuilder
-public class FoDScanDastAutomatedSetupGrpcRequest extends FoDScanDastAutomatedSetupApiRequest {
+public class FoDScanDastAutomatedSetupGrpcRequest extends FoDScanDastAutomatedSetupBaseRequest {
 
   public Integer fileId;
   public FoDEnums.ApiSchemeType schemeType;

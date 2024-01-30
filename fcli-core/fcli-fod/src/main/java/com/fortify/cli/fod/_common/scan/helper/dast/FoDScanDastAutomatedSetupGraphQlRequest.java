@@ -25,7 +25,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @SuperBuilder
-public class FoDScanDastAutomatedSetupGraphQlRequest extends FoDScanDastAutomatedSetupApiRequest {
+public class FoDScanDastAutomatedSetupGraphQlRequest extends FoDScanDastAutomatedSetupBaseRequest {
 
   public String sourceType;
   public String sourceUrn;

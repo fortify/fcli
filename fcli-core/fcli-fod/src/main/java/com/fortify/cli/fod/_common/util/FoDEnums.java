@@ -430,21 +430,6 @@ public class FoDEnums {
         ADFS_CBT
     }
 
-    public enum DastAutomatedScanPolicies {
-        Standard("Standard"),
-        Api("API"),
-        CriticalsAndHighs("Criticals And Highs"),
-        PassiveScan("Passive Scan");
-
-        public final String displayName;
-        DastAutomatedScanPolicies(String displayName) {
-            this.displayName = displayName;
-        }
-
-        // Optionally and/or additionally, toString.
-        @Override public String toString() { return displayName; }
-    }
-
     public enum DastAutomatedApiTypes {
         OpenApi,
         Postman,

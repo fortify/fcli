@@ -38,12 +38,10 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDScanSet
 
     @Option(names={"--hosts", "--allowed-hosts"}, split=",")
     private ArrayList<String> allowedHosts;
-    @Option(names = {"--redundant-page-detection"})
-    private Boolean redundantPageProtection;
     @Option(names = {"--file-id"})
     private Integer workflowMacroFileId;
-    @Option(names={"--policy"}, required = true)
-    private FoDEnums.DastAutomatedScanPolicies scanPolicy;
+    @Option(names={"--policy"}, required = true, defaultValue = "Standard")
+    private String scanPolicy;
     @Option(names={"--environment"}, defaultValue = "External")
     private FoDEnums.DynamicScanEnvironmentFacingType environmentFacingType;
     @Option(names = {"--timezone"})
@@ -54,6 +52,8 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDScanSet
     private String username;
     @Option(names = {"-p", "--network-password"})
     private String password;
+    @Option(names = {"--false-positive-removal"})
+    private Boolean requestFalsePositiveRemoval;
 
     @Override
     protected String getScanType() {
@@ -70,6 +70,7 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDScanSet
 
         boolean requiresNetworkAuthentication = false;
         Integer fileIdToUse = workflowMacroFileId;
+
         if (uploadFileMixin != null && uploadFileMixin.getFile() != null) {
             fileIdToUse = uploadFileToUse(unirest, releaseId, FoDScanType.Dynamic, dastFileType.name());
         }
@@ -88,18 +89,16 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDScanSet
                 assessmentType, entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), entitlementId);
         entitlementId = assessmentTypeDescriptor.getEntitlementId();
         FoDScanDastAutomatedSetupWorkflowRequest setupRequest = FoDScanDastAutomatedSetupWorkflowRequest.builder()
-                .enableRedundantPageDetection(redundantPageProtection != null ? redundantPageProtection : false)
                 .workflowDrivenMacro(workflowDrivenMacros)
-                .policy(scanPolicy.name())
-                .dynamicScanEnvironmentFacingType(environmentFacingType != null ?
-                        environmentFacingType :
-                        FoDEnums.DynamicScanEnvironmentFacingType.Internal)
+                .policy(scanPolicy)
+                .dynamicScanEnvironmentFacingType(environmentFacingType != null ? environmentFacingType : FoDEnums.DynamicScanEnvironmentFacingType.Internal)
                 .timeZone(timeZoneToUse)
                 .requiresNetworkAuthentication(requiresNetworkAuthentication)
                 .networkAuthenticationSettings(networkAuthenticationSettings)
                 .assessmentTypeId(assessmentTypeDescriptor.getAssessmentTypeId())
                 .entitlementId(entitlementId)
                 .entitlementFrequencyType(FoDEnums.EntitlementFrequencyType.valueOf(assessmentTypeDescriptor.getFrequencyType()))
+                .requestFalsePositiveRemoval(requestFalsePositiveRemoval != null ? requestFalsePositiveRemoval : false)
                 .build();
 
         return unirest.put(FoDUrls.DAST_AUTOMATED_SCANS + "/workflow-scan-setup")
@@ -108,8 +107,16 @@ public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDScanSet
     }
 
     private void validate() {
+        // check we have a valid workflow file
+        if (uploadFileMixin == null || uploadFileMixin.getFile() == null) {
+            throw new IllegalArgumentException("A valid workflow macro file needs to be provided.");
+        } else {
+            if (allowedHosts == null || allowedHosts.isEmpty()) {
+                throw new IllegalArgumentException("Please specify at least one '--allowed-hosts'.");
+            }
+        }
         // check allowed hosts is valid
-        if (!allowedHosts.isEmpty()) {
+        if (allowedHosts != null && !allowedHosts.isEmpty()) {
             allowedHosts.forEach((h) -> {
                 if (h.matches("^https?://.*")) {
                     throw new IllegalArgumentException("The 'allowedHosts' options should not include 'http://' or 'https://'.");

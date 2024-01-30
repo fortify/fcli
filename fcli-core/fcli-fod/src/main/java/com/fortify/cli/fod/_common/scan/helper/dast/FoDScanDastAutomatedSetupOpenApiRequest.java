@@ -25,7 +25,7 @@ import lombok.experimental.SuperBuilder;
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @SuperBuilder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class FoDScanDastAutomatedSetupOpenApiRequest extends FoDScanDastAutomatedSetupApiRequest {
+public class FoDScanDastAutomatedSetupOpenApiRequest extends FoDScanDastAutomatedSetupBaseRequest {
 
   public String sourceType;
   public String sourceUrn;

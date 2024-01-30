@@ -46,8 +46,8 @@ public class FoDDastAutomatedScanSetupWebsiteCommand extends AbstractFoDScanSetu
     private Set<String> exclusions;
     @Option(names={"--restrict"})
     private Boolean restrictToDirectoryAndSubdirectories;
-    @Option(names={"--policy"}, required = true)
-    private FoDEnums.DastAutomatedScanPolicies scanPolicy;
+    @Option(names={"--policy"}, required = true, defaultValue = "Standard")
+    private String scanPolicy;
     @Option(names={"--timebox"})
     private Integer timebox;
     @Option(names={"--environment"}, defaultValue = "External")
@@ -60,6 +60,18 @@ public class FoDDastAutomatedScanSetupWebsiteCommand extends AbstractFoDScanSetu
     private String username;
     @Option(names = {"-p", "--network-password"})
     private String password;
+    @Option(names = {"--false-positive-removal"})
+    private Boolean requestFalsePositiveRemoval;
+    @Option(names = {"--create-login-macro"})
+    private Boolean createLoginMacro;
+    @Option(names = {"--macro-primary-username"})
+    private String macroPrimaryUsername;
+    @Option(names = {"--macro-primary-password"})
+    private String macroPrimaryPassword;
+    @Option(names = {"--macro-secondary-username"})
+    private String macroSecondaryUsername;
+    @Option(names = {"--macro-secondary-password"})
+    private String macroSecondaryPassword;
 
     @Override
     protected String getScanType() {
@@ -74,10 +86,11 @@ public class FoDDastAutomatedScanSetupWebsiteCommand extends AbstractFoDScanSetu
     protected HttpRequest<?> getBaseRequest(UnirestInstance unirest, String releaseId) {
         boolean requiresSiteAuthentication = false;
         boolean requiresNetworkAuthentication = false;
-        Integer fileIdToUse = loginMacroFileId;
+        boolean requiresLoginMacroCreation = false;
+        int fileIdToUse = (loginMacroFileId != null ? loginMacroFileId : 0);
+
         if (loginMacroFileId != null && loginMacroFileId > 0) {
             requiresSiteAuthentication = true;
-            setFileId(loginMacroFileId);
         }
         if (uploadFileMixin != null && uploadFileMixin.getFile() != null) {
             requiresSiteAuthentication = true;
@@ -95,6 +108,13 @@ public class FoDDastAutomatedScanSetupWebsiteCommand extends AbstractFoDScanSetu
             }
         }
         String timeZoneToUse = FoDScanHelper.validateTimezone(unirest, timezone);
+        FoDScanDastAutomatedSetupWebsiteRequest.LoginMacroFileCreationType loginMacroFileCreationSettings = null;
+        if (createLoginMacro != null) {
+            requiresSiteAuthentication = true;
+            requiresLoginMacroCreation = createLoginMacro;
+            loginMacroFileCreationSettings = new FoDScanDastAutomatedSetupWebsiteRequest.LoginMacroFileCreationType(macroPrimaryUsername,
+                    macroPrimaryPassword, macroSecondaryUsername, macroSecondaryPassword);
+        }
 
         FoDScanAssessmentTypeDescriptor assessmentTypeDescriptor = FoDScanHelper.getEntitlementToUse(unirest, releaseId, FoDScanType.Dynamic,
                 assessmentType, entitlementFrequencyTypeMixin.getEntitlementFrequencyType(), entitlementId);
@@ -103,20 +123,21 @@ public class FoDDastAutomatedScanSetupWebsiteCommand extends AbstractFoDScanSetu
                 .dynamicSiteUrl(siteUrl)
                 .enableRedundantPageDetection(redundantPageProtection != null ? redundantPageProtection : false)
                 .requiresSiteAuthentication(requiresSiteAuthentication)
-                .loginMacroFileId(!requiresSiteAuthentication ? 0 : fileIdToUse)
+                .loginMacroFileId(fileIdToUse)
                 .exclusionsList(exclusionsList)
                 .restrictToDirectoryAndSubdirectories(restrictToDirectoryAndSubdirectories != null ? restrictToDirectoryAndSubdirectories : false)
-                .policy(scanPolicy.name())
+                .policy(scanPolicy)
                 .timeBoxInHours(timebox)
-                .dynamicScanEnvironmentFacingType(environmentFacingType != null ?
-                        environmentFacingType :
-                        FoDEnums.DynamicScanEnvironmentFacingType.Internal)
+                .dynamicScanEnvironmentFacingType(environmentFacingType != null ? environmentFacingType : FoDEnums.DynamicScanEnvironmentFacingType.Internal)
                 .timeZone(timeZoneToUse)
                 .requiresNetworkAuthentication(requiresNetworkAuthentication)
                 .networkAuthenticationSettings(networkAuthenticationSettings)
                 .assessmentTypeId(assessmentTypeDescriptor.getAssessmentTypeId())
                 .entitlementId(entitlementId)
                 .entitlementFrequencyType(FoDEnums.EntitlementFrequencyType.valueOf(assessmentTypeDescriptor.getFrequencyType()))
+                .requestFalsePositiveRemoval(requestFalsePositiveRemoval != null ? requestFalsePositiveRemoval : false)
+                .requestLoginMacroFileCreation(requiresLoginMacroCreation)
+                .loginMacroFileCreationDetails(loginMacroFileCreationSettings)
                 .build();
 
         return unirest.put(FoDUrls.DAST_AUTOMATED_SCANS + "/website-scan-setup")

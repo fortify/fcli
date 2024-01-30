@@ -35,6 +35,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.BeanUtils;
 
 import java.util.*;
 
@@ -153,129 +154,86 @@ public class FoDScanHelper {
                 .build();
     }
 
-    private static final FoDScanDescriptor getDescriptor(JsonNode node) {
-        return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
-    }
-
-    //
-
-    private static final FoDScanDescriptor getEmptyDescriptor() {
-        return JsonHelper.treeToValue(getObjectMapper().createObjectNode(), FoDScanDescriptor.class);
-    }
 
     public static final HttpRequest<?> addDefaultScanListParams(HttpRequest<?> request) {
         return request.queryString("orderBy", "startedDateTime")
                 .queryString("orderByDirection", "DESC");
     }
 
-    public static HttpRequest<?> getPostmanSetupRequest(UnirestInstance unirest, String releaseId, Integer timeBox, String timeZoneToUse, FoDEnums.DynamicScanEnvironmentFacingType environmentFacingType,
-                                                        Boolean requiresNetworkAuthentication,
-                                                        FoDScanDastAutomatedSetupApiRequest.NetworkAuthenticationType networkAuthenticationSettings,
-                                                        Integer assessmentTypeId, Integer entitlementId, FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
+    public static HttpRequest<?> getPostmanSetupRequest(UnirestInstance unirest, String releaseId,
+                                                        FoDScanDastAutomatedSetupBaseRequest base,
                                                         ArrayList<Integer> collectionFileIds) {
         FoDScanDastAutomatedSetupPostmanRequest setupRequest = FoDScanDastAutomatedSetupPostmanRequest.builder()
-                .dynamicScanEnvironmentFacingType(environmentFacingType != null ?
-                        environmentFacingType :
-                        FoDEnums.DynamicScanEnvironmentFacingType.Internal)
-                .timeZone(timeZoneToUse)
-                .requiresNetworkAuthentication(requiresNetworkAuthentication)
-                .networkAuthenticationSettings(networkAuthenticationSettings)
-                .timeBoxInHours(timeBox)
-                .assessmentTypeId(assessmentTypeId)
-                .entitlementId(entitlementId)
-                .entitlementFrequencyType(entitlementFrequencyType)
                 .collectionFileIds(collectionFileIds)
                 .build();
+        BeanUtils.copyProperties(base, setupRequest);
+
         return unirest.put(FoDUrls.DAST_AUTOMATED_SCANS + "/postman-scan-setup")
                 .routeParam("relId", releaseId)
                 .body(setupRequest);
     }
 
     @SneakyThrows
-    public static HttpRequest<?> getOpenApiSetupRequest(UnirestInstance unirest, String releaseId, Integer timebox, String timeZoneToUse, FoDEnums.DynamicScanEnvironmentFacingType environmentFacingType,
-                                                        Boolean requiresNetworkAuthentication,
-                                                        FoDScanDastAutomatedSetupApiRequest.NetworkAuthenticationType networkAuthenticationSettings,
-                                                        Integer assessmentTypeId, Integer entitlementId, FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
+    public static HttpRequest<?> getOpenApiSetupRequest(UnirestInstance unirest, String releaseId,
+                                                        FoDScanDastAutomatedSetupBaseRequest base,
                                                         Integer fileId, String apiUrl, String apiKey) {
         boolean isUrl = (apiUrl != null && !apiUrl.isEmpty());
         int fileIdToUse = (fileId != null ? fileId : 0);
         FoDScanDastAutomatedSetupOpenApiRequest setupRequest = FoDScanDastAutomatedSetupOpenApiRequest.builder()
-                .dynamicScanEnvironmentFacingType(environmentFacingType != null ?
-                        environmentFacingType :
-                        FoDEnums.DynamicScanEnvironmentFacingType.Internal)
-                .timeZone(timeZoneToUse)
-                .requiresNetworkAuthentication(requiresNetworkAuthentication)
-                .networkAuthenticationSettings(networkAuthenticationSettings)
-                .timeBoxInHours(timebox)
-                .assessmentTypeId(assessmentTypeId)
-                .entitlementId(entitlementId)
-                .entitlementFrequencyType(entitlementFrequencyType)
                 .sourceType(isUrl ? "Url" : "FileId")
                 .sourceUrn(isUrl ? apiUrl : String.valueOf(fileIdToUse))
                 .apiKey(apiKey)
                 .build();
+        BeanUtils.copyProperties(base, setupRequest);
 
         return unirest.put(FoDUrls.DAST_AUTOMATED_SCANS + "/openapi-scan-setup")
                 .routeParam("relId", releaseId)
                 .body(setupRequest);
     }
 
-    public static HttpRequest<?> getGraphQlSetupRequest(UnirestInstance unirest, String releaseId, Integer timebox, String timeZoneToUse, FoDEnums.DynamicScanEnvironmentFacingType environmentFacingType,
-                                                        Boolean requiresNetworkAuthentication,
-                                                        FoDScanDastAutomatedSetupApiRequest.NetworkAuthenticationType networkAuthenticationSettings,
-                                                        Integer assessmentTypeId, Integer entitlementId, FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
+    public static HttpRequest<?> getGraphQlSetupRequest(UnirestInstance unirest, String releaseId,
+                                                        FoDScanDastAutomatedSetupBaseRequest base,
                                                         Integer fileId, String apiUrl, FoDEnums.ApiSchemeType schemeType, String host, String servicePath) {
         boolean isUrl = (apiUrl != null && !apiUrl.isEmpty());
         int fileIdToUse = (fileId != null ? fileId : 0);
         FoDScanDastAutomatedSetupGraphQlRequest setupRequest = FoDScanDastAutomatedSetupGraphQlRequest.builder()
-                .dynamicScanEnvironmentFacingType(environmentFacingType != null ?
-                        environmentFacingType :
-                        FoDEnums.DynamicScanEnvironmentFacingType.Internal)
-                .timeZone(timeZoneToUse)
-                .requiresNetworkAuthentication(requiresNetworkAuthentication)
-                .networkAuthenticationSettings(networkAuthenticationSettings)
-                .timeBoxInHours(timebox)
-                .assessmentTypeId(assessmentTypeId)
-                .entitlementId(entitlementId)
-                .entitlementFrequencyType(entitlementFrequencyType)
                 .sourceType(isUrl ? "Url" : "FileId")
                 .sourceUrn(isUrl ? apiUrl : String.valueOf(fileIdToUse))
                 .schemeType(schemeType)
                 .host(host)
                 .servicePath(servicePath)
                 .build();
+        BeanUtils.copyProperties(base, setupRequest);
 
         return unirest.put(FoDUrls.DAST_AUTOMATED_SCANS + "/graphql-scan-setup")
                 .routeParam("relId", releaseId)
                 .body(setupRequest);
     }
 
-    public static HttpRequest<?> getGrpcSetupRequest(UnirestInstance unirest, String releaseId, Integer timebox, String timeZoneToUse, FoDEnums.DynamicScanEnvironmentFacingType environmentFacingType,
-                                                        Boolean requiresNetworkAuthentication,
-                                                        FoDScanDastAutomatedSetupApiRequest.NetworkAuthenticationType networkAuthenticationSettings,
-                                                        Integer assessmentTypeId, Integer entitlementId, FoDEnums.EntitlementFrequencyType entitlementFrequencyType,
-                                                        Integer fileId, FoDEnums.ApiSchemeType schemeType, String host, String servicePath) {
+    public static HttpRequest<?> getGrpcSetupRequest(UnirestInstance unirest, String releaseId,
+                                                     FoDScanDastAutomatedSetupBaseRequest base,
+                                                     Integer fileId, FoDEnums.ApiSchemeType schemeType, String host, String servicePath) {
         FoDScanDastAutomatedSetupGrpcRequest setupRequest = FoDScanDastAutomatedSetupGrpcRequest.builder()
-                .dynamicScanEnvironmentFacingType(environmentFacingType != null ?
-                        environmentFacingType :
-                        FoDEnums.DynamicScanEnvironmentFacingType.Internal)
-                .timeZone(timeZoneToUse)
-                .requiresNetworkAuthentication(requiresNetworkAuthentication)
-                .networkAuthenticationSettings(networkAuthenticationSettings)
-                .timeBoxInHours(timebox)
-                .assessmentTypeId(assessmentTypeId)
-                .entitlementId(entitlementId)
-                .entitlementFrequencyType(entitlementFrequencyType)
                 .fileId(fileId)
                 .schemeType(schemeType)
                 .host(host)
                 .servicePath(servicePath)
                 .build();
+        BeanUtils.copyProperties(base, setupRequest);
 
         return unirest.put(FoDUrls.DAST_AUTOMATED_SCANS + "/grpc-scan-setup")
                 .routeParam("relId", releaseId)
                 .body(setupRequest);
     }
 
+    //
+
+    private static final FoDScanDescriptor getDescriptor(JsonNode node) {
+        return JsonHelper.treeToValue(node, FoDScanDescriptor.class);
+    }
+
+    private static final FoDScanDescriptor getEmptyDescriptor() {
+        return JsonHelper.treeToValue(getObjectMapper().createObjectNode(), FoDScanDescriptor.class);
+    }
 
 }

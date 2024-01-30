@@ -22,7 +22,7 @@ import lombok.experimental.SuperBuilder;
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @SuperBuilder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class FoDScanDastAutomatedSetupApiRequest {
+public class FoDScanDastAutomatedSetupBaseRequest {
 
     @Reflectable @NoArgsConstructor @AllArgsConstructor
     @Getter @ToString
@@ -43,5 +43,7 @@ public class FoDScanDastAutomatedSetupApiRequest {
     public Boolean requiresNetworkAuthentication = false;
     public NetworkAuthenticationType networkAuthenticationSettings;
     private Integer timeBoxInHours;
+    @Builder.Default
+    private Boolean requestFalsePositiveRemoval = false;
 
 }
