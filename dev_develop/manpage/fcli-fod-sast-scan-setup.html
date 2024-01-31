@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240131.135808-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240131.144440-dev_develop" %}
 
 
 <div id="header">
@@ -64,7 +64,7 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p>This command is not fully implemented and is intended for preview only. Command name, options and behavior may change at any time, even between patch or minor releases, potentially affecting any workflows in which this command is being used.
-To correctly setup a scan you will need to provide the name of the assessment type using the '--assessment-type=xxx' option. Since assessment types can potentially be configured differently for each tenant, you can find the correct name using the 'fod release list-assessment-types' command.
+To correctly setup a scan you will need to provide the name of the assessment type using the '--assessment-type=xxx' option. Since assessment types can potentially be configured differently for each tenant, you can find the correct name using the 'fod rest lookup AssessmentTypes' command.
 If you know the Id of an entitlement that you want to use then you can supply it to the '--entitlement-id=xxx' option. If not, you can supply both '--assessment-type' and '--entitlement-frequency' options and the command will try to find an appropriate entitlement.
 For the '--technology-stack' and '--language-level' options it is recommended to examine the drop-down list values in the FoD UI. However, you can also use the 'fod rest lookup' command. For example, to list all the technology stacks you would use 'fod rest lookup TechnologyTypes' and then for the language levels (if appropriate) you would use the 'Value' field returned in 'fod rest lookup LanguageLevels'. For example, for Java which is typically value '7', you would use 'fod rest lookup LanguageLevels -q "group=='7'".</p>
 </div>
@@ -190,7 +190,7 @@ For the '--technology-stack' and '--language-level' options it is recommended to
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-01-31 13:59:44 UTC
+Last updated 2024-01-31 14:46:14 UTC
 </div>
 </div>
 </body>
