@@ -3,8 +3,8 @@ name: Functional Tests
 on:
   workflow_dispatch:
     inputs: 
-      runNumber: # Accessible through ${{ inputs.runNumber }}
-        description: 'Required "Build and release"" workflow run number from which to get artifacts to be tested'
+      runId: # Accessible through ${{ inputs.runId }}
+        description: 'Required "Build and release"" workflow run id (see id in browser URL for selected run) from which to get artifacts to be tested'
         required: true
         type: number
   workflow_run:
@@ -33,25 +33,30 @@ jobs:
           
       - name: Get artifacts from triggering workflow
         if: github.event_name == 'workflow_run'
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
-          run_id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: combined-artifacts
+          path: ./artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Get artifacts from specified workflow
         if: github.event_name == 'workflow_dispatch'
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
-          run_number: ${{ inputs.runNumber }}
-          workflow: ci.yml
+          run-id: ${{ inputs.runId }}
+          name: combined-artifacts
+          path: ./artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: List artifact contents
         shell: bash
-        run: ls -lR
+        run: find ./artifacts
           
       - name: Run Tests
         shell: bash
         run: |
-          mv artifact/release-assets/* .
-          mv artifact/fcli-ftest.jar .
+          mv artifacts/release-assets/* .
+          mv artifacts/fcli-ftest.jar .
           case "${{ matrix.type }}" in
             "java" )
               java -jar fcli-ftest.jar -Dft.fcli=build -Dft.run=core,config,tool ;;
@@ -80,7 +85,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-log
+          name: test-log-${{ matrix.os }}-${{ matrix.type }}
           path: test-*.log
           
   ft-product:
@@ -102,21 +107,26 @@ jobs:
           
       - name: Get artifacts from triggering workflow
         if: github.event_name == 'workflow_run'
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
-          run_id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: combined-artifacts
+          path: ./artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Get artifacts from specified workflow
         if: github.event_name == 'workflow_dispatch'
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
-          run_number: ${{ inputs.runNumber }}
-          workflow: ci.yml
+          run-id: ${{ inputs.runId }}
+          name: combined-artifacts
+          path: ./artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Run Tests
         shell: bash
         run: |
-          mv artifact/release-assets/* .
-          mv artifact/fcli-ftest.jar .
+          mv artifacts/release-assets/* .
+          mv artifacts/fcli-ftest.jar .
           tar -zxvf fcli-linux.tgz
           # Although we only run the current matrix entry type, we pass connection
           # options for all session types, as some SC-SAST/SC-DAST tests may also
@@ -150,7 +160,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-log
+          name: test-log-${{ matrix.type }}
           path: test-*.log
           
                    
