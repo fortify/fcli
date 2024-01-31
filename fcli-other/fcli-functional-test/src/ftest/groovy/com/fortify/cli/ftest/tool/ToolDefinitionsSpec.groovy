@@ -27,17 +27,53 @@ import spock.lang.Stepwise
 
 @Prefix("tool.definitions.update") @Stepwise
 class ToolDefinitionsSpec extends FcliBaseSpec {
+    def "reset"() {
+        def args = "tool definitions reset"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameSourceLastupdateAction")
+                it[1].replace(" ", "").contains("INTERNAL")
+                it[1].contains(" RESET")
+            }
+    }
     
-    def "updateDefault"() {
+    def "ls-after-reset"() {
+        def args = "tool definitions list"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameSourceLastupdate")
+                it[1].replace(" ", "").contains("INTERNAL")
+            }
+    }
+    
+    def "update"() {
         def args = "tool definitions update"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("SourceLastupdateAction")
+                it[0].replace(' ', '').equals("NameSourceLastupdateAction")
                 it[1].replace(" ", "").contains("https://github.com/")
                 it[1].contains(" UPDATED")
+            }
+    }
+    
+    def "ls-after-update"() {
+        def args = "tool definitions list"
+        when:
+            def result = Fcli.run(args)
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameSourceLastupdate")
+                it[1].replace(" ", "").contains("https://github.com/")
             }
     }
     

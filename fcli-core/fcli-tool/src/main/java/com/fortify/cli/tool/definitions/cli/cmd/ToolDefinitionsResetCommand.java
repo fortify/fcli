@@ -11,27 +11,23 @@ import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 
-@Command(name=OutputHelperMixins.Update.CMD_NAME)
-public class ToolDefinitionsUpdateCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
-    @Mixin @Getter private OutputHelperMixins.Update outputHelper;
-    private static final String DEFAULT_URL = "https://github.com/fortify-ps/tool-definitions/releases/download/v1/tool-definitions.yaml.zip";
-    @Getter @Option(names={"-s", "--source"}, required = false, descriptionKey="fcli.tool.definitions.update.definitions-source") 
-    private String source = DEFAULT_URL;
+@Command(name="reset")
+public class ToolDefinitionsResetCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Mixin @Getter private OutputHelperMixins.TableNoQuery outputHelper;
     
     @Override
     public JsonNode getJsonNode() {
-        return JsonHelper.getObjectMapper().valueToTree(ToolDefinitionsHelper.updateToolDefinitions(source));
+        return JsonHelper.getObjectMapper().valueToTree(ToolDefinitionsHelper.reset());
     }
     
     @Override
     public boolean isSingular() {
         return false;
     }
-
+    
     @Override
     public String getActionCommandResult() {
-        return "UPDATED";
+        return "RESET";
     }
 }

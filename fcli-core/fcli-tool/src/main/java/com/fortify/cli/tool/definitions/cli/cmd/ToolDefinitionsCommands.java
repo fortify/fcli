@@ -7,7 +7,9 @@ import picocli.CommandLine.Command;
         name = "definitions",
         aliases = {},
         subcommands = {
-                ToolDefinitionsUpdateCommand.class
+                ToolDefinitionsListCommand.class,
+                ToolDefinitionsUpdateCommand.class,
+                ToolDefinitionsResetCommand.class,
         }
 )
 

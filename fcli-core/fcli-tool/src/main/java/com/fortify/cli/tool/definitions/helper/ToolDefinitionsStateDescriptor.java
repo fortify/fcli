@@ -12,7 +12,6 @@
  */
 package com.fortify.cli.tool.definitions.helper;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -26,8 +25,4 @@ import lombok.NoArgsConstructor;
 public final class ToolDefinitionsStateDescriptor{
     private String source;
     private Date lastUpdate;
-    
-    public final String getLastUpdateString() {
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z").format(getLastUpdate());
-    }
 }

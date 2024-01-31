@@ -124,6 +124,11 @@ public class OutputHelperMixins {
         public static final String CMD_NAME = "list";
     }
     
+    @Command(aliases = {"ls"})
+    public static class ListNoQuery extends TableNoQuery {
+        public static final String CMD_NAME = "list";
+    }
+    
     @Command(aliases = {"lsd"})
     public static class ListDefinitions extends TableWithQuery {
         public static final String CMD_NAME = "list-definitions";
