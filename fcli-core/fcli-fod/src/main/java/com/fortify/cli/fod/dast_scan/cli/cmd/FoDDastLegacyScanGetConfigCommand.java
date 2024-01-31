@@ -14,8 +14,8 @@ package com.fortify.cli.fod.dast_scan.cli.cmd;
 
 import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanConfigGetCommand;
-import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastDescriptor;
-import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastHelper;
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastLegacyDescriptor;
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastLegacyHelper;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -23,11 +23,11 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = FoDOutputHelperMixins.GetConfigLegacy.CMD_NAME, hidden = true)
-public class FoDDastScanGetConfigLegacyCommand extends AbstractFoDScanConfigGetCommand {
-    @Getter @Mixin private FoDOutputHelperMixins.GetConfig outputHelper;
+public class FoDDastLegacyScanGetConfigCommand extends AbstractFoDScanConfigGetCommand {
+    @Getter @Mixin private FoDOutputHelperMixins.GetConfigLegacy outputHelper;
 
     @Override
-    protected FoDScanConfigDastDescriptor getDescriptor(UnirestInstance unirest, String releaseId) {
-        return FoDScanConfigDastHelper.getSetupDescriptor(unirest, releaseId);
+    protected FoDScanConfigDastLegacyDescriptor getDescriptor(UnirestInstance unirest, String releaseId) {
+        return FoDScanConfigDastLegacyHelper.getSetupDescriptor(unirest, releaseId);
     }
 }

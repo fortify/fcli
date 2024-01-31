@@ -24,12 +24,17 @@ import picocli.CommandLine;
                 FoDDastScanDownloadCommand.class,
                 FoDDastScanDownloadLatestCommand.class,
                 FoDDastScanGetCommand.class,
-                FoDDastScanGetConfigLegacyCommand.class,
+                FoDDastLegacyScanGetConfigCommand.class,
                 FoDDastScanImportCommand.class,
                 FoDDastScanListCommand.class,
-                //FoDDastScanSetupCommand.class,
-                FoDDastScanStartLegacyCommand.class,
+                FoDDastAutomatedScanSetupWebsiteCommand.class,
+                FoDDastAutomatedScanSetupWorkflowCommand.class,
+                FoDDastAutomatedScanSetupApiCommand.class,
+                FoDDastAutomatedScanGetConfigCommand.class,
+                FoDDastAutomatedScanStartCommand.class,
+                FoDDastLegacyScanStartCommand.class,
                 FoDDastScanWaitForCommand.class,
+                FoDDastScanFileUploadCommand.class
         }
 )
 @DefaultVariablePropertyName("scanId")

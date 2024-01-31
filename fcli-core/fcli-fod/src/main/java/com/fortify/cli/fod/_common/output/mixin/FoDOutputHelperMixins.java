@@ -26,14 +26,23 @@ public class FoDOutputHelperMixins {
     public static class DownloadLatest extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "download-latest";
     }
-    public static class SetupSast extends OutputHelperMixins.DetailsNoQuery {
+    public static class SetupSast extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "setup-sast";
     }
-    public static class SetupDast extends OutputHelperMixins.DetailsNoQuery {
+    public static class SetupDast extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "setup-dast";
     }
-    public static class SetupMobile extends OutputHelperMixins.DetailsNoQuery {
+    public static class SetupMobile extends OutputHelperMixins.TableNoQuery {
         public static final String CMD_NAME = "setup-mobile";
+    }
+    public static class SetupWebsite extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "setup-website";
+    }
+    public static class SetupWorkflow extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "setup-workflow";
+    }
+    public static class SetupApi extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "setup-api";
     }
     public static class GetConfig extends OutputHelperMixins.DetailsNoQuery {
         public static final String CMD_NAME = "get-config";
@@ -93,5 +102,9 @@ public class FoDOutputHelperMixins {
     }
     public static class GetConfigLegacy extends OutputHelperMixins.DetailsNoQuery {
         public static final String CMD_NAME = "get-config-legacy";
+    }
+
+    public static class UploadFile extends OutputHelperMixins.TableNoQuery {
+        public static final String CMD_NAME = "upload-file";
     }
 }

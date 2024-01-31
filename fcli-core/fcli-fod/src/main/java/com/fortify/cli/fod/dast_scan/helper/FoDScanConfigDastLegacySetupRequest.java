@@ -26,7 +26,7 @@ import lombok.ToString;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Getter @ToString @Builder
-public class FoDScanConfigDastSetupRequest {
+public class FoDScanConfigDastLegacySetupRequest {
 
     @Reflectable @NoArgsConstructor
     @Getter @ToString

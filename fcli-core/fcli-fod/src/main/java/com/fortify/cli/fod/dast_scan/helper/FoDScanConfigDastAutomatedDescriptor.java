@@ -11,31 +11,21 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod._common.scan.helper.dast;
+package com.fortify.cli.fod.dast_scan.helper;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.formkiq.graalvm.annotations.Reflectable;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import com.fortify.cli.common.json.JsonNodeHolder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Reflectable @NoArgsConstructor @AllArgsConstructor
-@Getter @ToString @Builder
-public class FoDScanDastStartRequest {
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "MM/dd/yyyy HH:mm")
-
-    private String startDate;
+@Reflectable @NoArgsConstructor
+@Data @ToString
+@EqualsAndHashCode(callSuper=false)
+public class FoDScanConfigDastAutomatedDescriptor extends JsonNodeHolder {
     private Integer assessmentTypeId;
     private Integer entitlementId;
     private String entitlementFrequencyType;
-    private Boolean isRemediationScan;
-    //private Boolean isBundledAssessment;
-    //private Integer parentAssessmentTypeId;
-    private Boolean applyPreviousScanSettings;
-    private String scanMethodType;
-    private String scanTool;
-    private String scanToolVersion;
+    private String scanType;
 }

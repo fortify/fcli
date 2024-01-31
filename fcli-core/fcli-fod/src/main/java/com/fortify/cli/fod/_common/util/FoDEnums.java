@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.fod._common.util;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 // TODO Any good reason for having one big class defining many enums? Was this somehow generated from FoD?
 // TODO Are all these enums actually used?
 // TODO Maybe better to have top-level enums in the entity packages that use them, if applicable.
@@ -410,7 +412,47 @@ public class FoDEnums {
         Add, Remove
     }
 
+    public enum DastAutomatedFileTypes {
+        OpenAPIDefinition,
+        PostmanCollection,
+        GraphQLDefinition,
+        GRPCDefinition,
+        WorkflowDrivenMacro,
+        LoginMacro
+    }
 
+    public enum DynamicScanNetworkAuthenticationType {
+        Basic,
+        NTLM,
+        Kerberos,
+        Digest,
+        Automatic,
+        ADFS_CBT
+    }
 
+    public enum DastAutomatedApiTypes {
+        OpenApi,
+        Postman,
+        GraphQL,
+        GRPC;
 
+        public FoDEnums.DastAutomatedFileTypes getDastFileType() {
+            switch (this) {
+                case OpenApi -> { return DastAutomatedFileTypes.OpenAPIDefinition; }
+                case Postman -> { return DastAutomatedFileTypes.PostmanCollection; }
+                case GRPC -> { return DastAutomatedFileTypes.GRPCDefinition; }
+                case GraphQL -> { return DastAutomatedFileTypes.GraphQLDefinition; }
+            }
+            return null;
+        }
+    }
+
+    public enum ApiSchemeType {
+        @JsonProperty("http")
+        HTTP,
+        @JsonProperty("https")
+        HTTPS,
+        @JsonProperty("http,https")
+        HTTPandHTTPs;
+    }
 }

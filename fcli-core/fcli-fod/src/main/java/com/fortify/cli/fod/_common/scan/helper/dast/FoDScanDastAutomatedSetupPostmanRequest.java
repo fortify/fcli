@@ -11,20 +11,20 @@
  * without notice.
  *******************************************************************************/
 
-package com.fortify.cli.fod.dast_scan.helper;
+package com.fortify.cli.fod._common.scan.helper.dast;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.fod._common.rest.FoDUrls;
+import com.formkiq.graalvm.annotations.Reflectable;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-import kong.unirest.UnirestInstance;
+import java.util.ArrayList;
 
-public class FoDScanConfigDastHelper {
-    public static final FoDScanConfigDastDescriptor getSetupDescriptor(UnirestInstance unirest, String relId) {
-        var body = unirest.get(FoDUrls.DYNAMIC_SCANS + "/scan-setup")
-                .routeParam("relId", relId)
-                .asObject(ObjectNode.class)
-                .getBody();
-        return JsonHelper.treeToValue(body, FoDScanConfigDastDescriptor.class);
-    }
+@EqualsAndHashCode(callSuper = true)
+@Reflectable @NoArgsConstructor @AllArgsConstructor
+@Data @SuperBuilder
+public class FoDScanDastAutomatedSetupPostmanRequest extends FoDScanDastAutomatedSetupBaseRequest {
+  public ArrayList<Integer> collectionFileIds;
 }

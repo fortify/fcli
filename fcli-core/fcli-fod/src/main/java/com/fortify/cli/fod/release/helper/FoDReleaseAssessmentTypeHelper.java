@@ -61,15 +61,15 @@ public final class FoDReleaseAssessmentTypeHelper {
             throw new IllegalStateException("Invalid or empty FODAssessmentTypeDescriptor.");
         }
         // check entitlement has not expired
-        if (atd.getSubscriptionEndDate() == null ||
+        if (atd.getSubscriptionEndDate() != null &&
                 atd.getSubscriptionEndDate().before(Date.from(Instant.now()))) {
             LOG.debug("Current Date: " + Date.from(Instant.now()).toString());
             LOG.debug("Subscription End Date: " + atd.getSubscriptionEndDate());
-            LOG.warn("Warning: the entitlement has expired.");
+            LOG.debug("Warning: the entitlement has expired.");
         }
         // warn if all units are consumed or not enough for "new" scan
         if (atd.getUnitsAvailable() == 0) {
-            LOG.warn("Warning: all units of the entitlement have been consumed.");
+            LOG.debug("Warning: all units of the entitlement have been consumed.");
         }
     }
 }

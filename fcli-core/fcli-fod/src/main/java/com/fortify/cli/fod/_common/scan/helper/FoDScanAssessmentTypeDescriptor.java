@@ -14,15 +14,14 @@
 package com.fortify.cli.fod._common.scan.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastDescriptor;
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastLegacyDescriptor;
 import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastDescriptor;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
-@Reflectable @NoArgsConstructor
+@Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @ToString
+@Builder
 public class FoDScanAssessmentTypeDescriptor {
     private Integer assessmentTypeId;
     private String name;
@@ -33,7 +32,7 @@ public class FoDScanAssessmentTypeDescriptor {
     private Integer frequencyTypeId;
     private String frequencyType;
 
-    public FoDScanAssessmentTypeDescriptor copyFromCurrentSetup(FoDScanConfigDastDescriptor curSetup) {
+    public FoDScanAssessmentTypeDescriptor copyFromCurrentSetup(FoDScanConfigDastLegacyDescriptor curSetup) {
         this.assessmentTypeId = curSetup.getAssessmentTypeId();
         this.entitlementId = curSetup.getEntitlementId();
         this.entitlementDescription = curSetup.getEntitlementDescription();

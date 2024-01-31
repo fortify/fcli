@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastLegacyHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -33,11 +34,10 @@ import com.fortify.cli.fod._common.scan.cli.mixin.FoDInProgressScanActionTypeMix
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDRemediationScanPreferenceTypeMixins;
 import com.fortify.cli.fod._common.scan.helper.FoDScanDescriptor;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
-import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastHelper;
-import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastStartRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastLegacyHelper;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastLegacyStartRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
-import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastDescriptor;
-import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastHelper;
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastLegacyDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
@@ -49,8 +49,8 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = FoDOutputHelperMixins.StartLegacy.CMD_NAME, hidden = true)
-public class FoDDastScanStartLegacyCommand extends AbstractFoDScanStartCommand {
-    private static final Log LOG = LogFactory.getLog(FoDDastScanStartLegacyCommand.class);
+public class FoDDastLegacyScanStartCommand extends AbstractFoDScanStartCommand {
+    private static final Log LOG = LogFactory.getLog(FoDDastLegacyScanStartCommand.class);
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm");
 
     @Getter @Mixin private OutputHelperMixins.Start outputHelper;
@@ -73,7 +73,7 @@ public class FoDDastScanStartLegacyCommand extends AbstractFoDScanStartCommand {
     private FoDEntitlementFrequencyTypeMixins.RequiredOption entitlementFrequencyTypeMixin;
 
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
-    
+
     @Override
     protected FoDScanDescriptor startScan(UnirestInstance unirest, FoDReleaseDescriptor releaseDescriptor) {
         try ( var progressWriter = progressWriterFactory.create() ) {
@@ -92,7 +92,7 @@ public class FoDDastScanStartLegacyCommand extends AbstractFoDScanStartCommand {
             }
 
             // get current setup
-            FoDScanConfigDastDescriptor currentSetup = FoDScanConfigDastHelper.getSetupDescriptor(unirest, relId);
+            FoDScanConfigDastLegacyDescriptor currentSetup = FoDScanConfigDastLegacyHelper.getSetupDescriptor(unirest, relId);
             if (currentSetup.getAssessmentTypeId() == null || currentSetup.getAssessmentTypeId() <= 0) {
                 throw new IllegalStateException("The dynamic scan configuration for release with id '" + relId +
                         "' has not been setup correctly - 'Assessment Type' is missing or empty.");
@@ -137,7 +137,7 @@ public class FoDDastScanStartLegacyCommand extends AbstractFoDScanStartCommand {
             String startDateStr = (startDate == null || startDate.isEmpty())
                     ? LocalDateTime.now().format(dtf)
                     : LocalDateTime.parse(startDate, dtf).toString();
-            FoDScanDastStartRequest startScanRequest = FoDScanDastStartRequest.builder()
+            FoDScanDastLegacyStartRequest startScanRequest = FoDScanDastLegacyStartRequest.builder()
                     .startDate(startDateStr)
                     .assessmentTypeId(assessmentTypeId)
                     .entitlementId(entitlementIdToUse)
@@ -149,7 +149,7 @@ public class FoDDastScanStartLegacyCommand extends AbstractFoDScanStartCommand {
                     .scanToolVersion(fcliProperties.getProperty("projectVersion", "unknown")).build();
 
             //System.out.println(startScanRequest);
-            return FoDScanDastHelper.startScan(unirest, releaseDescriptor, startScanRequest);
+            return FoDScanDastLegacyHelper.startScan(unirest, releaseDescriptor, startScanRequest);
         }
     }
 }
