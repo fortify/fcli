@@ -46,7 +46,7 @@ jobs:
       # Java is required to run the various Fortify utilities.
       # When scanning a Java application, please use the appropriate Java version for building your application.
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -95,6 +95,6 @@ jobs:
 
       # Import Fortify on Demand results to GitHub Security Code Scanning
       - name: Import Results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ./gh-fortify-sast.sarif

@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check-out source code
-        uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+        uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -75,8 +75,9 @@ jobs:
         run: java -jar build/libs/fcli.jar --version | tee /dev/stderr | grep -E '[0-9]+\.[0-9]+\.[0-9]+' >/dev/null || (echo "fcli --version doesn't output proper version number"; exit 1)
         
       - name: Publish build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: build-output
           path: build/dist/**/*
           
     outputs:
@@ -94,7 +95,7 @@ jobs:
 #      CC: /opt/musl_cc/x86_64-linux-musl-native/bin/gcc
     steps:
       - name: Check-out source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - uses: graalvm/setup-graalvm@v1
         with:
@@ -104,9 +105,10 @@ jobs:
           native-image-musl: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
       
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: ./
+          name: build-output
 
       # For Linux, we build a statically linked native image, to allow for building a 'FROM scratch'
       # Docker image, and to avoid libc version issues. Since Jansi is not supported on statically 
@@ -132,9 +134,10 @@ jobs:
       - name: Package native fcli
         run: tar -zcvf artifact/release-assets/fcli-linux.tgz fcli -C ./artifact fcli_completion
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./artifact/**/fcli-linux.tgz
+          name: fcli-linux
 
   native_mac:
     name: native-image-mac
@@ -142,7 +145,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Check-out source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - uses: graalvm/setup-graalvm@v1
         with:
@@ -151,9 +154,10 @@ jobs:
           components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: ./
+          name: build-output
 
       # For MacOS, we build a dynamically linked image. Jansi by default provides a resource-config.json
       # file to include native libraries for all platforms; we override this to include only the MacOS 
@@ -172,9 +176,10 @@ jobs:
       - name: Package native fcli
         run: tar -zcvf ./artifact/release-assets/fcli-mac.tgz fcli -C ./artifact fcli_completion
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./artifact/**/fcli-mac.tgz
+          name: fcli-mac
 
   native_win:
     name: native-image-win
@@ -188,9 +193,10 @@ jobs:
           components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: ./
+          name: build-output
     
     # For Windows, we build a dynamically linked image. Jansi by default provides a resource-config.json
     # file to include native libraries for all platforms; we override this to include only the 64-bit
@@ -216,9 +222,10 @@ jobs:
       - name: Package native fcli
         run: 7z a artifact\release-assets\fcli-windows.zip fcli*.exe
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./artifact/**/fcli-windows.zip
+          name: fcli-windows
         
   release:
     name: release
@@ -227,12 +234,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check-out source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          path: ./
+          path: ./artifacts
           
       - name: PROD - Prepare release PR
         if: github.ref == 'refs/heads/main'
@@ -262,7 +269,7 @@ jobs:
       - name: Upload assets to release
         if: needs.build.outputs.do_release
         run: |
-          files=$(find "./artifact/release-assets" -type f -printf "%p ")
+          files=$(find "./artifacts/release-assets" -type f -printf "%p ")
           gh release upload "${{ needs.build.outputs.release_tag }}" $files --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -274,15 +281,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check-out existing docs from gh-pages branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: gh-pages
           path: docs
         
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          path: ./
+          path: ./artifacts
           
       - name: Update documentation from artifact
         run: |
@@ -292,7 +299,7 @@ jobs:
           # Extract top-level documentation resources
           # TODO Should we do this only when building a release, or also for dev_main,
           #      or for all (dev & release) versions like we do now?
-          unzip -o artifact/docs-gh-pages.zip -d "docs"
+          unzip -o artifacts/docs-gh-pages.zip -d "docs"
           
           # Define the output directory, based on tag/branch name
           versionDir=docs/${{ needs.build.outputs.release_tag }}
@@ -301,7 +308,7 @@ jobs:
           # while leaving documentation for other tags/branches intact (as checked out above)
           rm -rf "${versionDir}"
           mkdir -p "${versionDir}"
-          unzip artifact/docs-jekyll.zip -d "${versionDir}"
+          unzip artifacts/docs-jekyll.zip -d "${versionDir}"
           
           # Recreate version data files, which may be empty if no versions available
           cd docs
