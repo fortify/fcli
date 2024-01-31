@@ -18,23 +18,32 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.tool._common.helper.ToolHelper;
+import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationOutputDescriptor;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionsHelper;
 
 public abstract class AbstractToolListCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     
     @Override
     public final JsonNode getJsonNode() {
-        String toolName = getToolName();
-        return ToolHelper.getToolVersionCombinedDescriptorsStream(toolName)
+        return ToolDefinitionsHelper.getToolDefinitionRootDescriptor(getToolName()).getVersionsStream()
+                .map(this::createToolOutputDescriptor)
                 .map(objectMapper::<ObjectNode>valueToTree)
                 .collect(JsonHelper.arrayNodeCollector());
     }
     
     @Override
-    public boolean isSingular() {
+    public final boolean isSingular() {
         return false;
     }
     
     protected abstract String getToolName();
+    
+    private ToolInstallationOutputDescriptor createToolOutputDescriptor(ToolDefinitionVersionDescriptor versionDescriptor) {
+        var toolName = getToolName();
+        var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
+        return new ToolInstallationOutputDescriptor(toolName, versionDescriptor, installationDescriptor, "");
+    }
 }

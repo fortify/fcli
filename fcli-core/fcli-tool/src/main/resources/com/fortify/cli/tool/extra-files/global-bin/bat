@@ -1,0 +1,3 @@
+@ECHO OFF
+set TOOLS_HOME=%~dp0..
+%TOOLS_HOME%\{{relativeBatTargetPath}} %*

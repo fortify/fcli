@@ -21,9 +21,12 @@ import java.nio.file.StandardOpenOption;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.tool._common.cli.cmd.AbstractToolInstallCommand;
-import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstaller;
+import com.fortify.cli.tool._common.helper.ToolInstaller.BinScriptType;
+import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
 
 import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -35,14 +38,17 @@ public class ToolSCClientInstallCommand extends AbstractToolInstallCommand {
     @Option(names= {"-t", "--client-auth-token"}) private String clientAuthToken; 
     
     @Override
-    protected InstallType getInstallType() {
-        return InstallType.EXTRACT_ZIP;
+    protected String getDefaultArtifactType() {
+        return "java";
     }
     
-    @Override
-    protected void postInstall(ToolVersionInstallDescriptor descriptor) throws IOException {
-        // Updating bin permissions is handled by parent class
-        updateClientAuthToken(descriptor.getInstallPath());
+    @Override @SneakyThrows
+    protected void postInstall(ToolInstaller installer, ToolInstallationResult installationResult) {
+        updateClientAuthToken(installer.getTargetPath());
+        installer.installGlobalBinScript(BinScriptType.bash, "scancentral", "bin/scancentral");
+        installer.installGlobalBinScript(BinScriptType.bat, "scancentral.bat", "bin/scancentral.bat");
+        installer.installGlobalBinScript(BinScriptType.bash, "pwtool", "bin/pwtool");
+        installer.installGlobalBinScript(BinScriptType.bat, "pwtool.bat", "bin/pwtool.bat");
     }
     
     private void updateClientAuthToken(Path installPath) throws IOException {

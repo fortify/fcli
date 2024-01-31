@@ -14,9 +14,13 @@ package com.fortify.cli.common.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 
 public class FcliBuildPropertiesHelper {
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final Properties buildProperties = loadProperties();
     
     public static final Properties getBuildProperties() {
@@ -31,15 +35,25 @@ public class FcliBuildPropertiesHelper {
         return buildProperties.getProperty("projectVersion", "unknown");
     }
     
-    public static final String getFcliBuildDate() {
+    public static final String getFcliBuildDateString() {
         return buildProperties.getProperty("buildDate", "unknown");
+    }
+    
+    public static final Date getFcliBuildDate() {
+        var dateString = getFcliBuildDateString();
+        if ( !StringUtils.isBlank(dateString) && !"unknown".equals(dateString) ) {
+            try {
+                return DATE_FORMAT.parse(dateString);
+            } catch (ParseException ignore) {}
+        }
+        return null;
     }
     
     public static final String getFcliBuildInfo() {
         return String.format("%s version %s, built on %s" 
                 , FcliBuildPropertiesHelper.getFcliProjectName()
                 , FcliBuildPropertiesHelper.getFcliVersion()
-                , FcliBuildPropertiesHelper.getFcliBuildDate());
+                , FcliBuildPropertiesHelper.getFcliBuildDateString());
     }
 
     private static final Properties loadProperties() {

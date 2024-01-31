@@ -13,171 +13,245 @@
 package com.fortify.cli.tool._common.cli.cmd;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
-import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
+import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
-import com.fortify.cli.common.util.FcliDataHelper;
+import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
+import com.fortify.cli.common.util.DisableTest;
+import com.fortify.cli.common.util.DisableTest.TestType;
 import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.StringUtils;
-import com.fortify.cli.tool._common.helper.ToolHelper;
-import com.fortify.cli.tool._common.helper.ToolVersionCombinedDescriptor;
-import com.fortify.cli.tool._common.helper.ToolVersionDownloadDescriptor;
-import com.fortify.cli.tool._common.helper.ToolVersionInstallDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationDescriptor;
+import com.fortify.cli.tool._common.helper.ToolInstallationHelper;
+import com.fortify.cli.tool._common.helper.ToolInstaller;
+import com.fortify.cli.tool._common.helper.ToolInstaller.DigestMismatchAction;
+import com.fortify.cli.tool._common.helper.ToolInstaller.ToolInstallationResult;
+import com.fortify.cli.tool._common.helper.ToolUninstaller;
+import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
-import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+@CommandGroup("install")
 public abstract class AbstractToolInstallCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
-    private static final Logger LOG = LoggerFactory.getLogger(AbstractToolInstallCommand.class);
-    private static final Set<PosixFilePermission> binPermissions = PosixFilePermissions.fromString("rwxr-xr-x");
-    @Getter @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.install.version", defaultValue = "default") 
+    private static final ObjectMapper OBJECTMAPPER = JsonHelper.getObjectMapper();
+    @Option(names={"-v", "--version"}, required = true, descriptionKey="fcli.tool.install.version", defaultValue = "latest") 
     private String version;
-    @Getter @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
-    private File installDir;
-    @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
-    @Getter @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
+    @ArgGroup(exclusive = true)
+    private InstallOrBaseDirArgGroup installOrBaseDirArgGroup = new InstallOrBaseDirArgGroup();
+    @Option(names={"-p", "--platform"}, required = false, descriptionKey="fcli.tool.install.platform") 
+    private String platform;
+    @Option(names={"--on-digest-mismatch"}, required = false, descriptionKey="fcli.tool.install.on-digest-mismatch", defaultValue = "fail") 
     private DigestMismatchAction onDigestMismatch;
+    @DisableTest(TestType.MULTI_OPT_PLURAL_NAME)
+    @Option(names={"-u", "--uninstall"}, required = false, split=",",  descriptionKey="fcli.tool.install.uninstall")
+    private Set<String> versionsToUninstall = new HashSet<>();
+    @Option(names={"--no-global-bin"}, required = false, negatable = true, descriptionKey="fcli.tool.install.global-bin")
+    private boolean installGlobalBin = true;
+    @Mixin private CommonOptionMixins.RequireConfirmation requireConfirmation;
+    @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     
-    private static enum DigestMismatchAction {
-        fail, warn
+    private static final class InstallOrBaseDirArgGroup {
+        @Option(names={"-d", "--install-dir"}, required = false, descriptionKey="fcli.tool.install.install-dir") 
+        private File installDir;
+        @Option(names={"-b", "--base-dir"}, required = false, descriptionKey="fcli.tool.install.base-dir") 
+        private File baseDir;
     }
     
     @Override
     public final JsonNode getJsonNode() {
-        String toolName = getToolName();
-        ToolVersionDownloadDescriptor descriptor = ToolHelper.getToolDownloadDescriptor(toolName).getVersionOrDefault(version);
-        return downloadAndInstall(toolName, descriptor);
+        return install(); 
     }
     
     @Override
-    public String getActionCommandResult() {
+    public final String getActionCommandResult() {
         return "INSTALLED";
     }
     
     @Override
-    public boolean isSingular() {
-        return true;
-    }
-    
-    private final JsonNode downloadAndInstall(String toolName, ToolVersionDownloadDescriptor downloadDescriptor) {
-        try {
-            Path installPath = getInstallPathOrDefault(downloadDescriptor);
-            Path binPath = getBinPath(downloadDescriptor);
-            ToolVersionInstallDescriptor installDescriptor = new ToolVersionInstallDescriptor(downloadDescriptor, installPath, binPath);
-            emptyExistingInstallPath(installDescriptor.getInstallPath());
-            File downloadedFile = download(downloadDescriptor);
-            checkDigest(downloadDescriptor, downloadedFile);
-            install(installDescriptor, downloadedFile);
-            ToolVersionCombinedDescriptor combinedDescriptor = ToolHelper.saveToolVersionInstallDescriptor(toolName, installDescriptor);
-            return new ObjectMapper().<ObjectNode>valueToTree(combinedDescriptor);            
-        } catch ( IOException e ) {
-            throw new RuntimeException("Error installing "+getToolName(), e);
-        }
-    }
-
-    private final File download(ToolVersionDownloadDescriptor descriptor) throws IOException {
-        File tempDownloadFile = File.createTempFile("fcli-tool-download", null);
-        tempDownloadFile.deleteOnExit();
-        download(descriptor.getDownloadUrl(), tempDownloadFile);
-        return tempDownloadFile;
-    }
-    
-    private final Void download(String downloadUrl, File destFile) {
-        UnirestInstance unirest = GenericUnirestFactory.getUnirestInstance("tool",
-                u->ProxyHelper.configureProxy(u, "tool", downloadUrl));
-        unirest.get(downloadUrl).asFile(destFile.getAbsolutePath(), StandardCopyOption.REPLACE_EXISTING).getBody();
-        return null;
-    }
-    
-    protected void install(ToolVersionInstallDescriptor descriptor, File downloadedFile) throws IOException {
-        Path installPath = descriptor.getInstallPath();
-        Files.createDirectories(installPath);
-        InstallType installType = getInstallType();
-        switch (installType) {
-        // TODO Clean this up
-        case COPY: Files.copy(downloadedFile.toPath(), installPath.resolve(StringUtils.substringAfterLast(descriptor.getOriginalDownloadDescriptor().getDownloadUrl(), "/")), StandardCopyOption.REPLACE_EXISTING); break;
-        case EXTRACT_ZIP: FileUtils.extractZip(downloadedFile, installPath); break;
-        default: throw new RuntimeException("Unknown install type: "+installType.name());
-        }
-        downloadedFile.delete();
-        postInstall(descriptor);
-        updateBinPermissions(descriptor.getBinPath());
-    }
-
-    @SneakyThrows
-    protected Path getInstallPathOrDefault(ToolVersionDownloadDescriptor descriptor) {
-        if ( installDir == null ) {
-            installDir = FcliDataHelper.getFortifyHomePath().resolve(String.format("tools/%s/%s", getToolName(), descriptor.getVersion())).toFile();
-        }
-        return installDir.getCanonicalFile().toPath();
-    }
-    
-    protected Path getBinPath(ToolVersionDownloadDescriptor descriptor) {
-        return getInstallPathOrDefault(descriptor).resolve("bin");
+    public final boolean isSingular() {
+        return false;
     }
     
     protected abstract String getToolName();
-    protected abstract InstallType getInstallType();
-    protected abstract void postInstall(ToolVersionInstallDescriptor installDescriptor) throws IOException;
+    protected abstract void postInstall(ToolInstaller toolInstaller, ToolInstallationResult installationResult);
+    protected abstract String getDefaultArtifactType();
     
-    private final void emptyExistingInstallPath(Path installPath) throws IOException {
-        if ( Files.exists(installPath) && Files.list(installPath).findFirst().isPresent() ) {
-            requireConfirmation.checkConfirmed();
-            FileUtils.deleteRecursive(installPath);
+    private final ArrayNode install() {
+        try ( var progressWriter = progressWriterFactory.create() ) {
+            var preparer = new ToolInstallationPreparer();
+            var installer = ToolInstaller.builder()
+                    .defaultPlatform(getDefaultArtifactType())
+                    .onDigestMismatch(onDigestMismatch)
+                    .preInstallAction(preparer)
+                    .postInstallAction(this::postInstall)
+                    .progressWriter(progressWriter)
+                    .targetPathProvider(this::getTargetPath)
+                    .globalBinPathProvider(this::getGlobalBinPath)
+                    .toolName(getToolName())
+                    .requestedVersion(version)
+                    .build();
+            var installResult = StringUtils.isBlank(platform) ? installer.install() : installer.install(platform);
+            var result = OBJECTMAPPER.createArrayNode();
+            result.add(OBJECTMAPPER.valueToTree(installResult.asOutputDescriptor()));
+            result.addAll(preparer.getToolInstallationOutputDescriptors());
+            return result;
         }
     }
     
-    private final void checkDigest(ToolVersionDownloadDescriptor descriptor, File downloadedFile) {
-        String actualDigest = FileUtils.getFileDigest(downloadedFile, descriptor.getDigestAlgorithm());
-        String expectedDigest = descriptor.getExpectedDigest();
-        if ( !actualDigest.equals(expectedDigest) ) {
-            String msg = "Digest mismatch"
-                    +"\n Expected: "+expectedDigest
-                    +"\n Actual:   "+actualDigest;
-            switch(onDigestMismatch) {
-            case fail: throw new IllegalStateException(msg);
-            case warn: LOG.warn(msg);
+    private final Path getInstallPath() {
+        return installOrBaseDirArgGroup.installDir==null
+                ? null 
+                : installOrBaseDirArgGroup.installDir.toPath();
+    }
+    
+    private final Path getBasePath() {
+        var basePath = installOrBaseDirArgGroup.baseDir==null
+                ? null 
+                : installOrBaseDirArgGroup.baseDir.toPath();
+        if ( getInstallPath()==null && basePath==null ) {
+            basePath = Path.of(System.getProperty("user.home"),"fortify", "tools"); 
+        }
+        return basePath; 
+    }
+
+    private final Path getTargetPath(ToolInstaller toolInstaller) {
+        var installPath = getInstallPath();
+        Path result = null;
+        if ( installPath!=null ) {
+            toolInstaller.getProgressWriter().writeWarning("WARN: --install-dir option is deprecated");
+            result = installPath;
+        } else {
+            var basePath = getBasePath();
+            result = basePath.resolve(String.format("%s/%s", getToolName(), toolInstaller.getToolVersion()));
+        }
+        return result.normalize().toAbsolutePath();
+    }
+
+    private final Path getGlobalBinPath(ToolInstaller toolInstaller) {
+        var basePath = getBasePath(); 
+        return basePath==null || !installGlobalBin ? null : basePath.resolve("bin");
+    }
+    
+    private final class ToolInstallationPreparer implements Consumer<ToolInstaller> {
+        @Getter private final ArrayNode toolInstallationOutputDescriptors = OBJECTMAPPER.createArrayNode();
+        private ToolInstaller installer;
+        private ToolUninstaller uninstaller;
+        
+        @Override
+        public void accept(ToolInstaller installer) {
+            this.installer = installer;
+            this.uninstaller = new ToolUninstaller(installer.getToolName());
+            prepare();
+        }
+        
+        @SneakyThrows
+        private final void prepare() {
+            Map<String, Runnable> requiredPreparations = new LinkedHashMap<String, Runnable>();
+            addTargetDirPreparation(requiredPreparations);
+            addUninstallPreparations(requiredPreparations);
+            prepare(requiredPreparations);
+        }
+
+        private final void prepare(Map<String, Runnable> requiredPreparations) {
+            if ( !requiredPreparations.isEmpty() ) {
+                // Generate message for prompt. This includes the required preparation actions
+                // from requiredPreparations, and for clarity, also the installation action.
+                String msg = String.format("\n  %s\n  Install %s %s to %s", 
+                        String.join("\n  ", requiredPreparations.keySet()),
+                        installer.getToolName(), installer.getToolVersion(), installer.getTargetPath());
+                requireConfirmation.checkConfirmed(msg);
+                requiredPreparations.values().forEach(Runnable::run);
             }
         }
-    }
-    
-    private static final void updateBinPermissions(Path binPath) throws IOException {
-        try (Stream<Path> walk = Files.walk(binPath)) {
-            walk.forEach(AbstractToolInstallCommand::updateFilePermissions);
-        }
-    }
         
-    @SneakyThrows
-    private static final void updateFilePermissions(Path p) {
-        try {
-            Files.setPosixFilePermissions(p, binPermissions);
-        } catch ( UnsupportedOperationException e ) {
-            // Log warning?
+        @SneakyThrows
+        private final void addTargetDirPreparation(Map<String, Runnable> requiredPreparations) {
+            var targetPath = installer.getTargetPath();
+            if ( Files.exists(targetPath) ) {
+                var existingVersionsWithSameTargetPath = getVersionsStream()
+                            .filter(d->!isCandidateForUninstall(d))
+                            .filter(d->installer.hasMatchingTargetPath(d))
+                            .map(ToolDefinitionVersionDescriptor::getVersion)
+                            .collect(Collectors.toList());
+                var otherVersionsWithSameTargetPath = existingVersionsWithSameTargetPath.stream()
+                        .filter(v->!v.equals(installer.getToolVersion()))
+                        .collect(Collectors.toList());
+                if ( !otherVersionsWithSameTargetPath.isEmpty() ) {
+                    throw new IllegalStateException(String.format("Target path %s already in use for versions: %s\nUse --replace option to explicitly uninstall the existing versions", targetPath, String.join(", ", otherVersionsWithSameTargetPath)));
+                } else if ( existingVersionsWithSameTargetPath.isEmpty() ) {
+                    // Basically we're moving the tool installation to a different directory
+                    requiredPreparations.put("Clean target directory "+targetPath, ()->deleteRecursive(targetPath));
+                }
+            }
         }
-    }
-    
-    protected static enum InstallType {
-        EXTRACT_ZIP, COPY
+
+        private final void addUninstallPreparations(Map<String, Runnable> requiredPreparations) {
+            if ( !versionsToUninstall.isEmpty() ) {
+                getVersionsStream()
+                    .filter(this::isCandidateForUninstall)
+                    .forEach(vd->addUninstallPreparation(vd, requiredPreparations));
+            }
+        }
+
+        private final void addUninstallPreparation(ToolDefinitionVersionDescriptor versionDescriptor, Map<String, Runnable> requiredPreparations) {
+            var toolName = installer.getToolName();
+            var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
+            if ( installationDescriptor!=null ) {
+                var msg = String.format("Uninstall %s v%s from %s", toolName, versionDescriptor.getVersion(), installationDescriptor.getInstallDir());
+                requiredPreparations.put(msg, ()->uninstall(versionDescriptor, installationDescriptor));
+            }
+        }
+        
+        private final void deleteRecursive(Path targetPath) {
+            installer.getProgressWriter().writeProgress("Cleaning target directory %s", targetPath);
+            FileUtils.deleteRecursive(targetPath);
+        }
+        
+        private final void uninstall(ToolDefinitionVersionDescriptor versionDescriptor, ToolInstallationDescriptor installationDescriptor) {
+            var toolName = installer.getToolName();
+            var toolVersion = versionDescriptor.getVersion();
+            var installPath = installationDescriptor.getInstallPath();
+            installer.getProgressWriter().writeProgress("Uninstalling %s %s from %s", toolName, toolVersion, installPath);
+            var outputDescriptor = uninstaller.uninstall(versionDescriptor, installationDescriptor, installer.getVersionDescriptor());
+            toolInstallationOutputDescriptors.add(OBJECTMAPPER.valueToTree(outputDescriptor));
+        }
+        
+        private final Stream<ToolDefinitionVersionDescriptor> getVersionsStream() {
+            return installer.getDefinitionRootDescriptor().getVersionsStream();
+        }
+
+        /**
+         * The given version descriptor is considered a candidate for uninstall
+         * if all of the following conditions are met:
+         * - {@link ToolInstallationHelper#isCandidateForUninstall(String, Set, ToolDefinitionVersionDescriptor)}
+         *   returns true
+         * - The version doesn't match the target version to be installed, 
+         *   or target path is different from existing installation
+         */
+        private final boolean isCandidateForUninstall(ToolDefinitionVersionDescriptor d) {
+            var toolName = installer.getToolName();
+            return ToolInstallationHelper.isCandidateForUninstall(toolName, versionsToUninstall, d)
+                    && !(d.getVersion().equals(installer.getToolVersion()) && installer.hasMatchingTargetPath(d));
+        }
     }
 }

@@ -22,6 +22,7 @@ import picocli.CommandLine.Command;
         subcommands = {
                 ToolBugTrackerUtilityInstallCommand.class,
                 ToolBugTrackerUtilityListCommand.class,
+                ToolBugTrackerUtilityListPlatformsCommand.class,
                 ToolBugTrackerUtilityUninstallCommand.class
         }
 

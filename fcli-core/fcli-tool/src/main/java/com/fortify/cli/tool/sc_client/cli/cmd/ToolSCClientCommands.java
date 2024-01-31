@@ -22,6 +22,7 @@ import picocli.CommandLine.Command;
         subcommands = {
                 ToolSCClientInstallCommand.class,
                 ToolSCClientListCommand.class,
+                ToolSCClientListPlatformsCommand.class,
                 ToolSCClientUninstallCommand.class
         }
 

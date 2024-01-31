@@ -12,32 +12,35 @@
  */
 package com.fortify.cli.ftest.tool
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import java.nio.file.Files
+import java.nio.file.Path
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
-import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
-import com.fortify.cli.ftest.ssc._common.SSCRoleSupplier
-import com.fortify.cli.ftest.ssc._common.SSCRoleSupplier.SSCRole
-import spock.lang.AutoCleanup
-import spock.lang.Requires
+import com.fortify.cli.ftest._common.spec.TempDir
+
 import spock.lang.Shared
 import spock.lang.Stepwise
 
 @Prefix("tool.vuln-exporter") @Stepwise
 class ToolVulnExporterSpec extends FcliBaseSpec {
+    @Shared @TempDir("fortify/tools") String baseDir;
+    @Shared String version = "2.0.4"
+    @Shared Path globalBinScript = Path.of(baseDir).resolve("bin/FortifyVulnerabilityExporter.bat");
+    @Shared Path binScript = Path.of(baseDir).resolve("vuln-exporter/${version}/bin/FortifyVulnerabilityExporter.bat");
     
     def "install"() {
-        def args = "tool vuln-exporter install -y latest"
+        def args = "tool vuln-exporter install -y -v=${version} --progress=none -b ${baseDir}"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
-                it[1].replace(" ", "").contains("YesYes")
-                it[1].contains("INSTALLED")
+                it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
+                it[1].contains(" INSTALLED")
+                Files.exists(binScript);
+                Files.exists(globalBinScript);
             }
     }
     
@@ -48,21 +51,23 @@ class ToolVulnExporterSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindir")
+                it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldir")
                 it[1].replace(" ", "").startsWith("vuln-exporter")
-                it[1].replace(" ", "").contains("YesYes")
             }
     }
     
     def "uninstall"() {
-        def args = "tool vuln-exporter uninstall -y default"
+        def args = "tool vuln-exporter uninstall -y --progress=none -v=${version}"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[0].replace(' ', '').equals("NameVersionDefaultInstalledInstalldirBindirAction")
-                it[1].replace(" ", "").contains("YesNoN/AN/AUNINSTALLED")
+                it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
+                it[1].contains(" UNINSTALLED")
+                // TODO fcli currently doesn't delete/update global bin script
+                Files.exists(globalBinScript);
+                !Files.exists(binScript);
             }
     }
     

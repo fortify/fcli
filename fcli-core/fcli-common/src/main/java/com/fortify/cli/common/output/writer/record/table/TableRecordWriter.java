@@ -68,7 +68,11 @@ public class TableRecordWriter extends AbstractFormattedRecordWriter {
 
     private String getHeader(String fieldName) {
         String header = getConfig().getMessageResolver().getMessageString("output.header."+fieldName);
-        return header!=null ? header : PropertyPathFormatter.humanReadable(fieldName);
+        return header!=null ? header : PropertyPathFormatter.humanReadable(getNormalizedFieldName(fieldName));
+    }
+
+    private String getNormalizedFieldName(String fieldName) {
+        return fieldName.replaceAll("String$", ""); 
     }
 
     private String[] getFields(ObjectNode firstObjectNode) {

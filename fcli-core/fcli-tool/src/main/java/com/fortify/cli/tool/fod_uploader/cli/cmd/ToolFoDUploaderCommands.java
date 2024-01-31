@@ -22,6 +22,7 @@ import picocli.CommandLine.Command;
         subcommands = {
                 ToolFoDUploaderInstallCommand.class,
                 ToolFoDUploaderListCommand.class,
+                ToolFoDUploaderListPlatformsCommand.class,
                 ToolFoDUploaderUninstallCommand.class
         }
 
