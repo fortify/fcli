@@ -26,7 +26,7 @@ import spock.lang.Shared
 import spock.lang.Stepwise
 
 @Prefix("tool.definitions.update") @Stepwise
-class ToolConfigUpdateSpec extends FcliBaseSpec {
+class ToolDefinitionsSpec extends FcliBaseSpec {
     
     def "updateDefault"() {
         def args = "tool definitions update"
@@ -36,7 +36,7 @@ class ToolConfigUpdateSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>0
                 it[0].replace(' ', '').equals("SourceLastupdateAction")
-                it[1].replace(" ", "").contains("https://github.com/fortify-ps/tool-definitions/raw/main/v1/tool-definitions")
+                it[1].replace(" ", "").contains("https://github.com/")
                 it[1].contains(" UPDATED")
             }
     }

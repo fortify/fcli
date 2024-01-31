@@ -34,6 +34,6 @@ public class ToolFoDUploaderInstallCommand extends AbstractToolInstallCommand {
     
     @Override @SneakyThrows
     protected void postInstall(ToolInstaller installer, ToolInstallationResult installationResult) {
-        installer.installJavaBinScripts("FoDUploader", "FodUpload.jar");
+        installer.installJavaBinScripts("FoDUpload", "FodUpload.jar");
     }
 }
