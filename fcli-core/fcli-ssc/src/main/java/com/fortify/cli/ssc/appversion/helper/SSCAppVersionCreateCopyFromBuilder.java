@@ -21,18 +21,16 @@ import kong.unirest.UnirestInstance;
 
 public final class SSCAppVersionCreateCopyFromBuilder {
     private final UnirestInstance unirest;
-
     private ObjectNode copyFromPartialOptions = JsonHelper.getObjectMapper().createObjectNode();
     private ObjectNode copyStateOptions = JsonHelper.getObjectMapper().createObjectNode();
-    private SSCAppVersionDescriptor previousProjectVersion;
-
+    private SSCAppVersionDescriptor previousProjectVersionDescriptor;
     private boolean copyRequested = false;
-
-    private boolean copyState = false;
 
     public SSCAppVersionCreateCopyFromBuilder(UnirestInstance unirest) {
         this.unirest = unirest;
     }
+
+    public SSCAppVersionDescriptor getPreviousProjectVersionDescriptor() { return this.previousProjectVersionDescriptor; }
 
     public final HttpRequest<?> buildCopyFromPartialRequest(String projectVersionId) {
         if(!copyRequested){
@@ -47,7 +45,7 @@ public final class SSCAppVersionCreateCopyFromBuilder {
 
 
     public final HttpRequest<?> buildCopyStateRequest(String projectVersionId) {
-        if(!copyState || !copyRequested){
+        if( !isCopyTypeRequested(SSCAppVersionCopyType.State) || !copyRequested){
             return null;
         }
 
@@ -63,7 +61,7 @@ public final class SSCAppVersionCreateCopyFromBuilder {
     }
 
     public final SSCAppVersionCreateCopyFromBuilder setCopyFrom(SSCAppVersionDescriptor previousProjectVersionDescriptor) {
-        this.previousProjectVersion = previousProjectVersionDescriptor;
+        this.previousProjectVersionDescriptor = previousProjectVersionDescriptor;
         this.copyFromPartialOptions.put("previousProjectVersionId", previousProjectVersionDescriptor.getVersionId());
         this.copyStateOptions.put("previousProjectVersionId", previousProjectVersionDescriptor.getIntVersionId());
         return this;
@@ -74,11 +72,7 @@ public final class SSCAppVersionCreateCopyFromBuilder {
             copyOptions = SSCAppVersionCopyType.values();
         }
         for (SSCAppVersionCopyType option : copyOptions) {
-            if(option.getSscValue() == "copyState") {
-                this.copyState = true;
-            } else {
-                this.copyFromPartialOptions.put(option.getSscValue(), "true");
-            }
+            this.copyFromPartialOptions.put(option.getSscValue(), "true");
         }
 
         return this;
@@ -90,7 +84,7 @@ public final class SSCAppVersionCreateCopyFromBuilder {
         return this;
     }
 
-    public boolean copyStateEnabled() {
-        return this.copyState;
+    public final boolean isCopyTypeRequested(SSCAppVersionCopyType type){
+        return this.copyFromPartialOptions.has(type.getSscValue());
     }
 }

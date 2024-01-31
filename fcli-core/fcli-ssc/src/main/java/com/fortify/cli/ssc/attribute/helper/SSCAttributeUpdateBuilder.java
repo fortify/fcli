@@ -26,6 +26,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionCopyType;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionCreateCopyFromBuilder;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
 import com.fortify.cli.ssc.attribute.domain.SSCAttributeDefinitionType;
 
 import kong.unirest.HttpRequest;
@@ -55,12 +59,31 @@ public final class SSCAttributeUpdateBuilder {
         }
         return resetPreparedRequest();
     }
-    
+
     public SSCAttributeUpdateBuilder addRequiredAttrs(boolean addRequiredAttrs) {
         this.addRequiredAttributes = addRequiredAttrs;
         return resetPreparedRequest();
     }
-    
+
+    public SSCAttributeUpdateBuilder getAttrsFrom(SSCAppVersionCreateCopyFromBuilder copyFromBuilder) {
+        if(copyFromBuilder.isCopyTypeRequested(SSCAppVersionCopyType.VersionAttributes)) {
+            Map<String,String> attributes = new LinkedHashMap<>();
+            SSCAppVersionDescriptor fromDescriptor = copyFromBuilder.getPreviousProjectVersionDescriptor();
+            JsonNode fromAttributes = SSCAppVersionHelper.getAttributes(unirest, fromDescriptor);
+
+            for (JsonNode attr : fromAttributes) {
+                String values = "";
+                for (JsonNode value: attr.get("values")) {
+                    values += value.get("guid").textValue() + ",";
+                }
+                attributes.put(attr.get("attributeDefinitionId").toString(), values);
+            }
+
+            return this.add(attributes);
+        }
+        return resetPreparedRequest();
+    }
+
     public SSCAttributeUpdateBuilder checkRequiredAttrs(boolean checkRequiredAttrs) {
         this.checkRequiredAttributes = checkRequiredAttrs;
         return resetPreparedRequest();
