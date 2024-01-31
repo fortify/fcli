@@ -35,7 +35,7 @@ public final class ToolDefinitionsOutputDescriptor {
     public ToolDefinitionsOutputDescriptor(String name, String source, Date lastUpdate) {
         this.name = name;
         this.source = getFormattedString(source);
-        this.lastUpdate = lastUpdate==null ? null : new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z").format(lastUpdate);
+        this.lastUpdate = lastUpdate==null ? null : new SimpleDateFormat("yyyy-MM-dd HH:mm").format(lastUpdate);
     }
     
     private static final String getFormattedString(String str) {
