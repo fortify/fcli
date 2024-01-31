@@ -14,6 +14,7 @@ Some of the fcli highlights:
 * link:#_session_management[Session-based]; no need to pass URL’s and credentials on every individual fcli invocation
 * Support for configuring option values through link:#_environment_variables[environment variables]
 * Support for link:#_fcli_variables[fcli variables]; pass data between fcli commands
+* Support for installing other Fortify-related tools
 
 The following Fortify products are currently supported by fcli:
 
@@ -37,13 +38,12 @@ The following Fortify products are currently supported by fcli:
 Some commands and options are either hidden or marked as `PREVIEW` or `LEGACY`; these may change at any time, even between minor fcli versions. Any fcli invocations using these commands or options may break when upgrading to a future fcli 2.x version, so if possible you should refrain from using these in pipelines for example. Most notably, this includes the following functionalities:
 
 * Commands for configuring and running FoD DAST & MAST scans will change significantly, based on upcoming FoD API changes & improvements
-* Commands and options for managing and assigning users and groups for both FoD and SSC will likely change; see https://github.com/fortify/fcli/issues/369 for details.
 
 Hidden commands are not listed in fcli help output and not included in the link:#_manual_pages[Manual Pages]. If needed, you can view the list of hidden commands using the `+fcli util all-commands list -q hidden+` command.
 
-== Installation
+== Release Assets
 
-Download bundles for fcli are available on the https://github.com/fortify/fcli/releases[Releases] page, containing both development releases (named `+Development Release - <branch> branch+`) and final releases. In general, the use of a final release is recommended, unless you want to use any functionality that hasn’t made it into a final release yet.
+Release assets for fcli are available on the https://github.com/fortify/fcli/releases[Releases] page. This page lists both development releases (named `+Development Release - <branch> branch+`) and final releases. In general, the use of a final release is recommended, unless you want to use any functionality that hasn’t made it into a final release yet.
 
 Each release comes with a list of assets:
 
@@ -51,7 +51,7 @@ Each release comes with a list of assets:
 * `+fcli-linux.tgz+`, `+fcli-mac.tgz+` & `+fcli-windows.zip+`: Native binaries for each of the mentioned platforms
 ** Note that some browsers by default will disallow downloading of `+fcli-windows.zip+`; please bypass the warning
 ** Linux and Mac downloads include an `+auto-completion+` script that makes interactive fcli usage easier
-* `+fcli.jar+`: Java version of fcli, which should be runnable on any platform that has Java 11+ installed
+* `+fcli.jar+`: Java version of fcli, which should be runnable on any platform that has Java 17+ installed
 ** Note that in general, the native binaries are easier to invoke, offer better performance, and have the benefit of auto-completion capabilities on Linux & Mac
 ** If you experience any unexpected behavior with native binaries, like commands or command line options not being listed or recognized, or technical error messages about methods, constructors or serializers not being
 found, please try with the Java version as it may be an issue specific to the native binaries. See the link:#_troubleshooting[Troubleshooting] section for details.
@@ -60,17 +60,46 @@ found, please try with the Java version as it may be an issue specific to the na
 
 Please note that when publishing a new release, it may take up to 30-60 minutes before release assets are posted. If the latest release doesn’t show any of the assets listed above, please check again in 30-60 minutes. If you encounter a release without these assets after waiting for 60 minutes, please consider submitting an issue on the https://github.com/fortify/fcli/issues[fcli issue tracker].
 
-To install one of the binary distributions of fcli:
+== Installation
 
-* Download the appropriate binary archive for your platform
-* Extract the archive contents to a directory of your choosing
-* For ease of use, add this directory to your operating system or shell PATH environment variable, or move the `+fcli+`/`+fcli.exe+` binary to a directory that is already on the PATH
+To install fcli, start by visiting the fcli https://github.com/fortify/fcli/releases[Releases] page as described in the previous section, and downloading the `fcli.jar` file or appropriate native binary archive for your platform. Native binary archives will need to be extracted to a temporary directory, the `fcli.jar` file can be used as-is. 
+
+Once downloaded and extracted (if applicable), you can either perform a manual or managed installation. Managed installation is recommended, but only available on internet-connected systems. Please see the sections below for more information.
+
+==== Managed Installation
+
+Managed installation is only available on internet-connected systems, or if you company hosts the various Fortify tools (including fcli) internally and provides a corresponding custom tool definitions bundle. Advantages of a managed installation:
+
+* Both fcli and other tools installed using `fcli tool` commands will be hosted under a single base directory
+* This base directory will contain a single `bin` directory that can be added to your `PATH` for easy invocation of all tools installed through fcli
+* The `fcli tool fcli list` command can be used to list both installed and available fcli versions
+* The `fcli tool fcli install` command can be used to easily upgrade the current fcli version
+
+The steps below describe how to perform a managed fcli installation. The syntax for invoking the various commands depends on the fcli variant that you downloaded. If you downloaded `fcli.jar`, fcli can be invoked using `java -jar /path/to/fcli.jar`. If you downloaded a native binary, fcli can be invoked using `/path/to/fcli` (Linux/Mac) or `C:\path\to\fcli.exe` (Windows). Any use of `fcli` in the commands below should be replaced by the appropriate command for invoking fcli on your system.
+
+* If necessary, configure fcli proxy settings:
+** View usage information: `fcli config proxy add -h`
+** Configure proxy settings: `fcli config proxy add [options]`
+* Update tool definitions to make fcli aware of latest tool releases:
+** View usage information: `fcli tool definitions update -h`
+** Update with default Fortify tool definitions: `fcli tool definitions update`
+** Update with company-provided tool definitions: `fcli tool definitions update --source <tool-definitions-source>`
+* Install the latest available fcli version:
+** View usage information: `fcli tool fcli install -h`
+** View available fcli versions: `fcli tool fcli list`
+** Install the latest available fcli version to the default base directory: `fcli tool fcli install -v latest`
+* Add the global Fortify tools `bin` directory to your PATH environment variable.
+** Unless `--base-dir` is specified on the `fcli tool fcli install` command, the Fortify tools global `bin` directory defaults to `<user.home>/fortify/tools/bin`.
+* Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the `+<tab>+` key to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell. +
+`+source <user.home>/fortify/tools/bin/fcli_completion+` +
+
+==== Manual Installation
+
+* Copy the `fcli.jar` file or the extracted native binaries to a directory of your choosing.
+* If using `fcli.jar`, create a simple wrapper script/batch file that invokes `java -jar /path/to/fcli.jar`, passing all the script arguments to this Java command.
+* For ease of use, add the directory to your operating system or shell PATH environment variable, or move `+fcli+`/`+fcli.exe+`/wrapper script to a directory that is already on the PATH
 * Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the `+<tab>+` to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell. +
-`+source <extraction-dir>/fcli_completion+` +
-*Note*: Please ensure that the version of the completion script matches the fcli version that you're using, as otherwise the completion script may provide incorrect suggestions.
-
-To install the `+.jar+` version of fcli, simply download `+fcli.jar+` and put in in a directory of your choosing, after which it can be executed using `+java -jar path/to/fcli.jar+`. You may want to set up a
-simple wrapper script/batch file or shell alias to make it slightly easier to invoke `+fcli.jar+`.
+`+source <extraction-dir>/fcli_completion+`
 
 == Command Structure
 
