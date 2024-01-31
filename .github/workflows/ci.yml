@@ -107,9 +107,9 @@ jobs:
       
       - uses: actions/download-artifact@v4
         with:
-          path: ./
+          path: ./artifacts
           name: build-output
-
+      
       # For Linux, we build a statically linked native image, to allow for building a 'FROM scratch'
       # Docker image, and to avoid libc version issues. Since Jansi is not supported on statically 
       # linked images (see https://github.com/fusesource/jansi/issues/246), we set a system property 
@@ -118,7 +118,7 @@ jobs:
       # at build time (see https://www.graalvm.org/22.1/reference-manual/native-image/Properties/). 
       # We also exclude the native Jansi library resources, as these are now no longer needed.
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.app.FortifyCLI -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifact/release-assets/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} --static --libc=musl -Djansi.disable=true --initialize-at-build-time=com.fortify.cli.app.FortifyCLI -H:ExcludeResources="org/fusesource/jansi/internal/native/.*" -jar ./artifacts/release-assets/fcli.jar fcli
 
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -132,11 +132,11 @@ jobs:
         run: ./fcli --version | tee /dev/stderr | grep -E '[0-9]+\.[0-9]+\.[0-9]+' >/dev/null || (echo "fcli --version doesn't output proper version number"; exit 1)
 
       - name: Package native fcli
-        run: tar -zcvf artifact/release-assets/fcli-linux.tgz fcli -C ./artifact fcli_completion
+        run: tar -zcvf artifacts/release-assets/fcli-linux.tgz fcli -C ./artifacts fcli_completion
 
       - uses: actions/upload-artifact@v4
         with:
-          path: ./artifact/**/fcli-linux.tgz
+          path: ./artifacts/**/fcli-linux.tgz
           name: fcli-linux
 
   native_mac:
@@ -156,14 +156,14 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          path: ./
+          path: ./artifacts
           name: build-output
 
       # For MacOS, we build a dynamically linked image. Jansi by default provides a resource-config.json
       # file to include native libraries for all platforms; we override this to include only the MacOS 
       # libraries
       - name: Create native fcli
-        run: native-image ${{ env.native_image_opts }} -march=compatibility -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifact/release-assets/fcli.jar fcli
+        run: native-image ${{ env.native_image_opts }} -march=compatibility -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifacts/release-assets/fcli.jar fcli
 
       - name: Compress native fcli
         uses: svenstaro/upx-action@v2
@@ -174,11 +174,11 @@ jobs:
         run: ./fcli --help && ./fcli get --help
 
       - name: Package native fcli
-        run: tar -zcvf ./artifact/release-assets/fcli-mac.tgz fcli -C ./artifact fcli_completion
+        run: tar -zcvf ./artifacts/release-assets/fcli-mac.tgz fcli -C ./artifacts fcli_completion
 
       - uses: actions/upload-artifact@v4
         with:
-          path: ./artifact/**/fcli-mac.tgz
+          path: ./artifacts/**/fcli-mac.tgz
           name: fcli-mac
 
   native_win:
@@ -195,7 +195,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          path: ./
+          path: ./artifacts
           name: build-output
     
     # For Windows, we build a dynamically linked image. Jansi by default provides a resource-config.json
@@ -204,7 +204,7 @@ jobs:
       - name: Create native fcli
         run: >-
           "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
-          ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Mac/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar .\artifact\release-assets\fcli.jar fcli
+          ${{ env.JAVA_HOME }}\bin\native-image.cmd ${{ env.native_image_opts }} -H:ExcludeResources="org/fusesource/jansi/internal/native/Mac/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar .\artifacts\release-assets\fcli.jar fcli
         shell: cmd
 
 # We don't compress the Windows binary for now as this is incompatible with current Graal version.
@@ -220,17 +220,31 @@ jobs:
           .\fcli.exe get --help
 
       - name: Package native fcli
-        run: 7z a artifact\release-assets\fcli-windows.zip fcli*.exe
+        run: 7z a artifacts\release-assets\fcli-windows.zip fcli*.exe
 
       - uses: actions/upload-artifact@v4
         with:
-          path: ./artifact/**/fcli-windows.zip
+          path: ./artifacts/**/fcli-windows.zip
           name: fcli-windows
         
+  combine-artifacts:
+    needs: [build, native_linux, native_mac, native_win]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          merge-multiple: true
+      - uses: actions/upload-artifact@v4
+        with:
+          path: ./artifacts
+          name: combined-artifacts  
+    
   release:
     name: release
     if: needs.build.outputs.do_release
-    needs: [build, native_linux, native_mac, native_win]
+    needs: [build, native_linux, native_mac, native_win, combine-artifacts]
     runs-on: ubuntu-latest
     steps:
       - name: Check-out source code
@@ -240,6 +254,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
+          name: combined-artifacts
           
       - name: PROD - Prepare release PR
         if: github.ref == 'refs/heads/main'
@@ -277,7 +292,7 @@ jobs:
   publishPages:
     name: publishPages
     if: needs.build.outputs.do_release
-    needs: [build, release]
+    needs: [build, release, combine-artifacts]
     runs-on: ubuntu-latest
     steps:
       - name: Check-out existing docs from gh-pages branch
@@ -290,6 +305,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
+          name: combined-artifacts
           
       - name: Update documentation from artifact
         run: |
