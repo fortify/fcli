@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240130.151547-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240131.131948-dev_develop" %}
 
 
 <div id="header">
@@ -41,7 +41,10 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool sc-client uninstall</strong> [<strong>-y</strong>] [<strong>-v</strong>=<em>&lt;version&gt;</em>] [[<strong>-h</strong>]
+<p><strong>fcli tool sc-client uninstall</strong> [<strong>-y</strong>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>] <strong>-v</strong>=<em>&lt;versionsToUninstall&gt;</em>
+                              [,<em>&lt;versionsToUninstall&gt;</em>&#8230;&#8203;]
+                              [<strong>-v</strong>=<em>&lt;versionsToUninstall&gt;</em>[,
+                              <em>&lt;versionsToUninstall&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                               [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                               [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format_
                         _      [=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
@@ -53,7 +56,7 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command removes a Fortify Vulnerability Exporter installation that was previously installed using the 'fcli tool vuln-exporter install' command.</p>
+<p>This command removes one or more Fortify Vulnerability Exporter installations that were previously installed using the 'fcli tool vuln-exporter install' command. Note that global bin scripts, if installed, will not be updated or removed by this command. If you un-install the version to which the global bin-script is currently pointing, the global bin script will cease functioning. To update the global bin script to point to an existing version, please use the install command.</p>
 </div>
 </div>
 </div>
@@ -62,9 +65,13 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>-v</strong>, <strong>--version</strong>=<em>&lt;version&gt;</em></dt>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
-<p>Tool version to uninstall.</p>
+<p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+</dd>
+<dt class="hdlist1"><strong>-v</strong>, <strong>--versions</strong>=<em>&lt;versionsToUninstall&gt;</em>[,<em>&lt;versionsToUninstall&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>One or more tool version to uninstall. Accepts 'all' to uninstall all existing versions, or a comma-separated list of version numbers. Version numbers may be specified as &lt;major&gt;[.&lt;minor&gt;[.&lt;patch&gt;]].</p>
 </dd>
 <dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
 <dd>
@@ -124,7 +131,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-01-30 15:17:14 UTC
+Last updated 2024-01-31 13:21:18 UTC
 </div>
 </div>
 </body>
