@@ -110,4 +110,42 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
             }
     }
     
+    def "installWithVPrefix"() {
+        def args = "tool fod-uploader install -y -v=v5.0.0 --progress=none"
+        when:
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
+                it[1].contains("5.0.0")
+                it[1].contains(" INSTALLED")
+            }
+    }
+    
+    def "installAndUninstallWithVPrefix"() {
+        def args = "tool fod-uploader install -y -v=v5.0.1 --uninstall=v5.0.0 --progress=none"
+        when:
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
+                it[1].contains("5.0.1")
+                it[1].contains(" INSTALLED")
+            }
+    }
+    
+    def "uninstallWithVPrefix"() {
+        def args = "tool fod-uploader uninstall -y -v=v5.0.1 --progress=none"
+        when:
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
+        then:
+            verifyAll(result.stdout) {
+                size()>0
+                it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
+                it[1].contains(" UNINSTALLED")
+            }
+    }
+    
 }

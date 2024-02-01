@@ -43,7 +43,7 @@ public class ToolDefinitionRootDescriptor {
     
     public final ToolDefinitionVersionDescriptor getVersion(String versionOrAlias) {
         return getVersionsStream()
-                .filter(v-> (v.getVersion().equals(versionOrAlias) || Arrays.stream(v.getAliases()).anyMatch(versionOrAlias::equals)) )
+                .filter(v->matches(v, versionOrAlias))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Version or alias "+versionOrAlias+" not found"));
     }
@@ -53,6 +53,15 @@ public class ToolDefinitionRootDescriptor {
             versionOrAlias = "latest";
         }
         return getVersion(versionOrAlias);
+    }
+    
+    private static final boolean matches(ToolDefinitionVersionDescriptor descriptor, String versionOrAlias) {
+        var result = descriptor.getVersion().equals(versionOrAlias) 
+                || Arrays.stream(descriptor.getAliases()).anyMatch(versionOrAlias::equals);
+        if ( !result && versionOrAlias.startsWith("v") ) {
+            result = matches(descriptor, versionOrAlias.replaceFirst("^v", ""));
+        }
+        return result;
     }
     
 }

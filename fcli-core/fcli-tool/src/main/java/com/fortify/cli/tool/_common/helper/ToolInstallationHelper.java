@@ -34,18 +34,22 @@ public final class ToolInstallationHelper {
     
     /**
      * The given version descriptor is considered a candidate for uninstall
-     * if all of the following conditions are met:
-     * - The full version is listed in --uninstall
-     * - The major version is listed in --uninstall
-     * - The major & minor version is listed in --uninstall
-     * - An installation descriptor for the version exists
+     * if an installation descriptor for the version exists, and any of the 
+     * following conditions are met:
+     * - The full version is listed in --uninstall, optionally prefixed with 'v'
+     * - The major version is listed in --uninstall, optionally prefixed with 'v'
+     * - The major & minor version is listed in --uninstall, optionally prefixed with 'v'
      */
     public static final boolean isCandidateForUninstall(String toolName, Set<String> versionsToUninstall, ToolDefinitionVersionDescriptor versionDescriptor) {
         var version = versionDescriptor.getVersion();
         return (versionsToUninstall.contains("all") 
-                || versionsToUninstall.contains(version)
-                || versionsToUninstall.contains(SemVerHelper.getMajor(version).orElse("N/A"))
-                || versionsToUninstall.contains(SemVerHelper.getMajorMinor(version).orElse("N/A")))
+                || containsCandidateForUninstall(versionsToUninstall, version)
+                || containsCandidateForUninstall(versionsToUninstall, SemVerHelper.getMajor(version).orElse("N/A"))
+                || containsCandidateForUninstall(versionsToUninstall, SemVerHelper.getMajorMinor(version).orElse("N/A")))
                && ToolInstallationDescriptor.load(toolName, versionDescriptor)!=null; 
+    }
+    
+    private static final boolean containsCandidateForUninstall(Set<String> versionsToUninstall, String candidate) {
+        return versionsToUninstall.contains(candidate) || versionsToUninstall.contains("v"+candidate);
     }
 }

@@ -217,7 +217,7 @@ public abstract class AbstractToolInstallCommand extends AbstractOutputCommand i
             var toolName = installer.getToolName();
             var installationDescriptor = ToolInstallationDescriptor.load(toolName, versionDescriptor);
             if ( installationDescriptor!=null ) {
-                var msg = String.format("Uninstall %s v%s from %s", toolName, versionDescriptor.getVersion(), installationDescriptor.getInstallDir());
+                var msg = String.format("Uninstall %s %s from %s", toolName, versionDescriptor.getVersion(), installationDescriptor.getInstallDir());
                 requiredPreparations.put(msg, ()->uninstall(versionDescriptor, installationDescriptor));
             }
         }
