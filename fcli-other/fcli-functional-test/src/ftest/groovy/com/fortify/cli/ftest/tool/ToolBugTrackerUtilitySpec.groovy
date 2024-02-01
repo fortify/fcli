@@ -32,7 +32,7 @@ class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
     def "install"() {
         def args = "tool bugtracker-utility install -y -v=${version} --progress=none -b ${baseDir}"
         when:
-            def result = Fcli.run(args)
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
                 size()>0

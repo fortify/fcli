@@ -33,7 +33,7 @@ class ToolScClientSpec extends FcliBaseSpec {
     def "install"() {
         def args = "tool sc-client install -y -v=${version} --progress=none -b ${baseDir}"
         when:
-            def result = Fcli.run(args)
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
                 size()>0

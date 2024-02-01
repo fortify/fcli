@@ -12,8 +12,10 @@
  *******************************************************************************/
 package com.fortify.cli.tool.fcli.cli.cmd;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.util.FileUtils;
@@ -39,13 +41,31 @@ public class ToolFcliInstallCommand extends AbstractToolInstallCommand {
     
     @Override @SneakyThrows
     protected void postInstall(ToolInstaller installer, ToolInstallationResult installationResult) {
+        installBinariesAndScripts(installer);
+        installFcliCompletion(installer);
+    }
+
+    private void installFcliCompletion(ToolInstaller installer) throws IOException {
+        var globalBinPath = installer.getGlobalBinPath();
+        var originalFcliCompletionScript = installer.getBinPath().resolve("fcli_completion");
+        if ( Files.exists(originalFcliCompletionScript) ) {
+            var pw = installer.getProgressWriter();
+            Path targetFcliCompletionScript = originalFcliCompletionScript;
+            if ( globalBinPath!=null ) {
+                targetFcliCompletionScript = globalBinPath.resolve(originalFcliCompletionScript.getFileName());
+                Files.copy(originalFcliCompletionScript, targetFcliCompletionScript, StandardCopyOption.REPLACE_EXISTING);
+            }
+            pw.writeWarning("INFO: Run the following command to update fcli auto-completion:\n  source %s", targetFcliCompletionScript.toAbsolutePath().normalize());
+        }
+    }
+
+    private void installBinariesAndScripts(ToolInstaller installer) {
         Path installPath = installer.getTargetPath();
         FileUtils.moveFiles(installPath, installer.getBinPath(), "fcli(_completion)?(\\.exe)?");
         if ( Files.exists(installPath.resolve("fcli.jar")) ) {
             installer.installJavaBinScripts("fcli", "fcli.jar");
         } else {
             installer.installGlobalBinScript(BinScriptType.bash, "fcli", "bin/fcli");
-            installer.installGlobalBinScript(BinScriptType.bash, "fcli_completion", "bin/fcli_completion");
             installer.installGlobalBinScript(BinScriptType.bat, "fcli.bat", "bin/fcli.exe");
         }
     }

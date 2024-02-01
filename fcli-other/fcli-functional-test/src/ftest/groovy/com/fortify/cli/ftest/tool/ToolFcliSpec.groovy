@@ -33,7 +33,7 @@ class ToolFcliSpec extends FcliBaseSpec {
     def "install"() {
         def args = "tool fcli install -y -v=${version} --progress=none -b ${baseDir} --platform windows/x64"
         when:
-            def result = Fcli.run(args)
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
                 size()>0

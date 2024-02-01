@@ -33,7 +33,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
     def "installLatest"() {
         def args = "tool fod-uploader install -y -v=${version} --progress=none -b ${baseDir}"
         when:
-            def result = Fcli.run(args)
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
                 size()>0
@@ -74,7 +74,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
     def "installV5"() {
         def args = "tool fod-uploader install -y -v=5 --progress=none"
         when:
-            def result = Fcli.run(args)
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
                 size()>0
@@ -87,7 +87,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
     def "installV50"() {
         def args = "tool fod-uploader install -y -v=5.0 --progress=none"
         when:
-            def result = Fcli.run(args)
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
                 size()>0
@@ -100,7 +100,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
     def "installV500"() {
         def args = "tool fod-uploader install -y -v=5.0.0 --progress=none"
         when:
-            def result = Fcli.run(args)
+            def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
             verifyAll(result.stdout) {
                 size()>0

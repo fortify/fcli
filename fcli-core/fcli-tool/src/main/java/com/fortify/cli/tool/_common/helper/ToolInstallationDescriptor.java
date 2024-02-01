@@ -38,10 +38,12 @@ import lombok.NoArgsConstructor;
 public class ToolInstallationDescriptor {
     private String installDir;
     private String binDir;
+    private String globalBinDir;
     
-    public ToolInstallationDescriptor(Path installPath, Path binPath) {
-        this.installDir = installPath.toAbsolutePath().toString();
-        this.binDir = binPath.toAbsolutePath().toString();
+    public ToolInstallationDescriptor(Path installPath, Path binPath, Path globalBinPath) {
+        this.installDir = installPath==null ? null : installPath.toAbsolutePath().normalize().toString();
+        this.binDir = binPath==null ? null : binPath.toAbsolutePath().normalize().toString();
+        this.globalBinDir = globalBinPath==null ? null : globalBinPath.toAbsolutePath().normalize().toString();
     }
     
     public static final ToolInstallationDescriptor load(String toolName, ToolDefinitionVersionDescriptor versionDescriptor) {
@@ -67,6 +69,10 @@ public class ToolInstallationDescriptor {
     }
     
     public Path getBinPath() {
+        return asPath(binDir);
+    }
+    
+    public Path getGlobalBinPath() {
         return asPath(binDir);
     }
     

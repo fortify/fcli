@@ -150,6 +150,13 @@ public class Fcli {
             }
             return this
         }
+        final FcliResult expectZeroExitCode() {
+            if ( nonZeroExitCode ) {
+                throw new UnexpectedFcliResultException("Fcli unexpectedly terminated unsuccessfully\n   "
+                    +stderr.join("\n   "), this)
+            }
+            return this
+        }
     }
     
     public static class UnexpectedFcliResultException extends RuntimeException {

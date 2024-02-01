@@ -41,6 +41,7 @@ public class ToolInstallationOutputDescriptor {
     private Map<String, ToolDefinitionArtifactDescriptor> binaries;
     private final String installDir;
     private final String binDir;
+    private final String globalBinDir;
     private final String installed;
     private final String __action__;
     
@@ -53,6 +54,7 @@ public class ToolInstallationOutputDescriptor {
         this.binaries = versionDescriptor.getBinaries();
         this.installDir = installationDescriptor==null ? null : installationDescriptor.getInstallDir();
         this.binDir = installationDescriptor==null ? null : installationDescriptor.getBinDir();
+        this.globalBinDir = installationDescriptor==null ? null : installationDescriptor.getGlobalBinDir();
         this.installed = StringUtils.isBlank(this.installDir) ? "No" : "Yes";
         this.__action__ = action;
     }

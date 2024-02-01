@@ -205,6 +205,7 @@ public final class ToolInstaller {
             progressWriter.writeProgress("Running post-install actions");
             postInstallAction.accept(this, result);
             updateBinPermissions(result.getInstallationDescriptor().getBinPath());
+            writeInstallationInfo(result);
             return result;
         } catch ( IOException e ) {
             throw new RuntimeException("Error installing "+toolName, e);
@@ -244,7 +245,8 @@ public final class ToolInstaller {
     private final ToolInstallationDescriptor createAndSaveInstallationDescriptor() {
         var installPath = getTargetPath();
         var binPath = getBinPath();
-        var installationDescriptor = new ToolInstallationDescriptor(installPath, binPath);
+        var globalBinPath = getGlobalBinPath();
+        var installationDescriptor = new ToolInstallationDescriptor(installPath, binPath, globalBinPath);
         installationDescriptor.save(toolName, getVersionDescriptor());
         return installationDescriptor;
     }
@@ -269,6 +271,13 @@ public final class ToolInstaller {
         }
     }
     
+    private final void writeInstallationInfo(ToolInstallationResult installationResult) {
+        var globalBinDir = installationResult.getInstallationDescriptor().getGlobalBinDir(); 
+        var binDir = installationResult.getInstallationDescriptor().getBinDir();
+        progressWriter.writeWarning("INFO: Add the following directory to PATH for easy tool invocation:\n  %s\n", 
+                globalBinDir==null ? binDir : globalBinDir);
+    }
+    
     private final void checkEmptyTargetPath() throws IOException {
         var targetPath = getTargetPath();
         if ( Files.exists(targetPath) && Files.list(targetPath).findFirst().isPresent() ) {
@@ -277,8 +286,10 @@ public final class ToolInstaller {
     }
     
     private static final void updateBinPermissions(Path binPath) throws IOException {
-        try (Stream<Path> walk = Files.walk(binPath)) {
-            walk.forEach(ToolInstaller::updateFilePermissions);
+        if ( binPath!=null ) {
+            try (Stream<Path> walk = Files.walk(binPath)) {
+                walk.forEach(ToolInstaller::updateFilePermissions);
+            }
         }
     }
         
