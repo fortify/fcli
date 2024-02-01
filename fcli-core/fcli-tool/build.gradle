@@ -6,7 +6,7 @@ apply from: "${sharedGradleScriptsDir}/fcli-module.gradle"
 ext.generatedToolDefinitionsDir = "${buildDir}/tool-definitions"
 tasks.register('generateToolDefinitionResources') {
     doLast {
-        def toolDefinitionsSource = "https://github.com/fortify-ps/tool-definitions/releases/download/v1/tool-definitions.yaml.zip"
+        def toolDefinitionsSource = "https://github.com/fortify/tool-definitions/releases/download/v1/tool-definitions.yaml.zip"
         def toolDefinitionsFile = "tool-definitions.yaml.zip"
         def toolDefinitionsRelativeDir = "com/fortify/cli/tool/config"
         def toolDefinitionsRelativeFile = "${toolDefinitionsRelativeDir}/${toolDefinitionsFile}"

@@ -16,7 +16,7 @@ import picocli.CommandLine.Option;
 @Command(name=OutputHelperMixins.Update.CMD_NAME)
 public class ToolDefinitionsUpdateCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Mixin @Getter private OutputHelperMixins.Update outputHelper;
-    private static final String DEFAULT_URL = "https://github.com/fortify-ps/tool-definitions/releases/download/v1/tool-definitions.yaml.zip";
+    private static final String DEFAULT_URL = "https://github.com/fortify/tool-definitions/releases/download/v1/tool-definitions.yaml.zip";
     @Getter @Option(names={"-s", "--source"}, required = false, descriptionKey="fcli.tool.definitions.update.definitions-source") 
     private String source = DEFAULT_URL;
     
