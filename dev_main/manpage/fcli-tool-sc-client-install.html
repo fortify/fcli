@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231121.114838-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240205.083259-dev_main" %}
 
 
 <div id="header">
@@ -41,11 +41,15 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli tool sc-client install</strong> [<strong>-y</strong>] [<strong>-d</strong>=<em>&lt;installDir&gt;</em>]
+<p><strong>fcli tool sc-client install</strong> [<strong>-y</strong>] [<strong>--[no-]global-bin</strong>]
                             [<strong>--on-digest-mismatch</strong>=<em>&lt;onDigestMismatch&gt;</em>]
-                            [<strong>-t</strong>=<em>&lt;clientAuthToken&gt;</em>] [<strong>-v</strong>=<em>&lt;version&gt;</em>] [[<strong>-h</strong>]
+                            [<strong>-p</strong>=<em>&lt;platform&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                            [<strong>-t</strong>=<em>&lt;clientAuthToken&gt;</em>] [<strong>-v</strong>=<em>&lt;version&gt;</em>]
+                            [<strong>-u</strong>=<em>&lt;versionsToUninstall&gt;</em>[,
+                            <em>&lt;versionsToUninstall&gt;</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>]
                             [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                            [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
+                            [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [<strong>-d</strong>=<em>&lt;installDir&gt;</em> |
+                            <strong>-b</strong>=<em>&lt;baseDir&gt;</em>] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                             [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
                             [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
 </div>
@@ -54,7 +58,32 @@ fcli_version:
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>This command allows for tool installation and upgrade. All tools are installed to &lt;base-dir&gt;/&lt;tool-name&gt;/&lt;version&gt;. The base directory can be specified using the --base-dir option, defaulting to &lt;user.home&gt;/fortify/tools if not specified. Unless the --no-global-bin option is specified, wrapper scripts for invoking each tool will be installed to &lt;base-dir&gt;/bin, allowing users to add this directory to the system PATH for easy tool invocations.</p>
+</div>
+<div class="paragraph">
+<p>When installing a new version, older versions can optionally be automatically un-installed using the --uninstall option, which is basically the equivalent of an upgrade. When trying to install a version that&#8217;s already been installed, only some post-installation tasks will be re-run, like installing the global bin scripts and performing any tool configuration if applicable.</p>
+</div>
+<div class="paragraph">
+<p>Sample invocations:</p>
+</div>
+<div class="paragraph">
+<p>Install latest tool version, keep older versions:
+  fcli tool &lt;name&gt; install -v latest</p>
+</div>
+<div class="paragraph">
+<p>Install latest tool version (only re-running post-install if already existing), uninstall all other tool versions:
+  fcli tool &lt;name&gt; install -v latest --uninstall all</p>
+</div>
+<div class="paragraph">
+<p>Install latest v2 version, uninstall all other v2 versions:
+  fcli tool &lt;name&gt; install -v 2 --uninstall 2</p>
+</div>
+<div class="paragraph">
+<p>Install latest and latest v1, have global bin-scripts point to latest:
+  fcli tool &lt;name&gt; install -v latest
+  fcli tool &lt;name&gt; install -v 1 --no-global-bin</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -62,28 +91,45 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>-b</strong>, <strong>--base-dir</strong>=<em>&lt;baseDir&gt;</em></dt>
+<dd>
+<p>Directory under which the tool will be installed. Defaults to ~/fortify. Tools will be installed to &lt;base-dir&gt;/&lt;tool&gt;/&lt;version&gt;.</p>
+</dd>
 <dt class="hdlist1"><strong>-d</strong>, <strong>--install-dir</strong>=<em>&lt;installDir&gt;</em></dt>
 <dd>
-<p>Tool installation directory.</p>
+<p>Tool installation directory. Deprecated, use --base-dir instead.</p>
+</dd>
+<dt class="hdlist1"><strong>--[no-]global-bin</strong></dt>
+<dd>
+<p>By default, wrapper scripts will be installed to &lt;base-dir&gt;/bin; use --no-global-bin to skip installing/updating these wrapper scripts.</p>
 </dd>
 <dt class="hdlist1"><strong>--on-digest-mismatch</strong>=<em>&lt;onDigestMismatch&gt;</em></dt>
 <dd>
-<p>Action to take if there is a digest mismatch. Allowed values: fail, warn. Default action is to fail. When installing 'latest', you may consider setting this option to 'warn' to avoid failures if fcli hasn&#8217;t been updated yet with the latest digest. Please consider submitting an issue on the fcli issue tracker if digest check consistently fails.</p>
+<p>Action to take if there is a digest mismatch. Allowed values: fail, warn. Default action is to fail.</p>
+</dd>
+<dt class="hdlist1"><strong>-p</strong>, <strong>--platform</strong>=<em>&lt;platform&gt;</em></dt>
+<dd>
+<p>By default, fcli will try to install tool binaries that match the current operating system &amp; architecture. Use this option to override automatic platform detection. The list-platforms command lists available platforms.</p>
+</dd>
+<dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
+<dd>
+<p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
 <dt class="hdlist1"><strong>-t</strong>, <strong>--client-auth-token</strong>=<em>&lt;clientAuthToken&gt;</em></dt>
 <dd>
 <p>ScanCentral SAST client_auth_token used for authenticating with ScanCentral SAST Controller.</p>
 </dd>
+<dt class="hdlist1"><strong>-u</strong>, <strong>--uninstall</strong>=<em>&lt;versionsToUninstall&gt;</em>[,<em>&lt;versionsToUninstall&gt;</em>&#8230;&#8203;]</dt>
+<dd>
+<p>Uninstall the given versions while installing the new version. Accepts 'all' to uninstall all existing versions, or a comma-separated list of version numbers. Version numbers may be specified as &lt;major&gt;[.&lt;minor&gt;[.&lt;patch&gt;]].</p>
+</dd>
 <dt class="hdlist1"><strong>-v</strong>, <strong>--version</strong>=<em>&lt;version&gt;</em></dt>
 <dd>
-<p>Tool version to install; see output of list command to view available versions. If not specified, the default version as shown in the output of the list command will be installed.</p>
+<p>Tool version to install; see output of list command to view available versions. Default value: latest</p>
 </dd>
 <dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
 <dd>
-<p>Confirm replacing existing ScanCentral SAST Client installation.</p>
-<div class="paragraph">
-<p>If a non-empty destination directory exists, the installation will fail unless this option is specified.</p>
-</div>
+<p>Automatically confirm all prompts (cleaning the target directory, uninstalling other versions).</p>
 </dd>
 </dl>
 </div>
@@ -139,7 +185,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-11-21 11:50:07 UTC
+Last updated 2024-02-05 08:34:30 UTC
 </div>
 </div>
 </body>

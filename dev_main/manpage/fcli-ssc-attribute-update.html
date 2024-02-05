@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231121.114838-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240205.083259-dev_main" %}
 
 
 <div id="header">
@@ -43,10 +43,8 @@ fcli_version:
 <div class="sectionbody">
 <div class="paragraph">
 <p><strong>fcli ssc attribute update</strong> <strong>--av</strong>=<em>&lt;appVersionNameOrId&gt;</em> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>]
-                          <strong>--attrs</strong>=<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>[,<em>[CATEGORY:]</em>
-               _           ATTR=VALUE[,VALUE&#8230;&#8203;]<em>&#8230;&#8203;] [<strong>--attrs</strong>=</em>[CATEGORY:]_
-               _           ATTR=VALUE[,VALUE&#8230;&#8203;]<em>[,</em>[CATEGORY:]ATTR=VALUE[,_
-   _                       VALUE&#8230;&#8203;]<em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=</em>&lt;envPrefix&gt;_]
+                          <strong>--attrs</strong>=<em>ATTR=VALUE</em>[,<em>ATTR=VALUE</em>&#8230;&#8203;] [<strong>--attrs</strong>=<em>ATTR=VALUE</em>
+                          [,<em>ATTR=VALUE</em>&#8230;&#8203;]]&#8230;&#8203; [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                           [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
                           [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]] <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
                           [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
@@ -65,9 +63,18 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>[,<em>[CATEGORY:]ATTR=VALUE[,VALUE&#8230;&#8203;]</em>&#8230;&#8203;]</dt>
+<dt class="hdlist1"><strong>--attrs, --attributes</strong>=<em>ATTR=VALUE</em>[,<em>ATTR=VALUE</em>&#8230;&#8203;]</dt>
 <dd>
-<p>Set values for one or more attributes. This option accepts a comma-separated list of attribute value assignments.</p>
+<p>Example: ATTR1=[VAL1;VAL2],CATEGORY:ATTR2=VAL3</p>
+<div class="paragraph">
+<p>Set values for one or more attributes. This option accepts a comma-separated list of KEY=VALUE assignments.</p>
+</div>
+<div class="paragraph">
+<p>Each KEY accepts either the Attribute&#8217;s GUID or its Name with the optional Category (InfoClassification or "BUSINESS:Data Classification" or "Data Classification")</p>
+</div>
+<div class="paragraph">
+<p>Each VALUE accepts a semicolon-separated list of Attribute&#8217;s Values, encapsulated in brackets (optional for single value)</p>
+</div>
 </dd>
 <dt class="hdlist1"><strong>--av, --appversion</strong>=<em>&lt;appVersionNameOrId&gt;</em></dt>
 <dd>
@@ -144,7 +151,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2023-11-21 11:50:07 UTC
+Last updated 2024-02-05 08:34:30 UTC
 </div>
 </div>
 </body>

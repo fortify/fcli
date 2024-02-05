@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20231121.114838-dev_main
+fcli_version: 0.20240205.083259-dev_main
 ---
 
 <!DOCTYPE html>
@@ -16,19 +16,25 @@ fcli_version: 0.20231121.114838-dev_main
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20231121.114838-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240205.083259-dev_main" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20231121.114838-dev_main</span>
+<span id="revnumber">version 0.20240205.083259-dev_main</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_introduction">Introduction</a></li>
-<li><a href="#_installation">Installation</a></li>
+<li><a href="#_release_assets">Release Assets</a></li>
+<li><a href="#_installation">Installation</a>
+<ul class="sectlevel3">
+<li><a href="#_managed_installation">Managed Installation</a></li>
+<li><a href="#_manual_installation">Manual Installation</a></li>
+</ul>
+</li>
 <li><a href="#_command_structure">Command Structure</a></li>
 <li><a href="#_common_options">Common Options</a>
 <ul class="sectlevel2">
@@ -97,6 +103,9 @@ man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p
 </li>
 <li>
 <p>Support for <a href="#_fcli_variables">fcli variables</a>; pass data between fcli commands</p>
+</li>
+<li>
+<p>Support for installing other Fortify-related tools</p>
 </li>
 </ul>
 </div>
@@ -179,9 +188,6 @@ man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p
 <li>
 <p>Commands for configuring and running FoD DAST &amp; MAST scans will change significantly, based on upcoming FoD API changes &amp; improvements</p>
 </li>
-<li>
-<p>Commands and options for managing and assigning users and groups for both FoD and SSC will likely change; see <a href="https://github.com/fortify/fcli/issues/369" class="bare">https://github.com/fortify/fcli/issues/369</a> for details.</p>
-</li>
 </ul>
 </div>
 <div class="paragraph">
@@ -190,10 +196,10 @@ man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p
 </div>
 </div>
 <div class="sect1">
-<h2 id="_installation"><a class="anchor" href="#_installation"></a>Installation</h2>
+<h2 id="_release_assets"><a class="anchor" href="#_release_assets"></a>Release Assets</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Download bundles for fcli are available on the <a href="https://github.com/fortify/fcli/releases">Releases</a> page, containing both development releases (named <code>Development Release - &lt;branch&gt; branch</code>) and final releases. In general, the use of a final release is recommended, unless you want to use any functionality that hasn’t made it into a final release yet.</p>
+<p>Release assets for fcli are available on the <a href="https://github.com/fortify/fcli/releases">Releases</a> page. This page lists both development releases (named <code>Development Release - &lt;branch&gt; branch</code>) and final releases. In general, the use of a final release is recommended, unless you want to use any functionality that hasn’t made it into a final release yet.</p>
 </div>
 <div class="paragraph">
 <p>Each release comes with a list of assets:</p>
@@ -217,7 +223,7 @@ man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p
 </div>
 </li>
 <li>
-<p><code>fcli.jar</code>: Java version of fcli, which should be runnable on any platform that has Java 11+ installed</p>
+<p><code>fcli.jar</code>: Java version of fcli, which should be runnable on any platform that has Java 17+ installed</p>
 <div class="ulist">
 <ul>
 <li>
@@ -241,30 +247,124 @@ found, please try with the Java version as it may be an issue specific to the na
 <div class="paragraph">
 <p>Please note that when publishing a new release, it may take up to 30-60 minutes before release assets are posted. If the latest release doesn’t show any of the assets listed above, please check again in 30-60 minutes. If you encounter a release without these assets after waiting for 60 minutes, please consider submitting an issue on the <a href="https://github.com/fortify/fcli/issues">fcli issue tracker</a>.</p>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_installation"><a class="anchor" href="#_installation"></a>Installation</h2>
+<div class="sectionbody">
 <div class="paragraph">
-<p>To install one of the binary distributions of fcli:</p>
+<p>To install fcli, start by visiting the fcli <a href="https://github.com/fortify/fcli/releases">Releases</a> page as described in the previous section, and downloading the <code>fcli.jar</code> file or appropriate native binary archive for your platform. Native binary archives will need to be extracted to a temporary directory, the <code>fcli.jar</code> file can be used as-is.</p>
+</div>
+<div class="paragraph">
+<p>Once downloaded and extracted (if applicable), you can either perform a manual or managed installation. Managed installation is recommended, but only available on internet-connected systems. Please see the sections below for more information.</p>
+</div>
+<div class="sect3">
+<h4 id="_managed_installation"><a class="anchor" href="#_managed_installation"></a>Managed Installation</h4>
+<div class="paragraph">
+<p>Managed installation is only available on internet-connected systems, or if you company hosts the various Fortify tools (including fcli) internally and provides a corresponding custom tool definitions bundle. Advantages of a managed installation:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Download the appropriate binary archive for your platform</p>
+<p>Both fcli and other tools installed using <code>fcli tool</code> commands will be hosted under a single base directory</p>
 </li>
 <li>
-<p>Extract the archive contents to a directory of your choosing</p>
+<p>This base directory will contain a single <code>bin</code> directory that can be added to your <code>PATH</code> for easy invocation of all tools installed through fcli</p>
 </li>
 <li>
-<p>For ease of use, add this directory to your operating system or shell PATH environment variable, or move the <code>fcli</code>/<code>fcli.exe</code> binary to a directory that is already on the PATH</p>
+<p>The <code>fcli tool fcli list</code> command can be used to list both installed and available fcli versions</p>
 </li>
 <li>
-<p>Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the <code>&lt;tab&gt;</code> to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell.<br>
-<code>source &lt;extraction-dir&gt;/fcli_completion</code><br>
-<strong>Note</strong>: Please ensure that the version of the completion script matches the fcli version that you&#8217;re using, as otherwise the completion script may provide incorrect suggestions.</p>
+<p>The <code>fcli tool fcli install</code> command can be used to easily upgrade the current fcli version</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>To install the <code>.jar</code> version of fcli, simply download <code>fcli.jar</code> and put in in a directory of your choosing, after which it can be executed using <code>java -jar path/to/fcli.jar</code>. You may want to set up a
-simple wrapper script/batch file or shell alias to make it slightly easier to invoke <code>fcli.jar</code>.</p>
+<p>The steps below describe how to perform a managed fcli installation. The syntax for invoking the various commands depends on the fcli variant that you downloaded. If you downloaded <code>fcli.jar</code>, fcli can be invoked using <code>java -jar /path/to/fcli.jar</code>. If you downloaded a native binary, fcli can be invoked using <code>/path/to/fcli</code> (Linux/Mac) or <code>C:\path\to\fcli.exe</code> (Windows). Any use of <code>fcli</code> in the commands below should be replaced by the appropriate command for invoking fcli on your system.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If necessary, configure fcli proxy settings:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>View usage information: <code>fcli config proxy add -h</code></p>
+</li>
+<li>
+<p>Configure proxy settings: <code>fcli config proxy add [options]</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Update tool definitions to make fcli aware of latest tool releases:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>View usage information: <code>fcli tool definitions update -h</code></p>
+</li>
+<li>
+<p>Update with default Fortify tool definitions: <code>fcli tool definitions update</code></p>
+</li>
+<li>
+<p>Update with company-provided tool definitions: <code>fcli tool definitions update --source &lt;tool-definitions-source&gt;</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Install the latest available fcli version:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>View usage information: <code>fcli tool fcli install -h</code></p>
+</li>
+<li>
+<p>View available fcli versions: <code>fcli tool fcli list</code></p>
+</li>
+<li>
+<p>Install the latest available fcli version to the default base directory: <code>fcli tool fcli install -v latest</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Add the global Fortify tools <code>bin</code> directory to your PATH environment variable.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Unless <code>--base-dir</code> is specified on the <code>fcli tool fcli install</code> command, the Fortify tools global <code>bin</code> directory defaults to <code>&lt;user.home&gt;/fortify/tools/bin</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the <code>&lt;tab&gt;</code> key to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell.<br>
+<code>source &lt;user.home&gt;/fortify/tools/bin/fcli_completion</code><br></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_manual_installation"><a class="anchor" href="#_manual_installation"></a>Manual Installation</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>Copy the <code>fcli.jar</code> file or the extracted native binaries to a directory of your choosing.</p>
+</li>
+<li>
+<p>If using <code>fcli.jar</code>, create a simple wrapper script/batch file that invokes <code>java -jar /path/to/fcli.jar</code>, passing all the script arguments to this Java command.</p>
+</li>
+<li>
+<p>For ease of use, add the directory to your operating system or shell PATH environment variable, or move <code>fcli</code>/<code>fcli.exe</code>/wrapper script to a directory that is already on the PATH</p>
+</li>
+<li>
+<p>Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the <code>&lt;tab&gt;</code> to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell.<br>
+<code>source &lt;extraction-dir&gt;/fcli_completion</code></p>
+</li>
+</ul>
+</div>
 </div>
 </div>
 </div>
@@ -952,8 +1052,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20231121.114838-dev_main<br>
-Last updated 2023-11-21 11:50:07 UTC
+Version 0.20240205.083259-dev_main<br>
+Last updated 2024-02-05 08:34:30 UTC
 </div>
 </div>
 </body>
