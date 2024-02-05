@@ -66,9 +66,9 @@ To install fcli, start by visiting the fcli https://github.com/fortify/fcli/rele
 
 Once downloaded and extracted (if applicable), you can either perform a manual or managed installation. Managed installation is recommended, but only available on internet-connected systems. Please see the sections below for more information.
 
-==== Managed Installation
+=== Managed Installation
 
-Managed installation is only available on internet-connected systems, or if you company hosts the various Fortify tools (including fcli) internally and provides a corresponding custom tool definitions bundle. Advantages of a managed installation:
+Managed installation is only available on internet-connected systems, or if your company hosts the various Fortify tools (including fcli) internally and provides a corresponding custom tool definitions bundle. Advantages of a managed installation:
 
 * Both fcli and other tools installed using `fcli tool` commands will be hosted under a single base directory
 * This base directory will contain a single `bin` directory that can be added to your `PATH` for easy invocation of all tools installed through fcli
@@ -78,28 +78,64 @@ Managed installation is only available on internet-connected systems, or if you 
 The steps below describe how to perform a managed fcli installation. The syntax for invoking the various commands depends on the fcli variant that you downloaded. If you downloaded `fcli.jar`, fcli can be invoked using `java -jar /path/to/fcli.jar`. If you downloaded a native binary, fcli can be invoked using `/path/to/fcli` (Linux/Mac) or `C:\path\to\fcli.exe` (Windows). Any use of `fcli` in the commands below should be replaced by the appropriate command for invoking fcli on your system.
 
 * If necessary, configure fcli proxy settings:
-** View usage information: `fcli config proxy add -h`
-** Configure proxy settings: `fcli config proxy add [options]`
+** View usage information: +
+   `fcli config proxy add -h`
+** Configure proxy settings: +
+   `fcli config proxy add [options]`
+** For example: +
+   `fcli config proxy add myproxy:8080 -u<proxy user> -p<proxy password>`
 * Update tool definitions to make fcli aware of latest tool releases:
-** View usage information: `fcli tool definitions update -h`
-** Update with default Fortify tool definitions: `fcli tool definitions update`
-** Update with company-provided tool definitions: `fcli tool definitions update --source <tool-definitions-source>`
+** View usage information: +
+   `fcli tool definitions update -h`
+** Update with default Fortify tool definitions: +
+   `fcli tool definitions update`
+** Update with company-provided tool definitions: +
+   `fcli tool definitions update --source <tool-definitions-source>`
 * Install the latest available fcli version:
-** View usage information: `fcli tool fcli install -h`
-** View available fcli versions: `fcli tool fcli list`
-** Install the latest available fcli version to the default base directory: `fcli tool fcli install -v latest`
-* Add the global Fortify tools `bin` directory to your PATH environment variable.
+** View usage information: +
+   `fcli tool fcli install -h`
+** View available fcli versions: +
+   `fcli tool fcli list`
+** Install the latest available fcli version to the default base directory: +
+   `fcli tool fcli install -v latest`
+* Add the global Fortify tools `bin` directory to your PATH environment variable, for example in the Windows User or System Environment variables, or in your `.bashrc` or `.profile` file.
 ** Unless `--base-dir` is specified on the `fcli tool fcli install` command, the Fortify tools global `bin` directory defaults to `<user.home>/fortify/tools/bin`.
-* Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the `+<tab>+` key to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell. +
+* Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the `+<tab>+` key to get suggestions for fcli command and option names. You may want to add this to your shell startup script like `.bashrc`, such that fcli auto-completion is readily available in every shell. +
 `+source <user.home>/fortify/tools/bin/fcli_completion+` +
 
-==== Manual Installation
+=== Manual Installation
 
 * Copy the `fcli.jar` file or the extracted native binaries to a directory of your choosing.
 * If using `fcli.jar`, create a simple wrapper script/batch file that invokes `java -jar /path/to/fcli.jar`, passing all the script arguments to this Java command.
 * For ease of use, add the directory to your operating system or shell PATH environment variable, or move `+fcli+`/`+fcli.exe+`/wrapper script to a directory that is already on the PATH
 * Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the `+<tab>+` to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell. +
 `+source <extraction-dir>/fcli_completion+`
+
+== Upgrade
+
+If you prefer a manual installation/upgrade, you can download the latest fcli version for your platform from the fcli https://github.com/fortify/fcli/releases[Releases] page and follow the link:#_manual_installation[Manual Installation] instructions above, adjusting any manually created wrapper scripts to point to the new installation.
+
+However, on internet-connected systems, or if your company hosts the various Fortify tools (including fcli) internally and provides a corresponding custom tool definitions bundle, the preferred upgrade approach is through the use of fcli commands as described below.
+
+Notes:
+
+* These steps assume that all other steps from the link:#_managed_installation[Managed Installation] instructions have already been performed during initial installation, like configuring a proxy server if applicable, and adding the global `bin` directory to your `PATH`.
+* If the requested version has already been installed, it will be used as-is; only post-installation tasks like replacing the global bin-script(s) will be performed.
+* Similar steps apply for upgrading any of the Fortify-related tools installed through the various `fcli tool * install` commands.
+
+Upgrade steps:
+
+* Update tool definitions to make fcli aware of latest tool releases:
+** Update with default Fortify tool definitions: +
+   `fcli tool definitions update`
+** Update with company-provided tool definitions: +
+   `fcli tool definitions update --source <tool-definitions-source>`
+* Upgrade fcli
+** Install latest version, removing all previous (managed) fcli installations: +
+   `fcli tool fcli install -v latest --uninstall all`
+** Install latest 2.x.y version, removing all previous 2.x.y installations but keeping any 1.x.y installations: +
+   `fcli tool fcli install -v 2 --uninstall 2`
+* Re-source the `fcli_completion` script if applicable on your platform
 
 == Command Structure
 
