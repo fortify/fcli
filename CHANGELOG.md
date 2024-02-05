@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.2.0](https://github.com/fortify/fcli/compare/v2.1.0...v2.2.0) (2024-02-05)
+
+
+### Features
+
+* `fcli fod`: Add `fcli fod report` commands for creating and downloading FoD reports (resolves [#263](https://github.com/fortify/fcli/issues/263)) ([5796379](https://github.com/fortify/fcli/commit/579637905499e75e33eff0317d5d52c246802326))
+* `fcli fod`: Add preview commands for starting and managing DAST Automated scans ([db898ee](https://github.com/fortify/fcli/commit/db898ee39453c68c88c18e9134278635782f31cb))
+* `fcli ssc`: Add `fcli ssc report` commands for generating, downloading & managing SSC reports (resolves [#205](https://github.com/fortify/fcli/issues/205)) ([60e7855](https://github.com/fortify/fcli/commit/60e78551cf14fd6644484eb1bc2e9340abf6231d))
+* `fcli tool`: Add `fcli tool * install --base-dir` option to specify the base directory under which all tools will be installed. By default, fcli will now also install tool invocation scripts in a global `&lt;base-dir&gt;/bin` directory, unless the `--no-global-bin` option is specified. This allows for having a single bin-directory on the `PATH`, while managing the actual tool versions being invoked through the `fcli tool * install` commands. ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
+* `fcli tool`: Add `fcli tool * install --uninstall` option to remove existing tool installations while installing a new tool version, allowing for easy tool upgrades. ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
+* `fcli tool`: Add `fcli tool debricked-cli` commands for installing Debricked CLI and managing those installations. ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
+* `fcli tool`: Add `fcli tool definitions` commands, allowing tool definitions to be updated to make fcli aware of new tool versions that were released after the current fcli release. Customers may also host customized tool definitions, for example allowing for alternative tool download URLs or restricting the set of tool versions available to end users. ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
+* `fcli tool`: Add `fcli tool fcli` commands for installing Fortify CLI and managing those installations. ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
+* `fcli tool`: By default, the `fcli tool * install` commands will now install tools under the `&lt;user.home&gt;/fortify/tools` base directory (no dot/hidden directory), instead of `<user.home>/.fortify/tools` ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
+* `fcli tool`: Deprecate `fcli tool * install --install-dir` option; the new `--base-dir` option is now preferred as it supports new functionality like global bin-scripts. ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
+
+
+### Bug Fixes
+
+* `fcli ssc`: The `--attributes` option on `fcli ssc appversion *` and `fcli ssc attribute *` commands now supports setting multiple values for an attribute ([bd3fd62](https://github.com/fortify/fcli/commit/bd3fd625125b410ac321ef08d7418b26d0643a58))
+
 ## [2.1.0](https://github.com/fortify/fcli/compare/v2.0.0...v2.1.0) (2023-11-21)
 
 
