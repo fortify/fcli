@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20240205.083259-dev_main
+fcli_version: 0.20240205.101259-dev_main
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20240205.083259-dev_main
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240205.083259-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240205.101259-dev_main" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20240205.083259-dev_main</span>
+<span id="revnumber">version 0.20240205.101259-dev_main</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -30,11 +30,12 @@ fcli_version: 0.20240205.083259-dev_main
 <li><a href="#_introduction">Introduction</a></li>
 <li><a href="#_release_assets">Release Assets</a></li>
 <li><a href="#_installation">Installation</a>
-<ul class="sectlevel3">
+<ul class="sectlevel2">
 <li><a href="#_managed_installation">Managed Installation</a></li>
 <li><a href="#_manual_installation">Manual Installation</a></li>
 </ul>
 </li>
+<li><a href="#_upgrade">Upgrade</a></li>
 <li><a href="#_command_structure">Command Structure</a></li>
 <li><a href="#_common_options">Common Options</a>
 <ul class="sectlevel2">
@@ -258,10 +259,10 @@ found, please try with the Java version as it may be an issue specific to the na
 <div class="paragraph">
 <p>Once downloaded and extracted (if applicable), you can either perform a manual or managed installation. Managed installation is recommended, but only available on internet-connected systems. Please see the sections below for more information.</p>
 </div>
-<div class="sect3">
-<h4 id="_managed_installation"><a class="anchor" href="#_managed_installation"></a>Managed Installation</h4>
+<div class="sect2">
+<h3 id="_managed_installation"><a class="anchor" href="#_managed_installation"></a>Managed Installation</h3>
 <div class="paragraph">
-<p>Managed installation is only available on internet-connected systems, or if you company hosts the various Fortify tools (including fcli) internally and provides a corresponding custom tool definitions bundle. Advantages of a managed installation:</p>
+<p>Managed installation is only available on internet-connected systems, or if your company hosts the various Fortify tools (including fcli) internally and provides a corresponding custom tool definitions bundle. Advantages of a managed installation:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -289,10 +290,16 @@ found, please try with the Java version as it may be an issue specific to the na
 <div class="ulist">
 <ul>
 <li>
-<p>View usage information: <code>fcli config proxy add -h</code></p>
+<p>View usage information:<br>
+<code>fcli config proxy add -h</code></p>
 </li>
 <li>
-<p>Configure proxy settings: <code>fcli config proxy add [options]</code></p>
+<p>Configure proxy settings:<br>
+<code>fcli config proxy add [options]</code></p>
+</li>
+<li>
+<p>For example:<br>
+<code>fcli config proxy add myproxy:8080 -u&lt;proxy user&gt; -p&lt;proxy password&gt;</code></p>
 </li>
 </ul>
 </div>
@@ -302,13 +309,16 @@ found, please try with the Java version as it may be an issue specific to the na
 <div class="ulist">
 <ul>
 <li>
-<p>View usage information: <code>fcli tool definitions update -h</code></p>
+<p>View usage information:<br>
+<code>fcli tool definitions update -h</code></p>
 </li>
 <li>
-<p>Update with default Fortify tool definitions: <code>fcli tool definitions update</code></p>
+<p>Update with default Fortify tool definitions:<br>
+<code>fcli tool definitions update</code></p>
 </li>
 <li>
-<p>Update with company-provided tool definitions: <code>fcli tool definitions update --source &lt;tool-definitions-source&gt;</code></p>
+<p>Update with company-provided tool definitions:<br>
+<code>fcli tool definitions update --source &lt;tool-definitions-source&gt;</code></p>
 </li>
 </ul>
 </div>
@@ -318,19 +328,22 @@ found, please try with the Java version as it may be an issue specific to the na
 <div class="ulist">
 <ul>
 <li>
-<p>View usage information: <code>fcli tool fcli install -h</code></p>
+<p>View usage information:<br>
+<code>fcli tool fcli install -h</code></p>
 </li>
 <li>
-<p>View available fcli versions: <code>fcli tool fcli list</code></p>
+<p>View available fcli versions:<br>
+<code>fcli tool fcli list</code></p>
 </li>
 <li>
-<p>Install the latest available fcli version to the default base directory: <code>fcli tool fcli install -v latest</code></p>
+<p>Install the latest available fcli version to the default base directory:<br>
+<code>fcli tool fcli install -v latest</code></p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p>Add the global Fortify tools <code>bin</code> directory to your PATH environment variable.</p>
+<p>Add the global Fortify tools <code>bin</code> directory to your PATH environment variable, for example in the Windows User or System Environment variables, or in your <code>.bashrc</code> or <code>.profile</code> file.</p>
 <div class="ulist">
 <ul>
 <li>
@@ -340,14 +353,14 @@ found, please try with the Java version as it may be an issue specific to the na
 </div>
 </li>
 <li>
-<p>Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the <code>&lt;tab&gt;</code> key to get suggestions for fcli command and option names. You may want to add this to your shell startup script, such that fcli auto-completion is readily available in every shell.<br>
+<p>Linux/Mac only: Run the following command to install fcli auto command completion, allowing for use of the <code>&lt;tab&gt;</code> key to get suggestions for fcli command and option names. You may want to add this to your shell startup script like <code>.bashrc</code>, such that fcli auto-completion is readily available in every shell.<br>
 <code>source &lt;user.home&gt;/fortify/tools/bin/fcli_completion</code><br></p>
 </li>
 </ul>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_manual_installation"><a class="anchor" href="#_manual_installation"></a>Manual Installation</h4>
+<div class="sect2">
+<h3 id="_manual_installation"><a class="anchor" href="#_manual_installation"></a>Manual Installation</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -365,6 +378,73 @@ found, please try with the Java version as it may be an issue specific to the na
 </li>
 </ul>
 </div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_upgrade"><a class="anchor" href="#_upgrade"></a>Upgrade</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you prefer a manual installation/upgrade, you can download the latest fcli version for your platform from the fcli <a href="https://github.com/fortify/fcli/releases">Releases</a> page and follow the <a href="#_manual_installation">Manual Installation</a> instructions above, adjusting any manually created wrapper scripts to point to the new installation.</p>
+</div>
+<div class="paragraph">
+<p>However, on internet-connected systems, or if your company hosts the various Fortify tools (including fcli) internally and provides a corresponding custom tool definitions bundle, the preferred upgrade approach is through the use of fcli commands as described below.</p>
+</div>
+<div class="paragraph">
+<p>Notes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>These steps assume that all other steps from the <a href="#_managed_installation">Managed Installation</a> instructions have already been performed during initial installation, like configuring a proxy server if applicable, and adding the global <code>bin</code> directory to your <code>PATH</code>.</p>
+</li>
+<li>
+<p>If the requested version has already been installed, it will be used as-is; only post-installation tasks like replacing the global bin-script(s) will be performed.</p>
+</li>
+<li>
+<p>Similar steps apply for upgrading any of the Fortify-related tools installed through the various <code>fcli tool * install</code> commands.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Upgrade steps:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Update tool definitions to make fcli aware of latest tool releases:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Update with default Fortify tool definitions:<br>
+<code>fcli tool definitions update</code></p>
+</li>
+<li>
+<p>Update with company-provided tool definitions:<br>
+<code>fcli tool definitions update --source &lt;tool-definitions-source&gt;</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Upgrade fcli</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Install latest version, removing all previous (managed) fcli installations:<br>
+<code>fcli tool fcli install -v latest --uninstall all</code></p>
+</li>
+<li>
+<p>Install latest 2.x.y version, removing all previous 2.x.y installations but keeping any 1.x.y installations:<br>
+<code>fcli tool fcli install -v 2 --uninstall 2</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Re-source the <code>fcli_completion</code> script if applicable on your platform</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -1052,8 +1132,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20240205.083259-dev_main<br>
-Last updated 2024-02-05 08:34:30 UTC
+Version 0.20240205.101259-dev_main<br>
+Last updated 2024-02-05 10:14:27 UTC
 </div>
 </div>
 </body>
