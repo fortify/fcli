@@ -13,7 +13,7 @@
 * `fcli tool`: Add `fcli tool debricked-cli` commands for installing Debricked CLI and managing those installations. ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
 * `fcli tool`: Add `fcli tool definitions` commands, allowing tool definitions to be updated to make fcli aware of new tool versions that were released after the current fcli release. Customers may also host customized tool definitions, for example allowing for alternative tool download URLs or restricting the set of tool versions available to end users. ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
 * `fcli tool`: Add `fcli tool fcli` commands for installing Fortify CLI and managing those installations. ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
-* `fcli tool`: By default, the `fcli tool * install` commands will now install tools under the `&lt;user.home&gt;/fortify/tools` base directory (no dot/hidden directory), instead of `<user.home>/.fortify/tools` ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
+* `fcli tool`: By default, the `fcli tool * install` commands will now install tools under the `<user.home>/fortify/tools` base directory (no dot/hidden directory), instead of `<user.home>/.fortify/tools` ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
 * `fcli tool`: Deprecate `fcli tool * install --install-dir` option; the new `--base-dir` option is now preferred as it supports new functionality like global bin-scripts. ([e2db51d](https://github.com/fortify/fcli/commit/e2db51d05567f9c7fcaa0bd96548b93fd69fea8a))
 
 
