@@ -31,7 +31,7 @@ class ToolFcliSpec extends FcliBaseSpec {
     @Shared Path binScript = Path.of(baseDir).resolve("fcli/${version}/bin/fcli.exe");
     
     def "install"() {
-        def args = "tool fcli install -y -v=${version} --progress=none -b ${baseDir} --platform windows/x64"
+        def args = "tool fcli install -y -v=${version} -b ${baseDir} --platform windows/x64"
         when:
             def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
@@ -57,7 +57,7 @@ class ToolFcliSpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool fcli uninstall -y --progress=none -v=${version}"
+        def args = "tool fcli uninstall -y -v=${version}"
         when:
             def result = Fcli.run(args)
         then:

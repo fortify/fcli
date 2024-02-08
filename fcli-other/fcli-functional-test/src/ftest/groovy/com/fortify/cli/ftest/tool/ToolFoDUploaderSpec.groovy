@@ -31,7 +31,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
     @Shared Path binScript = Path.of(baseDir).resolve("fod-uploader/${version}/bin/FoDUpload.bat");
     
     def "installLatest"() {
-        def args = "tool fod-uploader install -y -v=${version} --progress=none -b ${baseDir}"
+        def args = "tool fod-uploader install -y -v=${version} -b ${baseDir}"
         when:
             def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
@@ -57,7 +57,7 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool fod-uploader uninstall -y --progress=none -v=${version}"
+        def args = "tool fod-uploader uninstall -y -v=${version}"
         when:
             def result = Fcli.run(args)
         then:

@@ -23,7 +23,8 @@ import picocli.CommandLine.Help.Ansi;
 public enum ProgressWriterType {
     auto(ProgressWriterType::auto), 
     none(NoProgressWriter::new), 
-    simple(SimpleProgressWriter::new), 
+    simple(SimpleProgressWriter::new),
+    stderr(SimpleStdErrProgressWriter::new),
     single_line(SingleLineProgressWriter::new), 
     ansi(AnsiProgressWriter::new);
     
@@ -38,7 +39,7 @@ public enum ProgressWriterType {
         var hasAnsiConsole = Ansi.AUTO.enabled() && hasConsole;
         if ( hasAnsiConsole ) { return new AnsiProgressWriter(); }
         else if ( hasConsole ) { return new SingleLineProgressWriter(); }
-        else { return new SimpleProgressWriter(); }
+        else { return new NoProgressWriter(); }
     }
     
     private static abstract class AbstractProgressWriter implements IProgressWriter {
@@ -83,6 +84,26 @@ public enum ProgressWriterType {
                 formattedMessage += "\n";
             }
             System.out.println(formattedMessage);
+        }
+        
+        @Override
+        public void clearProgress() {}
+    }
+    
+    private static final class SimpleStdErrProgressWriter extends AbstractProgressWriter {
+        @Override
+        public boolean isMultiLineSupported() {
+            return true;
+        }
+        
+        @Override
+        public void writeProgress(String message, Object... args) {
+            String formattedMessage = String.format(message, args);
+            if ( formattedMessage.indexOf('\n') > 0 ) {
+                // Add extra newline to separate multi-line blocks
+                formattedMessage += "\n";
+            }
+            System.err.println(formattedMessage);
         }
         
         @Override

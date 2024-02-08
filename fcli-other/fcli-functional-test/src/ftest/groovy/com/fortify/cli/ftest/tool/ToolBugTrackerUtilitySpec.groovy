@@ -30,7 +30,7 @@ class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
     @Shared Path globalBinScript = Path.of(baseDir).resolve("bin/FortifyBugTrackerUtility.bat");
     @Shared Path binScript = Path.of(baseDir).resolve("bugtracker-utility/${version}/bin/FortifyBugTrackerUtility.bat");
     def "install"() {
-        def args = "tool bugtracker-utility install -y -v=${version} --progress=none -b ${baseDir}"
+        def args = "tool bugtracker-utility install -y -v=${version} -b ${baseDir}"
         when:
             def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
@@ -56,7 +56,7 @@ class ToolBugTrackerUtilitySpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool bugtracker-utility uninstall -y --progress=none -v=${version}"
+        def args = "tool bugtracker-utility uninstall -y -v=${version}"
         when:
             def result = Fcli.run(args)
         then:
