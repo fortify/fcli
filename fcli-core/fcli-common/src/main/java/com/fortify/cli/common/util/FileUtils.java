@@ -51,6 +51,11 @@ public final class FileUtils {
     }
     
     @SneakyThrows
+    public static String readInputStreamAsString(InputStream is, Charset charset) {
+        return new String(is.readAllBytes(), charset);
+    }
+    
+    @SneakyThrows
     public static final byte[] readResourceAsBytes(String resourcePath) {
         try ( InputStream in = getResourceInputStream(resourcePath) ) {
             return in.readAllBytes();

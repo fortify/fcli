@@ -12,24 +12,24 @@
  *******************************************************************************/
 package com.fortify.cli.fod.report.cli.cmd;
 
+import java.nio.file.StandardCopyOption;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.report.cli.mixin.FoDReportResolverMixin;
 import com.fortify.cli.fod.report.helper.FoDReportDescriptor;
 import com.fortify.cli.fod.report.helper.FoDReportHelper;
+
 import kong.unirest.GetRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-
-import java.nio.file.StandardCopyOption;
 
 @Command(name = OutputHelperMixins.Download.CMD_NAME)
 public class FoDReportDownloadCommand extends AbstractFoDJsonNodeOutputCommand implements IActionCommandResultSupplier {

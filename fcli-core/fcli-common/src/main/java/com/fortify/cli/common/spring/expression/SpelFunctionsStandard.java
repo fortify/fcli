@@ -28,7 +28,7 @@ import com.fortify.cli.common.variable.FcliVariableHelper;
 import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
-public class StandardSpelFunctions {
+public class SpelFunctionsStandard {
     private static final DateTimePeriodHelper PeriodHelper = DateTimePeriodHelper.all();
 
     public static final OffsetDateTime date(String s) {

@@ -1,0 +1,155 @@
+# For now, this template uses latest application state to generate PR decorations.
+# See corresponding .bak file for a better but incomplete (due to SSC limitations)
+# implementation based on artifact id.
+usage:
+  header: (PREVIEW) Add GitHub Pull Request review comments.  
+  description: |
+    This action adds review comments to a GitHub Pull Request. Currently
+    this is marked as PREVIEW as we build out this functionality; later
+    versions may have different behavior and/or require different action
+    parameters. In particular, note that comments are generated based on
+    current (latest) SSC application state, i.e., based on the last 
+    uploaded scan results. As such, to ensure the comments are accurate
+    for the given PR/commit id, this action should be run immediately 
+    after scan results have been published (and approved if necessary), 
+    before any subsequent scans are being published. Also, for now this
+    action doesn't generate any source code annotations, as GitHub will
+    return an error if vulnerability path & file name don't match exactly 
+    with repository path & file name.
+  
+parameters:
+  - name: appversion
+    cliAliases: av
+    description: "Required application version id or <appName>:<versionName>"
+    type: appversion_single
+  - name: filterset
+    cliAliases: fs
+    description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
+    required: false
+    type: filterset
+  - name: github-token
+    description: 'Required GitHub Token. Default value: GITHUB_TOKEN environment variable.'
+    required: true
+    defaultValue: ${#env('GITHUB_TOKEN')}
+  - name: github-owner
+    description: 'Required GitHub repository owner. Default value: GITHUB_REPOSITORY_OWNER environment variable.'
+    required: true
+    defaultValue: ${#env('GITHUB_REPOSITORY_OWNER')}
+  - name: github-repo
+    description: 'Required GitHub repository. Default value: Taken from GITHUB_REPOSITORY environment variable.'
+    required: true
+    defaultValue: ${#substringAfter(#env('GITHUB_REPOSITORY'),'/')}
+  - name: pr
+    description: 'Required PR number. Default value: Taken from GITHUB_REF_NAME environment variable.'
+    required: true
+    defaultValue: ${#substringBefore(#env('GITHUB_REF_NAME'),'/')}
+  - name: commit
+    description: 'Required commit hash. Default value: GITHUB_SHA environment variable.'
+    required: true
+    defaultValue: ${#env('GITHUB_SHA')}
+  - name: dryrun
+    description: "Set to true to just output PR decoration JSON; don't actually update any PR"
+    type: boolean
+    required: false
+    defaultValue: false
+    
+addRequestTargets:
+  - name: github
+    baseUrl: https://api.github.com
+    headers:
+      Authorization: Bearer ${parameters['github-token']}
+      'X-GitHub-Api-Version': '2022-11-28'
+    
+defaults:
+  requestTarget: ssc
+    
+steps:
+  - progress: Processing issue data
+  - requests:
+    - name: issues
+      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues?limit=100&orderby=engineType
+      query:
+        showremoved: true
+        filterset: ${parameters.filterset.guid}
+      pagingProgress:
+        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.count} issues
+      forEach:
+        name: issue
+        if: issue.scanStatus!='UPDATED'
+        embed:
+          - name: details
+            uri: /api/v1/issueDetails/${issue.id}
+        do:
+          - if: issue.scanStatus=='REMOVED'
+            set:
+            - name: removedIssues
+              valueTemplate: mdIssueListItem
+              operation: append
+          - if: (issue.scanStatus=='NEW' || issue.scanStatus=='REINTRODUCED')
+            set:
+            - name: newIssues
+              valueTemplate: mdIssueListItem
+              operation: append
+          - if: (issue.scanStatus=='NEW' || issue.scanStatus=='REINTRODUCED') && issue.engineType=='SCA'
+            set:
+            - name: jsonSourceCodeComments
+              valueTemplate: jsonSourceCodeComment
+              operation: append
+          
+  - progress: Generating GitHub request
+  - set:
+      - name: reviewBody
+      - name: reviewRequestBody
+  - if: parameters.dryrun
+    write:
+      - to: stdout
+        value: ${reviewRequestBody}
+  - if: '!parameters.dryrun'
+    requests:
+      - name:   GitHub PR review
+        method: POST
+        uri:    /repos/${parameters['github-owner']}/${parameters['github-repo']}/pulls/${parameters['pr']}/reviews
+        target: github
+        body:   ${reviewRequestBody}       
+
+valueTemplates:
+  - name: reviewRequestBody
+    contents:
+      owner: ${parameters['github-owner']}
+      repo: ${parameters['github-repo']}
+      pull_number: ${parameters['pr']}
+      commit_id: ${parameters['commit']}
+      body: ${reviewBody}
+      event: COMMENT
+      # For now, we don't include any source code comments, as this will cause
+      # GitHub to return an error if the source file doesn't exist in the repo.
+      comments: ${{}} 
+      # comments: ${jsonSourceCodeComments?:{}}
+      
+  - name: reviewBody
+    contents: |
+      ### New Issues
+      
+      ${newIssues==null 
+        ? "* No new or re-introduced issues were detected" 
+        : ("* "+#join('\n* ',newIssues))}
+        
+      ### Removed Issues
+      
+      ${removedIssues==null 
+        ? "* No removed issues were detected" 
+        : ("* "+#join('\n* ',removedIssues))}
+        
+  - name: jsonSourceCodeComment
+    contents:
+      path: ${issue.fullFileName}
+      line: ${issue.lineNumber==0?1:issue.lineNumber}
+      body: |
+        <p><b>Security Scanning</b> / Fortify SAST</p>
+        <h3>${issue.details.friority} - ${issue.details.issueName} </h3>
+        <p>${issue.details.brief}</p>
+        <br>
+        <p><a href=${#ssc.issueBrowserUrl(issue,parameters.filterset)} target="_blank" rel="noopener noreferrer">More information</a></p>
+  - name: mdIssueListItem
+    contents: >
+      ${issue.scanStatus} (${issue.engineCategory}): [${issue.fullFileName}${issue.lineNumber==null?'':':'+issue.lineNumber} - ${issue.issueName}](${#ssc.issueBrowserUrl(issue,parameters.filterset)})

@@ -16,6 +16,7 @@ import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanConfigGetCommand;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedHelper;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedDescriptor;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;

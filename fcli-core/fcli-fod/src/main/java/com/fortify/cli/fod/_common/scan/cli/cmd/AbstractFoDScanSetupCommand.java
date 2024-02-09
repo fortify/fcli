@@ -13,6 +13,9 @@
 
 package com.fortify.cli.fod._common.scan.cli.cmd;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
@@ -24,12 +27,11 @@ import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod.release.cli.mixin.FoDReleaseByQualifiedNameOrIdResolverMixin;
+
 import kong.unirest.HttpRequest;
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 

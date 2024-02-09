@@ -14,6 +14,7 @@ package com.fortify.cli.fod.report.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

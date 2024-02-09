@@ -20,6 +20,7 @@ import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.report.helper.FoDReportTemplateGroupType;
 import com.fortify.cli.fod.report.helper.FoDReportTemplateHelper;
+
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

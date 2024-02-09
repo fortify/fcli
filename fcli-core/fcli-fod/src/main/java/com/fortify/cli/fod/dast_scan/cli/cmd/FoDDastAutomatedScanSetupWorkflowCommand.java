@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
+import java.util.ArrayList;
+
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
@@ -21,14 +23,13 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupWorkflowRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
+
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.util.ArrayList;
 
 @Command(name = FoDOutputHelperMixins.SetupWorkflow.CMD_NAME) @CommandGroup("*-scan-setup")
 public class FoDDastAutomatedScanSetupWorkflowCommand extends AbstractFoDScanSetupCommand {

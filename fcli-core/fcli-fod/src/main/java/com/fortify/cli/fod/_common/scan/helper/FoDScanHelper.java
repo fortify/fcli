@@ -13,6 +13,18 @@
 
 package com.fortify.cli.fod._common.scan.helper;
 
+import static java.util.function.Predicate.not;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Objects;
+import java.util.Optional;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.BeanUtils;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,7 +33,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.rest.FoDUrls;
-import com.fortify.cli.fod._common.scan.helper.dast.*;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedHelper;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupBaseRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupGraphQlRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupGrpcRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupOpenApiRequest;
+import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupPostmanRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
@@ -29,17 +46,11 @@ import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupDescriptor;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupHelper;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
+
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.BeanUtils;
-
-import java.util.*;
-
-import static java.util.function.Predicate.not;
 
 public class FoDScanHelper {
     @Getter

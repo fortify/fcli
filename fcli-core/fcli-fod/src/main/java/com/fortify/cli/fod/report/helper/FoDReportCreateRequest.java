@@ -13,7 +13,12 @@
 package com.fortify.cli.fod.report.helper;
 
 import com.formkiq.graalvm.annotations.Reflectable;
-import lombok.*;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Getter @ToString @Builder

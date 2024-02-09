@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
-import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
@@ -26,6 +25,7 @@ import com.fortify.cli.fod.report.cli.mixin.FoDReportTemplateByNameOrIdResolverM
 import com.fortify.cli.fod.report.helper.FoDReportCreateRequest;
 import com.fortify.cli.fod.report.helper.FoDReportFormatType;
 import com.fortify.cli.fod.report.helper.FoDReportHelper;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;

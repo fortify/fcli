@@ -12,11 +12,14 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.unirest;
 
+import com.formkiq.graalvm.annotations.Reflectable;
+
 import kong.unirest.HttpRequestSummary;
 import kong.unirest.HttpResponse;
 import kong.unirest.UnirestException;
 import lombok.Getter;
 
+@Reflectable // Required for calling methods like getMessage() in fcli actions
 public final class UnexpectedHttpResponseException extends UnirestException {
     private static final long serialVersionUID = 1L;
     @Getter private int status = 200;

@@ -13,11 +13,11 @@
 
 package com.fortify.cli.fod._common.scan.helper;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import java.util.ArrayList;
 import java.util.stream.Stream;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public enum FoDScanStatus {
     Not_Started(1), In_Progress(2), Completed(3), Canceled(4), Waiting(5), Scheduled(6), Queued(7);

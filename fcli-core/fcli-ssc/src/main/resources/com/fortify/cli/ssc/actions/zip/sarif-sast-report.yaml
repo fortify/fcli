@@ -1,0 +1,158 @@
+# For now, github-sast-report and sarif-report actions are exactly the same, apart from the
+# following:
+# - Different usage information
+# - Different default Optional output file name 
+# - The sarif-report doesn't impose a limit of 1000 issues
+# The reason for having two similar but separate actions is two-fold:
+# - We want to explicitly show that fcli supports both GitHub Code Scanning integration (which 
+#   just happens to be based on SARIF) and generic SARIF capabilities.
+# - Potentially, outputs for GitHub and generic SARIF may deviate in the future, for example if 
+#   we want to add SARIF properties that are not supported by GitHub.
+# Until the latter situation arises, we should make sure though that both actions stay in sync;
+# when updating one, the other should also be updated. and ideally we should have functional tests
+# that compare the outputs of both actions. 
+
+usage:
+  header: Generate SARIF report listing SSC SAST vulnerabilities.  
+  description: |
+    This action generates a SARIF report listing Fortify SAST vulnerabilities, which 
+    may be useful for integration with various 3rd-party tools that can ingest SARIF 
+    reports. For more information about SARIF, please see
+    https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
+
+defaults:
+  requestTarget: ssc
+  
+parameters:
+  - name: file
+    cliAliases: f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: fortify-sast.sarif"
+    required: false
+    defaultValue: fortify-sast.sarif
+  - name: appversion
+    cliAliases: av
+    description: "Required application version id or <appName>:<versionName>"
+    type: appversion_single
+  - name: filterset
+    cliAliases: fs
+    description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
+    required: false
+    type: filterset
+  
+steps:
+  - progress: Loading latest static scan
+  - requests:
+    - name: artifacts
+      uri:  /api/v1/projectVersions/${parameters.appversion.id}/artifacts
+      type: paged
+      query:
+        embed: scans
+      forEach:
+        name: artifact
+        breakIf: lastStaticScan!=null
+        do:
+          - set:
+            - name: lastStaticScan
+              value: ${artifact._embed.scans?.^[type=='SCA']}
+  - progress: Processing issue data
+  - requests:
+    - name: issues
+      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues?limit=100
+      query:
+        filter: ISSUE[11111111-1111-1111-1111-111111111151]:SCA
+        filterset: ${parameters.filterset.guid}
+      pagingProgress:
+        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.count} issues
+      forEach:
+        name: issue
+        embed:
+          - name: details
+            uri: /api/v1/issueDetails/${issue.id}
+        do:
+          - set:
+            - name: rules
+              operation: append
+            - name: results
+              operation: append
+  - write:
+    - to: ${parameters.file}
+      valueTemplate: github-sast-report
+    - if: parameters.file!='stdout'
+      to: stdout
+      value: |
+        Output written to ${parameters.file}
+
+valueTemplates:
+  - name: github-sast-report
+    contents:
+      "$schema": https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json 
+      version: '2.1.0'
+      runs:
+        - tool:
+            driver:
+              name: 'Fortify SCA'   
+              version: ${lastStaticScan?.engineVersion?:'unknown'}
+              rules: ${rules?:{}}
+          results: ${results?:{}} 
+     
+  - name: rules
+    contents:
+      id: ${issue.id+''}
+      shortDescription:
+        text: ${issue.issueName}
+      fullDescription:
+        text: ${issue.details?.brief}
+      help:
+        text: |
+          ${#htmlToText(issue.details?.detail)}
+
+          ${#htmlToText(issue.details?.recommendation)}
+        
+            
+          For more information, see ${#ssc.issueBrowserUrl(issue,parameters.filterset)}
+      properties:
+        tags: ${{issue.friority}}
+        precision: ${(issue.friority matches "(Critical|Medium)") ? "high":"low" }
+        security-severity: ${{Critical:10.0,High:8.9,Medium:6.9,Low:3.9}.get(issue.friority)+''}
+        
+  - name: results
+    contents:
+      ruleId: ${issue.id+''}
+      message: 
+        text: ${issue.details?.brief}
+      level: ${(issue.friority matches "(Critical|High)") ? "warning":"note" }
+      partialFingerprints:
+        issueInstanceId: ${issue.issueInstanceId}
+      locations:
+        - physicalLocation:
+            artifactLocation:
+              uri: ${issue.fullFileName}
+            region:
+              startLine: ${issue.lineNumber==0?1:issue.lineNumber}
+              endLine: ${issue.lineNumber==0?1:issue.lineNumber}
+              startColumn: ${1}  # Needs to be specified as an expression in order to end up as integer instead of string in JSON
+              endColumn: ${80}
+      codeFlows: |-
+        ${ 
+          issue.details?.traceNodes==null ? {}
+            : 
+            {{ 
+                threadFlows: issue.details?.traceNodes.![{
+                  locations: #this.![{
+                    location: {
+                        message: {
+                            text: text
+                        },
+                        physicalLocation: {
+                            artifactLocation: {
+                                uri: fullPath
+                            },
+                            region: {
+                                startLine: line==0?1:line
+                            }
+                        }
+                    }
+                  }] 
+                }] 
+            }} 
+        }

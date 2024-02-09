@@ -55,6 +55,14 @@ public enum ProgressWriterType {
             clearProgress();
             warnings.forEach(System.err::println);
         }
+        
+        protected final String format(String message, Object... args) {
+            if ( args==null || args.length==0 ) {
+                return message;
+            } else {
+                return String.format(message, args);
+            }
+        }
     }
     
     private static final class NoProgressWriter extends AbstractProgressWriter {
@@ -78,7 +86,7 @@ public enum ProgressWriterType {
         
         @Override
         public void writeProgress(String message, Object... args) {
-            String formattedMessage = String.format(message, args);
+            String formattedMessage = format(message, args);
             if ( formattedMessage.indexOf('\n') > 0 ) {
                 // Add extra newline to separate multi-line blocks
                 formattedMessage += "\n";
@@ -98,7 +106,7 @@ public enum ProgressWriterType {
         
         @Override
         public void writeProgress(String message, Object... args) {
-            String formattedMessage = String.format(message, args);
+            String formattedMessage = format(message, args);
             if ( formattedMessage.indexOf('\n') > 0 ) {
                 // Add extra newline to separate multi-line blocks
                 formattedMessage += "\n";
@@ -121,9 +129,9 @@ public enum ProgressWriterType {
         
         @Override
         public void writeProgress(String message, Object... args) {
-            if ( message.contains("\n") ) { throw new RuntimeException("Multiline status updates are not supported; please file a bug"); }
+            String formattedMessage = format(message, args);
+            if ( formattedMessage.contains("\n") ) { throw new RuntimeException("Multiline status updates are not supported; please file a bug"); }
             clearProgress();
-            String formattedMessage = String.format(message, args);
             System.out.print(formattedMessage);
             this.lastNumberOfChars = formattedMessage.length();
         }
@@ -148,8 +156,8 @@ public enum ProgressWriterType {
         
         @Override
         public void writeProgress(String message, Object... args) {
+            String formattedMessage = format(message, args);
             clearProgress();
-            String formattedMessage = String.format(message, args);
             System.out.print(formattedMessage);
             this.lastNumberOfLines = (int)formattedMessage.chars().filter(ch -> ch == '\n').count();
         }

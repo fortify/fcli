@@ -12,22 +12,22 @@
  *******************************************************************************/
 package com.fortify.cli.fod.report.cli.cmd;
 
+import java.util.Set;
+
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanStatus;
 import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
 import com.fortify.cli.fod.report.cli.mixin.FoDReportResolverMixin;
 import com.fortify.cli.fod.report.helper.FoDReportStatus;
 import com.fortify.cli.fod.report.helper.FoDReportStatus.FoDReportStatusIterable;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.util.Set;
 
 @Command(name = OutputHelperMixins.WaitFor.CMD_NAME)
 public class FoDReportWaitForCommand extends AbstractWaitForCommand {

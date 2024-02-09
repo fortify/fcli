@@ -15,6 +15,7 @@ package com.fortify.cli.fod.report.cli.mixin;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod.report.helper.FoDReportTemplateDescriptor;
 import com.fortify.cli.fod.report.helper.FoDReportTemplateHelper;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;

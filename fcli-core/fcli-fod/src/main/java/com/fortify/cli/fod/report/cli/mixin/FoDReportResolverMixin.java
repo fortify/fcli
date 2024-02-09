@@ -12,18 +12,18 @@
  *******************************************************************************/
 package com.fortify.cli.fod.report.cli.mixin;
 
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.fod.report.helper.FoDReportDescriptor;
 import com.fortify.cli.fod.report.helper.FoDReportHelper;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-
-import java.util.Collection;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class FoDReportResolverMixin {
 

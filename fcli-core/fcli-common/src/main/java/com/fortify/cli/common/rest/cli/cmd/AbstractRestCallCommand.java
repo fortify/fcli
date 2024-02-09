@@ -28,8 +28,8 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.util.DisableTest;
-import com.fortify.cli.common.util.JavaHelper;
 import com.fortify.cli.common.util.DisableTest.TestType;
+import com.fortify.cli.common.util.JavaHelper;
 import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequest;
