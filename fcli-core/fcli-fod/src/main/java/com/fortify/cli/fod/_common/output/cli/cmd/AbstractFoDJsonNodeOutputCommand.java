@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.fod._common.output.cli;
+package com.fortify.cli.fod._common.output.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;

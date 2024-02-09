@@ -10,19 +10,18 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.sc_sast._common.output.cli.mixin;
+package com.fortify.cli.fod._common.output.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.output.transform.IInputTransformer;
-import com.fortify.cli.sc_sast._common.rest.helper.SCSastInputTransformer;
+import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
 
-// IMPORTANT: When updating/adding any methods in this class, SCSastControllerRestCallCommand
-//            also likely needs to be updated
-public class SCSastControllerProductHelperStandardMixin extends SCSastControllerProductHelperBasicMixin
-    implements IInputTransformer
-{
+import kong.unirest.HttpRequest;
+import kong.unirest.UnirestInstance;
+
+public abstract class AbstractFoDBaseRequestOutputCommand extends AbstractFoDOutputCommand  implements IBaseRequestSupplier {
     @Override
-    public JsonNode transformInput(JsonNode input) {
-        return SCSastInputTransformer.getItems(input);
+    public final HttpRequest<?> getBaseRequest() {
+        return getBaseRequest(getUnirestInstance());
     }
+
+    protected abstract HttpRequest<?> getBaseRequest(UnirestInstance unirest);
 }

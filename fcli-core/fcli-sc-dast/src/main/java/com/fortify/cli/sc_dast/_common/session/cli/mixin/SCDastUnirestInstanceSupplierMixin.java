@@ -10,10 +10,9 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.sc_dast._common.output.cli.mixin;
+package com.fortify.cli.sc_dast._common.session.cli.mixin;
 
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
-import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
@@ -23,9 +22,7 @@ import com.fortify.cli.sc_dast._common.session.helper.SCDastSessionHelper;
 
 import kong.unirest.UnirestInstance;
 
-public class SCDastProductHelperBasicMixin extends AbstractSessionUnirestInstanceSupplierMixin<SCDastSessionDescriptor> 
-    implements IProductHelper
-{
+public final class SCDastUnirestInstanceSupplierMixin extends AbstractSessionUnirestInstanceSupplierMixin<SCDastSessionDescriptor> {
     @Override
     protected final void configure(UnirestInstance unirest, SCDastSessionDescriptor sessionDescriptor) {
         UnirestUnexpectedHttpResponseConfigurer.configure(unirest);

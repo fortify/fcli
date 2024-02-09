@@ -10,25 +10,27 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.sc_sast._common.output.cli.mixin;
+package com.fortify.cli.sc_dast._common.rest.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
-import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
-import com.fortify.cli.ssc._common.rest.helper.SSCPagingHelper;
 
-public class SCSastSSCProductHelperStandardMixin extends SCSastSSCProductHelperBasicMixin
-    implements IInputTransformer, INextPageUrlProducerSupplier
+// IMPORTANT: When updating/adding any methods in this class, SCDastControllerRestCallCommand
+// also likely needs to be updated
+public class SCDastProductHelper implements IProductHelper, IInputTransformer, INextPageUrlProducerSupplier
 {
+    public static final SCDastProductHelper INSTANCE = new SCDastProductHelper();
+    private SCDastProductHelper() {}
     @Override
-    public JsonNode transformInput(JsonNode input) {
-        return SSCInputTransformer.getDataOrSelf(input);
+    public INextPageUrlProducer getNextPageUrlProducer() {
+        return SCDastPagingHelper.nextPageUrlProducer();
     }
     
     @Override
-    public INextPageUrlProducer getNextPageUrlProducer() {
-        return SSCPagingHelper.nextPageUrlProducer();
+    public JsonNode transformInput(JsonNode input) {
+        return SCDastInputTransformer.getItems(input);
     }
 }

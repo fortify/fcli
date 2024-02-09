@@ -17,7 +17,7 @@ import java.util.Set;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.ssc._common.output.cli.mixin.SSCProductHelperStandardMixin;
+import com.fortify.cli.ssc._common.session.cli.mixin.SSCUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc.report.cli.mixin.SSCReportResolverMixin;
 import com.fortify.cli.ssc.report.helper.SSCReportStatus;
 import com.fortify.cli.ssc.report.helper.SSCReportStatus.SSCReportStatusIterable;
@@ -30,7 +30,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.WaitFor.CMD_NAME)
 public class SSCReportWaitForCommand extends AbstractWaitForCommand {
-    @Getter @Mixin SSCProductHelperStandardMixin productHelper;
+    @Getter @Mixin private SSCUnirestInstanceSupplierMixin unirestInstanceSupplier;
     @Mixin private SSCReportResolverMixin.PositionalParameterMulti reportsResolver;
     @Option(names={"-s", "--any-state"}, required=true, split=",", defaultValue="PROCESS_COMPLETE", completionCandidates = SSCReportStatusIterable.class)
     private Set<String> states;

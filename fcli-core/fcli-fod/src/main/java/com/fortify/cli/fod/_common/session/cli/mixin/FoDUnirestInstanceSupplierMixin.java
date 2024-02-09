@@ -10,12 +10,11 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.fod._common.output.mixin;
+package com.fortify.cli.fod._common.session.cli.mixin;
 
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
-import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.config.UnirestJsonHeaderConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUnexpectedHttpResponseConfigurer;
 import com.fortify.cli.common.rest.unirest.config.UnirestUrlConfigConfigurer;
@@ -28,8 +27,7 @@ import kong.unirest.Config;
 import kong.unirest.UnirestInstance;
 import kong.unirest.apache.ApacheClient;
 
-public class FoDProductHelperBasicMixin extends AbstractSessionUnirestInstanceSupplierMixin<FoDSessionDescriptor> 
-    implements IProductHelper
+public final class FoDUnirestInstanceSupplierMixin extends AbstractSessionUnirestInstanceSupplierMixin<FoDSessionDescriptor>
 {   
     @Override
     protected final FoDSessionDescriptor getSessionDescriptor(String sessionName) {

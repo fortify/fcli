@@ -27,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDInProgressScanActionTypeMixins;

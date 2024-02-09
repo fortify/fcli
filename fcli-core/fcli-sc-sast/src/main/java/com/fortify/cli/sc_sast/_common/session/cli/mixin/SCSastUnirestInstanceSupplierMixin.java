@@ -20,7 +20,7 @@ import com.fortify.cli.sc_sast._common.session.helper.SCSastSessionHelper;
 
 import kong.unirest.UnirestInstance;
 
-public abstract class AbstractSCSastUnirestInstanceSupplierMixin extends AbstractSessionDescriptorSupplierMixin<SCSastSessionDescriptor> {
+public class SCSastUnirestInstanceSupplierMixin extends AbstractSessionDescriptorSupplierMixin<SCSastSessionDescriptor> {
     @Override
     protected final SCSastSessionDescriptor getSessionDescriptor(String sessionName) {
         return SCSastSessionHelper.instance().get(sessionName, true);

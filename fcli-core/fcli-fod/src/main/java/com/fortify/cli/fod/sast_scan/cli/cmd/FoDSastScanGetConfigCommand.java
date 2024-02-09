@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.fod.sast_scan.cli.cmd;
 
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanConfigGetCommand;
 import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastDescriptor;
 import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastHelper;

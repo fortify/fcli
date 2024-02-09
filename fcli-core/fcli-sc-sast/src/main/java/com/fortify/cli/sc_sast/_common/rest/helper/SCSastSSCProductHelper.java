@@ -10,27 +10,28 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.fod._common.output.mixin;
+package com.fortify.cli.sc_sast._common.rest.helper;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
-import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
-import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
+import com.fortify.cli.ssc._common.rest.helper.SSCInputTransformer;
+import com.fortify.cli.ssc._common.rest.helper.SSCPagingHelper;
 
-// IMPORTANT: When updating/adding any methods in this class, FoDRestCallCommand
-// also likely needs to be updated
-public class FoDProductHelperStandardMixin extends FoDProductHelperBasicMixin 
-    implements IInputTransformer, INextPageUrlProducerSupplier 
+public class SCSastSSCProductHelper implements IProductHelper, IInputTransformer, INextPageUrlProducerSupplier
 {
-    @Override
-    public INextPageUrlProducer getNextPageUrlProducer() {
-        return FoDPagingHelper.nextPageUrlProducer();
-    }
+    public static final SCSastSSCProductHelper INSTANCE = new SCSastSSCProductHelper();
+    private SCSastSSCProductHelper() {}
     
     @Override
     public JsonNode transformInput(JsonNode input) {
-        return FoDInputTransformer.getItems(input);
+        return SSCInputTransformer.getDataOrSelf(input);
+    }
+    
+    @Override
+    public INextPageUrlProducer getNextPageUrlProducer() {
+        return SSCPagingHelper.nextPageUrlProducer();
     }
 }

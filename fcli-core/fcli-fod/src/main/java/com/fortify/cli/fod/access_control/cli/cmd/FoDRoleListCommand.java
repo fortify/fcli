@@ -19,7 +19,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
-import com.fortify.cli.fod._common.output.cli.AbstractFoDBaseRequestOutputCommand;
+import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDBaseRequestOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.rest.lookup.helper.FoDLookupType;
 

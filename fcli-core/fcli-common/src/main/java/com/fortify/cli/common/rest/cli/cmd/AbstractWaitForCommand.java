@@ -14,7 +14,6 @@ package com.fortify.cli.common.rest.cli.cmd;
 
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
-import com.fortify.cli.common.output.product.IProductHelperSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 import com.fortify.cli.common.rest.cli.mixin.StandardWaitHelperProgressMonitorMixin;
@@ -28,7 +27,7 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractWaitForCommand extends AbstractRunnableCommand implements IActionCommandResultSupplier, IProductHelperSupplier, ISingularSupplier, Runnable {
+public abstract class AbstractWaitForCommand extends AbstractRunnableCommand implements IActionCommandResultSupplier, IUnirestInstanceSupplier, ISingularSupplier, Runnable {
     @Getter @Mixin private OutputHelperMixins.WaitFor outputHelper;
     @Mixin private WaitHelperControlPropertiesMixin controlProperties;
     @Mixin private WaitHelperWaitTypeMixin waitTypeSupplier;
@@ -37,14 +36,15 @@ public abstract class AbstractWaitForCommand extends AbstractRunnableCommand imp
     @Override
     public void run() {
         initMixins();
-        var productHelper = getProductHelper();
-        if ( productHelper instanceof IUnirestInstanceSupplier ) {
-            UnirestInstance unirest = ((IUnirestInstanceSupplier)productHelper).getUnirestInstance();
-            wait(unirest);
-        } else {
-            throw new RuntimeException("Class doesn't implement IUnirestInstanceSupplier: "+productHelper.getClass().getName());
-        }
+        wait(getUnirestInstance());
     }
+    
+    @Override
+    public final UnirestInstance getUnirestInstance() {
+        return getUnirestInstanceSupplier().getUnirestInstance();
+    }
+    
+    protected abstract IUnirestInstanceSupplier getUnirestInstanceSupplier();
     
     private void wait(UnirestInstance unirest) {
         configure(unirest,

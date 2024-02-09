@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.fod._common.output.mixin;
+package com.fortify.cli.fod._common.output.cli.mixin;
 
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;

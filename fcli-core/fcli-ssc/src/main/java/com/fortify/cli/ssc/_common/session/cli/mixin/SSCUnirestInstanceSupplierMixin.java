@@ -10,9 +10,8 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc._common.output.cli.mixin;
+package com.fortify.cli.ssc._common.session.cli.mixin;
 
-import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.session.cli.mixin.AbstractSessionUnirestInstanceSupplierMixin;
 import com.fortify.cli.ssc._common.session.helper.SSCSessionDescriptor;
 import com.fortify.cli.ssc._common.session.helper.SSCSessionHelper;
@@ -20,9 +19,7 @@ import com.fortify.cli.ssc.access_control.helper.SSCTokenHelper;
 
 import kong.unirest.UnirestInstance;
 
-public class SSCProductHelperBasicMixin extends AbstractSessionUnirestInstanceSupplierMixin<SSCSessionDescriptor>
-    implements IProductHelper
-{   
+public final class SSCUnirestInstanceSupplierMixin extends AbstractSessionUnirestInstanceSupplierMixin<SSCSessionDescriptor> {   
     @Override
     public final SSCSessionDescriptor getSessionDescriptor(String sessionName) {
         return SSCSessionHelper.instance().get(sessionName, true);

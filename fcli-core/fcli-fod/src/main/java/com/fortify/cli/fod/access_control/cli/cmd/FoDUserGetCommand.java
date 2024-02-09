@@ -17,7 +17,7 @@ import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.variable.DefaultVariablePropertyName;
-import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod.access_control.cli.mixin.FoDUserResolverMixin;
 import com.fortify.cli.fod.access_control.helper.FoDUserHelper;
 

@@ -24,7 +24,7 @@ import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.unirest.UnexpectedHttpResponseException;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
-import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;

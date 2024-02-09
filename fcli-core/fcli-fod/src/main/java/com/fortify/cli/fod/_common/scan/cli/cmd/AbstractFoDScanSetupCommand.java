@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
-import com.fortify.cli.fod._common.output.cli.AbstractFoDJsonNodeOutputCommand;
+import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDJsonNodeOutputCommand;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod._common.rest.helper.FoDFileTransferHelper;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;

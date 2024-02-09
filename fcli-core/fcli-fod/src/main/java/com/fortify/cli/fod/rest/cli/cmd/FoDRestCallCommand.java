@@ -12,15 +12,12 @@
  *******************************************************************************/
 package com.fortify.cli.fod.rest.cli.cmd;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractRestCallCommand;
-import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
-import com.fortify.cli.fod._common.output.mixin.FoDProductHelperBasicMixin;
-import com.fortify.cli.fod._common.rest.helper.FoDInputTransformer;
-import com.fortify.cli.fod._common.rest.helper.FoDPagingHelper;
+import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
+import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
 
 import lombok.Getter;
 import picocli.CommandLine.Command;
@@ -30,20 +27,6 @@ import picocli.CommandLine.Mixin;
 @DisableTest(TestType.CMD_DEFAULT_TABLE_OPTIONS_PRESENT) // Output columns depend on response contents
 public final class FoDRestCallCommand extends AbstractRestCallCommand {
     @Getter @Mixin private OutputHelperMixins.RestCall outputHelper;
-    @Getter @Mixin private FoDProductHelperBasicMixin productHelper;
-    
-    @Override
-    protected INextPageUrlProducer _getNextPageUrlProducer() {
-        return FoDPagingHelper.nextPageUrlProducer();
-    }
-    
-    @Override
-    protected JsonNode _transformInput(JsonNode input) {
-        return FoDInputTransformer.getItems(input);
-    }
-    
-    @Override
-    protected JsonNode _transformRecord(JsonNode input) {
-        return input;
-    }
+    @Getter @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplier;
+    @Getter private final FoDProductHelper productHelper = FoDProductHelper.INSTANCE;
 }
