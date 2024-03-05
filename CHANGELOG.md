@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/fortify/fcli/compare/v2.2.0...v2.3.0) (2024-03-05)
+
+
+### Features
+
+* Add support for configuring proxy settings through conventional environment variables HTTP_PROXY, HTTPS_PROXY, ALL_PROXY & NO_PROXY (used if proxy is not explicitly configured through 'fcli config proxy' commands) ([881adbd](https://github.com/fortify/fcli/commit/881adbda905d83d61045c01f706633691f19496e))
+
 ## [2.2.0](https://github.com/fortify/fcli/compare/v2.1.0...v2.2.0) (2024-02-05)
 
 
