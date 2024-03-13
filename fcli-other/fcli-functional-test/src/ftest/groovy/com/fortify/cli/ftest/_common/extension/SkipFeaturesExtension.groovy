@@ -22,6 +22,9 @@ class SkipFeaturesExtension implements IGlobalExtension {
                     feature.skip "Not included in "+Input.TestsToRun.propertyName()+" property"
                 }
             })
+            if ( !spec.allFeatures.findAll({ f->!f.skipped }) ) {
+                spec.skip "All features skipped"
+            }
         }
     }
 }
