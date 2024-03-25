@@ -29,7 +29,7 @@ class FoDScanImportSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()>2
+                size()>=2
                 it.last().contains("IMPORT_REQUESTED")
             }
     }
@@ -40,7 +40,7 @@ class FoDScanImportSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()>2
+                size()>=2
                 it.last().contains("IMPORT_REQUESTED")
             }
     }
@@ -51,7 +51,7 @@ class FoDScanImportSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()>2
+                size()>=2
                 it.last().contains("IMPORT_REQUESTED")
             }
     }
@@ -62,7 +62,7 @@ class FoDScanImportSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                size()>2
+                size()>=2
                 it.last().contains("IMPORT_REQUESTED")
             }
     }

@@ -12,11 +12,11 @@
  *******************************************************************************/
 package com.fortify.cli.fod.report.helper;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import java.util.ArrayList;
 import java.util.stream.Stream;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public enum FoDReportStatus {
     Started(1), Completed(2), Failed(3), Queued(4);

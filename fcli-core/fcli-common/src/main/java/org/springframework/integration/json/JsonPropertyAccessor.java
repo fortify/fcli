@@ -20,11 +20,6 @@ import java.io.IOException;
 import java.util.AbstractList;
 import java.util.Iterator;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-
 import org.springframework.expression.AccessException;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
@@ -32,6 +27,12 @@ import org.springframework.expression.TypedValue;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.POJONode;
 
 /**
  * A SpEL {@link PropertyAccessor} that knows how to read properties from JSON objects.
@@ -192,6 +193,10 @@ public class JsonPropertyAccessor implements PropertyAccessor {
 						"Can not get content of binary value: " + json, e);
 			}
 		}
+		// CHANGED: Compared to original version, this code was added to allow access to POJO node values.
+		else if (json.isPojo() ) {
+		    return ((POJONode)json).getPojo();
+		}
 		throw new IllegalArgumentException("Json is not ValueNode.");
 	}
 
@@ -210,7 +215,10 @@ public class JsonPropertyAccessor implements PropertyAccessor {
 		}
 	}
 
-	interface JsonNodeWrapper<T> extends Comparable<T> {
+	// CHANGED: Compared to original version, this interface was changed to public
+	//          to allow access by JsonHelper::evaluateSpelExpression (through
+	//          JsonHelper::unwrapSpelExpressionResult).
+	public interface JsonNodeWrapper<T> extends Comparable<T> {
 
 		String toString();
 

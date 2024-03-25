@@ -18,11 +18,11 @@ import java.util.Set;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.fod._common.output.mixin.FoDProductHelperStandardMixin;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDScanResolverMixin;
 import com.fortify.cli.fod._common.scan.helper.FoDScanStatus;
 import com.fortify.cli.fod._common.scan.helper.FoDScanStatus.FoDScanStatusIterable;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
+import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
@@ -31,7 +31,7 @@ import picocli.CommandLine.Option;
 
 @CommandGroup("*-scan")
 public abstract class AbstractFoDScanWaitForCommand extends AbstractWaitForCommand {
-    @Getter @Mixin FoDProductHelperStandardMixin productHelper;
+    @Getter @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplier;
     @Mixin private FoDScanResolverMixin.PositionalParameterMulti scansResolver;
     @Option(names={"-s", "--any-state"}, required=true, split=",", defaultValue="Completed", completionCandidates = FoDScanStatusIterable.class)
     private Set<String> states;

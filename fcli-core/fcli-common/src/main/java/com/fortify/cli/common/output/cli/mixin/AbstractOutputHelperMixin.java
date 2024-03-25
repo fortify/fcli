@@ -187,6 +187,7 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
         for ( var mixin : commandHelper.getCommandSpec().mixins().values() ) {
             addInputTransformersFromObject(standardOutputConfig, mixin.userObject());
         }
+        addInputTransformersFromObject(standardOutputConfig, getProductHelper());
         addInputTransformersFromObject(standardOutputConfig, cmd);
     }
     

@@ -24,7 +24,7 @@ import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.FoDStartScanResponse;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastAutomatedDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;
-import kong.unirest.HttpRequest;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 

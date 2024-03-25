@@ -23,7 +23,8 @@ import picocli.CommandLine.Help.Ansi;
 public enum ProgressWriterType {
     auto(ProgressWriterType::auto), 
     none(NoProgressWriter::new), 
-    simple(SimpleProgressWriter::new), 
+    simple(SimpleProgressWriter::new),
+    stderr(SimpleStdErrProgressWriter::new),
     single_line(SingleLineProgressWriter::new), 
     ansi(AnsiProgressWriter::new);
     
@@ -38,7 +39,7 @@ public enum ProgressWriterType {
         var hasAnsiConsole = Ansi.AUTO.enabled() && hasConsole;
         if ( hasAnsiConsole ) { return new AnsiProgressWriter(); }
         else if ( hasConsole ) { return new SingleLineProgressWriter(); }
-        else { return new SimpleProgressWriter(); }
+        else { return new NoProgressWriter(); }
     }
     
     private static abstract class AbstractProgressWriter implements IProgressWriter {
@@ -53,6 +54,14 @@ public enum ProgressWriterType {
         public void close() {
             clearProgress();
             warnings.forEach(System.err::println);
+        }
+        
+        protected final String format(String message, Object... args) {
+            if ( args==null || args.length==0 ) {
+                return message;
+            } else {
+                return String.format(message, args);
+            }
         }
     }
     
@@ -77,12 +86,32 @@ public enum ProgressWriterType {
         
         @Override
         public void writeProgress(String message, Object... args) {
-            String formattedMessage = String.format(message, args);
+            String formattedMessage = format(message, args);
             if ( formattedMessage.indexOf('\n') > 0 ) {
                 // Add extra newline to separate multi-line blocks
                 formattedMessage += "\n";
             }
             System.out.println(formattedMessage);
+        }
+        
+        @Override
+        public void clearProgress() {}
+    }
+    
+    private static final class SimpleStdErrProgressWriter extends AbstractProgressWriter {
+        @Override
+        public boolean isMultiLineSupported() {
+            return true;
+        }
+        
+        @Override
+        public void writeProgress(String message, Object... args) {
+            String formattedMessage = format(message, args);
+            if ( formattedMessage.indexOf('\n') > 0 ) {
+                // Add extra newline to separate multi-line blocks
+                formattedMessage += "\n";
+            }
+            System.err.println(formattedMessage);
         }
         
         @Override
@@ -100,9 +129,9 @@ public enum ProgressWriterType {
         
         @Override
         public void writeProgress(String message, Object... args) {
-            if ( message.contains("\n") ) { throw new RuntimeException("Multiline status updates are not supported; please file a bug"); }
+            String formattedMessage = format(message, args);
+            if ( formattedMessage.contains("\n") ) { throw new RuntimeException("Multiline status updates are not supported; please file a bug"); }
             clearProgress();
-            String formattedMessage = String.format(message, args);
             System.out.print(formattedMessage);
             this.lastNumberOfChars = formattedMessage.length();
         }
@@ -127,8 +156,8 @@ public enum ProgressWriterType {
         
         @Override
         public void writeProgress(String message, Object... args) {
+            String formattedMessage = format(message, args);
             clearProgress();
-            String formattedMessage = String.format(message, args);
             System.out.print(formattedMessage);
             this.lastNumberOfLines = (int)formattedMessage.chars().filter(ch -> ch == '\n').count();
         }

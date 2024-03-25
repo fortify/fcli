@@ -30,8 +30,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ContainerNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.ValueNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fortify.cli.common.spring.expression.SpelEvaluator;
 import com.fortify.cli.common.util.StringUtils;
@@ -85,6 +88,12 @@ public class JsonHelper {
     
     public static final Stream<JsonNode> stream(ArrayNode arrayNode) {
         return StreamSupport.stream(iterable(arrayNode).spliterator(), false);
+    }
+    
+    public static final ObjectNode shallowCopy(ObjectNode node) {
+        var newData = objectMapper.createObjectNode();
+        newData.setAll(node);
+        return newData;
     }
     
     public static final ArrayNodeCollector arrayNodeCollector() {
@@ -149,5 +158,110 @@ public class JsonHelper {
         public Set<Characteristics> characteristics() {
             return EnumSet.of(Characteristics.UNORDERED);
         }
-    }    
+    }
+    
+    public static abstract class AbstractJsonNodeWalker<R, S> {
+        public final R walk(JsonNode node) {
+            if ( node!=null ) {
+                walk(null, "", null, node);
+            }
+            return getResult();
+        }
+        protected abstract R getResult();
+        
+        protected void walk(S state, String path, JsonNode parent, JsonNode node) {
+            if ( !skipNode(state, path, parent, node) ) {
+                if ( node instanceof ContainerNode ) {
+                    walkContainer(state, path, parent, (ContainerNode<?>)node);
+                } else if ( node instanceof ValueNode ) {
+                    walkValue(state, path, parent, (ValueNode)node);
+                }
+            }
+        }
+        
+        protected boolean skipNode(S state, String path, JsonNode parent, JsonNode node) {
+            return false;
+        }
+        
+        protected void walkContainer(S state, String path, JsonNode parent, ContainerNode<?> node) {
+            if ( node instanceof ArrayNode ) {
+                walkArray(state, path, parent, (ArrayNode)node);
+            } else if ( node instanceof ObjectNode ) {
+                walkObject(state, path, parent, (ObjectNode)node);
+            }
+        }
+        
+        protected void walkObject(S state, String path, JsonNode parent, ObjectNode node) {
+            node.fields().forEachRemaining(e->walkObjectProperty(state, appendPath(path, e.getKey()), node, e.getKey(), e.getValue()));
+        }
+        
+        protected void walkObjectProperty(S state, String path, ObjectNode parent, String property, JsonNode value) {
+            walk(state, path, parent, value);
+        }
+        
+        protected void walkArray(S state, String path, JsonNode parent, ArrayNode node) {
+            for ( int i = 0 ; i < node.size() ; i++ ) {
+                walkArrayElement(state, appendPath(path, i+""), node, i, node.get(i));
+            }
+        }
+        
+        protected void walkArrayElement(S state, String path, ArrayNode parent, int index, JsonNode value) {
+            walk(state, path, parent, value);
+        }
+        
+        protected void walkValue(S state, String path, JsonNode parent, ValueNode node) {}
+        
+        protected final String appendPath(String parent, String entry) {
+            return String.format("%s[%s]", parent, entry);
+        }
+    }
+    
+    public static class JsonNodeDeepCopyWalker extends AbstractJsonNodeWalker<JsonNode, JsonNode> {
+        @Getter JsonNode result;
+        @Override
+        protected void walkObject(JsonNode state, String path, JsonNode parent, ObjectNode node) {
+            if ( state==null ) { state = objectMapper.createObjectNode(); }
+            if ( result==null ) { result = state; }
+            super.walkObject(state, path, parent, node);
+        }
+        @Override
+        protected void walkObjectProperty(JsonNode state, String path, ObjectNode parent, String property, JsonNode value) {
+            if ( value instanceof ContainerNode ) {
+                var newState = createContainerNode(value.getNodeType());
+                ((ObjectNode)state).set(property, newState);
+                super.walkObjectProperty(newState, path, parent, property, value);
+            } else {
+                ((ObjectNode)state).set(property, copyValue(state, path, parent, (ValueNode)value));
+            }
+        }
+        @Override
+        protected void walkArray(JsonNode state, String path, JsonNode parent, ArrayNode node) {
+            if ( state==null ) { state = objectMapper.createArrayNode(); }
+            if ( result==null ) { result = state; }
+            super.walkArray(state, path, parent, node);
+        }
+        @Override
+        protected void walkArrayElement(JsonNode state, String path, ArrayNode parent, int index, JsonNode value) {
+            if ( value instanceof ContainerNode ) {
+                var newState = createContainerNode(value.getNodeType());
+                ((ArrayNode)state).insert(index, newState);
+                super.walkArrayElement(newState, path, parent, index, value);
+            } else {
+                ((ArrayNode)state).insert(index, copyValue(state, path, parent, (ValueNode)value));
+            }
+        }
+        @Override
+        protected void walkValue(JsonNode state, String path, JsonNode parent, ValueNode node) {
+            if ( result == null ) { result = copyValue(state, path, parent, node); }
+        }
+        protected final JsonNode createContainerNode(JsonNodeType jsonNodeType) {
+            return jsonNodeType==JsonNodeType.ARRAY 
+                    ? objectMapper.createArrayNode() 
+                    : objectMapper.createObjectNode();
+        }
+        // We return JsonNode to allow subclasses to return other node types
+        protected JsonNode copyValue(JsonNode state, String path, JsonNode parent, ValueNode node) {
+            return node.deepCopy();
+        }
+    }
 }

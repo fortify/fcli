@@ -1,0 +1,157 @@
+usage:
+  header: Generate a GitLab DAST report listing FoD DAST vulnerabilities.
+  description: |
+    For information on how to import this report into GitLab, see 
+    https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportsdast
+
+defaults:
+  requestTarget: fod
+  
+parameters:
+  - name: file
+    cliAliases: f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-dast.json"
+    required: false
+    defaultValue: gl-fortify-dast.json
+  - name: release
+    cliAliases: rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+    type: release_single
+  
+steps:
+  - progress: Loading dynamic scan summary
+  - requests:
+      - name:   dynamicScanSummary
+        uri:    /api/v3/scans/${parameters.release.currentDynamicScanId}/summary
+        if:     parameters.release.currentDynamicScanId!=null
+      - name:   siteTree
+        uri:    /api/v3/scans/${parameters.release.currentDynamicScanId}/site-tree
+        if:     parameters.release.currentDynamicScanId!=null
+        onFail: 
+          - debug: "Site tree unavailable: ${exception.getMessage()}"
+  - progress: Processing issue data
+  - requests:
+    - name: issues
+      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
+      query:
+        filters: scantype:Dynamic
+      pagingProgress:
+        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+      forEach:
+        name: issue
+        embed:
+          - name: details
+            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
+          - name: recommendations
+            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
+          - name: request_response
+            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/request-response 
+        do:
+          - set:
+            - name: vulnerabilities
+              operation: append
+  - write:
+    - to: ${parameters.file}
+      valueTemplate: gitlab-dast-report
+    - if: parameters.file!='stdout'
+      to: stdout
+      value: |
+        Output written to ${parameters.file}
+
+valueTemplates:
+  - name: gitlab-dast-report
+    contents:
+      schema: https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/raw/v15.0.0/dist/dast-report-format.json
+      version: 15.0.0
+      scan:
+        start_time: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss", dynamicScanSummary?.startedDateTime?:'1970-01-01T00:00:00')}
+        end_time: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss", dynamicScanSummary?.completedDateTime?:'1970-01-01T00:00:00')}
+        status: ${parameters.release.dynamicAnalysisStatusTypeId==2?'success':'failure'}
+        type: dast
+        analyzer:
+          id: FoD-DAST
+          name: Fortify on Demand
+          url: https://www.microfocus.com/en-us/products/application-security-testing/overview
+          version: WebInspect ${dynamicScanSummary?.scanToolVersion?:'version unknown'}
+          vendor:
+            name: Fortify
+        scanner:
+          id: FoD-DAST
+          name: Fortify on Demand
+          url: https://www.microfocus.com/en-us/products/application-security-testing/overview
+          version: WebInspect ${dynamicScanSummary?.scanToolVersion?:'version unknown'}
+          vendor: 
+            name: Fortify
+        scanned_resources: |-
+          ${ 
+            siteTree==null ? {}
+              : siteTree.![{
+                method: method,
+                url: scheme+'://'+host+':'+port+path,
+                type: 'url' 
+              }] 
+          }
+      vulnerabilities: ${vulnerabilities?:{}}
+      # remediations: ... 
+     
+  - name: vulnerabilities
+    contents:
+      id: ${issue.vulnId}
+      category: dast
+      name: ${issue.category}
+      message: ${issue.category}
+      description: ${#abbreviate(#htmlToText(issue.details?.summary), 15000)}
+      cve: 'N/A'
+      severity: ${{'Critical':'Critical','High':'High','Medium':'Medium','Low':'Low','Best Practice':'Info','Info':'Info'}.get(issue.severityString)?:'Unknown'}
+      confidence: ${(issue.severityString matches "(Critical|Medium)") ? "High":"Low" }
+      solution: ${#abbreviate(#htmlToText(issue.details?.explanation)+'\n\n'+#htmlToText(issue.recommendations?.recommendations), 7000)}
+      scanner:
+        id: FoD-DAST
+        name: Fortify on Demand
+      identifiers: |-
+        ${{
+            {
+              name:  "Instance id: "+issue.instanceId,
+              url:   #fod.issueBrowserUrl(issue),
+              type:  "issueInstanceId",
+              value: issue.instanceId
+            }
+        }}
+      links:
+        - name: Additional issue details, including analysis trace, in Fortify on Demand
+          url:  ${#fod.issueBrowserUrl(issue)}
+      # evidence: # TODO
+      #   source:
+      #     id:
+      #     name:
+      #     url:
+      #   summary:
+      #   request:
+      #     headers:
+      #       - name:
+      #         value:
+      #     method:
+      #     url:
+      #     body:
+      #   response:
+      #     headers:
+      #       - name:
+      #         value:
+      #     reason_phrase: OK|Internal Server Error|...
+      #     status_code: 200|500|...
+      #     body:
+      #   supporting_messages:
+      #     - name:
+      #       request: ...
+      #       response: ...
+      location:
+        hostname: ${#uriPart(issue.primaryLocationFull, 'serverUrl')?:''}
+        method: ${#substringBefore(issue.request_response?.requestContent,' ')?:''}
+        param: ${#uriPart(issue.primaryLocationFull, 'query')?:''}
+        path: ${#uriPart(issue.primaryLocationFull, 'path')?:''}
+      # assets:
+      #   - type: http_session|postman
+      #     name: 
+      #     url: link to asset in build artifacts
+      # discovered_at: 2020-01-28T03:26:02.956
+      

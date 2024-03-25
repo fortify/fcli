@@ -14,13 +14,14 @@ package com.fortify.cli.common.rest.cli.cmd;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.EnvSuffix;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IBaseRequestSupplier;
-import com.fortify.cli.common.output.product.IProductHelperSupplier;
+import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.output.transform.IInputTransformer;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.paging.INextPageUrlProducer;
@@ -28,6 +29,7 @@ import com.fortify.cli.common.rest.paging.INextPageUrlProducerSupplier;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
+import com.fortify.cli.common.util.JavaHelper;
 import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpRequest;
@@ -41,17 +43,11 @@ import picocli.CommandLine.Parameters;
 
 /**
  * Abstract base class for 'fcli <product> rest call' commands. Concrete implementations must 
- * implement the various abstract methods. As dictated by the {@link IProductHelperSupplier},
- * implementations must implement the {@link IProductHelperSupplier#getProductHelper()} method,
- * but please note that the provided product helper may not implement any of the 
- * {@link IInputTransformer}, {@link IRecordTransformer}, {@link INextPageUrlProducerSupplier}
- * or {@link INextPageUrlProducer} as this would break the --no-transform and --no-paging options.
- * Instead, subclasses should implement the corresponding _* methods defined in this class,
- * to enable/disable paging and transformations on demand.
+ * implement the various abstract methods.
  * 
  * @author Ruud Senden
  */
-public abstract class AbstractRestCallCommand extends AbstractOutputCommand implements IBaseRequestSupplier, IProductHelperSupplier, IInputTransformer, IRecordTransformer, INextPageUrlProducerSupplier {
+public abstract class AbstractRestCallCommand extends AbstractOutputCommand implements IBaseRequestSupplier, IUnirestInstanceSupplier, IInputTransformer, IRecordTransformer, INextPageUrlProducerSupplier {
     @EnvSuffix("URI") @Parameters(index = "0", arity = "1..1", descriptionKey = "api.uri") String uri;
     
     @Option(names = {"--request", "-X"}, required = false, defaultValue = "GET")
@@ -77,13 +73,17 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
     
     @Override
     public HttpRequest<?> getBaseRequest() {
-        if ( getProductHelper() instanceof IUnirestInstanceSupplier ) {
-            UnirestInstance unirest = ((IUnirestInstanceSupplier)getProductHelper()).getUnirestInstance();
-            return prepareRequest(unirest);
-        }
-        throw new RuntimeException("Class doesn't implement IUnirestInstanceSupplier: "+getProductHelper().getClass().getName());
+        return prepareRequest(getUnirestInstance());
     }
     
+    @Override
+    public final UnirestInstance getUnirestInstance() {
+        return getUnirestInstanceSupplier().getUnirestInstance();
+    }
+    
+    protected abstract IUnirestInstanceSupplier getUnirestInstanceSupplier();
+    protected abstract IProductHelper getProductHelper();
+
     @Override
     public boolean isSingular() {
         return false;
@@ -116,9 +116,15 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
         return result;
     }
 
-    protected abstract JsonNode _transformRecord(JsonNode input);
-    protected abstract JsonNode _transformInput(JsonNode input);
-    protected abstract INextPageUrlProducer _getNextPageUrlProducer();
+    private final JsonNode _transformRecord(JsonNode input) {
+        return applyOnProductHelper(IRecordTransformer.class, t->t.transformRecord(input), input);
+    }
+    private final JsonNode _transformInput(JsonNode input) {
+        return applyOnProductHelper(IInputTransformer.class, t->t.transformInput(input), input);
+    }
+    private final INextPageUrlProducer _getNextPageUrlProducer() {
+        return applyOnProductHelper(INextPageUrlProducerSupplier.class, s->s.getNextPageUrlProducer(), null);
+    }
 
     @SneakyThrows
     protected final HttpRequest<?> prepareRequest(UnirestInstance unirest) {
@@ -137,6 +143,10 @@ public abstract class AbstractRestCallCommand extends AbstractOutputCommand impl
             }
         }
         return request;
+    }
+    
+    private final <T,R> R applyOnProductHelper(Class<T> type, Function<T,R> f, R defaultValue) {
+        return JavaHelper.as(getProductHelper(), type).map(f).orElse(defaultValue);
     }
     
 }

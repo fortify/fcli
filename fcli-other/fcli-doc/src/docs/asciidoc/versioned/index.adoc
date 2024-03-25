@@ -15,6 +15,7 @@ Some of the fcli highlights:
 * Support for configuring option values through link:#_environment_variables[environment variables]
 * Support for link:#_fcli_variables[fcli variables]; pass data between fcli commands
 * Support for installing other Fortify-related tools
+* Support for running multi-purpose YAML-based link:#_actions[actions]
 
 The following Fortify products are currently supported by fcli:
 
@@ -444,6 +445,16 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 ----
 
 Note: variable-related syntax and behavior was changed in fcli version 2.0.0. If you are using an older fcli version, please refer to the documentation for that version. When upgrading from 1.x.x to 2.x.x, you may need to update your fcli invocations to match the new syntax. See link:https://github.com/fortify/fcli/issues/160[Issue 160] for information on why syntax and behavior was changed.
+
+== Actions
+
+Various fcli modules support managing and running multi-purpose actions through the `fcli <module> action *` commands. For now, actions are supported for FoD and SSC modules, but we can easily add support on ScanCentral SAST & DAST modules if there's any demand. Actions are defined in action YAML files that describe action parameters and steps to be executed. These steps currently focus on executing and processing series of REST requests against FoD, SSC, or third-party systems. Future versions may provide additional functionality, like additional processing logic, or running a workflow of fcli commands.
+
+Fcli ships with many built-in actions but custom actions are also supported. For now, custom actions are considered `PREVIEW` functionality, primarily because action YAML syntax may change between fcli versions, i.e., an action that successfully runs on fcli 2.4.0 may fail to run on fcli 2.5.0, or vice versa. We plan on stabilizing the action YAML syntax over the next couple of fcli releases, and also implement proper version checks to prevent older fcli versions from attempting to run action YAML files designed for newer fcli versions. 
+
+The `+fcli <module> action get __sample__+` command outputs sample action YAML contents, listing all supported action YAML elements together with a description. Of course, if you want to modify the behavior or output of any of the built-in actions, you can use the same `get` command to view action YAML contents and customize as needed.
+
+Current built-in actions mostly focus on providing vulnerability export capabilities similar to link:https://github.com/fortify/FortifyVulnerabilityExporter[FortifyVulnerabilityExporter], allowing us to eventually deprecate FortifyVulnerabilityExporter. Fcli also provides some new actions though, for example for generating GitHub Pull Request decorations. Over time, we'll be adding more built-in actions.
 
 == Manual Pages
 

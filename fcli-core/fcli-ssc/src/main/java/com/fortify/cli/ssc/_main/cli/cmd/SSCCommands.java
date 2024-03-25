@@ -15,6 +15,7 @@ package com.fortify.cli.ssc._main.cli.cmd;
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.ssc._common.session.cli.cmd.SSCSessionCommands;
 import com.fortify.cli.ssc.access_control.cli.cmd.SSCAccessControlCommands;
+import com.fortify.cli.ssc.action.cli.cmd.SSCActionCommands;
 import com.fortify.cli.ssc.alert.cli.cmd.SSCAlertCommands;
 import com.fortify.cli.ssc.app.cli.cmd.SSCAppCommands;
 import com.fortify.cli.ssc.appversion.cli.cmd.SSCAppVersionCommands;
@@ -43,6 +44,7 @@ import picocli.CommandLine.Command;
                 //   'rest' has a different header ('Interact with' compared to most 
                 //   other commands ('Manage').
                 SSCSessionCommands.class,
+                SSCActionCommands.class,
                 SSCAccessControlCommands.class,
                 SSCAlertCommands.class,
                 SSCAppCommands.class,

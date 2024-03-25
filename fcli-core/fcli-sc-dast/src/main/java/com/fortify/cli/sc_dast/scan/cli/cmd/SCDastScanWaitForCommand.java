@@ -17,7 +17,7 @@ import java.util.Set;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.sc_dast._common.output.cli.mixin.SCDastProductHelperStandardMixin;
+import com.fortify.cli.sc_dast._common.session.cli.mixin.SCDastUnirestInstanceSupplierMixin;
 import com.fortify.cli.sc_dast.scan.cli.mixin.SCDastScanResolverMixin;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus;
 import com.fortify.cli.sc_dast.scan.helper.SCDastScanStatus.SCDastScanStatusIterable;
@@ -30,7 +30,7 @@ import picocli.CommandLine.Option;
 
 @Command(name = OutputHelperMixins.WaitFor.CMD_NAME)
 public class SCDastScanWaitForCommand extends AbstractWaitForCommand {
-    @Getter @Mixin SCDastProductHelperStandardMixin productHelper;
+    @Getter @Mixin SCDastUnirestInstanceSupplierMixin unirestInstanceSupplier;
     @Mixin private SCDastScanResolverMixin.PositionalParameterMulti scansResolver;
     @Option(names={"-s", "--any-state"}, required=true, split=",", defaultValue="Complete", completionCandidates = SCDastScanStatusIterable.class)
     private Set<String> states;

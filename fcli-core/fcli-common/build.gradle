@@ -1,1 +1,7 @@
+task zipResources_templates(type: Zip) {
+    destinationDirectory = file("${buildDir}/generated-zip-resources/com/fortify/cli/common")
+    archiveFileName = "actions.zip"
+    from("${projectDir}/src/main/resources//com/fortify/cli/common/actions/zip")
+}
+
 apply from: "${sharedGradleScriptsDir}/fcli-java.gradle"
