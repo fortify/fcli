@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20240325.160747-dev_develop
+fcli_version: 0.20240325.162920-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20240325.160747-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240325.160747-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240325.162920-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20240325.160747-dev_develop</span>
+<span id="revnumber">version 0.20240325.162920-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -247,6 +247,12 @@ found, please try with the Java version as it may be an issue specific to the na
 <li>
 <p><code>LICENSE.TXT</code> &amp; <code>README.md</code>: Some generic information and license for fcli</p>
 </li>
+<li>
+<p><code>*.sha256</code>: SHA256 checksum for each asset</p>
+</li>
+<li>
+<p><code>*.rsa_sha256</code>: RSA SHA256 signature for each asset, to be verified using this <a href="https://raw.githubusercontent.com/fortify/tool-definitions/main/id_rsa.pub">public key</a></p>
+</li>
 </ul>
 </div>
 <div class="paragraph">
@@ -261,7 +267,31 @@ found, please try with the Java version as it may be an issue specific to the na
 <p>To install fcli, start by visiting the fcli <a href="https://github.com/fortify/fcli/releases">Releases</a> page as described in the previous section, and downloading the <code>fcli.jar</code> file or appropriate native binary archive for your platform. Native binary archives will need to be extracted to a temporary directory, the <code>fcli.jar</code> file can be used as-is.</p>
 </div>
 <div class="paragraph">
-<p>Once downloaded and extracted (if applicable), you can either perform a manual or managed installation. Managed installation is recommended, but only available on internet-connected systems. Please see the sections below for more information.</p>
+<p>As a best practice, you should verify the integrity of the downloaded file. Release assets include <code><strong>.sha256</code> and <code></strong>.rsa_sha256</code> for this purpose, with the latter being preferred for better security. For example, after downloading both <code>fcli-linux.tgz</code> and <code>fcli-linux.tgz.rsa_sha256</code>, you can verify integrity by running the following OpenSSL command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>  openssl dgst -sha256 -verify &lt;(echo "-----BEGIN PUBLIC KEY-----
+  MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArij9U9yJVNc53oEMFWYp
+  NrXUG1UoRZseDh/p34q1uywD70RGKKWZvXIcUAZZwbZtCu4i0UzsrKRJeUwqanbc
+  woJvYanp6lc3DccXUN1w1Y0WOHOaBxiiK3B1TtEIH1cK/X+ZzazPG5nX7TSGh8Tp
+  /uxQzUFli2mDVLqaP62/fB9uJ2joX9Gtw8sZfuPGNMRoc8IdhjagbFkhFT7WCZnk
+  FH/4Co007lmXLAe12lQQqR/pOTeHJv1sfda1xaHtj4/Tcrq04Kx0ZmGAd5D9lA92
+  8pdBbzoe/mI5/Sk+nIY3AHkLXB9YAaKJf//Wb1yiP1/hchtVkfXyIaGM+cVyn7AN
+  VQIDAQAB
+  -----END PUBLIC KEY-----") -signature "fcli-linux.tgz.rsa_sha256" "fcli-linux.tgz"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If your shell doesn&#8217;t support <code>&lt;(&#8230;&#8203;)</code> syntax, you&#8217;ll need to save the <a href="https://raw.githubusercontent.com/fortify/tool-definitions/main/id_rsa.pub">public key</a> to a file and pass the file name to the <code>-verify</code> command line option, for example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>  openssl dgst -sha256 -verify pubkey.pem -signature "fcli-linux.tgz.rsa_sha256" "fcli-linux.tgz"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once downloaded, verified and extracted (if applicable), you can either perform a manual or managed installation. Managed installation is recommended, but only available on internet-connected systems. Please see the sections below for more information.</p>
 </div>
 <div class="sect2">
 <h3 id="_managed_installation"><a class="anchor" href="#_managed_installation"></a>Managed Installation</h3>
@@ -1153,8 +1183,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20240325.160747-dev_develop<br>
-Last updated 2024-03-25 16:09:29 UTC
+Version 0.20240325.162920-dev_develop<br>
+Last updated 2024-03-25 16:31:07 UTC
 </div>
 </div>
 </body>
