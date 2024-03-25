@@ -1,0 +1,112 @@
+---
+title: fcli-ssc-action(1)
+fcli_version: 
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fcli-ssc-action(1)</title>
+
+{% include asciidoc-head.html %}
+
+</head>
+<body class="manpage toc2 toc-left">
+
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240325.104343-dev_develop" %}
+
+
+<div id="header">
+<h1>fcli-ssc-action(1) Manual Page</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_synopsis">Synopsis</a></li>
+<li><a href="#_description">Description</a></li>
+<li><a href="#_options">Options</a></li>
+<li><a href="#_commands">Commands</a></li>
+</ul>
+</div>
+<h2>Name</h2>
+<div class="sectionbody">
+<p>fcli-ssc-action - Run a wide variety of SSC-related actions (data export, integration, automation).</p>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><strong>fcli ssc action</strong> [<strong>-h</strong>] [COMMAND]</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Actions are defined in YAML files that define action parameters, workflow steps and (optional) outputs. Fcli ships with various built-in actions, currently mostly focused on exporting issue data to 3rd-party systems or into various output formats. Please see the output of the 'list' command to see the list of available built-in actions.</p>
+</div>
+<div class="paragraph">
+<p>Fcli also supports custom actions, which can be imported using the 'import' command. You can design your custom actions from scratch, or use the built-in actions as a basis for your own custom actions, for example if you wish to modify behavior or output. The 'get' command can be used to view the contents of built-in or imported actions.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>-h</strong>, <strong>--help</strong></dt>
+<dd>
+<p>Show this help message and exit. Use 'fcli &lt;command&gt; -h' to display help for subcommands.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_commands"><a class="anchor" href="#_commands"></a>Commands</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="fcli-ssc-action-get.html"><strong>get</strong></a></dt>
+<dd>
+<p>Get action contents.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-action-help.html"><strong>help</strong></a></dt>
+<dd>
+<p>Show action usage help.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-action-import.html"><strong>import</strong></a></dt>
+<dd>
+<p>(PREVIEW) Import one or more actions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-action-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
+<dd>
+<p>List built-in actions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-action-reset.html"><strong>reset</strong></a></dt>
+<dd>
+<p>Remove all custom actions.</p>
+</dd>
+<dt class="hdlist1"><a href="fcli-ssc-action-run.html"><strong>run</strong></a></dt>
+<dd>
+<p>Run an action.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Version <br>
+Last updated 2024-03-25 10:45:17 UTC
+</div>
+</div>
+</body>
+</html>
