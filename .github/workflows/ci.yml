@@ -236,6 +236,17 @@ jobs:
         with:
           path: ./artifacts
           merge-multiple: true
+      - run: |
+          cd ./artifacts/release-assets
+          for f in *; do 
+            sha256sum ${f} > ${f}.sha256
+          done
+          for f in *; do 
+            openssl dgst -sha256 -passin env:SIGN_PASSPHRASE -sign <(echo "${SIGN_KEY}") -out ${f}.rsa_sha256 ${f}
+          done
+        env:
+          SIGN_PASSPHRASE: ${{ secrets.SIGN_PASSPHRASE }}
+          SIGN_KEY: ${{ secrets.SIGN_KEY }}
       - uses: actions/upload-artifact@v4
         with:
           path: ./artifacts
