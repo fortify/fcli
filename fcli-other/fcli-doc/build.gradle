@@ -30,7 +30,6 @@ task generateManpageAsciiDoc(type: JavaExec) {
 
 task generateManpageOutput(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
 	dependsOn(generateManpageAsciiDoc)
-	inProcess = JAVA_EXEC
 	forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
@@ -57,8 +56,7 @@ task prepareAsciiDocForVersionedHtml(type: Copy) {
 // Generate HTML documentation from AsciiDoc prepared by prepareAsciiDocForVersionedHtml
 task asciiDoctorVersionedHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
     dependsOn(prepareAsciiDocForVersionedHtml)
-    inProcess = JAVA_EXEC
-	forkOptions {
+    forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
     sourceDir = file("${htmlAsciiDocDir}")
@@ -84,7 +82,6 @@ task asciiDoctorVersionedHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) 
 // to be deployed to a version-specific directory on the fcli gh-pages site
 task asciiDoctorVersionedJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
 	dependsOn(prepareAsciiDocForVersionedHtml)
-	inProcess = JAVA_EXEC
 	forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
@@ -111,7 +108,6 @@ task asciiDoctorVersionedJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask
 // Generate Jekyll HTML documentation from AsciiDoc files in ${staticAsciiDocSrcDir}
 // to be deployed to the root directory on the fcli gh-pages site
 task asciiDoctorStaticJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
-	inProcess = JAVA_EXEC
 	forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
