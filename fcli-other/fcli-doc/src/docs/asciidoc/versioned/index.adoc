@@ -67,7 +67,7 @@ Please note that when publishing a new release, it may take up to 30-60 minutes 
 
 To install fcli, start by visiting the fcli https://github.com/fortify/fcli/releases[Releases] page as described in the previous section, and downloading the `fcli.jar` file or appropriate native binary archive for your platform. Native binary archives will need to be extracted to a temporary directory, the `fcli.jar` file can be used as-is. 
 
-As a best practice, you should verify the integrity of the downloaded file. Release assets include `*.sha256` and `*.rsa_sha256` for this purpose, with the latter being preferred for better security. For example, after downloading both `fcli-linux.tgz` and `fcli-linux.tgz.rsa_sha256`, you can verify integrity by running the following OpenSSL command:
+As a best practice, you should verify the integrity of the downloaded file. Release assets include `+*.sha256+` and `+*.rsa_sha256+` for this purpose, with the latter being preferred for better security. For example, after downloading both `+fcli-linux.tgz+` and `+fcli-linux.tgz.rsa_sha256+`, you can verify integrity by running the following OpenSSL command:
 
 ----
   openssl dgst -sha256 -verify <(echo "-----BEGIN PUBLIC KEY-----
@@ -81,7 +81,7 @@ As a best practice, you should verify the integrity of the downloaded file. Rele
   -----END PUBLIC KEY-----") -signature "fcli-linux.tgz.rsa_sha256" "fcli-linux.tgz"
 ----
 
-If your shell doesn't support `<(...)` syntax, you'll need to save the link:https://raw.githubusercontent.com/fortify/tool-definitions/main/id_rsa.pub[public key] to a file and pass the file name to the `-verify` command line option, for example:
+If your shell doesn't support `+<(...)+` syntax, you'll need to save the link:https://raw.githubusercontent.com/fortify/tool-definitions/main/id_rsa.pub[public key] to a file and pass the file name to the `-verify` command line option, for example:
 
 ----
   openssl dgst -sha256 -verify pubkey.pem -signature "fcli-linux.tgz.rsa_sha256" "fcli-linux.tgz"
