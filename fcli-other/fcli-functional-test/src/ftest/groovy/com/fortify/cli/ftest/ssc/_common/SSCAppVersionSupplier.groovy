@@ -35,7 +35,7 @@ public class SSCAppVersionSupplier implements Closeable, AutoCloseable  {
     
     
     
-    public class SSCAppVersion {
+    public static class SSCAppVersion {
         private final String random = System.currentTimeMillis()
         private final String fcliVariableName = "ssc_appversion_"+random
         private final String appName = "fcli-"+random

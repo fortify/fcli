@@ -9,6 +9,7 @@ import org.spockframework.runtime.model.FieldInfo
 import org.spockframework.runtime.model.SpecInfo
 
 import com.fortify.cli.ftest._common.spec.TestResource
+import com.fortify.cli.ftest._common.util.RuntimeResourcesHelper
 import com.fortify.cli.ftest._common.util.TempDirHelper
 
 import groovy.transform.CompileStatic
@@ -23,28 +24,9 @@ class TestResourceExtension extends AbstractTempDirExtension {
     @Override
     protected Path getPathForField(FieldInfo field) {
         def annotation = field.getAnnotation(TestResource.class)
-        return annotation==null ? null : extractResource(annotation.value())
+        return annotation==null ? null : RuntimeResourcesHelper.extractResource(annotation.value())
     }
     
-    private Path extractResource(String resourceFile) {
-        getResource(resourceFile).withCloseable {
-            Path outputFilePath = tempDir.resolve(resourceFile)
-            outputFilePath.parent.toFile().mkdirs()
-            Files.copy(it, outputFilePath, StandardCopyOption.REPLACE_EXISTING)
-            return outputFilePath
-        }
-    }
     
-    private InputStream getResource(String resourceFile) {
-        def cl = TestResourceExtension.class.classLoader
-        def stream = cl.getResourceAsStream(resourceFile)
-        if ( stream==null ) {
-            stream = cl.getResourceAsStream(resourceFile+"-no-shadow")
-        }
-        if ( stream==null ) {
-            throw new IllegalStateException("${resourceFile} (or ${resourceFile}-no-shadow) referenced in @TestResource not found")
-        }
-        return stream
-    }
     
 }
