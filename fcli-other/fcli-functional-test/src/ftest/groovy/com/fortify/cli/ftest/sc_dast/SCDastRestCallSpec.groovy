@@ -12,8 +12,8 @@
  */
 package com.fortify.cli.ftest.sc_dast
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SCDAST
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SCSAST
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SCDAST
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SCSAST
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec

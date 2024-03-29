@@ -1,6 +1,6 @@
 package com.fortify.cli.ftest.config;
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
@@ -15,7 +15,7 @@ import spock.lang.Stepwise
 
 @Prefix("config.truststore") @Stepwise
 class ConfigTrustStoreSpec extends FcliBaseSpec {
-    @Shared @TempDir("sc-client") String scClientInstallDir;
+    @Shared @TempDir("fortify/tools") String baseDir;
     @Shared @TestResource("runtime/config/dummyStore.jks") String dummyStore;
     
     def setupSpec() {
@@ -57,7 +57,7 @@ class ConfigTrustStoreSpec extends FcliBaseSpec {
     }
     
     def "install.failure"() {
-        def args = "tool sc-client install -y -d ${scClientInstallDir}"
+        def args = "tool sc-client install -y -b ${baseDir}"
         when:
             def result = Fcli.run(args, {it.expectSuccess(false)})
         then:

@@ -12,22 +12,22 @@
  */
 package com.fortify.cli.ftest.ssc
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
+import com.fortify.cli.ftest._common.spec.TempFile
 import com.fortify.cli.ftest._common.spec.TestResource
 
-import spock.lang.AutoCleanup
-import spock.lang.Requires
 import spock.lang.Shared
 import spock.lang.Stepwise
 
 @Prefix("ssc.issue-template") @FcliSession(SSC) @Stepwise
 class SSCIssueTemplateSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/ssc/issueTemplate.xml") String templateFile
+    @Shared @TempFile("issueTemplateSpec/download.xml") String downloadedTemplateFile
     private static final String random = System.currentTimeMillis()
     private static final String templateName = "fcli-test-Template"+random
     
@@ -102,10 +102,11 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
     }
     
     def "download"() {
-        def args = "ssc issue download-template ::template::id"
+        def args = "ssc issue download-template ::template::id -f ${downloadedTemplateFile}"
         when:
             def result = Fcli.run(args)
         then:
+            new File(downloadedTemplateFile).exists()
             verifyAll(result.stdout) {
                 size()>0
                 it.last().contains("DOWNLOADED")

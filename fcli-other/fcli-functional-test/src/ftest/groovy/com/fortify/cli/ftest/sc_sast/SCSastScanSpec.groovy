@@ -1,7 +1,7 @@
 package com.fortify.cli.ftest.sc_sast;
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SCSAST
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SCSAST
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec

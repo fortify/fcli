@@ -1,6 +1,6 @@
 package com.fortify.cli.ftest.ssc;
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.Fcli.UnexpectedFcliResultException

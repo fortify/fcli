@@ -12,15 +12,28 @@
  */
 package com.fortify.cli.ftest.ssc._common
 
+import java.nio.file.Path
+
 import com.fortify.cli.ftest._common.Fcli
-import com.fortify.cli.ftest.ssc._common.SSCLocalUserSupplier.SSCUser
+import com.fortify.cli.ftest._common.spec.Global.IGlobalValueSupplier
+import com.fortify.cli.ftest._common.util.WorkDirHelper
 
 public class SSCAppVersionSupplier implements Closeable, AutoCloseable  {
+    private final Closure init;
     private SSCAppVersion version;
+    
+    public SSCAppVersionSupplier() {
+        this({});
+    }
+    
+    public SSCAppVersionSupplier(Closure init) {
+        this.init = init;
+    }
     
     public SSCAppVersion getVersion() {
         if ( !version ) {
             version = new SSCAppVersion().create()
+            init(version);
         }
         return version
     }
@@ -33,9 +46,7 @@ public class SSCAppVersionSupplier implements Closeable, AutoCloseable  {
         }
     }
     
-    
-    
-    public class SSCAppVersion {
+    public static class SSCAppVersion {
         private final String random = System.currentTimeMillis()
         private final String fcliVariableName = "ssc_appversion_"+random
         private final String appName = "fcli-"+random
@@ -69,6 +80,48 @@ public class SSCAppVersionSupplier implements Closeable, AutoCloseable  {
         }
     }
     
+    private static abstract class AppVersionGlobalValueSupplier implements IGlobalValueSupplier {
+        private SSCAppVersionSupplier versionSupplier;
+        public final SSCAppVersionSupplier getValue(WorkDirHelper workDirHelper) {
+            if ( !versionSupplier ) {
+                versionSupplier = new SSCAppVersionSupplier({ SSCAppVersion v -> initVersion(workDirHelper, v) });
+            }
+            return versionSupplier
+        }
+        @Override
+        public final void close() {
+            if ( versionSupplier ) {
+                versionSupplier.close();
+                versionSupplier = null;
+            }
+        }
+        protected String upload(SSCAppVersion version, Path fprPath) {
+            def varName = "global${this.class.simpleName}Fpr"
+            Fcli.run("ssc artifact upload -f $fprPath --appversion ${version.variableRef} --store ${varName}")
+            Fcli.run("ssc artifact wait-for ::${varName}:: -i 2s")
+            return varName;
+        }
+        protected abstract void initVersion(WorkDirHelper workDirHelper, SSCAppVersion version);
+    }
+    
+    public static class Empty extends AppVersionGlobalValueSupplier {
+        @Override
+        protected void initVersion(WorkDirHelper workDirHelper, SSCAppVersion version) {}
+    }
+    
+    public static class EightBall extends AppVersionGlobalValueSupplier {
+        @Override
+        protected void initVersion(WorkDirHelper workDirHelper, SSCAppVersion version) {
+            upload(version, workDirHelper.getResource("runtime/shared/EightBall-22.1.0.fpr"));
+        }
+    }
+    
+    public static class LoginProject extends AppVersionGlobalValueSupplier {
+        @Override
+        protected void initVersion(WorkDirHelper workDirHelper, SSCAppVersion version) {
+            upload(version, workDirHelper.getResource("runtime/shared/LoginProject.fpr"));
+        }
+    }
 }
 
 
