@@ -1,6 +1,1 @@
-com.fortify.cli.ftest.ssc._common.SSCGlobal
-com.fortify.cli.ftest._common.extension.FcliInitializerExtension
-com.fortify.cli.ftest._common.extension.TestResourceExtension
-com.fortify.cli.ftest._common.extension.TempPathExtension
-com.fortify.cli.ftest._common.extension.DisplayNameExtension
-com.fortify.cli.ftest._common.extension.SkipFeaturesExtension
+com.fortify.cli.ftest._common.extension.FcliGlobalExtension

@@ -1,12 +1,11 @@
 package com.fortify.cli.ftest._common;
 
-import java.nio.file.Files
 import java.nio.file.Path
 
 import org.spockframework.runtime.IStandardStreamsListener
 import org.spockframework.runtime.StandardStreamsCapturer
 
-import com.fortify.cli.ftest._common.util.TempDirHelper
+import com.fortify.cli.ftest._common.util.WorkDirHelper
 
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
@@ -17,11 +16,10 @@ public class Fcli {
     private static IRunner runner
     private static Set<String> stringsToMask = []
     
-    static void initialize() {
+    static void initialize(Path fortifyDataDir) {
         System.setProperty("picocli.ansi", "false")
-        fcliDataDir = TempDirHelper.create()
-        System.setProperty("fcli.env.FORTIFY_DATA_DIR", fcliDataDir.toString())
-        println("Using fcli data directory "+fcliDataDir)
+        System.setProperty("fcli.env.FORTIFY_DATA_DIR", fortifyDataDir.toString())
+        println("Using fcli data directory "+fortifyDataDir)
         runner = createRunner()
     }
     
@@ -105,7 +103,6 @@ public class Fcli {
         if ( runner ) { 
             runner.close()
         }
-        TempDirHelper.rm(fcliDataDir)
     }
     
     private static IRunner createRunner() {

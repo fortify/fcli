@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.ftest.ssc
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -21,6 +21,7 @@ import java.text.SimpleDateFormat
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
+import com.fortify.cli.ftest._common.spec.Global
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest._common.spec.TempDir
 import com.fortify.cli.ftest._common.spec.TempFile
@@ -34,23 +35,15 @@ import spock.lang.Stepwise
 @Prefix("ssc.report") @FcliSession(SSC) @Stepwise
 class SSCReportSpec extends FcliBaseSpec {
     @Shared @TempFile("report.pdf") String reportFile;
-    @Shared @AutoCleanup SSCAppVersionSupplier version1Supplier = new SSCAppVersionSupplier()
-    @Shared @AutoCleanup SSCAppVersionSupplier version2Supplier = new SSCAppVersionSupplier()
-    @Shared @TestResource("runtime/shared/EightBall-22.1.0.fpr") String fpr1
-    @Shared @TestResource("runtime/shared/LoginProject.fpr") String fpr2
+    @Global(SSCAppVersionSupplier.EightBall.class) SSCAppVersionSupplier eightBallVersionSupplier;
+    @Global(SSCAppVersionSupplier.LoginProject.class) SSCAppVersionSupplier loginProjectVersionSupplier;
     @Shared String random = System.currentTimeMillis()
     @Shared String owaspReportName = "fcli-OWASP-${random}"
     @Shared String trendingReportName = "fcli-Trending-${random}"
     @Shared String kpiReportName = "fcli-KPI-${random}"
     
-    def setupSpec() {
-        Fcli.run("ssc artifact upload -f $fpr1 --appversion ${version1Supplier.version.variableRef} --store fpr1")
-        Fcli.run("ssc artifact upload -f $fpr2 --appversion ${version2Supplier.version.variableRef} --store fpr2")
-        Fcli.run("ssc artifact wait-for ::fpr1:: ::fpr2:: -i 2s")
-    }
-    
     def "createOWASP"() {
-        def args = "ssc report create --template OWASP\\ Top\\ 10 --name ${owaspReportName} -p Application\\ Version=${version1Supplier.version.get("id")} --store owasp"
+        def args = "ssc report create --template OWASP\\ Top\\ 10 --name ${owaspReportName} -p Application\\ Version=${eightBallVersionSupplier.version.get("id")} --store owasp"
         when:
             def result = Fcli.run(args)
         then:
@@ -62,7 +55,7 @@ class SSCReportSpec extends FcliBaseSpec {
     
     def "createTrending"() {
         def today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        def args = "ssc report create --template Issue\\ Trending --name ${trendingReportName} -p startDate=2010-01-01,endDate=${today},projectversionids=[${version1Supplier.version.get("id")};${version2Supplier.version.get("id")}] --store trending"
+        def args = "ssc report create --template Issue\\ Trending --name ${trendingReportName} -p startDate=2010-01-01,endDate=${today},projectversionids=[${eightBallVersionSupplier.version.get("id")};${loginProjectVersionSupplier.version.get("id")}] --store trending"
         when:
             def result = Fcli.run(args)
         then:
@@ -73,7 +66,7 @@ class SSCReportSpec extends FcliBaseSpec {
     }
     
     def "createKPI"() {
-        def args = "ssc report create --template Key\\ Performance\\ Indicators --name ${kpiReportName} -p Application\\ Attribute=Accessibility,projectversionids=[${version1Supplier.version.get("id")};${version2Supplier.version.get("id")}] --store kpi"
+        def args = "ssc report create --template Key\\ Performance\\ Indicators --name ${kpiReportName} -p Application\\ Attribute=Accessibility,projectversionids=[${eightBallVersionSupplier.version.get("id")};${loginProjectVersionSupplier.version.get("id")}] --store kpi"
         when:
             def result = Fcli.run(args)
         then:
