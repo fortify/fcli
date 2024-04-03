@@ -39,6 +39,7 @@ public class SSCIssueListCommand extends AbstractSSCBaseRequestOutputCommand imp
     @Mixin private SSCAppVersionResolverMixin.RequiredOption parentResolver;
     @Mixin private SSCIssueFilterSetResolverMixin.FilterSetOption filterSetResolver;
     @Mixin private SSCQParamMixin qParamMixin;
+    @Mixin private SSCIssueBulkEmbedMixin bulkEmbedMixin;
     @Option(names="--filter", required=false) private String filter;
     
     // For some reason, SSC q param doesn't use same property names as returned by SSC,
@@ -46,7 +47,6 @@ public class SSCIssueListCommand extends AbstractSSCBaseRequestOutputCommand imp
     @Getter private IServerSideQueryParamValueGenerator serverSideQueryParamGenerator = new SSCQParamGenerator()
         .add("issueName", "category", SSCQParamValueGenerators::wrapInQuotes)
         .add("fullFileName", "file", SSCQParamValueGenerators::wrapInQuotes);
-    @Mixin private SSCIssueBulkEmbedMixin bulkEmbedMixin;
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {

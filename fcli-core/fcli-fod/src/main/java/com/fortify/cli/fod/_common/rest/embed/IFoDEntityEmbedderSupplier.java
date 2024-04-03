@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2021, 2022 Open Text.
+ * Copyright 2021, 2023 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -10,7 +10,13 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
+package com.fortify.cli.fod._common.rest.embed;
+
 /**
- * This package contains generic helper classes for working with the SSC REST API.
+ * Interface for supplying an {@link IFoDEntityEmbedder} instance.
+ * @author rsenden
  */
-package com.fortify.cli.ssc._common.rest.bulk;
+@FunctionalInterface
+public interface IFoDEntityEmbedderSupplier {
+    IFoDEntityEmbedder createEntityEmbedder();
+}
