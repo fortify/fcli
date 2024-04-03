@@ -162,6 +162,9 @@ public abstract class AbstractOutputHelperMixin implements IOutputHelper {
      * @param cmd
      */
     protected final void addRecordTransformersForCommand(StandardOutputConfig standardOutputConfig, Object cmd) {
+        for ( var mixin : commandHelper.getCommandSpec().mixins().values() ) {
+            addRecordTransformersFromObject(standardOutputConfig, mixin.userObject());
+        }
         addRecordTransformersFromObject(standardOutputConfig, getProductHelper());
         addRecordTransformersFromObject(standardOutputConfig, cmd);
         addCommandActionResultRecordTransformer(standardOutputConfig, cmd);

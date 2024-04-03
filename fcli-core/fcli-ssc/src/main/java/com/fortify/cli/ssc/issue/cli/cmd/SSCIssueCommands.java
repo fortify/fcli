@@ -32,6 +32,7 @@ import picocli.CommandLine.Command;
                 SSCIssueGroupGetCommand.class,
                 SSCIssueGroupListCommand.class,
                 SSCIssueCountCommand.class,
+                SSCIssueListCommand.class,
         }
 )
 public class SSCIssueCommands extends AbstractContainerCommand {
