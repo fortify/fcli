@@ -1,4 +1,4 @@
-# For now, github-sast-report and sarif-report actions are exactly the same, apart from the
+# For now, github-sast-report and sarif-sast-report actions are exactly the same, apart from the
 # following:
 # - Different usage information
 # - Different default Optional output file name 
@@ -70,10 +70,19 @@ steps:
             uri: /api/v1/issueDetails/${issue.id}
         do:
           - set:
-            - name: rules
-              operation: append
+            - name: ruleCategories
+              operation: merge
             - name: results
               operation: append
+  - progress: Processing rule data
+  - forEach:
+      processor: "#ssc.ruleDescriptionsProcessor(parameters.appversion.id)"
+      name: rule
+      do:
+        - set:
+          - if: "#isNotBlank(ruleCategories[rule.id])"
+            name: rules
+            operation: append
   - write:
     - to: ${parameters.file}
       valueTemplate: github-sast-report
@@ -83,6 +92,9 @@ steps:
         Output written to ${parameters.file}
 
 valueTemplates:
+  - name: ruleCategories
+    contents: "${{issue.primaryRuleGuid: issue.issueName}}"
+      
   - name: github-sast-report
     contents:
       "$schema": https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json 
@@ -93,33 +105,52 @@ valueTemplates:
               name: 'Fortify SCA'   
               version: ${lastStaticScan?.engineVersion?:'unknown'}
               rules: ${rules?:{}}
+              properties:
+                copyright: ${#copyright()}
+                applicationName: ${parameters.appversion.project.name}
+                applicationId: ${parameters.appversion.project.id}
+                versionName: ${parameters.appversion.name}
+                versionId: ${parameters.appversion.id}
           results: ${results?:{}} 
      
   - name: rules
     contents:
-      id: ${issue.id+''}
+      id: ${rule.id}
       shortDescription:
-        text: ${issue.issueName}
+        text: ${ruleCategories[rule.id]}
       fullDescription:
-        text: ${issue.details?.brief}
+        text: |
+          ${ruleCategories[rule.id]}
+          
+          ${rule.abstract}
       help:
         text: |
-          ${#htmlToText(issue.details?.detail)}
-
-          ${#htmlToText(issue.details?.recommendation)}
-        
+          Explanation
+          
+          ${#htmlToText(rule.explanation)?:'-'}
+          
+          Recommendations
+          
+          ${#htmlToText(rule.recommendations)?:'-'}
+          
+          Tips
+          
+          ${#join('\n\n', rule.tips)?:'-'}
+          
+          References
+          
+          ${#join('\n\n', rule.references.![title 
+            +(#isNotBlank(publisher)?", "+publisher:"")
+            +(#isNotBlank(author)?", "+author:"")
+            +(#isNotBlank(source)?", "+source:"")])?:'-'}
             
-          For more information, see ${#ssc.issueBrowserUrl(issue,parameters.filterset)}
-      properties:
-        tags: ${{issue.friority}}
-        precision: ${(issue.friority matches "(Critical|Medium)") ? "high":"low" }
-        security-severity: ${{Critical:10.0,High:8.9,Medium:6.9,Low:3.9}.get(issue.friority)+''}
+          ${#copyright()}
         
   - name: results
     contents:
-      ruleId: ${issue.id+''}
+      ruleId: ${issue.primaryRuleGuid}
       message: 
-        text: ${issue.details?.brief}
+        text: ${issue.details?.brief} [More information](${#ssc.issueBrowserUrl(issue,parameters.filterset)})
       level: ${(issue.friority matches "(Critical|High)") ? "warning":"note" }
       partialFingerprints:
         issueInstanceId: ${issue.issueInstanceId}
@@ -128,8 +159,8 @@ valueTemplates:
             artifactLocation:
               uri: ${issue.fullFileName}
             region:
-              startLine: ${issue.lineNumber==0?1:issue.lineNumber}
-              endLine: ${issue.lineNumber==0?1:issue.lineNumber}
+              startLine: ${issue.lineNumber==0||issue.lineNumber==null?1:issue.lineNumber}
+              endLine: ${issue.lineNumber==0||issue.lineNumber==null?1:issue.lineNumber}
               startColumn: ${1}  # Needs to be specified as an expression in order to end up as integer instead of string in JSON
               endColumn: ${80}
       codeFlows: |-
@@ -148,7 +179,7 @@ valueTemplates:
                                 uri: fullPath
                             },
                             region: {
-                                startLine: line==0?1:line
+                                startLine: line==0||line==null?1:line
                             }
                         }
                     }

@@ -243,6 +243,8 @@ public class ActionDescriptor {
         private List<ActionStepSetDescriptor> set;
         /** Optional write operations */
         private List<ActionStepWriteDescriptor> write;
+        /** Optional forEach operation */
+        private ActionStepForEachDescriptor forEach;
         
         /**
          * This method is invoked by the parent element (which may either be another
@@ -253,38 +255,7 @@ public class ActionDescriptor {
             if ( requests!=null ) { requests.forEach(d->d.postLoad(action)); }
             if ( set!=null ) { set.forEach(d->d.postLoad(action)); }
             if ( write!=null ) { write.forEach(d->d.postLoad(action)); }
-        }
-    }
-    
-    /**
-     * This class describes a forEach element, allowing iteration over the output of
-     * the parent element, like the response of a REST request or the contents of a
-     * action parameter. 
-     */
-    @Reflectable @NoArgsConstructor
-    @Data
-    public static final class ActionStepForEachDescriptor implements IActionIfSupplier {
-        /** Optional if-expression, executing steps only if condition evaluates to true */
-        @JsonProperty("if") private SimpleExpression _if;
-        /** Optional break-expression, terminating forEach if condition evaluates to true */
-        private SimpleExpression breakIf;
-        /** Required name for this step element */
-        private String name;
-        /** Optional requests for which to embed the response in each forEach node */
-        private List<ActionStepRequestDescriptor> embed;
-        /** Steps to be repeated for each value */
-        @JsonProperty("do") private List<ActionStepDescriptor> _do;
-        
-        /**
-         * This method is invoked by the {@link ActionStepDescriptor#postLoad()}
-         * method. It checks that required properties are set, then calls the postLoad() method for
-         * each sub-step.
-         */
-        public final void postLoad(ActionDescriptor action) {
-            checkNotBlank("forEach name", name, this);
-            checkNotNull("forEach do", _do, this);
-            if ( embed!=null ) { embed.forEach(d->d.postLoad(action)); }
-            _do.forEach(d->d.postLoad(action));
+            if ( forEach!=null ) { forEach.postLoad(action); }
         }
     }
     
@@ -316,14 +287,12 @@ public class ActionDescriptor {
                         ()->"No value template found with name "+valueTemplate);
             }
         }
-    }
-    
-    // Ideally, this should be an inner class on ActionStepRequestDescriptor, but this causes
-    // issues with native images; see https://github.com/formkiq/graalvm-annotations-processor/issues/11
-    // TODO: Add other operations like 'merge' for merging two ObjectNodes or ArrayNodes?
-    @Reflectable
-    public static enum ActionStepSetOperation {
-        replace, append;
+        
+        // TODO: Add other operations like 'merge' for merging two ObjectNodes or ArrayNodes?
+        @Reflectable
+        public static enum ActionStepSetOperation {
+            replace, append, merge;
+        }
     }
     
     /**
@@ -345,6 +314,45 @@ public class ActionDescriptor {
             checkNotNull("write to", to, this);
             check(value==null && StringUtils.isBlank(valueTemplate), this, ()->
                 "Either value or valueTemplate must be specified on write step");
+        }
+    }
+    
+    /**
+     * This class describes a forEach element, allowing iteration over the output of
+     * a given input.
+     */
+    @Reflectable @NoArgsConstructor
+    @Data
+    public static final class ActionStepForEachDescriptor implements IActionIfSupplier {
+        /** Processor that runs the forEach steps. This expression must evaluate to an
+         *  IActionStepForEachProcessor instance. */
+        private SimpleExpression processor;
+        /** Optional if-expression, executing steps only if condition evaluates to true */
+        @JsonProperty("if") private SimpleExpression _if;
+        /** Optional break-expression, terminating forEach if condition evaluates to true */
+        private SimpleExpression breakIf;
+        /** Required name for this step element */
+        private String name;
+        /** Steps to be repeated for each value */
+        @JsonProperty("do") private List<ActionStepDescriptor> _do;
+        
+        /**
+         * This method is invoked by the {@link ActionStepDescriptor#postLoad()}
+         * method. It checks that required properties are set, then calls the postLoad() method for
+         * each sub-step.
+         */
+        public final void postLoad(ActionDescriptor action) {
+            checkNotBlank("forEach name", name, this);
+            checkNotNull("forEach do", _do, this);
+            _do.forEach(d->d.postLoad(action));
+        }
+        
+        @FunctionalInterface
+        public static interface IActionStepForEachProcessor {
+            /** Implementations of this method should invoke the given function for every
+             *  JsonNode to be processed, and terminate processing if the given function
+             *  returns false. */ 
+            public void process(Function<JsonNode, Boolean> consumer);
         }
     }
     
@@ -377,7 +385,7 @@ public class ActionDescriptor {
         /** Optional steps to be executed on request failure; if not declared, an exception will be thrown */
         private List<ActionStepDescriptor> onFail;
         /** Optional forEach block to be repeated for every response element */
-        private ActionStepForEachDescriptor forEach;
+        private ActionStepRequestForEachDescriptor forEach;
         
         /**
          * This method is invoked by {@link ActionStepDescriptor#postLoad()}
@@ -397,23 +405,51 @@ public class ActionDescriptor {
                 forEach.postLoad(action);
             }
         }
-    }
-    
-    // Ideally, this should be an inner class on ActionStepRequestDescriptor, but this causes
-    // issues with native images; see https://github.com/formkiq/graalvm-annotations-processor/issues/11
-    @Reflectable
-    public static enum ActionStepRequestType {
-        simple, paged
-    }
-    
-    // Ideally, this should be an inner class on ActionStepRequestDescriptor, but this causes
-    // issues with native images; see https://github.com/formkiq/graalvm-annotations-processor/issues/11
-    @Reflectable @NoArgsConstructor
-    @Data
-    public static final class ActionStepRequestPagingProgressDescriptor {
-        private TemplateExpression prePageLoad;
-        private TemplateExpression postPageLoad;
-        private TemplateExpression postPageProcess;
+        
+        /**
+         * This class describes a request forEach element, allowing iteration over the output of
+         * the parent element, like the response of a REST request or the contents of a
+         * action parameter. 
+         */
+        @Reflectable @NoArgsConstructor
+        @Data
+        public static final class ActionStepRequestForEachDescriptor implements IActionIfSupplier {
+            /** Optional if-expression, executing steps only if condition evaluates to true */
+            @JsonProperty("if") private SimpleExpression _if;
+            /** Optional break-expression, terminating forEach if condition evaluates to true */
+            private SimpleExpression breakIf;
+            /** Required name for this step element */
+            private String name;
+            /** Optional requests for which to embed the response in each forEach node */
+            private List<ActionStepRequestDescriptor> embed;
+            /** Steps to be repeated for each value */
+            @JsonProperty("do") private List<ActionStepDescriptor> _do;
+            
+            /**
+             * This method is invoked by the {@link ActionStepDescriptor#postLoad()}
+             * method. It checks that required properties are set, then calls the postLoad() method for
+             * each sub-step.
+             */
+            public final void postLoad(ActionDescriptor action) {
+                checkNotBlank("forEach name", name, this);
+                checkNotNull("forEach do", _do, this);
+                if ( embed!=null ) { embed.forEach(d->d.postLoad(action)); }
+                _do.forEach(d->d.postLoad(action));
+            }
+        }
+        
+        @Reflectable
+        public static enum ActionStepRequestType {
+            simple, paged
+        }
+        
+        @Reflectable @NoArgsConstructor
+        @Data
+        public static final class ActionStepRequestPagingProgressDescriptor {
+            private TemplateExpression prePageLoad;
+            private TemplateExpression postPageLoad;
+            private TemplateExpression postPageProcess;
+        }
     }
     
     /**

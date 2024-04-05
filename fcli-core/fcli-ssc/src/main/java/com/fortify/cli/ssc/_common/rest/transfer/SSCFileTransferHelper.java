@@ -119,7 +119,7 @@ public class SSCFileTransferHelper {
         REPORT_FILE
     }
     
-    private static final class SSCFileTransferTokenSupplier implements AutoCloseable, Supplier<String> {
+    public static final class SSCFileTransferTokenSupplier implements AutoCloseable, Supplier<String> {
         private final UnirestInstance unirest;
         private final String token;
         

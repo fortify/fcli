@@ -19,7 +19,7 @@ dependencies {
 		
 		// Annotation-based reflect-config.json generation
 		api('com.formkiq:graalvm-annotations:1.2.0')
-        api('com.formkiq:graalvm-annotations-processor:1.4.1')
+        api('com.formkiq:graalvm-annotations-processor:1.4.2')
         
         // ANSI support
         api("org.fusesource.jansi:jansi:2.4.1")
