@@ -1,6 +1,9 @@
-# For now, github-sast-report and sarif-report actions are exactly the same, apart from usage 
-# information and default output file name. The reason for having two similar but separate 
-# actions is two-fold:
+# For now, github-sast-report and sarif-sast-report actions are exactly the same, apart from the
+# following:
+# - Different usage information
+# - Different default Optional output file name 
+# - The sarif-report doesn't impose a limit of 1000 issues
+# The reason for having two similar but separate actions is two-fold:
 # - We want to explicitly show that fcli supports both GitHub Code Scanning integration (which 
 #   just happens to be based on SARIF) and generic SARIF capabilities.
 # - Potentially, outputs for GitHub and generic SARIF may deviate in the future, for example if 
@@ -57,8 +60,11 @@ steps:
             uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/traces 
         do:
           - set:
-            - name: rules
+            - if: "ruleCache==null || ruleCache[issue.checkId]==null"
+              name: rules
               operation: append
+            - name: ruleCache
+              operation: merge
             - name: results
               operation: append
   - write:
@@ -70,6 +76,9 @@ steps:
         Output written to ${parameters.file}
 
 valueTemplates:
+  - name: ruleCache
+    contents: "${{issue.checkId: true}}"
+
   - name: github-sast-report
     contents:
       "$schema": https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json 
@@ -80,33 +89,49 @@ valueTemplates:
               name: 'Fortify on Demand'   
               version: SCA ${staticScanSummary?.staticScanSummaryDetails?.engineVersion?:'version unknown'}; Rulepack ${staticScanSummary?.staticScanSummaryDetails?.rulePackVersion?:'version unknown'}
               rules: ${rules?:{}}
+              properties:
+                copyright: ${#copyright()}
+                applicationName: ${parameters.release.applicationName}
+                applicationId: ${parameters.release.applicationId}
+                releaseName: ${parameters.release.releaseName}
+                releaseId: ${parameters.release.releaseId}
           results: ${results?:{}}
      
   - name: rules
     contents:
-      id: ${issue.id+''}
+      id: ${issue.checkId}
       shortDescription:
         text: ${issue.category}
       fullDescription:
-        text: ${#htmlToText(issue.details?.summary)}
+        text: |
+          ${issue.category}
+          
+          ${#cleanRuleDescription(issue.details?.summary)}
       help:
         text: |
-          ${#htmlToText(issue.details?.explanation)}
+          Explanation
+        
+          ${#cleanRuleDescription(issue.details?.explanation)?:'-'}
           
-          ${#htmlToText(issue.recommendations?.recommendations)}
+          Recommendations
           
+          ${#cleanRuleDescription(issue.recommendations?.recommendations)?:'-'}
           
-          For more information, see ${#fod.issueBrowserUrl(issue)}
-      properties:
-        tags: ${{issue.severityString}}
-        precision: ${(issue.severityString matches "(Critical|Medium)") ? "high":"low" }
-        security-severity: ${{Critical:10.0,High:8.9,Medium:6.9,Low:3.9}.get(issue.severityString)+''}
+          Tips
+          
+          ${#cleanRuleDescription(issue.recommendations?.tips)?:'-'}
+          
+          References
+          
+          ${#cleanRuleDescription(issue.recommendations?.references)?:'-'}
+          
+          ${#copyright()}
 
   - name: results
     contents:
-      ruleId: ${issue.id+''}
+      ruleId: ${issue.checkId}
       message: 
-        text: ${#htmlToText(issue.details?.summary)}
+        text: ${#htmlToText(issue.details?.summary)} [More information](${#fod.issueBrowserUrl(issue)})
       level: ${(issue.severityString matches "(Critical|High)") ? "warning":"note" }
       partialFingerprints:
         issueInstanceId: ${issue.instanceId}

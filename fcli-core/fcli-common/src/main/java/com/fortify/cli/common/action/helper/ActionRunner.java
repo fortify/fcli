@@ -48,11 +48,13 @@ import com.fortify.cli.common.action.helper.ActionDescriptor.ActionParameterDesc
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionRequestTargetDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepForEachDescriptor;
+import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepForEachDescriptor.IActionStepForEachProcessor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestPagingProgressDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestType;
+import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor.ActionStepRequestForEachDescriptor;
+import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor.ActionStepRequestPagingProgressDescriptor;
+import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor.ActionStepRequestType;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepSetDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepSetOperation;
+import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepSetDescriptor.ActionStepSetOperation;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepWriteDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionValidationException;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionValueTemplateDescriptor;
@@ -155,7 +157,7 @@ public class ActionRunner implements AutoCloseable {
         return this;
     }
     
-    private IActionRequestHelper getRequestHelper(String name) {
+    public IActionRequestHelper getRequestHelper(String name) {
         if ( StringUtils.isBlank(name) ) {
             if ( requestHelpers.size()==1 ) {
                 return requestHelpers.values().iterator().next();
@@ -307,6 +309,7 @@ public class ActionRunner implements AutoCloseable {
                 processSupplier(step::getDebug, this::processDebugStep);
                 processSupplier(step::get_throw, this::processThrowStep);
                 processSupplier(step::getRequests, this::processRequestsStep);
+                processSupplier(step::getForEach, this::processForEachStep);
                 processAll(step::getSet, this::processSetStep);
                 processAll(step::getWrite, this::processWriteStep);
             }
@@ -369,6 +372,15 @@ public class ActionRunner implements AutoCloseable {
                     throw new IllegalStateException("Cannot append value to existing value of type "+result.getNodeType());
                 }
                 ((ArrayNode)result).add(value);
+            } else if ( op==ActionStepSetOperation.merge ) {
+                result = localData.get(name);
+                if ( result==null ) {
+                    result = objectMapper.createObjectNode();
+                }
+                if ( !result.isObject() || !value.isObject() ) {
+                    throw new IllegalStateException(String.format("Only ObjectNodes can be merged (existing value type: %s, type of value to be merged: %s) ", result.getNodeType(), value.getNodeType()));
+                }
+                ((ObjectNode)result).setAll((ObjectNode)value);
             }
             return result;
         }
@@ -438,6 +450,19 @@ public class ActionRunner implements AutoCloseable {
             throw new RuntimeException(spelEvaluator.evaluate(message, localData, String.class));
         }
         
+        private void processForEachStep(ActionStepForEachDescriptor forEach) {
+            spelEvaluator.evaluate(forEach.getProcessor(), localData, IActionStepForEachProcessor.class)
+                .process(node->processForEachStepNode(forEach, node));
+        }
+        
+        private boolean processForEachStepNode(ActionStepForEachDescriptor forEach, JsonNode node) {
+            setDataValue(forEach.getName(), node);
+            if ( _if(forEach) ) {
+                processSteps(forEach.get_do());
+            }
+            return true;
+        }
+
         private void processRequestsStep(List<ActionStepRequestDescriptor> requests) {
             if ( requests!=null ) {
                 var requestsProcessor = new ActionStepRequestsProcessor();
@@ -452,7 +477,7 @@ public class ActionRunner implements AutoCloseable {
             localData.set(name+"_raw", rawBody);
             localData.set(name, body);
             processOnResponse(requestDescriptor);
-            processForEach(requestDescriptor);
+            processRequestStepForEach(requestDescriptor);
         }
         
         private final void processFailure(ActionStepRequestDescriptor requestDescriptor, UnirestException e) {
@@ -467,15 +492,15 @@ public class ActionRunner implements AutoCloseable {
             processSteps(onResponseSteps);
         }
     
-        private final void processForEach(ActionStepRequestDescriptor requestDescriptor) {
+        private final void processRequestStepForEach(ActionStepRequestDescriptor requestDescriptor) {
             var forEach = requestDescriptor.getForEach();
             if ( forEach!=null ) {
                 var input = localData.get(requestDescriptor.getName());
                 if ( input!=null ) {
                     if ( input instanceof ArrayNode ) {
-                        updateForEachTotalCount(forEach, (ArrayNode)input);
-                        processForEachEmbed(forEach, (ArrayNode)input);
-                        processForEach(forEach, (ArrayNode)input, this::processForEachEntryDo);
+                        updateRequestStepForEachTotalCount(forEach, (ArrayNode)input);
+                        processRequestStepForEachEmbed(forEach, (ArrayNode)input);
+                        processRequestStepForEach(forEach, (ArrayNode)input, this::processRequestStepForEachEntryDo);
                     } else {
                         throw new ActionValidationException("forEach not supported on node type "+input.getNodeType());
                     }
@@ -483,18 +508,18 @@ public class ActionRunner implements AutoCloseable {
             }
         }
         
-        private final void processForEachEmbed(ActionStepForEachDescriptor forEach, ArrayNode source) {
+        private final void processRequestStepForEachEmbed(ActionStepRequestForEachDescriptor forEach, ArrayNode source) {
             var requestExecutor = new ActionStepRequestsProcessor();
-            processForEach(forEach, source, getForEachEntryEmbedProcessor(requestExecutor));
+            processRequestStepForEach(forEach, source, getRequestForEachEntryEmbedProcessor(requestExecutor));
             requestExecutor.executeRequests();
         }
         
         @FunctionalInterface
-        private interface IForEachEntryProcessor {
-            void process(ActionStepForEachDescriptor forEach, JsonNode currentNode, ObjectNode newData);
+        private interface IRequestStepForEachEntryProcessor {
+            void process(ActionStepRequestForEachDescriptor forEach, JsonNode currentNode, ObjectNode newData);
         }
         
-        private final void processForEach(ActionStepForEachDescriptor forEach, ArrayNode source, IForEachEntryProcessor entryProcessor) {
+        private final void processRequestStepForEach(ActionStepRequestForEachDescriptor forEach, ArrayNode source, IRequestStepForEachEntryProcessor entryProcessor) {
             for ( int i = 0 ; i < source.size(); i++ ) {
                 var currentNode = source.get(i);
                 var newData = JsonHelper.shallowCopy(localData);
@@ -510,19 +535,19 @@ public class ActionRunner implements AutoCloseable {
             }
         }
         
-        private void updateForEachTotalCount(ActionStepForEachDescriptor forEach, ArrayNode array) {
+        private void updateRequestStepForEachTotalCount(ActionStepRequestForEachDescriptor forEach, ArrayNode array) {
             var totalCountName = String.format("total%sCount", StringUtils.capitalize(forEach.getName()));
             var totalCount = localData.get(totalCountName);
             if ( totalCount==null ) { totalCount = new IntNode(0); }
             localData.put(totalCountName, totalCount.asInt()+array.size());
         }
 
-        private void processForEachEntryDo(ActionStepForEachDescriptor forEach, JsonNode currentNode, ObjectNode newData) {
+        private void processRequestStepForEachEntryDo(ActionStepRequestForEachDescriptor forEach, JsonNode currentNode, ObjectNode newData) {
             var processor = new ActionStepsProcessor(newData, this);
             processor.processSteps(forEach.get_do());
         }
         
-        private IForEachEntryProcessor getForEachEntryEmbedProcessor(ActionStepRequestsProcessor requestExecutor) {
+        private IRequestStepForEachEntryProcessor getRequestForEachEntryEmbedProcessor(ActionStepRequestsProcessor requestExecutor) {
             return (forEach, currentNode, newData) -> {
                 if ( !currentNode.isObject() ) {
                     // TODO Improve exception message?
@@ -592,6 +617,7 @@ public class ActionRunner implements AutoCloseable {
     }
     
     public static interface IActionRequestHelper extends AutoCloseable {
+        public UnirestInstance getUnirestInstance();
         public JsonNode transformInput(JsonNode input);
         public void executePagedRequest(ActionRequestDescriptor requestDescriptor);
         public void executeSimpleRequests(List<ActionRequestDescriptor> requestDescriptor);

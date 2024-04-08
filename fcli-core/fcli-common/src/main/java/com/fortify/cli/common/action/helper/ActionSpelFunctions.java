@@ -13,6 +13,7 @@
 package com.fortify.cli.common.action.helper;
 
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -23,6 +24,7 @@ import java.util.regex.Pattern;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.safety.Safelist;
 
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -76,8 +78,33 @@ public class ActionSpelFunctions {
         if( html==null ) { return null; }
         Document document = Jsoup.parse(html);
         document.outputSettings(new Document.OutputSettings().prettyPrint(false));//makes html() preserve linebreaks and spacing
+        document.select("li").append("\\n");
         document.select("br").append("\\n");
         document.select("p").prepend("\\n\\n");
+        String s = document.html().replaceAll("\\\\n", "\n");
+        return Jsoup.clean(s, "", Safelist.none(), new Document.OutputSettings().prettyPrint(false));
+    }
+    
+    public static final String cleanRuleDescription(String description) {
+        if( description==null ) { return ""; }
+        Document document = Jsoup.parse(description);
+        document.outputSettings(new Document.OutputSettings().prettyPrint(false));//makes html() preserve linebreaks and spacing
+        document.select("li").append("\\n");
+        document.select("br").append("\\n");
+        document.select("p").prepend("\\n\\n");
+        var paragraphs = document.select("Paragraph");
+        for ( var p : paragraphs ) {
+            var altParagraph = p.select("AltParagraph");
+            if ( !altParagraph.isEmpty() ) {
+                p.replaceWith(new TextNode(String.join("\n\n",altParagraph.eachText())));
+            } else {
+                p.remove();
+            }
+            
+        }
+        document.select("IfDef").remove();
+        document.select("ConditionalText").remove();
+        
         String s = document.html().replaceAll("\\\\n", "\n");
         return Jsoup.clean(s, "", Safelist.none(), new Document.OutputSettings().prettyPrint(false));
     }
@@ -152,6 +179,10 @@ public class ActionSpelFunctions {
         ZonedDateTime zonedDateTime = new JSONDateTimeConverter(defaultZoneId).parseZonedDateTime(dateString);
         LocalDateTime utcDateTime = LocalDateTime.ofInstant(zonedDateTime.toInstant(), ZoneOffset.UTC);
         return DateTimeFormatter.ofPattern(pattern).format(utcDateTime);
+    }
+    
+    public static final String copyright() {
+        return String.format("Copyright (c) %s Open Text", Year.now().getValue());
     }
 
 }
