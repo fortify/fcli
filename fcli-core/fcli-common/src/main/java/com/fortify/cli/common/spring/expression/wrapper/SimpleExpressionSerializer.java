@@ -24,26 +24,28 @@
  ******************************************************************************/
 package com.fortify.cli.common.spring.expression.wrapper;
 
-import org.springframework.expression.Expression;
+import java.io.IOException;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.formkiq.graalvm.annotations.Reflectable;
 
 /**
- * <p>This is a simple wrapper class for a Spring {@link Expression}
- * instance. It's main use is in combination with 
- * {@link SimpleExpressionDeserializer} to allow automatic
- * conversion from String values to simple {@link Expression}
- * instances in JSON/YAML documents.</p>
- * 
- * <p>The reason for needing this wrapper class is to differentiate
- * with templated {@link Expression} instances that are handled 
- * by {@link TemplateExpressionSerializer}.</p>
+ * This Jackson deserializer allows parsing String values into an 
+ * SpEL Expression object.
  */
-@JsonDeserialize(using = SimpleExpressionDeserializer.class)
-@JsonSerialize(using = SimpleExpressionSerializer.class)
-public class SimpleExpression extends WrappedExpression {
-	public SimpleExpression(Expression target) {
-		super(target);
-	}
+@Reflectable
+public final class SimpleExpressionSerializer extends StdSerializer<SimpleExpression> {
+    private static final long serialVersionUID = 1L;
+    protected SimpleExpressionSerializer() {
+        super(SimpleExpression.class);
+    }
+
+    @Override
+    public void serialize(SimpleExpression value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        gen.writeString(value.getExpressionString());
+    }
+    
+    
 }

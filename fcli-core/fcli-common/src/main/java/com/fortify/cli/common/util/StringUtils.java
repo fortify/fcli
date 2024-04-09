@@ -70,4 +70,9 @@ public class StringUtils {
         if ( str==null ) { return null; }
         return Stream.of(str.split("\n")).collect(Collectors.joining("\n"+indentStr, indentStr, ""));
     }
+    
+    // For use in SpEL expressions
+    public static final String fmt(String fmt, Object... input) {
+        return String.format(fmt, input);
+    }
 }

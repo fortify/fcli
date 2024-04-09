@@ -27,11 +27,12 @@ package com.fortify.cli.common.spring.expression.wrapper;
 import org.springframework.expression.Expression;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * <p>This is a simple wrapper class for a Spring {@link Expression}
  * instance. It's main use is in combination with 
- * {@link TemplateExpressionDeserializer} to allow automatic
+ * {@link TemplateExpressionSerializer} to allow automatic
  * conversion from String values to templated {@link Expression}
  * instances.</p>
  * 
@@ -40,6 +41,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  * handled by {@link SimpleExpressionDeserializer}.</p>
  */
 @JsonDeserialize(using = TemplateExpressionDeserializer.class)
+@JsonSerialize(using = TemplateExpressionSerializer.class)
 public class TemplateExpression extends WrappedExpression {
 	public TemplateExpression(Expression target) {
 		super(target);

@@ -18,6 +18,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -84,6 +85,15 @@ public class ActionSpelFunctions {
         return StringUtils.abbreviate(text, maxWidth);
     }
     
+    public static final String repeat(String text, int count) {
+        if ( count<0 ) { return ""; }
+        StringBuilder sb = new StringBuilder();
+        for ( int i=0; i<count; i++ ) {
+            sb.append(text);
+        }
+        return sb.toString();
+    }
+    
     /**
      * @param html to be converted to plain text
      * @return Formatted plain-text string for the given HTML contents
@@ -121,7 +131,12 @@ public class ActionSpelFunctions {
         Matcher m = CODE_PATTERN.matcher(s);
         while(m.find()){
             String code = m.group(1);
-            m.appendReplacement(sb, Parser.unescapeEntities(code, false));
+            // Code may contain regex-related characters like ${..}, which we don't
+            // want to interpret as regex groups. So, we append an empty replacement
+            // (have Matcher append all text before the code block), then manually 
+            // append the code block. See https://stackoverflow.com/a/948381
+            m.appendReplacement(sb, "");
+            sb.append(Parser.unescapeEntities(code, false));
         }
         m.appendTail(sb);
         return sb.toString();
@@ -191,8 +206,15 @@ public class ActionSpelFunctions {
      * @param dateString JSON string representation of date to be formatted
      * @return Formatted date
      */
-    public static final String formatDateTime(String pattern, String dateString) {
+    public static final String formatDateTime(String pattern, String... dateStrings) {
+        var dateString = dateStrings==null||dateStrings.length==0 
+                ? currentDateTime() 
+                : dateStrings[0];
         return formatDateTimeWithZoneId(pattern, dateString, ZoneId.systemDefault());
+    }
+    
+    public static final String currentDateTime() {
+        return DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now());
     }
     
     /**
@@ -232,6 +254,10 @@ public class ActionSpelFunctions {
         LocalDateTime utcDateTime = LocalDateTime.ofInstant(zonedDateTime.toInstant(), ZoneOffset.UTC);
         return DateTimeFormatter.ofPattern(pattern).format(utcDateTime);
     }
+    
+    public static final <T> Iterable<T> asIterable(Iterator<T> iterator) { 
+        return () -> iterator; 
+    } 
     
     public static final String copyright() {
         return String.format("Copyright (c) %s Open Text", Year.now().getValue());

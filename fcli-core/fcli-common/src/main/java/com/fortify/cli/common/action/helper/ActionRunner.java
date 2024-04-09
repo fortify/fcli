@@ -44,6 +44,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionParameterDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionRequestTargetDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepDescriptor;
@@ -55,6 +56,7 @@ import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDe
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor.ActionStepRequestType;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepSetDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepSetDescriptor.ActionStepSetOperation;
+import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepUnsetDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepWriteDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionValidationException;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionValueTemplateDescriptor;
@@ -96,6 +98,8 @@ import lombok.RequiredArgsConstructor;
 public class ActionRunner implements AutoCloseable {
     /** Jackson {@link ObjectMapper} used for various JSON-related operations */
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
+    /** Jackson {@link ObjectMapper} used for formatting steps in logging/exception messages */
+    private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
     /** Logger */
     private static final Logger LOG = LoggerFactory.getLogger(ActionRunner.class);
     /** Progress writer, provided through builder method */
@@ -304,28 +308,62 @@ public class ActionRunner implements AutoCloseable {
         
         private final void processStep(ActionStepDescriptor step) {
             if ( _if(step) ) {
-                processSupplier(step::getProgress, this::processProgressStep);
-                processSupplier(step::getWarn, this::processWarnStep);
-                processSupplier(step::getDebug, this::processDebugStep);
-                processSupplier(step::get_throw, this::processThrowStep);
-                processSupplier(step::getRequests, this::processRequestsStep);
-                processSupplier(step::getForEach, this::processForEachStep);
-                processAll(step::getSet, this::processSetStep);
-                processAll(step::getWrite, this::processWriteStep);
+                processStepSupplier(step::getProgress, this::processProgressStep);
+                processStepSupplier(step::getWarn, this::processWarnStep);
+                processStepSupplier(step::getDebug, this::processDebugStep);
+                processStepSupplier(step::get_throw, this::processThrowStep);
+                processStepSupplier(step::getRequests, this::processRequestsStep);
+                processStepSupplier(step::getForEach, this::processForEachStep);
+                processStepEntries(step::getSet, this::processSetStep);
+                processStepEntries(step::getUnset, this::processUnsetStep);
+                processStepEntries(step::getWrite, this::processWriteStep);
             }
         }
         
-        private <T> void processAll(Supplier<List<T>> supplier, Consumer<T> consumer) {
+        private <T> void processStepEntries(Supplier<List<T>> supplier, Consumer<T> consumer) {
             var list = supplier.get();
-            if ( list!=null ) { list.forEach(value->processValue(value, consumer)); }
+            if ( list!=null ) { list.forEach(value->processStep(value, consumer)); }
         }
         
-        private <T> void processSupplier(Supplier<T> supplier, Consumer<T> consumer) {
-            processValue(supplier.get(), consumer);
+        private <T> void processStepSupplier(Supplier<T> supplier, Consumer<T> consumer) {
+            processStep(supplier.get(), consumer);
         }
         
-        private <T> void processValue(T value, Consumer<T> consumer) {
-            if ( _if(value) ) { consumer.accept(value); }
+        private <T> void processStep(T value, Consumer<T> consumer) {
+            if ( _if(value) ) {
+                String valueString = null;
+                if ( LOG.isDebugEnabled() ) {
+                    valueString = getStepAsString(valueString, value);
+                    LOG.debug("Start processing:\n"+valueString);
+                }
+                try {
+                    consumer.accept(value);
+                } catch ( Exception e ) {
+                    if ( e instanceof StepProcessingException ) {
+                        throw e;
+                    } else {
+                        valueString = getStepAsString(valueString, value);
+                        throw new StepProcessingException("Error processing:\n"+valueString, e);
+                    }
+                }
+                if ( LOG.isDebugEnabled() ) {
+                    valueString = getStepAsString(valueString, value);
+                    LOG.debug("End processing:\n"+valueString);
+                }
+            }
+        }
+        
+        private final String getStepAsString(String cachedString, Object value) {
+            if ( value==null ) { return null; }
+            if ( cachedString!=null ) { return cachedString; }
+            try {
+                cachedString = String.format("%s:\n%s", 
+                    StringUtils.indent(value.getClass().getCanonicalName(), "  "),
+                    StringUtils.indent(yamlObjectMapper.valueToTree(value).toPrettyString(), "    "));
+            } catch ( Exception e ) {
+                cachedString = StringUtils.indent(value.toString(), "  ");
+            }
+            return cachedString;
         }
         
         private final boolean _if(Object o) {
@@ -344,10 +382,19 @@ public class ActionRunner implements AutoCloseable {
             var value = getValueForSetStep(set);
             setDataValue(name, value);
         }
+        
+        private void processUnsetStep(ActionStepUnsetDescriptor unset) {
+            unsetDataValue(unset.getName());
+        }
 
         private void setDataValue(String name, JsonNode value) {
             localData.set(name, value);
             if ( parent!=null ) { parent.setDataValue(name, value); }
+        }
+        
+        private void unsetDataValue(String name) {
+            localData.remove(name);
+            if ( parent!=null ) { parent.unsetDataValue(name); }
         }
 
         private JsonNode getValueForSetStep(ActionStepSetDescriptor set) {
@@ -451,8 +498,15 @@ public class ActionRunner implements AutoCloseable {
         }
         
         private void processForEachStep(ActionStepForEachDescriptor forEach) {
-            spelEvaluator.evaluate(forEach.getProcessor(), localData, IActionStepForEachProcessor.class)
-                .process(node->processForEachStepNode(forEach, node));
+            var processorExpression = forEach.getProcessor();
+            var valuesExpression = forEach.getValues();
+            if ( processorExpression!=null ) {
+                var processor = spelEvaluator.evaluate(processorExpression, localData, IActionStepForEachProcessor.class);
+                if ( processor!=null ) { processor.process(node->processForEachStepNode(forEach, node)); }
+            } else if ( valuesExpression!=null ) {
+                var values = spelEvaluator.evaluate(valuesExpression, localData, ArrayNode.class);
+                if ( values!=null ) { values.forEach(value->processForEachStepNode(forEach, value)); }
+            }
         }
         
         private boolean processForEachStepNode(ActionStepForEachDescriptor forEach, JsonNode node) {
@@ -573,7 +627,7 @@ public class ActionRunner implements AutoCloseable {
         private final void addRequest(ActionStepRequestDescriptor requestDescriptor, BiConsumer<ActionStepRequestDescriptor, JsonNode> responseConsumer, BiConsumer<ActionStepRequestDescriptor, UnirestException> failureConsumer, ObjectNode data) {
             var _if = requestDescriptor.get_if();
             if ( _if==null || spelEvaluator.evaluate(_if, data, Boolean.class) ) {
-                var method = requestDescriptor.getMethod().toString();
+                var method = requestDescriptor.getMethod();
                 var uri = spelEvaluator.evaluate(requestDescriptor.getUri(), data, String.class);
                 var query = evaluateTemplateExpressionMap(requestDescriptor.getQuery(), data, Object.class);
                 var body = requestDescriptor.getBody()==null ? null : spelEvaluator.evaluate(requestDescriptor.getBody(), data, Object.class);
@@ -762,6 +816,23 @@ public class ActionRunner implements AutoCloseable {
                     throw new RuntimeException("Error evaluating action expression "+expression.getExpressionString(), e);
                 }
             }
+        }
+    }
+    
+    public static final class StepProcessingException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
+        public StepProcessingException(String message, Throwable cause) {
+            super(message, cause);
+            // TODO Auto-generated constructor stub
+        }
+
+        public StepProcessingException(String message) {
+            super(message);
+        }
+
+        public StepProcessingException(Throwable cause) {
+            super(cause);
         }
     }
 }

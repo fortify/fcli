@@ -241,6 +241,8 @@ public class ActionDescriptor {
         @JsonProperty("throw") private TemplateExpression _throw;
         /** Optional set operations */
         private List<ActionStepSetDescriptor> set;
+        /** Optional unset operations */
+        private List<ActionStepUnsetDescriptor> unset;
         /** Optional write operations */
         private List<ActionStepWriteDescriptor> write;
         /** Optional forEach operation */
@@ -296,6 +298,22 @@ public class ActionDescriptor {
     }
     
     /**
+     * This class describes an operation to explicitly unset a data property.
+     */
+    @Reflectable @NoArgsConstructor
+    @Data
+    public static final class ActionStepUnsetDescriptor implements IActionIfSupplier {
+        /** Optional if-expression, executing this step only if condition evaluates to true */
+        @JsonProperty("if") private SimpleExpression _if;
+        /** Required name for this step element */
+        private String name;
+        
+        public void postLoad(ActionDescriptor action) {
+            checkNotBlank("set name", name, this);
+        }
+    }
+    
+    /**
      * This class describes a 'write' step.
      */
     @Reflectable @NoArgsConstructor
@@ -327,6 +345,8 @@ public class ActionDescriptor {
         /** Processor that runs the forEach steps. This expression must evaluate to an
          *  IActionStepForEachProcessor instance. */
         private SimpleExpression processor;
+        /** Values to iterate over */
+        private SimpleExpression values;
         /** Optional if-expression, executing steps only if condition evaluates to true */
         @JsonProperty("if") private SimpleExpression _if;
         /** Optional break-expression, terminating forEach if condition evaluates to true */
@@ -367,7 +387,7 @@ public class ActionDescriptor {
         /** Required name for this step element */
         private String name;
         /** Optional HTTP method, defaults to 'GET' */
-        private HttpMethod method = HttpMethod.GET;
+        private String method = HttpMethod.GET.name();
         /** Required template expression defining the request URI from which to get the data */
         private TemplateExpression uri;
         /** Required target to which to send the request; may be specified here or through defaults.requestTarget */

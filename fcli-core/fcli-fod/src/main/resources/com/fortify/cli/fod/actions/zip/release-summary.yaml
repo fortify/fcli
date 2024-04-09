@@ -1,0 +1,58 @@
+usage:
+  header: Generate release summary. 
+  description: |
+    This action generates a short summary listing issue counts and other statistics
+    for a given release.
+
+defaults:
+  requestTarget: fod
+  
+parameters:
+  - name: file
+    cliAliases: f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: stdout"
+    required: false
+    defaultValue: stdout
+  - name: release
+    cliAliases: rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+    type: release_single
+  
+steps:
+  - set: 
+      # Add short alias for release object, as we reference it a lot
+    - name: r 
+      value: ${parameters.release}
+      # Define output date format
+    - name: dateFmt
+      value: YYYY-MM-dd HH:mm
+  - write:
+    - to: ${parameters.file}
+      valueTemplate: summary-md
+    - if: parameters.file!='stdout'
+      to: stdout
+      value: |
+        Output written to ${parameters.file}
+
+valueTemplates:
+  - name: summary-md
+    contents: |
+      # Fortify on Demand Release Summary
+      
+      ## [${r.applicationName}${#isNotBlank(r.microserviceNae)?'- '+r.microserviceName:''} - ${r.releaseName}](${#fod.releaseBrowserUrl(r)})
+      
+      Summary generated on: ${#formatDateTime(dateFmt)}
+      
+      ### Security Policy
+      **Rating:** ${#repeat("&bigstar;", r.rating)}${#repeat("&star;", 5-r.rating)}
+      **Status:** ${r.isPassed?'Pass':'Fail'}
+      
+      ### Issue Counts
+      | Type        | Last Scan Date   | Critical | High     | Medium   | Low      |
+      | ----------- | ---------------- | -------- | -------- | -------- | -------- |
+      | **Static**  | ${(#isBlank(r.staticScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.staticScanDate))  +' | '+#fmt('%8s', r.staticCritical)                                   +' | '+#fmt('%8s', r.staticHigh)                           +' | '+#fmt('%8s', r.staticMedium)                               +' | '+#fmt('%8s', r.staticLow)                         +' |'}
+      | **Dynamic** | ${(#isBlank(r.dynamicScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.dynamicScanDate))+' | '+#fmt('%8s', r.dynamicCritical)                                  +' | '+#fmt('%8s', r.dynamicHigh)                          +' | '+#fmt('%8s', r.dynamicMedium)                              +' | '+#fmt('%8s', r.dynamicLow)                        +' |'}
+      | **Mobile**  | ${(#isBlank(r.mobileScanDate)?#fmt('%-16s', 'N/A'):#formatDateTime(dateFmt, r.mobileScanDate))  +' | '+#fmt('%8s', r.mobileCritical)                                   +' | '+#fmt('%8s', r.mobileHigh)                           +' | '+#fmt('%8s', r.mobileMedium)                               +' | '+#fmt('%8s', r.mobileLow)                         +' |'}
+      | **Total**   |                  | ${#fmt('%8s', r.staticCritical+r.dynamicCritical+r.mobileCritical)+' | '+#fmt('%8s', r.staticHigh+r.dynamicHigh+r.mobileHigh)+' | '+#fmt('%8s', r.staticMedium+r.dynamicMedium+r.mobileMedium)+' | '+#fmt('%8s', r.staticLow+r.dynamicLow+r.mobileLow)+' |'}
+      
+      

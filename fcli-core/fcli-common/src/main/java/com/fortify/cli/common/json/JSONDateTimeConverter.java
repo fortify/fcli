@@ -55,7 +55,7 @@ public final class JSONDateTimeConverter implements Converter<String,Date> {
 		this.defaultZoneId = defaultZoneId!=null ? defaultZoneId : ZoneId.systemDefault();
 	}
 
-	private static final DateTimeFormatter createDefaultDateTimeFormatter() {
+	public static final DateTimeFormatter createDefaultDateTimeFormatter() {
 		return DateTimeFormatter.ofPattern("yyyy-MM-dd[['T'][' ']HH:mm:ss[.SSS][.SS]][ZZZZ][Z][XXX][XX][X]");
 	}
 	
