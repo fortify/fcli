@@ -104,12 +104,20 @@ public class ActionSpelFunctions {
         document.select("li").append("\\n");
         document.select("br").forEach(e->e.replaceWith(new TextNode("\n")));
         document.select("p").prepend("\\n\\n");
+        // Replace code blocks, either embedding in backticks if inline (no newline characters)
+        // or indenting with 4 spaces and fencing with CODE_START and CODE_END, which will remain
+        // in place when cleaning all HTML tags, and removed using pattern matching below.
         document.select("span.code").forEach(ActionSpelFunctions::replaceCode);
         document.select("code").forEach(ActionSpelFunctions::replaceCode);
         document.select("pre").forEach(ActionSpelFunctions::replaceCode);
         
+        // Remove all HTML tags. Note that for now, this keeps escaped characters like &gt;
+        // We may want to have separate methods or method parameter to allow for escaped
+        // characters to be unescaped.
         var s = Jsoup.clean(document.html().replaceAll("\\\\n", "\n"), "", Safelist.none(), new Document.OutputSettings().prettyPrint(false));
+        
         var sb = new StringBuilder();
+        // Remove CODE_START and CODE_END fences
         Matcher m = CODE_PATTERN.matcher(s);
         while(m.find()){
             String code = m.group(1);
