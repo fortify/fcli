@@ -27,6 +27,11 @@ parameters:
     description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
     required: false
     type: filterset
+  - name: analysis-type
+    cliAliases: t
+    description: "Analysis type for which to list vulnerabilities. Default value: SCA"
+    required: true
+    defaultValue: SCA
   - name: github-token
     description: 'Required GitHub Token. Default value: GITHUB_TOKEN environment variable.'
     required: true
@@ -67,9 +72,10 @@ steps:
   - progress: Processing issue data
   - requests:
     - name: issues
-      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues?limit=100&orderby=engineType
+      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues?limit=100
       query:
         showremoved: true
+        filter: ISSUE[11111111-1111-1111-1111-111111111151]:${parameters['analysis-type']}
         filterset: ${parameters.filterset.guid}
       pagingProgress:
         postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.count} issues
@@ -128,6 +134,8 @@ valueTemplates:
       
   - name: reviewBody
     contents: |
+      ## Fortify vulnerability summary
+      
       ### New Issues
       
       ${newIssues==null 

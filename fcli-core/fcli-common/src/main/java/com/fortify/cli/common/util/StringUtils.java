@@ -12,6 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.common.util;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.formkiq.graalvm.annotations.Reflectable;
 
 @Reflectable // Required for using these functions in fcli actions
@@ -54,12 +57,17 @@ public class StringUtils {
                 : str.substring(0,1).toUpperCase() + str.substring(1).toLowerCase();
     }
 
-    public static String abbreviate(String str, int maxLength) {
+    public static final String abbreviate(String str, int maxLength) {
         if ( str==null ) { return null; }
         if (str.length() <= maxLength) {
             return str;
         } else {
             return str.substring(0, maxLength-3) + "...";
         }
+    }
+    
+    public static final String indent(String str, String indentStr) {
+        if ( str==null ) { return null; }
+        return Stream.of(str.split("\n")).collect(Collectors.joining("\n"+indentStr, indentStr, ""));
     }
 }

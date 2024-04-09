@@ -120,29 +120,27 @@ valueTemplates:
         text: ${ruleCategories[rule.id]}
       fullDescription:
         text: |
-          ${ruleCategories[rule.id]}
+          ## ${ruleCategories[rule.id]}
           
           ${rule.abstract}
       help:
         text: |
-          Explanation
+          ${rule.explanation?:'No explanation available'}
           
-          ${#htmlToText(rule.explanation)?:'-'}
+          ## Recommendations
           
-          Recommendations
+          ${rule.recommendations?:'Not available'}
           
-          ${#htmlToText(rule.recommendations)?:'-'}
+          ## Tips
           
-          Tips
+          ${#join('\n\n', rule.tips)?:'Not available'}
           
-          ${#join('\n\n', rule.tips)?:'-'}
+          ## References
           
-          References
-          
-          ${#join('\n\n', rule.references.![title 
+          ${#numberedList(rule.references.![title
             +(#isNotBlank(publisher)?", "+publisher:"")
             +(#isNotBlank(author)?", "+author:"")
-            +(#isNotBlank(source)?", "+source:"")])?:'-'}
+            +(#isNotBlank(source)?", "+source:"")])?:'Not available'}
             
           ${#copyright()}
         

@@ -104,26 +104,24 @@ valueTemplates:
         text: ${issue.category}
       fullDescription:
         text: |
-          ${issue.category}
+          ## ${issue.category}
           
           ${#cleanRuleDescription(issue.details?.summary)}
       help:
         text: |
-          Explanation
-        
-          ${#cleanRuleDescription(issue.details?.explanation)?:'-'}
+          ${#cleanRuleDescription(issue.details?.explanation)?:'No explanation available'}
           
-          Recommendations
+          ## Recommendations
           
-          ${#cleanRuleDescription(issue.recommendations?.recommendations)?:'-'}
+          ${#cleanRuleDescription(issue.recommendations?.recommendations)?:'Not available'}
           
-          Tips
+          ## Tips
           
-          ${#cleanRuleDescription(issue.recommendations?.tips)?:'-'}
+          ${#cleanRuleDescription(issue.recommendations?.tips)?:'Not available'}
           
-          References
+          ## References
           
-          ${#cleanRuleDescription(issue.recommendations?.references)?:'-'}
+          ${#numberedList(#cleanRuleDescription(issue.recommendations?.references)?.split('\n'))?:'Not available'}
           
           ${#copyright()}
 
@@ -131,7 +129,7 @@ valueTemplates:
     contents:
       ruleId: ${issue.checkId}
       message: 
-        text: ${#htmlToText(issue.details?.summary)} [More information](${#fod.issueBrowserUrl(issue)})
+        text: ${#cleanIssueDescription(issue.details?.summary)} [More information](${#fod.issueBrowserUrl(issue)})
       level: ${(issue.severityString matches "(Critical|High)") ? "warning":"note" }
       partialFingerprints:
         issueInstanceId: ${issue.instanceId}

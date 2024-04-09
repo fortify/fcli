@@ -22,6 +22,11 @@ parameters:
     cliAliases: rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
     type: release_single
+  - name: scan-type
+    cliAliases: t
+    description: "Scan type for which to list vulnerabilities. Default value: Static"
+    required: true
+    defaultValue: Static
   - name: github-token
     description: 'Required GitHub Token. Default value: GITHUB_TOKEN environment variable.'
     required: true
@@ -65,6 +70,7 @@ steps:
       uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
       query:
         includeFixed: true
+        filters: scantype:${parameters['scan-type']}
       pagingProgress:
         postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
       forEach:
@@ -122,6 +128,8 @@ valueTemplates:
       
   - name: reviewBody
     contents: |
+      ## Fortify vulnerability summary
+      
       ### New Issues
       
       ${newIssues==null 

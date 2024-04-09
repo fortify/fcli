@@ -21,10 +21,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
+import org.jsoup.parser.Parser;
 import org.jsoup.safety.Safelist;
 
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -35,6 +38,9 @@ import lombok.NoArgsConstructor;
 
 @Reflectable @NoArgsConstructor
 public class ActionSpelFunctions {
+    private static final String CODE_START = "\n===== CODE START =====\n";
+    private static final String CODE_END   = "\n===== CODE END =====\n";
+    private static final Pattern CODE_PATTERN = Pattern.compile(String.format("%s(.*?)%s", CODE_START, CODE_END), Pattern.DOTALL);
     private static final Pattern uriPartsPattern = Pattern.compile("^(?<serverUrl>(?:(?<protocol>[A-Za-z]+):)?(\\/{0,3})(?<host>[0-9.\\-A-Za-z]+)(?::(?<port>\\d+))?)(?<path>\\/(?<relativePath>[^?#]*))?(?:\\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$");
     
     public static final String join(String separator, List<Object> elts) {
@@ -42,7 +48,15 @@ public class ActionSpelFunctions {
         case "\\n": separator="\n"; break;
         case "\\t": separator="\t"; break;
         }
-        return elts==null ? "" : String.join(separator, elts.stream().map(Object::toString).toList());
+        return elts==null ? "" : elts.stream().map(Object::toString).collect(Collectors.joining(separator));
+    }
+    
+    public static final String numberedList(List<Object> elts) {
+        StringBuilder builder = new StringBuilder();
+        for ( var i=0; i < elts.size(); i++ ) {
+            builder.append(i+1).append(". ").append(elts.get(i)).append('\n');
+        }
+        return builder.toString();
     }
     
     /**
@@ -76,22 +90,48 @@ public class ActionSpelFunctions {
      */
     public static final String htmlToText(String html) {
         if( html==null ) { return null; }
+        Document document = _asDocument(html);
+        return _htmlToText(document);
+    }
+
+    private static final Document _asDocument(String html) {
         Document document = Jsoup.parse(html);
         document.outputSettings(new Document.OutputSettings().prettyPrint(false));//makes html() preserve linebreaks and spacing
+        return document;
+    }
+
+    private static String _htmlToText(Document document) {
         document.select("li").append("\\n");
-        document.select("br").append("\\n");
+        document.select("br").forEach(e->e.replaceWith(new TextNode("\n")));
         document.select("p").prepend("\\n\\n");
-        String s = document.html().replaceAll("\\\\n", "\n");
-        return Jsoup.clean(s, "", Safelist.none(), new Document.OutputSettings().prettyPrint(false));
+        document.select("span.code").forEach(ActionSpelFunctions::replaceCode);
+        document.select("code").forEach(ActionSpelFunctions::replaceCode);
+        document.select("pre").forEach(ActionSpelFunctions::replaceCode);
+        
+        var s = Jsoup.clean(document.html().replaceAll("\\\\n", "\n"), "", Safelist.none(), new Document.OutputSettings().prettyPrint(false));
+        var sb = new StringBuilder();
+        Matcher m = CODE_PATTERN.matcher(s);
+        while(m.find()){
+            String code = m.group(1);
+            m.appendReplacement(sb, Parser.unescapeEntities(code, false));
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    }
+    
+    private static final void replaceCode(Element e) {
+        var text = e.text();
+        if ( text.contains("\n") ) {
+            text = "\n\n"+CODE_START+StringUtils.indent(text.replaceAll("\t", "    "), "    ")+CODE_END+"\n\n";
+        } else {
+            text = "`"+text+"`";
+        }
+        e.replaceWith(new TextNode(text));
     }
     
     public static final String cleanRuleDescription(String description) {
         if( description==null ) { return ""; }
-        Document document = Jsoup.parse(description);
-        document.outputSettings(new Document.OutputSettings().prettyPrint(false));//makes html() preserve linebreaks and spacing
-        document.select("li").append("\\n");
-        document.select("br").append("\\n");
-        document.select("p").prepend("\\n\\n");
+        Document document = _asDocument(description);
         var paragraphs = document.select("Paragraph");
         for ( var p : paragraphs ) {
             var altParagraph = p.select("AltParagraph");
@@ -100,13 +140,17 @@ public class ActionSpelFunctions {
             } else {
                 p.remove();
             }
-            
         }
         document.select("IfDef").remove();
         document.select("ConditionalText").remove();
-        
-        String s = document.html().replaceAll("\\\\n", "\n");
-        return Jsoup.clean(s, "", Safelist.none(), new Document.OutputSettings().prettyPrint(false));
+        return _htmlToText(document);
+    }
+    
+    public static final String cleanIssueDescription(String description) {
+        if( description==null ) { return ""; }
+        Document document = _asDocument(description);
+        document.select("AltParagraph").remove();
+        return _htmlToText(document);
     }
     
     /**

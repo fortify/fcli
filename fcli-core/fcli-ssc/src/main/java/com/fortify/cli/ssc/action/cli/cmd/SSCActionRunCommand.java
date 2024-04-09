@@ -35,6 +35,7 @@ import com.fortify.cli.common.action.helper.ActionDescriptor.ActionValidationExc
 import com.fortify.cli.common.action.helper.ActionRunner;
 import com.fortify.cli.common.action.helper.ActionRunner.IActionRequestHelper.BasicActionRequestHelper;
 import com.fortify.cli.common.action.helper.ActionRunner.ParameterTypeConverterArgs;
+import com.fortify.cli.common.action.helper.ActionSpelFunctions;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.product.IProductHelper;
 import com.fortify.cli.common.rest.unirest.IUnirestInstanceSupplier;
@@ -204,9 +205,9 @@ public class SSCActionRunCommand extends AbstractActionRunCommand {
             entry.set("references", references);
             processElement(reader, name->{
                 switch ( name ) {
-                case "Abstract": entry.put("abstract", readString(reader)); break;
-                case "Explanation": entry.put("explanation", readString(reader)); break;
-                case "Recommendations": entry.put("recommendations", readString(reader)); break;
+                case "Abstract": entry.put("abstract", ActionSpelFunctions.cleanRuleDescription(readString(reader))); break;
+                case "Explanation": entry.put("explanation", ActionSpelFunctions.cleanRuleDescription(readString(reader))); break;
+                case "Recommendations": entry.put("recommendations", ActionSpelFunctions.cleanRuleDescription(readString(reader))); break;
                 case "Tips": addTips(reader, tips); break;
                 case "References": addReferences(reader, references); break;
                 }
@@ -218,7 +219,7 @@ public class SSCActionRunCommand extends AbstractActionRunCommand {
         private void addTips(XMLStreamReader reader, ArrayNode tips) {
             processElement(reader, name->{
                 switch ( name ) {
-                case "Tip": tips.add(readString(reader));
+                case "Tip": tips.add(ActionSpelFunctions.cleanRuleDescription(readString(reader)));
                 }
             });
         }
