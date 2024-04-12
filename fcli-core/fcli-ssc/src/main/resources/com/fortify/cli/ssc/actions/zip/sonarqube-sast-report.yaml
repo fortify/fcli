@@ -41,13 +41,13 @@ steps:
       forEach:
         name: issue
         do:
-          - set:
+          - append:
             - name: sq_issues
-              operation: append
+              valueTemplate: sq_issues
   - write:
     - to: ${parameters.file}
       valueTemplate: sq_output 
-    - if: parameters.file!='stdout'
+    - if: ${parameters.file!='stdout'}
       to: stdout
       value: |
         Output written to ${parameters.file}

@@ -33,7 +33,7 @@ steps:
         embed: scans
       forEach:
         name: artifact
-        breakIf: lastSonatypeScan!=null
+        breakIf: ${lastSonatypeScan!=null}
         do:
           - set:
             - name: lastSonatypeScan
@@ -53,13 +53,13 @@ steps:
           - name: details
             uri: /api/v1/issueDetails/${issue.id}
         do:
-          - set:
+          - append:
             - name: vulnerabilities
-              operation: append
+              valueTemplate: vulnerabilities
   - write:
     - to: ${parameters.file}
       valueTemplate: gitlab-sonatype-report
-    - if: parameters.file!='stdout'
+    - if: ${parameters.file!='stdout'}
       to: stdout
       value: |
         Output written to ${parameters.file}

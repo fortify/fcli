@@ -47,6 +47,7 @@ import com.fasterxml.jackson.databind.node.ValueNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionParameterDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionRequestTargetDescriptor;
+import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepAppendDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepForEachDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepForEachDescriptor.IActionStepForEachProcessor;
@@ -55,12 +56,12 @@ import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDe
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor.ActionStepRequestPagingProgressDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor.ActionStepRequestType;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepSetDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepSetDescriptor.ActionStepSetOperation;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepUnsetDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepWriteDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionValidationException;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionValueTemplateDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.IActionIfSupplier;
+import com.fortify.cli.common.action.helper.ActionDescriptor.IActionValueSupplier;
 import com.fortify.cli.common.action.helper.ActionRunner.IActionRequestHelper.ActionRequestDescriptor;
 import com.fortify.cli.common.action.helper.ActionRunner.IActionRequestHelper.BasicActionRequestHelper;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser;
@@ -146,7 +147,10 @@ public class ActionRunner implements AutoCloseable {
     
     private final void configureSpelEvaluator(SimpleEvaluationContext context) {
         SpelHelper.registerFunctions(context, ActionSpelFunctions.class);
+        context.setVariable("apply", context);
     }
+    
+    
     
     public final ActionRunner addParameterConverter(String type, BiFunction<String, ParameterTypeConverterArgs, JsonNode> converter) {
         parameterConverters.put(type, converter);
@@ -293,11 +297,15 @@ public class ActionRunner implements AutoCloseable {
         }
     }
     
-    @RequiredArgsConstructor
     private final class ActionStepsProcessor {
         private final ObjectNode localData;
         private final ActionStepsProcessor parent;
         
+        public ActionStepsProcessor(ObjectNode localData, ActionStepsProcessor parent) {
+            this.localData = localData;
+            this.parent = parent;
+        }
+
         private final void processSteps() {
             processSteps(action.getSteps());
         }
@@ -315,6 +323,7 @@ public class ActionRunner implements AutoCloseable {
                 processStepSupplier(step::getRequests, this::processRequestsStep);
                 processStepSupplier(step::getForEach, this::processForEachStep);
                 processStepEntries(step::getSet, this::processSetStep);
+                processStepEntries(step::getAppend, this::processAppendStep);
                 processStepEntries(step::getUnset, this::processUnsetStep);
                 processStepEntries(step::getWrite, this::processWriteStep);
             }
@@ -379,10 +388,50 @@ public class ActionRunner implements AutoCloseable {
         
         private void processSetStep(ActionStepSetDescriptor set) {
             var name = set.getName();
-            var value = getValueForSetStep(set);
+            var value = getValue(set);
             setDataValue(name, value);
         }
         
+        private void processAppendStep(ActionStepAppendDescriptor append) {
+            var name = append.getName();
+            var property = append.getProperty();
+            var currentValue = localData.get(name);
+            var valueToAppend = getValue(append);
+            if ( property==null ) {
+                appendToArray(name, currentValue, valueToAppend);
+            } else {
+                appendToObject(name, currentValue, spelEvaluator.evaluate(property, localData, String.class), valueToAppend);
+            }
+        }
+
+        private void appendToArray(String name, JsonNode currentValue, JsonNode valueToAppend) {
+            if ( currentValue==null ) {
+                currentValue = objectMapper.createArrayNode();
+            }
+            if ( !currentValue.isArray() ) {
+                throw new IllegalStateException("Cannot append value to non-array node "+currentValue.getNodeType());
+            } else {
+                if ( valueToAppend!=null ) {
+                    ((ArrayNode)currentValue).add(valueToAppend);
+                }
+                setDataValue(name, currentValue); // Update copies in parents
+            }
+        }
+        
+        private void appendToObject(String name, JsonNode currentValue, String property, JsonNode valueToAppend) {
+            if ( currentValue==null ) {
+                currentValue = objectMapper.createObjectNode();
+            }
+            if ( !currentValue.isObject() ) {
+                throw new IllegalStateException(String.format("Cannot append value to non-object node "+currentValue.getNodeType()));
+            } else {
+                if ( valueToAppend!=null ) {
+                    ((ObjectNode)currentValue).set(property, valueToAppend);
+                }
+                setDataValue(name, currentValue); // Update copies in parents
+            }
+        }
+
         private void processUnsetStep(ActionStepUnsetDescriptor unset) {
             unsetDataValue(unset.getName());
         }
@@ -396,60 +445,29 @@ public class ActionRunner implements AutoCloseable {
             localData.remove(name);
             if ( parent!=null ) { parent.unsetDataValue(name); }
         }
-
-        private JsonNode getValueForSetStep(ActionStepSetDescriptor set) {
-            var valueExpression = set.getValue();
-            var valueTemplate = set.getValueTemplate();
-            var value = valueExpression!=null 
-                    ? getValue(valueExpression)
-                    : getFormattedValue(valueTemplate);
-            return getTargetValueForSetStep(set, value);
-        }
         
-        private JsonNode getTargetValueForSetStep(ActionStepSetDescriptor set, JsonNode value) {
-            var result = value;
-            var name = set.getName();
-            var op = set.getOperation();
-            if ( op==ActionStepSetOperation.append ) {
-                result = localData.get(name);
-                if ( result==null ) {
-                    result = objectMapper.createArrayNode();
-                }
-                if ( !result.isArray() ) {
-                    throw new IllegalStateException("Cannot append value to existing value of type "+result.getNodeType());
-                }
-                ((ArrayNode)result).add(value);
-            } else if ( op==ActionStepSetOperation.merge ) {
-                result = localData.get(name);
-                if ( result==null ) {
-                    result = objectMapper.createObjectNode();
-                }
-                if ( !result.isObject() || !value.isObject() ) {
-                    throw new IllegalStateException(String.format("Only ObjectNodes can be merged (existing value type: %s, type of value to be merged: %s) ", result.getNodeType(), value.getNodeType()));
-                }
-                ((ObjectNode)result).setAll((ObjectNode)value);
-            }
-            return result;
+        private JsonNode getValue(IActionValueSupplier supplier) {
+            var value = supplier.getValue();
+            var valueTemplate = supplier.getValueTemplate();
+            if ( value!=null ) { return getValue(value); }
+            else if ( StringUtils.isNotBlank(valueTemplate) ) { return getTemplateValue(valueTemplate); }
+            else { throw new IllegalStateException("Either value or valueTemplate must be specified"); }
         }
 
         private JsonNode getValue(TemplateExpression valueExpression) {
             var value = spelEvaluator.evaluate(valueExpression, localData, Object.class);
             return objectMapper.valueToTree(value);
         }
-
-        private JsonNode getFormattedValue(String valueTemplate) {
-            var valueTemplateDescriptor = action.getValueTemplatesByName().get(valueTemplate);
+        
+        private final JsonNode getTemplateValue(String templateName) {
+            var valueTemplateDescriptor = action.getValueTemplatesByName().get(templateName);
             var outputRawContents = valueTemplateDescriptor.getContents();
             return new JsonNodeOutputWalker(spelEvaluator, valueTemplateDescriptor, localData).walk(outputRawContents);
         }
         
         private void processWriteStep(ActionStepWriteDescriptor write) {
             var to = spelEvaluator.evaluate(write.getTo(), localData, String.class);
-            var valueExpression = write.getValue();
-            var valueTemplate = write.getValueTemplate();
-            var value = asString(valueExpression!=null 
-                    ? getValue(valueExpression)
-                    : getFormattedValue(valueTemplate));
+            var value = asString(getValue(write));
             try {
                 switch (to.toLowerCase()) {
                 case "stdout": delayedConsoleWriterRunnables.add(createRunner(System.out, value)); break;

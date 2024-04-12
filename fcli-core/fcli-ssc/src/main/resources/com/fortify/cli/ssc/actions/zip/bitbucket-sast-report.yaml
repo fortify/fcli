@@ -38,7 +38,7 @@ steps:
         embed: scans
       forEach:
         name: artifact
-        breakIf: lastStaticScan!=null
+        breakIf: ${lastStaticScan!=null}
         do:
           - set:
             - name: lastStaticScan
@@ -72,15 +72,15 @@ steps:
           - name: details
             uri: /api/v1/issueDetails/${issue.id}
         do:
-          - set:
+          - append:
             - name: annotations
-              operation: append
+              valueTemplate: annotations
   - write:
     - to: ${parameters['annotations-file']}
       value: ${annotations?:{}}
     - to: ${parameters['report-file']}
       valueTemplate: report
-    - if: parameters['annotations-file']!='stdout' && parameters['report-file']!='stdout'
+    - if: ${parameters['annotations-file']!='stdout' && parameters['report-file']!='stdout'}
       to: stdout
       value: |
         Report written to ${parameters['report-file']}

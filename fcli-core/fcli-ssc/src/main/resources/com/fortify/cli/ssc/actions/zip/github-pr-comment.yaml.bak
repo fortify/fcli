@@ -65,7 +65,7 @@ defaults:
 steps:
   - progress: Loading artifact
   - requests:
-    - if:   parameters['artifact-id']!=null
+    - if:   ${parameters['artifact-id']!=null}
       name: artifact
       uri:  /api/v1/artifacts/${parameters['artifact-id']}?embed=scans
   - set:
@@ -83,32 +83,32 @@ steps:
         postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.count} issues
       forEach:
         name: issue
-        if: scanDates.contains(issue.removedDate) || scanDates.contains(issue.foundDate)
+        if: ${scanDates.contains(issue.removedDate) || scanDates.contains(issue.foundDate)}
         embed:
           - name: details
             uri: /api/v1/issueDetails/${issue.id}
         do:
-          - if: scanDates.contains(issue.removedDate)
-            set:
-            - name: removedIssues
-              operation: append
-          - if: scanDates.contains(issue.foundDate) && issue.engineType=='SCA'
-            set:
-            - name: newStaticIssues
-              operation: append
-          - if: scanDates.contains(issue.foundDate) && issue.engineType!='SCA'
-            set:
-            - name: newOtherIssues
-              operation: append
+          - append:
+            - if: ${scanDates.contains(issue.removedDate)}
+              name: removedIssues
+              valueTemplate: removedIssues
+            - if: ${scanDates.contains(issue.foundDate) && issue.engineType=='SCA'}
+              name: newStaticIssues
+              valueTemplate: newStaticIssues
+            - if: ${scanDates.contains(issue.foundDate) && issue.engineType!='SCA'}
+              name: newOtherIssues
+              valueTemplate: newOtherIssues
   - progress: Generating GitHub request
   - set:
       - name: reviewBody
+        valueTemplate: reviewBody
       - name: reviewRequestBody
-  - if: parameters.dryrun
+        valueTemplate: reviewRequestBody
+  - if: ${parameters.dryrun}
     write:
       - to: stdout
         value: ${reviewRequestBody}
-  - if: '!parameters.dryrun'
+  - if: ${!parameters.dryrun}
     requests:
       - name:   GitHub PR review
         method: POST

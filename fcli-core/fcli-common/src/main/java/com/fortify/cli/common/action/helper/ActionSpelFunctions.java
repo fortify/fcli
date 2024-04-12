@@ -262,5 +262,4 @@ public class ActionSpelFunctions {
     public static final String copyright() {
         return String.format("Copyright (c) %s Open Text", Year.now().getValue());
     }
-
 }

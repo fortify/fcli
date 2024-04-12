@@ -23,7 +23,7 @@ steps:
   - requests:
       - name: staticScanSummary
         uri:  /api/v3/scans/${parameters.release.currentStaticScanId}/summary
-        if:   parameters.release.currentStaticScanId!=null
+        if:   ${parameters.release.currentStaticScanId!=null}
   - progress: Processing issue data
   - requests:
     - name: issues
@@ -40,13 +40,13 @@ steps:
           - name: recommendations
             uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
         do:
-          - set:
+          - append:
             - name: vulnerabilities
-              operation: append
+              valueTemplate: vulnerabilities
   - write:
     - to: ${parameters.file}
       valueTemplate: gitlab-sast-report
-    - if: parameters.file!='stdout'
+    - if: ${parameters.file!='stdout'}
       to: stdout
       value: |
         Output written to ${parameters.file}

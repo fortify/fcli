@@ -75,36 +75,33 @@ steps:
         postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
       forEach:
         name: issue
-        if: issue.status!='Existing'
+        if: ${issue.status!='Existing'}
         embed:
           - name: details
             uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
         do:
-          - if: issue.status=='Fix Validated'
-            set:
-            - name: removedIssues
+          - append:
+            - if: ${issue.status=='Fix Validated'}
+              name: removedIssues
               valueTemplate: mdIssueListItem
-              operation: append
-          - if: (issue.status=='New' || issue.status=='Reopen')
-            set:
-            - name: newIssues
+            - if: ${(issue.status=='New' || issue.status=='Reopen')}
+              name: newIssues
               valueTemplate: mdIssueListItem
-              operation: append
-          - if: (issue.status=='New' || issue.status=='Reopen') && issue.engineType=='Static'
-            set:
-            - name: jsonSourceCodeComments
+            - if: ${(issue.status=='New' || issue.status=='Reopen') && issue.engineType=='Static'}
+              name: jsonSourceCodeComments
               valueTemplate: jsonSourceCodeComment
-              operation: append
           
   - progress: Generating GitHub request
   - set:
       - name: reviewBody
+        valueTemplate: reviewBody
       - name: reviewRequestBody
-  - if: parameters.dryrun
+        valueTemplate: reviewRequestBody
+  - if: ${parameters.dryrun}
     write:
       - to: stdout
         value: ${reviewRequestBody}
-  - if: '!parameters.dryrun'
+  - if: ${!parameters.dryrun}
     requests:
       - name:   GitHub PR review
         method: POST

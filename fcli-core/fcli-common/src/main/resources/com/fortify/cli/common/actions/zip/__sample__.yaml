@@ -1,7 +1,6 @@
 # This action documents action syntax through comments for the various sections and
 # elements below. Many action properties accept Spring Expression Language (SpEL) 
-# expressions, either as a simple expression or a template expression, with the
-# latter combining regular text with SpEL expressions embedded between ${ and }.
+# template expressions, combining regular text with SpEL expressions embedded between ${ and }.
 # Please see the Sring Expression Language reference for details:
 # https://docs.spring.io/spring-framework/reference/6.0/core/expressions.html
 
@@ -102,6 +101,7 @@ defaults:
 # - progress: Takes an SpEL expression to generate a progress message
 # - requests: Execute one or more requests
 # - set:      Set a data value for use by subsequent or nested steps
+# - append:   Set a data value by appending the given value to a new or existing array or object
 # - write:    Write data to stdout, stderr or a file
 # See below for more information on each step type.
 steps:
@@ -113,7 +113,7 @@ steps:
     # that return JSON data are currently supported. Each request element
     # supports the following properties:
     # - if:                Optional; only execute this request if the given SpEL 
-    #                      expression evaluates to 'true'.
+    #                      template expression evaluates to 'true'.
     # - name:              Required request name. Subsequent steps can reference 
     #                      raw request JSON output through the <request-name>_raw 
     #                      property. For FoD/SSC, actual contents (i.e., contents 
@@ -141,9 +141,9 @@ steps:
     #                      a paged request), and before any forEach block is executed.
     # - forEach:           Optional; process each record returned by the target system.
     #     if:              Optional; only process the current record if the given SpEL
-    #                      expression evaluates to 'true'.
+    #                      template expression evaluates to 'true'.
     #     breakIf:         Optional; stop processing current and subsequent records if
-    #                      the given SpEL expression evaluates to 'true'.
+    #                      the given SpEL template expression evaluates to 'true'.
     #     name:            Required name for the current record; record data can be
     #                      accessed through the given name in all steps listed in the
     #                      'do' block.
@@ -155,7 +155,7 @@ steps:
   - requests:
       # 
     - name: repos
-      # if: true
+      # if: ${true}
       # target: github
       # method: GET
       uri: /orgs/${parameters['github-org']}/repos
@@ -172,45 +172,31 @@ steps:
       # onResponse:
       #  - steps
       forEach:
-        # if: true
-        # breakIf: false
+        # if: ${true}
+        # breakIf: ${false}
         name: repo
         # embed:
         #  - name: releases
         #    uri: /repos/${repo.full_name}/releases
         do:
-          - set: # See documentation for 'set' below
+          - append: # See documentation for 'append' below
             - name: repositories
-              operation: append
+              valueTemplate: repositories
             - name: repositories_json
               value: ${repo}
-              operation: append
-  # Set one or more data properties for use in later steps. Each set element
-  # supports the following properties:
-  # - if:            Optional; only set value if given simple SpEL expression 
-  #                  evaluates to 'true'.
-  # - name:          Required name of the data property to set.
-  # - value:         Optional SpEL template expression defining the value to be set.
-  # - valueTemplate: Optional reference to a valueTemplate name (see below) used to
-  #                  generate the value to be set. If neither 'value' or 'valueTemplate'
-  #                  is specified, the value template for which the name matches the 
-  #                  name of this set element is used to generate the value.
-  # - operation:     Required: Either 'append' (for appending as array entryies) or 
-  #                  'replace'
-  - set:
-    - name: output
   # Write one or more outputs. Each write element supports the following properties:
   # - to: Required; either 'stdout', 'stderr' or a file name.
-  #   value: Required; SpEL template expression that generates the output to be written.            
+  #   value: Required if no valueTemplate specified; SpEL template expression that generates the output to be written.
+  #   valueTemplate: Required if no value specified; template output for the given template name.            
   - write:
     - to: ${parameters.file}
-      value: ${output}
-    - if: parameters.file!='stdout'
+      valueTemplate: output
+    - if: ${parameters.file!='stdout'}
       to: stdout
       value: |
         Output written to ${parameters.file}
 
-# This section defines value templates for use with 'set' steps. Each value template
+# This section defines value templates for use with 'set', 'append' and 'write' steps. Each value template
 # supports the following properties:
 # - name:     Name of this value template
 # - contents: Contents of this value template; may either be an SpEL template

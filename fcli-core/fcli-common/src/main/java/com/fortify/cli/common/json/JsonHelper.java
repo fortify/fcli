@@ -67,20 +67,6 @@ public class JsonHelper {
         return SpelEvaluator.JSON_GENERIC.evaluate(expression, input, returnClass);
     }
     
-    public static final ObjectNode getFirstObjectNode(JsonNode input) {
-        if ( input instanceof ObjectNode ) {
-            return (ObjectNode)input;
-        } else if ( input instanceof ArrayNode ) {
-            ArrayNode array = (ArrayNode)input;
-            if ( array.size()==0 ) { return null; }
-            JsonNode node = array.get(0);
-            if ( node instanceof ObjectNode ) {
-                return (ObjectNode)node;
-            }
-        }
-        throw new IllegalArgumentException("Input must be an ObjectNode or array of ObjectNodes");
-    }
-    
     public static final Iterable<JsonNode> iterable(ArrayNode arrayNode) {
         Iterator<JsonNode> iterator = arrayNode.iterator();
         return () -> iterator;

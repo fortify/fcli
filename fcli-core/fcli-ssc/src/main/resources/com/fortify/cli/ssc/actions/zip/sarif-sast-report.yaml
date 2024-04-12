@@ -49,7 +49,7 @@ steps:
         embed: scans
       forEach:
         name: artifact
-        breakIf: lastStaticScan!=null
+        breakIf: ${lastStaticScan!=null}
         do:
           - set:
             - name: lastStaticScan
@@ -69,32 +69,30 @@ steps:
           - name: details
             uri: /api/v1/issueDetails/${issue.id}
         do:
-          - set:
+          - append:
             - name: ruleCategories
-              operation: merge
+              property: ${issue.primaryRuleGuid}
+              value: ${issue.issueName}
             - name: results
-              operation: append
+              valueTemplate: results
   - progress: Processing rule data
   - forEach:
-      processor: "#ssc.ruleDescriptionsProcessor(parameters.appversion.id)"
+      processor: ${#ssc.ruleDescriptionsProcessor(parameters.appversion.id)}
       name: rule
       do:
-        - set:
-          - if: "#isNotBlank(ruleCategories[rule.id])"
+        - append:
+          - if: ${#isNotBlank(ruleCategories[rule.id])}
             name: rules
-            operation: append
+            valueTemplate: rules
   - write:
     - to: ${parameters.file}
       valueTemplate: github-sast-report
-    - if: parameters.file!='stdout'
+    - if: ${parameters.file!='stdout'}
       to: stdout
       value: |
         Output written to ${parameters.file}
 
-valueTemplates:
-  - name: ruleCategories
-    contents: "${{issue.primaryRuleGuid: issue.issueName}}"
-      
+valueTemplates:     
   - name: github-sast-report
     contents:
       "$schema": https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json 

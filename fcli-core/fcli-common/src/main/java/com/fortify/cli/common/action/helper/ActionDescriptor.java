@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.action.helper;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,12 +31,12 @@ import com.fasterxml.jackson.databind.node.ValueNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonHelper.AbstractJsonNodeWalker;
 import com.fortify.cli.common.spring.expression.SpelHelper;
-import com.fortify.cli.common.spring.expression.wrapper.SimpleExpression;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.StringUtils;
 
 import kong.unirest.HttpMethod;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -61,7 +62,7 @@ public class ActionDescriptor {
     /** Action description */
     private ActionUsageDescriptor usage;
     /** Action parameters */
-    private List<ActionParameterDescriptor> parameters;
+    private List<ActionParameterDescriptor> parameters = Collections.emptyList();
     /** Additional requests targets */
     private List<ActionRequestTargetDescriptor> addRequestTargets;
     /** Default values for certain action properties */
@@ -121,7 +122,23 @@ public class ActionDescriptor {
     }
     
     public static interface IActionIfSupplier {
-        SimpleExpression get_if();
+        TemplateExpression get_if();
+    }
+    
+    public static interface IActionValueSupplier {
+        TemplateExpression getValue();
+        String getValueTemplate();
+    }
+    
+    private static final void checkActionValueSupplier(ActionDescriptor action, IActionValueSupplier supplier) {
+        var value = supplier.getValue();
+        var valueTemplate = supplier.getValueTemplate();
+        check(value!=null && StringUtils.isNotBlank(valueTemplate), supplier, ()->"Either value or valueTemplate must be specified, not both");
+        check(value==null && StringUtils.isBlank(valueTemplate), supplier, ()->"Either value or valueTemplate must be specified");
+        if ( valueTemplate!=null ) {
+            check(!action.getValueTemplates().stream().anyMatch(d->d.getName().equals(valueTemplate)), supplier, 
+                    ()->"No value template found with name "+valueTemplate);
+        }
     }
     
     /**
@@ -228,7 +245,7 @@ public class ActionDescriptor {
     @Data
     public static final class ActionStepDescriptor implements IActionIfSupplier {
         /** Optional if-expression, executing this step only if condition evaluates to true */
-        @JsonProperty("if") private SimpleExpression _if;
+        @JsonProperty("if") private TemplateExpression _if;
         /** Optional requests for this step element */
         private List<ActionStepRequestDescriptor> requests;
         /** Optional progress message template expression for this step element */
@@ -241,6 +258,8 @@ public class ActionDescriptor {
         @JsonProperty("throw") private TemplateExpression _throw;
         /** Optional set operations */
         private List<ActionStepSetDescriptor> set;
+        /** Optional add operations */
+        private List<ActionStepAppendDescriptor> append;
         /** Optional unset operations */
         private List<ActionStepUnsetDescriptor> unset;
         /** Optional write operations */
@@ -262,39 +281,48 @@ public class ActionDescriptor {
     }
     
     /**
-     * This class describes an operation to explicitly set a data property.
-     * Note that data properties for request outputs are set automatically.
+     * This abstract class describes an operation to update a data property.
      */
     @Reflectable @NoArgsConstructor
     @Data
-    public static final class ActionStepSetDescriptor implements IActionIfSupplier {
+    public static abstract class ActionStepUpdatePropertyDescriptor implements IActionIfSupplier, IActionValueSupplier {
         /** Optional if-expression, executing this step only if condition evaluates to true */
-        @JsonProperty("if") private SimpleExpression _if;
+        @JsonProperty("if") private TemplateExpression _if;
         /** Required name for this step element */
         private String name;
         /** Value template expression for this step element */
         private TemplateExpression value;
-        /** Value template used to generate the value to be set */
+        /** Value template for this step element */
         private String valueTemplate;
-        /** Operation to be performed when setting the value */
-        private ActionStepSetOperation operation;
         
-        public void postLoad(ActionDescriptor action) {
+        public final void postLoad(ActionDescriptor action) {
             checkNotBlank("set name", name, this);
-            if ( value==null && valueTemplate==null ) {
-                valueTemplate = name;
-            }
-            if ( valueTemplate!=null ) {
-                check(!action.getValueTemplates().stream().anyMatch(d->d.getName().equals(valueTemplate)), this, 
-                        ()->"No value template found with name "+valueTemplate);
-            }
+            checkActionValueSupplier(action, this);
+            _postLoad(action);
         }
         
-        // TODO: Add other operations like 'merge' for merging two ObjectNodes or ArrayNodes?
-        @Reflectable
-        public static enum ActionStepSetOperation {
-            replace, append, merge;
-        }
+        protected void _postLoad(ActionDescriptor action) {}
+    }
+    
+    /**
+     * This class describes an operation to explicitly set a data property.
+     * Note that data properties for request outputs are set automatically.
+     */
+    @Reflectable @NoArgsConstructor
+    @Data @EqualsAndHashCode(callSuper = true)
+    public static final class ActionStepSetDescriptor extends ActionStepUpdatePropertyDescriptor {
+    }
+    
+    /**
+     * This class describes an operation to add a given value to the array
+     * identified by the name property. If the target array doesn't exist yet, 
+     * it will be created.
+     */
+    @Reflectable @NoArgsConstructor
+    @Data @EqualsAndHashCode(callSuper = true)
+    public static final class ActionStepAppendDescriptor extends ActionStepUpdatePropertyDescriptor {
+        /** Optional property name to be added to the object */
+        private TemplateExpression property;
     }
     
     /**
@@ -304,7 +332,7 @@ public class ActionDescriptor {
     @Data
     public static final class ActionStepUnsetDescriptor implements IActionIfSupplier {
         /** Optional if-expression, executing this step only if condition evaluates to true */
-        @JsonProperty("if") private SimpleExpression _if;
+        @JsonProperty("if") private TemplateExpression _if;
         /** Required name for this step element */
         private String name;
         
@@ -318,20 +346,20 @@ public class ActionDescriptor {
      */
     @Reflectable @NoArgsConstructor
     @Data
-    public static final class ActionStepWriteDescriptor implements IActionIfSupplier {
+    public static final class ActionStepWriteDescriptor implements IActionIfSupplier, IActionValueSupplier {
         /** Optional if-expression, executing this step only if condition evaluates to true */
-        @JsonProperty("if") private SimpleExpression _if;
+        @JsonProperty("if") private TemplateExpression _if;
         /** Required template expression defining where to write the data, either stdout, stderr or filename */
         private TemplateExpression to;
-        /** Value template expression that generated the contents to be written */
+        /** Value template expression that generates the contents to be written */
         private TemplateExpression value;
-        /** Value template used to generate the value to be set */
+        /** Value template for this step element */
         private String valueTemplate;
+        
         
         public void postLoad(ActionDescriptor action) {
             checkNotNull("write to", to, this);
-            check(value==null && StringUtils.isBlank(valueTemplate), this, ()->
-                "Either value or valueTemplate must be specified on write step");
+            checkActionValueSupplier(action, this);
         }
     }
     
@@ -344,13 +372,13 @@ public class ActionDescriptor {
     public static final class ActionStepForEachDescriptor implements IActionIfSupplier {
         /** Processor that runs the forEach steps. This expression must evaluate to an
          *  IActionStepForEachProcessor instance. */
-        private SimpleExpression processor;
+        private TemplateExpression processor;
         /** Values to iterate over */
-        private SimpleExpression values;
+        private TemplateExpression values;
         /** Optional if-expression, executing steps only if condition evaluates to true */
-        @JsonProperty("if") private SimpleExpression _if;
+        @JsonProperty("if") private TemplateExpression _if;
         /** Optional break-expression, terminating forEach if condition evaluates to true */
-        private SimpleExpression breakIf;
+        private TemplateExpression breakIf;
         /** Required name for this step element */
         private String name;
         /** Steps to be repeated for each value */
@@ -383,7 +411,7 @@ public class ActionDescriptor {
     @Data
     public static final class ActionStepRequestDescriptor implements IActionIfSupplier {
         /** Optional if-expression, executing this request only if condition evaluates to true */
-        @JsonProperty("if") private SimpleExpression _if;
+        @JsonProperty("if") private TemplateExpression _if;
         /** Required name for this step element */
         private String name;
         /** Optional HTTP method, defaults to 'GET' */
@@ -435,9 +463,9 @@ public class ActionDescriptor {
         @Data
         public static final class ActionStepRequestForEachDescriptor implements IActionIfSupplier {
             /** Optional if-expression, executing steps only if condition evaluates to true */
-            @JsonProperty("if") private SimpleExpression _if;
+            @JsonProperty("if") private TemplateExpression _if;
             /** Optional break-expression, terminating forEach if condition evaluates to true */
-            private SimpleExpression breakIf;
+            private TemplateExpression breakIf;
             /** Required name for this step element */
             private String name;
             /** Optional requests for which to embed the response in each forEach node */

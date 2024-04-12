@@ -39,7 +39,7 @@ steps:
   - requests:
       - name: staticScanSummary
         uri:  /api/v3/scans/${parameters.release.currentStaticScanId}/summary
-        if:   parameters.release.currentStaticScanId!=null
+        if:   ${parameters.release.currentStaticScanId!=null}
   - progress: Processing issue data
   - requests:
     - name: issues
@@ -58,26 +58,24 @@ steps:
           - name: traces
             uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/traces 
         do:
-          - set:
-            - if: "ruleCache==null || ruleCache[issue.checkId]==null"
+          - append:
+            - if: ${ruleCache==null || ruleCache[issue.checkId]==null}
               name: rules
-              operation: append
+              valueTemplate: rules
             - name: ruleCache
-              operation: merge
+              property: ${issue.checkId}
+              value: true
             - name: results
-              operation: append
+              valueTemplate: results
   - write:
     - to: ${parameters.file}
       valueTemplate: github-sast-report
-    - if: parameters.file!='stdout'
+    - if: ${parameters.file!='stdout'}
       to: stdout
       value: |
         Output written to ${parameters.file}
 
 valueTemplates:
-  - name: ruleCache
-    contents: "${{issue.checkId: true}}"
-
   - name: github-sast-report
     contents:
       "$schema": https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json 

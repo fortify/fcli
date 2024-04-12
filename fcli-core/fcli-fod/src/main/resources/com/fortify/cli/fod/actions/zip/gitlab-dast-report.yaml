@@ -23,10 +23,10 @@ steps:
   - requests:
       - name:   dynamicScanSummary
         uri:    /api/v3/scans/${parameters.release.currentDynamicScanId}/summary
-        if:     parameters.release.currentDynamicScanId!=null
+        if:     ${parameters.release.currentDynamicScanId!=null}
       - name:   siteTree
         uri:    /api/v3/scans/${parameters.release.currentDynamicScanId}/site-tree
-        if:     parameters.release.currentDynamicScanId!=null
+        if:     ${parameters.release.currentDynamicScanId!=null}
         onFail: 
           - debug: "Site tree unavailable: ${exception.getMessage()}"
   - progress: Processing issue data
@@ -47,13 +47,13 @@ steps:
           - name: request_response
             uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/request-response 
         do:
-          - set:
+          - append:
             - name: vulnerabilities
-              operation: append
+              valueTemplate: vulnerabilities
   - write:
     - to: ${parameters.file}
       valueTemplate: gitlab-dast-report
-    - if: parameters.file!='stdout'
+    - if: ${parameters.file!='stdout'}
       to: stdout
       value: |
         Output written to ${parameters.file}
