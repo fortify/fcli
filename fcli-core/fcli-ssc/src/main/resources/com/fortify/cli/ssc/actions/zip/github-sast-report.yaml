@@ -36,7 +36,12 @@ parameters:
     description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
     required: false
     type: filterset
-  
+  - name: limit
+    cliAliases: l
+    description: "By default, retrieve 200 issues at a time from SSC. You can adjust this limit to be more or less for performance."
+    required: false
+    defaultValue: "200"
+
 steps:
   - progress: Loading latest static scan
   - requests:
@@ -55,7 +60,7 @@ steps:
   - progress: Processing issue data
   - requests:
     - name: issues
-      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues?limit=100
+      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues?limit=${parameters.limit}
       query:
         filter: ISSUE[11111111-1111-1111-1111-111111111151]:SCA
         filterset: ${parameters.filterset.guid}

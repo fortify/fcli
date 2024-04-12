@@ -31,6 +31,11 @@ parameters:
     cliAliases: rel
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
     type: release_single
+  - name: limit
+    cliAliases: l
+    description: "By default, retrieve 100 issues at a time from FoD. You can adjust this limit to be more or less for performance."
+    required: false
+    defaultValue: "100"
 
 steps:
   - progress: Loading static scan summary
@@ -41,7 +46,7 @@ steps:
   - progress: Processing issue data
   - requests:
     - name: issues
-      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
+      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=${parameters.limit}
       query:
         filters: scantype:Static
       pagingProgress:

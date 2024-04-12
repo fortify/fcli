@@ -52,7 +52,12 @@ parameters:
     type: boolean
     required: false
     defaultValue: false
-    
+  - name: limit
+    cliAliases: l
+    description: "By default, retrieve 100 issues at a time from FoD. You can adjust this limit to be more or less for performance."
+    required: false
+    defaultValue: "100"
+
 addRequestTargets:
   - name: github
     baseUrl: https://api.github.com
@@ -67,7 +72,7 @@ steps:
   - progress: Processing issue data
   - requests:
     - name: issues
-      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
+      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=${parameters.limit}
       query:
         includeFixed: true
         filters: scantype:${parameters['scan-type']}
