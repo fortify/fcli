@@ -41,7 +41,7 @@ public class SSCAttributeDefinitionListCommand extends AbstractSSCBaseRequestOut
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get("/api/v1/attributeDefinitions?limit=-1&orderby=category,name");
+        return unirest.get("/api/v1/attributeDefinitions?limit=200&orderby=category,name");
     }
     
     @Override

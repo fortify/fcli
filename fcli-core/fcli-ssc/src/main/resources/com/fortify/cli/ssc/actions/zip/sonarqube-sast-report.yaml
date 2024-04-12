@@ -32,7 +32,7 @@ steps:
   - progress: Processing issue data
   - requests:
     - name: issues
-      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues?limit=100
+      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues?limit=200
       query:
         filter: ISSUE[11111111-1111-1111-1111-111111111151]:SCA
         filterset: ${parameters.filterset.guid}

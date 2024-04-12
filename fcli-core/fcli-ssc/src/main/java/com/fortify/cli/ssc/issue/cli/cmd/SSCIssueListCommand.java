@@ -52,7 +52,7 @@ public class SSCIssueListCommand extends AbstractSSCBaseRequestOutputCommand imp
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
         String appVersionId = parentResolver.getAppVersionId(unirest);
         SSCIssueFilterSetDescriptor filterSetDescriptor = filterSetResolver.getFilterSetDescriptor(unirest, appVersionId);
-        GetRequest request = unirest.get("/api/v1/projectVersions/{id}/issues?limit=100&qm=issues")
+        GetRequest request = unirest.get("/api/v1/projectVersions/{id}/issues?limit=200&qm=issues")
                 .routeParam("id", appVersionId);
         if ( filterSetDescriptor!=null ) {
             request.queryString("filterset", filterSetDescriptor.getGuid());

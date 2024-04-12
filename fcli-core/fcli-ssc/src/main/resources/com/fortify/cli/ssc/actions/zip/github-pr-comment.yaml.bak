@@ -75,7 +75,7 @@ steps:
   - progress: Processing issue data
   - requests:
     - name: issues
-      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues?limit=100
+      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues?limit=200
       query:
         showremoved: true
         filterset: ${parameters.filterset.guid}
