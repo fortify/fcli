@@ -38,33 +38,32 @@ steps:
   - requests:
     - name: issueSelectorSet
       uri:  /api/v1/projectVersions/${parameters.appversion.id}/issueSelectorSet?fields=filterBySet
-      
-  # Collect analysis types from SSC issue selector filter by sets,
-  # and collect latest scan for each analysis type
-  - forEach:
-      values: ${issueSelectorSet.filterBySet.^[displayName=='Analysis Type'].selectorOptions}
-      name: analysisType
-      do:
-        # Collect analysis types
-        - append:
-          - name: analysisTypes
-            value: ${analysisType}
-        # Load latest scan for current analysis type
-        - progress: Loading ${analysisType.displayName} scan data
-        - requests:
-          - name: artifactsResponse
-            uri:  /api/v1/projectVersions/${parameters.appversion.id}/artifacts
-            type: paged
-            query:
-              embed: scans
-            forEach:
-              name: artifact
-              breakIf: ${lastScans!=null && lastScans[analysisType.guid]!=null}
+  - set:
+    - name: analysisTypes
+      value: ${issueSelectorSet.filterBySet.^[displayName=='Analysis Type'].selectorOptions}
+  - requests:
+    - if: ${analysisTypes!=null && analysisTypes.size()>0}
+      name: artifactsResponse
+      uri:  /api/v1/projectVersions/${parameters.appversion.id}/artifacts
+      type: paged
+      query:
+        embed: scans
+      forEach:
+        name: artifact
+        breakIf: ${analysizedScans?.![type]?.containsAll(analysisTypes.![displayName])?:false}
+        do:
+          - forEach:
+              values: ${artifact._embed.scans}
+              name: scan
               do:
                 - append:
-                  - name: lastScans
-                    property: ${analysisType.displayName}
-                    value: ${artifact._embed.scans?.^[type==#root.analysisType.guid]}
+                  - name:     lastScans
+                    if:       ${lastScans==null || lastScans[scan.type]==null}
+                    property: ${analysisTypes?.^[guid==#root.scan.type].displayName}
+                    value:    ${scan}
+                  - name:  analyzedScans
+                    value: ${scan}
+                    
                     
   # Collect SSC filter set data, together with issue counts by analysis type & folder
   - requests:
