@@ -1,8 +1,9 @@
 usage:
-  header: Generate release summary. 
+  header: (PREVIEW) Generate release summary. 
   description: |
     This action generates a short summary listing issue counts and other statistics
-    for a given release.
+    for a given release. Based on user feedback on this initial version of this action, 
+    parameters and output of this action may change in the next couple of fcli releases.
 
 defaults:
   requestTarget: fod

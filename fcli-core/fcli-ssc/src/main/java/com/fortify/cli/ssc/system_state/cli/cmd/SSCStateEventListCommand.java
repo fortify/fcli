@@ -48,7 +48,7 @@ public class SSCStateEventListCommand extends AbstractSSCBaseRequestOutputComman
     
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get("/api/v1/events?limit=200");
+        return unirest.get("/api/v1/events?limit=100");
     }
     
     @Override
