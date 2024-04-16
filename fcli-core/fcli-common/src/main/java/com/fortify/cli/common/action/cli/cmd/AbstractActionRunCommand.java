@@ -13,6 +13,7 @@
 package com.fortify.cli.common.action.cli.cmd;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
@@ -27,6 +28,7 @@ import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
 
+import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
@@ -42,10 +44,10 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     @Mixin CommandHelperMixin commandHelper;
     @Unmatched private String[] actionArgs;
     
-    @Override
+    @Override @SneakyThrows
     public final Integer call() {
         initMixins();
-        Runnable delayedConsoleWriter = null;
+        Callable<Integer> delayedConsoleWriter = null;
         try ( var progressWriter = progressWriterFactory.create() ) {
             progressWriter.writeProgress("Loading action %s", action);
             var actionDescriptor = ActionHelper.load(getType(), action);
@@ -57,11 +59,10 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
                 delayedConsoleWriter = run(actionRunner, progressWriter);
             }
         }
-        delayedConsoleWriter.run();
-        return 0;
+        return delayedConsoleWriter.call();
     }
 
-    private Runnable run(ActionRunner actionRunner, IProgressWriterI18n progressWriter) {
+    private Callable<Integer> run(ActionRunner actionRunner, IProgressWriterI18n progressWriter) {
         actionRunner.getSpelEvaluator().configure(context->configure(actionRunner, context));
         progressWriter.writeProgress("Executing action %s", actionRunner.getAction().getName());
         return actionRunner.run(actionArgs);

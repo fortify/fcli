@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -124,8 +125,10 @@ public class ActionRunner implements AutoCloseable {
     private final Map<String, IActionRequestHelper> requestHelpers = new HashMap<>();
     // We need to delay writing output to console as to not interfere with progress writer
     private final List<Runnable> delayedConsoleWriterRunnables = new ArrayList<>();
+    @Builder.Default private int exitCode = 0;
+    @Builder.Default private boolean exitRequested = false;
     
-    public final Runnable run(String[] args) {
+    public final Callable<Integer> run(String[] args) {
         globalData.set("parameters", parameters);
         progressWriter.writeProgress("Processing action parameters");
         var optionsParseResult = new ActionParameterProcessor(args).processParameters();
@@ -138,7 +141,10 @@ public class ActionRunner implements AutoCloseable {
             progressWriter.writeProgress("Producing action outputs");
             progressWriter.writeProgress("Action processing finished");
         }
-        return ()->delayedConsoleWriterRunnables.forEach(Runnable::run);
+        return ()->{
+            delayedConsoleWriterRunnables.forEach(Runnable::run);
+            return exitCode;
+        };
     }
 
     public final void close() {
@@ -147,10 +153,7 @@ public class ActionRunner implements AutoCloseable {
     
     private final void configureSpelEvaluator(SimpleEvaluationContext context) {
         SpelHelper.registerFunctions(context, ActionSpelFunctions.class);
-        context.setVariable("apply", context);
     }
-    
-    
     
     public final ActionRunner addParameterConverter(String type, BiFunction<String, ParameterTypeConverterArgs, JsonNode> converter) {
         parameterConverters.put(type, converter);
@@ -320,12 +323,14 @@ public class ActionRunner implements AutoCloseable {
                 processStepSupplier(step::getWarn, this::processWarnStep);
                 processStepSupplier(step::getDebug, this::processDebugStep);
                 processStepSupplier(step::get_throw, this::processThrowStep);
+                processStepSupplier(step::get_exit, this::processExitStep);
                 processStepSupplier(step::getRequests, this::processRequestsStep);
                 processStepSupplier(step::getForEach, this::processForEachStep);
                 processStepEntries(step::getSet, this::processSetStep);
                 processStepEntries(step::getAppend, this::processAppendStep);
                 processStepEntries(step::getUnset, this::processUnsetStep);
                 processStepEntries(step::getWrite, this::processWriteStep);
+                processStepEntries(step::getSteps, this::processStep);
             }
         }
         
@@ -376,7 +381,7 @@ public class ActionRunner implements AutoCloseable {
         }
         
         private final boolean _if(Object o) {
-            if (o==null) { return false; }
+            if (exitRequested || o==null) { return false; }
             if (o instanceof IActionIfSupplier ) {
                 var _if = ((IActionIfSupplier) o).get_if();
                 if ( _if!=null ) {
@@ -513,6 +518,11 @@ public class ActionRunner implements AutoCloseable {
         
         private void processThrowStep(TemplateExpression message) {
             throw new RuntimeException(spelEvaluator.evaluate(message, localData, String.class));
+        }
+        
+        private void processExitStep(TemplateExpression exitCodeExpression) {
+            exitCode = spelEvaluator.evaluate(exitCodeExpression, localData, Integer.class);
+            exitRequested = true;
         }
         
         private void processForEachStep(ActionStepForEachDescriptor forEach) {

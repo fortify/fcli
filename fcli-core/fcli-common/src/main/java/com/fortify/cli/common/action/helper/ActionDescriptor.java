@@ -256,6 +256,8 @@ public class ActionDescriptor {
         private TemplateExpression debug;
         /** Optional exception message template expression for this step element */
         @JsonProperty("throw") private TemplateExpression _throw;
+        /** Optional exit step element to generate exit code and terminate the action */
+        @JsonProperty("exit") private TemplateExpression _exit;
         /** Optional set operations */
         private List<ActionStepSetDescriptor> set;
         /** Optional add operations */
@@ -266,6 +268,8 @@ public class ActionDescriptor {
         private List<ActionStepWriteDescriptor> write;
         /** Optional forEach operation */
         private ActionStepForEachDescriptor forEach;
+        /** Optional sub-steps to be executed, useful for grouping or conditional execution */
+        private List<ActionStepDescriptor> steps;
         
         /**
          * This method is invoked by the parent element (which may either be another
@@ -277,6 +281,7 @@ public class ActionDescriptor {
             if ( set!=null ) { set.forEach(d->d.postLoad(action)); }
             if ( write!=null ) { write.forEach(d->d.postLoad(action)); }
             if ( forEach!=null ) { forEach.postLoad(action); }
+            if ( steps!=null) { steps.forEach(d->d.postLoad(action)); }
         }
     }
     
