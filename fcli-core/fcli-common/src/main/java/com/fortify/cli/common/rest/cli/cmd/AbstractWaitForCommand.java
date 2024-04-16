@@ -27,16 +27,17 @@ import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractWaitForCommand extends AbstractRunnableCommand implements IActionCommandResultSupplier, IUnirestInstanceSupplier, ISingularSupplier, Runnable {
+public abstract class AbstractWaitForCommand extends AbstractRunnableCommand implements IActionCommandResultSupplier, IUnirestInstanceSupplier, ISingularSupplier {
     @Getter @Mixin private OutputHelperMixins.WaitFor outputHelper;
     @Mixin private WaitHelperControlPropertiesMixin controlProperties;
     @Mixin private WaitHelperWaitTypeMixin waitTypeSupplier;
     @Mixin StandardWaitHelperProgressMonitorMixin progressMonitorMixin;
     
     @Override
-    public void run() {
+    public Integer call() {
         initMixins();
         wait(getUnirestInstance());
+        return 0;
     }
     
     @Override

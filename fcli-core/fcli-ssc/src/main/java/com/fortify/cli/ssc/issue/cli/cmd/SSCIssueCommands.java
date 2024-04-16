@@ -31,6 +31,7 @@ import picocli.CommandLine.Command;
                 SSCIssueFiltersListCommand.class,
                 SSCIssueGroupGetCommand.class,
                 SSCIssueGroupListCommand.class,
+                SSCIssueCheckCommand.class,
                 SSCIssueCountCommand.class,
                 SSCIssueListCommand.class,
         }

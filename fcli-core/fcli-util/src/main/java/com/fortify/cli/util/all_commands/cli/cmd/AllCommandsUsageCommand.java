@@ -21,14 +21,15 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 
 @Command(name = "usage")
-public final class AllCommandsUsageCommand extends AbstractRunnableCommand implements Runnable {
+public final class AllCommandsUsageCommand extends AbstractRunnableCommand {
     @Mixin private AllCommandsCommandSelectorMixin selectorMixin;
     
     @Override
-    public final void run() {
+    public final Integer call() {
         initMixins();
         selectorMixin.getSelectedCommands().getSpecs()
             .forEach(this::printHelp);
+        return 0;
     }
 
     private void printHelp(CommandSpec spec) {

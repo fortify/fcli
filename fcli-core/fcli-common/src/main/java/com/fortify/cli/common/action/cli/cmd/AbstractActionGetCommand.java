@@ -17,13 +17,14 @@ import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 
 import picocli.CommandLine.Parameters;
 
-public abstract class AbstractActionGetCommand extends AbstractRunnableCommand implements Runnable {
+public abstract class AbstractActionGetCommand extends AbstractRunnableCommand {
     @Parameters(arity="1", descriptionKey="fcli.action.run.action") private String action;
     
     @Override
-    public final void run() {
+    public final Integer call() {
         initMixins();
         System.out.println(ActionHelper.loadContents(getType(), action));
+        return 0;
     }
     
     protected abstract String getType();

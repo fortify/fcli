@@ -27,15 +27,16 @@ import picocli.CommandLine.Spec;
  * 
  */
 @Command(name = "generate")
-public final class AutoCompleteGenerationCommand extends AbstractRunnableCommand implements Runnable {
+public final class AutoCompleteGenerationCommand extends AbstractRunnableCommand {
     @Spec CommandSpec spec;
 
-    public void run() {
+    public Integer call() {
         String script = AutoComplete.bash(spec.root().name(), spec.root().commandLine());
         // not PrintWriter.println: scripts with Windows line separators fail in strange
         // ways!
         spec.commandLine().getOut().print(script);
         spec.commandLine().getOut().print('\n');
         spec.commandLine().getOut().flush();
+        return 0;
     }
 }

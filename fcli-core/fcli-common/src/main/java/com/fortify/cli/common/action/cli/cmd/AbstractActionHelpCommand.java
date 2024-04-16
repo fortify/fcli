@@ -20,16 +20,17 @@ import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Unmatched;
 
-public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand implements Runnable {
+public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand {
     @Parameters(arity="1", descriptionKey="fcli.action.run.action") private String action;
     @Unmatched private String[] actionArgs; // We explicitly ignore any unknown CLI args, to allow for 
                                             // users to simply switch between run and help commands.
     
     @Override
-    public final void run() {
+    public final Integer call() {
         initMixins();
         var actionDescriptor = ActionHelper.load(getType(), action);
         System.out.println(getActionHelp(actionDescriptor));
+        return 0;
     }
     
     private final String getActionHelp(ActionDescriptor action) {

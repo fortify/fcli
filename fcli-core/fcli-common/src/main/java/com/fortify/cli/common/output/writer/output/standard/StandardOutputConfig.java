@@ -85,6 +85,10 @@ public class StandardOutputConfig {
         return new StandardOutputConfig().defaultFormat(OutputFormat.table);
     }
     
+    public static final StandardOutputConfig table_plain() {
+        return new StandardOutputConfig().defaultFormat(OutputFormat.table_plain);
+    }
+    
     public static final StandardOutputConfig tree() {
         return new StandardOutputConfig().defaultFormat(OutputFormat.tree);
     }
