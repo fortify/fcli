@@ -33,7 +33,9 @@ public class YamlRecordWriter extends AbstractFormattedRecordWriter {
     private YAMLGenerator getGenerator() {
         if ( generator==null ) {
             YAMLFactory factory = new YAMLFactory();
-            this.generator = (YAMLGenerator)factory.createGenerator(getWriter())
+            this.generator = (YAMLGenerator)factory.createGenerator(getWriter());
+            generator.configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
+                    .configure(YAMLGenerator.Feature.WRITE_DOC_START_MARKER, false)
                     .setCodec(new ObjectMapper())
                     .disable(Feature.AUTO_CLOSE_TARGET);
             if ( getConfig().isPretty() ) generator = (YAMLGenerator)generator.useDefaultPrettyPrinter();

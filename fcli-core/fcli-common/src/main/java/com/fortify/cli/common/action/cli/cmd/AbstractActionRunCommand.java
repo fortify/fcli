@@ -33,7 +33,7 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Unmatched;
 
-public abstract class AbstractActionRunCommand extends AbstractRunnableCommand implements Runnable {
+public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     @Parameters(arity="1", descriptionKey="fcli.action.run.action") private String action;
     @DisableTest({TestType.MULTI_OPT_SPLIT, TestType.MULTI_OPT_PLURAL_NAME, TestType.OPT_LONG_NAME})
     @Option(names="--<action-parameter>", paramLabel="<value>", descriptionKey="fcli.action.run.action-parameter") 
@@ -43,7 +43,7 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand i
     @Unmatched private String[] actionArgs;
     
     @Override
-    public final void run() {
+    public final Integer call() {
         initMixins();
         Runnable delayedConsoleWriter = null;
         try ( var progressWriter = progressWriterFactory.create() ) {
@@ -58,6 +58,7 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand i
             }
         }
         delayedConsoleWriter.run();
+        return 0;
     }
 
     private Runnable run(ActionRunner actionRunner, IProgressWriterI18n progressWriter) {

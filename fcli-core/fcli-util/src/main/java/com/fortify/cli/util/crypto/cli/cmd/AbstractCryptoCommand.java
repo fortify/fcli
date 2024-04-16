@@ -20,11 +20,11 @@ import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractCryptoCommand extends AbstractRunnableCommand implements Runnable {
+public abstract class AbstractCryptoCommand extends AbstractRunnableCommand {
     @Mixin private CommandHelperMixin commandHelper;
     
     @Override @SneakyThrows
-    public final void run() {
+    public final Integer call() {
         initMixins();
         String prompt = commandHelper.getMessageResolver().getMessageString("prompt")+" ";
         String value;
@@ -37,6 +37,7 @@ public abstract class AbstractCryptoCommand extends AbstractRunnableCommand impl
             }
         }
         System.out.println(process(value));
+        return 0;
     }
 
     protected abstract String process(String value);

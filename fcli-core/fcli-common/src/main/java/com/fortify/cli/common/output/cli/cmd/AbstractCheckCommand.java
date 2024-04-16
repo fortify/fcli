@@ -12,37 +12,43 @@
  *******************************************************************************/
 package com.fortify.cli.common.output.cli.cmd;
 
-import java.util.Arrays;
-import java.util.List;
-
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 
-public abstract class AbstractOutputCommand extends AbstractRunnableCommand implements ISingularSupplier {
-    private static final List<Class<?>> supportedInterfaces = Arrays.asList(
-            IBaseRequestSupplier.class, 
-            IJsonNodeSupplier.class);
+public abstract class AbstractCheckCommand extends AbstractRunnableCommand implements ISingularSupplier {
     @Override
     public final Integer call() {
         initMixins();
         IOutputHelper outputHelper = getOutputHelper();
-        if ( isInstance(IBaseRequestSupplier.class) ) {
-            outputHelper.write(((IBaseRequestSupplier)this).getBaseRequest());
-        } else if ( isInstance(IJsonNodeSupplier.class) ) {
-            outputHelper.write(((IJsonNodeSupplier)this).getJsonNode());
+        if ( isPass() ) {
+            outputHelper.write(getPassResult());
+            return 0;
         } else {
-            throw new IllegalStateException(this.getClass().getName()+" must implement exactly one of "+supportedInterfaces);
+            outputHelper.write(getFailResult());
+            return 1;
         }
-        return 0;
     }
     
-    private boolean isInstance(Class<?> clazz) {
-        return clazz.isAssignableFrom(this.getClass()) &&
-                supportedInterfaces.stream()
-                .filter(c->!c.equals(clazz))
-                .noneMatch(c->c.isAssignableFrom(this.getClass()));
+    @Override
+    public final boolean isSingular() {
+        return true;
     }
     
     protected abstract IOutputHelper getOutputHelper();
+    protected abstract boolean isPass();
+    
+    protected String getPropertyName() { return "result"; }
+    protected String getPassValue() { return "Pass"; }
+    protected String getFailValue() { return "Fail"; }
+    protected ObjectNode getPassResult() {
+        return JsonHelper.getObjectMapper().createObjectNode()
+                .put(getPropertyName(), getPassValue());
+    }
+    protected ObjectNode getFailResult() {
+        return JsonHelper.getObjectMapper().createObjectNode()
+                .put(getPropertyName(), getFailValue());
+    }
 }
