@@ -19,6 +19,7 @@ import com.fortify.cli.common.output.writer.IMessageResolver;
 import com.fortify.cli.common.util.JavaHelper;
 
 import lombok.Getter;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 
@@ -26,11 +27,13 @@ import picocli.CommandLine.Model.CommandSpec;
 public final class CommandHelperMixin implements ICommandAware {
     @Getter private CommandSpec commandSpec;
     @Getter private IMessageResolver messageResolver;
+    @Getter private CommandLine rootCommandLine;
     
     @Override
     public final void setCommandSpec(CommandSpec commandSpec) {
         this.commandSpec = commandSpec;
         this.messageResolver = new CommandSpecMessageResolver(commandSpec);
+        this.rootCommandLine = _getRootCommandLine(commandSpec);
     }
 
     /**
@@ -48,5 +51,14 @@ public final class CommandHelperMixin implements ICommandAware {
      */
     public final Object getCommand() {
         return commandSpec.userObject();
+    }
+    
+    public final CommandLine _getRootCommandLine(CommandSpec spec) {
+        var cl = spec.commandLine();
+        while ( true ) {
+            if ( cl.getParent()==null ) break;
+            cl = cl.getParent();
+        }
+        return cl;
     }
 }

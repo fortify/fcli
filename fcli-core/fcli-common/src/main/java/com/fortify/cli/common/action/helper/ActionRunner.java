@@ -46,10 +46,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fortify.cli.common.action.helper.ActionDescriptor.AbstractActionForEachDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionParameterDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionRequestTargetDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepAppendDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepDescriptor;
+import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepFcliDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepForEachDescriptor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepForEachDescriptor.IActionStepForEachProcessor;
 import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor;
@@ -65,6 +67,7 @@ import com.fortify.cli.common.action.helper.ActionDescriptor.IActionIfSupplier;
 import com.fortify.cli.common.action.helper.ActionDescriptor.IActionValueSupplier;
 import com.fortify.cli.common.action.helper.ActionRunner.IActionRequestHelper.ActionRequestDescriptor;
 import com.fortify.cli.common.action.helper.ActionRunner.IActionRequestHelper.BasicActionRequestHelper;
+import com.fortify.cli.common.cli.util.FcliCommandExecutor;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.IOptionDescriptor;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
@@ -95,9 +98,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import picocli.CommandLine;
 
 @Builder
 public class ActionRunner implements AutoCloseable {
+    /** Save original stdout for delayed output operations */
+    private static final PrintStream stdout = System.out;
+    /** Save original stderr for delayed output operations */
+    private static final PrintStream stderr = System.err;
     /** Jackson {@link ObjectMapper} used for various JSON-related operations */
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     /** Jackson {@link ObjectMapper} used for formatting steps in logging/exception messages */
@@ -106,6 +114,8 @@ public class ActionRunner implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(ActionRunner.class);
     /** Progress writer, provided through builder method */
     private final IProgressWriterI18n progressWriter;
+    /** Root CommandLine object for executing fcli commands, provided through builder method */
+    private final CommandLine rootCommandLine;
     /** Data extract action, provided through builder method */
     @Getter private final ActionDescriptor action;
     /** Callback to handle validation errors */
@@ -326,6 +336,7 @@ public class ActionRunner implements AutoCloseable {
                 processStepSupplier(step::get_exit, this::processExitStep);
                 processStepSupplier(step::getRequests, this::processRequestsStep);
                 processStepSupplier(step::getForEach, this::processForEachStep);
+                processStepEntries(step::getFcli, this::processFcliStep);
                 processStepEntries(step::getSet, this::processSetStep);
                 processStepEntries(step::getAppend, this::processAppendStep);
                 processStepEntries(step::getUnset, this::processUnsetStep);
@@ -475,8 +486,8 @@ public class ActionRunner implements AutoCloseable {
             var value = asString(getValue(write));
             try {
                 switch (to.toLowerCase()) {
-                case "stdout": delayedConsoleWriterRunnables.add(createRunner(System.out, value)); break;
-                case "stderr": delayedConsoleWriterRunnables.add(createRunner(System.err, value)); break;
+                case "stdout": delayedConsoleWriterRunnables.add(createRunner(stdout, value)); break;
+                case "stderr": delayedConsoleWriterRunnables.add(createRunner(stderr, value)); break;
                 default: write(new File(to), value);
                 }
             } catch (IOException e) {
@@ -517,7 +528,7 @@ public class ActionRunner implements AutoCloseable {
         }
         
         private void processThrowStep(TemplateExpression message) {
-            throw new RuntimeException(spelEvaluator.evaluate(message, localData, String.class));
+            throw new StepProcessingException(spelEvaluator.evaluate(message, localData, String.class));
         }
         
         private void processExitStep(TemplateExpression exitCodeExpression) {
@@ -533,16 +544,63 @@ public class ActionRunner implements AutoCloseable {
                 if ( processor!=null ) { processor.process(node->processForEachStepNode(forEach, node)); }
             } else if ( valuesExpression!=null ) {
                 var values = spelEvaluator.evaluate(valuesExpression, localData, ArrayNode.class);
-                if ( values!=null ) { values.forEach(value->processForEachStepNode(forEach, value)); }
+                if ( values!=null ) { JsonHelper.stream(values).takeWhile(value->processForEachStepNode(forEach, value)); }
             }
         }
         
-        private boolean processForEachStepNode(ActionStepForEachDescriptor forEach, JsonNode node) {
+        private boolean processForEachStepNode(AbstractActionForEachDescriptor forEach, JsonNode node) {
+            if ( forEach==null ) { return false; }
+            var breakIf = forEach.getBreakIf();
             setDataValue(forEach.getName(), node);
+            if ( breakIf!=null && spelEvaluator.evaluate(breakIf, localData, Boolean.class) ) {
+                return false;
+            }
             if ( _if(forEach) ) {
                 processSteps(forEach.get_do());
             }
             return true;
+        }
+        
+        // TODO Handle fcli::name
+        private void processFcliStep(ActionStepFcliDescriptor fcli) {
+            var cmd = spelEvaluator.evaluate(fcli.getCmd(), localData, String.class);
+            progressWriter.writeProgress("Executing fcli %s", cmd);
+            var cmdExecutor = new FcliCommandExecutor(rootCommandLine, cmd);
+            Consumer<ObjectNode> recordConsumer = null;
+            var forEach = fcli.getForEach();
+            var name = fcli.getName();
+            if ( forEach!=null || StringUtils.isNotBlank(name) ) {
+                if ( !cmdExecutor.canCollectRecords() ) {
+                    throw new IllegalStateException("Can't use forEach or name on fcli command: "+cmd);
+                } else {
+                    recordConsumer = new FcliRecordConsumer(fcli);
+                }
+            }
+            
+            // TODO Implement optional output suppression
+            var output = cmdExecutor.execute(recordConsumer, true);
+            delayedConsoleWriterRunnables.add(createRunner(System.err, output.getErr()));
+            delayedConsoleWriterRunnables.add(createRunner(System.out, output.getOut()));
+            if ( output.getExitCode() >0 ) { 
+                throw new StepProcessingException("Fcli command returned non-zero exit code "+output.getExitCode()); 
+            }
+        }
+        @RequiredArgsConstructor
+        private class FcliRecordConsumer implements Consumer<ObjectNode> {
+            private final ActionStepFcliDescriptor fcli;
+            private boolean continueProcessing = true;
+            @Override
+            public void accept(ObjectNode record) {
+                var name = fcli.getName();
+                if ( StringUtils.isNotBlank(name) ) {
+                    // For name attribute, we want to collect all records,
+                    // independent of break condition in the forEach block.
+                    appendToArray(name, localData.get(name), record);
+                }
+                if ( continueProcessing ) {
+                    continueProcessing = processForEachStepNode(fcli.getForEach(), record);
+                }
+            }
         }
 
         private void processRequestsStep(List<ActionStepRequestDescriptor> requests) {
@@ -852,7 +910,6 @@ public class ActionRunner implements AutoCloseable {
 
         public StepProcessingException(String message, Throwable cause) {
             super(message, cause);
-            // TODO Auto-generated constructor stub
         }
 
         public StepProcessingException(String message) {

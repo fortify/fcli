@@ -142,6 +142,61 @@ public class ActionDescriptor {
     }
     
     /**
+     * This abstract class describes an operation to update a data property.
+     */
+    @Reflectable @NoArgsConstructor
+    @Data
+    public static abstract class AbstractActionStepUpdatePropertyDescriptor implements IActionIfSupplier, IActionValueSupplier {
+        /** Optional if-expression, executing this step only if condition evaluates to true */
+        @JsonProperty("if") private TemplateExpression _if;
+        /** Required name for this step element */
+        private String name;
+        /** Value template expression for this step element */
+        private TemplateExpression value;
+        /** Value template for this step element */
+        private String valueTemplate;
+        
+        public final void postLoad(ActionDescriptor action) {
+            checkNotBlank("set name", name, this);
+            checkActionValueSupplier(action, this);
+            _postLoad(action);
+        }
+        
+        protected void _postLoad(ActionDescriptor action) {}
+    }
+    
+    /**
+     * This abstract class is the base class for forEach steps/properties.
+     */
+    @Reflectable @NoArgsConstructor
+    @Data
+    public static abstract class AbstractActionForEachDescriptor implements IActionIfSupplier {
+        /** Optional if-expression, executing steps only if condition evaluates to true */
+        @JsonProperty("if") private TemplateExpression _if;
+        /** Optional break-expression, terminating forEach if condition evaluates to true */
+        private TemplateExpression breakIf;
+        /** Required name for this step element */
+        private String name;
+        /** Steps to be repeated for each value */
+        @JsonProperty("do") private List<ActionStepDescriptor> _do;
+        
+        /**
+         * This method is invoked by the {@link ActionStepDescriptor#postLoad()}
+         * method. It checks that required properties are set, then calls the postLoad() method for
+         * each sub-step.
+         */
+        public final void postLoad(ActionDescriptor action) {
+            checkNotBlank("forEach name", name, this);
+            checkNotNull("forEach do", _do, this);
+            _do.forEach(d->d.postLoad(action));
+            _postLoad(action);
+        }
+
+        protected void _postLoad(ActionDescriptor action) {}
+    }
+    
+    
+    /**
      * This class describes action usage header and description.
      */
     @Reflectable @NoArgsConstructor
@@ -248,6 +303,8 @@ public class ActionDescriptor {
         @JsonProperty("if") private TemplateExpression _if;
         /** Optional requests for this step element */
         private List<ActionStepRequestDescriptor> requests;
+        /** Optional fcli commands for this step element */
+        private List<ActionStepFcliDescriptor> fcli;
         /** Optional progress message template expression for this step element */
         private TemplateExpression progress;
         /** Optional warning message template expression for this step element */
@@ -286,36 +343,12 @@ public class ActionDescriptor {
     }
     
     /**
-     * This abstract class describes an operation to update a data property.
-     */
-    @Reflectable @NoArgsConstructor
-    @Data
-    public static abstract class ActionStepUpdatePropertyDescriptor implements IActionIfSupplier, IActionValueSupplier {
-        /** Optional if-expression, executing this step only if condition evaluates to true */
-        @JsonProperty("if") private TemplateExpression _if;
-        /** Required name for this step element */
-        private String name;
-        /** Value template expression for this step element */
-        private TemplateExpression value;
-        /** Value template for this step element */
-        private String valueTemplate;
-        
-        public final void postLoad(ActionDescriptor action) {
-            checkNotBlank("set name", name, this);
-            checkActionValueSupplier(action, this);
-            _postLoad(action);
-        }
-        
-        protected void _postLoad(ActionDescriptor action) {}
-    }
-    
-    /**
      * This class describes an operation to explicitly set a data property.
      * Note that data properties for request outputs are set automatically.
      */
     @Reflectable @NoArgsConstructor
     @Data @EqualsAndHashCode(callSuper = true)
-    public static final class ActionStepSetDescriptor extends ActionStepUpdatePropertyDescriptor {
+    public static final class ActionStepSetDescriptor extends AbstractActionStepUpdatePropertyDescriptor {
     }
     
     /**
@@ -325,7 +358,7 @@ public class ActionDescriptor {
      */
     @Reflectable @NoArgsConstructor
     @Data @EqualsAndHashCode(callSuper = true)
-    public static final class ActionStepAppendDescriptor extends ActionStepUpdatePropertyDescriptor {
+    public static final class ActionStepAppendDescriptor extends AbstractActionStepUpdatePropertyDescriptor {
         /** Optional property name to be added to the object */
         private TemplateExpression property;
     }
@@ -374,20 +407,15 @@ public class ActionDescriptor {
      */
     @Reflectable @NoArgsConstructor
     @Data
-    public static final class ActionStepForEachDescriptor implements IActionIfSupplier {
-        /** Processor that runs the forEach steps. This expression must evaluate to an
-         *  IActionStepForEachProcessor instance. */
-        private TemplateExpression processor;
-        /** Values to iterate over */
-        private TemplateExpression values;
+    public static final class ActionStepFcliDescriptor implements IActionIfSupplier {
         /** Optional if-expression, executing steps only if condition evaluates to true */
         @JsonProperty("if") private TemplateExpression _if;
-        /** Optional break-expression, terminating forEach if condition evaluates to true */
-        private TemplateExpression breakIf;
-        /** Required name for this step element */
+        /** Required template expression providing fcli command to run */
+        private TemplateExpression cmd;
+        /** Optional name for this step element */
         private String name;
         /** Steps to be repeated for each value */
-        @JsonProperty("do") private List<ActionStepDescriptor> _do;
+        @JsonProperty("forEach") private ActionStepFcliForEachDescriptor forEach;
         
         /**
          * This method is invoked by the {@link ActionStepDescriptor#postLoad()}
@@ -395,10 +423,35 @@ public class ActionDescriptor {
          * each sub-step.
          */
         public final void postLoad(ActionDescriptor action) {
-            checkNotBlank("forEach name", name, this);
-            checkNotNull("forEach do", _do, this);
-            _do.forEach(d->d.postLoad(action));
+            checkNotNull("fcli cmd", cmd, this);
+            forEach.postLoad(action);
         }
+        
+        /**
+         * This class describes an fcli forEach element, allowing iteration over the output of
+         * the fcli command. 
+         */
+        @Reflectable @NoArgsConstructor
+        @Data @EqualsAndHashCode(callSuper = true)
+        public static final class ActionStepFcliForEachDescriptor extends AbstractActionForEachDescriptor {
+            protected final void _postLoad(ActionDescriptor action) {}
+        }
+    }
+    
+    /**
+     * This class describes a forEach element, allowing iteration over the output of
+     * a given input.
+     */
+    @Reflectable @NoArgsConstructor
+    @Data @EqualsAndHashCode(callSuper=true)
+    public static final class ActionStepForEachDescriptor extends AbstractActionForEachDescriptor implements IActionIfSupplier {
+        /** Processor that runs the forEach steps. This expression must evaluate to an
+         *  IActionStepForEachProcessor instance. */
+        private TemplateExpression processor;
+        /** Values to iterate over */
+        private TemplateExpression values;
+        
+        public final void _postLoad(ActionDescriptor action) {}
         
         @FunctionalInterface
         public static interface IActionStepForEachProcessor {
@@ -465,29 +518,12 @@ public class ActionDescriptor {
          * action parameter. 
          */
         @Reflectable @NoArgsConstructor
-        @Data
-        public static final class ActionStepRequestForEachDescriptor implements IActionIfSupplier {
-            /** Optional if-expression, executing steps only if condition evaluates to true */
-            @JsonProperty("if") private TemplateExpression _if;
-            /** Optional break-expression, terminating forEach if condition evaluates to true */
-            private TemplateExpression breakIf;
-            /** Required name for this step element */
-            private String name;
-            /** Optional requests for which to embed the response in each forEach node */
+        @Data @EqualsAndHashCode(callSuper = true)
+        public static final class ActionStepRequestForEachDescriptor extends AbstractActionForEachDescriptor implements IActionIfSupplier {
             private List<ActionStepRequestDescriptor> embed;
-            /** Steps to be repeated for each value */
-            @JsonProperty("do") private List<ActionStepDescriptor> _do;
             
-            /**
-             * This method is invoked by the {@link ActionStepDescriptor#postLoad()}
-             * method. It checks that required properties are set, then calls the postLoad() method for
-             * each sub-step.
-             */
-            public final void postLoad(ActionDescriptor action) {
-                checkNotBlank("forEach name", name, this);
-                checkNotNull("forEach do", _do, this);
+            protected final void _postLoad(ActionDescriptor action) {
                 if ( embed!=null ) { embed.forEach(d->d.postLoad(action)); }
-                _do.forEach(d->d.postLoad(action));
             }
         }
         

@@ -1,0 +1,29 @@
+usage:
+  header: (SAMPLE) Check security gate. 
+  description: |
+    This sample action demonstrates how to implement a security gate, returning a
+    non-zero exit code if the security gate fails.
+
+defaults:
+  requestTarget: ssc
+  
+parameters:
+  - name: appversion
+    cliAliases: av
+    description: "Required application version id or <appName>:<versionName>"
+    type: appversion_single
+  - name: exit
+    description: test
+    defaultValue: 0
+  
+steps:
+  - fcli:
+    - name: counts
+      cmd: ssc issue count --av ${parameters.appversion.id}
+  - if: ${counts.^[cleanName=='Critical'].visibleCount>0}
+    throw: test
+  - write:
+    - to: stdout
+      value: ${counts}
+  - exit: ${parameters.exit}
+      

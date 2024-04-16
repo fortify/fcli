@@ -54,7 +54,9 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
             try ( var actionRunner = ActionRunner.builder()
                 .onValidationErrors(this::onValidationErrors)
                 .action(actionDescriptor)
-                .progressWriter(progressWriter).build() ) 
+                .progressWriter(progressWriter)
+                .rootCommandLine(commandHelper.getRootCommandLine())
+                .build() ) 
             {
                 delayedConsoleWriter = run(actionRunner, progressWriter);
             }

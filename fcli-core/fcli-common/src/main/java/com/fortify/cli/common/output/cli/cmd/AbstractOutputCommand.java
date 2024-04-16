@@ -19,7 +19,7 @@ import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 
-public abstract class AbstractOutputCommand extends AbstractRunnableCommand implements ISingularSupplier {
+public abstract class AbstractOutputCommand extends AbstractRunnableCommand implements ISingularSupplier, IOutputHelperSupplier {
     private static final List<Class<?>> supportedInterfaces = Arrays.asList(
             IBaseRequestSupplier.class, 
             IJsonNodeSupplier.class);
@@ -44,5 +44,5 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand impl
                 .noneMatch(c->c.isAssignableFrom(this.getClass()));
     }
     
-    protected abstract IOutputHelper getOutputHelper();
+    public abstract IOutputHelper getOutputHelper();
 }
