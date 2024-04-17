@@ -25,4 +25,12 @@ steps:
       failIf:      ${countsByFolder.^[cleanName=='Critical']?.visibleCount>0}
     - displayName: No new issues allowed
       failIf:      ${countsByNewIssue.^[cleanName=='NEW']?.visibleCount>0}
+  - fcli:
+    - cmd: ssc issue ls --av ${parameters.appversion.id}
+      forEach:
+        name: issue
+        do:
+          - check:
+            - displayName: No new critical issues allowed
+              failIf:      ${issue.scanStatus=='NEW' && issue.friority=='Critical'}
       

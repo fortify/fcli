@@ -13,8 +13,10 @@
 package com.fortify.cli.common.action.helper.descriptor;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -29,16 +31,28 @@ import lombok.NoArgsConstructor;
 
 /**
  * This class describes an action deserialized from an action YAML file, 
- * containing elements describing:
+ * containing elements describing things like:
  * <ul> 
  *  <li>Action metadata like name and description</li> 
  *  <li>Action parameters</li>
  *  <li>Steps to be executed, like executing REST requests and writing output</li>
- *  <li>Data formatters</li>
+ *  <li>Value templates</li>
  * </ul> 
  *
  * @author Ruud Senden
  */
+// TODO Make postLoad() invocations more fail-safe; currently it's too easy
+//      to forget invoking the postLoad() method on a child element. Safest
+//      but least performant approach is to use reflection to iterate through
+//      field values on each descriptor. Alternatively, each descriptor could
+//      define a getFieldValues() method returning an array listing all field
+//      references. In both approaches, if a field value is of type List, we'd
+//      iterate over all entries in the list to process each individual entry.
+//      For individual entries, we check whether an entry implements a new 
+//      IPostLoadSupplier interface, and call the postLoad() method. Alternative 
+//      to handling this in the descriptor itself, we could look into creating 
+//      a unit test that checks whether the postLoad() method is invoked on 
+//      every field, but not sure how to easily do that.
 @Reflectable @NoArgsConstructor
 @Data
 public class ActionDescriptor {
@@ -60,6 +74,7 @@ public class ActionDescriptor {
     private List<ActionValueTemplateDescriptor> valueTemplates;
     @JsonIgnore @Getter(lazy=true) private final Map<String, ActionValueTemplateDescriptor> valueTemplatesByName = 
             valueTemplates.stream().collect(Collectors.toMap(ActionValueTemplateDescriptor::getName, Function.identity()));
+    @JsonIgnore @Getter private final Set<String> checkDisplayNames = new LinkedHashSet<>();
     
     /**
      * This method is invoked by ActionHelper after deserializing

@@ -82,6 +82,8 @@ public final class ActionStepDescriptor implements IActionStepIfSupplier {
         if ( set!=null ) { set.forEach(d->d.postLoad(action)); }
         if ( write!=null ) { write.forEach(d->d.postLoad(action)); }
         if ( forEach!=null ) { forEach.postLoad(action); }
+        if ( check!=null ) { check.forEach(d->d.postLoad(action)); }
+        if ( fcli!=null ) { fcli.forEach(d->d.postLoad(action)); }
         if ( steps!=null) { steps.forEach(d->d.postLoad(action)); }
     }
 }

@@ -39,5 +39,6 @@ public final class ActionStepCheckDescriptor implements IActionStepIfSupplier {
         ActionDescriptor.checkNotBlank("check displayName", displayName, this);
         ActionDescriptor.check(failIf==null && passIf==null, this, ()->"Either passIf or failIf must be specified on check step");
         ActionDescriptor.check(failIf!=null && passIf!=null, this, ()->"Only one of passIf or failIf may be specified on check step");
+        action.getCheckDisplayNames().add(displayName);
     }
 }

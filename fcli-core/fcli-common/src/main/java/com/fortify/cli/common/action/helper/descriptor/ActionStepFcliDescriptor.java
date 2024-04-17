@@ -43,7 +43,7 @@ public final class ActionStepFcliDescriptor implements IActionStepIfSupplier {
      */
     public final void postLoad(ActionDescriptor action) {
         ActionDescriptor.checkNotNull("fcli cmd", cmd, this);
-        forEach.postLoad(action);
+        if ( forEach!=null ) { forEach.postLoad(action); }
     }
     
     /**

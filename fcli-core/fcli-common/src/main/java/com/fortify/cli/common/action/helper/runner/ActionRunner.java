@@ -104,6 +104,12 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
 
+// TODO Move processing of each descriptor element into a separate class,
+//      either for all elements or just for step elements.
+//      For example, each of these classes could have a (static?) 
+//      process(context, descriptor element), with context providing access
+//      to ActionRunner fields, parent steps, local data, shared methods like 
+//      setDataValue(), ...
 @Builder
 public class ActionRunner implements AutoCloseable {
     /** Jackson {@link ObjectMapper} used for various JSON-related operations */
@@ -145,6 +151,7 @@ public class ActionRunner implements AutoCloseable {
     @Builder.Default private boolean exitRequested = false;
     
     public final Callable<Integer> run(String[] args) {
+        action.getCheckDisplayNames().forEach(name->checkStatuses.put(name, CheckStatus.SKIP));
         globalData.set("parameters", parameters);
         progressWriter.writeProgress("Processing action parameters");
         var optionsParseResult = new ActionParameterProcessor(args).processParameters();
@@ -477,6 +484,9 @@ public class ActionRunner implements AutoCloseable {
         }
 
         private void setDataValue(String name, JsonNode value) {
+            if ( LOG.isDebugEnabled() ) {
+                LOG.debug(String.format("Set %s: %s", name, value.toPrettyString()));
+            }
             localData.set(name, value);
             if ( parent!=null ) { parent.setDataValue(name, value); }
         }
@@ -568,7 +578,11 @@ public class ActionRunner implements AutoCloseable {
                 if ( processor!=null ) { processor.process(node->processForEachStepNode(forEach, node)); }
             } else if ( valuesExpression!=null ) {
                 var values = spelEvaluator.evaluate(valuesExpression, localData, ArrayNode.class);
-                if ( values!=null ) { JsonHelper.stream(values).takeWhile(value->processForEachStepNode(forEach, value)); }
+                if ( values!=null ) { 
+                    // Process values until processForEachStepNode() returns false
+                    JsonHelper.stream(values)
+                        .allMatch(value->processForEachStepNode(forEach, value));
+                }
             }
         }
         
@@ -959,7 +973,7 @@ public class ActionRunner implements AutoCloseable {
     }
     
     private static enum CheckStatus {
-        PASS, FAIL;
+        PASS, FAIL, SKIP;
         
         public static CheckStatus combine(CheckStatus... statuses) {
             return combine(Stream.of(statuses));
