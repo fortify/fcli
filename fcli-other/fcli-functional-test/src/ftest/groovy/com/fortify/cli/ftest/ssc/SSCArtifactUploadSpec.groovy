@@ -122,7 +122,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.equals("originalFileName: \"EightBall-22.1.0.fpr\"") }
+                it.any { it.equals("originalFileName: EightBall-22.1.0.fpr") }
             }
     }
     

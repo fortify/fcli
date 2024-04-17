@@ -50,7 +50,7 @@ class FoDAccessControlRoleSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[9].equals("roleName: \"Developer\"")
+                it[9].equals("roleName: Developer")
             }
     }
     

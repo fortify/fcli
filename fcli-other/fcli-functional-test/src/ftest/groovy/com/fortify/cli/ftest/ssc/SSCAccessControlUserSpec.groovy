@@ -30,9 +30,9 @@ class SSCAccessControlUserSpec extends FcliBaseSpec {
     @Shared private final String random = System.currentTimeMillis()
     @Shared private final String userName = "fclitemporarytestuser"+random
     
-    @Shared private String unameval = "userName: \"$userName\""
-    @Shared private String entityval = "entityName: \"$userName\""
-    @Shared private String mailval = "email: \"$random@mail.mail\""
+    @Shared private String unameval = "userName: $userName"
+    @Shared private String entityval = "entityName: $userName"
+    @Shared private String mailval = "email: $random@mail.mail"
     
     def "list"() {
         def args = "ssc ac list-users --store users"
@@ -54,8 +54,8 @@ class SSCAccessControlUserSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>0
                 it[2].equals(unameval)
-                it[3].equals("firstName: \"fName\"")
-                it[4].equals("lastName: \"lName\"")
+                it[3].equals("firstName: fName")
+                it[4].equals("lastName: lName")
                 it[5].equals(mailval)
                 !it[11].equals("roles: null")
             }

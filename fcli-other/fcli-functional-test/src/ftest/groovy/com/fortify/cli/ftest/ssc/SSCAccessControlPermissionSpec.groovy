@@ -45,7 +45,7 @@ class SSCAccessControlPermissionSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[1].equals("id: \"user_view\"")
+                it[1].equals("id: user_view")
             }
     }
     
@@ -56,7 +56,7 @@ class SSCAccessControlPermissionSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[1].equals("id: \"user_view\"")
+                it[1].equals("id: user_view")
             }
     }
 }

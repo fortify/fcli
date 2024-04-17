@@ -55,7 +55,7 @@ class SSCAccessControlRoleSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].equals("name: \"" + roleSupplier.role.roleName + "\"")
+                it[2].equals("name: " + roleSupplier.role.roleName)
             }
     }
     
@@ -66,7 +66,7 @@ class SSCAccessControlRoleSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].equals("name: \"" + roleSupplier.role.roleName + "\"")
+                it[2].equals("name: " + roleSupplier.role.roleName)
             }
     }
     

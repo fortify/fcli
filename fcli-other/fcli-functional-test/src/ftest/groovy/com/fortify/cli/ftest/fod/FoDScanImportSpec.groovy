@@ -75,7 +75,7 @@ class FoDScanImportSpec extends FcliBaseSpec {
             def success = false;
             while(true){
                 def result = Fcli.run("fod rest call ${relScanurl}")
-                if(result.stdout.findAll{element -> element.contains("analysisStatusType: \"Completed\"")}.size()==3) {
+                if(result.stdout.findAll{element -> element.contains("analysisStatusType: Completed")}.size()==3) {
                     success=true;
                     break;
                 } else if(System.currentTimeMillis()-start > timeoutMs) {
@@ -95,7 +95,7 @@ class FoDScanImportSpec extends FcliBaseSpec {
             def success = false;
             while(true){
                 def result = Fcli.run("fod rest call ${relScanurl}")
-                if(result.stdout.findAll{element -> element.contains("analysisStatusType: \"Completed\"")}.size()==1) {
+                if(result.stdout.findAll{element -> element.contains("analysisStatusType: Completed")}.size()==1) {
                     success=true;
                     break;
                 } else if(System.currentTimeMillis()-start > timeoutMs) {

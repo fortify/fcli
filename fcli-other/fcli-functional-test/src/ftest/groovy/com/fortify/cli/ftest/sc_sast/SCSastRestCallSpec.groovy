@@ -32,7 +32,7 @@ class SCSastRestCallSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()==2
                 it[0] == '---'
-                it[1] =~ '- message: ".* I am still alive."'
+                it[1] =~ '- message: .* I am still alive.'
             }
     }
 }

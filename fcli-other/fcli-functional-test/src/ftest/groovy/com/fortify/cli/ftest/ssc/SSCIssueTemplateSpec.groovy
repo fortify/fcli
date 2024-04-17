@@ -63,7 +63,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].equals("name: \"" + templateName + "\"")
+                it[2].equals("name: " + templateName)
             }
     }
     
@@ -74,7 +74,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].equals("name: \"" + templateName + "\"")
+                it[2].equals("name: " + templateName)
             }
     }
     
@@ -97,7 +97,7 @@ class SSCIssueTemplateSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>0
-                it[2].equals("name: \"updatedName\"")
+                it[2].equals("name: updatedName")
             }
     }
     

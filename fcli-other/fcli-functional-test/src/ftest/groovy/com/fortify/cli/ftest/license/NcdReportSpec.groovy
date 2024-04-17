@@ -36,8 +36,8 @@ class NcdReportSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) { 
                 size() == 3
-                it[1] ==~ /^path: "$sampleConfigOutputFile"$/
-                it[2] ==~ /^__action__: "GENERATED"$/
+                it[1] ==~ /^path: $sampleConfigOutputFile$/
+                it[2] ==~ /^__action__: GENERATED$/
             }
             new File(sampleConfigOutputFile).exists()
     }
@@ -58,8 +58,8 @@ class NcdReportSpec extends FcliBaseSpec {
             new File("${reportOutputDir}/details/contributors-by-repository.csv").exists()
             new File("${reportOutputDir}/details/repositories.csv").exists()
             verifyAll(result.stdout) {
-                it.any { it == "reportPath: \"${reportOutputDir}\"" }
-                it.any { it == '  reportType: "Number of Contributing Developers (NCD) Report"' }
+                it.any { it == "reportPath: ${reportOutputDir}" }
+                it.any { it == '  reportType: Number of Contributing Developers (NCD) Report' }
                 it.any { it.contains("repositoryCounts:") }
                 it.any { it.contains("commitCount:") }
                 it.any { it.contains("authorCount:") }
@@ -74,8 +74,8 @@ class NcdReportSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it == "reportPath: \"${reportOutputZip}\"" }
-                it.any { it == '  reportType: "Number of Contributing Developers (NCD) Report"' }
+                it.any { it == "reportPath: ${reportOutputZip}" }
+                it.any { it == '  reportType: Number of Contributing Developers (NCD) Report' }
                 it.any { it.contains("repositoryCounts:") }
                 it.any { it.contains("commitCount:") }
                 it.any { it.contains("authorCount:") }

@@ -45,8 +45,8 @@ class SSCAppVersionSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it[4].equals("  name: \"" + versionSupplier.version.appName + "\"");
-                it[9].equals("name: \"" + versionSupplier.version.versionName + "\"");
+                it[4].equals("  name: " + versionSupplier.version.appName);
+                it[9].equals("name: " + versionSupplier.version.versionName);
             }
     }
     

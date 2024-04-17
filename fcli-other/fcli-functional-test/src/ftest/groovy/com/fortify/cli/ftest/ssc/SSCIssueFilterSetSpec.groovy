@@ -37,7 +37,7 @@ class SSCIssueFilterSetSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[2].equals("title: \"Security Auditor View\"")
+                it[2].equals("title: Security Auditor View")
             }
     }
     
@@ -48,7 +48,7 @@ class SSCIssueFilterSetSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[2].equals("title: \"Security Auditor View\"")
+                it[2].equals("title: Security Auditor View")
             }
     }
 }

@@ -85,8 +85,8 @@ class FoDReleaseSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it.any { it.contains("releaseName: \"testrel\"") }
-                it.any { it.contains("applicationName: \"${app.get().appName}\"") }
+                it.any { it.contains("releaseName: testrel") }
+                it.any { it.contains("applicationName: ${app.get().appName}") }
             }
     }
 
@@ -97,8 +97,8 @@ class FoDReleaseSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it.any { it.contains("releaseName: \"testrel\"") }
-                it.any { it.contains("applicationName: \"${app.get().appName}\"") }
+                it.any { it.contains("releaseName: testrel") }
+                it.any { it.contains("applicationName: ${app.get().appName}") }
             }
     }
 
@@ -119,7 +119,7 @@ class FoDReleaseSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any {it.equals("sdlcStatusType: \"QA\"") }
+                it.any {it.equals("sdlcStatusType: QA") }
             }
     }
 

@@ -88,8 +88,8 @@ class SSCPluginSpec extends FcliBaseSpec {
             then:
                 verifyAll(result.stdout) {
                     size()>0
-                    it.any { it.equals("pluginName: \"Alternative sample parser plugin\"") }
-                    it.any { it.equals("pluginState: \"STOPPED\"") }
+                    it.any { it.equals("pluginName: Alternative sample parser plugin") }
+                    it.any { it.equals("pluginState: STOPPED") }
                 }
     }
     
@@ -101,8 +101,8 @@ class SSCPluginSpec extends FcliBaseSpec {
             then:
                 verifyAll(result.stdout) {
                     size()>0
-                    it.any { it.equals("pluginName: \"Alternative sample parser plugin\"") }
-                    it.any { it.equals("pluginState: \"STOPPED\"") }
+                    it.any { it.equals("pluginName: Alternative sample parser plugin") }
+                    it.any { it.equals("pluginState: STOPPED") }
                 }
     }
     
@@ -126,8 +126,8 @@ class SSCPluginSpec extends FcliBaseSpec {
             then:
                 verifyAll(result.stdout) {
                     size()>0
-                    it.any { it.equals("pluginName: \"Alternative sample parser plugin\"") }
-                    it.any { it.equals("pluginState: \"STARTED\"") }
+                    it.any { it.equals("pluginName: Alternative sample parser plugin") }
+                    it.any { it.equals("pluginState: STARTED") }
                 }
     }
     
