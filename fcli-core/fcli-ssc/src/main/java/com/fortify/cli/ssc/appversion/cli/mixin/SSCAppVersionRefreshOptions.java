@@ -12,9 +12,7 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.appversion.cli.mixin;
 
-import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import lombok.Getter;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Getter

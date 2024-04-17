@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.action.helper;
+package com.fortify.cli.common.action.helper.runner;
 
 import java.time.LocalDateTime;
 import java.time.Year;

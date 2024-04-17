@@ -2,7 +2,7 @@ usage:
   header: (SAMPLE) Check security gate. 
   description: |
     This sample action demonstrates how to implement a security gate, returning a
-    non-zero exit code if the security gate fails.
+    non-zero exit code if any of the checks fail.
 
 defaults:
   requestTarget: ssc
@@ -12,18 +12,17 @@ parameters:
     cliAliases: av
     description: "Required application version id or <appName>:<versionName>"
     type: appversion_single
-  - name: exit
-    description: test
-    defaultValue: 0
   
 steps:
   - fcli:
-    - name: counts
-      cmd: ssc issue count --av ${parameters.appversion.id}
-  - if: ${counts.^[cleanName=='Critical'].visibleCount>0}
-    throw: test
-  - write:
-    - to: stdout
-      value: ${counts}
-  - exit: ${parameters.exit}
+    - name: countsByFolder
+      cmd: ssc issue count --av ${parameters.appversion.id} --by FOLDER
+  - fcli:
+    - name: countsByNewIssue
+      cmd: ssc issue count --av ${parameters.appversion.id} --by "New Issue"
+  - check:
+    - displayName: No critical issues allowed
+      failIf:      ${countsByFolder.^[cleanName=='Critical']?.visibleCount>0}
+    - displayName: No new issues allowed
+      failIf:      ${countsByNewIssue.^[cleanName=='NEW']?.visibleCount>0}
       

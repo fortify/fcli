@@ -10,13 +10,14 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper;
+package com.fortify.cli.common.action.helper.runner;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionParameterDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionParameterDescriptor;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.IOptionDescriptor;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionDescriptor;
 import com.github.freva.asciitable.AsciiTable;

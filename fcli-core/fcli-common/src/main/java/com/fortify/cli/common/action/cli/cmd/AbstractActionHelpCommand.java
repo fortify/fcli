@@ -12,9 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.common.action.cli.cmd;
 
-import com.fortify.cli.common.action.helper.ActionDescriptor;
 import com.fortify.cli.common.action.helper.ActionHelper;
-import com.fortify.cli.common.action.helper.ActionParameterHelper;
+import com.fortify.cli.common.action.helper.descriptor.ActionDescriptor;
+import com.fortify.cli.common.action.helper.runner.ActionParameterHelper;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 
 import picocli.CommandLine.Parameters;

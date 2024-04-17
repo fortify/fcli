@@ -10,13 +10,14 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper;
+package com.fortify.cli.common.action.helper.runner;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,27 +48,29 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fortify.cli.common.action.helper.ActionDescriptor.AbstractActionForEachDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionParameterDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionRequestTargetDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepAppendDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepFcliDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepForEachDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepForEachDescriptor.IActionStepForEachProcessor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor.ActionStepRequestForEachDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor.ActionStepRequestPagingProgressDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepRequestDescriptor.ActionStepRequestType;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepSetDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepUnsetDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionStepWriteDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionValidationException;
-import com.fortify.cli.common.action.helper.ActionDescriptor.ActionValueTemplateDescriptor;
-import com.fortify.cli.common.action.helper.ActionDescriptor.IActionIfSupplier;
-import com.fortify.cli.common.action.helper.ActionDescriptor.IActionValueSupplier;
-import com.fortify.cli.common.action.helper.ActionRunner.IActionRequestHelper.ActionRequestDescriptor;
-import com.fortify.cli.common.action.helper.ActionRunner.IActionRequestHelper.BasicActionRequestHelper;
+import com.fortify.cli.common.action.helper.descriptor.AbstractActionStepForEachDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionParameterDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionRequestTargetDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepAppendDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepCheckDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepFcliDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepForEachDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepForEachDescriptor.IActionStepForEachProcessor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepRequestDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepRequestDescriptor.ActionStepRequestForEachDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepRequestDescriptor.ActionStepRequestPagingProgressDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepRequestDescriptor.ActionStepRequestType;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepSetDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepUnsetDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionStepWriteDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.ActionValidationException;
+import com.fortify.cli.common.action.helper.descriptor.ActionValueTemplateDescriptor;
+import com.fortify.cli.common.action.helper.descriptor.IActionStepIfSupplier;
+import com.fortify.cli.common.action.helper.descriptor.IActionStepValueSupplier;
+import com.fortify.cli.common.action.helper.runner.ActionRunner.IActionRequestHelper.ActionRequestDescriptor;
+import com.fortify.cli.common.action.helper.runner.ActionRunner.IActionRequestHelper.BasicActionRequestHelper;
 import com.fortify.cli.common.cli.util.FcliCommandExecutor;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.IOptionDescriptor;
@@ -102,10 +106,6 @@ import picocli.CommandLine;
 
 @Builder
 public class ActionRunner implements AutoCloseable {
-    /** Save original stdout for delayed output operations */
-    private static final PrintStream stdout = System.out;
-    /** Save original stderr for delayed output operations */
-    private static final PrintStream stderr = System.err;
     /** Jackson {@link ObjectMapper} used for various JSON-related operations */
     private static final ObjectMapper objectMapper = JsonHelper.getObjectMapper();
     /** Jackson {@link ObjectMapper} used for formatting steps in logging/exception messages */
@@ -133,8 +133,14 @@ public class ActionRunner implements AutoCloseable {
     private final Map<String, BiFunction<String, ParameterTypeConverterArgs, JsonNode>> parameterConverters = createDefaultParameterConverters();
     /** Request helpers as configured through the {@link #addRequestHelper(String, IActionRequestHelper)} method */
     private final Map<String, IActionRequestHelper> requestHelpers = new HashMap<>();
+    /** Check statuses */
+    private final Map<String, CheckStatus> checkStatuses = new LinkedHashMap<>(); 
     // We need to delay writing output to console as to not interfere with progress writer
     private final List<Runnable> delayedConsoleWriterRunnables = new ArrayList<>();
+    /** Save original stdout for delayed output operations */
+    private final PrintStream stdout = System.out;
+    /** Save original stderr for delayed output operations */
+    private final PrintStream stderr = System.err;
     @Builder.Default private int exitCode = 0;
     @Builder.Default private boolean exitRequested = false;
     
@@ -148,13 +154,30 @@ public class ActionRunner implements AutoCloseable {
             new ActionAddRequestTargetsProcessor().addRequestTargets();
             progressWriter.writeProgress("Processing action steps");
             new ActionStepsProcessor(globalData, null).processSteps();
-            progressWriter.writeProgress("Producing action outputs");
             progressWriter.writeProgress("Action processing finished");
         }
         return ()->{
             delayedConsoleWriterRunnables.forEach(Runnable::run);
+            if ( !checkStatuses.isEmpty() ) {
+                checkStatuses.entrySet().forEach(
+                    e-> printCheckResult(e.getValue(), e.getKey()));
+                var overallStatus = CheckStatus.combine(checkStatuses.values());
+                stdout.println("Status: "+overallStatus);
+                if ( exitCode==0 && overallStatus==CheckStatus.FAIL ) {
+                    exitCode = 100;
+                }
+            }
             return exitCode;
         };
+    }
+    
+    private final void printCheckResult(CheckStatus status, String displayName) {
+        // Even when flushing, output may appear in incorrect order if some 
+        // check statuses are written to stdout and others to stderr.
+        //var out = status==CheckStatus.PASS?stdout:stderr;
+        var out = stdout;
+        out.println(String.format("%s: %s", status, displayName));
+        //out.flush();
     }
 
     public final void close() {
@@ -340,6 +363,7 @@ public class ActionRunner implements AutoCloseable {
                 processStepEntries(step::getSet, this::processSetStep);
                 processStepEntries(step::getAppend, this::processAppendStep);
                 processStepEntries(step::getUnset, this::processUnsetStep);
+                processStepEntries(step::getCheck, this::processCheckStep);
                 processStepEntries(step::getWrite, this::processWriteStep);
                 processStepEntries(step::getSteps, this::processStep);
             }
@@ -393,8 +417,8 @@ public class ActionRunner implements AutoCloseable {
         
         private final boolean _if(Object o) {
             if (exitRequested || o==null) { return false; }
-            if (o instanceof IActionIfSupplier ) {
-                var _if = ((IActionIfSupplier) o).get_if();
+            if (o instanceof IActionStepIfSupplier ) {
+                var _if = ((IActionStepIfSupplier) o).get_if();
                 if ( _if!=null ) {
                     return spelEvaluator.evaluate(_if, localData, Boolean.class);
                 }
@@ -462,7 +486,7 @@ public class ActionRunner implements AutoCloseable {
             if ( parent!=null ) { parent.unsetDataValue(name); }
         }
         
-        private JsonNode getValue(IActionValueSupplier supplier) {
+        private JsonNode getValue(IActionStepValueSupplier supplier) {
             var value = supplier.getValue();
             var valueTemplate = supplier.getValueTemplate();
             if ( value!=null ) { return getValue(value); }
@@ -548,7 +572,7 @@ public class ActionRunner implements AutoCloseable {
             }
         }
         
-        private boolean processForEachStepNode(AbstractActionForEachDescriptor forEach, JsonNode node) {
+        private boolean processForEachStepNode(AbstractActionStepForEachDescriptor forEach, JsonNode node) {
             if ( forEach==null ) { return false; }
             var breakIf = forEach.getBreakIf();
             setDataValue(forEach.getName(), node);
@@ -561,7 +585,17 @@ public class ActionRunner implements AutoCloseable {
             return true;
         }
         
-        // TODO Handle fcli::name
+        private void processCheckStep(ActionStepCheckDescriptor check) {
+            var displayName = check.getDisplayName();
+            var failIf = check.getFailIf();
+            var passIf = check.getPassIf();
+            var pass = passIf!=null 
+                    ? spelEvaluator.evaluate(passIf, localData, Boolean.class)
+                    : !spelEvaluator.evaluate(failIf, localData, Boolean.class);
+            var currentStatus = pass ? CheckStatus.PASS : CheckStatus.FAIL;
+            checkStatuses.compute(displayName, (name,oldStatus)->CheckStatus.combine(oldStatus, currentStatus));
+        }
+        
         private void processFcliStep(ActionStepFcliDescriptor fcli) {
             var cmd = spelEvaluator.evaluate(fcli.getCmd(), localData, String.class);
             progressWriter.writeProgress("Executing fcli %s", cmd);
@@ -569,6 +603,9 @@ public class ActionRunner implements AutoCloseable {
             Consumer<ObjectNode> recordConsumer = null;
             var forEach = fcli.getForEach();
             var name = fcli.getName();
+            if ( StringUtils.isNotBlank(name) ) {
+                setDataValue(name, objectMapper.createArrayNode());
+            }
             if ( forEach!=null || StringUtils.isNotBlank(name) ) {
                 if ( !cmdExecutor.canCollectRecords() ) {
                     throw new IllegalStateException("Can't use forEach or name on fcli command: "+cmd);
@@ -918,6 +955,22 @@ public class ActionRunner implements AutoCloseable {
 
         public StepProcessingException(Throwable cause) {
             super(cause);
+        }
+    }
+    
+    private static enum CheckStatus {
+        PASS, FAIL;
+        
+        public static CheckStatus combine(CheckStatus... statuses) {
+            return combine(Stream.of(statuses));
+        }
+        
+        public static CheckStatus combine(Collection<CheckStatus> statusCollection) {
+            return combine(statusCollection.stream());
+        }
+        
+        private static CheckStatus combine(Stream<CheckStatus> statusStream) {
+            return statusStream.anyMatch(FAIL::equals) ? FAIL : PASS;
         }
     }
 }

@@ -21,7 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.action.helper.ActionRunner.StepProcessingException;
+import com.fortify.cli.common.action.helper.runner.ActionRunner.StepProcessingException;
 import com.fortify.cli.common.output.cli.cmd.IOutputHelperSupplier;
 import com.fortify.cli.common.output.writer.output.standard.StandardOutputWriter;
 import com.fortify.cli.common.util.JavaHelper;
