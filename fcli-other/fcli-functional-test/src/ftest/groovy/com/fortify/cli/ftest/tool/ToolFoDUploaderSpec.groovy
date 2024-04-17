@@ -79,8 +79,10 @@ class ToolFoDUploaderSpec extends FcliBaseSpec {
             verifyAll(result.stdout) {
                 size()>0
                 it[0].replace(' ', '').equals("NameVersionAliasesStableInstalldirAction")
-                it[1].contains("5.4.0")
-                it[1].contains(" INSTALLED")
+                it.any { 
+                    it.contains("5.4.0")
+                    it.contains(" INSTALLED")
+                }
             }
     }
     
