@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,7 +34,7 @@ import lombok.NoArgsConstructor;
  */
 @Reflectable @NoArgsConstructor
 @Data
-public final class ActionValueTemplateDescriptor {
+public final class ActionValueTemplate implements IActionElement {
     /** Required name for this output */
     private String name;
     /** Output contents in JSON format, where each text node is assumed to be a template expression */
@@ -48,9 +48,9 @@ public final class ActionValueTemplateDescriptor {
      * caching the resulting {@link TemplateExpression} instance in the {@link #valueExpressions}
      * map, throwing an exception if the text node cannot be parsed as a {@link TemplateExpression}.
      */
-    public final void postLoad(ActionDescriptor action) {
-        ActionDescriptor.checkNotBlank("(partial) output name", name, this);
-        ActionDescriptor.checkNotNull("(partial) output contents", contents, this);
+    public final void postLoad(Action action) {
+        Action.checkNotBlank("(partial) output name", name, this);
+        Action.checkNotNull("(partial) output contents", contents, this);
         new ContentsWalker().walk(contents);
     }
     
@@ -64,7 +64,7 @@ public final class ActionValueTemplateDescriptor {
                 try {
                     valueExpressions.put(path, SpelHelper.parseTemplateExpression(expr));
                 } catch (ParseException e) {
-                    throw new ActionValidationException(String.format("Error parsing template expression '%s'", expr), ActionValueTemplateDescriptor.this, e);
+                    throw new ActionValidationException(String.format("Error parsing template expression '%s'", expr), ActionValueTemplate.this, e);
                 }
             }
             super.walkValue(state, path, parent, node);

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
 import com.formkiq.graalvm.annotations.Reflectable;
 
@@ -22,14 +22,14 @@ import lombok.NoArgsConstructor;
  */
 @Reflectable @NoArgsConstructor
 @Data
-public final class ActionUsageDescriptor {
+public final class ActionUsage implements IActionElement {
     /** Required usage header */
     private String header;
     /** Required usage description */
     private String description;
     
-    public void postLoad(ActionDescriptor action) {
-        ActionDescriptor.checkNotBlank("usage header", header, this);
-        ActionDescriptor.checkNotBlank("usage description", description, this);
+    public void postLoad(Action action) {
+        Action.checkNotBlank("usage header", header, this);
+        Action.checkNotBlank("usage description", description, this);
     }
 }

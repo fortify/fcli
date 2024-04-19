@@ -18,8 +18,8 @@ import java.util.concurrent.Callable;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fortify.cli.common.action.helper.ActionHelper;
-import com.fortify.cli.common.action.helper.runner.ActionParameterHelper;
-import com.fortify.cli.common.action.helper.runner.ActionRunner;
+import com.fortify.cli.common.action.runner.ActionParameterHelper;
+import com.fortify.cli.common.action.runner.ActionRunner;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;

@@ -10,11 +10,19 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.formkiq.graalvm.annotations.Reflectable;
 
-public interface IActionStepValueSupplier {
-    TemplateExpression getValue();
-    String getValueTemplate();
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+/**
+ * This class describes an operation to explicitly set a data property.
+ * Note that data properties for request outputs are set automatically.
+ */
+@Reflectable @NoArgsConstructor
+@Data @EqualsAndHashCode(callSuper = true)
+public final class ActionStepSet extends AbstractActionStepUpdateProperty {
 }

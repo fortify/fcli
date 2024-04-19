@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
 import java.util.Map;
 
@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
  */
 @Reflectable @NoArgsConstructor
 @Data
-public final class ActionRequestTargetDescriptor {
+public final class ActionRequestTarget implements IActionElement {
     /** Required name */
     private String name;
     /** Required base URL */
@@ -35,8 +35,8 @@ public final class ActionRequestTargetDescriptor {
     // TODO Add support for next page URL producer
     // TODO ? Add proxy support ?
     
-    public final void postLoad(ActionDescriptor action) {
-        ActionDescriptor.checkNotBlank("request target name", name, this);
-        ActionDescriptor.checkNotNull("request target base URL", baseUrl, this);
+    public final void postLoad(Action action) {
+        Action.checkNotBlank("request target name", name, this);
+        Action.checkNotNull("request target base URL", baseUrl, this);
     }
 }

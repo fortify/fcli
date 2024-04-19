@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
 import java.util.List;
 
@@ -19,6 +19,7 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
@@ -39,14 +40,12 @@ import lombok.NoArgsConstructor;
  * @author Ruud Senden
  */
 @Reflectable @NoArgsConstructor
-@Data
-public final class ActionStepDescriptor implements IActionStepIfSupplier {
-    /** Optional if-expression, executing this step only if condition evaluates to true */
-    @JsonProperty("if") private TemplateExpression _if;
+@Data @EqualsAndHashCode(callSuper = true)
+public final class ActionStep extends AbstractActionStep {
     /** Optional requests for this step element */
-    private List<ActionStepRequestDescriptor> requests;
+    private List<ActionStepRequest> requests;
     /** Optional fcli commands for this step element */
-    private List<ActionStepFcliDescriptor> fcli;
+    private List<ActionStepFcli> fcli;
     /** Optional progress message template expression for this step element */
     private TemplateExpression progress;
     /** Optional warning message template expression for this step element */
@@ -58,32 +57,24 @@ public final class ActionStepDescriptor implements IActionStepIfSupplier {
     /** Optional exit step element to generate exit code and terminate the action */
     @JsonProperty("exit") private TemplateExpression _exit;
     /** Optional set operations */
-    private List<ActionStepSetDescriptor> set;
+    private List<ActionStepSet> set;
     /** Optional add operations */
-    private List<ActionStepAppendDescriptor> append;
+    private List<ActionStepAppend> append;
     /** Optional unset operations */
-    private List<ActionStepUnsetDescriptor> unset;
+    private List<ActionStepUnset> unset;
     /** Optional write operations */
-    private List<ActionStepWriteDescriptor> write;
+    private List<ActionStepWrite> write;
     /** Optional forEach operation */
-    private ActionStepForEachDescriptor forEach;
+    private ActionStepForEach forEach;
     /** Optional check operation */
-    private List<ActionStepCheckDescriptor> check;
+    private List<ActionStepCheck> check;
     /** Optional sub-steps to be executed, useful for grouping or conditional execution */
-    private List<ActionStepDescriptor> steps;
+    private List<ActionStep> steps;
     
     /**
      * This method is invoked by the parent element (which may either be another
-     * step element, or the top-level {@link ActionDescriptor} instance).
+     * step element, or the top-level {@link Action} instance).
      * It invokes the postLoad() method on each request descriptor.
      */
-    public final void postLoad(ActionDescriptor action) {
-        if ( requests!=null ) { requests.forEach(d->d.postLoad(action)); }
-        if ( set!=null ) { set.forEach(d->d.postLoad(action)); }
-        if ( write!=null ) { write.forEach(d->d.postLoad(action)); }
-        if ( forEach!=null ) { forEach.postLoad(action); }
-        if ( check!=null ) { check.forEach(d->d.postLoad(action)); }
-        if ( fcli!=null ) { fcli.forEach(d->d.postLoad(action)); }
-        if ( steps!=null) { steps.forEach(d->d.postLoad(action)); }
-    }
+    public final void postLoad(Action action) {}
 }

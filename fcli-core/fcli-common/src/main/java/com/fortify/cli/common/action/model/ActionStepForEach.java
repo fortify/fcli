@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
 import java.util.function.Function;
 
@@ -28,14 +28,14 @@ import lombok.NoArgsConstructor;
  */
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper=true)
-public final class ActionStepForEachDescriptor extends AbstractActionStepForEachDescriptor implements IActionStepIfSupplier {
+public final class ActionStepForEach extends AbstractActionStepForEach {
     /** Processor that runs the forEach steps. This expression must evaluate to an
      *  IActionStepForEachProcessor instance. */
     private TemplateExpression processor;
     /** Values to iterate over */
     private TemplateExpression values;
     
-    public final void _postLoad(ActionDescriptor action) {}
+    public final void _postLoad(Action action) {}
     
     @FunctionalInterface
     public static interface IActionStepForEachProcessor {

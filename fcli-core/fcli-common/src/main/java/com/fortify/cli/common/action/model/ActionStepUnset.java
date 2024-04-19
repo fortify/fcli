@@ -10,19 +10,27 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * This class describes an operation to explicitly set a data property.
- * Note that data properties for request outputs are set automatically.
+ * This class describes an operation to explicitly unset a data property.
  */
 @Reflectable @NoArgsConstructor
-@Data @EqualsAndHashCode(callSuper = true)
-public final class ActionStepSetDescriptor extends AbstractActionStepUpdatePropertyDescriptor {
+@Data
+public final class ActionStepUnset implements IActionStep {
+    /** Optional if-expression, executing this step only if condition evaluates to true */
+    @JsonProperty("if") private TemplateExpression _if;
+    /** Required name for this step element */
+    private String name;
+    
+    public void postLoad(Action action) {
+        Action.checkNotBlank("set name", name, this);
+    }
 }

@@ -10,19 +10,11 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
-import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-/**
- * This class describes default values for various action properties.
- */
-@Reflectable @NoArgsConstructor
-@Data
-public final class ActionDefaultValuesDescriptor {
-    /** Default value for {@link ActionStepRequestDescriptor#from} */
-    String requestTarget;
+public interface IActionStepValueSupplier {
+    TemplateExpression getValue();
+    String getValueTemplate();
 }

@@ -10,10 +10,12 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+/**
+ *
+ * @author Ruud Senden
+ */
+public interface IActionStep extends IActionElement, IActionStepIfSupplier {
 
-public interface IActionStepIfSupplier {
-    TemplateExpression get_if();
 }

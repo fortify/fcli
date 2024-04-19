@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -20,25 +20,23 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * This abstract class describes an operation to update a data property.
+ * This class describes a 'write' step.
  */
 @Reflectable @NoArgsConstructor
 @Data
-public abstract class AbstractActionStepUpdatePropertyDescriptor implements IActionStepIfSupplier, IActionStepValueSupplier {
+public final class ActionStepWrite implements IActionStep, IActionStepValueSupplier {
     /** Optional if-expression, executing this step only if condition evaluates to true */
     @JsonProperty("if") private TemplateExpression _if;
-    /** Required name for this step element */
-    private String name;
-    /** Value template expression for this step element */
+    /** Required template expression defining where to write the data, either stdout, stderr or filename */
+    private TemplateExpression to;
+    /** Value template expression that generates the contents to be written */
     private TemplateExpression value;
     /** Value template for this step element */
     private String valueTemplate;
     
-    public final void postLoad(ActionDescriptor action) {
-        ActionDescriptor.checkNotBlank("set name", name, this);
-        ActionDescriptor.checkActionValueSupplier(action, this);
-        _postLoad(action);
-    }
     
-    protected void _postLoad(ActionDescriptor action) {}
+    public void postLoad(Action action) {
+        Action.checkNotNull("write to", to, this);
+        Action.checkActionValueSupplier(action, this);
+    }
 }

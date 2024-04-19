@@ -10,14 +10,14 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.runner;
+package com.fortify.cli.common.action.runner;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.fortify.cli.common.action.helper.descriptor.ActionDescriptor;
-import com.fortify.cli.common.action.helper.descriptor.ActionParameterDescriptor;
+import com.fortify.cli.common.action.model.Action;
+import com.fortify.cli.common.action.model.ActionParameter;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.IOptionDescriptor;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionDescriptor;
 import com.github.freva.asciitable.AsciiTable;
@@ -27,14 +27,14 @@ import com.github.freva.asciitable.HorizontalAlign;
 public final class ActionParameterHelper {
     private ActionParameterHelper() {}
     
-    public static final List<IOptionDescriptor> getOptionDescriptors(ActionDescriptor action) {
+    public static final List<IOptionDescriptor> getOptionDescriptors(Action action) {
         var parameters = action.getParameters();
         List<IOptionDescriptor> result = new ArrayList<>(parameters.size());
         parameters.forEach(p->addOptionDescriptor(result, p));
         return result;
     }
 
-    private static final void addOptionDescriptor(List<IOptionDescriptor> result, ActionParameterDescriptor parameter) {
+    private static final void addOptionDescriptor(List<IOptionDescriptor> result, ActionParameter parameter) {
         result.add(OptionDescriptor.builder()
                 .name(getOptionName(parameter.getName()))
                 .aliases(getOptionAliases(parameter.getCliAliasesArray()))
@@ -51,7 +51,7 @@ public final class ActionParameterHelper {
         return aliases==null ? null : Stream.of(aliases).map(ActionParameterHelper::getOptionName).toList();
     }
     
-    public static final String getSupportedOptionsTable(ActionDescriptor action) {
+    public static final String getSupportedOptionsTable(Action action) {
         return getSupportedOptionsTable(getOptionDescriptors(action));
     }
     

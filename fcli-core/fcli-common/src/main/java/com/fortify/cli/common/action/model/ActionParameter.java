@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
  */
 @Reflectable @NoArgsConstructor
 @Data
-public final class ActionParameterDescriptor {
+public final class ActionParameter implements IActionElement {
     /** Required parameter name */
     private String name;
     /** Optional comma-separated CLI aliases */
@@ -42,9 +42,9 @@ public final class ActionParameterDescriptor {
     /** Boolean indicating whether this parameter is required, default is true */
     private boolean required = true;
     
-    public final void postLoad(ActionDescriptor action) {
-        ActionDescriptor.checkNotBlank("parameter name", name, this);
-        ActionDescriptor.checkNotNull("parameter description", getDescription(), this);
+    public final void postLoad(Action action) {
+        Action.checkNotBlank("parameter name", name, this);
+        Action.checkNotNull("parameter description", getDescription(), this);
         // TODO Check no duplicate names; ideally ActionRunner should also verify
         //      that option names/aliases don't conflict with command options
         //      like --help/-h, --log-file, ...

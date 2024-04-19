@@ -10,23 +10,22 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * This class describes an operation to add a given value to the array
- * identified by the name property. If the target array doesn't exist yet, 
- * it will be created.
+ * This class describes default values for various action properties.
  */
 @Reflectable @NoArgsConstructor
-@Data @EqualsAndHashCode(callSuper = true)
-public final class ActionStepAppendDescriptor extends AbstractActionStepUpdatePropertyDescriptor {
-    /** Optional property name to be added to the object */
-    private TemplateExpression property;
+@Data
+public final class ActionDefaultValues implements IActionElement {
+    /** Default value for {@link ActionStepRequest#from} */
+    String requestTarget;
+    
+    @Override
+    public void postLoad(Action action) {}
 }

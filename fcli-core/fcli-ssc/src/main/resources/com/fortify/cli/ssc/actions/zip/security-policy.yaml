@@ -33,4 +33,5 @@ steps:
           - check:
             - displayName: No new critical issues allowed
               failIf:      ${issue.scanStatus=='NEW' && issue.friority=='Critical'}
+              ifSkipped:   PASS # If no issues
       

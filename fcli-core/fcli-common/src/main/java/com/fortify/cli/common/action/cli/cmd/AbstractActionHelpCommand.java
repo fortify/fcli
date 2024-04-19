@@ -13,8 +13,8 @@
 package com.fortify.cli.common.action.cli.cmd;
 
 import com.fortify.cli.common.action.helper.ActionHelper;
-import com.fortify.cli.common.action.helper.descriptor.ActionDescriptor;
-import com.fortify.cli.common.action.helper.runner.ActionParameterHelper;
+import com.fortify.cli.common.action.model.Action;
+import com.fortify.cli.common.action.runner.ActionParameterHelper;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 
 import picocli.CommandLine.Parameters;
@@ -33,7 +33,7 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
         return 0;
     }
     
-    private final String getActionHelp(ActionDescriptor action) {
+    private final String getActionHelp(Action action) {
         var usage = action.getUsage();
         return String.format(
             "\nAction: %s\n"+

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
+package com.fortify.cli.common.action.model;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
  */
 @Reflectable @NoArgsConstructor
 @Data
-public final class ActionStepRequestDescriptor implements IActionStepIfSupplier {
+public final class ActionStepRequest implements IActionStep {
     /** Optional if-expression, executing this request only if condition evaluates to true */
     @JsonProperty("if") private TemplateExpression _if;
     /** Required name for this step element */
@@ -46,32 +46,29 @@ public final class ActionStepRequestDescriptor implements IActionStepIfSupplier 
     /** Optional request body template expression */
     private TemplateExpression body;
     /** Type of request; either 'simple' or 'paged' for now */
-    private ActionStepRequestDescriptor.ActionStepRequestType type = ActionStepRequestType.simple;
+    private ActionStepRequest.ActionStepRequestType type = ActionStepRequestType.simple;
     /** Optional progress messages for various stages of request processing */
-    private ActionStepRequestDescriptor.ActionStepRequestPagingProgressDescriptor pagingProgress;
+    private ActionStepRequest.ActionStepRequestPagingProgressDescriptor pagingProgress;
     /** Optional steps to be executed on the response before executing forEach steps */
-    private List<ActionStepDescriptor> onResponse;
+    private List<ActionStep> onResponse;
     /** Optional steps to be executed on request failure; if not declared, an exception will be thrown */
-    private List<ActionStepDescriptor> onFail;
+    private List<ActionStep> onFail;
     /** Optional forEach block to be repeated for every response element */
-    private ActionStepRequestDescriptor.ActionStepRequestForEachDescriptor forEach;
+    private ActionStepRequest.ActionStepRequestForEachDescriptor forEach;
     
     /**
-     * This method is invoked by {@link ActionStepDescriptor#postLoad()}
+     * This method is invoked by {@link ActionStep#postLoad()}
      * method. It checks that required properties are set.
      */
-    protected final void postLoad(ActionDescriptor action) {
-        ActionDescriptor.checkNotBlank("request name", name, this);
-        ActionDescriptor.checkNotNull("request uri", uri, this);
+    public final void postLoad(Action action) {
+        Action.checkNotBlank("request name", name, this);
+        Action.checkNotNull("request uri", uri, this);
         if ( StringUtils.isBlank(target) && action.defaults!=null ) {
             target = action.defaults.requestTarget;
         }
-        ActionDescriptor.checkNotBlank("request target", target, this);
+        Action.checkNotBlank("request target", target, this);
         if ( pagingProgress!=null ) {
             type = ActionStepRequestType.paged;
-        }
-        if ( forEach!=null ) {
-            forEach.postLoad(action);
         }
     }
     
@@ -82,11 +79,11 @@ public final class ActionStepRequestDescriptor implements IActionStepIfSupplier 
      */
     @Reflectable @NoArgsConstructor
     @Data @EqualsAndHashCode(callSuper = true)
-    public static final class ActionStepRequestForEachDescriptor extends AbstractActionStepForEachDescriptor implements IActionStepIfSupplier {
-        private List<ActionStepRequestDescriptor> embed;
+    public static final class ActionStepRequestForEachDescriptor extends AbstractActionStepForEach implements IActionStepIfSupplier {
+        private List<ActionStepRequest> embed;
         
-        protected final void _postLoad(ActionDescriptor action) {
-            if ( embed!=null ) { embed.forEach(d->d.postLoad(action)); }
+        protected final void _postLoad(Action action) {
+            //throw new RuntimeException("test");
         }
     }
     

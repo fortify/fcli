@@ -10,43 +10,48 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.action.helper.descriptor;
-
-import java.util.List;
+package com.fortify.cli.common.action.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * This abstract class is the base class for forEach steps/properties.
+ * This class describes a forEach element, allowing iteration over the output of
+ * a given input.
  */
 @Reflectable @NoArgsConstructor
 @Data
-public abstract class AbstractActionStepForEachDescriptor implements IActionStepIfSupplier {
+public final class ActionStepFcli implements IActionStep {
     /** Optional if-expression, executing steps only if condition evaluates to true */
     @JsonProperty("if") private TemplateExpression _if;
-    /** Optional break-expression, terminating forEach if condition evaluates to true */
-    private TemplateExpression breakIf;
-    /** Required name for this step element */
+    /** Required template expression providing fcli command to run */
+    private TemplateExpression cmd;
+    /** Optional name for this step element */
     private String name;
     /** Steps to be repeated for each value */
-    @JsonProperty("do") private List<ActionStepDescriptor> _do;
+    @JsonProperty("forEach") private ActionStepFcli.ActionStepFcliForEachDescriptor forEach;
     
     /**
-     * This method is invoked by the {@link ActionStepDescriptor#postLoad()}
+     * This method is invoked by the {@link ActionStep#postLoad()}
      * method. It checks that required properties are set, then calls the postLoad() method for
      * each sub-step.
      */
-    public final void postLoad(ActionDescriptor action) {
-        ActionDescriptor.checkNotBlank("forEach name", name, this);
-        ActionDescriptor.checkNotNull("forEach do", _do, this);
-        _do.forEach(d->d.postLoad(action));
-        _postLoad(action);
+    public final void postLoad(Action action) {
+        Action.checkNotNull("fcli cmd", cmd, this);
     }
-
-    protected void _postLoad(ActionDescriptor action) {}
+    
+    /**
+     * This class describes an fcli forEach element, allowing iteration over the output of
+     * the fcli command. 
+     */
+    @Reflectable @NoArgsConstructor
+    @Data @EqualsAndHashCode(callSuper = true)
+    public static final class ActionStepFcliForEachDescriptor extends AbstractActionStepForEach {
+        protected final void _postLoad(Action action) {}
+    }
 }

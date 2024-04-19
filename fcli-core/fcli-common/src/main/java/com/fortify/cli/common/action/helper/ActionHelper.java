@@ -37,7 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fortify.cli.common.action.helper.descriptor.ActionDescriptor;
+import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
@@ -53,7 +53,7 @@ public class ActionHelper {
     private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
     private ActionHelper() {}
     
-    public static final ActionDescriptor load(String type, String name) {
+    public static final Action load(String type, String name) {
         return loadZipEntry(type, name, ActionHelper::loadDescriptor);
     }
 
@@ -129,7 +129,7 @@ public class ActionHelper {
             // Read contents as JsonNode to update importedEntries array after import
             var json = yamlObjectMapper.readValue(contents, ObjectNode.class);
             // Verify that the template can be successfully parsed and post-processed
-            yamlObjectMapper.treeToValue(json, ActionDescriptor.class).postLoad(name, true);
+            yamlObjectMapper.treeToValue(json, Action.class).postLoad(name, true);
             // Import entry to zip-file
             importEntry(name, type, contents);
             // Add JSON to the imported entries array.
@@ -157,13 +157,13 @@ public class ActionHelper {
         return result;
     }
     
-    private static final ActionDescriptor loadDescriptor(InputStream is, ZipEntry ze, boolean isCustom) {
+    private static final Action loadDescriptor(InputStream is, ZipEntry ze, boolean isCustom) {
         return loadDescriptor(is, ze.getName(), isCustom);
     }
 
-    private static final ActionDescriptor loadDescriptor(InputStream is, String actionName, boolean isCustom) {
+    private static final Action loadDescriptor(InputStream is, String actionName, boolean isCustom) {
         try {
-            var result = yamlObjectMapper.readValue(is, ActionDescriptor.class);
+            var result = yamlObjectMapper.readValue(is, Action.class);
             result.postLoad(getActionName(actionName), isCustom);
             return result;
         } catch (IOException e) {
