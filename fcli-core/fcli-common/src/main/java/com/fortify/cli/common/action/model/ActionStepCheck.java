@@ -12,8 +12,9 @@
  */
 package com.fortify.cli.common.action.model;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.stream.Stream;
+import java.util.HashSet;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.formkiq.graalvm.annotations.Reflectable;
@@ -48,20 +49,23 @@ public final class ActionStepCheck implements IActionStep {
     }
     
     public static enum CheckStatus {
-        PASS, FAIL, SKIP;
+        // Statuses must be defined in order of precedence when combining,
+        // i.e., when combining PASS and FAIL, outcome should be FAIL, so
+        // FAIL should come before PASS.
+        FAIL, PASS, SKIP, HIDE;
         
         public static CheckStatus combine(CheckStatus... statuses) {
-            if ( Stream.of(statuses).anyMatch(FAIL::equals) ) { 
-                return FAIL;
-            } else if ( Stream.of(statuses).anyMatch(PASS::equals) ) {
-                return PASS;
-            } else {
-                return SKIP;
-            }
+            return combine(statuses==null ? null : Arrays.asList(statuses));
         }
         
-        public static CheckStatus combine(Collection<CheckStatus> statusCollection) {
-            return combine(statusCollection.toArray(CheckStatus[]::new));
+        public static CheckStatus combine(Collection<CheckStatus> statuses) {
+            if ( statuses==null ) { return null; }
+            var set = new HashSet<CheckStatus>(statuses);
+            for ( var s: values() ) {
+                if ( set.contains(s) ) { return s; }
+            }
+            // Can only happen if all statuses are null
+            return null;
         }
     }
 }

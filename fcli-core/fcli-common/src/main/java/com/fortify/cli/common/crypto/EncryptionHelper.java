@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.util;
+package com.fortify.cli.common.crypto;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -18,6 +18,9 @@ import java.io.Writer;
 
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.jasypt.iv.RandomIvGenerator;
+
+import com.fortify.cli.common.util.EnvHelper;
+import com.fortify.cli.common.util.StringUtils;
 
 import lombok.RequiredArgsConstructor;
 

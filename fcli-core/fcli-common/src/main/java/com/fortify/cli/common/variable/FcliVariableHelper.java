@@ -27,9 +27,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.crypto.EncryptionHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.json.JsonNodeHolder;
-import com.fortify.cli.common.util.EncryptionHelper;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.StringUtils;
 

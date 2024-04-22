@@ -30,6 +30,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import com.fortify.cli.common.crypto.SignatureHelper;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.rest.unirest.UnirestHelper;
 import com.fortify.cli.common.util.FileUtils;
@@ -216,7 +217,8 @@ public final class ToolInstaller {
         progressWriter.writeProgress("Downloading tool binaries");
         File downloadedFile = download(artifactDescriptor);
         progressWriter.writeProgress("Verifying signature");
-        SignatureHelper.verifyFileSignature(downloadedFile, artifactDescriptor.getRsa_sha256(), onDigestMismatch == DigestMismatchAction.fail);
+        SignatureHelper.fortifySignatureVerifier()
+            .verify(downloadedFile, artifactDescriptor.getRsa_sha256(), onDigestMismatch == DigestMismatchAction.fail);
         progressWriter.writeProgress("Installing tool binaries");
         copyOrExtract(artifactDescriptor, downloadedFile);
     }

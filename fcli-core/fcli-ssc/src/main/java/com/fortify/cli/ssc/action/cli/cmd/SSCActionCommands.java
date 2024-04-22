@@ -25,6 +25,7 @@ import picocli.CommandLine.Command;
                 SSCActionListCommand.class,
                 SSCActionResetCommand.class,
                 SSCActionRunCommand.class,
+                SSCActionSignCommand.class,
         }
 )
 public class SSCActionCommands extends AbstractContainerCommand {

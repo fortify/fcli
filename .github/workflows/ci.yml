@@ -9,7 +9,7 @@ on:
 env:
   native_image_opts: --verbose -H:Log=registerResource:verbose -H:+PrintClassInitialization
   graal_distribution: graalvm-community
-  graal_java_version: 17
+  graal_java_version: 21
           
 jobs:
   build:
@@ -101,7 +101,6 @@ jobs:
         with:
           distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
-          components: 'native-image'
           native-image-musl: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
       
@@ -151,7 +150,6 @@ jobs:
         with:
           distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
-          components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/download-artifact@v4
@@ -165,10 +163,11 @@ jobs:
       - name: Create native fcli
         run: native-image ${{ env.native_image_opts }} -march=compatibility -H:ExcludeResources="org/fusesource/jansi/internal/native/Windows/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/Linux/.*" -H:ExcludeResources="org/fusesource/jansi/internal/native/FreeBSD/.*" -jar ./artifacts/release-assets/fcli.jar fcli
 
-      - name: Compress native fcli
-        uses: svenstaro/upx-action@v2
-        with:
-          files: fcli
+      # Disabled for now, as compressed binaries crash on macOS Ventura or above
+      #- name: Compress native fcli
+      #  uses: svenstaro/upx-action@v2
+      #  with:
+      #    files: fcli
 
       - name: Basic test of native fcli
         run: ./fcli --help && ./fcli get --help
@@ -190,7 +189,6 @@ jobs:
         with:
           distribution: ${{ env.graal_distribution }}
           java-version: ${{ env.graal_java_version }}
-          components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/download-artifact@v4

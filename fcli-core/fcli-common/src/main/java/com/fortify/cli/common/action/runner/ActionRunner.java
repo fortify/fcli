@@ -189,12 +189,14 @@ public class ActionRunner implements AutoCloseable {
     }
 
     private final void printCheckResult(CheckStatus status, String displayName) {
-        // Even when flushing, output may appear in incorrect order if some 
-        // check statuses are written to stdout and others to stderr.
-        //var out = status==CheckStatus.PASS?stdout:stderr;
-        var out = stdout;
-        out.println(String.format("%s: %s", status, displayName));
-        //out.flush();
+        if ( status!=CheckStatus.HIDE ) {
+            // Even when flushing, output may appear in incorrect order if some 
+            // check statuses are written to stdout and others to stderr.
+            //var out = status==CheckStatus.PASS?stdout:stderr;
+            var out = stdout;
+            out.println(String.format("%s: %s", status, displayName));
+            //out.flush();
+        }
     }
 
     public final void close() {
