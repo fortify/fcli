@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,16 +18,19 @@ import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
+import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
@@ -83,13 +88,18 @@ public class SignatureHelper {
     }
     
     @SneakyThrows
-    private static final KeyFactory createKeyFactory() {
-        return KeyFactory.getInstance("RSA");
+    public static final KPGenerator keyPairGenerator(char[] passPhrase) {
+        return new KPGenerator(passPhrase);
     }
     
     @SneakyThrows
     public static final KPGenerator keyPairGenerator(String passPhrase) {
-        return new KPGenerator(StringUtils.isBlank(passPhrase) ? null : passPhrase.toCharArray());
+        return keyPairGenerator(StringUtils.isBlank(passPhrase) ? null : passPhrase.toCharArray());
+    }
+    
+    @SneakyThrows
+    private static final KeyFactory createKeyFactory() {
+        return KeyFactory.getInstance("RSA");
     }
     
     @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -188,6 +198,10 @@ public class SignatureHelper {
             return sign(new FileSignatureUpdater(file), throwOnFailure);
         }
         
+        public final String sign(Path path, boolean throwOnFailure) {
+            return sign(new FileSignatureUpdater(path.toFile()), throwOnFailure);
+        }
+        
         public final String sign(byte[] data, boolean throwOnFailure) {
             return sign(new DataSignatureUpdater(data), throwOnFailure);
         }
@@ -256,8 +270,8 @@ public class SignatureHelper {
         @SneakyThrows
         public final void writePem(Path privateKeyPath, Path publicKeyPath) {
             var kp = generate();
-            writePem("PRIVATE", kp.getPrivate().getEncoded(), privateKeyPath);
-            writePem("PUBLIC", kp.getPublic().getEncoded(), publicKeyPath);
+            writePem("PRIVATE KEY", kp.getPrivate().getEncoded(), privateKeyPath);
+            writePem("PUBLIC KEY", kp.getPublic().getEncoded(), publicKeyPath);
         }
         
         @SneakyThrows
@@ -267,9 +281,106 @@ public class SignatureHelper {
         }
         
         private final String asPem(String type, byte[] key) {
-            return "-----BEGIN "+type+" KEY-----\n"
+            if ( "PRIVATE KEY".equals(type) && passPhrase!=null ) {
+                throw new RuntimeException("Generating password-protected private key not supported yet");
+                //return asPem("ENCRYPTED PRIVATE KEY", pemEncrypt(key, passPhrase));
+            }
+            return "-----BEGIN "+type+"-----\n"
                     + Base64.getMimeEncoder().encodeToString(key)
-                    + "\n-----END "+type+" KEY-----";
+                    + "\n-----END "+type+"-----";
+        }
+        
+        /*
+        @SneakyThrows
+        private static final byte[] pemEncrypt(byte[] privateKey, char[] passPhrase) {
+            
+        }
+        */
+        
+        /*
+        @SneakyThrows
+        // Based on https://medium.com/@patc888/decrypt-openssl-encrypted-data-in-java-4c31983afe19
+        private static final byte[] pemEncrypt(byte[] privateKey, char[] passPhrase) {
+            var salt = createSalt();
+            byte[] passAndSalt = ArrayUtils.addAll(toBytes(passPhrase), salt);
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] key = md.digest(passAndSalt);
+            SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
+
+            // Derive IV
+            md.reset();
+            byte[] iv = Arrays.copyOfRange(md.digest(ArrayUtils.addAll(key, passAndSalt)), 0, 16);
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, new IvParameterSpec(iv));
+            byte[] encryptedSecretKey = cipher.doFinal(privateKey);
+            try ( var bos = new ByteArrayOutputStream(); ) {
+                bos.writeBytes("Salted__".getBytes(StandardCharsets.US_ASCII));
+                bos.writeBytes(salt);
+                bos.writeBytes(encryptedSecretKey);
+                return bos.toByteArray();
+            }
+        }
+        */
+        
+        
+        private static final byte[] toBytes(char[] chars) {
+            CharBuffer charBuffer = CharBuffer.wrap(chars);
+            ByteBuffer byteBuffer = Charset.forName("UTF-8").encode(charBuffer);
+            byte[] bytes = Arrays.copyOfRange(byteBuffer.array(),
+                      byteBuffer.position(), byteBuffer.limit());
+            Arrays.fill(byteBuffer.array(), (byte) 0); // clear sensitive data
+            return bytes;
+          }
+        
+        @SneakyThrows
+        private static final byte[] pemEncrypt(byte[] privateKey, char[] passPhrase) {
+            PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(privateKey);
+            byte[] salt = createSalt();
+            int iterationCount = 65536; // You can adjust this value
+            int keyLength = 128; // You can adjust this value
+    
+            PBEKeySpec pbeKeySpec = new PBEKeySpec(passPhrase, salt, iterationCount, keyLength);
+            SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            SecretKey secretKey = secretKeyFactory.generateSecret(pbeKeySpec);
+    
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            byte[] encryptedKey = cipher.doFinal(pkcs8EncodedKeySpec.getEncoded());
+    
+            EncryptedPrivateKeyInfo encryptedPrivateKeyInfo = new EncryptedPrivateKeyInfo(cipher.getParameters(), encryptedKey);
+            return encryptedPrivateKeyInfo.getEncoded();
+        }
+
+        
+        /*
+        @SneakyThrows
+        private static final byte[] pemEncrypt(byte[] key, char[] passPhrase) {
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, createKey(passPhrase), createIv());
+            return cipher.doFinal(key);
+        }
+        
+        
+        @SneakyThrows
+        private static final SecretKey createKey(char[] passPhrase) {
+            //SecretKeyFactory factory = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_256");
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            KeySpec spec = new PBEKeySpec(passPhrase, createSalt(), 65536, 256);
+            SecretKey secret = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
+            return secret;
+        }
+        
+        private static final IvParameterSpec createIv() {
+            final byte[] iv = new byte[16];
+            new SecureRandom().nextBytes(iv);
+            return new IvParameterSpec(iv);
+        }
+        */
+        
+        private static final byte[] createSalt() {
+            final byte[] salt = new byte[16];
+            new SecureRandom().nextBytes(salt);
+            return salt;
         }
     }
     
@@ -332,6 +443,7 @@ public class SignatureHelper {
     }
     
     public static void main(String[] args) {
-        keyPairGenerator("abc").writePem(Path.of("private.key"), Path.of("public.key"));
+        System.out.println(signer(Path.of("/home/rsenden/aes.key"), "test").publicKeyFingerprint());
+        keyPairGenerator("test").writePem(Path.of("/home/rsenden/test-private.key"), Path.of("/home/rsenden/test-public.key"));
     }
 }

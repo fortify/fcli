@@ -1,76 +1,77 @@
-usage:
-  header: Generate a SonarQube External Issues report listing SSC SAST vulnerabilities. 
-  description: |
-    For information on how to import this report into SonarQube, see 
-    https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/
-  
-defaults:
-  requestTarget: ssc
-  
-parameters:
-  - name: file
-    cliAliases: f
-    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: sq-fortify-sast.json"
-    required: false
-    defaultValue: sq-fortify-sast.json
-  - name: file-path-prefix
-    cliAliases: pfx
-    description: "Optional prefix for issue file paths"
-    required: false
-    defaultValue: ""
-  - name: appversion
-    cliAliases: av
-    description: "Required application version id or <appName>:<versionName>"
-    type: appversion_single
-  - name: filterset
-    cliAliases: fs
-    description: "Optional filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
-    required: false
-    type: filterset
-  - name: page-size
-    description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100"
-    required: false
-    defaultValue: "100"
-  
-steps:
-  - progress: Processing issue data
-  - requests:
-    - name: issues
-      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues
-      query:
-        filter: ISSUE[11111111-1111-1111-1111-111111111151]:SCA
-        filterset: ${parameters.filterset.guid}
-        limit: ${parameters['page-size']}
-      pagingProgress:
-        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.count} issues
-      forEach:
-        name: issue
-        do:
-          - append:
-            - name: sq_issues
-              valueTemplate: sq_issues
-  - write:
-    - to: ${parameters.file}
-      valueTemplate: sq_output 
-    - if: ${parameters.file!='stdout'}
-      to: stdout
-      value: |
-        Output written to ${parameters.file}
-     
-valueTemplates:
-  - name: sq_output
-    contents:
-      issues: ${sq_issues?:{}}
-  - name: sq_issues
-    contents:
-      engineId: FortifySCA
-      ruleId: ${issue.issueName}
-      severity: ${{'Critical':'CRITICAL','High':'MAJOR','Medium':'MINOR','Low':'INFO'}.get(issue.friority)}
-      type: VULNERABILITY
-      primaryLocation:
-        message: ${issue.issueName} - ${#ssc.issueBrowserUrl(issue,parameters.filterset)}
-        filePath: ${parameters['file-path-prefix']}${issue.fullFileName}
-        textRange:
-          startLine: ${issue.lineNumber==0?1:issue.lineNumber}
-      # effortMinutes:
-      # secondaryLocations:
+action:
+    usage:
+      header: Generate a SonarQube External Issues report listing SSC SAST vulnerabilities. 
+      description: |
+        For information on how to import this report into SonarQube, see 
+        https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/
+      
+    defaults:
+      requestTarget: ssc
+      
+    parameters:
+      - name: file
+        cliAliases: f
+        description: "Optional output file name (or 'stdout' / 'stderr'). Default value: sq-fortify-sast.json"
+        required: false
+        defaultValue: sq-fortify-sast.json
+      - name: file-path-prefix
+        cliAliases: pfx
+        description: "Optional prefix for issue file paths"
+        required: false
+        defaultValue: ""
+      - name: appversion
+        cliAliases: av
+        description: "Required application version id or <appName>:<versionName>"
+        type: appversion_single
+      - name: filterset
+        cliAliases: fs
+        description: "Optional filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
+        required: false
+        type: filterset
+      - name: page-size
+        description: "Number of vulnerabilities to retrieve at a time. Higher numbers may reduce time required to build the report, at the cost of increased memory usage (on both fcli and SSC), and could potentially negatively affect overall SSC performance or result in read time-outs (see --socket-timeout option on fcli ssc session login command). Default value: 100"
+        required: false
+        defaultValue: "100"
+      
+    steps:
+      - progress: Processing issue data
+      - requests:
+        - name: issues
+          uri: /api/v1/projectVersions/${parameters.appversion.id}/issues
+          query:
+            filter: ISSUE[11111111-1111-1111-1111-111111111151]:SCA
+            filterset: ${parameters.filterset.guid}
+            limit: ${parameters['page-size']}
+          pagingProgress:
+            postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.count} issues
+          forEach:
+            name: issue
+            do:
+              - append:
+                - name: sq_issues
+                  valueTemplate: sq_issues
+      - write:
+        - to: ${parameters.file}
+          valueTemplate: sq_output 
+        - if: ${parameters.file!='stdout'}
+          to: stdout
+          value: |
+            Output written to ${parameters.file}
+         
+    valueTemplates:
+      - name: sq_output
+        contents:
+          issues: ${sq_issues?:{}}
+      - name: sq_issues
+        contents:
+          engineId: FortifySCA
+          ruleId: ${issue.issueName}
+          severity: ${{'Critical':'CRITICAL','High':'MAJOR','Medium':'MINOR','Low':'INFO'}.get(issue.friority)}
+          type: VULNERABILITY
+          primaryLocation:
+            message: ${issue.issueName} - ${#ssc.issueBrowserUrl(issue,parameters.filterset)}
+            filePath: ${parameters['file-path-prefix']}${issue.fullFileName}
+            textRange:
+              startLine: ${issue.lineNumber==0?1:issue.lineNumber}
+          # effortMinutes:
+          # secondaryLocations:

@@ -12,41 +12,69 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.action.cli.cmd;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.action.helper.ActionSigner;
+import com.fortify.cli.common.action.model.SignedAction;
+import com.fortify.cli.common.action.model._ActionRoot;
 import com.fortify.cli.common.crypto.SignatureHelper;
+import com.fortify.cli.common.crypto.SignatureHelper.Signer;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 
 import lombok.Getter;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 @Command(name = "sign")
-public class SSCActionSignCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
+public class SSCActionSignCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin OutputHelperMixins.TableNoQuery outputHelper;
-    @Option(names="--in") private Path in;
-    @Option(names="--out") private Path out;
-    @Option(names="--pem-file") private Path pemFile;
+    @Option(names = "--in", required=true) private Path actionFileToSign;
+    @Option(names = "--out", required=true) private Path signedActionFile;
+    @Option(names = "--info", required=false) private Path infoFile;
+    @Option(names="--with", required=true) private Path privateKeyPath;
+    @Option(names="--pubout", required=false) private Path publicKeyPath;
     @Option(names = {"--password", "-p"}, interactive = true, echo = false, arity = "0..1", required = false) 
-    private char[] password;
+    private char[] privateKeyPassword;
     
-    @Override
+    @Override @SneakyThrows
     public JsonNode getJsonNode() {
-        var fingerprint = SignatureHelper.signer(pemFile, password).publicKeyFingerprint();
+        if ( !Files.exists(privateKeyPath) ) {
+            if ( publicKeyPath==null ) {
+                throw new IllegalStateException("Private key file "+privateKeyPath+" doesn't exist, and not generating new key file as --pubOut hasn't been specified");
+            } else {
+                SignatureHelper.keyPairGenerator(privateKeyPassword).writePem(privateKeyPath, publicKeyPath);
+            }
+        }
+        
+        
+        var signer = new ActionSigner(privateKeyPath, privateKeyPassword);
+        signer.sign(actionFileToSign, signedActionFile);
+        
         var fortifyFingerPrint = SignatureHelper.fortifySignatureVerifier().publicKeyFingerPrint();
         return JsonHelper.getObjectMapper().createObjectNode()
-                .put("fingerprint", fingerprint)
+                .put("fingerprint", signer.publicKeyFingerprint())
                 .put("fortifyFingerprint", fortifyFingerPrint);
         
+    }
+
+    
+    
+    @Override
+    public String getActionCommandResult() {
+        return "GENERATED";
     }
     
     @Override
     public boolean isSingular() {
-        return true;
+        return false;
     }
 }

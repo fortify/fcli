@@ -1,157 +1,158 @@
-# For now, this template uses latest release state to generate PR decorations.
-# See corresponding .bak file is SSC module for an example of how to better
-# implement this, once FoD supports retrieving new/re-introduced/removed isses
-# for a particular scan id/PR number/commit id.
-usage:
-  header: (PREVIEW) Add GitHub Pull Request review comments.  
-  description: |
-    This action adds review comments to a GitHub Pull Request. Currently
-    this is marked as PREVIEW as we build out this functionality; later
-    versions may have different behavior and/or require different action
-    parameters. In particular, note that comments are generated based on
-    current (latest) FoD release state, i.e., based on the last uploaded 
-    scan results. As such, to ensure the comments are accurate for the 
-    given PR/commit id, this action should be run immediately after scan 
-    results have been published, before any subsequent scans are being 
-    published. Also, for now this action doesn't generate any source code 
-    annotations, as GitHub will return an error if vulnerability path & file 
-    name don't match exactly with repository path & file name.
-  
-parameters:
-  - name: release
-    cliAliases: rel
-    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
-    type: release_single
-  - name: scan-type
-    cliAliases: t
-    description: "Scan type for which to list vulnerabilities. Default value: Static"
-    required: true
-    defaultValue: Static
-  - name: github-token
-    description: 'Required GitHub Token. Default value: GITHUB_TOKEN environment variable.'
-    required: true
-    defaultValue: ${#env('GITHUB_TOKEN')}
-  - name: github-owner
-    description: 'Required GitHub repository owner. Default value: GITHUB_REPOSITORY_OWNER environment variable.'
-    required: true
-    defaultValue: ${#env('GITHUB_REPOSITORY_OWNER')}
-  - name: github-repo
-    description: 'Required GitHub repository. Default value: Taken from GITHUB_REPOSITORY environment variable.'
-    required: true
-    defaultValue: ${#substringAfter(#env('GITHUB_REPOSITORY'),'/')}
-  - name: pr
-    description: 'Required PR number. Default value: Taken from GITHUB_REF_NAME environment variable.'
-    required: true
-    defaultValue: ${#substringBefore(#env('GITHUB_REF_NAME'),'/')}
-  - name: commit
-    description: 'Required commit hash. Default value: GITHUB_SHA environment variable.'
-    required: true
-    defaultValue: ${#env('GITHUB_SHA')}
-  - name: dryrun
-    description: "Set to true to just output PR decoration JSON; don't actually update any PR"
-    type: boolean
-    required: false
-    defaultValue: false
+action:
+    # For now, this template uses latest release state to generate PR decorations.
+    # See corresponding .bak file is SSC module for an example of how to better
+    # implement this, once FoD supports retrieving new/re-introduced/removed isses
+    # for a particular scan id/PR number/commit id.
+    usage:
+      header: (PREVIEW) Add GitHub Pull Request review comments.  
+      description: |
+        This action adds review comments to a GitHub Pull Request. Currently
+        this is marked as PREVIEW as we build out this functionality; later
+        versions may have different behavior and/or require different action
+        parameters. In particular, note that comments are generated based on
+        current (latest) FoD release state, i.e., based on the last uploaded 
+        scan results. As such, to ensure the comments are accurate for the 
+        given PR/commit id, this action should be run immediately after scan 
+        results have been published, before any subsequent scans are being 
+        published. Also, for now this action doesn't generate any source code 
+        annotations, as GitHub will return an error if vulnerability path & file 
+        name don't match exactly with repository path & file name.
+      
+    parameters:
+      - name: release
+        cliAliases: rel
+        description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+        type: release_single
+      - name: scan-type
+        cliAliases: t
+        description: "Scan type for which to list vulnerabilities. Default value: Static"
+        required: true
+        defaultValue: Static
+      - name: github-token
+        description: 'Required GitHub Token. Default value: GITHUB_TOKEN environment variable.'
+        required: true
+        defaultValue: ${#env('GITHUB_TOKEN')}
+      - name: github-owner
+        description: 'Required GitHub repository owner. Default value: GITHUB_REPOSITORY_OWNER environment variable.'
+        required: true
+        defaultValue: ${#env('GITHUB_REPOSITORY_OWNER')}
+      - name: github-repo
+        description: 'Required GitHub repository. Default value: Taken from GITHUB_REPOSITORY environment variable.'
+        required: true
+        defaultValue: ${#substringAfter(#env('GITHUB_REPOSITORY'),'/')}
+      - name: pr
+        description: 'Required PR number. Default value: Taken from GITHUB_REF_NAME environment variable.'
+        required: true
+        defaultValue: ${#substringBefore(#env('GITHUB_REF_NAME'),'/')}
+      - name: commit
+        description: 'Required commit hash. Default value: GITHUB_SHA environment variable.'
+        required: true
+        defaultValue: ${#env('GITHUB_SHA')}
+      - name: dryrun
+        description: "Set to true to just output PR decoration JSON; don't actually update any PR"
+        type: boolean
+        required: false
+        defaultValue: false
+        
+    addRequestTargets:
+      - name: github
+        baseUrl: https://api.github.com
+        headers:
+          Authorization: Bearer ${parameters['github-token']}
+          'X-GitHub-Api-Version': '2022-11-28'
+        
+    defaults:
+      requestTarget: fod
+        
+    steps:
+      - progress: Processing issue data
+      - requests:
+        - name: issues
+          uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
+          query:
+            includeFixed: true
+            filters: scantype:${parameters['scan-type']}
+          pagingProgress:
+            postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+          forEach:
+            name: issue
+            if: ${issue.status!='Existing'}
+            embed:
+              - name: details
+                uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
+            do:
+              - append:
+                - if: ${issue.status=='Fix Validated'}
+                  name: removedIssues
+                  valueTemplate: mdIssueListItem
+                - if: ${(issue.status=='New' || issue.status=='Reopen')}
+                  name: newIssues
+                  valueTemplate: mdIssueListItem
+                - if: ${(issue.status=='New' || issue.status=='Reopen') && issue.engineType=='Static'}
+                  name: jsonSourceCodeComments
+                  valueTemplate: jsonSourceCodeComment
+              
+      - progress: Generating GitHub request
+      - set:
+          - name: reviewBody
+            valueTemplate: reviewBody
+          - name: reviewRequestBody
+            valueTemplate: reviewRequestBody
+      - if: ${parameters.dryrun}
+        write:
+          - to: stdout
+            value: ${reviewRequestBody}
+      - if: ${!parameters.dryrun}
+        requests:
+          - name:   GitHub PR review
+            method: POST
+            uri:    /repos/${parameters['github-owner']}/${parameters['github-repo']}/pulls/${parameters['pr']}/reviews
+            target: github
+            body:   ${reviewRequestBody}       
     
-addRequestTargets:
-  - name: github
-    baseUrl: https://api.github.com
-    headers:
-      Authorization: Bearer ${parameters['github-token']}
-      'X-GitHub-Api-Version': '2022-11-28'
-    
-defaults:
-  requestTarget: fod
-    
-steps:
-  - progress: Processing issue data
-  - requests:
-    - name: issues
-      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
-      query:
-        includeFixed: true
-        filters: scantype:${parameters['scan-type']}
-      pagingProgress:
-        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
-      forEach:
-        name: issue
-        if: ${issue.status!='Existing'}
-        embed:
-          - name: details
-            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
-        do:
-          - append:
-            - if: ${issue.status=='Fix Validated'}
-              name: removedIssues
-              valueTemplate: mdIssueListItem
-            - if: ${(issue.status=='New' || issue.status=='Reopen')}
-              name: newIssues
-              valueTemplate: mdIssueListItem
-            - if: ${(issue.status=='New' || issue.status=='Reopen') && issue.engineType=='Static'}
-              name: jsonSourceCodeComments
-              valueTemplate: jsonSourceCodeComment
-          
-  - progress: Generating GitHub request
-  - set:
-      - name: reviewBody
-        valueTemplate: reviewBody
+    valueTemplates:
       - name: reviewRequestBody
-        valueTemplate: reviewRequestBody
-  - if: ${parameters.dryrun}
-    write:
-      - to: stdout
-        value: ${reviewRequestBody}
-  - if: ${!parameters.dryrun}
-    requests:
-      - name:   GitHub PR review
-        method: POST
-        uri:    /repos/${parameters['github-owner']}/${parameters['github-repo']}/pulls/${parameters['pr']}/reviews
-        target: github
-        body:   ${reviewRequestBody}       
-
-valueTemplates:
-  - name: reviewRequestBody
-    contents:
-      owner: ${parameters['github-owner']}
-      repo: ${parameters['github-repo']}
-      pull_number: ${parameters['pr']}
-      commit_id: ${parameters['commit']}
-      body: ${reviewBody}
-      event: COMMENT
-      # For now, we don't include any source code comments, as this will cause
-      # GitHub to return an error if the source file doesn't exist in the repo.
-      comments: ${{}} 
-      # comments: ${jsonSourceCodeComments?:{}}
-      
-  - name: reviewBody
-    contents: |
-      ## Fortify vulnerability summary
-      
-      ### New Issues
-      
-      ${newIssues==null 
-        ? "* No new or re-introduced issues were detected" 
-        : ("* "+#join('\n* ',newIssues))}
-        
-      ### Removed Issues
-      
-      ${removedIssues==null 
-        ? "* No removed issues were detected" 
-        : ("* "+#join('\n* ',removedIssues))}
-        
-  - name: jsonSourceCodeComment
-    contents:
-      path: ${issue.primaryLocationFull}
-      line: ${issue.lineNumber==0?1:issue.lineNumber}
-      body: |
-        <p><b>Security Scanning</b> / Fortify SAST</p>
-        <h3>${issue.severityString} - ${issue.category} </h3>
-        <p>${#htmlToText(issue.details?.summary)}</p>
-        <br>
-        <p><a href=${#fod.issueBrowserUrl(issue)} target="_blank" rel="noopener noreferrer">More information</a></p>
-  - name: mdIssueListItem
-    contents: >
-      ${issue.status} (${issue.scantype}): [${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber} - ${issue.category}](${#fod.issueBrowserUrl(issue)})
-      
-      
-      
+        contents:
+          owner: ${parameters['github-owner']}
+          repo: ${parameters['github-repo']}
+          pull_number: ${parameters['pr']}
+          commit_id: ${parameters['commit']}
+          body: ${reviewBody}
+          event: COMMENT
+          # For now, we don't include any source code comments, as this will cause
+          # GitHub to return an error if the source file doesn't exist in the repo.
+          comments: ${{}} 
+          # comments: ${jsonSourceCodeComments?:{}}
+          
+      - name: reviewBody
+        contents: |
+          ## Fortify vulnerability summary
+          
+          ### New Issues
+          
+          ${newIssues==null 
+            ? "* No new or re-introduced issues were detected" 
+            : ("* "+#join('\n* ',newIssues))}
+            
+          ### Removed Issues
+          
+          ${removedIssues==null 
+            ? "* No removed issues were detected" 
+            : ("* "+#join('\n* ',removedIssues))}
+            
+      - name: jsonSourceCodeComment
+        contents:
+          path: ${issue.primaryLocationFull}
+          line: ${issue.lineNumber==0?1:issue.lineNumber}
+          body: |
+            <p><b>Security Scanning</b> / Fortify SAST</p>
+            <h3>${issue.severityString} - ${issue.category} </h3>
+            <p>${#htmlToText(issue.details?.summary)}</p>
+            <br>
+            <p><a href=${#fod.issueBrowserUrl(issue)} target="_blank" rel="noopener noreferrer">More information</a></p>
+      - name: mdIssueListItem
+        contents: >
+          ${issue.status} (${issue.scantype}): [${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber} - ${issue.category}](${#fod.issueBrowserUrl(issue)})
+          
+          
+          

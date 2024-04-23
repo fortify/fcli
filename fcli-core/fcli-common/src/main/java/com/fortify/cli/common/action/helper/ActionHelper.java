@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.action.model.Action;
+import com.fortify.cli.common.action.model._ActionRoot;
 import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
@@ -58,7 +60,7 @@ public class ActionHelper {
     }
 
     public static final String loadContents(String type, String name) {
-        return loadZipEntry(type, name, (is, ze, isCustom)->FileUtils.readInputStreamAsString(is, StandardCharsets.US_ASCII));
+        return loadZipEntry(type, name, (is, ze, isCustom)->FileUtils.readInputStreamAsString(is, StandardCharsets.UTF_8));
     }
     
     public static final Stream<ObjectNode> list(String type) {
@@ -129,7 +131,11 @@ public class ActionHelper {
             // Read contents as JsonNode to update importedEntries array after import
             var json = yamlObjectMapper.readValue(contents, ObjectNode.class);
             // Verify that the template can be successfully parsed and post-processed
-            yamlObjectMapper.treeToValue(json, Action.class).postLoad(name, true);
+            var actionRoot = yamlObjectMapper.treeToValue(json, _ActionRoot.class);
+            if ( actionRoot.getAction()!=null ) {
+                actionRoot.getAction().postLoad(name, true);
+            } // TODO Also validate signed action? Should already have been validated
+              // during signing?
             // Import entry to zip-file
             importEntry(name, type, contents);
             // Add JSON to the imported entries array.
@@ -163,7 +169,19 @@ public class ActionHelper {
 
     private static final Action loadDescriptor(InputStream is, String actionName, boolean isCustom) {
         try {
-            var result = yamlObjectMapper.readValue(is, Action.class);
+            Action result = null;
+            var actionRoot = yamlObjectMapper.readValue(is, _ActionRoot.class);
+            var signedAction = actionRoot.getSignedAction();
+            if ( signedAction!=null ) {
+                var actionString = new String(Base64.decodeBase64(signedAction.getActionBase64()), StandardCharsets.UTF_8);
+                // TODO Verify signature
+                result = yamlObjectMapper.readValue(actionString, Action.class);
+            } else {
+                result = actionRoot.getAction();
+            }
+            if ( result==null ) {
+                throw new IllegalStateException("Action document must contain either action: or signedAction: element");
+            }
             result.postLoad(getActionName(actionName), isCustom);
             return result;
         } catch (IOException e) {
