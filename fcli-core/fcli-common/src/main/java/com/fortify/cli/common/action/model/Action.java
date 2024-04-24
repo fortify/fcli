@@ -25,8 +25,11 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.crypto.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.util.StringUtils;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -47,10 +50,12 @@ import lombok.SneakyThrows;
 @Reflectable @NoArgsConstructor
 @Data
 public class Action implements IActionElement {
-    /** Action name, set in {@link #postLoad(String)} method */
+    /** Action name, set in {@link #postLoad(ActionProperties)} method */
     private String name;
-    /** Whether this is a custom action, set in {@link #postLoad(String)} method */
+    /** Whether this is a custom action, set in {@link #postLoad(ActionProperties)} method */
     private boolean custom;
+    /** Signature status for this action, set in {@link #postLoad(ActionProperties)} method */
+    private SignatureStatus signatureStatus;
     /** Action description */
     private ActionUsage usage;
     /** Action parameters */
@@ -89,10 +94,11 @@ public class Action implements IActionElement {
      * </ul>
      * We need to initialize collections before invoking {@link IActionElement#postLoad(Action)}
      * methods, as these methods may utilize the collections.
+     * @param signatureStatus 
      */
-    public final void postLoad(String name, boolean isCustom) {
-        this.name = name;
-        this.custom = isCustom;
+    public final void postLoad(ActionProperties properties) {
+        this.name = properties.getName();
+        this.custom = properties.isCustom();
         initializeCollections();
         allActionElements.forEach(elt->elt.postLoad(this));
     }
@@ -221,5 +227,16 @@ public class Action implements IActionElement {
     @SneakyThrows
     private Object getFieldValue(Object actionElement, Field field) {
         return field.get(actionElement);
+    }
+    
+    @Data @Builder(toBuilder = true) @AllArgsConstructor
+    public static final class ActionProperties {
+        private final String name;
+        private final boolean custom;
+        @Builder.Default private final SignatureStatus signatureStatus = SignatureStatus.NOT_VERIFIED;
+        
+        public static final ActionProperties create(boolean custom) {
+            return builder().custom(custom).build();
+        }
     }
 }

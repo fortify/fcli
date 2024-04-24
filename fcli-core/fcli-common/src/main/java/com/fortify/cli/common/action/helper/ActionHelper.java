@@ -12,20 +12,15 @@
  */
 package com.fortify.cli.common.action.helper;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -38,39 +33,72 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.http.proxy.helper.ProxyHelper;
+import com.fortify.cli.common.action.model.Action.ActionProperties;
+import com.fortify.cli.common.crypto.SignatureHelper;
+import com.fortify.cli.common.crypto.SignatureHelper.SignatureStatus;
+import com.fortify.cli.common.crypto.SignatureHelper.SignedTextDescriptor;
+import com.fortify.cli.common.crypto.SignatureHelper.SignedTextReader;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.rest.unirest.GenericUnirestFactory;
+import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
-import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.common.util.ZipHelper;
+import com.fortify.cli.common.util.ZipHelper.IZipEntryWithContextProcessor;
 
-import kong.unirest.UnirestInstance;
+import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.SneakyThrows;
+import lombok.experimental.Accessors;
 
 public class ActionHelper {
     private static final Logger LOG = LoggerFactory.getLogger(ActionHelper.class);
-    private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
     private ActionHelper() {}
     
-    public static final Action load(String type, String name) {
-        return loadZipEntry(type, name, ActionHelper::loadDescriptor);
-    }
-
-    public static final String loadContents(String type, String name) {
-        return loadZipEntry(type, name, (is, ze, isCustom)->FileUtils.readInputStreamAsString(is, StandardCharsets.US_ASCII));
+    public static final Action loadAction(String type, String name, ActionSignatureHandler signatureHandler) {
+        return load(type, name, false, signatureHandler).asAction();
     }
     
-    public static final Stream<ObjectNode> list(String type) {
+    public static final Action loadBuiltinAction(String type, String name, ActionSignatureHandler signatureHandler) {
+        return load(type, name, true, signatureHandler).asAction();
+    }
+
+    public static final String loadActionContents(String type, String name, ActionSignatureHandler signatureHandler) {
+        return load(type, name, false, signatureHandler).asString();
+    }
+    
+    public static final String loadBuiltinActionContents(String type, String name, ActionSignatureHandler signatureHandler) {
+        return load(type, name, true, signatureHandler).asString();
+    }
+    
+    private static final ActionLoadResult load(String type, String name, boolean ignoreCustom, ActionSignatureHandler signatureConfig) {
+        return new ActionLoader(signatureConfig)
+                .ignoreCustomActions(ignoreCustom)
+                .loadCustomOrBuiltInAction(type, name);
+    }
+    
+    public static final Stream<ObjectNode> streamAsJson(String type, ActionSignatureHandler signatureHandler) {
+        return streamAsJson(type, false, signatureHandler);
+    }
+    
+    public static final Stream<ObjectNode> streamBuiltinAsJson(String type, ActionSignatureHandler signatureHandler) {
+        return streamAsJson(type, true, signatureHandler);
+    }
+    
+    private static final Stream<ObjectNode> streamAsJson(String type, boolean ignoreCustom, ActionSignatureHandler signatureHandler) {
         Map<String, ObjectNode> result = new HashMap<>();
-        processBuiltinAndCustomZipEntries(type, (zis, ze, isCustom)->{
-            result.putIfAbsent(getActionName(ze.getName()), loadAsJson(ze.getName(), zis, isCustom));
-            return true;
-        });
+        new ActionLoader(signatureHandler)
+            .ignoreCustomActions(ignoreCustom)
+            .processCustomAndBuiltInActions(type, loadResult->{
+                result.putIfAbsent(loadResult.getProperties().getName(), loadResult.asJson());
+                return Break.FALSE;
+            });
         return result.values().stream()
                 .sorted((a,b)->a.get("name").asText().compareTo(b.get("name").asText()));
     }
     
+    /*
     @SneakyThrows
     public static final ArrayNode importZip(String type, String source) {
         var result = JsonHelper.getObjectMapper().createArrayNode();
@@ -87,7 +115,9 @@ public class ActionHelper {
         }
         return result;
     }
+    */
     
+    /*
     @SneakyThrows
     public static final ArrayNode importSingle(String type, String name, String source) {
         var result = JsonHelper.getObjectMapper().createArrayNode();
@@ -104,24 +134,22 @@ public class ActionHelper {
         }
         return result;
     }
+    */
     
     @SneakyThrows
     public static final ArrayNode reset(String type) {
         var result = JsonHelper.getObjectMapper().createArrayNode();
-        var zipPath = getCustomActionsZipPath(type);
-        if ( Files.exists(zipPath) ) {
-            try ( var is = Files.newInputStream(zipPath) ) {
-                processZipEntries(is, (zis, ze, isCustom) -> {
-                    result.add(loadAsJson(ze.getName(), zis, isCustom));
-                    return true;
-                }, true);
-            }
-            Files.delete(zipPath);
-        }
+        var zipPath = customActionsZipPath(type);
+        new ActionLoader(ActionSignatureHandler.IGNORE)
+            .processZipEntries(zipPath, ActionProperties.create(true),
+                        loadResult->{
+                            result.add(loadResult.asJson());
+                            return Break.FALSE;});
+        Files.delete(zipPath);
         return result;
     }
     
-    
+    /* 
     private static final boolean importEntry(ArrayNode importedEntries, InputStream is, String name, String type) {
         try {
             // Read input stream as string for further processing
@@ -140,7 +168,9 @@ public class ActionHelper {
         }
         return true;
     }
+    */
 
+    /*
     @SneakyThrows
     private static void importEntry(String name, String type, String contents) {
         Map<String, String> env = Collections.singletonMap("create", "true");
@@ -156,122 +186,178 @@ public class ActionHelper {
         ProxyHelper.configureProxy(result, type.toLowerCase()+"-action", url.toString());
         return result;
     }
+    */
     
-    private static final Action loadDescriptor(InputStream is, ZipEntry ze, boolean isCustom) {
-        return loadDescriptor(is, ze.getName(), isCustom);
-    }
-
-    private static final Action loadDescriptor(InputStream is, String actionName, boolean isCustom) {
-        try {
-            var result = yamlObjectMapper.readValue(is, Action.class);
-            result.postLoad(getActionName(actionName), isCustom);
-            return result;
-        } catch (IOException e) {
-            throw new RuntimeException("Error loading action "+actionName, e);
-        }
-    }
-    
-    private static final ObjectNode loadAsJson(String fileName, InputStream is, boolean isCustom) {
-        if ( is==null ) {
-            // TODO Use more descriptive exception message
-            throw new IllegalStateException("Can't read "+fileName);
-        }
-        try {
-            var result = yamlObjectMapper.readValue(is.readAllBytes(), ObjectNode.class); 
-            return updateJson(fileName, isCustom, result);
-        } catch (IOException e) {
-            throw new RuntimeException("Error loading action "+fileName, e);
-        }
-    }
-
-    private static ObjectNode updateJson(String fileName, boolean isCustom, ObjectNode result) {
-        return result
-            .put("name", getActionName(fileName))
-            .put("custom", isCustom)
-            .put("isCustomString", isCustom?"Yes":"No");
-    }
-    
-    private static final String getActionName(String fileName) {
-        return Path.of(fileName).getFileName().toString().replace(".yaml", "");
-    }
-    
-    private static final <T> T loadZipEntry(String type, String name, IZipEntryProcessor<T> processor) {
-        AtomicReference<T> result = new AtomicReference<>();
-        processBuiltinAndCustomZipEntries(type, (zis, ze, isCustom)->{
-            var fileName = name+".yaml";
-            if (ze.getName().equals(fileName)) {
-                result.set(processor.process(zis, ze, isCustom));
-                return false;
-            } else {
-                return true;
-            }
-        });
-        if ( result.get()==null ) {
-            throw new IllegalArgumentException("No action found with name "+name);
-        }
-        return result.get();
-    }
-    
-    @SneakyThrows
-    private static final void processBuiltinAndCustomZipEntries(String type, IZipEntryProcessor<Boolean> processor) {
-        boolean _continue;
-        try ( var customActionsZipFileInputStream = getCustomActionsZipFileInputStream(type) ) {
-            _continue = processZipEntries(customActionsZipFileInputStream, processor, true);
-        }
-        if ( _continue ) {
-            try ( var builtinActionsZipFileInputStream = getBuiltinActionsZipFileInputStream(type) ) {
-                _continue = processZipEntries(builtinActionsZipFileInputStream, processor, false);
-            } 
-        }
-        if ( _continue ) {
-            try ( var commonActionsZipFileInputStream = getCommonActionsZipFileInputStream() ) {
-                _continue = processZipEntries(commonActionsZipFileInputStream, processor, false);
-            } 
-        }
-    }
-    
-    private static final boolean processZipEntries(InputStream zipFileInputStream, IZipEntryProcessor<Boolean> processor, boolean isCustom) {
-        if ( zipFileInputStream!=null ) {
-            try ( ZipInputStream zis = new ZipInputStream(zipFileInputStream) ) {
-                ZipEntry entry;
-                while ( (entry = zis.getNextEntry())!=null ) {
-                    if ( !processor.process(zis, entry, isCustom) ) { return false; }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException("Error loading actions", e);
-            }
-        }
-        return true;
-    }
-    
-    @SneakyThrows
-    private static final InputStream getCustomActionsZipFileInputStream(String type) {
-        var zipPath = getCustomActionsZipPath(type);
-        return !Files.exists(zipPath) ? null : Files.newInputStream(zipPath);
-    }
-    
-    private static final InputStream getBuiltinActionsZipFileInputStream(String type) {
-        return FileUtils.getResourceInputStream(getBuiltinActionsResourceZip(type));
-    }
-    
-    private static final InputStream getCommonActionsZipFileInputStream() {
-        return FileUtils.getResourceInputStream(getCommonActionsResourceZip());
-    }
-    
-    private static Path getCustomActionsZipPath(String type) {
+    private static final Path customActionsZipPath(String type) {
         return FcliDataHelper.getFcliConfigPath().resolve("action").resolve(type.toLowerCase()+".zip");
     }
     
-    private static final String getBuiltinActionsResourceZip(String type) {
+    private static final String builtinActionsResourceZip(String type) {
         return String.format("com/fortify/cli/%s/actions.zip", type.toLowerCase().replace('-', '_'));
     }
     
-    private static final String getCommonActionsResourceZip() {
+    private static final String commonActionsResourceZip() {
         return "com/fortify/cli/common/actions.zip";
+    }
+
+    @RequiredArgsConstructor
+    private static final class ActionLoader {
+        private static final SignedTextReader signedTextReader = SignatureHelper.signedTextReader();
+        private final ActionSignatureHandler signatureHandler;
+        @Setter @Accessors(fluent = true) private boolean ignoreCustomActions;
+        
+        public final ActionLoadResult loadCustomOrBuiltInAction(String type, String name) {
+            AtomicReference<ActionLoadResult> result = new AtomicReference<>();
+            processCustomAndBuiltInActionZipEntries(type, 
+                    singleZipEntryProcessor(name, result::set));
+            if ( result.get()==null ) {
+                throw new IllegalArgumentException("No action found with name "+name);
+            }
+            return result.get();
+        }
+        
+        public final void processCustomAndBuiltInActions(String type, ActionLoadResultProcessor actionLoadResultProcessor) {
+            processCustomAndBuiltInActionZipEntries(type, zipEntryProcessor(actionLoadResultProcessor));
+        }
+        
+        private final void processCustomAndBuiltInActionZipEntries(String type, IZipEntryWithContextProcessor<ActionProperties> processor) {
+            var _break = Break.FALSE;
+            if ( _break.doContinue() && !ignoreCustomActions ) {
+                _break = ZipHelper.processZipEntries(customActionsInputStreamSupplier(type), 
+                        processor, ActionProperties.create(true));
+            }
+            if ( _break.doContinue() ) {
+                _break = ZipHelper.processZipEntries(builtinActionsInputStreamSupplier(type), 
+                        processor, ActionProperties.create(false));
+            }
+            if ( _break.doContinue() ) {
+                _break = ZipHelper.processZipEntries(commonActionsInputStreamSupplier(), 
+                        processor, ActionProperties.create(false));
+            }
+        }
+        
+        public final Break processZipEntries(Path zipFilePath, ActionProperties properties, ActionLoadResultProcessor loadResultProcessor) {
+            return ZipHelper.processZipEntries(()->FileUtils.getInputStream(zipFilePath), zipEntryProcessor(loadResultProcessor), properties);
+        }
+        
+        public final Break processZipEntries(Supplier<InputStream> zipFileInputStreamSupplier, ActionProperties properties, ActionLoadResultProcessor loadResultProcessor) {
+            return ZipHelper.processZipEntries(zipFileInputStreamSupplier, zipEntryProcessor(loadResultProcessor), properties);
+        }
+        
+        public final Break processZipEntries(InputStream zipFileInputStream, ActionProperties properties, ActionLoadResultProcessor loadResultProcessor) {
+            return ZipHelper.processZipEntries(zipFileInputStream, zipEntryProcessor(loadResultProcessor), properties);
+        }
+        
+        private final IZipEntryWithContextProcessor<ActionProperties> zipEntryProcessor(ActionLoadResultProcessor loadResultProcessor) {
+            return (zis, ze, properties) -> loadResultProcessor.process(load(zis, ze, properties)); 
+        }
+        
+        private final IZipEntryWithContextProcessor<ActionProperties> singleZipEntryProcessor(String name, Consumer<ActionLoadResult> loadResultConsumer) {
+            return (zis, ze, properties) -> processSingleZipEntry(zis, ze, name, loadResultConsumer, properties);
+        }
+
+        private Break processSingleZipEntry(ZipInputStream zis, ZipEntry ze, String name, Consumer<ActionLoadResult> loadResultConsumer, ActionProperties properties) {
+            var fileName = name+".yaml";
+            if (ze.getName().equals(fileName)) {
+                loadResultConsumer.accept(load(zis, ze, properties));
+                return Break.TRUE;
+            }
+            return Break.FALSE;
+        }
+        
+        private final ActionLoadResult load(ZipInputStream zis, ZipEntry ze, ActionProperties properties) {
+            properties = properties.toBuilder().name(getActionName(ze.getName())).build();
+            return load(zis, properties);
+        }
+        
+        public final ActionLoadResult load(InputStream is, ActionProperties properties) {
+            return new ActionLoadResult(loadSignedTextDescriptor(is, properties.isCustom()), properties);
+        }
+            
+        private final SignedTextDescriptor loadSignedTextDescriptor(InputStream is, boolean isCustom) {
+            return signedTextReader.load(is, StandardCharsets.UTF_8, 
+                    // TODO For now, we only evaluate/check signatures for custom actions,
+                    // until we've figured out how to sign internal actions during (or 
+                    // potentially after) Gradle build.
+                    isCustom 
+                        ? signatureHandler.getSignedTextDescriptorConsumer()
+                        : null);
+        }
+        
+        private final String getActionName(String fileName) {
+            return Path.of(fileName).getFileName().toString().replace(".yaml", "");
+        }
+        
+        @SneakyThrows
+        private final Supplier<InputStream> customActionsInputStreamSupplier(String type) {
+            return ()->FileUtils.getInputStream(customActionsZipPath(type));
+        }
+        
+        private final Supplier<InputStream> builtinActionsInputStreamSupplier(String type) {
+            return ()->FileUtils.getResourceInputStream(builtinActionsResourceZip(type));
+        }
+        
+        private final Supplier<InputStream> commonActionsInputStreamSupplier() {
+            return ()->FileUtils.getResourceInputStream(commonActionsResourceZip());
+        }
+    }
+    
+    @Data
+    private static final class ActionLoadResult {
+        private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
+        private final SignedTextDescriptor signedTextDescriptor;
+        private final ActionProperties properties;
+        
+        @SneakyThrows
+        final Action asAction() {
+            var payload = signedTextDescriptor.getPayload();
+            var signatureStatus = signedTextDescriptor.getSignatureStatus();
+            var result = yamlObjectMapper.readValue(payload, Action.class);
+            var properties = this.properties.toBuilder().signatureStatus(signatureStatus).build();
+            result.postLoad(properties);
+            return result;
+        }
+        
+        public String asString() {
+            return signedTextDescriptor.getPayload();
+        }
+
+        @SneakyThrows
+        final ObjectNode asJson() {
+            var payload = signedTextDescriptor.getPayload();
+            var signatureStatus = signedTextDescriptor.getSignatureStatus();
+            String name = properties.getName();
+            boolean custom = properties.isCustom();
+            var customString = custom?"Yes":"No";
+            // TODO see ActionLoader#loadSignedTextDescriptor; for internal actions
+            // we currently don't evaluate signatures until we implement functionality
+            // for signing these during or after build.
+            var signatureString = !custom || signatureStatus==SignatureStatus.VALID_SIGNATURE 
+                ? "Valid" : "Invalid";
+            return yamlObjectMapper.readValue(payload, ObjectNode.class)
+                    .put("name", name)
+                    .put("custom", custom)
+                    .put("customString", customString)
+                    .put("signatureStatus", signatureStatus.toString())
+                    .put("signatureString", signatureString);
+        }
+    }
+    
+    @RequiredArgsConstructor
+    public static enum ActionSignatureHandler {
+        IGNORE(null),
+        EVALUATE(d->{}),
+        WARN(d->LOG.warn("WARN: "+failedMessage(d))),
+        FAIL(d->{throw new IllegalStateException(failedMessage(d));});
+        
+        @Getter private final Consumer<SignedTextDescriptor> signedTextDescriptorConsumer;
+        private static final String failedMessage(SignedTextDescriptor descriptor) {
+            return "Action signature verification failed: "+descriptor.getSignatureStatus();
+        }
     }
     
     @FunctionalInterface
-    private static interface IZipEntryProcessor<T> {
-        T process(ZipInputStream is, ZipEntry entry, boolean isCustom);
+    private static interface ActionLoadResultProcessor {
+        Break process(ActionLoadResult loadResult);
     }
 }

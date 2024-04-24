@@ -18,6 +18,7 @@ import java.util.concurrent.Callable;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fortify.cli.common.action.helper.ActionHelper;
+import com.fortify.cli.common.action.helper.ActionHelper.ActionSignatureHandler;
 import com.fortify.cli.common.action.runner.ActionParameterHelper;
 import com.fortify.cli.common.action.runner.ActionRunner;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
@@ -50,10 +51,10 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
         Callable<Integer> delayedConsoleWriter = null;
         try ( var progressWriter = progressWriterFactory.create() ) {
             progressWriter.writeProgress("Loading action %s", action);
-            var actionDescriptor = ActionHelper.load(getType(), action);
+            var loadedAction = ActionHelper.loadAction(getType(), action, ActionSignatureHandler.FAIL);
             try ( var actionRunner = ActionRunner.builder()
                 .onValidationErrors(this::onValidationErrors)
-                .action(actionDescriptor)
+                .action(loadedAction)
                 .progressWriter(progressWriter)
                 .rootCommandLine(commandHelper.getRootCommandLine())
                 .build() ) 

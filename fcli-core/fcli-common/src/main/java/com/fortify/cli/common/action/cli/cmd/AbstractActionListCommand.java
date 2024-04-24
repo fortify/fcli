@@ -13,8 +13,8 @@
 package com.fortify.cli.common.action.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.helper.ActionHelper;
+import com.fortify.cli.common.action.helper.ActionHelper.ActionSignatureHandler;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -22,9 +22,8 @@ import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 public abstract class AbstractActionListCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     @Override
     public final JsonNode getJsonNode() {
-        return ActionHelper.list(getType())
-                .map(JsonHelper.getObjectMapper()::valueToTree)
-                .map(ObjectNode.class::cast)
+        return ActionHelper
+                .streamAsJson(getType(), ActionSignatureHandler.EVALUATE)
                 .collect(JsonHelper.arrayNodeCollector());
     }    
     @Override

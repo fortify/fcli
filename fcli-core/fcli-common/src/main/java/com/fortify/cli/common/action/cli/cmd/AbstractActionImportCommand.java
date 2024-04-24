@@ -13,10 +13,8 @@
 package com.fortify.cli.common.action.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.action.helper.ActionHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
-import com.fortify.cli.common.util.StringUtils;
 
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
@@ -38,11 +36,14 @@ public abstract class AbstractActionImportCommand extends AbstractOutputCommand 
     @Override
     public final JsonNode getJsonNode() {
         var zip = argGroup.zipArgGroup.zip;
+        /* TODO
         if ( StringUtils.isNotBlank(zip) ) {
             return ActionHelper.importZip(getType(), zip);
         } else {
             return ActionHelper.importSingle(getType(), argGroup.fileArgGroup.name, argGroup.fileArgGroup.file);
         }
+        */
+        return null;
     }    
     @Override
     public final boolean isSingular() {

@@ -12,28 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.ssc._common.action;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import lombok.Getter;
 
-import com.fortify.cli.common.action.helper.ActionHelper;
-
-public class SSCActionTest {
-    private static final String TYPE = "SSC";
-    @ParameterizedTest
-    @MethodSource("getActions")
-    public void testLoadAction(String name) {
-        try {
-            ActionHelper.load(TYPE, name);
-        } catch ( Exception e ) {
-            System.err.println(String.format("Error loading %s action %s:\n%s", TYPE, name, e));
-            Assertions.fail(String.format("Error loading %s action %s", TYPE, name), e);
-        }
-    }
-    
-    public static final String[] getActions() {
-        return ActionHelper.list(TYPE)
-                .map(a->a.get("name").asText())
-                .toArray(String[]::new);
-    }
+public class SSCActionTest extends AbstractActionTest {
+    @Getter private final String type = "SSC";
 }

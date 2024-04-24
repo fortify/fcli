@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -27,6 +28,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.function.Consumer;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
@@ -44,6 +46,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.formkiq.graalvm.annotations.Reflectable;
+import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.AccessLevel;
@@ -102,6 +105,11 @@ public class SignatureHelper {
     }
     
     @SneakyThrows
+    public static final Signer signer(Path pemOrBase64KeyPath, String passPhrase) {
+        return signer(pemOrBase64KeyPath, StringUtils.isBlank(passPhrase) ? null : passPhrase.toCharArray());
+    }
+    
+    @SneakyThrows
     public static final TextSigner textSigner(Path pemOrBase64KeyPath, String passPhrase) {
         return textSigner(pemOrBase64KeyPath, StringUtils.isBlank(passPhrase) ? null : passPhrase.toCharArray());
     }
@@ -119,9 +127,8 @@ public class SignatureHelper {
         return new TextSigner(getKey(Files.readString(pemOrBase64KeyPath)), passPhrase);
     }
     
-    @SneakyThrows
-    public static final Signer signer(Path pemOrBase64KeyPath, String passPhrase) {
-        return signer(pemOrBase64KeyPath, StringUtils.isBlank(passPhrase) ? null : passPhrase.toCharArray());
+    public static final SignedTextReader signedTextReader() {
+        return new SignedTextReader();
     }
     
     @SneakyThrows
@@ -428,14 +435,18 @@ public class SignatureHelper {
     }
     
     public static final class SignedTextReader {
-        private final Verifier verifier;
+        private SignedTextReader() {}
         
-        private SignedTextReader(Path publicKeyPath) {
-            this.verifier = SignatureHelper.verifier(publicKeyPath);
+        public final SignedTextDescriptor load(InputStream is, Charset charset, boolean evaluateSignature) {
+            return load(FileUtils.readInputStreamAsString(is, charset), evaluateSignature);
+        }
+        
+        public final SignedTextDescriptor load(InputStream is, Charset charset, Consumer<SignedTextDescriptor> onInvalidSingature) {
+            return load(FileUtils.readInputStreamAsString(is, charset), onInvalidSingature);
         }
         
         @SneakyThrows
-        public final SignedTextFileDescriptor load(String signedOrUnsignedText) {
+        public final SignedTextDescriptor load(String signedOrUnsignedText, boolean evaluateSignature) {
             var elts = signedOrUnsignedText.split(String.valueOf(FILE_SEPARATOR));
             if ( elts.length>2 ) {
                 throw new IllegalStateException("Input may contain only single Unicode File Separator character");
@@ -444,25 +455,48 @@ public class SignatureHelper {
             } else {
                 var signatureDescriptor = new ObjectMapper(new YAMLFactory())
                         .readValue(elts[1], SignatureDescriptor.class);
-                return buildSignedDescriptor(elts[0], signatureDescriptor);
+                return buildSignedDescriptor(elts[0], signatureDescriptor, evaluateSignature);
             }
         }
+        
+        /**
+         * Load a {@link SignedTextDescriptor} instance from the given signed or
+         * unsigned text.
+         * 
+         * @param signedOrUnsignedText Either signed or unsigned text to be loaded.
+         * @param onInvalidSingature is invoked if there's no valid signature. If null,
+         *        the signature status will not be evaluated. To evaluate signature status
+         *        without performing any action on failure, simply pass d->{}.
+         * @return {@link SignedTextDescriptor} instance
+         */
+        public final SignedTextDescriptor load(String signedOrUnsignedText, Consumer<SignedTextDescriptor> onInvalidSingature) {
+            if ( onInvalidSingature==null ) { return load(signedOrUnsignedText, false); }
+            var descriptor = load(signedOrUnsignedText, true);
+            if ( descriptor.getSignatureStatus()!=SignatureStatus.VALID_SIGNATURE ) {
+                onInvalidSingature.accept(descriptor);
+            }
+            return descriptor;
+        }
 
-        private SignedTextFileDescriptor buildUnsignedDescriptor(String payload) {
-            return SignedTextFileDescriptor.builder()
+        private SignedTextDescriptor buildUnsignedDescriptor(String payload) {
+            return SignedTextDescriptor.builder()
                     .payload(payload)
                     .signatureStatus(SignatureStatus.NO_SIGNATURE)
                     .build();
         }
         
-        private SignedTextFileDescriptor buildSignedDescriptor(String payload, SignatureDescriptor signatureDescriptor) {
-            // TODO Load public key based on fingerprint in descriptor
-            // TODO Verify payload against signature
-            // TODO Set proper signature status
-            return SignedTextFileDescriptor.builder()
+        private SignedTextDescriptor buildSignedDescriptor(String payload, SignatureDescriptor signatureDescriptor, boolean evaluateSignatureStatus) {
+            var signatureStatus = SignatureStatus.NOT_VERIFIED;
+            if ( evaluateSignatureStatus ) {
+                // TODO Load public key based on fingerprint in descriptor
+                // TODO Verify payload against signature
+                // var verifier = SignatureHelper.verifier(publicKey);
+                // TODO Set proper signature status
+            }
+            return SignedTextDescriptor.builder()
                     .payload(payload)
                     .signatureDescriptor(signatureDescriptor)
-                    .signatureStatus(SignatureStatus.NOT_VERIFIED)
+                    .signatureStatus(signatureStatus)
                     .build();
         }
 
@@ -551,7 +585,7 @@ public class SignatureHelper {
     
     @Reflectable @NoArgsConstructor
     @Data @AllArgsConstructor @Builder
-    public static final class SignedTextFileDescriptor {
+    public static final class SignedTextDescriptor {
         /** Original file contents */
         private String payload;
         /** Signature descriptor */
@@ -574,7 +608,7 @@ public class SignatureHelper {
         Files.deleteIfExists(output);
         keyPairGenerator("test").writePem(priv, pub);
         textSigner(priv, "test".toCharArray()).signAndWrite(pub, output, null);
-        var result = new SignedTextReader(pub).load(Files.readString(output, StandardCharsets.UTF_8));
+        var result = new SignedTextReader().load(Files.readString(output, StandardCharsets.UTF_8), true);
         System.out.println(result);
     }
 }

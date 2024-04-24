@@ -41,6 +41,11 @@ import lombok.SneakyThrows;
 public final class FileUtils {
     private FileUtils() {}
     
+    @SneakyThrows
+    public static final InputStream getInputStream(Path path) {
+        return !Files.exists(path) ? null : Files.newInputStream(path);
+    }
+    
     public static final InputStream getResourceInputStream(String resourcePath) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);
     }

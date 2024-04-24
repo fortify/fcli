@@ -13,6 +13,7 @@
 package com.fortify.cli.common.action.cli.cmd;
 
 import com.fortify.cli.common.action.helper.ActionHelper;
+import com.fortify.cli.common.action.helper.ActionHelper.ActionSignatureHandler;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.runner.ActionParameterHelper;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
@@ -28,7 +29,7 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
     @Override
     public final Integer call() {
         initMixins();
-        var actionDescriptor = ActionHelper.load(getType(), action);
+        var actionDescriptor = ActionHelper.loadAction(getType(), action, ActionSignatureHandler.WARN);
         System.out.println(getActionHelp(actionDescriptor));
         return 0;
     }

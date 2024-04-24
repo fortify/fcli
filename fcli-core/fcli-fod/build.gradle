@@ -1,7 +1,15 @@
-task zipResources_templates(type: Zip) {
+task zipResources_actions(type: Zip) {
     destinationDirectory = file("${buildDir}/generated-zip-resources/com/fortify/cli/fod")
     archiveFileName = "actions.zip"
-    from("${projectDir}/src/main/resources//com/fortify/cli/fod/actions/zip")
+    from("${projectDir}/src/main/resources/com/fortify/cli/fod/actions/zip")
+    include '*.yaml'
+    //TODO Sign file; how do we invoke a sign operation from Gradle?
+    /*
+    eachFile { fcd ->  
+        //String content = sign(fcd.file.text)
+        //fcd.file.text = content
+    }
+    */
 }
 
 apply from: "${sharedGradleScriptsDir}/fcli-module.gradle"
