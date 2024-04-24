@@ -47,8 +47,6 @@ import lombok.SneakyThrows;
 @Reflectable @NoArgsConstructor
 @Data
 public class Action implements IActionElement {
-    /** Signed action */
-    private SignedAction signed;
     /** Action name, set in {@link #postLoad(String)} method */
     private String name;
     /** Whether this is a custom action, set in {@link #postLoad(String)} method */

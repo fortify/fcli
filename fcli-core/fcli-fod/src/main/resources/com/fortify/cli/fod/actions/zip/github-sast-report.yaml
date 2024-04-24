@@ -12,157 +12,156 @@
 # when updating one, the other should also be updated. and ideally we should have functional tests
 # that compare the outputs of both actions. 
 
-action:
-    usage:
-      header: Generate a GitHub Code Scanning report listing FoD SAST vulnerabilities. 
-      description: |
-        For information on how to import this report into GitHub, see  
-        https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github
-    
-    defaults:
-      requestTarget: fod
-      
-    parameters:
-      - name: file
-        cliAliases: f
-        description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gh-fortify-sast.sarif"
-        required: false
-        defaultValue: gh-fortify-sast.sarif
-      - name: release
-        cliAliases: rel
-        description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
-        type: release_single
-    
-    steps:
-      - progress: Loading static scan summary
-      - requests:
-          - name: staticScanSummary
-            uri:  /api/v3/scans/${parameters.release.currentStaticScanId}/summary
-            if:   ${parameters.release.currentStaticScanId!=null}
-      - progress: Processing issue data
-      - requests:
-        - name: issues
-          uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
-          query:
-            filters: scantype:Static
-          pagingProgress:
-            postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
-          onResponse:
-            - if: ${issues_raw.totalCount>1000}
-              throw: GitHub does not support importing more than 1000 vulnerabilities. Please clean the scan results or update vulnerability search criteria.
-          forEach:
-            name: issue
-            embed:
-              - name: details
-                uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
-              - name: recommendations
-                uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
-              - name: traces
-                uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/traces 
-            do:
-              - append:
-                - if: ${ruleCache==null || ruleCache[issue.checkId]==null}
-                  name: rules
-                  valueTemplate: rules
-                - name: ruleCache
-                  property: ${issue.checkId}
-                  value: true
-                - name: results
-                  valueTemplate: results
-      - write:
-        - to: ${parameters.file}
-          valueTemplate: github-sast-report
-        - if: ${parameters.file!='stdout'}
-          to: stdout
-          value: |
-            Output written to ${parameters.file}
-    
-    valueTemplates:
-      - name: github-sast-report
-        contents:
-          "$schema": https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json 
-          version: '2.1.0'
-          runs:
-            - tool:
-                driver:
-                  name: 'Fortify on Demand'   
-                  version: SCA ${staticScanSummary?.staticScanSummaryDetails?.engineVersion?:'version unknown'}; Rulepack ${staticScanSummary?.staticScanSummaryDetails?.rulePackVersion?:'version unknown'}
-                  rules: ${rules?:{}}
-                  properties:
-                    copyright: ${#copyright()}
-                    applicationName: ${parameters.release.applicationName}
-                    applicationId: ${parameters.release.applicationId}
-                    releaseName: ${parameters.release.releaseName}
-                    releaseId: ${parameters.release.releaseId}
-              results: ${results?:{}}
-         
-      - name: rules
-        contents:
-          id: ${issue.checkId}
-          shortDescription:
-            text: ${issue.category}
-          fullDescription:
-            text: |
-              ## ${issue.category}
-              
-              ${#cleanRuleDescription(issue.details?.summary)}
-          help:
-            text: |
-              ${#cleanRuleDescription(issue.details?.explanation)?:'No explanation available'}
-              
-              ## Recommendations
-              
-              ${#cleanRuleDescription(issue.recommendations?.recommendations)?:'Not available'}
-              
-              ## Tips
-              
-              ${#cleanRuleDescription(issue.recommendations?.tips)?:'Not available'}
-              
-              ## References
-              
-              ${#numberedList(#cleanRuleDescription(issue.recommendations?.references)?.split('\n'))?:'Not available'}
-              
-              ${#copyright()}
-    
-      - name: results
-        contents:
-          ruleId: ${issue.checkId}
-          message: 
-            text: ${#cleanIssueDescription(issue.details?.summary)} [More information](${#fod.issueBrowserUrl(issue)})
-          level: ${(issue.severityString matches "(Critical|High)") ? "warning":"note" }
-          partialFingerprints:
-            issueInstanceId: ${issue.instanceId}
-          locations:
-            - physicalLocation:
-                artifactLocation:
-                  uri: ${issue.primaryLocationFull}
-                region:
-                  startLine: ${issue.lineNumber==0?1:issue.lineNumber}
-                  endLine: ${issue.lineNumber==0?1:issue.lineNumber}
-                  startColumn: ${1}  # Needs to be specified as an expression in order to end up as integer instead of string in JSON
-                  endColumn: ${80}
-          codeFlows: |-
-            ${ 
-              issue.traces==null ? {}
-                : 
-                {{ 
-                    threadFlows: issue.traces.![{
-                      locations: traceEntries?.![{
-                        location: {
-                            message: {
-                                text: #htmlToText(displayText).replaceAll("&nbsp;", " ")
+usage:
+  header: Generate a GitHub Code Scanning report listing FoD SAST vulnerabilities. 
+  description: |
+    For information on how to import this report into GitHub, see  
+    https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github
+
+defaults:
+  requestTarget: fod
+  
+parameters:
+  - name: file
+    cliAliases: f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gh-fortify-sast.sarif"
+    required: false
+    defaultValue: gh-fortify-sast.sarif
+  - name: release
+    cliAliases: rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+    type: release_single
+
+steps:
+  - progress: Loading static scan summary
+  - requests:
+      - name: staticScanSummary
+        uri:  /api/v3/scans/${parameters.release.currentStaticScanId}/summary
+        if:   ${parameters.release.currentStaticScanId!=null}
+  - progress: Processing issue data
+  - requests:
+    - name: issues
+      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
+      query:
+        filters: scantype:Static
+      pagingProgress:
+        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+      onResponse:
+        - if: ${issues_raw.totalCount>1000}
+          throw: GitHub does not support importing more than 1000 vulnerabilities. Please clean the scan results or update vulnerability search criteria.
+      forEach:
+        name: issue
+        embed:
+          - name: details
+            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
+          - name: recommendations
+            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
+          - name: traces
+            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/traces 
+        do:
+          - append:
+            - if: ${ruleCache==null || ruleCache[issue.checkId]==null}
+              name: rules
+              valueTemplate: rules
+            - name: ruleCache
+              property: ${issue.checkId}
+              value: true
+            - name: results
+              valueTemplate: results
+  - write:
+    - to: ${parameters.file}
+      valueTemplate: github-sast-report
+    - if: ${parameters.file!='stdout'}
+      to: stdout
+      value: |
+        Output written to ${parameters.file}
+
+valueTemplates:
+  - name: github-sast-report
+    contents:
+      "$schema": https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json 
+      version: '2.1.0'
+      runs:
+        - tool:
+            driver:
+              name: 'Fortify on Demand'   
+              version: SCA ${staticScanSummary?.staticScanSummaryDetails?.engineVersion?:'version unknown'}; Rulepack ${staticScanSummary?.staticScanSummaryDetails?.rulePackVersion?:'version unknown'}
+              rules: ${rules?:{}}
+              properties:
+                copyright: ${#copyright()}
+                applicationName: ${parameters.release.applicationName}
+                applicationId: ${parameters.release.applicationId}
+                releaseName: ${parameters.release.releaseName}
+                releaseId: ${parameters.release.releaseId}
+          results: ${results?:{}}
+     
+  - name: rules
+    contents:
+      id: ${issue.checkId}
+      shortDescription:
+        text: ${issue.category}
+      fullDescription:
+        text: |
+          ## ${issue.category}
+          
+          ${#cleanRuleDescription(issue.details?.summary)}
+      help:
+        text: |
+          ${#cleanRuleDescription(issue.details?.explanation)?:'No explanation available'}
+          
+          ## Recommendations
+          
+          ${#cleanRuleDescription(issue.recommendations?.recommendations)?:'Not available'}
+          
+          ## Tips
+          
+          ${#cleanRuleDescription(issue.recommendations?.tips)?:'Not available'}
+          
+          ## References
+          
+          ${#numberedList(#cleanRuleDescription(issue.recommendations?.references)?.split('\n'))?:'Not available'}
+          
+          ${#copyright()}
+
+  - name: results
+    contents:
+      ruleId: ${issue.checkId}
+      message: 
+        text: ${#cleanIssueDescription(issue.details?.summary)} [More information](${#fod.issueBrowserUrl(issue)})
+      level: ${(issue.severityString matches "(Critical|High)") ? "warning":"note" }
+      partialFingerprints:
+        issueInstanceId: ${issue.instanceId}
+      locations:
+        - physicalLocation:
+            artifactLocation:
+              uri: ${issue.primaryLocationFull}
+            region:
+              startLine: ${issue.lineNumber==0?1:issue.lineNumber}
+              endLine: ${issue.lineNumber==0?1:issue.lineNumber}
+              startColumn: ${1}  # Needs to be specified as an expression in order to end up as integer instead of string in JSON
+              endColumn: ${80}
+      codeFlows: |-
+        ${ 
+          issue.traces==null ? {}
+            : 
+            {{ 
+                threadFlows: issue.traces.![{
+                  locations: traceEntries?.![{
+                    location: {
+                        message: {
+                            text: #htmlToText(displayText).replaceAll("&nbsp;", " ")
+                        },
+                        physicalLocation: {
+                            artifactLocation: {
+                                uri: location
                             },
-                            physicalLocation: {
-                                artifactLocation: {
-                                    uri: location
-                                },
-                                region: {
-                                    startLine: lineNumber==0?1:lineNumber
-                                }
+                            region: {
+                                startLine: lineNumber==0?1:lineNumber
                             }
                         }
-                      }] 
-                    }] 
-                }} 
-            }
-          
+                    }
+                  }] 
+                }] 
+            }} 
+        }
+      

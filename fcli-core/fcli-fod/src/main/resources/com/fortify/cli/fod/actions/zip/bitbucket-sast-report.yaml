@@ -1,114 +1,113 @@
-action:
-    usage:
-      header: Generate a BitBucket Code Insights report listing FoD SAST vulnerabilities. 
-      description: |
-        For information on how to import this report into BitBucket, see 
-        https://support.atlassian.com/bitbucket-cloud/docs/code-insights/
-    
-    defaults:
-      requestTarget: fod
-      
-    parameters:
-      - name: report-file
-        cliAliases: r
-        description: "Optional report output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-report.json"
-        required: false
-        defaultValue: bb-fortify-report.json
-      - name: annotations-file
-        cliAliases: a
-        description: "Optional annotations output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-annotations.json"
-        required: false
-        defaultValue: bb-fortify-annotations.json
-      - name: release
-        cliAliases: rel
-        description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
-        type: release_single
-      
-    steps:
-      - progress: Processing issue data
-      - requests:
-        - name: issues
-          uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
-          query:
-            filters: scantype:Static
-          pagingProgress:
-            postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
-          forEach:
-            name: issue
-            embed:
-              - name: details
-                uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
-            do:
-              - append:
-                - name: annotations
-                  valueTemplate: annotations
-      - write:
-        - to: ${parameters['annotations-file']}
-          value: ${annotations?:{}}
-        - to: ${parameters['report-file']}
-          valueTemplate: report
-        - if: ${parameters['annotations-file']!='stdout' && parameters['report-file']!='stdout'}
-          to: stdout
-          value: |
-            Report written to ${parameters['report-file']}
-            Annotations written to ${parameters['annotations-file']}
-    
-    valueTemplates:
-      - name: report
-        contents:
-          # uuid:
-          title: Fortify Scan Report
-          details: Fortify on Demand detected ${parameters.release.issueCount} ${parameters.release.issueCount==1 ? 'vulnerability':'vulnerabilities'}
-          #external_id:
-          reporter: Fortify on Demand
-          link: ${#fod.releaseBrowserUrl(parameters.release)}
-          # remote_link_enabled:
-          logo_url: https://bitbucket.org/workspaces/fortifysoftware/avatar
-          report_type: SECURITY
-          result: ${parameters.release.isPassed ? 'PASSED':'FAILED'}
-          data:
-            - type: DATE
-              title: Last Static Scan # Apparently BB is very strict on how TZ is presented, so we always provide UTC date/time
-              value: ${#formatDateTimewithZoneIdAsUTC("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",parameters.release.staticScanDate?:'1970-01-01T00:00:00',parameters.release.serverZoneId)}
-            - type: NUMBER
-              title: Rating
-              value: ${parameters.release.rating}
-            - type: NUMBER
-              title: Critical (SAST)
-              value: ${parameters.release.staticCritical}
-            - type: NUMBER
-              title: Critical (Overall)
-              value: ${parameters.release.critical}
-            - type: NUMBER
-              title: High (SAST)
-              value: ${parameters.release.staticHigh}
-            - type: NUMBER
-              title: High (Overall)
-              value: ${parameters.release.high}
-            - type: NUMBER
-              title: Medium (SAST)
-              value: ${parameters.release.staticMedium}
-            - type: NUMBER
-              title: Medium (Overall)
-              value: ${parameters.release.medium}
-            - type: NUMBER
-              title: Low (SAST)
-              value: ${parameters.release.staticLow}
-            - type: NUMBER
-              title: Low (Overall)
-              value: ${parameters.release.low}
-    
-      - name: annotations
-        contents:
-          external_id: FTFY-${issue.id}
-          # uuid:
-          annotation_type: VULNERABILITY
-          path: ${issue.primaryLocationFull}
-          line: ${issue.lineNumber==0?1:issue.lineNumber}
-          summary: ${issue.category}
-          details: ${#htmlToText(issue.details?.summary)}
-          # result: PASSED|FAILED|SKIPPED|IGNORED
-          severity: ${(issue.severityString matches "(Critical|High|Medium|Low)") ? issue.severityString.toUpperCase():"LOW"}
-          link: ${#fod.issueBrowserUrl(issue)}
-          # created_on:
-          # updated_on:
+usage:
+  header: Generate a BitBucket Code Insights report listing FoD SAST vulnerabilities. 
+  description: |
+    For information on how to import this report into BitBucket, see 
+    https://support.atlassian.com/bitbucket-cloud/docs/code-insights/
+
+defaults:
+  requestTarget: fod
+  
+parameters:
+  - name: report-file
+    cliAliases: r
+    description: "Optional report output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-report.json"
+    required: false
+    defaultValue: bb-fortify-report.json
+  - name: annotations-file
+    cliAliases: a
+    description: "Optional annotations output file name (or 'stdout' / 'stderr'). Default value: bb-fortify-annotations.json"
+    required: false
+    defaultValue: bb-fortify-annotations.json
+  - name: release
+    cliAliases: rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+    type: release_single
+  
+steps:
+  - progress: Processing issue data
+  - requests:
+    - name: issues
+      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
+      query:
+        filters: scantype:Static
+      pagingProgress:
+        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+      forEach:
+        name: issue
+        embed:
+          - name: details
+            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
+        do:
+          - append:
+            - name: annotations
+              valueTemplate: annotations
+  - write:
+    - to: ${parameters['annotations-file']}
+      value: ${annotations?:{}}
+    - to: ${parameters['report-file']}
+      valueTemplate: report
+    - if: ${parameters['annotations-file']!='stdout' && parameters['report-file']!='stdout'}
+      to: stdout
+      value: |
+        Report written to ${parameters['report-file']}
+        Annotations written to ${parameters['annotations-file']}
+
+valueTemplates:
+  - name: report
+    contents:
+      # uuid:
+      title: Fortify Scan Report
+      details: Fortify on Demand detected ${parameters.release.issueCount} ${parameters.release.issueCount==1 ? 'vulnerability':'vulnerabilities'}
+      #external_id:
+      reporter: Fortify on Demand
+      link: ${#fod.releaseBrowserUrl(parameters.release)}
+      # remote_link_enabled:
+      logo_url: https://bitbucket.org/workspaces/fortifysoftware/avatar
+      report_type: SECURITY
+      result: ${parameters.release.isPassed ? 'PASSED':'FAILED'}
+      data:
+        - type: DATE
+          title: Last Static Scan # Apparently BB is very strict on how TZ is presented, so we always provide UTC date/time
+          value: ${#formatDateTimewithZoneIdAsUTC("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",parameters.release.staticScanDate?:'1970-01-01T00:00:00',parameters.release.serverZoneId)}
+        - type: NUMBER
+          title: Rating
+          value: ${parameters.release.rating}
+        - type: NUMBER
+          title: Critical (SAST)
+          value: ${parameters.release.staticCritical}
+        - type: NUMBER
+          title: Critical (Overall)
+          value: ${parameters.release.critical}
+        - type: NUMBER
+          title: High (SAST)
+          value: ${parameters.release.staticHigh}
+        - type: NUMBER
+          title: High (Overall)
+          value: ${parameters.release.high}
+        - type: NUMBER
+          title: Medium (SAST)
+          value: ${parameters.release.staticMedium}
+        - type: NUMBER
+          title: Medium (Overall)
+          value: ${parameters.release.medium}
+        - type: NUMBER
+          title: Low (SAST)
+          value: ${parameters.release.staticLow}
+        - type: NUMBER
+          title: Low (Overall)
+          value: ${parameters.release.low}
+
+  - name: annotations
+    contents:
+      external_id: FTFY-${issue.id}
+      # uuid:
+      annotation_type: VULNERABILITY
+      path: ${issue.primaryLocationFull}
+      line: ${issue.lineNumber==0?1:issue.lineNumber}
+      summary: ${issue.category}
+      details: ${#htmlToText(issue.details?.summary)}
+      # result: PASSED|FAILED|SKIPPED|IGNORED
+      severity: ${(issue.severityString matches "(Critical|High|Medium|Low)") ? issue.severityString.toUpperCase():"LOW"}
+      link: ${#fod.issueBrowserUrl(issue)}
+      # created_on:
+      # updated_on:

@@ -1,69 +1,68 @@
-action:
-    usage:
-      header: Generate a SonarQube External Issues report listing FoD SAST vulnerabilities. 
-      description: |
-        For information on how to import this report into SonarQube, see 
-        https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/
-    
-    defaults:
-      requestTarget: fod
+usage:
+  header: Generate a SonarQube External Issues report listing FoD SAST vulnerabilities. 
+  description: |
+    For information on how to import this report into SonarQube, see 
+    https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/importing-external-issues/external-analyzer-reports/
+
+defaults:
+  requestTarget: fod
+  
+parameters:
+  - name: file
+    cliAliases: f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: sq-fortify-sast.json"
+    required: false
+    defaultValue: sq-fortify-sast.json
+  - name: file-path-prefix
+    cliAliases: pfx
+    description: "Optional prefix for issue file paths"
+    required: false
+    defaultValue: ""
+  - name: release
+    cliAliases: rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+    type: release_single
+  
+steps:
+  - progress: Processing issue data
+  - requests:
+    - name: issues
+      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
+      query:
+        filters: scantype:Static
+      pagingProgress:
+        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+      forEach:
+        name: issue
+        do:
+          - append:
+            - name: sq_issues
+              valueTemplate: sq_issues
+
+  - write:
+    - to: ${parameters.file}
+      valueTemplate: sq-sast-report
+    - if: ${parameters.file!='stdout'}
+      to: stdout
+      value: |
+        Output written to ${parameters.file}
+
+valueTemplates:
+  - name: sq-sast-report
+    contents:
+      issues: ${sq_issues?:{}} 
+
+  - name: sq_issues
+    contents:
+      engineId: FortifyOnDemand
+      ruleId: ${issue.category}
+      severity: ${{'Critical':'CRITICAL','High':'MAJOR','Medium':'MINOR','Low':'INFO'}.get(issue.severityString)}
+      type: VULNERABILITY
+      primaryLocation:
+        message: ${issue.category} - ${#fod.issueBrowserUrl(issue)}
+        filePath: ${parameters['file-path-prefix']}${issue.primaryLocationFull}
+        textRange:
+          startLine: ${issue.lineNumber==0?1:issue.lineNumber}
+      # effortMinutes:
+      # secondaryLocations:
       
-    parameters:
-      - name: file
-        cliAliases: f
-        description: "Optional output file name (or 'stdout' / 'stderr'). Default value: sq-fortify-sast.json"
-        required: false
-        defaultValue: sq-fortify-sast.json
-      - name: file-path-prefix
-        cliAliases: pfx
-        description: "Optional prefix for issue file paths"
-        required: false
-        defaultValue: ""
-      - name: release
-        cliAliases: rel
-        description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
-        type: release_single
-      
-    steps:
-      - progress: Processing issue data
-      - requests:
-        - name: issues
-          uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
-          query:
-            filters: scantype:Static
-          pagingProgress:
-            postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
-          forEach:
-            name: issue
-            do:
-              - append:
-                - name: sq_issues
-                  valueTemplate: sq_issues
-    
-      - write:
-        - to: ${parameters.file}
-          valueTemplate: sq-sast-report
-        - if: ${parameters.file!='stdout'}
-          to: stdout
-          value: |
-            Output written to ${parameters.file}
-    
-    valueTemplates:
-      - name: sq-sast-report
-        contents:
-          issues: ${sq_issues?:{}} 
-    
-      - name: sq_issues
-        contents:
-          engineId: FortifyOnDemand
-          ruleId: ${issue.category}
-          severity: ${{'Critical':'CRITICAL','High':'MAJOR','Medium':'MINOR','Low':'INFO'}.get(issue.severityString)}
-          type: VULNERABILITY
-          primaryLocation:
-            message: ${issue.category} - ${#fod.issueBrowserUrl(issue)}
-            filePath: ${parameters['file-path-prefix']}${issue.primaryLocationFull}
-            textRange:
-              startLine: ${issue.lineNumber==0?1:issue.lineNumber}
-          # effortMinutes:
-          # secondaryLocations:
-          

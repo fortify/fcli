@@ -1,10 +1,12 @@
 package com.fortify.cli.common.crypto;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,14 +38,27 @@ import javax.crypto.spec.PBEParameterSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
 
 public class SignatureHelper {
+    // This character is used by TextFileSigner and SignedTextFileReader to 
+    // separate original text document and signature YAML document.
+    public static final char FILE_SEPARATOR = '\u001C';
     private static final Logger LOG = LoggerFactory.getLogger(SignatureHelper.class);
     private static final KeyFactory KEY_FACTORY = createKeyFactory();
     private static final String FORTIFY_PUBLIC_KEY = 
@@ -68,6 +83,11 @@ public class SignatureHelper {
         return new Verifier(getKey(pemOrBase64Key));
     }
     
+    @SneakyThrows
+    public static final Verifier verifier(Path pemOrBase64KeyPath) {
+        return new Verifier(getKey(Files.readString(pemOrBase64KeyPath)));
+    }
+    
     public static final Signer signer(String pemOrBase64Key, char[] passPhrase) {
         return new Signer(getKey(pemOrBase64Key), passPhrase);
     }
@@ -79,6 +99,24 @@ public class SignatureHelper {
     @SneakyThrows
     public static final Signer signer(Path pemOrBase64KeyPath, char[] passPhrase) {
         return new Signer(getKey(Files.readString(pemOrBase64KeyPath)), passPhrase);
+    }
+    
+    @SneakyThrows
+    public static final TextSigner textSigner(Path pemOrBase64KeyPath, String passPhrase) {
+        return textSigner(pemOrBase64KeyPath, StringUtils.isBlank(passPhrase) ? null : passPhrase.toCharArray());
+    }
+    
+    public static final TextSigner textSigner(String pemOrBase64Key, char[] passPhrase) {
+        return new TextSigner(getKey(pemOrBase64Key), passPhrase);
+    }
+    
+    public static final TextSigner textSigner(String pemOrBase64Key, String passPhrase) {
+        return new TextSigner(getKey(pemOrBase64Key), StringUtils.isBlank(passPhrase) ? null : passPhrase.toCharArray());
+    }
+    
+    @SneakyThrows
+    public static final TextSigner textSigner(Path pemOrBase64KeyPath, char[] passPhrase) {
+        return new TextSigner(getKey(Files.readString(pemOrBase64KeyPath)), passPhrase);
     }
     
     @SneakyThrows
@@ -389,13 +427,154 @@ public class SignatureHelper {
         }
     }
     
+    public static final class SignedTextReader {
+        private final Verifier verifier;
+        
+        private SignedTextReader(Path publicKeyPath) {
+            this.verifier = SignatureHelper.verifier(publicKeyPath);
+        }
+        
+        @SneakyThrows
+        public final SignedTextFileDescriptor load(String signedOrUnsignedText) {
+            var elts = signedOrUnsignedText.split(String.valueOf(FILE_SEPARATOR));
+            if ( elts.length>2 ) {
+                throw new IllegalStateException("Input may contain only single Unicode File Separator character");
+            } else if ( elts.length==1) {
+                return buildUnsignedDescriptor(elts[0]);
+            } else {
+                var signatureDescriptor = new ObjectMapper(new YAMLFactory())
+                        .readValue(elts[1], SignatureDescriptor.class);
+                return buildSignedDescriptor(elts[0], signatureDescriptor);
+            }
+        }
+
+        private SignedTextFileDescriptor buildUnsignedDescriptor(String payload) {
+            return SignedTextFileDescriptor.builder()
+                    .payload(payload)
+                    .signatureStatus(SignatureStatus.NO_SIGNATURE)
+                    .build();
+        }
+        
+        private SignedTextFileDescriptor buildSignedDescriptor(String payload, SignatureDescriptor signatureDescriptor) {
+            // TODO Load public key based on fingerprint in descriptor
+            // TODO Verify payload against signature
+            // TODO Set proper signature status
+            return SignedTextFileDescriptor.builder()
+                    .payload(payload)
+                    .signatureDescriptor(signatureDescriptor)
+                    .signatureStatus(SignatureStatus.NOT_VERIFIED)
+                    .build();
+        }
+
+    }
+    
+    public static final class TextSigner {
+        private final Signer signer;
+        
+        private TextSigner(byte[] privateKey, char[] passPhrase) {
+            this.signer = new Signer(privateKey, passPhrase);
+        }
+        
+        @SneakyThrows
+        public final void signAndWrite(Path payloadPath, Path outputPath, ObjectNode extraInfo) {
+            var content = sign(Files.readString(payloadPath), extraInfo);
+            Files.writeString(outputPath, content, StandardOpenOption.CREATE_NEW);
+        }
+        
+        @SneakyThrows
+        public final String sign(Path payloadPath, ObjectNode extraInfo) {
+            return sign(Files.readString(payloadPath), extraInfo);
+        }
+        
+        @SneakyThrows
+        public final String sign(String textToSign, ObjectNode extraInfo) {
+            var payload = readBytes(textToSign);
+            var fingerprint = signer.publicKeyFingerprint();
+            var signature = signer.sign(payload, true);
+            
+            var signatureDescriptor = SignatureDescriptor.builder()
+                    .signature(signature)
+                    .publicKeyFingerprint(fingerprint)
+                    .extraInfo(extraInfo)
+                    .build();
+            return generateOutput(payload, signatureDescriptor);
+        }
+
+        private byte[] readBytes(String payload) throws IOException {
+            if ( payload.contains(String.valueOf(FILE_SEPARATOR)) ) {
+                throw new IllegalStateException("Input file may not contain Unicode File Separator character \u001C");
+            }
+            return payload.getBytes(StandardCharsets.UTF_8);
+        }
+
+        @SneakyThrows
+        private final String generateOutput(byte[] payload, SignatureDescriptor signatureDescriptor) {
+            YAMLFactory factory = new YAMLFactory();
+            try ( var os = new ByteArrayOutputStream();
+                  var generator = (YAMLGenerator)factory.createGenerator(os) ) {
+                os.write(payload);
+                os.write(FILE_SEPARATOR);
+                os.write('\n');
+                generator.configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
+                        .configure(YAMLGenerator.Feature.WRITE_DOC_START_MARKER, true)
+                        .setCodec(new ObjectMapper())
+                        .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+                        .useDefaultPrettyPrinter();
+                generator.writeObject(signatureDescriptor);
+                return os.toString(StandardCharsets.UTF_8);
+            }
+        }
+    
+        public final PublicKey publicKey() {
+            return signer.publicKey();
+        }
+        
+        public final String publicKeyFingerprint() {
+            return signer.publicKeyFingerprint();
+        }
+        
+        public final void writePublicKey(Path publicKeyPath) {
+            // TODO
+        }
+    }
+    
+    @Reflectable @NoArgsConstructor
+    @Data @AllArgsConstructor @Builder
+    public static final class SignatureDescriptor {
+        /** Actual signature */
+        private String signature;
+        /** Public key fingerprint */
+        private String publicKeyFingerprint;
+        /** Additional information about the signature or action */
+        private ObjectNode extraInfo;
+    }
+    
+    @Reflectable @NoArgsConstructor
+    @Data @AllArgsConstructor @Builder
+    public static final class SignedTextFileDescriptor {
+        /** Original file contents */
+        private String payload;
+        /** Signature descriptor */
+        private SignatureDescriptor signatureDescriptor; 
+        /** Signature status */
+        private SignatureStatus signatureStatus;
+    }
+    
+    public static enum SignatureStatus {
+        VALID_SIGNATURE, INVALID_SIGNATURE, NO_PUBLIC_KEY, NO_SIGNATURE, NOT_VERIFIED
+    }
+    
     @SneakyThrows
     public static void main(String[] args) {
         var priv = Paths.get("/home/rsenden/test-private.key");
         var pub = Paths.get("/home/rsenden/test-public.key");
+        var output = Paths.get("/home/rsenden/signed.txt");
         Files.deleteIfExists(priv);
         Files.deleteIfExists(pub);
+        Files.deleteIfExists(output);
         keyPairGenerator("test").writePem(priv, pub);
-        System.out.println(signer(priv,"test").sign(pub, true));
+        textSigner(priv, "test".toCharArray()).signAndWrite(pub, output, null);
+        var result = new SignedTextReader(pub).load(Files.readString(output, StandardCharsets.UTF_8));
+        System.out.println(result);
     }
 }

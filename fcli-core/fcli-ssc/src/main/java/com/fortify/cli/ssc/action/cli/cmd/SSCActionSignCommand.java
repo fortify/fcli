@@ -12,16 +12,11 @@
  *******************************************************************************/
 package com.fortify.cli.ssc.action.cli.cmd;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.action.helper.ActionSigner;
-import com.fortify.cli.common.action.model.SignedAction;
-import com.fortify.cli.common.action.model._ActionRoot;
 import com.fortify.cli.common.crypto.SignatureHelper;
-import com.fortify.cli.common.crypto.SignatureHelper.Signer;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -56,8 +51,8 @@ public class SSCActionSignCommand extends AbstractOutputCommand implements IJson
         }
         
         
-        var signer = new ActionSigner(privateKeyPath, privateKeyPassword);
-        signer.sign(actionFileToSign, signedActionFile);
+        var signer = SignatureHelper.textSigner(privateKeyPath, privateKeyPassword);
+        signer.signAndWrite(actionFileToSign, signedActionFile, null);
         
         var fortifyFingerPrint = SignatureHelper.fortifySignatureVerifier().publicKeyFingerPrint();
         return JsonHelper.getObjectMapper().createObjectNode()
