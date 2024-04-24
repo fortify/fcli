@@ -4,11 +4,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.AlgorithmParameters;
 import java.security.Key;
@@ -25,7 +24,6 @@ import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
@@ -33,6 +31,7 @@ import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -282,106 +281,54 @@ public class SignatureHelper {
         
         private final String asPem(String type, byte[] key) {
             if ( "PRIVATE KEY".equals(type) && passPhrase!=null ) {
-                throw new RuntimeException("Generating password-protected private key not supported yet");
-                //return asPem("ENCRYPTED PRIVATE KEY", pemEncrypt(key, passPhrase));
+                //throw new RuntimeException("Generating password-protected private key not supported yet");
+                return asPem("ENCRYPTED PRIVATE KEY", pemEncrypt(key, passPhrase));
             }
             return "-----BEGIN "+type+"-----\n"
                     + Base64.getMimeEncoder().encodeToString(key)
                     + "\n-----END "+type+"-----";
         }
         
-        /*
+        /* Less preferred algorithm, but both encrypting and decrypting the
+         * private key work on Java 17. 
+         */
         @SneakyThrows
-        private static final byte[] pemEncrypt(byte[] privateKey, char[] passPhrase) {
-            
+        private static byte[] pemEncrypt(byte[] key, char[] passPhrase) {
+            byte[] salt = new byte[16]; new SecureRandom().nextBytes(salt);
+            String pbealg = "PBEwithSHA1andDESede"; 
+            SecretKey secretKey = SecretKeyFactory.getInstance(pbealg) 
+                    .generateSecret(new PBEKeySpec(passPhrase));
+            Cipher cipher = Cipher.getInstance(pbealg);
+            cipher.init (Cipher.ENCRYPT_MODE, secretKey, new PBEParameterSpec(salt,65536));
+            byte[] body = cipher.doFinal(key);
+            return new EncryptedPrivateKeyInfo(cipher.getParameters(),body).getEncoded();
         }
-        */
         
+        /* Template-based approach
+         * See comments at https://stackoverflow.com/questions/78372763/java-21-generate-encrypted-private-rsa-key-in-pem-format */
         /*
         @SneakyThrows
-        // Based on https://medium.com/@patc888/decrypt-openssl-encrypted-data-in-java-4c31983afe19
-        private static final byte[] pemEncrypt(byte[] privateKey, char[] passPhrase) {
-            var salt = createSalt();
-            byte[] passAndSalt = ArrayUtils.addAll(toBytes(passPhrase), salt);
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] key = md.digest(passAndSalt);
-            SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
-
-            // Derive IV
-            md.reset();
-            byte[] iv = Arrays.copyOfRange(md.digest(ArrayUtils.addAll(key, passAndSalt)), 0, 16);
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, new IvParameterSpec(iv));
-            byte[] encryptedSecretKey = cipher.doFinal(privateKey);
-            try ( var bos = new ByteArrayOutputStream(); ) {
-                bos.writeBytes("Salted__".getBytes(StandardCharsets.US_ASCII));
-                bos.writeBytes(salt);
-                bos.writeBytes(encryptedSecretKey);
-                return bos.toByteArray();
+        private static byte[] pemEncrypt(byte[] key, char[] passPhrase) {
+            EncryptedPrivateKeyInfo encryptPKInfo = new EncryptedPrivateKeyInfo(readTemplate());
+            Cipher cipher = Cipher.getInstance(encryptPKInfo.getAlgName());
+            PBEKeySpec pbeKeySpec = new PBEKeySpec(passPhrase);
+            SecretKeyFactory secFac = SecretKeyFactory.getInstance(encryptPKInfo.getAlgName());
+            Key pbeKey = secFac.generateSecret(pbeKeySpec);
+            // For now using original parameters; 
+            // I suppose I should create new parameters instead?
+            AlgorithmParameters algParams = encryptPKInfo.getAlgParameters();
+            cipher.init(Cipher.ENCRYPT_MODE, pbeKey, algParams);
+            byte[] body = cipher.doFinal(key);
+            return new EncryptedPrivateKeyInfo(cipher.getParameters(), body).getEncoded();
+        }
+        
+        @SneakyThrows
+        private static byte[] readTemplate() {
+            try ( var is = KPGenerator.class.getClassLoader().getResourceAsStream("com/fortify/cli/common/crypto/key-template.aes256.pem") ) {
+                return getKey(IOUtils.toString(is, StandardCharsets.US_ASCII));
             }
         }
         */
-        
-        
-        private static final byte[] toBytes(char[] chars) {
-            CharBuffer charBuffer = CharBuffer.wrap(chars);
-            ByteBuffer byteBuffer = Charset.forName("UTF-8").encode(charBuffer);
-            byte[] bytes = Arrays.copyOfRange(byteBuffer.array(),
-                      byteBuffer.position(), byteBuffer.limit());
-            Arrays.fill(byteBuffer.array(), (byte) 0); // clear sensitive data
-            return bytes;
-          }
-        
-        @SneakyThrows
-        private static final byte[] pemEncrypt(byte[] privateKey, char[] passPhrase) {
-            PKCS8EncodedKeySpec pkcs8EncodedKeySpec = new PKCS8EncodedKeySpec(privateKey);
-            byte[] salt = createSalt();
-            int iterationCount = 65536; // You can adjust this value
-            int keyLength = 128; // You can adjust this value
-    
-            PBEKeySpec pbeKeySpec = new PBEKeySpec(passPhrase, salt, iterationCount, keyLength);
-            SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-            SecretKey secretKey = secretKeyFactory.generateSecret(pbeKeySpec);
-    
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-            byte[] encryptedKey = cipher.doFinal(pkcs8EncodedKeySpec.getEncoded());
-    
-            EncryptedPrivateKeyInfo encryptedPrivateKeyInfo = new EncryptedPrivateKeyInfo(cipher.getParameters(), encryptedKey);
-            return encryptedPrivateKeyInfo.getEncoded();
-        }
-
-        
-        /*
-        @SneakyThrows
-        private static final byte[] pemEncrypt(byte[] key, char[] passPhrase) {
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, createKey(passPhrase), createIv());
-            return cipher.doFinal(key);
-        }
-        
-        
-        @SneakyThrows
-        private static final SecretKey createKey(char[] passPhrase) {
-            //SecretKeyFactory factory = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_256");
-            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            KeySpec spec = new PBEKeySpec(passPhrase, createSalt(), 65536, 256);
-            SecretKey secret = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
-            return secret;
-        }
-        
-        private static final IvParameterSpec createIv() {
-            final byte[] iv = new byte[16];
-            new SecureRandom().nextBytes(iv);
-            return new IvParameterSpec(iv);
-        }
-        */
-        
-        private static final byte[] createSalt() {
-            final byte[] salt = new byte[16];
-            new SecureRandom().nextBytes(salt);
-            return salt;
-        }
     }
     
     private static final byte[] getKey(String pemOrBase64Key) {
@@ -442,8 +389,13 @@ public class SignatureHelper {
         }
     }
     
+    @SneakyThrows
     public static void main(String[] args) {
-        System.out.println(signer(Path.of("/home/rsenden/aes.key"), "test").publicKeyFingerprint());
-        keyPairGenerator("test").writePem(Path.of("/home/rsenden/test-private.key"), Path.of("/home/rsenden/test-public.key"));
+        var priv = Paths.get("/home/rsenden/test-private.key");
+        var pub = Paths.get("/home/rsenden/test-public.key");
+        Files.deleteIfExists(priv);
+        Files.deleteIfExists(pub);
+        keyPairGenerator("test").writePem(priv, pub);
+        System.out.println(signer(priv,"test").sign(pub, true));
     }
 }
