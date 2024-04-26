@@ -10,11 +10,23 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.action.cli.cmd;
+package com.fortify.cli.config.publickey.cli.cmd;
 
-import com.fortify.cli.common.action.cli.cmd.AbstractActionSignCommand;
+import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 
 import picocli.CommandLine.Command;
 
-@Command(name = "sign")
-public class SSCActionSignCommand extends AbstractActionSignCommand {}
+@Command(
+        name = "public-key",
+        aliases = "pk",
+        subcommands = {
+                PublicKeyClearCommand.class,
+                PublicKeyDeleteCommand.class,
+                PublicKeyGetCommand.class,
+                PublicKeyListCommand.class,
+                PublicKeyImportCommand.class
+                
+        }
+)
+public class PublicKeyCommands extends AbstractContainerCommand {
+}

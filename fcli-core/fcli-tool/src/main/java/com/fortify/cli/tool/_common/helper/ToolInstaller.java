@@ -218,7 +218,8 @@ public final class ToolInstaller {
         File downloadedFile = download(artifactDescriptor);
         progressWriter.writeProgress("Verifying signature");
         SignatureHelper.fortifySignatureVerifier()
-            .verify(downloadedFile, artifactDescriptor.getRsa_sha256(), onDigestMismatch == DigestMismatchAction.fail);
+            .verify(downloadedFile, artifactDescriptor.getRsa_sha256())
+            .throwIfNotValid(onDigestMismatch == DigestMismatchAction.fail);
         progressWriter.writeProgress("Installing tool binaries");
         copyOrExtract(artifactDescriptor, downloadedFile);
     }

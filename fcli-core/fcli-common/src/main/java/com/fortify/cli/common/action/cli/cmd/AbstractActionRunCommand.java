@@ -17,13 +17,15 @@ import java.util.concurrent.Callable;
 
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
+import com.fortify.cli.common.action.cli.mixin.ActionSourceResolverMixin;
 import com.fortify.cli.common.action.helper.ActionHelper;
-import com.fortify.cli.common.action.helper.ActionHelper.ActionSignatureHandler;
 import com.fortify.cli.common.action.runner.ActionParameterHelper;
 import com.fortify.cli.common.action.runner.ActionRunner;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
+import com.fortify.cli.common.crypto.SignatureHelper.SignedTextDescriptor;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.DisableTest;
@@ -43,15 +45,16 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     private List<String> dummyForSynopsis;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     @Mixin CommandHelperMixin commandHelper;
+    @Mixin CommonOptionMixins.RequireConfirmation confirm;
+    @Mixin private ActionSourceResolverMixin.OptionalOption actionSourceResolver;
     @Unmatched private String[] actionArgs;
     
     @Override @SneakyThrows
     public final Integer call() {
         initMixins();
+        var loadedAction = ActionHelper.loadAction(actionSourceResolver.getActionSources(getType()), action, this::confirmInvalidSignature);
         Callable<Integer> delayedConsoleWriter = null;
         try ( var progressWriter = progressWriterFactory.create() ) {
-            progressWriter.writeProgress("Loading action %s", action);
-            var loadedAction = ActionHelper.loadAction(getType(), action, ActionSignatureHandler.FAIL);
             try ( var actionRunner = ActionRunner.builder()
                 .onValidationErrors(this::onValidationErrors)
                 .action(loadedAction)
@@ -63,6 +66,10 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
             }
         }
         return delayedConsoleWriter.call();
+    }
+    
+    private void confirmInvalidSignature(SignedTextDescriptor descriptor) {
+        confirm.checkConfirmed("WARN: "+ActionHelper.getSignatureStatusMessage(descriptor.getSignatureStatus()));
     }
 
     private Callable<Integer> run(ActionRunner actionRunner, IProgressWriterI18n progressWriter) {

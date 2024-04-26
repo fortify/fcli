@@ -26,11 +26,11 @@ public abstract class AbstractActionImportCommand extends AbstractOutputCommand 
         @ArgGroup(exclusive=false) private FileArgGroup fileArgGroup = new FileArgGroup();
     }
     private static final class ZipArgGroup {
-        @Option(names = {"--zip", "-z"}, required = true, descriptionKey="cli.action.import.zip") private String zip;
+        @Option(names = {"--zip", "-z"}, required = true, descriptionKey="fcli.action.import.zip") private String zip;
     }
     private static final class FileArgGroup {
-        @Option(names = {"--file", "-f"}, required = true, descriptionKey="cli.action.import.file") private String file;
-        @Option(names = {"--name", "-n"}, required = false, descriptionKey="cli.action.import.name") private String name;
+        @Option(names = {"--file", "-f"}, required = true, descriptionKey="fcli.action.import.file") private String file;
+        @Option(names = {"--name", "-n"}, required = false, descriptionKey="fcli.action.import.name") private String name;
     }
     
     @Override

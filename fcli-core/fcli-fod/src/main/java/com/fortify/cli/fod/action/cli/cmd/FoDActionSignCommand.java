@@ -10,11 +10,11 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.ssc.action.cli.cmd;
+package com.fortify.cli.fod.action.cli.cmd;
 
 import com.fortify.cli.common.action.cli.cmd.AbstractActionSignCommand;
 
 import picocli.CommandLine.Command;
 
 @Command(name = "sign")
-public class SSCActionSignCommand extends AbstractActionSignCommand {}
+public class FoDActionSignCommand extends AbstractActionSignCommand {}

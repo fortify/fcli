@@ -13,10 +13,14 @@
 package com.fortify.cli.common.action.helper;
 
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -35,9 +39,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.Action.ActionProperties;
 import com.fortify.cli.common.crypto.SignatureHelper;
+import com.fortify.cli.common.crypto.SignatureHelper.InvalidSignatureHandler;
 import com.fortify.cli.common.crypto.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.crypto.SignatureHelper.SignedTextDescriptor;
-import com.fortify.cli.common.crypto.SignatureHelper.SignedTextReader;
+import com.fortify.cli.common.crypto.impl.SignedTextReader;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.util.FcliDataHelper;
@@ -45,57 +50,63 @@ import com.fortify.cli.common.util.FileUtils;
 import com.fortify.cli.common.util.ZipHelper;
 import com.fortify.cli.common.util.ZipHelper.IZipEntryWithContextProcessor;
 
+import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.SneakyThrows;
-import lombok.experimental.Accessors;
 
 public class ActionHelper {
     private static final Logger LOG = LoggerFactory.getLogger(ActionHelper.class);
     private ActionHelper() {}
     
-    public static final Action loadAction(String type, String name, ActionSignatureHandler signatureHandler) {
-        return load(type, name, false, signatureHandler).asAction();
+    public static final Action loadAction(String type, String name, InvalidSignatureHandler invalidSignatureHandler) {
+        return load(ActionSource.defaultActionSources(type), name, invalidSignatureHandler).asAction();
     }
     
-    public static final Action loadBuiltinAction(String type, String name, ActionSignatureHandler signatureHandler) {
-        return load(type, name, true, signatureHandler).asAction();
+    public static final Action loadAction(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
+        return load(sources, name, invalidSignatureHandler).asAction();
     }
 
-    public static final String loadActionContents(String type, String name, ActionSignatureHandler signatureHandler) {
-        return load(type, name, false, signatureHandler).asString();
+    public static final String loadActionContents(String type, String name, InvalidSignatureHandler invalidSignatureHandler) {
+        return load(ActionSource.defaultActionSources(type), name, invalidSignatureHandler).asString();
     }
     
-    public static final String loadBuiltinActionContents(String type, String name, ActionSignatureHandler signatureHandler) {
-        return load(type, name, true, signatureHandler).asString();
+    public static final String loadActionContents(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
+        return load(sources, name, invalidSignatureHandler).asString();
     }
     
-    private static final ActionLoadResult load(String type, String name, boolean ignoreCustom, ActionSignatureHandler signatureConfig) {
-        return new ActionLoader(signatureConfig)
-                .ignoreCustomActions(ignoreCustom)
-                .loadCustomOrBuiltInAction(type, name);
+    public static final ActionLoadResult load(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
+        return new ActionLoader(sources, invalidSignatureHandler).load(name);
     }
     
-    public static final Stream<ObjectNode> streamAsJson(String type, ActionSignatureHandler signatureHandler) {
-        return streamAsJson(type, false, signatureHandler);
+    public static final Stream<ObjectNode> streamAsJson(String type, InvalidSignatureHandler invalidSignatureHandler) {
+        return _streamAsJson(ActionSource.defaultActionSources(type), invalidSignatureHandler);
     }
     
-    public static final Stream<ObjectNode> streamBuiltinAsJson(String type, ActionSignatureHandler signatureHandler) {
-        return streamAsJson(type, true, signatureHandler);
+    public static final Stream<ObjectNode> streamAsJson(List<ActionSource> sources, InvalidSignatureHandler invalidSignatureHandler) {
+        return _streamAsJson(sources, invalidSignatureHandler);
     }
     
-    private static final Stream<ObjectNode> streamAsJson(String type, boolean ignoreCustom, ActionSignatureHandler signatureHandler) {
+    private static final Stream<ObjectNode> _streamAsJson(List<ActionSource> sources, InvalidSignatureHandler invalidSignatureHandler) {
         Map<String, ObjectNode> result = new HashMap<>();
-        new ActionLoader(signatureHandler)
-            .ignoreCustomActions(ignoreCustom)
-            .processCustomAndBuiltInActions(type, loadResult->{
+        new ActionLoader(sources, invalidSignatureHandler)
+            .processActions(loadResult->{
                 result.putIfAbsent(loadResult.getProperties().getName(), loadResult.asJson());
                 return Break.FALSE;
             });
         return result.values().stream()
                 .sorted((a,b)->a.get("name").asText().compareTo(b.get("name").asText()));
+    }
+    
+    public static final String getSignatureStatusMessage(SignatureStatus signatureStatus) {
+        switch (signatureStatus) {
+        case INVALID_SIGNATURE: return "Action signature is invalid.";
+        case NO_PUBLIC_KEY: return "No trusted public key found to verify action signature.";
+        case NO_SIGNATURE: return "Action is not signed.";
+        case NOT_VERIFIED: return "Action signature verification skipped.";
+        case VALID_SIGNATURE: return "Action has a valid signature.";
+        default: throw new RuntimeException("Unknown signature status: "+signatureStatus);
+        }
     }
     
     /*
@@ -140,7 +151,7 @@ public class ActionHelper {
     public static final ArrayNode reset(String type) {
         var result = JsonHelper.getObjectMapper().createArrayNode();
         var zipPath = customActionsZipPath(type);
-        new ActionLoader(ActionSignatureHandler.IGNORE)
+        new ActionLoader(ActionSource.defaultActionSources(type), ActionInvalidSignatureHandlers.IGNORE)
             .processZipEntries(zipPath, ActionProperties.create(true),
                         loadResult->{
                             result.add(loadResult.asJson());
@@ -181,58 +192,32 @@ public class ActionHelper {
         }
     }
 
-    private static final UnirestInstance createUnirestInstance(String type, URL url) {
-        var result = GenericUnirestFactory.createUnirestInstance(); 
-        ProxyHelper.configureProxy(result, type.toLowerCase()+"-action", url.toString());
-        return result;
-    }
     */
-    
-    private static final Path customActionsZipPath(String type) {
-        return FcliDataHelper.getFcliConfigPath().resolve("action").resolve(type.toLowerCase()+".zip");
-    }
-    
-    private static final String builtinActionsResourceZip(String type) {
-        return String.format("com/fortify/cli/%s/actions.zip", type.toLowerCase().replace('-', '_'));
-    }
-    
-    private static final String commonActionsResourceZip() {
-        return "com/fortify/cli/common/actions.zip";
-    }
 
     @RequiredArgsConstructor
     private static final class ActionLoader {
         private static final SignedTextReader signedTextReader = SignatureHelper.signedTextReader();
-        private final ActionSignatureHandler signatureHandler;
-        @Setter @Accessors(fluent = true) private boolean ignoreCustomActions;
+        private final List<ActionSource> sources;
+        private final InvalidSignatureHandler invalidSignatureHandler;
         
-        public final ActionLoadResult loadCustomOrBuiltInAction(String type, String name) {
+        public final ActionLoadResult load(String name) {
             AtomicReference<ActionLoadResult> result = new AtomicReference<>();
-            processCustomAndBuiltInActionZipEntries(type, 
-                    singleZipEntryProcessor(name, result::set));
+            processZipEntries(singleZipEntryProcessor(name, result::set));
             if ( result.get()==null ) {
                 throw new IllegalArgumentException("No action found with name "+name);
             }
             return result.get();
         }
         
-        public final void processCustomAndBuiltInActions(String type, ActionLoadResultProcessor actionLoadResultProcessor) {
-            processCustomAndBuiltInActionZipEntries(type, zipEntryProcessor(actionLoadResultProcessor));
+        public final void processActions(ActionLoadResultProcessor actionLoadResultProcessor) {
+            processZipEntries(zipEntryProcessor(actionLoadResultProcessor));
         }
         
-        private final void processCustomAndBuiltInActionZipEntries(String type, IZipEntryWithContextProcessor<ActionProperties> processor) {
-            var _break = Break.FALSE;
-            if ( _break.doContinue() && !ignoreCustomActions ) {
-                _break = ZipHelper.processZipEntries(customActionsInputStreamSupplier(type), 
-                        processor, ActionProperties.create(true));
-            }
-            if ( _break.doContinue() ) {
-                _break = ZipHelper.processZipEntries(builtinActionsInputStreamSupplier(type), 
-                        processor, ActionProperties.create(false));
-            }
-            if ( _break.doContinue() ) {
-                _break = ZipHelper.processZipEntries(commonActionsInputStreamSupplier(), 
-                        processor, ActionProperties.create(false));
+        private final void processZipEntries(IZipEntryWithContextProcessor<ActionProperties> processor) {
+            for ( var source: sources ) {
+                var _break = ZipHelper.processZipEntries(source.getInputStreamSupplier(), 
+                        processor, source.getActionProperties());
+                if ( _break.doBreak() ) { break; }
             }
         }
         
@@ -270,7 +255,7 @@ public class ActionHelper {
             return load(zis, properties);
         }
         
-        public final ActionLoadResult load(InputStream is, ActionProperties properties) {
+        private final ActionLoadResult load(InputStream is, ActionProperties properties) {
             return new ActionLoadResult(loadSignedTextDescriptor(is, properties.isCustom()), properties);
         }
             
@@ -280,25 +265,12 @@ public class ActionHelper {
                     // until we've figured out how to sign internal actions during (or 
                     // potentially after) Gradle build.
                     isCustom 
-                        ? signatureHandler.getSignedTextDescriptorConsumer()
+                        ? invalidSignatureHandler
                         : null);
         }
         
         private final String getActionName(String fileName) {
             return Path.of(fileName).getFileName().toString().replace(".yaml", "");
-        }
-        
-        @SneakyThrows
-        private final Supplier<InputStream> customActionsInputStreamSupplier(String type) {
-            return ()->FileUtils.getInputStream(customActionsZipPath(type));
-        }
-        
-        private final Supplier<InputStream> builtinActionsInputStreamSupplier(String type) {
-            return ()->FileUtils.getResourceInputStream(builtinActionsResourceZip(type));
-        }
-        
-        private final Supplier<InputStream> commonActionsInputStreamSupplier() {
-            return ()->FileUtils.getResourceInputStream(commonActionsResourceZip());
         }
     }
     
@@ -343,16 +315,98 @@ public class ActionHelper {
         }
     }
     
-    @RequiredArgsConstructor
-    public static enum ActionSignatureHandler {
-        IGNORE(null),
-        EVALUATE(d->{}),
-        WARN(d->LOG.warn("WARN: "+failedMessage(d))),
-        FAIL(d->{throw new IllegalStateException(failedMessage(d));});
+    @Data @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class ActionSource {
+        private final Supplier<InputStream> inputStreamSupplier;
+        private final ActionProperties actionProperties;
         
-        @Getter private final Consumer<SignedTextDescriptor> signedTextDescriptorConsumer;
+        public static final List<ActionSource> defaultActionSources(String type) {
+            var result = new ArrayList<ActionSource>();
+            result.add(imported(type));
+            result.add(builtin(type));
+            result.add(common(type));
+            return result;
+        }
+        
+        public static final List<ActionSource> builtinActionSources(String type) {
+            var result = new ArrayList<ActionSource>();
+            result.add(builtin(type));
+            result.add(common(type));
+            return result;
+        }
+        
+        public static final List<ActionSource> externalActionSources(String source) {
+            var result = new ArrayList<ActionSource>();
+            result.add(external(source));
+            return result;
+        }
+        
+        private static final ActionSource external(String source) {
+            return new ActionSource(()->createURLOrFileInputStream(source), ActionProperties.create(true));
+        }
+        
+        private static final ActionSource imported(String type) {
+            return new ActionSource(customActionsInputStreamSupplier(type), ActionProperties.create(true));
+        }
+        
+        private static final ActionSource builtin(String type) {
+            return new ActionSource(builtinActionsInputStreamSupplier(type), ActionProperties.create(false));
+        }
+        
+        private static final ActionSource common(String type) {
+            return new ActionSource(commonActionsInputStreamSupplier(), ActionProperties.create(false));
+        }
+        
+        @SneakyThrows
+        private static final Supplier<InputStream> customActionsInputStreamSupplier(String type) {
+            return ()->FileUtils.getInputStream(customActionsZipPath(type));
+        }
+        
+        private static final Supplier<InputStream> builtinActionsInputStreamSupplier(String type) {
+            return ()->FileUtils.getResourceInputStream(builtinActionsResourceZip(type));
+        }
+        
+        private static final Supplier<InputStream> commonActionsInputStreamSupplier() {
+            return ()->FileUtils.getResourceInputStream(commonActionsResourceZip());
+        }
+    }
+    
+    private static final Path customActionsZipPath(String type) {
+        return FcliDataHelper.getFcliConfigPath().resolve("action").resolve(type.toLowerCase()+".zip");
+    }
+    
+    private static final String builtinActionsResourceZip(String type) {
+        return String.format("com/fortify/cli/%s/actions.zip", type.toLowerCase().replace('-', '_'));
+    }
+    
+    private static final String commonActionsResourceZip() {
+        return "com/fortify/cli/common/actions.zip";
+    }
+    
+    @SneakyThrows
+    private static final InputStream createURLOrFileInputStream(String source) {
+        try {
+            return new URL(source).openStream();
+        } catch (MalformedURLException e ) {
+            return Files.newInputStream(Path.of(source));
+        }
+    }
+    
+    @RequiredArgsConstructor
+    public static final class ActionInvalidSignatureHandlers {
+        public static final InvalidSignatureHandler IGNORE   = InvalidSignatureHandler.IGNORE;
+        public static final InvalidSignatureHandler EVALUATE = InvalidSignatureHandler.EVALUATE;
+        public static final InvalidSignatureHandler WARN     = ActionInvalidSignatureHandlers::warn;
+        public static final InvalidSignatureHandler FAIL     = ActionInvalidSignatureHandlers::fail;
+        
+        private static final void warn(SignedTextDescriptor descriptor) {
+            LOG.warn("WARN: "+failedMessage(descriptor));
+        }
+        private static final void fail(SignedTextDescriptor descriptor) {
+            throw new IllegalStateException(failedMessage(descriptor));
+        }
         private static final String failedMessage(SignedTextDescriptor descriptor) {
-            return "Action signature verification failed: "+descriptor.getSignatureStatus();
+            return getSignatureStatusMessage(descriptor.getSignatureStatus());
         }
     }
     

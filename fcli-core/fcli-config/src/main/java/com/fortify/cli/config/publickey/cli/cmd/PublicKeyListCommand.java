@@ -10,32 +10,33 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.action.cli.cmd;
+package com.fortify.cli.config.publickey.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.action.cli.mixin.ActionSourceResolverMixin;
-import com.fortify.cli.common.action.helper.ActionHelper;
-import com.fortify.cli.common.action.helper.ActionHelper.ActionInvalidSignatureHandlers;
+import com.fortify.cli.common.crypto.SignatureHelper;
+import com.fortify.cli.common.crypto.SignatureHelper.PublicKeyDescriptor;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 
+import lombok.Getter;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-public abstract class AbstractActionListCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
-    @Mixin private ActionSourceResolverMixin.OptionalOption actionSourceResolver;
+@Command(name = OutputHelperMixins.List.CMD_NAME)
+public class PublicKeyListCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
+    @Getter @Mixin private OutputHelperMixins.List outputHelper;
+
+    @Override
+    public JsonNode getJsonNode() {
+        return SignatureHelper.publicKeyTrustStore().stream() 
+                .map(PublicKeyDescriptor::asObjectNode)
+                .collect(JsonHelper.arrayNodeCollector());
+    }
     
     @Override
-    public final JsonNode getJsonNode() {
-        return ActionHelper
-                .streamAsJson(actionSourceResolver.getActionSources(getType()),ActionInvalidSignatureHandlers.EVALUATE)
-                .collect(JsonHelper.arrayNodeCollector());
-    }    
-    @Override
-    public final boolean isSingular() {
+    public boolean isSingular() {
         return false;
     }
-    protected abstract String getType();
-    
-    
 }

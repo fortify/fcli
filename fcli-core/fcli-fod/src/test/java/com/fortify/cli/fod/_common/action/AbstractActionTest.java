@@ -19,7 +19,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import com.fortify.cli.common.action.helper.ActionHelper;
-import com.fortify.cli.common.action.helper.ActionHelper.ActionSignatureHandler;
+import com.fortify.cli.common.action.helper.ActionHelper.ActionInvalidSignatureHandlers;
+import com.fortify.cli.common.action.helper.ActionHelper.ActionSource;
+import com.fortify.cli.common.crypto.SignatureHelper.InvalidSignatureHandler;
 
 // TODO Move this class to a common test utility module; currently
 //      exact copies of this class are available in every module 
@@ -30,7 +32,7 @@ public abstract class AbstractActionTest {
     @MethodSource("getActions")
     public void testLoadAction(String name) {
         try {
-            ActionHelper.loadBuiltinAction(getType(), name, actionSignatureHandler());
+            ActionHelper.loadAction(ActionSource.builtinActionSources(getType()), name, invalidSignatureHandler());
         } catch ( Exception e ) {
             System.err.println(String.format("Error loading %s action %s:\n%s", getType(), name, e));
             Assertions.fail(String.format("Error loading %s action %s", getType(), name), e);
@@ -38,15 +40,15 @@ public abstract class AbstractActionTest {
     }
 
     public final String[] getActions() {
-        return ActionHelper.streamBuiltinAsJson(getType(), ActionSignatureHandler.IGNORE)
+        return ActionHelper.streamAsJson(ActionSource.builtinActionSources(getType()), ActionInvalidSignatureHandlers.IGNORE)
                 .map(a->a.get("name").asText())
                 .toArray(String[]::new);
     }
 
-    private static final ActionSignatureHandler actionSignatureHandler() {
+    private static final InvalidSignatureHandler invalidSignatureHandler() {
         return "true".equalsIgnoreCase((System.getProperty("test.action.requireValidSignature")))
-                ? ActionSignatureHandler.FAIL
-                : ActionSignatureHandler.WARN;
+                ? ActionInvalidSignatureHandlers.FAIL
+                : ActionInvalidSignatureHandlers.WARN;
     }
     
     protected abstract String getType();
