@@ -19,6 +19,7 @@ import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
+// TODO Re-implement import functionality 
 public abstract class AbstractActionImportCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
     @ArgGroup(exclusive = true, multiplicity = "1") private ImportArgGroup argGroup = new ImportArgGroup();
     private static final class ImportArgGroup {

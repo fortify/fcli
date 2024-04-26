@@ -17,9 +17,7 @@ import java.nio.file.Files;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionInvalidSignatureHandlers;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
-import com.fortify.cli.common.action.model.Action.ActionProperties;
 import com.fortify.cli.common.json.JsonHelper;
-import com.fortify.cli.common.util.Break;
 
 import lombok.SneakyThrows;
 

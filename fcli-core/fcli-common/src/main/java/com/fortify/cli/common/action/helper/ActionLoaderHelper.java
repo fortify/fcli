@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.Action.ActionProperties;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins.RequireConfirmation.AbortedByUserException;
 import com.fortify.cli.common.crypto.SignatureHelper;
 import com.fortify.cli.common.crypto.SignatureHelper.InvalidSignatureHandler;
 import com.fortify.cli.common.crypto.SignatureHelper.SignatureStatus;
@@ -121,7 +122,6 @@ public class ActionLoaderHelper {
             processZipEntries(zipEntryProcessor(actionLoadResultProcessor));
         }
         
-        @SneakyThrows
         private final ActionLoadResult loadFromFileOrUrl(String source) {
             try ( var is = createSourceInputStream(source, false) ) {
                 if ( is!=null ) {
@@ -129,14 +129,21 @@ public class ActionLoaderHelper {
                             .custom(true).name(source).build();
                     return load(is, properties);
                 }
+            } catch (Exception e) {
+                if ( e instanceof AbortedByUserException ) { throw (AbortedByUserException)e; }
+                throw wrapException("Error loading action from "+source, e);
             }
             return null;
         }
         
         private final ActionLoadResult loadFromZips(String name) {
-            AtomicReference<ActionLoadResult> result = new AtomicReference<>();
-            processZipEntries(singleZipEntryProcessor(name, result::set));
-            return result.get();
+            try {
+                AtomicReference<ActionLoadResult> result = new AtomicReference<>();
+                processZipEntries(singleZipEntryProcessor(name, result::set));
+                return result.get();
+            } catch ( RuntimeException e ) {
+                throw wrapException("Error loading action "+name, e);
+            }
         }
         
         private final void processZipEntries(IZipEntryWithContextProcessor<ActionProperties> processor) {
@@ -194,38 +201,48 @@ public class ActionLoaderHelper {
         private final SignedTextDescriptor signedTextDescriptor;
         private final ActionProperties properties;
         
-        @SneakyThrows
         final Action asAction() {
-            var payload = signedTextDescriptor.getPayload();
-            var signatureStatus = signedTextDescriptor.getSignatureStatus();
-            var result = yamlObjectMapper.readValue(payload, Action.class);
-            var properties = this.properties.toBuilder().signatureStatus(signatureStatus).build();
-            result.postLoad(properties);
-            return result;
+            try {
+                var payload = signedTextDescriptor.getPayload();
+                var signatureStatus = signedTextDescriptor.getSignatureStatus();
+                var result = yamlObjectMapper.readValue(payload, Action.class);
+                var properties = this.properties.toBuilder().signatureStatus(signatureStatus).build();
+                result.postLoad(properties);
+                return result;
+            } catch ( Exception e ) {
+                throw createException(properties, e);
+            }
         }
         
         public String asString() {
             return signedTextDescriptor.getPayload();
         }
 
-        @SneakyThrows
         final ObjectNode asJson() {
-            var payload = signedTextDescriptor.getPayload();
-            var signatureStatus = signedTextDescriptor.getSignatureStatus();
-            String name = properties.getName();
-            boolean custom = properties.isCustom();
-            var customString = custom?"Yes":"No";
-            // TODO see ActionLoader#loadSignedTextDescriptor; for internal actions
-            // we currently don't evaluate signatures until we implement functionality
-            // for signing these during or after build.
-            var signatureString = !custom || signatureStatus==SignatureStatus.VALID_SIGNATURE 
-                ? "Valid" : "Invalid";
-            return yamlObjectMapper.readValue(payload, ObjectNode.class)
-                    .put("name", name)
-                    .put("custom", custom)
-                    .put("customString", customString)
-                    .put("signatureStatus", signatureStatus.toString())
-                    .put("signatureString", signatureString);
+            try {
+                var payload = signedTextDescriptor.getPayload();
+                var signatureStatus = signedTextDescriptor.getSignatureStatus();
+                String name = properties.getName();
+                boolean custom = properties.isCustom();
+                var customString = custom?"Yes":"No";
+                // TODO see ActionLoader#loadSignedTextDescriptor; for internal actions
+                // we currently don't evaluate signatures until we implement functionality
+                // for signing these during or after build.
+                var signatureString = !custom || signatureStatus==SignatureStatus.VALID_SIGNATURE 
+                    ? "Valid" : "Invalid";
+                return yamlObjectMapper.readValue(payload, ObjectNode.class)
+                        .put("name", name)
+                        .put("custom", custom)
+                        .put("customString", customString)
+                        .put("signatureStatus", signatureStatus.toString())
+                        .put("signatureString", signatureString);
+            } catch ( Exception e ) {
+                throw createException(properties, e);
+            }
+        }
+        
+        private final RuntimeException createException(ActionProperties properties, Exception e) {
+            return wrapException("Error loading action "+properties.getName(), e);
         }
     }
     
@@ -336,6 +353,11 @@ public class ActionLoaderHelper {
         private static final String failedMessage(SignedTextDescriptor descriptor) {
             return getSignatureStatusMessage(descriptor.getSignatureStatus());
         }
+    }
+    
+    private static final RuntimeException wrapException(String msg, Exception e) {
+        if ( e instanceof AbortedByUserException ) { return (AbortedByUserException)e; }
+        return new IllegalStateException(msg, e);
     }
     
     @FunctionalInterface

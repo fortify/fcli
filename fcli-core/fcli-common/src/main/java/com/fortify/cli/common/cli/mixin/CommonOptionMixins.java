@@ -54,7 +54,7 @@ public class CommonOptionMixins {
                     if ( response.equalsIgnoreCase(expectedResponse) ) {
                         return;
                     } else {
-                        throw new IllegalStateException("Aborting: operation aborted by user");
+                        throw new AbortedByUserException("Aborting: operation aborted by user");
                     }
                 }
             }
@@ -76,6 +76,11 @@ public class CommonOptionMixins {
                 prompt = spec.optionsMap().get("-y").description()[0].replaceAll("[. ]+$", "")+"?";
             }
             return prompt;
+        }
+        
+        public static final class AbortedByUserException extends IllegalStateException {
+            private static final long serialVersionUID = 1L;
+            public AbortedByUserException(String msg) { super(msg); }
         }
     }
 }

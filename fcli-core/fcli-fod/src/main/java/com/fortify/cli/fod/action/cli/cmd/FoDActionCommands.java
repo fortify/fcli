@@ -19,11 +19,12 @@ import picocli.CommandLine.Command;
 @Command(
         name = "action",
         subcommands = {
+                // TODO Re-enable import & reset commands once re-implemented
                 FoDActionGetCommand.class,
                 FoDActionHelpCommand.class,
-                FoDActionImportCommand.class,
+                //FoDActionImportCommand.class,
                 FoDActionListCommand.class,
-                FoDActionResetCommand.class,
+                //FoDActionResetCommand.class,
                 FoDActionRunCommand.class,
         }
 )
