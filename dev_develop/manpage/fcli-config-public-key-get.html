@@ -1,5 +1,5 @@
 ---
-title: fcli-fod-action-import(1)
+title: fcli-config-public-key-get(1)
 fcli_version: 
 ---
 
@@ -9,31 +9,31 @@ fcli_version:
 <meta http-equiv="Content-Type" content="text/html; charset=">
 <meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>fcli-fod-action-import(1)</title>
+<title>fcli-config-public-key-get(1)</title>
 
 {% include asciidoc-head.html %}
 
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240415.130113-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240426.171137-dev_develop" %}
 
 
 <div id="header">
-<h1>fcli-fod-action-import(1) Manual Page</h1>
+<h1>fcli-config-public-key-get(1) Manual Page</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_synopsis">Synopsis</a></li>
 <li><a href="#_description">Description</a></li>
-<li><a href="#_options">Options</a></li>
 <li><a href="#_output_options">Output options:</a></li>
 <li><a href="#_generic_fcli_options">Generic fcli options:</a></li>
+<li><a href="#_arguments">Arguments</a></li>
 </ul>
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-action-import - (PREVIEW) Import one or more actions.</p>
+<p>fcli-config-public-key-get - Get trusted public key data.</p>
 </div>
 </div>
 <div id="content">
@@ -41,47 +41,18 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod action import</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
-                       [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] ([<strong>-z</strong>=<em>&lt;zip&gt;</em>] | [<strong>-f</strong>=<em>&lt;file&gt;</em>
-                       [<strong>-n</strong>=<em>&lt;name&gt;</em>]]) <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">]
-                       [<strong>--store</strong>=_variableName[=&lt;propertyNames&gt;]</em>]
-                       [<strong>--to-file</strong>=<em>&lt;outputFile&gt;</em>]]</p>
+<p><strong>fcli config public-key get</strong> [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+                           [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
+                           <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
+               _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]]
+                           <em>&lt;nameOrFingerprint&gt;</em></p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>Import one or more custom actions. You can import either a single action YAML file, or a zip-file containing one or more action YAML files. Imported actions will take precedence over built-in action if they have the same name.</p>
-</div>
-<div class="paragraph">
-<p>Please note that actions may have full access to both local and remote system resources, limited only by current user permissions. As such, you should only import &amp; run actions that are provided by trusted sources, and/or review action contents.</p>
-</div>
-<div class="paragraph">
-<p>The reason that this command is marked as 'PREVIEW' is that the action YAML file structure is subject to change. Custom action YAML files that work fine on the current fcli version may not work on either older or newer fcli versions, and thus may need to be updated when upgrading fcli. Please see <a href="https://github.com/fortify/fcli/issues/515" class="bare">https://github.com/fortify/fcli/issues/515</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_options"><a class="anchor" href="#_options"></a>Options</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><strong>-f</strong>, <strong>--file</strong>=<em>&lt;file&gt;</em></dt>
-<dd>
-<p>Single action YAML file to be imported; may be specified as a path to a local file or a URL.</p>
-</dd>
-<dt class="hdlist1"><strong>-n</strong>, <strong>--name</strong>=<em>&lt;name&gt;</em></dt>
-<dd>
-<p>Name for the imported action. If not specified, the name of the given file (with path and extension removed) is used as the action name.</p>
-</dd>
-<dt class="hdlist1"><strong>-z</strong>, <strong>--zip</strong>=<em>&lt;zip&gt;</em></dt>
-<dd>
-<p>Zip-file containing actions to be imported; may be specified as a path to a local zip-file or a URL. Action names will be based on filenames contained in the zip-file.</p>
-</dd>
-</dl>
-</div>
+
 </div>
 </div>
 <div class="sect1">
@@ -130,11 +101,24 @@ fcli_version:
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_arguments"><a class="anchor" href="#_arguments"></a>Arguments</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><em>&lt;nameOrFingerprint&gt;</em></dt>
+<dd>
+<p>Public key name or fingerprint.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-04-15 13:02:51 UTC
+Last updated 2024-04-26 17:13:20 UTC
 </div>
 </div>
 </body>

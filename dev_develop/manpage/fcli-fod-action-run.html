@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240415.130113-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240426.171137-dev_develop" %}
 
 
 <div id="header">
@@ -42,7 +42,8 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod action run</strong> [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [<strong>--&lt;action-parameter&gt;</strong>=<em>&lt;value&gt;</em>]&#8230;&#8203; [[<strong>-h</strong>]
+<p><strong>fcli fod action run</strong> [<strong>-y</strong>] [<strong>--from</strong>=<em>&lt;source&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                    [<strong>--&lt;action-parameter&gt;</strong>=<em>&lt;value&gt;</em>]&#8230;&#8203; [[<strong>-h</strong>]
                     [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
                     <em>&lt;action&gt;</em></p>
@@ -69,9 +70,17 @@ fcli_version:
 <dd>
 <p>Action parameter(s); see 'help' command output to list supported parameters.</p>
 </dd>
+<dt class="hdlist1"><strong>--from</strong>=<em>&lt;source&gt;</em></dt>
+<dd>
+<p>Optional local or remote zip-file from which to load the action</p>
+</dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
 <p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+</dd>
+<dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
+<dd>
+<p>Confirm running an action with invalid signature.</p>
 </dd>
 </dl>
 </div>
@@ -132,7 +141,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-04-15 13:02:51 UTC
+Last updated 2024-04-26 17:13:20 UTC
 </div>
 </div>
 </body>
