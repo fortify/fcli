@@ -13,7 +13,7 @@
 package com.fortify.cli.common.action.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.action.helper.ActionHelper;
+import com.fortify.cli.common.action.helper.ActionImportHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
@@ -21,7 +21,7 @@ import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 public abstract class AbstractActionResetCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Override
     public final JsonNode getJsonNode() {
-        return ActionHelper.reset(getType());
+        return ActionImportHelper.reset(getType());
     }
     @Override
     public String getActionCommandResult() {

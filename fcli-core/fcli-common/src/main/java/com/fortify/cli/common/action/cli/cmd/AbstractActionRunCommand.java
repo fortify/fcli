@@ -18,7 +18,7 @@ import java.util.concurrent.Callable;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fortify.cli.common.action.cli.mixin.ActionSourceResolverMixin;
-import com.fortify.cli.common.action.helper.ActionHelper;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.runner.ActionParameterHelper;
 import com.fortify.cli.common.action.runner.ActionRunner;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
@@ -52,7 +52,7 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     @Override @SneakyThrows
     public final Integer call() {
         initMixins();
-        var loadedAction = ActionHelper.loadAction(actionSourceResolver.getActionSources(getType()), action, this::confirmInvalidSignature);
+        var loadedAction = ActionLoaderHelper.loadAction(actionSourceResolver.getActionSources(getType()), action, this::confirmInvalidSignature);
         Callable<Integer> delayedConsoleWriter = null;
         try ( var progressWriter = progressWriterFactory.create() ) {
             try ( var actionRunner = ActionRunner.builder()
@@ -69,7 +69,7 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     }
     
     private void confirmInvalidSignature(SignedTextDescriptor descriptor) {
-        confirm.checkConfirmed("WARN: "+ActionHelper.getSignatureStatusMessage(descriptor.getSignatureStatus()));
+        confirm.checkConfirmed("WARN: "+ActionLoaderHelper.getSignatureStatusMessage(descriptor.getSignatureStatus()));
     }
 
     private Callable<Integer> run(ActionRunner actionRunner, IProgressWriterI18n progressWriter) {

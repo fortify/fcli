@@ -16,7 +16,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fortify.cli.common.action.helper.ActionHelper.ActionSource;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;

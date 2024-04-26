@@ -13,8 +13,8 @@
 package com.fortify.cli.common.action.cli.cmd;
 
 import com.fortify.cli.common.action.cli.mixin.ActionSourceResolverMixin;
-import com.fortify.cli.common.action.helper.ActionHelper;
-import com.fortify.cli.common.action.helper.ActionHelper.ActionInvalidSignatureHandlers;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionInvalidSignatureHandlers;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 
 import picocli.CommandLine.Mixin;
@@ -27,7 +27,7 @@ public abstract class AbstractActionGetCommand extends AbstractRunnableCommand {
     @Override
     public final Integer call() {
         initMixins();
-        System.out.println(ActionHelper.loadActionContents(actionSourceResolver.getActionSources(getType()), action, ActionInvalidSignatureHandlers.WARN));
+        System.out.println(ActionLoaderHelper.loadActionContents(actionSourceResolver.getActionSources(getType()), action, ActionInvalidSignatureHandlers.WARN));
         return 0;
     }
     

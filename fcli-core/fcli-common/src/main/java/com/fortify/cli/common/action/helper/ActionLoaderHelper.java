@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.action.helper;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -33,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.action.model.Action;
@@ -43,7 +43,6 @@ import com.fortify.cli.common.crypto.SignatureHelper.InvalidSignatureHandler;
 import com.fortify.cli.common.crypto.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.crypto.SignatureHelper.SignedTextDescriptor;
 import com.fortify.cli.common.crypto.impl.SignedTextReader;
-import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
@@ -55,32 +54,20 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
-public class ActionHelper {
-    private static final Logger LOG = LoggerFactory.getLogger(ActionHelper.class);
-    private ActionHelper() {}
-    
-    public static final Action loadAction(String type, String name, InvalidSignatureHandler invalidSignatureHandler) {
-        return load(ActionSource.defaultActionSources(type), name, invalidSignatureHandler).asAction();
-    }
+public class ActionLoaderHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(ActionLoaderHelper.class);
+    private ActionLoaderHelper() {}
     
     public static final Action loadAction(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
         return load(sources, name, invalidSignatureHandler).asAction();
     }
 
-    public static final String loadActionContents(String type, String name, InvalidSignatureHandler invalidSignatureHandler) {
-        return load(ActionSource.defaultActionSources(type), name, invalidSignatureHandler).asString();
-    }
-    
     public static final String loadActionContents(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
         return load(sources, name, invalidSignatureHandler).asString();
     }
     
     public static final ActionLoadResult load(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
         return new ActionLoader(sources, invalidSignatureHandler).load(name);
-    }
-    
-    public static final Stream<ObjectNode> streamAsJson(String type, InvalidSignatureHandler invalidSignatureHandler) {
-        return _streamAsJson(ActionSource.defaultActionSources(type), invalidSignatureHandler);
     }
     
     public static final Stream<ObjectNode> streamAsJson(List<ActionSource> sources, InvalidSignatureHandler invalidSignatureHandler) {
@@ -109,108 +96,47 @@ public class ActionHelper {
         }
     }
     
-    /*
-    @SneakyThrows
-    public static final ArrayNode importZip(String type, String source) {
-        var result = JsonHelper.getObjectMapper().createArrayNode();
-        IZipEntryProcessor<Boolean> processor = (zis, ze, isCustom)->importEntry(result, zis, getActionName(ze.getName()), type);
-        try {
-            var url = new URL(source);
-            try ( var unirest = createUnirestInstance(type, url) ) {
-                unirest.get(url.toString()).asObject(r->processZipEntries(r.getContent(), processor, true)).getBody();
-            }
-        } catch (MalformedURLException e ) {
-            try ( var is = Files.newInputStream(Path.of(source)) ) {
-                processZipEntries(is, processor, true);
-            }
-        }
-        return result;
-    }
-    */
-    
-    /*
-    @SneakyThrows
-    public static final ArrayNode importSingle(String type, String name, String source) {
-        var result = JsonHelper.getObjectMapper().createArrayNode();
-        var finalName = StringUtils.isBlank(name) ? getActionName(source) : name;
-        try {
-            var url = new URL(source);
-            try ( var unirest = createUnirestInstance(type, url) ) {
-                unirest.get(url.toString()).asObject(r->importEntry(result, r.getContent(), finalName, type)).getBody();
-            }
-        } catch (MalformedURLException e ) {
-            try ( var is = Files.newInputStream(Path.of(source)) ) {
-                importEntry(result, is, finalName, type);
-            }
-        }
-        return result;
-    }
-    */
-    
-    @SneakyThrows
-    public static final ArrayNode reset(String type) {
-        var result = JsonHelper.getObjectMapper().createArrayNode();
-        var zipPath = customActionsZipPath(type);
-        new ActionLoader(ActionSource.defaultActionSources(type), ActionInvalidSignatureHandlers.IGNORE)
-            .processZipEntries(zipPath, ActionProperties.create(true),
-                        loadResult->{
-                            result.add(loadResult.asJson());
-                            return Break.FALSE;});
-        Files.delete(zipPath);
-        return result;
-    }
-    
-    /* 
-    private static final boolean importEntry(ArrayNode importedEntries, InputStream is, String name, String type) {
-        try {
-            // Read input stream as string for further processing
-            var contents = FileUtils.readInputStreamAsString(is, StandardCharsets.US_ASCII);
-            // Read contents as JsonNode to update importedEntries array after import
-            var json = yamlObjectMapper.readValue(contents, ObjectNode.class);
-            // Verify that the template can be successfully parsed and post-processed
-            yamlObjectMapper.treeToValue(json, Action.class).postLoad(name, true);
-            // Import entry to zip-file
-            importEntry(name, type, contents);
-            // Add JSON to the imported entries array.
-            importedEntries.add(updateJson(name, true, json));
-        } catch ( Exception e ) {
-            LOG.warn("WARN: Skipping "+name+" due to errors, see debug log for details");
-            LOG.debug("WARN: Skipping "+name+" due to errors", e);
-        }
-        return true;
-    }
-    */
-
-    /*
-    @SneakyThrows
-    private static void importEntry(String name, String type, String contents) {
-        Map<String, String> env = Collections.singletonMap("create", "true");
-
-        try (FileSystem zipfs = FileSystems.newFileSystem(getCustomActionsZipPath(type), env)) {
-          Path filePath = zipfs.getPath(getActionName(name)+".yaml");
-          Files.write(filePath, contents.getBytes(StandardCharsets.US_ASCII), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        }
-    }
-
-    */
-
     @RequiredArgsConstructor
     private static final class ActionLoader {
         private static final SignedTextReader signedTextReader = SignatureHelper.signedTextReader();
         private final List<ActionSource> sources;
         private final InvalidSignatureHandler invalidSignatureHandler;
         
-        public final ActionLoadResult load(String name) {
-            AtomicReference<ActionLoadResult> result = new AtomicReference<>();
-            processZipEntries(singleZipEntryProcessor(name, result::set));
-            if ( result.get()==null ) {
-                throw new IllegalArgumentException("No action found with name "+name);
-            }
-            return result.get();
+        public final ActionLoadResult load(String source) {
+            // We first load from zips, in case a file happens to exist with
+            // same name as an existing action, to avoid errors if for example 
+            // a user saved a SARIF SAST report named 'sarif-sast-report' (with
+            // no extension) in the current working directory.
+            // TODO We may want to consider making this a bit smarter. For example,
+            //      we may require action names to only use [a-zA-Z0-9-_]+ (also
+            //      for imported actions), and only try to load from zips if source
+            //      matches this regex.
+            var result = loadFromZips(source);
+            if ( result==null ) { result = loadFromFileOrUrl(source); }
+            if ( result==null ) { throw new IllegalArgumentException("Action not found: "+source); }
+            return result;
         }
         
         public final void processActions(ActionLoadResultProcessor actionLoadResultProcessor) {
             processZipEntries(zipEntryProcessor(actionLoadResultProcessor));
+        }
+        
+        @SneakyThrows
+        private final ActionLoadResult loadFromFileOrUrl(String source) {
+            try ( var is = createSourceInputStream(source, false) ) {
+                if ( is!=null ) {
+                    var properties = ActionProperties.builder()
+                            .custom(true).name(source).build();
+                    return load(is, properties);
+                }
+            }
+            return null;
+        }
+        
+        private final ActionLoadResult loadFromZips(String name) {
+            AtomicReference<ActionLoadResult> result = new AtomicReference<>();
+            processZipEntries(singleZipEntryProcessor(name, result::set));
+            return result.get();
         }
         
         private final void processZipEntries(IZipEntryWithContextProcessor<ActionProperties> processor) {
@@ -219,18 +145,6 @@ public class ActionHelper {
                         processor, source.getActionProperties());
                 if ( _break.doBreak() ) { break; }
             }
-        }
-        
-        public final Break processZipEntries(Path zipFilePath, ActionProperties properties, ActionLoadResultProcessor loadResultProcessor) {
-            return ZipHelper.processZipEntries(()->FileUtils.getInputStream(zipFilePath), zipEntryProcessor(loadResultProcessor), properties);
-        }
-        
-        public final Break processZipEntries(Supplier<InputStream> zipFileInputStreamSupplier, ActionProperties properties, ActionLoadResultProcessor loadResultProcessor) {
-            return ZipHelper.processZipEntries(zipFileInputStreamSupplier, zipEntryProcessor(loadResultProcessor), properties);
-        }
-        
-        public final Break processZipEntries(InputStream zipFileInputStream, ActionProperties properties, ActionLoadResultProcessor loadResultProcessor) {
-            return ZipHelper.processZipEntries(zipFileInputStream, zipEntryProcessor(loadResultProcessor), properties);
         }
         
         private final IZipEntryWithContextProcessor<ActionProperties> zipEntryProcessor(ActionLoadResultProcessor loadResultProcessor) {
@@ -328,6 +242,12 @@ public class ActionHelper {
             return result;
         }
         
+        public static final List<ActionSource> importedActionSources(String type) {
+            var result = new ArrayList<ActionSource>();
+            result.add(imported(type));
+            return result;
+        }
+        
         public static final List<ActionSource> builtinActionSources(String type) {
             var result = new ArrayList<ActionSource>();
             result.add(builtin(type));
@@ -342,7 +262,7 @@ public class ActionHelper {
         }
         
         private static final ActionSource external(String source) {
-            return new ActionSource(()->createURLOrFileInputStream(source), ActionProperties.create(true));
+            return new ActionSource(()->createSourceInputStream(source, true), ActionProperties.create(true));
         }
         
         private static final ActionSource imported(String type) {
@@ -371,7 +291,7 @@ public class ActionHelper {
         }
     }
     
-    private static final Path customActionsZipPath(String type) {
+    static final Path customActionsZipPath(String type) {
         return FcliDataHelper.getFcliConfigPath().resolve("action").resolve(type.toLowerCase()+".zip");
     }
     
@@ -384,11 +304,19 @@ public class ActionHelper {
     }
     
     @SneakyThrows
-    private static final InputStream createURLOrFileInputStream(String source) {
+    private static final InputStream createSourceInputStream(String source, boolean failOnError) {
         try {
             return new URL(source).openStream();
-        } catch (MalformedURLException e ) {
-            return Files.newInputStream(Path.of(source));
+        } catch (MalformedURLException mue ) {
+            try {
+                return Files.newInputStream(Path.of(source));
+            } catch ( IOException ioe ) {
+                if ( failOnError ) {
+                    throw new IllegalArgumentException("Unable to read from "+source, ioe);
+                } else {
+                    return null;
+                }
+            }
         }
     }
     
