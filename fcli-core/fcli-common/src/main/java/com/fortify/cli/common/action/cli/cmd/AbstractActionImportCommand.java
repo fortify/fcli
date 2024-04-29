@@ -13,39 +13,36 @@
 package com.fortify.cli.common.action.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
+import com.fortify.cli.common.action.helper.ActionImportHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 
-import picocli.CommandLine.ArgGroup;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Mixin;
 
-// TODO Re-implement import functionality 
-public abstract class AbstractActionImportCommand extends AbstractOutputCommand implements IJsonNodeSupplier {
-    @ArgGroup(exclusive = true, multiplicity = "1") private ImportArgGroup argGroup = new ImportArgGroup();
-    private static final class ImportArgGroup {
-        @ArgGroup(exclusive=false) private ZipArgGroup zipArgGroup = new ZipArgGroup();
-        @ArgGroup(exclusive=false) private FileArgGroup fileArgGroup = new FileArgGroup();
-    }
-    private static final class ZipArgGroup {
-        @Option(names = {"--zip", "-z"}, required = true, descriptionKey="fcli.action.import.zip") private String zip;
-    }
-    private static final class FileArgGroup {
-        @Option(names = {"--file", "-f"}, required = true, descriptionKey="fcli.action.import.file") private String file;
-        @Option(names = {"--name", "-n"}, required = false, descriptionKey="fcli.action.import.name") private String name;
-    }
+public abstract class AbstractActionImportCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
+    @Mixin private ActionResolverMixin.OptionalParameter actionResolver;
     
     @Override
     public final JsonNode getJsonNode() {
-        var zip = argGroup.zipArgGroup.zip;
-        /* TODO
-        if ( StringUtils.isNotBlank(zip) ) {
-            return ActionHelper.importZip(getType(), zip);
+        var source = actionResolver.getActionSourceResolver().getSource();
+        var action = actionResolver.getAction();
+        if ( action!=null) {
+            return ActionImportHelper.importAction(getType(), source, action);
         } else {
-            return ActionHelper.importSingle(getType(), argGroup.fileArgGroup.name, argGroup.fileArgGroup.file);
+            var zip = actionResolver.getActionSourceResolver().getSource();
+            if ( zip!=null ) {
+                return ActionImportHelper.importZip(getType(), zip);
+            } else {
+                throw new IllegalArgumentException("Either action and/or --from-zip option must be specified");
+            }
         }
-        */
-        return null;
-    }    
+    }
+    @Override
+    public String getActionCommandResult() {
+        return "IMPORTED";
+    }
     @Override
     public final boolean isSingular() {
         return false;

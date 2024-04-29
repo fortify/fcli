@@ -12,93 +12,127 @@
  */
 package com.fortify.cli.common.action.helper;
 
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Collections;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionInvalidSignatureHandlers;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoadResult;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoader;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
+import com.fortify.cli.common.action.model.Action;
+import com.fortify.cli.common.action.model.Action.ActionProperties;
 import com.fortify.cli.common.json.JsonHelper;
+import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
+import com.fortify.cli.common.util.Break;
+import com.fortify.cli.common.util.ZipHelper;
 
 import lombok.SneakyThrows;
 
 public class ActionImportHelper {
-    /*
     @SneakyThrows
-    public static final ArrayNode importZip(String type, String source) {
+    public static ArrayNode importAction(String type, String externalSource, String action) {
         var result = JsonHelper.getObjectMapper().createArrayNode();
-        IZipEntryProcessor<Boolean> processor = (zis, ze, isCustom)->importEntry(result, zis, getActionName(ze.getName()), type);
-        try {
-            var url = new URL(source);
-            try ( var unirest = createUnirestInstance(type, url) ) {
-                unirest.get(url.toString()).asObject(r->processZipEntries(r.getContent(), processor, true)).getBody();
-            }
-        } catch (MalformedURLException e ) {
-            try ( var is = Files.newInputStream(Path.of(source)) ) {
-                processZipEntries(is, processor, true);
-            }
+        try ( var fs = createOutputZipFileSystem(type) ) {
+            var actionLoadResult = new ActionLoader(ActionSource.externalActionSources(externalSource), ActionInvalidSignatureHandlers.EVALUATE)
+                    .load(action);
+            result.add(importAction(fs, actionLoadResult));
         }
         return result;
     }
-    */
-    
-    /*
+
     @SneakyThrows
-    public static final ArrayNode importSingle(String type, String name, String source) {
+    public static ArrayNode importZip(String type, String zip) {
         var result = JsonHelper.getObjectMapper().createArrayNode();
-        var finalName = StringUtils.isBlank(name) ? getActionName(source) : name;
-        try {
-            var url = new URL(source);
-            try ( var unirest = createUnirestInstance(type, url) ) {
-                unirest.get(url.toString()).asObject(r->importEntry(result, r.getContent(), finalName, type)).getBody();
-            }
-        } catch (MalformedURLException e ) {
-            try ( var is = Files.newInputStream(Path.of(source)) ) {
-                importEntry(result, is, finalName, type);
-            }
+        var loader = new ActionLoader(null, ActionInvalidSignatureHandlers.EVALUATE);
+        try ( var fs = createOutputZipFileSystem(type); var is = createZipFileInputStream(zip) ) {
+            ZipHelper.processZipEntries(is, (zis, entry)->
+                importAction(fs, result, loader, zis, entry));
         }
         return result;
     }
+
+    @SneakyThrows
+    private static final InputStream createZipFileInputStream(String zip) {
+        try {
+            return new URL(zip).openStream();
+        } catch ( MalformedURLException e ) {
+            return Files.newInputStream(Path.of(zip));
+        }
+    }
+
+    @SneakyThrows
+    private static final FileSystem createOutputZipFileSystem(String type) {
+        Map<String, String> env = Collections.singletonMap("create", "true");
+        var zipPath = ActionLoaderHelper.customActionsZipPath(type);
+        return FileSystems.newFileSystem(zipPath, env);
+    }
     
-    */
+    private static final Break importAction(FileSystem fs, ArrayNode result, ActionLoader loader, ZipInputStream zis, ZipEntry entry) {
+        var properties = ActionProperties.builder()
+                .custom(true).name(entry.getName()).build();
+        try {
+            result.add(importAction(fs, loader.load(zis, properties)));
+        } catch ( Exception e ) {
+            result.add(createErrorEntry(properties));
+        }
+        return Break.FALSE;  
+    }
+    
+    private static JsonNode createErrorEntry(ActionProperties properties) {
+        return JsonHelper.getObjectMapper().createObjectNode()
+                .put("name", properties.getName())
+                .put(IActionCommandResultSupplier.actionFieldName, "ERROR");
+    }
+
+    @SneakyThrows
+    private static final ObjectNode importAction(FileSystem fs, ActionLoadResult actionLoadResult) {
+        var action = actionLoadResult.asAction(); // Validate action and allow for retrieving name
+        var contents = actionLoadResult.asRawText();
+        var path = fs.getPath(getTargetFileName(action));
+        Files.write(path, contents.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        var result = actionLoadResult.asJson();
+        return result.put("name", cleanActionName(path.getFileName().toString()));
+    }
+
+    private static final String cleanActionName(String name) {
+        return name.replaceAll("\\.([^.]*)$", "[.$1]");
+    }
+
+    private static final String getTargetFileName(Action action) {
+        var path = action.getName(); // May be simple name, path or URL
+        // TODO May be can use URI instead, to handle both URLs and local files?
+        try {
+            path = new URL(path).getPath();
+        } catch ( MalformedURLException e) {}
+        if ( !path.endsWith(".yaml") ) { path+=".yaml"; }
+        return Path.of(path).getFileName().toString();
+    }
+    
     @SneakyThrows
     public static final ArrayNode reset(String type) {
         var zipPath = ActionLoaderHelper.customActionsZipPath(type);
-        var result = ActionLoaderHelper
-            .streamAsJson(ActionSource.importedActionSources(type), ActionInvalidSignatureHandlers.IGNORE)
-            .collect(JsonHelper.arrayNodeCollector());
-        Files.delete(zipPath);
-        return result;
-    }
-    /*
-    
-    private static final boolean importEntry(ArrayNode importedEntries, InputStream is, String name, String type) {
-        try {
-            // Read input stream as string for further processing
-            var contents = FileUtils.readInputStreamAsString(is, StandardCharsets.US_ASCII);
-            // Read contents as JsonNode to update importedEntries array after import
-            var json = yamlObjectMapper.readValue(contents, ObjectNode.class);
-            // Verify that the template can be successfully parsed and post-processed
-            yamlObjectMapper.treeToValue(json, Action.class).postLoad(name, true);
-            // Import entry to zip-file
-            importEntry(name, type, contents);
-            // Add JSON to the imported entries array.
-            importedEntries.add(updateJson(name, true, json));
-        } catch ( Exception e ) {
-            LOG.warn("WARN: Skipping "+name+" due to errors, see debug log for details");
-            LOG.debug("WARN: Skipping "+name+" due to errors", e);
-        }
-        return true;
-    }
-    
-    @SneakyThrows
-    private static void importEntry(String name, String type, String contents) {
-        Map<String, String> env = Collections.singletonMap("create", "true");
-
-        try (FileSystem zipfs = FileSystems.newFileSystem(getCustomActionsZipPath(type), env)) {
-          Path filePath = zipfs.getPath(getActionName(name)+".yaml");
-          Files.write(filePath, contents.getBytes(StandardCharsets.US_ASCII), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        if ( !Files.exists(zipPath) ) {
+            return JsonHelper.getObjectMapper().createArrayNode();
+        } else {
+            var result = ActionLoaderHelper
+                    .streamAsJson(ActionSource.importedActionSources(type), ActionInvalidSignatureHandlers.EVALUATE)
+                    .collect(JsonHelper.arrayNodeCollector());
+            Files.delete(zipPath);
+            return result;
         }
     }
-
-    */
 }

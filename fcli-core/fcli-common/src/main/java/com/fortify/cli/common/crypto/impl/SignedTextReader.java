@@ -47,7 +47,7 @@ public final class SignedTextReader {
         } else {
             var signatureDescriptor = new ObjectMapper(new YAMLFactory())
                     .readValue(elts[1], SignatureDescriptor.class);
-            return buildSignedDescriptor(elts[0], signatureDescriptor, evaluateSignature);
+            return buildSignedDescriptor(signedOrUnsignedText, elts[0], signatureDescriptor, evaluateSignature);
         }
     }
     
@@ -70,23 +70,25 @@ public final class SignedTextReader {
         return descriptor;
     }
 
-    private SignedTextDescriptor buildUnsignedDescriptor(String payload) {
+    private SignedTextDescriptor buildUnsignedDescriptor(String text) {
         return SignedTextDescriptor.builder()
-                .payload(payload)
+                .rawText(text)
+                .text(text)
                 .signatureStatus(SignatureStatus.NO_SIGNATURE)
                 .build();
     }
     
-    private SignedTextDescriptor buildSignedDescriptor(String payload, SignatureDescriptor signatureDescriptor, boolean evaluateSignatureStatus) {
+    private SignedTextDescriptor buildSignedDescriptor(String rawText, String text, SignatureDescriptor signatureDescriptor, boolean evaluateSignatureStatus) {
         var signatureStatus = SignatureStatus.NOT_VERIFIED;
         if ( evaluateSignatureStatus ) {
             var fingerprint = signatureDescriptor.getPublicKeyFingerprint();
             var expectedSignature = signatureDescriptor.getSignature();
             signatureStatus = Verifier.forFingerprint(fingerprint)
-                .verify(payload, StandardCharsets.UTF_8, expectedSignature);
+                .verify(text, StandardCharsets.UTF_8, expectedSignature);
         }
         return SignedTextDescriptor.builder()
-                .payload(payload)
+                .rawText(rawText)
+                .text(text)
                 .signatureDescriptor(signatureDescriptor)
                 .signatureStatus(signatureStatus)
                 .build();

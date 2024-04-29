@@ -13,6 +13,7 @@
 package com.fortify.cli.common.action.cli.mixin;
 
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoadResult;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.crypto.SignatureHelper.InvalidSignatureHandler;
 
@@ -22,15 +23,22 @@ import picocli.CommandLine.Parameters;
 
 public class ActionResolverMixin {
     public static abstract class AbstractActionResolverMixin {
-        @Mixin private ActionSourceResolverMixin.OptionalOption actionSourceResolver;
+        @Getter @Mixin private ActionSourceResolverMixin.OptionalOption actionSourceResolver;
         public abstract String getAction();
         
+        public ActionLoadResult load(String type, InvalidSignatureHandler invalidSignatureHandler) {
+            var action = getAction();
+            return action==null 
+                ? null 
+                : ActionLoaderHelper.load(actionSourceResolver.getActionSources(type), action, invalidSignatureHandler);
+        }
+        
         public Action loadAction(String type, InvalidSignatureHandler invalidSignatureHandler) {
-            return ActionLoaderHelper.loadAction(actionSourceResolver.getActionSources(type), getAction(), invalidSignatureHandler);
+            return load(type, invalidSignatureHandler).asAction();
         }
         
         public String loadActionContents(String type, InvalidSignatureHandler invalidSignatureHandler) {
-            return ActionLoaderHelper.loadActionContents(actionSourceResolver.getActionSources(type), getAction(), invalidSignatureHandler);
+            return load(type, invalidSignatureHandler).asText();
         }
     }
     

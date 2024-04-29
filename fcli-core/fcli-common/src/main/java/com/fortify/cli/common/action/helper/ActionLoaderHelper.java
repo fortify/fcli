@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,15 +60,7 @@ public class ActionLoaderHelper {
     private static final Logger LOG = LoggerFactory.getLogger(ActionLoaderHelper.class);
     private ActionLoaderHelper() {}
     
-    public static final Action loadAction(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
-        return load(sources, name, invalidSignatureHandler).asAction();
-    }
-
-    public static final String loadActionContents(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
-        return load(sources, name, invalidSignatureHandler).asString();
-    }
-    
-    private static final ActionLoadResult load(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
+    public static final ActionLoadResult load(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
         return new ActionLoader(sources, invalidSignatureHandler).load(name);
     }
     
@@ -98,7 +91,7 @@ public class ActionLoaderHelper {
     }
     
     @RequiredArgsConstructor
-    private static final class ActionLoader {
+    static final class ActionLoader {
         private static final SignedTextReader signedTextReader = SignatureHelper.signedTextReader();
         private final List<ActionSource> sources;
         private final InvalidSignatureHandler invalidSignatureHandler;
@@ -176,7 +169,7 @@ public class ActionLoaderHelper {
             return load(zis, properties);
         }
         
-        private final ActionLoadResult load(InputStream is, ActionProperties properties) {
+        final ActionLoadResult load(InputStream is, ActionProperties properties) {
             return new ActionLoadResult(loadSignedTextDescriptor(is, properties.isCustom()), properties);
         }
             
@@ -196,16 +189,16 @@ public class ActionLoaderHelper {
     }
     
     @Data
-    private static final class ActionLoadResult {
+    public static final class ActionLoadResult {
         private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
         private final SignedTextDescriptor signedTextDescriptor;
         private final ActionProperties properties;
         
-        final Action asAction() {
+        public final Action asAction() {
             try {
-                var payload = signedTextDescriptor.getPayload();
+                var actionText = signedTextDescriptor.getText();
                 var signatureStatus = signedTextDescriptor.getSignatureStatus();
-                var result = yamlObjectMapper.readValue(payload, Action.class);
+                var result = yamlObjectMapper.readValue(actionText, Action.class);
                 var properties = this.properties.toBuilder().signatureStatus(signatureStatus).build();
                 result.postLoad(properties);
                 return result;
@@ -214,13 +207,17 @@ public class ActionLoaderHelper {
             }
         }
         
-        public String asString() {
-            return signedTextDescriptor.getPayload();
+        public final String asText() {
+            return signedTextDescriptor.getText();
+        }
+        
+        public final String asRawText() {
+            return signedTextDescriptor.getRawText();
         }
 
-        final ObjectNode asJson() {
+        public final ObjectNode asJson() {
             try {
-                var payload = signedTextDescriptor.getPayload();
+                var payload = signedTextDescriptor.getText();
                 var signatureStatus = signedTextDescriptor.getSignatureStatus();
                 String name = properties.getName();
                 boolean custom = properties.isCustom();
@@ -274,7 +271,9 @@ public class ActionLoaderHelper {
         
         public static final List<ActionSource> externalActionSources(String source) {
             var result = new ArrayList<ActionSource>();
-            result.add(external(source));
+            if ( StringUtils.isNotBlank(source) ) {
+                result.add(external(source));
+            }
             return result;
         }
         

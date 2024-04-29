@@ -136,8 +136,10 @@ public class SignatureHelper {
     @Reflectable @NoArgsConstructor
     @Data @AllArgsConstructor @Builder
     public static final class SignedTextDescriptor {
-        /** Original file contents */
-        private String payload;
+        /** Raw text that was parsed, including signature if present */
+        private String rawText;
+        /** Text that was signed */
+        private String text;
         /** Signature descriptor */
         private SignatureDescriptor signatureDescriptor; 
         /** Signature status */

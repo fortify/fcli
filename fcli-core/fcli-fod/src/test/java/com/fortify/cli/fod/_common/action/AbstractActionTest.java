@@ -32,7 +32,9 @@ public abstract class AbstractActionTest {
     @MethodSource("getActions")
     public void testLoadAction(String name) {
         try {
-            ActionLoaderHelper.loadAction(ActionSource.builtinActionSources(getType()), name, invalidSignatureHandler());
+            ActionLoaderHelper
+                .load(ActionSource.builtinActionSources(getType()), name, invalidSignatureHandler())
+                .asAction();
         } catch ( Exception e ) {
             System.err.println(String.format("Error loading %s action %s:\n%s", getType(), name, e));
             Assertions.fail(String.format("Error loading %s action %s", getType(), name), e);

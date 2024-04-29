@@ -19,12 +19,11 @@ import picocli.CommandLine.Command;
 @Command(
         name = "action",
         subcommands = {
-             // TODO Re-enable import & reset commands once re-implemented
                 SSCActionGetCommand.class,
                 SSCActionHelpCommand.class,
-                //SSCActionImportCommand.class,
+                SSCActionImportCommand.class,
                 SSCActionListCommand.class,
-                //SSCActionResetCommand.class,
+                SSCActionResetCommand.class,
                 SSCActionRunCommand.class,
                 SSCActionSignCommand.class,
         }
