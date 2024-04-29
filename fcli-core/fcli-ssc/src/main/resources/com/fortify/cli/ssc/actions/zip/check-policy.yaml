@@ -1,8 +1,8 @@
 usage:
-  header: (SAMPLE) Check security gate. 
+  header: (SAMPLE) Check security policy. 
   description: |
-    This sample action demonstrates how to implement a security gate, returning a
-    non-zero exit code if any of the checks fail.
+    This sample action demonstrates how to implement a security policy using
+    fcli actions, returning a non-zero exit code if any of the checks fail.
 
 defaults:
   requestTarget: ssc

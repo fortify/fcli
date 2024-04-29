@@ -1,0 +1,23 @@
+usage:
+  header: (SAMPLE) Check security policy. 
+  description: |
+    This sample action demonstrates how to implement a security policy using
+    fcli actions, returning a non-zero exit code if any of the checks fail.
+
+defaults:
+  requestTarget: fod
+  
+parameters:
+  - name: release
+    cliAliases: rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+    type: release_single
+  
+steps:
+  - check:
+    - displayName: FoD Security Policy must Pass
+      passIf:      ${parameters.release.isPassed}
+  - check:
+    - displayName: FoD Star rating must be at least 2 stars
+      passIf:      ${parameters.release.rating>=2}
+      
