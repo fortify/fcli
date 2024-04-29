@@ -17,7 +17,7 @@ import java.util.concurrent.Callable;
 
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
-import com.fortify.cli.common.action.cli.mixin.ActionSourceResolverMixin;
+import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.runner.ActionParameterHelper;
 import com.fortify.cli.common.action.runner.ActionRunner;
@@ -35,29 +35,27 @@ import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
-import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Unmatched;
 
 public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
-    @Parameters(arity="1", descriptionKey="fcli.action.run.action") private String action;
+    @Mixin private ActionResolverMixin.RequiredParameter actionResolver;
     @DisableTest({TestType.MULTI_OPT_SPLIT, TestType.MULTI_OPT_PLURAL_NAME, TestType.OPT_LONG_NAME})
     @Option(names="--<action-parameter>", paramLabel="<value>", descriptionKey="fcli.action.run.action-parameter") 
     private List<String> dummyForSynopsis;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
     @Mixin CommandHelperMixin commandHelper;
     @Mixin CommonOptionMixins.RequireConfirmation confirm;
-    @Mixin private ActionSourceResolverMixin.OptionalOption actionSourceResolver;
     @Unmatched private String[] actionArgs;
     
     @Override @SneakyThrows
     public final Integer call() {
         initMixins();
-        var loadedAction = ActionLoaderHelper.loadAction(actionSourceResolver.getActionSources(getType()), action, this::confirmInvalidSignature);
+        var action = actionResolver.loadAction(getType(), this::confirmInvalidSignature);
         Callable<Integer> delayedConsoleWriter = null;
         try ( var progressWriter = progressWriterFactory.create() ) {
             try ( var actionRunner = ActionRunner.builder()
                 .onValidationErrors(this::onValidationErrors)
-                .action(loadedAction)
+                .action(action)
                 .progressWriter(progressWriter)
                 .rootCommandLine(commandHelper.getRootCommandLine())
                 .build() ) 

@@ -12,28 +12,25 @@
  *******************************************************************************/
 package com.fortify.cli.common.action.cli.cmd;
 
-import com.fortify.cli.common.action.cli.mixin.ActionSourceResolverMixin;
-import com.fortify.cli.common.action.helper.ActionLoaderHelper;
+import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionInvalidSignatureHandlers;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.runner.ActionParameterHelper;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Unmatched;
 
 public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand {
-    @Parameters(arity="1", descriptionKey="fcli.action.run.action") private String action;
-    @Mixin private ActionSourceResolverMixin.OptionalOption actionSourceResolver;
+    @Mixin private ActionResolverMixin.RequiredParameter actionResolver;
     @Unmatched private String[] actionArgs; // We explicitly ignore any unknown CLI args, to allow for 
                                             // users to simply switch between run and help commands.
     
     @Override
     public final Integer call() {
         initMixins();
-        var actionDescriptor = ActionLoaderHelper.loadAction(actionSourceResolver.getActionSources(getType()), action, ActionInvalidSignatureHandlers.WARN);
-        System.out.println(getActionHelp(actionDescriptor));
+        var action = actionResolver.loadAction(getType(), ActionInvalidSignatureHandlers.WARN);
+        System.out.println(getActionHelp(action));
         return 0;
     }
     

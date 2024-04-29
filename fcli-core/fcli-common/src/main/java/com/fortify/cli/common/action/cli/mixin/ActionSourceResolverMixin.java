@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright 2021, 2023 Open Text.
+/**
+ * Copyright 2023 Open Text.
  *
  * The only warranties for products and services of Open Text 
  * and its affiliates and licensors ("Open Text") are as may 
@@ -9,20 +9,18 @@
  * liable for technical or editorial errors or omissions contained 
  * herein. The information contained herein is subject to change 
  * without notice.
- *******************************************************************************/
+ */
 package com.fortify.cli.common.action.cli.mixin;
 
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
+import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Getter;
 import picocli.CommandLine.Option;
 
 public class ActionSourceResolverMixin {
-    
     public static abstract class AbstractActionSourceResolverMixin  {
         public abstract String getSource();
 
@@ -35,7 +33,7 @@ public class ActionSourceResolverMixin {
     }
     
     public static class OptionalOption extends AbstractActionSourceResolverMixin {
-        @Option(names="--from", required = false, descriptionKey = "fcli.action.resolver.from")
+        @Option(names={"--from-zip", "-z"}, required = false, descriptionKey = "fcli.action.resolver.from-zip")
         @Getter private String source;
     }
 }

@@ -67,7 +67,7 @@ public class ActionLoaderHelper {
         return load(sources, name, invalidSignatureHandler).asString();
     }
     
-    public static final ActionLoadResult load(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
+    private static final ActionLoadResult load(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
         return new ActionLoader(sources, invalidSignatureHandler).load(name);
     }
     
