@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240426.171137-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240429.090312-dev_develop" %}
 
 
 <div id="header">
@@ -41,7 +41,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod action list</strong> [<strong>--from</strong>=<em>&lt;source&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
+<p><strong>fcli fod action list</strong> [<strong>-z</strong>=<em>&lt;source&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
                      [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]]
                      <em class="[<strong>-o</strong>=_format[=&lt;options&gt;">] [<strong>--store</strong>=_variableName</em>
          _            <em class="=&lt;propertyNames&gt;">] [<strong>--to-file</strong>=</em>&lt;outputFile&gt;_]] [<strong>-q</strong>=<em>&lt;SpEL _
@@ -52,7 +52,9 @@ fcli_version:
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>By default, this command lists available built-in and previously imported custom actions. If the <code>--from-zip</code> option is specified, this command lists available actions from the given local or remote zip file instead.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -60,13 +62,13 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><strong>--from</strong>=<em>&lt;source&gt;</em></dt>
-<dd>
-<p>Optional local or remote zip-file from which to load the action</p>
-</dd>
 <dt class="hdlist1"><strong>-q</strong>, <strong>--query</strong>=<em>&lt;SpEL expression&gt;</em></dt>
 <dd>
 <p>Only display records for which the given Spring Expression Language (SpEL) expression returns true.</p>
+</dd>
+<dt class="hdlist1"><strong>-z</strong>, <strong>--from-zip</strong>=<em>&lt;source&gt;</em></dt>
+<dd>
+<p>Optional local or remote zip-file from which to load the action if the action is specified as a simple name. This option will be ignored if action is specified as local or remote action YAML file location.</p>
 </dd>
 </dl>
 </div>
@@ -122,7 +124,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-04-26 17:13:20 UTC
+Last updated 2024-04-29 09:04:53 UTC
 </div>
 </div>
 </body>

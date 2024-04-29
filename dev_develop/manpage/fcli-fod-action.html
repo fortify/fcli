@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240426.171137-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240429.090312-dev_develop" %}
 
 
 <div id="header">
@@ -32,7 +32,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-fod-action - Run a wide variety of FoD-related actions (data export, integration, automation).</p>
+<p>fcli-fod-action - Manage FoD actions: data export, integration, automation & more.</p>
 </div>
 </div>
 <div id="content">
@@ -48,10 +48,10 @@ fcli_version:
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Actions are defined in YAML files that define action parameters, workflow steps and (optional) outputs. Fcli ships with various built-in actions, currently mostly focused on exporting issue data to 3rd-party systems or into various output formats. Please see the output of the 'list' command to see the list of available built-in actions.</p>
+<p>Fcli supports workflow-style actions defined in YAML files. Many built-in actions are provided, focusing on data export and CI/CD integration. Users can also develop their own custom actions, either from scratch or by customizing built-in actions. Note though that the ability to run custom actions is currently considered PREVIEW functionality; custom actions developed for this fcli version may fail on other fcli versions. We will stabilize action syntax over the next couple of fcli versions, and provide proper backward compatibility so that newer fcli versions can run actions developed for older fcli versions.</p>
 </div>
 <div class="paragraph">
-<p>Fcli also supports custom actions, which can be imported using the 'import' command. You can design your custom actions from scratch, or use the built-in actions as a basis for your own custom actions, for example if you wish to modify behavior or output. The 'get' command can be used to view the contents of built-in or imported actions.</p>
+<p>Actions can potentially perform dangerous operations like deleting data or posting data to 3rd-party systems, so it is recommended to only run trusted actions. Action authors can sign their actions using the <code>action sign</code> command; actions without a (valid) signature will require confirmation when trying to run them. Trusted public keys can be configured through the <code>fcli config public-key</code> commands.</p>
 </div>
 </div>
 </div>
@@ -89,6 +89,10 @@ fcli_version:
 <dd>
 <p>Run an action.</p>
 </dd>
+<dt class="hdlist1"><a href="fcli-fod-action-sign.html"><strong>sign</strong></a></dt>
+<dd>
+<p>Sign action.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -97,7 +101,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-04-26 17:13:20 UTC
+Last updated 2024-04-29 09:04:53 UTC
 </div>
 </div>
 </body>

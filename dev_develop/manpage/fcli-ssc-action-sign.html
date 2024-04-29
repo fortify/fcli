@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240426.171137-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240429.090312-dev_develop" %}
 
 
 <div id="header">
@@ -33,7 +33,7 @@ fcli_version:
 </div>
 <h2>Name</h2>
 <div class="sectionbody">
-<p>fcli-ssc-action-sign - Sign action</p>
+<p>fcli-ssc-action-sign - Sign action.</p>
 </div>
 </div>
 <div id="content">
@@ -54,7 +54,19 @@ fcli_version:
 <div class="sect1">
 <h2 id="_description"><a class="anchor" href="#_description"></a>Description</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>This command allows for signing custom actions, allowing those actions to be run without confirmation if the corresponding public key has been imported through the <code>fcli config public-key</code> commands. Contrary to other action commands, the action to be signed must be a local file.</p>
+</div>
+<div class="paragraph">
+<p>This command can use an existing private key for signing, or generate a new key pair if the private key file as specified through the <code>--with</code> option doesn&#8217;t yet exist and <code>--pubout</code> is specified to output the corresponding public key.</p>
+</div>
+<div class="paragraph">
+<p>Private keys may also be generated using OpenSSL or similar tools, but note that only RSA keys in PEM format are supported, and only a small set of encryption schemes are supported for encrypted private keys. It is recommended to use AES encryption, which is supported by both native fcli executables and the .jar version of fcli. The latter requires Java 19 or above though to handle AES-encrypted private keys. Following is a sample OpenSSL command for generating an encrypted private key that&#8217;s supported by fcli for signing:
+  openssl genpkey -algorithm rsa -out private-key.pem -aes256</p>
+</div>
+<div class="paragraph">
+<p>For convenience, when using a pre-existing private key, the <code>--pubout</code> option allows for outputting the corresponding public key for use by the <code>fcli config public-key import</code> command. Note that public keys will not be automatically added to the fcli trusted public key store; even if this command generates a key pair on the fly, you&#8217;ll still need to import the generated public key using the <code>fcli config public-key import</code> command.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -76,20 +88,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>-p</strong>, <strong>--password</strong>[=<em>&lt;privateKeyPassword&gt;</em>]</dt>
 <dd>
-<p>SSC password.</p>
-<div class="paragraph">
-<p>Environment variables:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>FCLI_DEFAULT_SSC_PASSWORD: Shared with SC SAST/DAST</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>FCLI_DEFAULT_SSC_SESSION_PASSWORD: Only SSC session commands</pre>
-</div>
-</div>
+<p>Private key password</p>
 </dd>
 <dt class="hdlist1"><strong>--pubout</strong>=<em>&lt;publicKeyPath&gt;</em></dt>
 <dd>
@@ -157,7 +156,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-04-26 17:13:20 UTC
+Last updated 2024-04-29 09:04:53 UTC
 </div>
 </div>
 </body>
