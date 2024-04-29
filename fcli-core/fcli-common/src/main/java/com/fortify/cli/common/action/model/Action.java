@@ -59,7 +59,7 @@ public class Action implements IActionElement {
     /** Action description */
     private ActionUsage usage;
     /** Action parameters */
-    private List<ActionParameter> parameters = Collections.emptyList();
+    private List<ActionParameter> parameters;
     /** Additional requests targets */
     private List<ActionRequestTarget> addRequestTargets;
     /** Default values for certain action properties */
@@ -111,6 +111,9 @@ public class Action implements IActionElement {
     public final void postLoad(Action action) {
         checkNotNull("action usage", usage, this);
         checkNotNull("action steps", steps, this);
+        if ( parameters==null ) {
+            parameters = Collections.emptyList();
+        }
     }
     
     /**

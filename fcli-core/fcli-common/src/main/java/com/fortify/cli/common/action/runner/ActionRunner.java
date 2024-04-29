@@ -15,6 +15,8 @@ package com.fortify.cli.common.action.runner;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -499,6 +501,13 @@ public class ActionRunner implements AutoCloseable {
             if ( LOG.isDebugEnabled() ) {
                 LOG.debug(String.format("Set %s: %s", name, value.toPrettyString()));
             }
+            if ( "parameters".equals(name) ) {
+                // If we ever implement some action security analysis, we want to
+                // consider user-provided parameter values as 'safe' values in
+                // potentially unsafe actions. As such, actions are not allowed
+                // to update the parameters object.
+                throw new IllegalStateException("Action steps are not allowed to modify 'parameters'");
+            }
             localData.set(name, value);
             if ( parent!=null ) { parent.setDataValue(name, value); }
         }
@@ -778,6 +787,7 @@ public class ActionRunner implements AutoCloseable {
             if ( _if==null || spelEvaluator.evaluate(_if, data, Boolean.class) ) {
                 var method = requestDescriptor.getMethod();
                 var uri = spelEvaluator.evaluate(requestDescriptor.getUri(), data, String.class);
+                checkUri(uri);
                 var query = evaluateTemplateExpressionMap(requestDescriptor.getQuery(), data, Object.class);
                 var body = requestDescriptor.getBody()==null ? null : spelEvaluator.evaluate(requestDescriptor.getBody(), data, Object.class);
                 var requestData = new IActionRequestHelper.ActionRequestDescriptor(method, uri, query, body, r->responseConsumer.accept(requestDescriptor, r), e->failureConsumer.accept(requestDescriptor, e));
@@ -787,6 +797,20 @@ public class ActionRunner implements AutoCloseable {
                 } else {
                     simpleRequests.computeIfAbsent(requestDescriptor.getTarget(), s->new ArrayList<IActionRequestHelper.ActionRequestDescriptor>()).add(requestData);
                 }
+            }
+        }
+
+        private void checkUri(String uriString) {
+            try {
+                var uri = new URI(uriString);
+                // We don't allow absolute URIs, as this could expose authorization
+                // headers and other data to systems other than the predefined target
+                // system.
+                if ( uri.isAbsolute() ) {
+                    throw new IllegalStateException("Absolute request uri is not allowed: "+uriString);
+                }
+            } catch ( URISyntaxException e ) {
+                throw new IllegalStateException("Invalid request uri: "+uriString);
             }
         }
 
