@@ -37,6 +37,6 @@ import picocli.CommandLine;
                 FoDDastScanFileUploadCommand.class
         }
 )
-@DefaultVariablePropertyName("scanId")
+@DefaultVariablePropertyName("releaseAndScanId")
 public class FoDDastScanCommands extends AbstractContainerCommand {
 }

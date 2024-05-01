@@ -51,6 +51,7 @@ public class FoDScanDastAutomatedHelper extends FoDScanHelper {
         JsonNode node = objectMapper.createObjectNode()
                 .put("scanId", startScanResponse.getScanId())
                 .put("scanType", FoDScanType.Dynamic.name())
+                .put("releaseAndScanId",  String.format("%s:%s", releaseDescriptor.getReleaseId(), startScanResponse.getScanId()))
                 .put("analysisStatusType", "Pending")
                 .put("applicationName", releaseDescriptor.getApplicationName())
                 .put("releaseName", releaseDescriptor.getReleaseName())

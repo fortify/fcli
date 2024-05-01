@@ -56,4 +56,5 @@ public class FoDUrls {
     public static final String DAST_AUTOMATED_SCANS = ApiBase + "/releases/{relId}/dast-automated-scans";
     public static final String REPORTS = ApiBase + "/reports";
     public static final String REPORT = ApiBase + "/reports/{reportId}";
+    public static final String SCAN_POLLING_SUMMARY = ApiBase + "/releases/{relId}/scans/{scanId}/polling-summary";
 }
