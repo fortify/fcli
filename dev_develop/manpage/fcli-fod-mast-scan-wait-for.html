@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240429.215802-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240502.082719-dev_develop" %}
 
 
 <div id="header">
@@ -43,7 +43,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod mast-scan wait-for</strong> [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
+<p><strong>fcli fod mast-scan wait-for</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
                             [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
                             [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
                             [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
@@ -76,6 +76,10 @@ See fcli help output</p>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
+</dd>
 <dt class="hdlist1"><strong>-i</strong>, <strong>--interval</strong>=<em>&lt;intervalPeriod&gt;</em></dt>
 <dd>
 <p>Polling interval, for example 5s (5 seconds) or 1m (1 minute).</p>
@@ -196,7 +200,7 @@ See fcli help output</p>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-04-29 21:59:38 UTC
+Last updated 2024-05-02 08:28:56 UTC
 </div>
 </div>
 </body>
