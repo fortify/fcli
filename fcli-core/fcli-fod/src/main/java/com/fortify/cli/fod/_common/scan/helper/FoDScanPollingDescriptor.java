@@ -13,35 +13,30 @@
 
 package com.fortify.cli.fod._common.scan.helper;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
-public class FoDScanDescriptor extends JsonNodeHolder {
-    private String scanId;
-    private String scanType;
-    private String applicationName;
-    private String releaseName;
-    private String applicationId;
-    private String releaseId;
-    private String microserviceName;
-    private String status;
-
-    @JsonIgnore
-    public String getReleaseAndScanId() {
-        return String.format("%s:%s", releaseId, scanId);
-    }
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyy-MM-dd'T'hh:mm:ss")
-    private Date startedDateTime;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyy-MM-dd'T'hh:mm:ss")
-    private Date completedDateTime;
+public class FoDScanPollingDescriptor extends JsonNodeHolder {
+    private String ScanId;
+    private String OpenSourceScanId;
+    private String TenantId;
+    private String AnalysisStatusId;
+    private String OpenSourceStatusId;
+    private String AnalysisStatusTypeValue;
+    private String AnalysisStatusReasonId;
+    private String AnalysisStatusReason;
+    private String AnalysisStatusReasonNotes;
+    private String IssueCountCritical;
+    private String IssueCountHigh;
+    private String IssueCountMedium;
+    private String IssueCountLow;
+    private String PassFailStatus;
+    private String PassFailReasonType;
+    private String PauseDetails;
+    private String ScanType;
 }
