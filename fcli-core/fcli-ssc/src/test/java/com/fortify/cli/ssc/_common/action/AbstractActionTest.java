@@ -21,7 +21,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionInvalidSignatureHandlers;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
-import com.fortify.cli.common.crypto.SignatureHelper.InvalidSignatureHandler;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.InvalidSignatureHandler;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
 
 // TODO Move this class to a common test utility module; currently
 //      exact copies of this class are available in every module 
@@ -33,7 +34,7 @@ public abstract class AbstractActionTest {
     public void testLoadAction(String name) {
         try {
             ActionLoaderHelper
-            .load(ActionSource.builtinActionSources(getType()), name, invalidSignatureHandler())
+            .load(ActionSource.builtinActionSources(getType()), name, new SignatureValidator(invalidSignatureHandler()))
             .asAction();
         } catch ( Exception e ) {
             System.err.println(String.format("Error loading %s action %s:\n%s", getType(), name, e));
@@ -42,7 +43,7 @@ public abstract class AbstractActionTest {
     }
 
     public final String[] getActions() {
-        return ActionLoaderHelper.streamAsJson(ActionSource.builtinActionSources(getType()), ActionInvalidSignatureHandlers.IGNORE)
+        return ActionLoaderHelper.streamAsJson(ActionSource.builtinActionSources(getType()), new SignatureValidator(ActionInvalidSignatureHandlers.IGNORE))
                 .map(a->a.get("name").asText())
                 .toArray(String[]::new);
     }

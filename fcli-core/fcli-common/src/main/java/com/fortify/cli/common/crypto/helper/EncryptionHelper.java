@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  *******************************************************************************/
-package com.fortify.cli.common.crypto;
+package com.fortify.cli.common.crypto.helper;
 
 import java.io.IOException;
 import java.io.StringWriter;

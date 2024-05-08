@@ -40,11 +40,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.Action.ActionProperties;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.RequireConfirmation.AbortedByUserException;
-import com.fortify.cli.common.crypto.SignatureHelper;
-import com.fortify.cli.common.crypto.SignatureHelper.InvalidSignatureHandler;
-import com.fortify.cli.common.crypto.SignatureHelper.SignatureStatus;
-import com.fortify.cli.common.crypto.SignatureHelper.SignedTextDescriptor;
-import com.fortify.cli.common.crypto.impl.SignedTextReader;
+import com.fortify.cli.common.crypto.helper.SignatureHelper;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.InvalidSignatureHandler;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor;
+import com.fortify.cli.common.crypto.helper.impl.SignedTextReader;
 import com.fortify.cli.common.util.Break;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
@@ -60,17 +61,17 @@ public class ActionLoaderHelper {
     private static final Logger LOG = LoggerFactory.getLogger(ActionLoaderHelper.class);
     private ActionLoaderHelper() {}
     
-    public static final ActionLoadResult load(List<ActionSource> sources, String name, InvalidSignatureHandler invalidSignatureHandler) {
-        return new ActionLoader(sources, invalidSignatureHandler).load(name);
+    public static final ActionLoadResult load(List<ActionSource> sources, String name, SignatureValidator signatureValidator) {
+        return new ActionLoader(sources, signatureValidator).load(name);
     }
     
-    public static final Stream<ObjectNode> streamAsJson(List<ActionSource> sources, InvalidSignatureHandler invalidSignatureHandler) {
-        return _streamAsJson(sources, invalidSignatureHandler);
+    public static final Stream<ObjectNode> streamAsJson(List<ActionSource> sources, SignatureValidator signatureValidator) {
+        return _streamAsJson(sources, signatureValidator);
     }
     
-    private static final Stream<ObjectNode> _streamAsJson(List<ActionSource> sources, InvalidSignatureHandler invalidSignatureHandler) {
+    private static final Stream<ObjectNode> _streamAsJson(List<ActionSource> sources, SignatureValidator signatureValidator) {
         Map<String, ObjectNode> result = new HashMap<>();
-        new ActionLoader(sources, invalidSignatureHandler)
+        new ActionLoader(sources, signatureValidator)
             .processActions(loadResult->{
                 result.putIfAbsent(loadResult.getProperties().getName(), loadResult.asJson());
                 return Break.FALSE;
@@ -94,7 +95,7 @@ public class ActionLoaderHelper {
     static final class ActionLoader {
         private static final SignedTextReader signedTextReader = SignatureHelper.signedTextReader();
         private final List<ActionSource> sources;
-        private final InvalidSignatureHandler invalidSignatureHandler;
+        private final SignatureValidator signatureValidator;
         
         public final ActionLoadResult load(String source) {
             // We first load from zips, in case a file happens to exist with
@@ -179,7 +180,7 @@ public class ActionLoaderHelper {
                     // until we've figured out how to sign internal actions during (or 
                     // potentially after) Gradle build.
                     isCustom 
-                        ? invalidSignatureHandler
+                        ? signatureValidator
                         : null);
         }
         

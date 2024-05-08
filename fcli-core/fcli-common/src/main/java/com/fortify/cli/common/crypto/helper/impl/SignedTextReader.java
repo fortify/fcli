@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.crypto.impl;
+package com.fortify.cli.common.crypto.helper.impl;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -18,10 +18,10 @@ import java.nio.charset.StandardCharsets;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fortify.cli.common.crypto.SignatureHelper.InvalidSignatureHandler;
-import com.fortify.cli.common.crypto.SignatureHelper.SignatureDescriptor;
-import com.fortify.cli.common.crypto.SignatureHelper.SignatureStatus;
-import com.fortify.cli.common.crypto.SignatureHelper.SignedTextDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor;
 import com.fortify.cli.common.util.FileUtils;
 
 import lombok.SneakyThrows;
@@ -33,22 +33,8 @@ public final class SignedTextReader {
         return load(FileUtils.readInputStreamAsString(is, charset), evaluateSignature);
     }
     
-    public final SignedTextDescriptor load(InputStream is, Charset charset, InvalidSignatureHandler onInvalidSingature) {
-        return load(FileUtils.readInputStreamAsString(is, charset), onInvalidSingature);
-    }
-    
-    @SneakyThrows
-    public final SignedTextDescriptor load(String signedOrUnsignedText, boolean evaluateSignature) {
-        var elts = signedOrUnsignedText.split(String.valueOf(InternalSignatureUtil.FILE_SEPARATOR));
-        if ( elts.length>2 ) {
-            throw new IllegalStateException("Input may contain only single Unicode File Separator character");
-        } else if ( elts.length==1) {
-            return buildUnsignedDescriptor(elts[0]);
-        } else {
-            var signatureDescriptor = new ObjectMapper(new YAMLFactory())
-                    .readValue(elts[1], SignatureDescriptor.class);
-            return buildSignedDescriptor(signedOrUnsignedText, elts[0], signatureDescriptor, evaluateSignature);
-        }
+    public final SignedTextDescriptor load(InputStream is, Charset charset, SignatureValidator signatureValidator) {
+        return load(FileUtils.readInputStreamAsString(is, charset), signatureValidator);
     }
     
     /**
@@ -61,13 +47,29 @@ public final class SignedTextReader {
      *        without performing any action on failure, simply pass d->{}.
      * @return {@link SignedTextDescriptor} instance
      */
-    public final SignedTextDescriptor load(String signedOrUnsignedText, InvalidSignatureHandler onInvalidSingature) {
+    public final SignedTextDescriptor load(String signedOrUnsignedText, SignatureValidator signatureValidator) {
+        var onInvalidSingature = signatureValidator==null ? null : signatureValidator.getInvalidSignatureHandler();
         if ( onInvalidSingature==null ) { return load(signedOrUnsignedText, false); }
-        var descriptor = load(signedOrUnsignedText, true);
+        var extraPublicKeys = signatureValidator.getExtraPublicKeys();
+        var descriptor = load(signedOrUnsignedText, true, extraPublicKeys);
         if ( descriptor.getSignatureStatus()!=SignatureStatus.VALID_SIGNATURE ) {
             onInvalidSingature.onInvalidSignature(descriptor);
         }
         return descriptor;
+    }
+    
+    @SneakyThrows
+    public final SignedTextDescriptor load(String signedOrUnsignedText, boolean evaluateSignature, String... extraPublicKeys) {
+        var elts = signedOrUnsignedText.split(String.valueOf(InternalSignatureUtil.FILE_SEPARATOR));
+        if ( elts.length>2 ) {
+            throw new IllegalStateException("Input may contain only single Unicode File Separator character");
+        } else if ( elts.length==1) {
+            return buildUnsignedDescriptor(elts[0]);
+        } else {
+            var signatureDescriptor = new ObjectMapper(new YAMLFactory())
+                    .readValue(elts[1], SignatureDescriptor.class);
+            return buildSignedDescriptor(signedOrUnsignedText, elts[0], signatureDescriptor, evaluateSignature, extraPublicKeys);
+        }
     }
 
     private SignedTextDescriptor buildUnsignedDescriptor(String text) {
@@ -78,12 +80,12 @@ public final class SignedTextReader {
                 .build();
     }
     
-    private SignedTextDescriptor buildSignedDescriptor(String rawText, String text, SignatureDescriptor signatureDescriptor, boolean evaluateSignatureStatus) {
+    private SignedTextDescriptor buildSignedDescriptor(String rawText, String text, SignatureDescriptor signatureDescriptor, boolean evaluateSignatureStatus, String... extraPublicKeys) {
         var signatureStatus = SignatureStatus.NOT_VERIFIED;
         if ( evaluateSignatureStatus ) {
             var fingerprint = signatureDescriptor.getPublicKeyFingerprint();
             var expectedSignature = signatureDescriptor.getSignature();
-            signatureStatus = Verifier.forFingerprint(fingerprint)
+            signatureStatus = Verifier.forFingerprint(fingerprint, extraPublicKeys)
                 .verify(text, StandardCharsets.UTF_8, expectedSignature);
         }
         return SignedTextDescriptor.builder()

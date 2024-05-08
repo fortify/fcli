@@ -19,7 +19,7 @@ import java.time.format.DateTimeParseException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.crypto.EncryptionHelper;
+import com.fortify.cli.common.crypto.helper.EncryptionHelper;
 import com.fortify.cli.common.util.DateTimePeriodHelper;
 import com.fortify.cli.common.util.EnvHelper;
 import com.fortify.cli.common.util.StringUtils;

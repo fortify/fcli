@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.crypto.impl;
+package com.fortify.cli.common.crypto.helper.impl;
 
 import java.nio.file.Path;
 import java.security.KeyPair;

@@ -12,8 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.config.publickey.cli.mixin;
 
-import com.fortify.cli.common.crypto.SignatureHelper;
-import com.fortify.cli.common.crypto.SignatureHelper.PublicKeyDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
 
 import lombok.Getter;
 import picocli.CommandLine.Parameters;

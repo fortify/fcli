@@ -35,6 +35,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoader;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.Action.ActionProperties;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.Break;
@@ -47,7 +48,7 @@ public class ActionImportHelper {
     public static ArrayNode importAction(String type, String externalSource, String action) {
         var result = JsonHelper.getObjectMapper().createArrayNode();
         try ( var fs = createOutputZipFileSystem(type) ) {
-            var actionLoadResult = new ActionLoader(ActionSource.externalActionSources(externalSource), ActionInvalidSignatureHandlers.EVALUATE)
+            var actionLoadResult = new ActionLoader(ActionSource.externalActionSources(externalSource), new SignatureValidator(ActionInvalidSignatureHandlers.EVALUATE))
                     .load(action);
             result.add(importAction(fs, actionLoadResult));
         }
@@ -57,7 +58,7 @@ public class ActionImportHelper {
     @SneakyThrows
     public static ArrayNode importZip(String type, String zip) {
         var result = JsonHelper.getObjectMapper().createArrayNode();
-        var loader = new ActionLoader(null, ActionInvalidSignatureHandlers.EVALUATE);
+        var loader = new ActionLoader(null, new SignatureValidator(ActionInvalidSignatureHandlers.EVALUATE));
         try ( var fs = createOutputZipFileSystem(type); var is = createZipFileInputStream(zip) ) {
             ZipHelper.processZipEntries(is, (zis, entry)->
                 importAction(fs, result, loader, zis, entry));
@@ -129,7 +130,7 @@ public class ActionImportHelper {
             return JsonHelper.getObjectMapper().createArrayNode();
         } else {
             var result = ActionLoaderHelper
-                    .streamAsJson(ActionSource.importedActionSources(type), ActionInvalidSignatureHandlers.EVALUATE)
+                    .streamAsJson(ActionSource.importedActionSources(type), new SignatureValidator(ActionInvalidSignatureHandlers.EVALUATE))
                     .collect(JsonHelper.arrayNodeCollector());
             Files.delete(zipPath);
             return result;

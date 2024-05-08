@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.crypto.SignatureHelper.SignatureStatus;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.AllArgsConstructor;

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.crypto.impl;
+package com.fortify.cli.common.crypto.helper.impl;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -21,10 +21,12 @@ import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
-import com.fortify.cli.common.crypto.SignatureHelper.SignatureStatus;
-import com.fortify.cli.common.crypto.impl.InternalSignatureUtil.DataSignatureUpdater;
-import com.fortify.cli.common.crypto.impl.InternalSignatureUtil.FileSignatureUpdater;
-import com.fortify.cli.common.crypto.impl.InternalSignatureUtil.ISignatureUpdater;
+import org.apache.commons.lang3.StringUtils;
+
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
+import com.fortify.cli.common.crypto.helper.impl.InternalSignatureUtil.DataSignatureUpdater;
+import com.fortify.cli.common.crypto.helper.impl.InternalSignatureUtil.FileSignatureUpdater;
+import com.fortify.cli.common.crypto.helper.impl.InternalSignatureUtil.ISignatureUpdater;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -37,7 +39,19 @@ public final class Verifier {
         this(InternalSignatureUtil.parseKey(pemOrBase64Key));
     }
     
-    public static final Verifier forFingerprint(String fingerprint) {
+    public static final Verifier forFingerprint(String fingerprint, String... extraPublicKeys) {
+        // Try to locate public key for fingerprint from given extra public keys
+        if ( extraPublicKeys!=null ) {
+            for ( var extraPublicKey : extraPublicKeys ) {
+                if ( StringUtils.isNotBlank(extraPublicKey) ) {
+                    var verifier = new Verifier(extraPublicKey);
+                    if ( fingerprint.equals(verifier.publicKeyFingerPrint()) ) {
+                        return verifier;
+                    }
+                }
+            }
+        }
+        // If not found in extra public keys, load from trusted public keys
         var publicKeyDescriptor = PublicKeyTrustStore.INSTANCE.load(fingerprint, false);
         var publicKey = publicKeyDescriptor==null ? null : publicKeyDescriptor.getPublicKey();
         return new Verifier(publicKey);

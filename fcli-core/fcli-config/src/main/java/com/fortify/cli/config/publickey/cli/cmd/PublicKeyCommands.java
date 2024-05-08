@@ -18,7 +18,7 @@ import picocli.CommandLine.Command;
 
 @Command(
         name = "public-key",
-        aliases = "pk",
+        aliases = "pubkey",
         subcommands = {
                 PublicKeyClearCommand.class,
                 PublicKeyDeleteCommand.class,

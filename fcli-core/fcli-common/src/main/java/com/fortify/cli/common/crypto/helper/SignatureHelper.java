@@ -1,16 +1,16 @@
-package com.fortify.cli.common.crypto;
+package com.fortify.cli.common.crypto.helper;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.crypto.impl.KPGenerator;
-import com.fortify.cli.common.crypto.impl.PublicKeyTrustStore;
-import com.fortify.cli.common.crypto.impl.SignedTextReader;
-import com.fortify.cli.common.crypto.impl.Signer;
-import com.fortify.cli.common.crypto.impl.TextSigner;
-import com.fortify.cli.common.crypto.impl.Verifier;
+import com.fortify.cli.common.crypto.helper.impl.KPGenerator;
+import com.fortify.cli.common.crypto.helper.impl.PublicKeyTrustStore;
+import com.fortify.cli.common.crypto.helper.impl.SignedTextReader;
+import com.fortify.cli.common.crypto.helper.impl.Signer;
+import com.fortify.cli.common.crypto.helper.impl.TextSigner;
+import com.fortify.cli.common.crypto.helper.impl.Verifier;
 import com.fortify.cli.common.json.JsonNodeHolder;
 import com.fortify.cli.common.util.StringUtils;
 
@@ -119,6 +119,17 @@ public class SignatureHelper {
             if ( throwIfNotValid && this!=VALID_SIGNATURE ) {
                 throw new IllegalStateException("Signature mismatch");
             }
+        }
+    }
+    
+    @Data
+    public static final class SignatureValidator {
+        private final InvalidSignatureHandler invalidSignatureHandler;
+        private final String[] extraPublicKeys;
+        
+        public SignatureValidator(InvalidSignatureHandler invalidSignatureHandler, String... extraPublicKeys) {
+            this.invalidSignatureHandler = invalidSignatureHandler;
+            this.extraPublicKeys = extraPublicKeys;
         }
     }
     

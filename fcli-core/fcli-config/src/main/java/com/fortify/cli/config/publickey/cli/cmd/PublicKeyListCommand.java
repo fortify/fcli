@@ -13,8 +13,8 @@
 package com.fortify.cli.config.publickey.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.crypto.SignatureHelper;
-import com.fortify.cli.common.crypto.SignatureHelper.PublicKeyDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;

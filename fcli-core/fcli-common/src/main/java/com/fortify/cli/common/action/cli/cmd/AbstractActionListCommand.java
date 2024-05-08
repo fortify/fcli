@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.action.cli.mixin.ActionSourceResolverMixin;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionInvalidSignatureHandlers;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -28,7 +29,7 @@ public abstract class AbstractActionListCommand extends AbstractOutputCommand im
     @Override
     public final JsonNode getJsonNode() {
         return ActionLoaderHelper
-                .streamAsJson(actionSourceResolver.getActionSources(getType()),ActionInvalidSignatureHandlers.EVALUATE)
+                .streamAsJson(actionSourceResolver.getActionSources(getType()), new SignatureValidator(ActionInvalidSignatureHandlers.EVALUATE))
                 .collect(JsonHelper.arrayNodeCollector());
     }    
     @Override

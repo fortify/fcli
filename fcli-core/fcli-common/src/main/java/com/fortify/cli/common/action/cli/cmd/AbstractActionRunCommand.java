@@ -25,7 +25,7 @@ import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
-import com.fortify.cli.common.crypto.SignatureHelper.SignedTextDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.DisableTest;

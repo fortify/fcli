@@ -15,22 +15,26 @@ package com.fortify.cli.common.action.cli.mixin;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoadResult;
 import com.fortify.cli.common.action.model.Action;
-import com.fortify.cli.common.crypto.SignatureHelper.InvalidSignatureHandler;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins.AbstractTextResolverMixin;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.InvalidSignatureHandler;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 public class ActionResolverMixin {
     public static abstract class AbstractActionResolverMixin {
         @Getter @Mixin private ActionSourceResolverMixin.OptionalOption actionSourceResolver;
+        @Mixin private PublicKeyResolverMixin publicKeyResolver;
         public abstract String getAction();
         
         public ActionLoadResult load(String type, InvalidSignatureHandler invalidSignatureHandler) {
             var action = getAction();
             return action==null 
                 ? null 
-                : ActionLoaderHelper.load(actionSourceResolver.getActionSources(type), action, invalidSignatureHandler);
+                : ActionLoaderHelper.load(actionSourceResolver.getActionSources(type), action, new SignatureValidator(invalidSignatureHandler, publicKeyResolver.getText()));
         }
         
         public Action loadAction(String type, InvalidSignatureHandler invalidSignatureHandler) {
@@ -48,5 +52,9 @@ public class ActionResolverMixin {
     
     public static class OptionalParameter extends AbstractActionResolverMixin {
         @Getter @Parameters(arity="0..1", descriptionKey="fcli.action.nameOrLocation") private String action;
+    }
+    
+    private static class PublicKeyResolverMixin extends AbstractTextResolverMixin {
+        @Getter @Option(names={"--pubkey"}, required = false, descriptionKey = "fcli.action.resolver.pubkey", paramLabel = "source") private String textSource;
     }
 }

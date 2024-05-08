@@ -10,27 +10,22 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.crypto.impl;
+package com.fortify.cli.common.crypto.helper.impl;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fortify.cli.common.crypto.SignatureHelper.PublicKeyDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.PublicKeyDescriptor;
 import com.fortify.cli.common.util.FcliDataHelper;
-
-import lombok.SneakyThrows;
 
 public final class PublicKeyTrustStore {
     public static final PublicKeyTrustStore INSTANCE = new PublicKeyTrustStore();
     private PublicKeyTrustStore() {}
     
-    @SneakyThrows
-    public final PublicKeyDescriptor importKey(Path pemPath, String name) {
-        var publicKey = Files.readString(pemPath);
+    public PublicKeyDescriptor importKey(String publicKey, String name) {
         var fingerprint = new Verifier(publicKey).publicKeyFingerPrint();
         if ( StringUtils.isBlank(name) ) { name=fingerprint; }
         var descriptor = new PublicKeyDescriptor(name, fingerprint, publicKey);

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.crypto.impl;
+package com.fortify.cli.common.crypto.helper.impl;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -32,9 +32,9 @@ import javax.crypto.EncryptedPrivateKeyInfo;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-import com.fortify.cli.common.crypto.impl.InternalSignatureUtil.DataSignatureUpdater;
-import com.fortify.cli.common.crypto.impl.InternalSignatureUtil.FileSignatureUpdater;
-import com.fortify.cli.common.crypto.impl.InternalSignatureUtil.ISignatureUpdater;
+import com.fortify.cli.common.crypto.helper.impl.InternalSignatureUtil.DataSignatureUpdater;
+import com.fortify.cli.common.crypto.helper.impl.InternalSignatureUtil.FileSignatureUpdater;
+import com.fortify.cli.common.crypto.helper.impl.InternalSignatureUtil.ISignatureUpdater;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;

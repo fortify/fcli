@@ -12,10 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.config.publickey.cli.cmd;
 
-import java.nio.file.Path;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.crypto.SignatureHelper;
+import com.fortify.cli.common.cli.mixin.CommonOptionMixins.AbstractTextResolverMixin;
+import com.fortify.cli.common.crypto.helper.SignatureHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
@@ -25,16 +24,19 @@ import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @Command(name = OutputHelperMixins.Import.CMD_NAME)
 public class PublicKeyImportCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Getter @Mixin private OutputHelperMixins.Import outputHelper;
-    @Option(names = {"--file", "-f"}, required = true) private Path pemFile;
+    @Mixin private PublicKeyResolverMixin publicKeyResolver;
     @Option(names = {"--name", "-n"}, required = true) private String name;
 
     @Override
     public JsonNode getJsonNode() {
-        return SignatureHelper.publicKeyTrustStore().importKey(pemFile, name).asObjectNode();
+        return SignatureHelper.publicKeyTrustStore()
+                .importKey(publicKeyResolver.getText(), name)
+                .asObjectNode();
     }
     
     @Override
@@ -45,5 +47,9 @@ public class PublicKeyImportCommand extends AbstractOutputCommand implements IJs
     @Override
     public boolean isSingular() {
         return true;
+    }
+    
+    private static class PublicKeyResolverMixin extends AbstractTextResolverMixin {
+        @Getter @Parameters(arity = "1", descriptionKey = "fcli.config.public-key.resolver", paramLabel = "source") private String textSource;
     }
 }

@@ -10,7 +10,7 @@
  * herein. The information contained herein is subject to change 
  * without notice.
  */
-package com.fortify.cli.common.crypto.impl;
+package com.fortify.cli.common.crypto.helper.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import com.fortify.cli.common.crypto.SignatureHelper.SignatureDescriptor;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureDescriptor;
 
 import lombok.SneakyThrows;
 
