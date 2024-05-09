@@ -1,3 +1,5 @@
+$schema: file:///home/rsenden/fcli-action-schema.json
+
 usage:
   header: (SAMPLE) Check security policy. 
   description: |

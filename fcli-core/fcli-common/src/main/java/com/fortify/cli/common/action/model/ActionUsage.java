@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.action.model;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.Data;
@@ -24,8 +25,10 @@ import lombok.NoArgsConstructor;
 @Data
 public final class ActionUsage implements IActionElement {
     /** Required usage header */
+    @JsonPropertyDescription("Required action usage header, displayed in list and help outputs")
     private String header;
     /** Required usage description */
+    @JsonPropertyDescription("Required action usage description, displayed in help output")
     private String description;
     
     public void postLoad(Action action) {

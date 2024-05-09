@@ -2,8 +2,11 @@ apply plugin: 'java'
 apply plugin: 'org.asciidoctor.jvm.convert'
 
 dependencies {
-	runtimeOnly project("${fcliAppRef}")
+    implementation project("${fcliCommonRef}")
+	implementation project("${fcliAppRef}")
 	runtimeOnly 'info.picocli:picocli-codegen'
+    implementation 'com.github.victools:jsonschema-generator:4.35.0'
+    implementation 'com.github.victools:jsonschema-module-jackson:4.35.0'
 }
 
 ext {
@@ -18,6 +21,12 @@ ext {
 	htmlOutputDir             = "${docsBuildDir}/html/output"
 	ghPagesStaticOutputDir    = "${docsBuildDir}/gh-pages/static/output"
 	ghPagesVersionedOutputDir = "${docsBuildDir}/gh-pages/versioned/output"
+}
+
+task generateActionSchema(type: JavaExec) {
+    dependsOn('build')
+    classpath = sourceSets.main.runtimeClasspath
+    main 'com.fortify.cli.common.action.schema.generator.GenerateActionSchema'
 }
 
 task generateManpageAsciiDoc(type: JavaExec) {

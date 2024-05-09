@@ -24,6 +24,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.util.StringUtils;
@@ -51,12 +52,14 @@ import lombok.SneakyThrows;
 @Data
 public class Action implements IActionElement {
     /** Action name, set in {@link #postLoad(ActionProperties)} method */
+    @JsonPropertyDescription("Action name")
     private String name;
     /** Whether this is a custom action, set in {@link #postLoad(ActionProperties)} method */
     private boolean custom;
     /** Signature status for this action, set in {@link #postLoad(ActionProperties)} method */
     private SignatureStatus signatureStatus;
     /** Action description */
+    @JsonPropertyDescription("Action usage help")
     private ActionUsage usage;
     /** Action parameters */
     private List<ActionParameter> parameters;
