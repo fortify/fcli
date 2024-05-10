@@ -34,7 +34,7 @@ public final class ActionStepWrite extends AbstractActionStep implements IAction
     @JsonProperty(required = false) private TemplateExpression value;
     
     @JsonPropertyDescription("Required if 'value' is not specified: Name of a value template to be evaluated, writing the outcome of the value template to the given output.")
-    @JsonProperty(required = true) private String valueTemplate;    
+    @JsonProperty(required = false) private String valueTemplate;    
     
     public void postLoad(Action action) {
         Action.checkNotNull("write to", to, this);

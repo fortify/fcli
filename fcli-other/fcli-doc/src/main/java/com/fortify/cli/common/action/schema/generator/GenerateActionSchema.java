@@ -15,26 +15,21 @@ package com.fortify.cli.common.action.schema.generator;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.SupportedSchemaVersion;
 import com.fortify.cli.common.spring.expression.wrapper.SimpleExpression;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.github.victools.jsonschema.generator.Option;
 import com.github.victools.jsonschema.generator.OptionPreset;
-import com.github.victools.jsonschema.generator.SchemaGenerationContext;
 import com.github.victools.jsonschema.generator.SchemaGenerator;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfig;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfigBuilder;
 import com.github.victools.jsonschema.generator.SchemaVersion;
-import com.github.victools.jsonschema.generator.SubtypeResolver;
 import com.github.victools.jsonschema.generator.impl.module.SimpleTypeModule;
 import com.github.victools.jsonschema.module.jackson.JacksonModule;
 import com.github.victools.jsonschema.module.jackson.JacksonOption;
@@ -45,14 +40,15 @@ public class GenerateActionSchema {
         var outputPath = Path.of(args[0]);
         SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
         JacksonModule jacksonModule = new JacksonModule(JacksonOption.RESPECT_JSONPROPERTY_REQUIRED, JacksonOption.FLATTENED_ENUMS_FROM_JSONPROPERTY);
-        //configBuilder.forTypesInGeneral().withSubtypeResolver(new JsonNodeSubTypeResolver());
-        /*
-        configBuilder.forTypesInGeneral().withCustomDefinitionProvider((javaType, context) -> 
-            context.createDefinition(javaType)
-                .set("type", JsonHelper.getObjectMapper().createArrayNode()
-                        .add("object").add("string"))
-        );
-        */
+        configBuilder.forFields().withTargetTypeOverridesResolver(field->{
+            if ( field.getName().equals("contents") && field.getType().isInstanceOf(JsonNode.class) ) {
+                var context = field.getContext();
+                return Stream.of(ObjectNode.class, String.class)
+                    .map(context::resolve)
+                    .collect(Collectors.toList());
+            }
+            return null;
+        });
         SchemaGeneratorConfig config = configBuilder
                 .with(jacksonModule)
                 .with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
