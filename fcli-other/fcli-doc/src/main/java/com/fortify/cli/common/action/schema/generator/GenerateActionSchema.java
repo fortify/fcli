@@ -24,11 +24,13 @@ import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.SupportedSchemaVersion;
 import com.fortify.cli.common.spring.expression.wrapper.SimpleExpression;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
+import com.github.victools.jsonschema.generator.CustomDefinition;
 import com.github.victools.jsonschema.generator.Option;
 import com.github.victools.jsonschema.generator.OptionPreset;
 import com.github.victools.jsonschema.generator.SchemaGenerator;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfig;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfigBuilder;
+import com.github.victools.jsonschema.generator.SchemaKeyword;
 import com.github.victools.jsonschema.generator.SchemaVersion;
 import com.github.victools.jsonschema.generator.impl.module.SimpleTypeModule;
 import com.github.victools.jsonschema.module.jackson.JacksonModule;
@@ -40,14 +42,26 @@ public class GenerateActionSchema {
         var outputPath = Path.of(args[0]);
         SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
         JacksonModule jacksonModule = new JacksonModule(JacksonOption.RESPECT_JSONPROPERTY_REQUIRED, JacksonOption.FLATTENED_ENUMS_FROM_JSONPROPERTY);
-        configBuilder.forFields().withTargetTypeOverridesResolver(field->{
-            if ( field.getName().equals("contents") && field.getType().isInstanceOf(JsonNode.class) ) {
-                var context = field.getContext();
-                return Stream.of(ObjectNode.class, String.class)
-                    .map(context::resolve)
-                    .collect(Collectors.toList());
+        configBuilder.forTypesInGeneral().withCustomDefinitionProvider((type, context) -> {
+            if (type.getErasedType() == TemplateExpression.class) {
+                var custom = context.getGeneratorConfig().createObjectNode();
+                custom.put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "spelTemplateExpression")
+                    .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_BOOLEAN))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_INTEGER))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_NUMBER));
+                return new CustomDefinition(custom, true);
+            } else if (type.getErasedType() == JsonNode.class ) {
+                var custom = context.getGeneratorConfig().createObjectNode();
+                custom.put(context.getKeyword(SchemaKeyword.TAG_ADDITIONAL_PROPERTIES), true)
+                    .putArray(context.getKeyword(SchemaKeyword.TAG_TYPE))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_OBJECT))
+                        .add(context.getKeyword(SchemaKeyword.TAG_TYPE_STRING));
+                return new CustomDefinition(custom, true);
+            } else {
+                return null;
             }
-            return null;
         });
         SchemaGeneratorConfig config = configBuilder
                 .with(jacksonModule)
@@ -55,8 +69,11 @@ public class GenerateActionSchema {
                 .with(Option.FLATTENED_ENUMS)
                 .with(Option.FORBIDDEN_ADDITIONAL_PROPERTIES_BY_DEFAULT)
                 .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES)
-                .with(new SimpleTypeModule().withStandardStringType(SimpleExpression.class, "spel-expression"))
-                .with(new SimpleTypeModule().withStandardStringType(TemplateExpression.class, "spel-template-expression"))
+                // TODO Ideally we'd also want to support all other primitive types,
+                //      for example to allow 'if: true' in addition to 'if: "true"'
+                //      or 'if: ${true}'
+                //.with(new SimpleTypeModule().withStandardStringType(SimpleExpression.class, "spel-expression"))
+                //.with(new SimpleTypeModule().withStandardStringType(TemplateExpression.class, "spel-template-expression"))
                 .build();
         SchemaGenerator generator = new SchemaGenerator(config);
         JsonNode jsonSchema = generator.generateSchema(Action.class);
