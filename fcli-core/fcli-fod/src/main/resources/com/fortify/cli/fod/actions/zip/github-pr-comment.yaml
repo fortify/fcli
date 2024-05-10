@@ -1,8 +1,13 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.json
+schemaVersion: '1.0'
+# The yaml-language-server line above tells most IDE's & YAML editors where to find 
+# the fcli action schema for validation & code completion. Please make sure that the 
+# referenced schema name matches the schemaVersion property above.
+
 # For now, this template uses latest release state to generate PR decorations.
 # See corresponding .bak file is SSC module for an example of how to better
 # implement this, once FoD supports retrieving new/re-introduced/removed isses
 # for a particular scan id/PR number/commit id.
-schemaVersion: '1.0'
 
 usage:
   header: (PREVIEW) Add GitHub Pull Request review comments.  

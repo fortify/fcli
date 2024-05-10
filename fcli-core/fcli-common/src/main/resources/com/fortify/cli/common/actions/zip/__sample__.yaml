@@ -1,3 +1,9 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.json
+schemaVersion: '1.0'
+# The yaml-language-server line above tells most IDE's & YAML editors where to find 
+# the fcli action schema for validation & code completion. Please make sure that the 
+# referenced schema name matches the schemaVersion property above.
+
 # This action documents action syntax through comments for the various sections and
 # elements below. Many action properties accept Spring Expression Language (SpEL) 
 # template expressions, combining regular text with SpEL expressions embedded between ${ and }.
@@ -7,7 +13,6 @@
 # This section defines action usage information, consisting of a usage header (shown 
 # by the 'list' and 'help' commands) and a more detailed description (shown by the 
 # 'help' command).
-schemaVersion: '1.0'
 
 usage:
   header: Sample Action 

@@ -34,7 +34,7 @@ public abstract class AbstractActionStepUpdateProperty extends AbstractActionSte
     @JsonProperty(required = false) private TemplateExpression value;
     
     @JsonPropertyDescription("Required if 'value' is not specified: Name of a value template to be evaluated, assigning or appending the outcome of the value template to the given set/append name.")
-    @JsonProperty(required = true) private String valueTemplate;
+    @JsonProperty(required = false) private String valueTemplate;
     
     public final void postLoad(Action action) {
         Action.checkNotBlank("set name", name, this);

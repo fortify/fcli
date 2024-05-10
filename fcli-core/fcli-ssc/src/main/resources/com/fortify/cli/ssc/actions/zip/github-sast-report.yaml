@@ -1,3 +1,9 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.json
+schemaVersion: '1.0'
+# The yaml-language-server line above tells most IDE's & YAML editors where to find 
+# the fcli action schema for validation & code completion. Please make sure that the 
+# referenced schema name matches the schemaVersion property above.
+
 # For now, github-sast-report and sarif-sast-report actions are exactly the same, apart from the
 # following:
 # - Different usage information
@@ -11,8 +17,6 @@
 # Until the latter situation arises, we should make sure though that both actions stay in sync;
 # when updating one, the other should also be updated. and ideally we should have functional tests
 # that compare the outputs of both actions. 
-
-schemaVersion: '1.0'
 
 usage:
   header: Generate a GitHub Code Scanning report listing SSC SAST vulnerabilities.  

@@ -1,3 +1,9 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.json
+schemaVersion: '1.0'
+# The yaml-language-server line above tells most IDE's & YAML editors where to find 
+# the fcli action schema for validation & code completion. Please make sure that the 
+# referenced schema name matches the schemaVersion property above.
+
 # This template would ideally get the list of new, removed and re-introduced issues
 # based on a given artifact id/scan id/commit# (in scan label)/pr# (in scan label).
 # However, although current implementation works for new and removed issues by matching
@@ -8,7 +14,6 @@
 # As such, for now we provide a separate template that's based on current application 
 # state, rather than trying to identify issues for a particular scan. Based on the
 # '.bak' extension of this file, it won't be included in fcli artifacts. 
-schemaVersion: '1.0'
 
 usage:
   header: Generate GitHub Pull Request decoration.  
