@@ -344,7 +344,7 @@ jobs:
           ls -d dev_* | sort | while read line; do echo "- '$line'"; done > _data/versions/dev.yml
           
       - name: Deploy documentation
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs
