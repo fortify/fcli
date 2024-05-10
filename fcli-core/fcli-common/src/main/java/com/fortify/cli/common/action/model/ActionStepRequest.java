@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.fortify.cli.common.util.StringUtils;
@@ -29,32 +30,40 @@ import lombok.NoArgsConstructor;
  * This class describes a REST request.
  */
 @Reflectable @NoArgsConstructor
-@Data
-public final class ActionStepRequest implements IActionStep {
-    /** Optional if-expression, executing this request only if condition evaluates to true */
-    @JsonProperty("if") private TemplateExpression _if;
-    /** Required name for this step element */
-    private String name;
-    /** Optional HTTP method, defaults to 'GET' */
-    private String method = HttpMethod.GET.name();
-    /** Required template expression defining the request URI from which to get the data */
-    private TemplateExpression uri;
-    /** Required target to which to send the request; may be specified here or through defaults.requestTarget */
-    private String target;
-    /** Map defining (non-encoded) request query parameters; parameter values are defined as template expressions */
-    private Map<String,TemplateExpression> query;
-    /** Optional request body template expression */
-    private TemplateExpression body;
-    /** Type of request; either 'simple' or 'paged' for now */
-    private ActionStepRequest.ActionStepRequestType type = ActionStepRequestType.simple;
-    /** Optional progress messages for various stages of request processing */
-    private ActionStepRequest.ActionStepRequestPagingProgressDescriptor pagingProgress;
-    /** Optional steps to be executed on the response before executing forEach steps */
-    private List<ActionStep> onResponse;
-    /** Optional steps to be executed on request failure; if not declared, an exception will be thrown */
-    private List<ActionStep> onFail;
-    /** Optional forEach block to be repeated for every response element */
-    private ActionStepRequest.ActionStepRequestForEachDescriptor forEach;
+@Data @EqualsAndHashCode(callSuper = true)
+public final class ActionStepRequest extends AbstractActionStep {
+    @JsonPropertyDescription("Required: Name to assign to the JSON response for this REST request. Can be referenced in subsequent steps using ${<name>} to access transformed data (if applicable) or ${<name>_raw} to access raw, untransformed data.")
+    @JsonProperty(required = true) private String name;
+    
+    @JsonPropertyDescription("Optional: HTTP method like GET or POST to use for this REST request. Defaults to 'GET'.")
+    @JsonProperty(required = false, defaultValue = "GET") private String method = HttpMethod.GET.name();
+    
+    @JsonPropertyDescription("Required: Unqualified REST URI, like '/api/v3/some/api/${parameters.<name>.id}' to be appended to the base URL as configured for the given 'target'.")
+    @JsonProperty(required = true) private TemplateExpression uri;
+    
+    @JsonPropertyDescription("Required if no default target has been configured through defaults.requestTarget: Target on which to execute the REST request. This may be 'fod' (for actions in FoD module), 'ssc' (for actions in SSC module), or a custom request target as configured through 'addRequestTargets'.")
+    @JsonProperty(required = false) private String target;
+    
+    @JsonPropertyDescription("Optional: Map of query parameters and corresponding values, for example 'someParam: ${<name>.<property>}'.")
+    @JsonProperty(required = false) private Map<String,TemplateExpression> query;
+    
+    @JsonPropertyDescription("Optional: Request body to send with the REST request.")
+    @JsonProperty(required = false) private TemplateExpression body;
+    
+    @JsonPropertyDescription("Optional: Flag to indicate whether this is a 'paged' or 'simple' request. If set to 'paged' (only available for 'fod' and 'ssc' request targets for now), all pages will be automatically processed. Defaults to 'simple'.")
+    @JsonProperty(required = false, defaultValue = "simple") private ActionStepRequest.ActionStepRequestType type = ActionStepRequestType.simple;
+
+    @JsonPropertyDescription("Optional: Progress messages for various stages of request/response processing.")
+    @JsonProperty(required = false) private ActionStepRequest.ActionStepRequestPagingProgressDescriptor pagingProgress;
+    
+    @JsonPropertyDescription("Optional: Steps to be executed on the overall response before executing any 'forEach' steps.")
+    @JsonProperty(required = false) private List<ActionStep> onResponse;
+    
+    @JsonPropertyDescription("Optional: Steps to be executed on request failure. If not specified, an exception will be thrown on request failure.")
+    @JsonProperty(required = false) private List<ActionStep> onFail;
+
+    @JsonPropertyDescription("Optional: Steps to be executed for each record in the REST response.")
+    @JsonProperty(required = false) private ActionStepRequest.ActionStepRequestForEachDescriptor forEach;
     
     /**
      * This method is invoked by {@link ActionStep#postLoad()}
@@ -63,8 +72,8 @@ public final class ActionStepRequest implements IActionStep {
     public final void postLoad(Action action) {
         Action.checkNotBlank("request name", name, this);
         Action.checkNotNull("request uri", uri, this);
-        if ( StringUtils.isBlank(target) && action.defaults!=null ) {
-            target = action.defaults.requestTarget;
+        if ( StringUtils.isBlank(target) && action.getDefaults()!=null ) {
+            target = action.getDefaults().getRequestTarget();
         }
         Action.checkNotBlank("request target", target, this);
         if ( pagingProgress!=null ) {

@@ -632,9 +632,9 @@ public class ActionRunner implements AutoCloseable {
         }
         
         private void processFcliStep(ActionStepFcli fcli) {
-            var cmd = spelEvaluator.evaluate(fcli.getCmd(), localData, String.class);
-            progressWriter.writeProgress("Executing fcli %s", cmd);
-            var cmdExecutor = new FcliCommandExecutor(rootCommandLine, cmd);
+            var args = spelEvaluator.evaluate(fcli.getArgs(), localData, String.class);
+            progressWriter.writeProgress("Executing fcli %s", args);
+            var cmdExecutor = new FcliCommandExecutor(rootCommandLine, args);
             Consumer<ObjectNode> recordConsumer = null;
             var forEach = fcli.getForEach();
             var name = fcli.getName();
@@ -643,7 +643,7 @@ public class ActionRunner implements AutoCloseable {
             }
             if ( forEach!=null || StringUtils.isNotBlank(name) ) {
                 if ( !cmdExecutor.canCollectRecords() ) {
-                    throw new IllegalStateException("Can't use forEach or name on fcli command: "+cmd);
+                    throw new IllegalStateException("Can't use forEach or name on fcli command: "+args);
                 } else {
                     recordConsumer = new FcliRecordConsumer(fcli);
                 }

@@ -12,6 +12,8 @@
 # when updating one, the other should also be updated. and ideally we should have functional tests
 # that compare the outputs of both actions. 
 
+schemaVersion: '1.0'
+
 usage:
   header: Generate a GitHub Code Scanning report listing SSC SAST vulnerabilities.  
   description: |

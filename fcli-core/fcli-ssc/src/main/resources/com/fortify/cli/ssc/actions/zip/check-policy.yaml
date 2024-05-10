@@ -1,4 +1,4 @@
-$schema: file:///home/rsenden/fcli-action-schema.json
+schemaVersion: '1.0'
 
 usage:
   header: (SAMPLE) Check security policy. 
@@ -18,17 +18,17 @@ parameters:
 steps:
   - fcli:
     - name: countsByFolder
-      cmd: ssc issue count --av ${parameters.appversion.id} --by FOLDER
+      args: ssc issue count --av ${parameters.appversion.id} --by FOLDER
   - fcli:
     - name: countsByNewIssue
-      cmd: ssc issue count --av ${parameters.appversion.id} --by "New Issue"
+      args: ssc issue count --av ${parameters.appversion.id} --by "New Issue"
   - check:
     - displayName: No critical issues allowed
       failIf:      ${countsByFolder.^[cleanName=='Critical']?.visibleCount>0}
     - displayName: No new issues allowed
       failIf:      ${countsByNewIssue.^[cleanName=='NEW']?.visibleCount>0}
   - fcli:
-    - cmd: ssc issue ls --av ${parameters.appversion.id}
+    - args: ssc issue ls --av ${parameters.appversion.id}
       forEach:
         name: issue
         do:

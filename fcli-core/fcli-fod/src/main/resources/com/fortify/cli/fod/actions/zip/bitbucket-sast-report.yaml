@@ -1,3 +1,5 @@
+schemaVersion: '1.0'
+
 usage:
   header: Generate a BitBucket Code Insights report listing FoD SAST vulnerabilities. 
   description: |

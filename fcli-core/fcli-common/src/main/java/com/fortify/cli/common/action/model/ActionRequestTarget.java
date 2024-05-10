@@ -14,6 +14,8 @@ package com.fortify.cli.common.action.model;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
@@ -26,12 +28,15 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionRequestTarget implements IActionElement {
-    /** Required name */
-    private String name;
-    /** Required base URL */
-    private TemplateExpression baseUrl;
-    /** Optional headers */
-    private Map<String, TemplateExpression> headers;
+    @JsonPropertyDescription("Required: Request target name, referenceable from 'request' steps.")
+    @JsonProperty(required = true) private String name;
+    
+    @JsonPropertyDescription("Required: Base URL to use for REST requests to this request target.")
+    @JsonProperty(required = true) private TemplateExpression baseUrl;
+    
+    @JsonPropertyDescription("Optional: Headers to be sent to this request target on every request.")
+    @JsonProperty(required = false) private Map<String, TemplateExpression> headers;
+    
     // TODO Add support for next page URL producer
     // TODO ? Add proxy support ?
     

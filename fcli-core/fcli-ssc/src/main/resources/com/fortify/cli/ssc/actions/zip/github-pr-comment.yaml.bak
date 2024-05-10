@@ -8,6 +8,8 @@
 # As such, for now we provide a separate template that's based on current application 
 # state, rather than trying to identify issues for a particular scan. Based on the
 # '.bak' extension of this file, it won't be included in fcli artifacts. 
+schemaVersion: '1.0'
+
 usage:
   header: Generate GitHub Pull Request decoration.  
   description: |

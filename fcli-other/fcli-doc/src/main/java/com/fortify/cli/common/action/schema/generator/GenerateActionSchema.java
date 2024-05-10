@@ -16,41 +16,39 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.model.Action;
+import com.fortify.cli.common.action.model.SupportedSchemaVersion;
+import com.fortify.cli.common.spring.expression.wrapper.SimpleExpression;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
-import com.github.victools.jsonschema.generator.CustomDefinition;
 import com.github.victools.jsonschema.generator.Option;
 import com.github.victools.jsonschema.generator.OptionPreset;
 import com.github.victools.jsonschema.generator.SchemaGenerator;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfig;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfigBuilder;
-import com.github.victools.jsonschema.generator.SchemaKeyword;
 import com.github.victools.jsonschema.generator.SchemaVersion;
+import com.github.victools.jsonschema.generator.impl.module.SimpleTypeModule;
 import com.github.victools.jsonschema.module.jackson.JacksonModule;
+import com.github.victools.jsonschema.module.jackson.JacksonOption;
 
 public class GenerateActionSchema {
     public static void main(String[] args) throws Exception {
+        if ( args.length!=1 ) { throw new IllegalArgumentException("Output directory must be specified as single argument"); }
+        var outputPath = Path.of(args[0]);
         SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
-        configBuilder.forTypesInGeneral().withCustomDefinitionProvider((type, context) -> {
-            if (type.getErasedType() != TemplateExpression.class) {
-                return null;
-            }
-            ObjectNode customPatternSchema = context.getGeneratorConfig().createObjectNode()
-                    .put(context.getKeyword(SchemaKeyword.TAG_TYPE), context.getKeyword(SchemaKeyword.TAG_TYPE_STRING))
-                    .put(context.getKeyword(SchemaKeyword.TAG_FORMAT), "spelTemplateExpression");
-            return new CustomDefinition(customPatternSchema, true);
-        });
-        JacksonModule jacksonModule = new JacksonModule();
+        JacksonModule jacksonModule = new JacksonModule(JacksonOption.RESPECT_JSONPROPERTY_REQUIRED, JacksonOption.FLATTENED_ENUMS_FROM_JSONPROPERTY);
         SchemaGeneratorConfig config = configBuilder
                 .with(jacksonModule)
                 .with(Option.EXTRA_OPEN_API_FORMAT_VALUES)
-                .without(Option.FLATTENED_ENUMS_FROM_TOSTRING)
                 .with(Option.FLATTENED_ENUMS)
+                .with(Option.FORBIDDEN_ADDITIONAL_PROPERTIES_BY_DEFAULT)
+                .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES)
+                .with(new SimpleTypeModule().withStandardStringType(SimpleExpression.class, "spel-expression"))
+                .with(new SimpleTypeModule().withStandardStringType(TemplateExpression.class, "spel-template-expression"))
                 .build();
         SchemaGenerator generator = new SchemaGenerator(config);
         JsonNode jsonSchema = generator.generateSchema(Action.class);
-        Files.writeString(Path.of("/home/rsenden/fcli-action-schema.json"), jsonSchema.toPrettyString());
+        Files.createDirectories(outputPath);
+        Files.writeString(outputPath.resolve(String.format("fcli-action-schema-%s.json", SupportedSchemaVersion.current.toString())), jsonSchema.toPrettyString());
         System.out.println(jsonSchema.toPrettyString());
     }
 }

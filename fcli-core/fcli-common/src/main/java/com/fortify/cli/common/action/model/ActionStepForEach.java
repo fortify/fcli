@@ -14,6 +14,8 @@ package com.fortify.cli.common.action.model;
 
 import java.util.function.Function;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
@@ -31,9 +33,11 @@ import lombok.NoArgsConstructor;
 public final class ActionStepForEach extends AbstractActionStepForEach {
     /** Processor that runs the forEach steps. This expression must evaluate to an
      *  IActionStepForEachProcessor instance. */
-    private TemplateExpression processor;
-    /** Values to iterate over */
-    private TemplateExpression values;
+    @JsonPropertyDescription("Required if 'values' not specified: Reference to a processor that generates JSON records and executes the given steps for each record. For now, the only available processor is ${#ssc.ruleDescriptionsProcessor(parameters.appversion.id)} for processing rule descriptions from the current state FPR file, used by some built-in actions.")
+    @JsonProperty(required = false) private TemplateExpression processor;
+    
+    @JsonPropertyDescription("Required if 'processor' not specified: Array of values to be iterated over.")
+    @JsonProperty(required = false) private TemplateExpression values;
     
     public final void _postLoad(Action action) {}
     

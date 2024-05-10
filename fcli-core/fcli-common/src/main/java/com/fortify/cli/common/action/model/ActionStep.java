@@ -15,6 +15,7 @@ package com.fortify.cli.common.action.model;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
@@ -42,34 +43,47 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public final class ActionStep extends AbstractActionStep {
-    /** Optional requests for this step element */
-    private List<ActionStepRequest> requests;
-    /** Optional fcli commands for this step element */
-    private List<ActionStepFcli> fcli;
-    /** Optional progress message template expression for this step element */
-    private TemplateExpression progress;
-    /** Optional warning message template expression for this step element */
-    private TemplateExpression warn;
-    /** Optional debug message template expression for this step element */
-    private TemplateExpression debug;
-    /** Optional exception message template expression for this step element */
-    @JsonProperty("throw") private TemplateExpression _throw;
-    /** Optional exit step element to generate exit code and terminate the action */
-    @JsonProperty("exit") private TemplateExpression _exit;
-    /** Optional set operations */
-    private List<ActionStepSet> set;
-    /** Optional add operations */
-    private List<ActionStepAppend> append;
-    /** Optional unset operations */
-    private List<ActionStepUnset> unset;
-    /** Optional write operations */
-    private List<ActionStepWrite> write;
-    /** Optional forEach operation */
-    private ActionStepForEach forEach;
-    /** Optional check operation */
-    private List<ActionStepCheck> check;
-    /** Optional sub-steps to be executed, useful for grouping or conditional execution */
-    private List<ActionStep> steps;
+    @JsonPropertyDescription("Optional: Execute one or more REST requests.")
+    @JsonProperty(required = false) private List<ActionStepRequest> requests;
+    
+    @JsonPropertyDescription("Optional: Execute one or more fcli commands. For now, only fcli commands that support the standard output options (--output/--store/--to-file) may be used, allowing the JSON output of those commands to be used in subsequent or nested steps. Any console output is suppressed, and any non-zero exit codes will produce an error.")
+    @JsonProperty(required = false) private List<ActionStepFcli> fcli;
+    
+    @JsonPropertyDescription("Optional: Write a progress message.")
+    @JsonProperty(required = false) private TemplateExpression progress;
+    
+    @JsonPropertyDescription("Optional: Write a warning message to console and log file (if enabled). Note that warning messages will be shown on console only after all action steps have been executed, to not interfere with progress messages.")
+    @JsonProperty(required = false) private TemplateExpression warn;
+    
+    @JsonPropertyDescription("Optional: Write a debug message to log file (if enabled).")
+    @JsonProperty(required = false) private TemplateExpression debug;
+
+    @JsonPropertyDescription("Optional: Throw an exception, thereby terminating action execution.")
+    @JsonProperty(value = "throw", required = false) private TemplateExpression _throw;
+    
+    @JsonPropertyDescription("Optional: Terminate action execution and return the given exit code.")
+    @JsonProperty(value = "exit", required = false) private TemplateExpression _exit;
+    
+    @JsonPropertyDescription("Optional: Set a data value for use in subsequent steps.")
+    @JsonProperty(required = false) private List<ActionStepSet> set;
+    
+    @JsonPropertyDescription("Optional: Append a data value for use in subsequent steps.")
+    @JsonProperty(required = false) private List<ActionStepAppend> append;
+    
+    @JsonPropertyDescription("Optional: Unset a data value for use in subsequent steps.")
+    @JsonProperty(required = false) private List<ActionStepUnset> unset;
+    
+    @JsonPropertyDescription("Optional: Write data to a file, stdout, or stderr. Note that output to stdout and stderr will be deferred until action termination as to not interfere with progress messages.")
+    @JsonProperty(required = false) private List<ActionStepWrite> write;
+    
+    @JsonPropertyDescription("Optional: Iterate over a given array of values.")
+    @JsonProperty(required = false) private ActionStepForEach forEach;
+    
+    @JsonPropertyDescription("Optional: Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of on or more checks was FAIL.")
+    @JsonProperty(required = false) private List<ActionStepCheck> check;
+    
+    @JsonPropertyDescription("Optional: Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.")
+    @JsonProperty(required = false) private List<ActionStep> steps;
     
     /**
      * This method is invoked by the parent element (which may either be another

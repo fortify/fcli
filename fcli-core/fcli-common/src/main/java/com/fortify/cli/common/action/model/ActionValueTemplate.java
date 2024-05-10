@@ -17,6 +17,9 @@ import java.util.Map;
 
 import org.springframework.expression.ParseException;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
@@ -35,12 +38,14 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionValueTemplate implements IActionElement {
-    /** Required name for this output */
-    private String name;
-    /** Output contents in JSON format, where each text node is assumed to be a template expression */
-    private JsonNode contents;
+    @JsonPropertyDescription("Required: Name of this value template.")
+    @JsonProperty(required = true) private String name;
+    
+    @JsonPropertyDescription("Required: Text or structured JSON contents, where each text node is assumed to be a template expression.")
+    @JsonProperty(required = true) private JsonNode contents;
+    
     /** Cached mapping from text node property path to corresponding TemplateExpression instance */  
-    private final Map<String, TemplateExpression> valueExpressions = new LinkedHashMap<>();
+    @JsonIgnore private final Map<String, TemplateExpression> valueExpressions = new LinkedHashMap<>();
     
     /**
      * This method checks whether required name and contents are not blank or null, then

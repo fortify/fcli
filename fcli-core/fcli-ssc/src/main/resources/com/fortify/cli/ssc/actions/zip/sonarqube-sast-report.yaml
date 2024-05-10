@@ -1,3 +1,5 @@
+schemaVersion: '1.0'
+
 usage:
   header: Generate a SonarQube External Issues report listing SSC SAST vulnerabilities. 
   description: |

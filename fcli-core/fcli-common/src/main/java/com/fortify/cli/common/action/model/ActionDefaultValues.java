@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.action.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.Data;
@@ -23,8 +25,8 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionDefaultValues implements IActionElement {
-    /** Default value for {@link ActionStepRequest#from} */
-    String requestTarget;
+    @JsonPropertyDescription("Optional: Default request target to use for REST requests.")
+    @JsonProperty(required = false) private String requestTarget;
     
     @Override
     public void postLoad(Action action) {}

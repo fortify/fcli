@@ -20,6 +20,8 @@ ext {
 	htmlAsciiDocDir           = "${docsBuildDir}/html/asciidoc"
 	htmlOutputDir             = "${docsBuildDir}/html/output"
 	ghPagesStaticOutputDir    = "${docsBuildDir}/gh-pages/static/output"
+    schemaOutputDir           = "${ghPagesStaticOutputDir}/schemas"
+    actionSchemaOutputDir     = "${schemaOutputDir}/action"
 	ghPagesVersionedOutputDir = "${docsBuildDir}/gh-pages/versioned/output"
 }
 
@@ -27,6 +29,7 @@ task generateActionSchema(type: JavaExec) {
     dependsOn('build')
     classpath = sourceSets.main.runtimeClasspath
     main 'com.fortify.cli.common.action.schema.generator.GenerateActionSchema'
+    args "${actionSchemaOutputDir}"
 }
 
 task generateManpageAsciiDoc(type: JavaExec) {

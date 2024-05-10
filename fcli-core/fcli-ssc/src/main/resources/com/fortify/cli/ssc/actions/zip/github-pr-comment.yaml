@@ -1,6 +1,8 @@
 # For now, this template uses latest application state to generate PR decorations.
 # See corresponding .bak file for a better but incomplete (due to SSC limitations)
 # implementation based on artifact id.
+schemaVersion: '1.0'
+
 usage:
   header: (PREVIEW) Add GitHub Pull Request review comments.  
   description: |

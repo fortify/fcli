@@ -12,6 +12,7 @@
  */
 package com.fortify.cli.common.action.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 
@@ -24,12 +25,11 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionUsage implements IActionElement {
-    /** Required usage header */
-    @JsonPropertyDescription("Required action usage header, displayed in list and help outputs")
-    private String header;
-    /** Required usage description */
-    @JsonPropertyDescription("Required action usage description, displayed in help output")
-    private String description;
+    @JsonPropertyDescription("Required: Action usage header, displayed in list and help outputs")
+    @JsonProperty(required = true) private String header;
+    
+    @JsonPropertyDescription("Required: Action usage description, displayed in help output")
+    @JsonProperty(required = true) private String description;
     
     public void postLoad(Action action) {
         Action.checkNotBlank("usage header", header, this);

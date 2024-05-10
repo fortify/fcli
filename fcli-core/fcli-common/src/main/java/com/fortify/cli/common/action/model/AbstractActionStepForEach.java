@@ -15,6 +15,7 @@ package com.fortify.cli.common.action.model;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
@@ -28,12 +29,14 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public abstract class AbstractActionStepForEach extends AbstractActionStep {
-    /** Optional break-expression, terminating forEach if condition evaluates to true */
-    private TemplateExpression breakIf;
-    /** Required name for this step element */
-    private String name;
-    /** Steps to be repeated for each value */
-    @JsonProperty("do") private List<ActionStep> _do;
+    @JsonPropertyDescription("Required: Name to assign to each individual record being processed. Can be referenced in other forEach properties and nested steps using ${<name>}.")
+    @JsonProperty(required = true) private String name;
+    
+    @JsonPropertyDescription("Required: Steps to be executed for each individual record.")
+    @JsonProperty(value = "do", required = true)  private List<ActionStep> _do;
+    
+    @JsonPropertyDescription("Optional: Stop processing any further records if the breakIf expression evaluates to 'true'.")
+    @JsonProperty(required = false) private TemplateExpression breakIf;
     
     /**
      * This method is invoked by the {@link ActionStep#postLoad()}

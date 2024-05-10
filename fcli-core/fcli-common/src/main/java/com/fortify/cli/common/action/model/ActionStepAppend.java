@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.action.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
@@ -20,13 +22,16 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * This class describes an operation to add a given value to the array
- * identified by the name property. If the target array doesn't exist yet, 
- * it will be created.
+ * This class describes an operation to add a given value to the array or object
+ * identified by the name property. If the target array or object doesn't exist yet, 
+ * it will be created. Whether this operation operates on objects or arrays depends 
+ * on the presence of the 'property' property; if 'property' is present, we assume
+ * 'name' references an object, if 'property' is not present, we assume 'name' references
+ * an array. 
  */
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public final class ActionStepAppend extends AbstractActionStepUpdateProperty {
-    /** Optional property name to be added to the object */
-    private TemplateExpression property;
+    @JsonPropertyDescription("Optional: Property name to be added or updated in the data object specified by 'name'. If specified, 'name' is considered to be an object, otherwise 'name' is considered to be an array.")
+    @JsonProperty(required = false) private TemplateExpression property;
 }

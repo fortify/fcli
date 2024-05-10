@@ -2,6 +2,8 @@
 # See corresponding .bak file is SSC module for an example of how to better
 # implement this, once FoD supports retrieving new/re-introduced/removed isses
 # for a particular scan id/PR number/commit id.
+schemaVersion: '1.0'
+
 usage:
   header: (PREVIEW) Add GitHub Pull Request review comments.  
   description: |

@@ -23,7 +23,10 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
@@ -50,27 +53,38 @@ import lombok.SneakyThrows;
  */
 @Reflectable @NoArgsConstructor
 @Data
+@JsonClassDescription("Fortify CLI action definition")
 public class Action implements IActionElement {
-    /** Action name, set in {@link #postLoad(ActionProperties)} method */
-    @JsonPropertyDescription("Action name")
-    private String name;
-    /** Whether this is a custom action, set in {@link #postLoad(ActionProperties)} method */
-    private boolean custom;
-    /** Signature status for this action, set in {@link #postLoad(ActionProperties)} method */
-    private SignatureStatus signatureStatus;
-    /** Action description */
-    @JsonPropertyDescription("Action usage help")
-    private ActionUsage usage;
-    /** Action parameters */
-    private List<ActionParameter> parameters;
-    /** Additional requests targets */
-    private List<ActionRequestTarget> addRequestTargets;
-    /** Default values for certain action properties */
-    ActionDefaultValues defaults;
-    /** Action steps, evaluated in the order as defined in the YAML file */
-    private List<ActionStep> steps;
-    /** Value templates */
-    private List<ActionValueTemplate> valueTemplates;
+    @JsonPropertyDescription("Read-only: Action name, inferred from file name.")
+    @JsonProperty(access = Access.READ_ONLY) private String name;
+    
+    @JsonPropertyDescription("Read-only: Whether this is a custom action, inferred from where the action is loaded from.")
+    @JsonProperty(access = Access.READ_ONLY) private boolean custom;
+    
+    @JsonPropertyDescription("Read-only: Action signature verification status.")
+    @JsonProperty(access = Access.READ_ONLY) private SignatureStatus signatureStatus;
+    
+    @JsonPropertyDescription("Required: Schema version.")
+    @JsonProperty(required=true) public SupportedSchemaVersion schemaVersion;
+    
+    @JsonPropertyDescription("Required: Action usage help.")
+    @JsonProperty(required = true) private ActionUsage usage;
+    
+    @JsonPropertyDescription("Optional: Action parameters.")
+    @JsonProperty(required = false) private List<ActionParameter> parameters;
+    
+    @JsonPropertyDescription("Optional: Add target URLs and related properties for REST requests.")
+    @JsonProperty(required = false) private List<ActionRequestTarget> addRequestTargets;
+    
+    @JsonPropertyDescription("Optional: Default values for some specific properties. Currently only used to set a default request target.")
+    @JsonProperty(required = false) private ActionDefaultValues defaults;
+    
+    @JsonPropertyDescription("Required: Steps to be executed when this action is being run.")
+    @JsonProperty(required = true) private List<ActionStep> steps;
+    
+    @JsonPropertyDescription("Optional: Value templates used to format data.")
+    @JsonProperty(required = false) private List<ActionValueTemplate> valueTemplates;
+    
     /** Maps/Collections listing action elements. 
      *  These get filled by the {@link #visit(Action, Object)} method. */ 
     @JsonIgnore private final Map<String, ActionValueTemplate> valueTemplatesByName = new HashMap<>();
@@ -114,6 +128,7 @@ public class Action implements IActionElement {
     public final void postLoad(Action action) {
         checkNotNull("action usage", usage, this);
         checkNotNull("action steps", steps, this);
+        checkNotNull("action schemaVersion", getSchemaVersion(), this);
         if ( parameters==null ) {
             parameters = Collections.emptyList();
         }

@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.common.action.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
@@ -25,12 +27,14 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public abstract class AbstractActionStepUpdateProperty extends AbstractActionStep implements IActionStepValueSupplier {
-    /** Required name for this step element */
-    private String name;
-    /** Value template expression for this step element */
-    private TemplateExpression value;
-    /** Value template for this step element */
-    private String valueTemplate;
+    @JsonPropertyDescription("Required: Name to assign to the outcome of this operation. Can be referenced in subsequent steps using ${<name>}.")
+    @JsonProperty(required = true) private String name;
+    
+    @JsonPropertyDescription("Required if 'valueTemplate' is not specified: Value to be assigned or appended to the given name.")
+    @JsonProperty(required = false) private TemplateExpression value;
+    
+    @JsonPropertyDescription("Required if 'value' is not specified: Name of a value template to be evaluated, assigning or appending the outcome of the value template to the given set/append name.")
+    @JsonProperty(required = true) private String valueTemplate;
     
     public final void postLoad(Action action) {
         Action.checkNotBlank("set name", name, this);

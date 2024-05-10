@@ -7,6 +7,8 @@
 # This section defines action usage information, consisting of a usage header (shown 
 # by the 'list' and 'help' commands) and a more detailed description (shown by the 
 # 'help' command).
+schemaVersion: '1.0'
+
 usage:
   header: Sample Action 
   description: |

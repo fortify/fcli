@@ -15,12 +15,14 @@ package com.fortify.cli.app.runner.util;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.fortify.cli.common.action.model.SupportedSchemaVersion;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.i18n.helper.LanguageHelper;
@@ -56,28 +58,33 @@ public final class FortifyCLIStaticInitializer {
         initializeSCDastProperties();
         initializeSCSastProperties();
         initializeSSCProperties();
+        initializeActionProperties();
     }
     
     private void initializeFoDProperties() {
-        System.setProperty("fcli.fod.scan.states", getValuesString(FoDScanStatus.values()));
-        System.setProperty("fcli.fod.scan.states.complete", getValuesString(FoDScanStatus.getDefaultCompleteStates()));
+        System.setProperty("fcli.fod.scan.states", getValueNamesString(FoDScanStatus.values()));
+        System.setProperty("fcli.fod.scan.states.complete", getValueNamesString(FoDScanStatus.getDefaultCompleteStates()));
     }
     
     private void initializeSCDastProperties() {
-        System.setProperty("fcli.sc-dast.scan.states", getValuesString(SCDastScanStatus.values()));
-        System.setProperty("fcli.sc-dast.scan.states.complete", getValuesString(SCDastScanStatus.getDefaultCompleteStates()));
+        System.setProperty("fcli.sc-dast.scan.states", getValueNamesString(SCDastScanStatus.values()));
+        System.setProperty("fcli.sc-dast.scan.states.complete", getValueNamesString(SCDastScanStatus.getDefaultCompleteStates()));
     }
     
     private void initializeSCSastProperties() {
-        System.setProperty("fcli.sc-sast.scan.jobStates", getValuesString(SCSastControllerScanJobState.values()));
-        System.setProperty("fcli.sc-sast.scan.jobStates.complete", getValuesString(SCSastControllerScanJobState.getDefaultCompleteStates()));
-        System.setProperty("fcli.sc-sast.scan.jobArtifactStates", getValuesString(SCSastControllerScanJobArtifactState.values()));
-        System.setProperty("fcli.sc-sast.scan.jobArtifactStates.complete", getValuesString(SCSastControllerScanJobArtifactState.getDefaultCompleteStates()));
+        System.setProperty("fcli.sc-sast.scan.jobStates", getValueNamesString(SCSastControllerScanJobState.values()));
+        System.setProperty("fcli.sc-sast.scan.jobStates.complete", getValueNamesString(SCSastControllerScanJobState.getDefaultCompleteStates()));
+        System.setProperty("fcli.sc-sast.scan.jobArtifactStates", getValueNamesString(SCSastControllerScanJobArtifactState.values()));
+        System.setProperty("fcli.sc-sast.scan.jobArtifactStates.complete", getValueNamesString(SCSastControllerScanJobArtifactState.getDefaultCompleteStates()));
     }
     
     private void initializeSSCProperties() {
-        System.setProperty("fcli.ssc.artifact.states", getValuesString(SSCArtifactStatus.values()));
-        System.setProperty("fcli.ssc.artifact.states.complete", getValuesString(SSCArtifactStatus.getDefaultCompleteStates()));
+        System.setProperty("fcli.ssc.artifact.states", getValueNamesString(SSCArtifactStatus.values()));
+        System.setProperty("fcli.ssc.artifact.states.complete", getValueNamesString(SSCArtifactStatus.getDefaultCompleteStates()));
+    }
+    
+    private void initializeActionProperties() {
+        System.setProperty("fcli.action.supportedSchemaVersions", getValueToStringString(SupportedSchemaVersion.values()));
     }
     
     private void initializeTrustStore() {
@@ -103,8 +110,16 @@ public final class FortifyCLIStaticInitializer {
     private void initializeLocale() {
         Locale.setDefault(LanguageHelper.getConfiguredLanguageDescriptor().getLocale());
     }
+    
+    private String getValueNamesString(Enum<?>[] values) {
+        return getValuesString(values, Enum::name);
+    }
+    
+    private String getValueToStringString(Enum<?>[] values) {
+        return getValuesString(values, Enum::toString);
+    }
 
-    private String getValuesString(Enum<?>[] values) {
-        return Stream.of(values).map(Enum::name).collect(Collectors.joining(", "));
+    private String getValuesString(Enum<?>[] values, Function<Enum<?>, String> f) {
+        return Stream.of(values).map(f).collect(Collectors.joining(", "));
     }
 }

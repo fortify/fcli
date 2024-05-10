@@ -17,10 +17,12 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
@@ -28,19 +30,19 @@ import lombok.NoArgsConstructor;
  * perform security gate or other checks.
  */
 @Reflectable @NoArgsConstructor
-@Data
-public final class ActionStepCheck implements IActionStep {
-    /** Optional if-expression, executing this step only if condition evaluates to true */
-    @JsonProperty("if") private TemplateExpression _if;
-    /** Required display name for this check */
-    private String displayName;
-    /** Fail the check if condition evaluates to true. Either failIf or passIf must be specified. */
-    private TemplateExpression failIf;
-    /** Fail the check if condition evaluates to false. Either failIf or passIf must be specified. */
-    private TemplateExpression passIf;
-    /** Check result if check is not being executed due to no elements in forEach block
-     *  or explicit if-statements on this step or one of its parents. */
-    private CheckStatus ifSkipped = CheckStatus.SKIP;
+@Data @EqualsAndHashCode(callSuper = true)
+public final class ActionStepCheck extends AbstractActionStep {
+    @JsonPropertyDescription("Required: Display name of this check, to be displayed in PASS/FAIL messages.")
+    @JsonProperty(required = true) private String displayName;
+    
+    @JsonPropertyDescription("Required if 'passIf' not specified: The outcome of this check will be 'FAIL' if the given expression evaluates to 'true', outcome will be 'PASS' otherwise.")
+    @JsonProperty(required = false) private TemplateExpression failIf;
+    
+    @JsonPropertyDescription("Required if 'failIf' not specified: The outcome of this check will be 'SUCCESS' if the given expression evaluates to 'true', outcome will be 'FAIL' otherwise.")
+    @JsonProperty(required = false) private TemplateExpression passIf;
+    
+    @JsonPropertyDescription("Optional: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks.")
+    @JsonProperty(required = false, defaultValue = "SKIP") private CheckStatus ifSkipped = CheckStatus.SKIP;
     
     public final void postLoad(Action action) {
         Action.checkNotBlank("check displayName", displayName, this);

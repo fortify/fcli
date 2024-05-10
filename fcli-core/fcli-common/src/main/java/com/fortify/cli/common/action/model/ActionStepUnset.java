@@ -13,22 +13,21 @@
 package com.fortify.cli.common.action.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
-import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
  * This class describes an operation to explicitly unset a data property.
  */
 @Reflectable @NoArgsConstructor
-@Data
-public final class ActionStepUnset implements IActionStep {
-    /** Optional if-expression, executing this step only if condition evaluates to true */
-    @JsonProperty("if") private TemplateExpression _if;
-    /** Required name for this step element */
-    private String name;
+@Data @EqualsAndHashCode(callSuper = true)
+public final class ActionStepUnset extends AbstractActionStep {
+    @JsonPropertyDescription("Required: Name to unset.")
+    @JsonProperty(required = true) private String name;
     
     public void postLoad(Action action) {
         Action.checkNotBlank("set name", name, this);

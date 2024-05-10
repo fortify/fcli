@@ -13,6 +13,7 @@
 package com.fortify.cli.common.action.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
@@ -22,6 +23,6 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data 
 public abstract class AbstractActionStep implements IActionStep {
-    /** Optional if-expression, executing steps only if condition evaluates to true */
-    @JsonProperty("if") private TemplateExpression _if;
+    @JsonPropertyDescription("Optional: Only execute this step if the given if-expression evaluates to 'true'")
+    @JsonProperty(value = "if", required = false) private TemplateExpression _if;
 }

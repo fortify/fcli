@@ -13,27 +13,28 @@
 package com.fortify.cli.common.action.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
  * This class describes a 'write' step.
  */
 @Reflectable @NoArgsConstructor
-@Data
-public final class ActionStepWrite implements IActionStep, IActionStepValueSupplier {
-    /** Optional if-expression, executing this step only if condition evaluates to true */
-    @JsonProperty("if") private TemplateExpression _if;
-    /** Required template expression defining where to write the data, either stdout, stderr or filename */
-    private TemplateExpression to;
-    /** Value template expression that generates the contents to be written */
-    private TemplateExpression value;
-    /** Value template for this step element */
-    private String valueTemplate;
+@Data @EqualsAndHashCode(callSuper = true)
+public final class ActionStepWrite extends AbstractActionStep implements IActionStepValueSupplier {
+    @JsonPropertyDescription("Required: SpEL template expression defining where to write the given data; either 'stdout', 'stderr' or a filename.")
+    @JsonProperty(required = true) private TemplateExpression to;
     
+    @JsonPropertyDescription("Required if 'valueTemplate' is not specified: Value to be written to the given output.")
+    @JsonProperty(required = false) private TemplateExpression value;
+    
+    @JsonPropertyDescription("Required if 'value' is not specified: Name of a value template to be evaluated, writing the outcome of the value template to the given output.")
+    @JsonProperty(required = true) private String valueTemplate;    
     
     public void postLoad(Action action) {
         Action.checkNotNull("write to", to, this);
