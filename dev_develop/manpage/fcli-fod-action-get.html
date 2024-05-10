@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240502.082719-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240510.141839-dev_develop" %}
 
 
 <div id="header">
@@ -41,8 +41,9 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod action get</strong> [<strong>-z</strong>=<em>&lt;source&gt;</em>] [[<strong>-h</strong>] [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>]
-                    [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>] [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em>&lt;action&gt;</em></p>
+<p><strong>fcli fod action get</strong> [<strong>--pubkey</strong>=<em>source</em>] [<strong>-z</strong>=<em>&lt;source&gt;</em>] [[<strong>-h</strong>]
+                    [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
+                    [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] <em>&lt;action&gt;</em></p>
 </div>
 </div>
 </div>
@@ -62,6 +63,35 @@ fcli_version:
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--pubkey</strong>=<em>source</em></dt>
+<dd>
+<p>Optional public key to use for verifying action signature. Can be specified as one of:</p>
+<div class="literalblock">
+<div class="content">
+<pre>file:&lt;local file&gt;</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>url:&lt;url&gt;</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>string:&lt;string value&gt;</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>env:&lt;env-var name&gt;</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>If no prefix is given, &lt;local file&gt; is assumed. For security reasons, you should only use trusted public keys from a trusted source. Independent of source, contents must be in PEM (base64-encoded) format. For convenience with string: or env: inputs, the 'BEGIN/END PUBLIC KEY' statements and any whitespace (including newline characters) may be omitted. If no (matching) public key is provided, action signature will be verified against public keys previously imported through the 'fcli config public-key import' command.</pre>
+</div>
+</div>
+</dd>
 <dt class="hdlist1"><strong>-z</strong>, <strong>--from-zip</strong>=<em>&lt;source&gt;</em></dt>
 <dd>
 <p>Optional local or remote zip-file from which to load the action if the action is specified as a simple name. This option will be ignored if action is specified as local or remote action YAML file location.</p>
@@ -102,7 +132,7 @@ fcli_version:
 <dl>
 <dt class="hdlist1"><em>&lt;action&gt;</em></dt>
 <dd>
-<p>The action to load; either simple name or local or remote action YAML file location.</p>
+<p>The action to load; either simple name or local or remote action YAML file location. Note that custom actions are currently considered PREVIEW functionality, as explained in the 'fcli fod action -h' help output.</p>
 </dd>
 </dl>
 </div>
@@ -112,7 +142,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-05-02 08:28:56 UTC
+Last updated 2024-05-10 14:20:26 UTC
 </div>
 </div>
 </body>
