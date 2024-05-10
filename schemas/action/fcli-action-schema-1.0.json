@@ -34,7 +34,7 @@
                 "description" : "Required if 'value' is not specified: Name of a value template to be evaluated, assigning or appending the outcome of the value template to the given set/append name."
               }
             },
-            "required" : [ "name", "valueTemplate" ],
+            "required" : [ "name" ],
             "additionalProperties" : false
           }
         },
@@ -218,7 +218,7 @@
                 "description" : "Required if 'value' is not specified: Name of a value template to be evaluated, assigning or appending the outcome of the value template to the given set/append name."
               }
             },
-            "required" : [ "name", "valueTemplate" ],
+            "required" : [ "name" ],
             "additionalProperties" : false
           }
         },
