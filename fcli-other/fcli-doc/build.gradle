@@ -170,7 +170,7 @@ task distDocsVersionedJekyll(type: Zip) {
 
 // Zip the output of the asciiDoctorStaticJekyl task into ${releaseAssetsDir}
 task distDocsStaticJekyll(type: Zip) {
-    dependsOn 'asciiDoctorStaticJekyll'
+    dependsOn 'asciiDoctorStaticJekyll', 'generateActionSchema'
     archiveFileName = "docs-gh-pages.zip"
     destinationDirectory = file("$distDir")
     from layout.buildDirectory.dir("${ghPagesStaticOutputDir}")
