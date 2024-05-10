@@ -285,7 +285,7 @@
                 "description" : "Required if 'value' is not specified: Name of a value template to be evaluated, writing the outcome of the value template to the given output."
               }
             },
-            "required" : [ "to", "valueTemplate" ],
+            "required" : [ "to" ],
             "additionalProperties" : false
           }
         }
@@ -539,9 +539,14 @@
         "type" : "object",
         "properties" : {
           "contents" : {
-            "type" : "object",
-            "additionalProperties" : false,
-            "description" : "Required: Text or structured JSON contents, where each text node is assumed to be a template expression."
+            "anyOf" : [ {
+              "type" : "object",
+              "additionalProperties" : false,
+              "description" : "Required: Text or structured JSON contents, where each text node is assumed to be a template expression."
+            }, {
+              "type" : "string",
+              "description" : "Required: Text or structured JSON contents, where each text node is assumed to be a template expression."
+            } ]
           },
           "name" : {
             "type" : "string",
