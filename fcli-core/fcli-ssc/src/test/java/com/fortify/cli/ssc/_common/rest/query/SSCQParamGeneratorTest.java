@@ -19,9 +19,6 @@ import org.springframework.expression.Expression;
 import org.springframework.expression.spel.SpelParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
-import com.fortify.cli.ssc._common.rest.query.SSCQParamGenerator;
-import com.fortify.cli.ssc._common.rest.query.SSCQParamValueGenerators;
-
 public class SSCQParamGeneratorTest {
     private SSCQParamGenerator generator = new SSCQParamGenerator()
             .add("plain", SSCQParamValueGenerators::plain)

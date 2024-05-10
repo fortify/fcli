@@ -15,14 +15,10 @@ package com.fortify.cli.common.action.schema.generator;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.SupportedSchemaVersion;
-import com.fortify.cli.common.spring.expression.wrapper.SimpleExpression;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.github.victools.jsonschema.generator.CustomDefinition;
 import com.github.victools.jsonschema.generator.Option;
@@ -32,7 +28,6 @@ import com.github.victools.jsonschema.generator.SchemaGeneratorConfig;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfigBuilder;
 import com.github.victools.jsonschema.generator.SchemaKeyword;
 import com.github.victools.jsonschema.generator.SchemaVersion;
-import com.github.victools.jsonschema.generator.impl.module.SimpleTypeModule;
 import com.github.victools.jsonschema.module.jackson.JacksonModule;
 import com.github.victools.jsonschema.module.jackson.JacksonOption;
 
