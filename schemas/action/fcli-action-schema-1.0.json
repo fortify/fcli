@@ -11,8 +11,8 @@
             "type" : "object",
             "properties" : {
               "if" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Optional: Only execute this step if the given if-expression evaluates to 'true'"
               },
               "name" : {
@@ -20,13 +20,13 @@
                 "description" : "Required: Name to assign to the outcome of this operation. Can be referenced in subsequent steps using ${<name>}."
               },
               "property" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Optional: Property name to be added or updated in the data object specified by 'name'. If specified, 'name' is considered to be an object, otherwise 'name' is considered to be an array."
               },
               "value" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Required if 'valueTemplate' is not specified: Value to be assigned or appended to the given name."
               },
               "valueTemplate" : {
@@ -49,13 +49,13 @@
                 "description" : "Required: Display name of this check, to be displayed in PASS/FAIL messages."
               },
               "failIf" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Required if 'passIf' not specified: The outcome of this check will be 'FAIL' if the given expression evaluates to 'true', outcome will be 'PASS' otherwise."
               },
               "if" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Optional: Only execute this step if the given if-expression evaluates to 'true'"
               },
               "ifSkipped" : {
@@ -64,8 +64,8 @@
                 "description" : "Optional: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks."
               },
               "passIf" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Required if 'failIf' not specified: The outcome of this check will be 'SUCCESS' if the given expression evaluates to 'true', outcome will be 'FAIL' otherwise."
               }
             },
@@ -74,13 +74,13 @@
           }
         },
         "debug" : {
-          "type" : "string",
-          "format" : "spel-template-expression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional: Write a debug message to log file (if enabled)."
         },
         "exit" : {
-          "type" : "string",
-          "format" : "spel-template-expression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional: Terminate action execution and return the given exit code."
         },
         "fcli" : {
@@ -90,16 +90,16 @@
             "type" : "object",
             "properties" : {
               "args" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Required: Arguments to pass to the fcli command, for example 'ssc appversion list --embed=attrValuesByName'."
               },
               "forEach" : {
                 "type" : "object",
                 "properties" : {
                   "breakIf" : {
-                    "type" : "string",
-                    "format" : "spel-template-expression",
+                    "format" : "spelTemplateExpression",
+                    "type" : [ "boolean", "integer", "string", "number" ],
                     "description" : "Optional: Stop processing any further records if the breakIf expression evaluates to 'true'."
                   },
                   "do" : {
@@ -110,8 +110,8 @@
                     }
                   },
                   "if" : {
-                    "type" : "string",
-                    "format" : "spel-template-expression",
+                    "format" : "spelTemplateExpression",
+                    "type" : [ "boolean", "integer", "string", "number" ],
                     "description" : "Optional: Only execute this step if the given if-expression evaluates to 'true'"
                   },
                   "name" : {
@@ -124,8 +124,8 @@
                 "description" : "Optional: Steps to be executed for each individual record generated by the given fcli invocation."
               },
               "if" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Optional: Only execute this step if the given if-expression evaluates to 'true'"
               },
               "name" : {
@@ -141,8 +141,8 @@
           "type" : "object",
           "properties" : {
             "breakIf" : {
-              "type" : "string",
-              "format" : "spel-template-expression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
               "description" : "Optional: Stop processing any further records if the breakIf expression evaluates to 'true'."
             },
             "do" : {
@@ -153,8 +153,8 @@
               }
             },
             "if" : {
-              "type" : "string",
-              "format" : "spel-template-expression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
               "description" : "Optional: Only execute this step if the given if-expression evaluates to 'true'"
             },
             "name" : {
@@ -162,13 +162,13 @@
               "description" : "Required: Name to assign to each individual record being processed. Can be referenced in other forEach properties and nested steps using ${<name>}."
             },
             "processor" : {
-              "type" : "string",
-              "format" : "spel-template-expression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
               "description" : "Required if 'values' not specified: Reference to a processor that generates JSON records and executes the given steps for each record. For now, the only available processor is ${#ssc.ruleDescriptionsProcessor(parameters.appversion.id)} for processing rule descriptions from the current state FPR file, used by some built-in actions."
             },
             "values" : {
-              "type" : "string",
-              "format" : "spel-template-expression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
               "description" : "Required if 'processor' not specified: Array of values to be iterated over."
             }
           },
@@ -177,13 +177,13 @@
           "description" : "Optional: Iterate over a given array of values."
         },
         "if" : {
-          "type" : "string",
-          "format" : "spel-template-expression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional: Only execute this step if the given if-expression evaluates to 'true'"
         },
         "progress" : {
-          "type" : "string",
-          "format" : "spel-template-expression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional: Write a progress message."
         },
         "requests" : {
@@ -200,8 +200,8 @@
             "type" : "object",
             "properties" : {
               "if" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Optional: Only execute this step if the given if-expression evaluates to 'true'"
               },
               "name" : {
@@ -209,8 +209,8 @@
                 "description" : "Required: Name to assign to the outcome of this operation. Can be referenced in subsequent steps using ${<name>}."
               },
               "value" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Required if 'valueTemplate' is not specified: Value to be assigned or appended to the given name."
               },
               "valueTemplate" : {
@@ -230,8 +230,8 @@
           }
         },
         "throw" : {
-          "type" : "string",
-          "format" : "spel-template-expression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional: Throw an exception, thereby terminating action execution."
         },
         "unset" : {
@@ -241,8 +241,8 @@
             "type" : "object",
             "properties" : {
               "if" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Optional: Only execute this step if the given if-expression evaluates to 'true'"
               },
               "name" : {
@@ -255,8 +255,8 @@
           }
         },
         "warn" : {
-          "type" : "string",
-          "format" : "spel-template-expression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional: Write a warning message to console and log file (if enabled). Note that warning messages will be shown on console only after all action steps have been executed, to not interfere with progress messages."
         },
         "write" : {
@@ -266,18 +266,18 @@
             "type" : "object",
             "properties" : {
               "if" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Optional: Only execute this step if the given if-expression evaluates to 'true'"
               },
               "to" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Required: SpEL template expression defining where to write the given data; either 'stdout', 'stderr' or a filename."
               },
               "value" : {
-                "type" : "string",
-                "format" : "spel-template-expression",
+                "format" : "spelTemplateExpression",
+                "type" : [ "boolean", "integer", "string", "number" ],
                 "description" : "Required if 'valueTemplate' is not specified: Value to be written to the given output."
               },
               "valueTemplate" : {
@@ -296,16 +296,16 @@
       "type" : "object",
       "properties" : {
         "body" : {
-          "type" : "string",
-          "format" : "spel-template-expression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional: Request body to send with the REST request."
         },
         "forEach" : {
           "type" : "object",
           "properties" : {
             "breakIf" : {
-              "type" : "string",
-              "format" : "spel-template-expression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
               "description" : "Optional: Stop processing any further records if the breakIf expression evaluates to 'true'."
             },
             "do" : {
@@ -322,8 +322,8 @@
               }
             },
             "if" : {
-              "type" : "string",
-              "format" : "spel-template-expression",
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ],
               "description" : "Optional: Only execute this step if the given if-expression evaluates to 'true'"
             },
             "name" : {
@@ -336,8 +336,8 @@
           "description" : "Optional: Steps to be executed for each record in the REST response."
         },
         "if" : {
-          "type" : "string",
-          "format" : "spel-template-expression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Optional: Only execute this step if the given if-expression evaluates to 'true'"
         },
         "method" : {
@@ -366,16 +366,16 @@
           "type" : "object",
           "properties" : {
             "postPageLoad" : {
-              "type" : "string",
-              "format" : "spel-template-expression"
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ]
             },
             "postPageProcess" : {
-              "type" : "string",
-              "format" : "spel-template-expression"
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ]
             },
             "prePageLoad" : {
-              "type" : "string",
-              "format" : "spel-template-expression"
+              "format" : "spelTemplateExpression",
+              "type" : [ "boolean", "integer", "string", "number" ]
             }
           },
           "additionalProperties" : false,
@@ -395,8 +395,8 @@
           "description" : "Optional: Flag to indicate whether this is a 'paged' or 'simple' request. If set to 'paged' (only available for 'fod' and 'ssc' request targets for now), all pages will be automatically processed. Defaults to 'simple'."
         },
         "uri" : {
-          "type" : "string",
-          "format" : "spel-template-expression",
+          "format" : "spelTemplateExpression",
+          "type" : [ "boolean", "integer", "string", "number" ],
           "description" : "Required: Unqualified REST URI, like '/api/v3/some/api/${parameters.<name>.id}' to be appended to the base URL as configured for the given 'target'."
         }
       },
@@ -406,8 +406,8 @@
     "Map(String,TemplateExpression)" : {
       "type" : "object",
       "additionalProperties" : {
-        "type" : "string",
-        "format" : "spel-template-expression"
+        "format" : "spelTemplateExpression",
+        "type" : [ "boolean", "integer", "string", "number" ]
       }
     }
   },
@@ -420,8 +420,8 @@
         "type" : "object",
         "properties" : {
           "baseUrl" : {
-            "type" : "string",
-            "format" : "spel-template-expression",
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number" ],
             "description" : "Required: Base URL to use for REST requests to this request target."
           },
           "headers" : {
@@ -469,8 +469,8 @@
             "description" : "Optional: Comma-separated CLI option aliases. This will allow the action to accept CLI options named '--<alias>' or '-<alias>' for single-letter aliases. Aliases cannot be referenced in SpEL expressions."
           },
           "defaultValue" : {
-            "type" : "string",
-            "format" : "spel-template-expression",
+            "format" : "spelTemplateExpression",
+            "type" : [ "boolean", "integer", "string", "number" ],
             "description" : "Optional: Default value for this action parameter if no value is specified by the user."
           },
           "description" : {
@@ -539,14 +539,9 @@
         "type" : "object",
         "properties" : {
           "contents" : {
-            "anyOf" : [ {
-              "type" : "object",
-              "additionalProperties" : false,
-              "description" : "Required: Text or structured JSON contents, where each text node is assumed to be a template expression."
-            }, {
-              "type" : "string",
-              "description" : "Required: Text or structured JSON contents, where each text node is assumed to be a template expression."
-            } ]
+            "additionalProperties" : true,
+            "type" : [ "object", "string" ],
+            "description" : "Required: Text or structured JSON contents, where each text node is assumed to be a template expression."
           },
           "name" : {
             "type" : "string",
