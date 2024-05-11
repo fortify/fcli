@@ -17,6 +17,13 @@ import com.formkiq.graalvm.annotations.Reflectable;
 
 import lombok.SneakyThrows;
 
+// TODO The approach below won't work. For example, when an action developer uses
+// schema version 1.1, the schemaVersion property may be set to either 1.0 or 1.1,
+// with schemaVersion 1.0 purposely being supported by older fcli versions. However,
+// even when set to 1.0, the schema/IDE will also allow properties that were 
+// introduced in schema version 1.1, making the action incompatible with older fcli
+// versions that only support schema version 1.0.
+//
 // We'll probably need to think about this a bit more, but for now, the 
 // SupportedSchemaVersion enum lists schema versions supported by this fcli version.
 // The JsonProperty annotations on the enum entries define the actual version numbers,
