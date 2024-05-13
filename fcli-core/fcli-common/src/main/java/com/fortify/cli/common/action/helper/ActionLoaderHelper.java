@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -192,19 +193,20 @@ public class ActionLoaderHelper {
     @Data
     public static final class ActionLoadResult {
         private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
+        private static final Pattern schemaPattern = Pattern.compile("(?m)(^\\$schema:\\s+(?<schemaPropertyValue>\\S+)\\s*$)|(^#\\s+yaml-language-server:\\s+\\$schema=(?<schemaCommentValue>\\S+)\\s*$)");
         private final SignedTextDescriptor signedTextDescriptor;
         private final ActionProperties properties;
         
         public final Action asAction() {
             try {
-                var actionText = signedTextDescriptor.getText();
+                var actionText = updateSchema(asText());
                 var signatureStatus = signedTextDescriptor.getSignatureStatus();
                 var result = yamlObjectMapper.readValue(actionText, Action.class);
                 var properties = this.properties.toBuilder().signatureStatus(signatureStatus).build();
                 result.postLoad(properties);
                 return result;
             } catch ( Exception e ) {
-                throw createException(properties, e);
+                throw createException(e);
             }
         }
         
@@ -218,7 +220,7 @@ public class ActionLoaderHelper {
 
         public final ObjectNode asJson() {
             try {
-                var payload = signedTextDescriptor.getText();
+                var payload = asText();
                 var signatureStatus = signedTextDescriptor.getSignatureStatus();
                 String name = properties.getName();
                 boolean custom = properties.isCustom();
@@ -235,12 +237,47 @@ public class ActionLoaderHelper {
                         .put("signatureStatus", signatureStatus.toString())
                         .put("signatureString", signatureString);
             } catch ( Exception e ) {
-                throw createException(properties, e);
+                throw createException(e);
             }
         }
         
-        private final RuntimeException createException(ActionProperties properties, Exception e) {
-            return wrapException("Error loading action "+properties.getName(), e);
+        private final String updateSchema(String actionText) {
+            var result = actionText;
+            var matcher = schemaPattern.matcher(actionText);
+            String propertyValue = null;
+            String commentValue = null;
+            while ( matcher.find() ) {
+                propertyValue = getValue("$schema", matcher.group("schemaPropertyValue"), propertyValue);
+                commentValue = getValue("# yaml-language-server $schema", matcher.group("schemaCommentValue"), commentValue);
+            }
+            if ( StringUtils.isAllBlank(propertyValue, commentValue) ) {
+                throw new IllegalStateException(getExceptionMessage("Either '$schema' property or '# yaml-language-server $schema' must be specified"));
+            } else if ( StringUtils.isNoneBlank(propertyValue, commentValue) && !propertyValue.equals(commentValue) ) {
+                throw new IllegalStateException(getExceptionMessage("If both '$schema' property and '# yaml-language-server $schema' are specified, the schema locations must be identical"));
+            } else if ( StringUtils.isBlank(propertyValue) ) {
+                result += "\n\n$schema: "+commentValue;
+            }
+            return result;
+        }
+        
+        private final String getValue(String type, String newValue, String oldValue) {
+            if ( StringUtils.isBlank(oldValue) ) { 
+                return newValue; 
+            } else if ( StringUtils.isNotBlank(newValue) ) {
+                throw new IllegalStateException(getExceptionMessage(type+" may only be specified once"));
+            } else {
+                return oldValue;
+            }
+        }
+        
+        private final RuntimeException createException(Exception e) {
+            return wrapException(getExceptionMessage(null), e);
+        }
+
+        private String getExceptionMessage(String detailMessage) {
+            var msg = "Error loading action "+properties.getName();
+            if ( StringUtils.isNotBlank(detailMessage) ) { msg+=": "+detailMessage; }
+            return msg;
         }
     }
     
@@ -356,7 +393,7 @@ public class ActionLoaderHelper {
     }
     
     private static final RuntimeException wrapException(String msg, Exception e) {
-        if ( e instanceof AbortedByUserException ) { return (AbortedByUserException)e; }
+        if ( e!=null && e instanceof AbortedByUserException ) { return (AbortedByUserException)e; }
         return new IllegalStateException(msg, e);
     }
     

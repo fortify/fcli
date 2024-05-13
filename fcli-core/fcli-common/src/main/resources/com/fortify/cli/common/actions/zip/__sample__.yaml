@@ -1,8 +1,15 @@
 # yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.json
-schemaVersion: '1.0'
-# The yaml-language-server line above tells most IDE's & YAML editors where to find 
-# the fcli action schema for validation & code completion. Please make sure that the 
-# referenced schema name matches the schemaVersion property above.
+# $schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.json
+
+# Depending on your IDE/YAML editor, the yaml-language-server comment or the $schema property 
+# above may be used to associate the action YAML file with the action YAML schema. This allows 
+# for your IDE/editor to provide code completion, displaying property descriptions, and validating 
+# the action YAML file. Fcli requires at least one of these to be present to determine whether 
+# current fcli version is compatible with the given schema. If your IDE/editor supports the 
+# yaml-language-server comment, you can remove the $schema line and vice versa. Note that the
+# yaml-language-server line must remain as a comment (don't remove the leading hash-sign), 
+# whereas $schema must be a regular YAML property. By convention, these lines should appear at 
+# the top of the YAML document.
 
 # This action documents action syntax through comments for the various sections and
 # elements below. Many action properties accept Spring Expression Language (SpEL) 

@@ -12,6 +12,9 @@
  */
 package com.fortify.cli.common.action.schema.generator;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -19,6 +22,7 @@ import java.nio.file.StandardOpenOption;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.SupportedSchemaVersion;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.github.victools.jsonschema.generator.CustomDefinition;
 import com.github.victools.jsonschema.generator.Option;
@@ -35,6 +39,34 @@ public class GenerateActionSchema {
     public static void main(String[] args) throws Exception {
         if ( args.length!=1 ) { throw new IllegalArgumentException("Output directory must be specified as single argument"); }
         var outputPath = Path.of(args[0]);
+        var newSchema = generateSchema();
+        //var existingSchema = loadExistingSchema();
+        //if ( existingSchema!=null && !existingSchema.equals(newSchema) ) {
+        //    throw new IllegalStateException("New schema is structurally different from previously published schema");
+        //}
+        Files.createDirectories(outputPath);
+        var outputFile = outputPath.resolve(String.format("fcli-action-schema-%s.json", SupportedSchemaVersion.current.toVersion()));
+        Files.writeString(outputFile, newSchema.toPrettyString(), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+        System.out.println("Fortify CLI action schema written to "+outputFile.toString());
+    }
+    
+    private static final JsonNode loadExistingSchema() throws IOException {
+        try {
+            return JsonHelper.getObjectMapper().readTree(new URL(SupportedSchemaVersion.current.toURI()));
+        } catch ( FileNotFoundException fnfe ) {
+            return null; // Schema doesn't exist yet
+        } catch ( IOException e ) {
+            throw e;
+        }
+    }
+
+    private static final JsonNode generateSchema() {
+        var config = createGeneratorConfig();
+        var generator = new SchemaGenerator(config);
+        return generator.generateSchema(Action.class);
+    }
+
+    private static final SchemaGeneratorConfig createGeneratorConfig() {
         SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
         JacksonModule jacksonModule = new JacksonModule(JacksonOption.RESPECT_JSONPROPERTY_REQUIRED, JacksonOption.FLATTENED_ENUMS_FROM_JSONPROPERTY);
         configBuilder.forTypesInGeneral().withCustomDefinitionProvider((type, context) -> {
@@ -64,32 +96,7 @@ public class GenerateActionSchema {
                 .with(Option.FLATTENED_ENUMS)
                 .with(Option.FORBIDDEN_ADDITIONAL_PROPERTIES_BY_DEFAULT)
                 .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES)
-                // TODO Ideally we'd also want to support all other primitive types,
-                //      for example to allow 'if: true' in addition to 'if: "true"'
-                //      or 'if: ${true}'
-                //.with(new SimpleTypeModule().withStandardStringType(SimpleExpression.class, "spel-expression"))
-                //.with(new SimpleTypeModule().withStandardStringType(TemplateExpression.class, "spel-template-expression"))
                 .build();
-        SchemaGenerator generator = new SchemaGenerator(config);
-        JsonNode jsonSchema = generator.generateSchema(Action.class);
-        Files.createDirectories(outputPath);
-        var outputFile = outputPath.resolve(String.format("fcli-action-schema-%s.json", SupportedSchemaVersion.current.toString()));
-        Files.writeString(outputFile, jsonSchema.toPrettyString(), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-        System.out.println("Fortify CLI action schema written to "+outputFile.toString());
+        return config;
     }
-    /*
-    private static final class JsonNodeSubTypeResolver implements SubtypeResolver {
-        @Override
-        public List<ResolvedType> findSubtypes(ResolvedType declaredType, SchemaGenerationContext context) {
-            if ( declaredType.isInstanceOf(JsonNode.class) ) {
-                var typeContext = context.getTypeContext();
-                return Stream.of(ObjectNode.class, TextNode.class)
-                        .map(c->typeContext.resolveSubtype(declaredType, c))
-                        .collect(Collectors.toList());
-            }
-            return null;
-        }
-        
-    }
-    */
 }

@@ -1,8 +1,4 @@
 # yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.json
-schemaVersion: '1.0'
-# The yaml-language-server line above tells most IDE's & YAML editors where to find 
-# the fcli action schema for validation & code completion. Please make sure that the 
-# referenced schema name matches the schemaVersion property above.
 
 usage:
   header: Generate a GitLab Dependency Scanning report listing SSC Sonatype vulnerabilities. 

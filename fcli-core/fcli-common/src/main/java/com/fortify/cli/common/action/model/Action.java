@@ -64,8 +64,8 @@ public class Action implements IActionElement {
     @JsonPropertyDescription("Read-only: Action signature verification status.")
     @JsonProperty(access = Access.READ_ONLY) private SignatureStatus signatureStatus;
     
-    @JsonPropertyDescription("Required: Schema version.")
-    @JsonProperty(required=true) public SupportedSchemaVersion schemaVersion;
+    @JsonPropertyDescription("Required unless `yaml-language-server` comment with schema location is provided: Schema location.")
+    @JsonProperty(value = "$schema", required=false) public String schema;
     
     @JsonPropertyDescription("Required: Action usage help.")
     @JsonProperty(required = true) private ActionUsage usage;
@@ -128,7 +128,9 @@ public class Action implements IActionElement {
     public final void postLoad(Action action) {
         checkNotNull("action usage", usage, this);
         checkNotNull("action steps", steps, this);
-        checkNotNull("action schemaVersion", getSchemaVersion(), this);
+        var schema = getSchema();
+        checkNotNull("action $schema", schema, this);
+        throwIf(!SupportedSchemaVersion.isSupportedSchemaURI(getSchema()), this, ()->"Unsupported action schema URI or version: "+schema);
         if ( parameters==null ) {
             parameters = Collections.emptyList();
         }
