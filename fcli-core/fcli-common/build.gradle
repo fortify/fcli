@@ -26,7 +26,7 @@ task generateFcliBuildProperties {
         mkdir "${resourceConfigOutputDir}"
         def contents =
             '{"resources":[\n' +
-            '  {"pattern":"com/fortify/cli/app/fcli-build.properties"}\n' +
+            '  {"pattern":"com/fortify/cli/common/fcli-build.properties"}\n' +
             ']}\n'
         file("${resourceConfigOutputDir}/resource-config.json").text = contents;
         println contents
