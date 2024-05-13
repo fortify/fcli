@@ -58,7 +58,7 @@ public class FcliBuildPropertiesHelper {
 
     private static final Properties loadProperties() {
         final Properties p = new Properties();
-        try (final InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("com/fortify/cli/app/fcli-build.properties")) {
+        try (final InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("com/fortify/cli/common/fcli-build.properties")) {
             if ( stream!=null ) { p.load(stream); }
         } catch ( IOException ioe ) {
             throw new RuntimeException("Error reading fcli-build.properties from classpath", ioe);

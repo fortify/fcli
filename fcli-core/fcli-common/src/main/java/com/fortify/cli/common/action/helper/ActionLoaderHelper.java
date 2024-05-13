@@ -261,8 +261,9 @@ public class ActionLoaderHelper {
             } else {
                 schemaUri = propertyValue;
             }
-            if ( !ActionSchemaVersionHelper.isSupportedSchemaURI(schemaUri) ) {
-                LOG.warn("WARN: Action was designed for fcli version "+ActionSchemaVersionHelper.CURRENT_FCLI_VERSION+" and may fail");
+            var schemaVersion = ActionSchemaVersionHelper.getSchemaVersion(schemaUri);
+            if ( !ActionSchemaVersionHelper.isSupportedSchemaVersion(schemaVersion) ) {
+                LOG.warn("WARN: Action was designed for fcli version "+schemaVersion+" and may fail");
             }
             return result;
         }

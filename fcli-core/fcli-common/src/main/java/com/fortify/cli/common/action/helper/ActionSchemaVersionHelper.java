@@ -22,7 +22,6 @@ import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
 
 @Reflectable public final class ActionSchemaVersionHelper {
     private static final MessageFormat URI_FORMAT = new MessageFormat("https://fortify.github.io/fcli/schemas/action/fcli-action-schema-{0}.json");
-    public static final String CURRENT_FCLI_VERSION = FcliBuildPropertiesHelper.getFcliVersion();
     
     /** Get the schema URI for the current enum entry by formatting schema version as URI */
     public static final String toURI(String version) {
@@ -30,11 +29,15 @@ import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
     }
 
     /** Check whether given schema/version is supported */
-    public static final boolean isSupportedSchemaURI(String schema) {
+    public static final boolean isSupportedSchemaURI(String schemaURI) {
+        return isSupportedSchemaVersion(getSchemaVersion(schemaURI));
+    }
+    
+    public static final String getSchemaVersion(String schemaURI) {
         try {
-            return isSupportedSchemaVersion((String)URI_FORMAT.parse(schema)[0]);
+            return (String)URI_FORMAT.parse(schemaURI)[0];
         } catch (ParseException e) {
-            return false;
+            return "unknown";
         }
     }
 
@@ -44,6 +47,7 @@ import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
     }
     
     public static final List<String> getSupportedSchemaVersions() {
-        return Arrays.asList(CURRENT_FCLI_VERSION.startsWith("0.")?"dev":CURRENT_FCLI_VERSION);
+        var fcliVersion = FcliBuildPropertiesHelper.getFcliVersion();
+        return Arrays.asList(fcliVersion.startsWith("0.")?"dev":fcliVersion);
     }
 }
