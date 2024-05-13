@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.fortify.cli.common.action.helper.ActionSchemaVersionHelper;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.i18n.helper.LanguageHelper;
@@ -83,7 +84,7 @@ public final class FortifyCLIStaticInitializer {
     }
     
     private void initializeActionProperties() {
-        System.setProperty("fcli.action.supportedSchemaVersions", "TODO");
+        System.setProperty("fcli.action.supportedSchemaVersions", ActionSchemaVersionHelper.getSupportedSchemaVersions().stream().collect(Collectors.joining(", ")));
     }
     
     private void initializeTrustStore() {
