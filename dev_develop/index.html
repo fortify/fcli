@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20240513.162237-dev_develop
+fcli_version: 0.20240513.163402-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20240513.162237-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240513.162237-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240513.163402-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20240513.162237-dev_develop</span>
+<span id="revnumber">version 0.20240513.163402-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1081,13 +1081,13 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <h2 id="_actions"><a class="anchor" href="#_actions"></a>Actions</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Various fcli modules support managing and running multi-purpose actions through the <code>fcli &lt;module&gt; action *</code> commands. For now, actions are supported for FoD and SSC modules, but we can easily add support on ScanCentral SAST &amp; DAST modules if there&#8217;s any demand. Actions are defined in action YAML files that describe action parameters and steps to be executed. These steps currently focus on executing and processing series of REST requests against FoD, SSC, or third-party systems. Future versions may provide additional functionality, like additional processing logic, or running a workflow of fcli commands.</p>
+<p>Various fcli modules support managing and running multi-purpose actions through the <code>fcli &lt;module&gt; action *</code> commands. For now, actions are supported for FoD and SSC modules, but we can easily add support on ScanCentral SAST &amp; DAST modules if there&#8217;s any demand. Actions are defined in action YAML files that describe action parameters and steps to be executed. These steps currently focus on executing and processing series of REST requests or fcli commands against FoD, SSC, or third-party systems. Future versions may provide additional functionality, like additional processing logic or the ability to run sequences of fcli and other commands.</p>
 </div>
 <div class="paragraph">
 <p>Fcli ships with many built-in actions but custom actions are also supported. For now, custom actions are considered <code>PREVIEW</code> functionality, primarily because action YAML syntax may change between fcli versions, i.e., an action that successfully runs on fcli 2.4.0 may fail to run on fcli 2.5.0, or vice versa. We plan on stabilizing the action YAML syntax over the next couple of fcli releases, and also implement proper version checks to prevent older fcli versions from attempting to run action YAML files designed for newer fcli versions.</p>
 </div>
 <div class="paragraph">
-<p>The <code>fcli &lt;module&gt; action get __sample__</code> command outputs sample action YAML contents, listing all supported action YAML elements together with a description. Of course, if you want to modify the behavior or output of any of the built-in actions, you can use the same <code>get</code> command to view action YAML contents and customize as needed.</p>
+<p>The <code>fcli &lt;module&gt; action get __sample__</code> command outputs sample action YAML contents, listing many of the supported action YAML elements together with a description. Of course, if you want to modify the behavior or output of any of the built-in actions, you can use the same <code>get</code> command to view action YAML contents and customize as needed.</p>
 </div>
 <div class="paragraph">
 <p>Current built-in actions mostly focus on providing vulnerability export capabilities similar to <a href="https://github.com/fortify/FortifyVulnerabilityExporter">FortifyVulnerabilityExporter</a>, allowing us to eventually deprecate FortifyVulnerabilityExporter. Fcli also provides some new actions though, for example for generating GitHub Pull Request decorations. Over time, we&#8217;ll be adding more built-in actions.</p>
@@ -1183,8 +1183,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20240513.162237-dev_develop<br>
-Last updated 2024-05-13 16:24:19 UTC
+Version 0.20240513.163402-dev_develop<br>
+Last updated 2024-05-13 16:35:50 UTC
 </div>
 </div>
 </body>
