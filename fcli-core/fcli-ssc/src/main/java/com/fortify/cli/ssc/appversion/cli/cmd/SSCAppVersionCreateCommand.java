@@ -78,9 +78,9 @@ public class SSCAppVersionCreateCommand extends AbstractSSCJsonNodeOutputCommand
         SSCAttributeUpdateBuilder attrUpdateBuilder = getAttrUpdateBuilder(unirest);
         SSCAppVersionUserUpdateBuilder authUpdateBuilder = getAuthUpdateBuilder(unirest);
 
-        SSCAppVersionDescriptor descriptor = createUncommittedAppVersion(unirest);
-
         SSCAppVersionCreateCopyFromBuilder copyFromBuilder = getCopyFromBuilder(unirest);
+        
+        SSCAppVersionDescriptor descriptor = createUncommittedAppVersion(unirest);
 
         SSCBulkResponse bulkResponse = new SSCBulkRequestBuilder()
             .request("attrUpdate", attrUpdateBuilder.buildRequest(descriptor.getVersionId()))
