@@ -29,7 +29,7 @@ task generateActionSchema(type: JavaExec) {
     dependsOn('build')
     classpath = sourceSets.main.runtimeClasspath
     main 'com.fortify.cli.common.action.schema.generator.GenerateActionSchema'
-    args "${actionSchemaOutputDir}"
+    args project.version, actionSchemaOutputDir
 }
 
 task generateManpageAsciiDoc(type: JavaExec) {

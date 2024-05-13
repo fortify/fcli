@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.fortify.cli.common.action.model.SupportedSchemaVersion;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigDescriptor;
 import com.fortify.cli.common.http.ssl.truststore.helper.TrustStoreConfigHelper;
 import com.fortify.cli.common.i18n.helper.LanguageHelper;
@@ -84,7 +83,7 @@ public final class FortifyCLIStaticInitializer {
     }
     
     private void initializeActionProperties() {
-        System.setProperty("fcli.action.supportedSchemaVersions", getValueToStringString(SupportedSchemaVersion.values()));
+        System.setProperty("fcli.action.supportedSchemaVersions", "TODO");
     }
     
     private void initializeTrustStore() {
@@ -115,10 +114,6 @@ public final class FortifyCLIStaticInitializer {
         return getValuesString(values, Enum::name);
     }
     
-    private String getValueToStringString(Enum<?>[] values) {
-        return getValuesString(values, Enum::toString);
-    }
-
     private String getValuesString(Enum<?>[] values, Function<Enum<?>, String> f) {
         return Stream.of(values).map(f).collect(Collectors.joining(", "));
     }

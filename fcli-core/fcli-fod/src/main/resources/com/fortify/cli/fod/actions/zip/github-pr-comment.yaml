@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
 
 # For now, this template uses latest release state to generate PR decorations.
 # See corresponding .bak file is SSC module for an example of how to better

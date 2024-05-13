@@ -246,6 +246,7 @@ public class ActionLoaderHelper {
             var matcher = schemaPattern.matcher(actionText);
             String propertyValue = null;
             String commentValue = null;
+            String schemaUri = null;
             while ( matcher.find() ) {
                 propertyValue = getValue("$schema", matcher.group("schemaPropertyValue"), propertyValue);
                 commentValue = getValue("# yaml-language-server $schema", matcher.group("schemaCommentValue"), commentValue);
@@ -256,6 +257,12 @@ public class ActionLoaderHelper {
                 throw new IllegalStateException(getExceptionMessage("If both '$schema' property and '# yaml-language-server $schema' are specified, the schema locations must be identical"));
             } else if ( StringUtils.isBlank(propertyValue) ) {
                 result += "\n\n$schema: "+commentValue;
+                schemaUri = commentValue;
+            } else {
+                schemaUri = propertyValue;
+            }
+            if ( !ActionSchemaVersionHelper.isSupportedSchemaURI(schemaUri) ) {
+                LOG.warn("WARN: Action was designed for fcli version "+ActionSchemaVersionHelper.CURRENT_FCLI_VERSION+" and may fail");
             }
             return result;
         }

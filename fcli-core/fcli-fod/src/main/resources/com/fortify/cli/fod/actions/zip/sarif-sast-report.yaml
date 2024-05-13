@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
 
 # For now, github-sast-report and sarif-sast-report actions are exactly the same, apart from the
 # following:

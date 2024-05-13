@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.json
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
 
 usage:
   header: Generate a SonarQube External Issues report listing SSC SAST vulnerabilities. 

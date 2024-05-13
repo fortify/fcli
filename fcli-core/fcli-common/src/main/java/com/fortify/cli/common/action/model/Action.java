@@ -37,6 +37,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.ToString;
 
 /**
  * This class describes an action deserialized from an action YAML file, 
@@ -87,8 +88,8 @@ public class Action implements IActionElement {
     
     /** Maps/Collections listing action elements. 
      *  These get filled by the {@link #visit(Action, Object)} method. */ 
-    @JsonIgnore private final Map<String, ActionValueTemplate> valueTemplatesByName = new HashMap<>();
-    @JsonIgnore private final List<IActionElement> allActionElements = new ArrayList<>();
+    @ToString.Exclude @JsonIgnore private final Map<String, ActionValueTemplate> valueTemplatesByName = new HashMap<>();
+    @ToString.Exclude @JsonIgnore private final List<IActionElement> allActionElements = new ArrayList<>();
     
     public Map<String, ActionValueTemplate> getValueTemplatesByName() {
         return Collections.unmodifiableMap(valueTemplatesByName);
@@ -128,9 +129,6 @@ public class Action implements IActionElement {
     public final void postLoad(Action action) {
         checkNotNull("action usage", usage, this);
         checkNotNull("action steps", steps, this);
-        var schema = getSchema();
-        checkNotNull("action $schema", schema, this);
-        throwIf(!SupportedSchemaVersion.isSupportedSchemaURI(getSchema()), this, ()->"Unsupported action schema URI or version: "+schema);
         if ( parameters==null ) {
             parameters = Collections.emptyList();
         }
