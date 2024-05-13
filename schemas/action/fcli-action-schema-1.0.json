@@ -413,6 +413,10 @@
   },
   "type" : "object",
   "properties" : {
+    "$schema" : {
+      "type" : "string",
+      "description" : "Required unless `yaml-language-server` comment with schema location is provided: Schema location."
+    },
     "addRequestTargets" : {
       "description" : "Optional: Add target URLs and related properties for REST requests.",
       "type" : "array",
@@ -498,11 +502,6 @@
         "additionalProperties" : false
       }
     },
-    "schemaVersion" : {
-      "type" : "string",
-      "const" : "1.0",
-      "description" : "Required: Schema version."
-    },
     "signatureStatus" : {
       "type" : "string",
       "enum" : [ "VALID_SIGNATURE", "INVALID_SIGNATURE", "NO_PUBLIC_KEY", "NO_SIGNATURE", "NOT_VERIFIED" ],
@@ -553,7 +552,7 @@
       }
     }
   },
-  "required" : [ "schemaVersion", "steps", "usage" ],
+  "required" : [ "steps", "usage" ],
   "description" : "Fortify CLI action definition",
   "additionalProperties" : false
 }
