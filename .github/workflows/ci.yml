@@ -301,7 +301,7 @@ jobs:
   publishPages:
     name: publishPages
     if: needs.build.outputs.do_release
-    needs: [build, release, combine-artifacts]
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Check-out existing docs from gh-pages branch
@@ -314,7 +314,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
-          name: combined-artifacts
+          name: build-output
           
       - name: Update documentation from artifact
         run: |
