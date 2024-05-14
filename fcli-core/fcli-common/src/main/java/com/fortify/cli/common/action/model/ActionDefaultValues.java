@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionDefaultValues implements IActionElement {
-    @JsonPropertyDescription("Optional: Default request target to use for REST requests.")
+    @JsonPropertyDescription("Optional string: Default request target to use for REST requests.")
     @JsonProperty(required = false) private String requestTarget;
     
     @Override

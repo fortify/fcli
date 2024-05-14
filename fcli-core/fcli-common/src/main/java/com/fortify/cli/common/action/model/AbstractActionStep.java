@@ -23,6 +23,6 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data 
 public abstract class AbstractActionStep implements IActionStep {
-    @JsonPropertyDescription("Optional: Only execute this step if the given if-expression evaluates to 'true'")
+    @JsonPropertyDescription("Optional SpEL template expression: Only execute this step if the given if-expression evaluates to 'true'")
     @JsonProperty(value = "if", required = false) private TemplateExpression _if;
 }

@@ -27,13 +27,13 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public final class ActionStepWrite extends AbstractActionStep implements IActionStepValueSupplier {
-    @JsonPropertyDescription("Required: SpEL template expression defining where to write the given data; either 'stdout', 'stderr' or a filename.")
+    @JsonPropertyDescription("Required SpEL template expression: Specify where to write the given data; either 'stdout', 'stderr' or a filename.")
     @JsonProperty(required = true) private TemplateExpression to;
     
-    @JsonPropertyDescription("Required if 'valueTemplate' is not specified: Value to be written to the given output.")
+    @JsonPropertyDescription("Required SpEL template expression if 'valueTemplate' is not specified: Value to be written to the given output.")
     @JsonProperty(required = false) private TemplateExpression value;
     
-    @JsonPropertyDescription("Required if 'value' is not specified: Name of a value template to be evaluated, writing the outcome of the value template to the given output.")
+    @JsonPropertyDescription("Required string if 'value' is not specified: Name of a value template to be evaluated, writing the outcome of the value template to the given output.")
     @JsonProperty(required = false) private String valueTemplate;    
     
     public void postLoad(Action action) {

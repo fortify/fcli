@@ -38,10 +38,10 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionValueTemplate implements IActionElement {
-    @JsonPropertyDescription("Required: Name of this value template.")
+    @JsonPropertyDescription("Required string: Name of this value template.")
     @JsonProperty(required = true) private String name;
     
-    @JsonPropertyDescription("Required: Text or structured JSON contents, where each text node is assumed to be a template expression.")
+    @JsonPropertyDescription("Required object|string: Text or structured JSON contents, where each text node is assumed to be a template expression.")
     @JsonProperty(required = true) private JsonNode contents;
     
     /** Cached mapping from text node property path to corresponding TemplateExpression instance */  

@@ -32,6 +32,6 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public final class ActionStepAppend extends AbstractActionStepUpdateProperty {
-    @JsonPropertyDescription("Optional: Property name to be added or updated in the data object specified by 'name'. If specified, 'name' is considered to be an object, otherwise 'name' is considered to be an array.")
+    @JsonPropertyDescription("Optional SpEL template expression: Property name to be added or updated in the data object specified by 'name'. If specified, 'name' is considered to be an object, otherwise 'name' is considered to be an array.")
     @JsonProperty(required = false) private TemplateExpression property;
 }

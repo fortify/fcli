@@ -56,34 +56,34 @@ import lombok.ToString;
 @Data
 @JsonClassDescription("Fortify CLI action definition")
 public class Action implements IActionElement {
-    @JsonPropertyDescription("Read-only: Action name, inferred from file name.")
+    @JsonPropertyDescription("Read-only string: Action name, inferred from file name.")
     @JsonProperty(access = Access.READ_ONLY) private String name;
     
-    @JsonPropertyDescription("Read-only: Whether this is a custom action, inferred from where the action is loaded from.")
+    @JsonPropertyDescription("Read-only boolean: Whether this is a custom action, inferred from where the action is loaded from.")
     @JsonProperty(access = Access.READ_ONLY) private boolean custom;
     
-    @JsonPropertyDescription("Read-only: Action signature verification status.")
+    @JsonPropertyDescription("Read-only object: Action signature verification status.")
     @JsonProperty(access = Access.READ_ONLY) private SignatureStatus signatureStatus;
     
-    @JsonPropertyDescription("Required unless `yaml-language-server` comment with schema location is provided: Schema location.")
+    @JsonPropertyDescription("Required string unless `yaml-language-server` comment with schema location is provided: Schema location.")
     @JsonProperty(value = "$schema", required=false) public String schema;
     
-    @JsonPropertyDescription("Required: Action usage help.")
+    @JsonPropertyDescription("Required object: Action usage help.")
     @JsonProperty(required = true) private ActionUsage usage;
     
-    @JsonPropertyDescription("Optional: Action parameters.")
+    @JsonPropertyDescription("Optional list: Action parameters.")
     @JsonProperty(required = false) private List<ActionParameter> parameters;
     
-    @JsonPropertyDescription("Optional: Add target URLs and related properties for REST requests.")
+    @JsonPropertyDescription("Optional list: Add target URLs and related properties for REST requests.")
     @JsonProperty(required = false) private List<ActionRequestTarget> addRequestTargets;
     
-    @JsonPropertyDescription("Optional: Default values for some specific properties. Currently only used to set a default request target.")
+    @JsonPropertyDescription("Optional object: Default values for some specific properties. Currently only used to set a default request target.")
     @JsonProperty(required = false) private ActionDefaultValues defaults;
     
-    @JsonPropertyDescription("Required: Steps to be executed when this action is being run.")
+    @JsonPropertyDescription("Required list: Steps to be executed when this action is being run.")
     @JsonProperty(required = true) private List<ActionStep> steps;
     
-    @JsonPropertyDescription("Optional: Value templates used to format data.")
+    @JsonPropertyDescription("Optional list: Value templates used to format data.")
     @JsonProperty(required = false) private List<ActionValueTemplate> valueTemplates;
     
     /** Maps/Collections listing action elements. 

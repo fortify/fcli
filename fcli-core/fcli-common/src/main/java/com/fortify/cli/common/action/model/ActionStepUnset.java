@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public final class ActionStepUnset extends AbstractActionStep {
-    @JsonPropertyDescription("Required: Name to unset.")
+    @JsonPropertyDescription("Required string: Name to unset.")
     @JsonProperty(required = true) private String name;
     
     public void postLoad(Action action) {

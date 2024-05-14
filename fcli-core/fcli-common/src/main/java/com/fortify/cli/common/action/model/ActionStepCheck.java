@@ -32,16 +32,16 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public final class ActionStepCheck extends AbstractActionStep {
-    @JsonPropertyDescription("Required: Display name of this check, to be displayed in PASS/FAIL messages.")
+    @JsonPropertyDescription("Required string: Display name of this check, to be displayed in PASS/FAIL messages.")
     @JsonProperty(required = true) private String displayName;
     
-    @JsonPropertyDescription("Required if 'passIf' not specified: The outcome of this check will be 'FAIL' if the given expression evaluates to 'true', outcome will be 'PASS' otherwise.")
+    @JsonPropertyDescription("Required SpEL template expression if 'passIf' not specified: The outcome of this check will be 'FAIL' if the given expression evaluates to 'true', outcome will be 'PASS' otherwise.")
     @JsonProperty(required = false) private TemplateExpression failIf;
     
-    @JsonPropertyDescription("Required if 'failIf' not specified: The outcome of this check will be 'SUCCESS' if the given expression evaluates to 'true', outcome will be 'FAIL' otherwise.")
+    @JsonPropertyDescription("Required SpEL template expression if 'failIf' not specified: The outcome of this check will be 'SUCCESS' if the given expression evaluates to 'true', outcome will be 'FAIL' otherwise.")
     @JsonProperty(required = false) private TemplateExpression passIf;
     
-    @JsonPropertyDescription("Optional: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks.")
+    @JsonPropertyDescription("Optional enum value: Define the check result in case the check is being skipped due to conditional execution or no records to be processed in forEach blocks.")
     @JsonProperty(required = false, defaultValue = "SKIP") private CheckStatus ifSkipped = CheckStatus.SKIP;
     
     public final void postLoad(Action action) {

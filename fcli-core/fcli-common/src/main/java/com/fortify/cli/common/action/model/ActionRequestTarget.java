@@ -28,13 +28,13 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionRequestTarget implements IActionElement {
-    @JsonPropertyDescription("Required: Request target name, referenceable from 'request' steps.")
+    @JsonPropertyDescription("Required string: Request target name, referenceable from 'request' steps.")
     @JsonProperty(required = true) private String name;
     
-    @JsonPropertyDescription("Required: Base URL to use for REST requests to this request target.")
+    @JsonPropertyDescription("Required SpEL template expression: Base URL to use for REST requests to this request target.")
     @JsonProperty(required = true) private TemplateExpression baseUrl;
     
-    @JsonPropertyDescription("Optional: Headers to be sent to this request target on every request.")
+    @JsonPropertyDescription("Optional map<string,SpEL template expression>: Headers to be sent to this request target on every request.")
     @JsonProperty(required = false) private Map<String, TemplateExpression> headers;
     
     // TODO Add support for next page URL producer

@@ -29,13 +29,13 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public abstract class AbstractActionStepForEach extends AbstractActionStep {
-    @JsonPropertyDescription("Required: Name to assign to each individual record being processed. Can be referenced in other forEach properties and nested steps using ${name}.")
+    @JsonPropertyDescription("Required string: Name to assign to each individual record being processed. Can be referenced in other forEach properties and nested steps using ${name}.")
     @JsonProperty(required = true) private String name;
     
-    @JsonPropertyDescription("Required: Steps to be executed for each individual record.")
+    @JsonPropertyDescription("Required list: Steps to be executed for each individual record.")
     @JsonProperty(value = "do", required = true)  private List<ActionStep> _do;
     
-    @JsonPropertyDescription("Optional: Stop processing any further records if the breakIf expression evaluates to 'true'.")
+    @JsonPropertyDescription("Optional SpEL template expression: Stop processing any further records if the breakIf expression evaluates to 'true'.")
     @JsonProperty(required = false) private TemplateExpression breakIf;
     
     /**

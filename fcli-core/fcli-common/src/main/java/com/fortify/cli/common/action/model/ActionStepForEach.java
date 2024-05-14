@@ -33,10 +33,10 @@ import lombok.NoArgsConstructor;
 public final class ActionStepForEach extends AbstractActionStepForEach {
     /** Processor that runs the forEach steps. This expression must evaluate to an
      *  IActionStepForEachProcessor instance. */
-    @JsonPropertyDescription("Required if 'values' not specified: Reference to a processor that generates JSON records and executes the given steps for each record. For now, the only available processor is ${#ssc.ruleDescriptionsProcessor(parameters.appversion.id)} for processing rule descriptions from the current state FPR file, used by some built-in actions.")
+    @JsonPropertyDescription("Required SpEL template expression if 'values' not specified: Reference to a processor that generates JSON records and executes the given steps for each record. For now, the only available processor is ${#ssc.ruleDescriptionsProcessor(parameters.appversion.id)} for processing rule descriptions from the current state FPR file, used by some built-in actions.")
     @JsonProperty(required = false) private TemplateExpression processor;
     
-    @JsonPropertyDescription("Required if 'processor' not specified: Array of values to be iterated over.")
+    @JsonPropertyDescription("Required SpEL template expression if 'processor' not specified: Array of values to be iterated over.")
     @JsonProperty(required = false) private TemplateExpression values;
     
     public final void _postLoad(Action action) {}

@@ -32,37 +32,37 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public final class ActionStepRequest extends AbstractActionStep {
-    @JsonPropertyDescription("Required: Name to assign to the JSON response for this REST request. Can be referenced in subsequent steps using ${name} to access transformed data (if applicable) or ${name_raw} to access raw, untransformed data.")
+    @JsonPropertyDescription("Required string: Name to assign to the JSON response for this REST request. Can be referenced in subsequent steps using ${name} to access transformed data (if applicable) or ${name_raw} to access raw, untransformed data.")
     @JsonProperty(required = true) private String name;
     
-    @JsonPropertyDescription("Optional: HTTP method like GET or POST to use for this REST request. Defaults to 'GET'.")
+    @JsonPropertyDescription("Optional string: HTTP method like GET or POST to use for this REST request. Defaults to 'GET'.")
     @JsonProperty(required = false, defaultValue = "GET") private String method = HttpMethod.GET.name();
     
-    @JsonPropertyDescription("Required: Unqualified REST URI, like '/api/v3/some/api/${parameters.name.id}' to be appended to the base URL as configured for the given 'target'.")
+    @JsonPropertyDescription("Required SpEL template expression: Unqualified REST URI, like '/api/v3/some/api/${parameters.name.id}' to be appended to the base URL as configured for the given 'target'.")
     @JsonProperty(required = true) private TemplateExpression uri;
     
-    @JsonPropertyDescription("Required if no default target has been configured through defaults.requestTarget: Target on which to execute the REST request. This may be 'fod' (for actions in FoD module), 'ssc' (for actions in SSC module), or a custom request target as configured through 'addRequestTargets'.")
+    @JsonPropertyDescription("Required string if no default target has been configured through defaults.requestTarget: Target on which to execute the REST request. This may be 'fod' (for actions in FoD module), 'ssc' (for actions in SSC module), or a custom request target as configured through 'addRequestTargets'.")
     @JsonProperty(required = false) private String target;
     
-    @JsonPropertyDescription("Optional: Map of query parameters and corresponding values, for example 'someParam: ${name.property}'.")
+    @JsonPropertyDescription("Optional map<string,SpEL template expression>: Map of query parameters and corresponding values, for example 'someParam: ${name.property}'.")
     @JsonProperty(required = false) private Map<String,TemplateExpression> query;
     
-    @JsonPropertyDescription("Optional: Request body to send with the REST request.")
+    @JsonPropertyDescription("Optional SpEL template expression: Request body to send with the REST request.")
     @JsonProperty(required = false) private TemplateExpression body;
     
-    @JsonPropertyDescription("Optional: Flag to indicate whether this is a 'paged' or 'simple' request. If set to 'paged' (only available for 'fod' and 'ssc' request targets for now), all pages will be automatically processed. Defaults to 'simple'.")
+    @JsonPropertyDescription("Optional enum value: Flag to indicate whether this is a 'paged' or 'simple' request. If set to 'paged' (only available for 'fod' and 'ssc' request targets for now), all pages will be automatically processed. Defaults to 'simple'.")
     @JsonProperty(required = false, defaultValue = "simple") private ActionStepRequest.ActionStepRequestType type = ActionStepRequestType.simple;
 
-    @JsonPropertyDescription("Optional: Progress messages for various stages of request/response processing.")
+    @JsonPropertyDescription("Optional object: Progress messages for various stages of request/response processing.")
     @JsonProperty(required = false) private ActionStepRequest.ActionStepRequestPagingProgressDescriptor pagingProgress;
     
-    @JsonPropertyDescription("Optional: Steps to be executed on the overall response before executing any 'forEach' steps.")
+    @JsonPropertyDescription("Optional list: Steps to be executed on the overall response before executing any 'forEach' steps.")
     @JsonProperty(required = false) private List<ActionStep> onResponse;
     
-    @JsonPropertyDescription("Optional: Steps to be executed on request failure. If not specified, an exception will be thrown on request failure.")
+    @JsonPropertyDescription("Optional list: Steps to be executed on request failure. If not specified, an exception will be thrown on request failure.")
     @JsonProperty(required = false) private List<ActionStep> onFail;
 
-    @JsonPropertyDescription("Optional: Steps to be executed for each record in the REST response.")
+    @JsonPropertyDescription("Optional object: Steps to be executed for each record in the REST response.")
     @JsonProperty(required = false) private ActionStepRequest.ActionStepRequestForEachDescriptor forEach;
     
     /**

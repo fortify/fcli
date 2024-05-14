@@ -25,10 +25,10 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionUsage implements IActionElement {
-    @JsonPropertyDescription("Required: Action usage header, displayed in list and help outputs")
+    @JsonPropertyDescription("Required string: Action usage header, displayed in list and help outputs")
     @JsonProperty(required = true) private String header;
     
-    @JsonPropertyDescription("Required: Action usage description, displayed in help output")
+    @JsonPropertyDescription("Required string: Action usage description, displayed in help output")
     @JsonProperty(required = true) private String description;
     
     public void postLoad(Action action) {

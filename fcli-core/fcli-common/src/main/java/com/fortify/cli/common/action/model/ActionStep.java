@@ -43,46 +43,46 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public final class ActionStep extends AbstractActionStep {
-    @JsonPropertyDescription("Optional: Execute one or more REST requests.")
+    @JsonPropertyDescription("Optional list: Execute one or more REST requests.")
     @JsonProperty(required = false) private List<ActionStepRequest> requests;
     
-    @JsonPropertyDescription("Optional: Execute one or more fcli commands. For now, only fcli commands that support the standard output options (--output/--store/--to-file) may be used, allowing the JSON output of those commands to be used in subsequent or nested steps. Any console output is suppressed, and any non-zero exit codes will produce an error.")
+    @JsonPropertyDescription("Optional list: Execute one or more fcli commands. For now, only fcli commands that support the standard output options (--output/--store/--to-file) may be used, allowing the JSON output of those commands to be used in subsequent or nested steps. Any console output is suppressed, and any non-zero exit codes will produce an error.")
     @JsonProperty(required = false) private List<ActionStepFcli> fcli;
     
-    @JsonPropertyDescription("Optional: Write a progress message.")
+    @JsonPropertyDescription("Optional SpEL template expression: Write a progress message.")
     @JsonProperty(required = false) private TemplateExpression progress;
     
-    @JsonPropertyDescription("Optional: Write a warning message to console and log file (if enabled). Note that warning messages will be shown on console only after all action steps have been executed, to not interfere with progress messages.")
+    @JsonPropertyDescription("Optional SpEL template expression: Write a warning message to console and log file (if enabled). Note that warning messages will be shown on console only after all action steps have been executed, to not interfere with progress messages.")
     @JsonProperty(required = false) private TemplateExpression warn;
     
-    @JsonPropertyDescription("Optional: Write a debug message to log file (if enabled).")
+    @JsonPropertyDescription("Optional SpEL template expression: Write a debug message to log file (if enabled).")
     @JsonProperty(required = false) private TemplateExpression debug;
 
-    @JsonPropertyDescription("Optional: Throw an exception, thereby terminating action execution.")
+    @JsonPropertyDescription("Optional SpEL template expression: Throw an exception, thereby terminating action execution.")
     @JsonProperty(value = "throw", required = false) private TemplateExpression _throw;
     
-    @JsonPropertyDescription("Optional: Terminate action execution and return the given exit code.")
+    @JsonPropertyDescription("OptionalSpEL template expression: Terminate action execution and return the given exit code.")
     @JsonProperty(value = "exit", required = false) private TemplateExpression _exit;
     
-    @JsonPropertyDescription("Optional: Set a data value for use in subsequent steps.")
+    @JsonPropertyDescription("Optional list: Set a data value for use in subsequent steps.")
     @JsonProperty(required = false) private List<ActionStepSet> set;
     
-    @JsonPropertyDescription("Optional: Append a data value for use in subsequent steps.")
+    @JsonPropertyDescription("Optional list: Append a data value for use in subsequent steps.")
     @JsonProperty(required = false) private List<ActionStepAppend> append;
     
-    @JsonPropertyDescription("Optional: Unset a data value for use in subsequent steps.")
+    @JsonPropertyDescription("Optional list: Unset a data value for use in subsequent steps.")
     @JsonProperty(required = false) private List<ActionStepUnset> unset;
     
-    @JsonPropertyDescription("Optional: Write data to a file, stdout, or stderr. Note that output to stdout and stderr will be deferred until action termination as to not interfere with progress messages.")
+    @JsonPropertyDescription("Optional list: Write data to a file, stdout, or stderr. Note that output to stdout and stderr will be deferred until action termination as to not interfere with progress messages.")
     @JsonProperty(required = false) private List<ActionStepWrite> write;
     
-    @JsonPropertyDescription("Optional: Iterate over a given array of values.")
+    @JsonPropertyDescription("Optional object: Iterate over a given array of values.")
     @JsonProperty(required = false) private ActionStepForEach forEach;
     
-    @JsonPropertyDescription("Optional: Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of on or more checks was FAIL.")
+    @JsonPropertyDescription("Optional list: Mostly used for security policy and similar actions to define PASS/FAIL criteria. Upon action termination, check results will be written to console and return a non-zero exit code if the outcome of on or more checks was FAIL.")
     @JsonProperty(required = false) private List<ActionStepCheck> check;
     
-    @JsonPropertyDescription("Optional: Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.")
+    @JsonPropertyDescription("Optional list: Sub-steps to be executed; useful for grouping or conditional execution of multiple steps.")
     @JsonProperty(required = false) private List<ActionStep> steps;
     
     /**
