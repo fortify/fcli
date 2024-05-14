@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240514.173807-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240514.181427-dev_develop" %}
 
 
 <div id="header">
@@ -76,19 +76,19 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><strong>--on-invalid-signature</strong>=<em>&lt;onInvalidSignature&gt;</em></dt>
 <dd>
-<p>Action to take if action signature is invalid. Default value: prompt</p>
+<p>Action to take if action signature is invalid. Allowed values: ignore, warn, fail, prompt. Default value: prompt</p>
 </dd>
 <dt class="hdlist1"><strong>--on-invalid-version</strong>=<em>&lt;onUnsupportedVersion&gt;</em></dt>
 <dd>
-<p>Action to take if action schema version is not supported by this fcli version. Default value: prompt</p>
+<p>Action to take if action schema version is not supported by this fcli version. Allowed values: ignore, warn, fail, prompt. Default value: prompt</p>
 </dd>
 <dt class="hdlist1"><strong>--on-no-public-key</strong>=<em>&lt;onNoPublicKey&gt;</em></dt>
 <dd>
-<p>Action to take if no matching public key was configured. Default value: prompt</p>
+<p>Action to take if no matching public key was configured. Allowed values: ignore, warn, fail, prompt. Default value: prompt</p>
 </dd>
 <dt class="hdlist1"><strong>--on-unsigned</strong>=<em>&lt;onUnsigned&gt;</em></dt>
 <dd>
-<p>Action to take if action isn&#8217;t signed. Default value: prompt</p>
+<p>Action to take if action isn&#8217;t signed. Allowed values: ignore, warn, fail, prompt. Default value: prompt</p>
 </dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
@@ -186,7 +186,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-05-14 17:39:52 UTC
+Last updated 2024-05-14 18:16:13 UTC
 </div>
 </div>
 </body>
