@@ -46,10 +46,26 @@ public class GenerateActionSchema {
         var newSchema = generateSchema();
         var existingSchema = loadExistingSchema(actionSchemaVersion);
         checkSchemaCompatibility(actionSchemaVersion, existingSchema, newSchema);
+        writeGitHubWarning(actionSchemaVersion, existingSchema);
 
         // If this is an fcli development release, we output the schema as a development release.
         // Note that the same output file name will be used for any branch.
         var outputVersion = isDevelopmentRelease.equals("true") ? DEV_VERSION : actionSchemaVersion;
+        if ( existingSchema!=null && !DEV_VERSION.equals(outputVersion) ) {
+            System.out.println("Fortify CLI action schema not being generated as "+outputVersion+" schema already exists");
+        } else {
+            writeSchema(outputPath, newSchema, outputVersion);
+        }
+    }
+
+    private static void writeSchema(Path outputPath, JsonNode newSchema, String outputVersion) throws IOException {
+        Files.createDirectories(outputPath);
+        var outputFile = outputPath.resolve(String.format("fcli-action-schema-%s.json", outputVersion));
+        Files.writeString(outputFile, newSchema.toPrettyString(), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+        System.out.println("Fortify CLI action schema written to "+outputFile.toString());
+    }
+
+    private static void writeGitHubWarning(String actionSchemaVersion, JsonNode existingSchema) {
         if ( existingSchema==null ) {
             System.out.println("::warning ::New fcli action schema version "+actionSchemaVersion+
                     " will be published upon fcli release. Please ensure that this version number" +
@@ -57,13 +73,6 @@ public class GenerateActionSchema {
                     " like description changes, minor increase for backward-compatible structural" +
                     " changes like new optional properties, major increase for non-backward-compatible" +
                     " structural changes like new required properties or removed properties).");
-        } else if ( !DEV_VERSION.equals(outputVersion) ) {
-            System.out.println("Fortify CLI action schema not being generated as "+outputVersion+" schema already exists");
-        } else {
-            Files.createDirectories(outputPath);
-            var outputFile = outputPath.resolve(String.format("fcli-action-schema-%s.json", outputVersion));
-            Files.writeString(outputFile, newSchema.toPrettyString(), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-            System.out.println("Fortify CLI action schema written to "+outputFile.toString());
         }
     }
     

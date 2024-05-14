@@ -263,7 +263,7 @@ public class ActionLoaderHelper {
             }
             var schemaVersion = ActionSchemaHelper.getSchemaVersion(schemaUri);
             if ( !ActionSchemaHelper.isSupportedSchemaVersion(schemaVersion) ) {
-                LOG.warn("WARN: Action was designed for fcli version "+schemaVersion+" and may fail");
+                LOG.warn("WARN: Action uses unsupported schema version "+schemaVersion+" and may fail");
             }
             return result;
         }
