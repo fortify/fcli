@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240514.124859-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240514.161022-dev_develop" %}
 
 
 <div id="header">
@@ -42,7 +42,11 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli ssc action run</strong> [<strong>-y</strong>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>] [<strong>--pubkey</strong>=<em>source</em>] [<strong>-z</strong>=<em>&lt;source&gt;</em>]
+<p><strong>fcli ssc action run</strong> [<strong>--on-invalid-signature</strong>=<em>&lt;onInvalidSignature&gt;</em>]
+                    [<strong>--on-invalid-version</strong>=<em>&lt;onUnsupportedVersion&gt;</em>]
+                    [<strong>--on-no-public-key</strong>=<em>&lt;onNoPublicKey&gt;</em>]
+                    [<strong>--on-unsigned</strong>=<em>&lt;onUnsigned&gt;</em>] [<strong>--progress</strong>=<em>&lt;type&gt;</em>]
+                    [<strong>--pubkey</strong>=<em>source</em>] [<strong>-z</strong>=<em>&lt;source&gt;</em>]
                     [<strong>--&lt;action-parameter&gt;</strong>=<em>&lt;value&gt;</em>]&#8230;&#8203; [[<strong>-h</strong>]
                     [<strong>--env-prefix</strong>=<em>&lt;envPrefix&gt;</em>] [<strong>--log-file</strong>=<em>&lt;logFile&gt;</em>]
                     [<strong>--log-level</strong>=<em>&lt;logLevel&gt;</em>]] [[<strong>--session</strong>=<em>&lt;sessionName&gt;</em>]]
@@ -69,6 +73,22 @@ fcli_version:
 <dt class="hdlist1"><strong>--&lt;action-parameter&gt;</strong>=<em>&lt;value&gt;</em></dt>
 <dd>
 <p>Action parameter(s); see 'help' command output to list supported parameters.</p>
+</dd>
+<dt class="hdlist1"><strong>--on-invalid-signature</strong>=<em>&lt;onInvalidSignature&gt;</em></dt>
+<dd>
+<p>Action to take if action signature is invalid. Default value: prompt</p>
+</dd>
+<dt class="hdlist1"><strong>--on-invalid-version</strong>=<em>&lt;onUnsupportedVersion&gt;</em></dt>
+<dd>
+<p>Action to take if action schema version is not supported by this fcli version. Default value: prompt</p>
+</dd>
+<dt class="hdlist1"><strong>--on-no-public-key</strong>=<em>&lt;onNoPublicKey&gt;</em></dt>
+<dd>
+<p>Action to take if no matching public key was configured. Default value: prompt</p>
+</dd>
+<dt class="hdlist1"><strong>--on-unsigned</strong>=<em>&lt;onUnsigned&gt;</em></dt>
+<dd>
+<p>Action to take if action isn&#8217;t signed. Default value: prompt</p>
 </dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
@@ -102,10 +122,6 @@ fcli_version:
 <pre>If no prefix is given, &lt;local file&gt; is assumed. For security reasons, you should only use trusted public keys from a trusted source. Independent of source, contents must be in PEM (base64-encoded) format. For convenience with string: or env: inputs, the 'BEGIN/END PUBLIC KEY' statements and any whitespace (including newline characters) may be omitted. If no (matching) public key is provided, action signature will be verified against public keys previously imported through the 'fcli config public-key import' command.</pre>
 </div>
 </div>
-</dd>
-<dt class="hdlist1"><strong>-y</strong>, <strong>--confirm</strong></dt>
-<dd>
-<p>Confirm running an action with invalid signature.</p>
 </dd>
 <dt class="hdlist1"><strong>-z</strong>, <strong>--from-zip</strong>=<em>&lt;source&gt;</em></dt>
 <dd>
@@ -170,7 +186,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-05-14 12:50:39 UTC
+Last updated 2024-05-14 16:12:04 UTC
 </div>
 </div>
 </body>
