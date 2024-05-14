@@ -12,7 +12,7 @@
  */
 package com.fortify.cli.fod._common.action;
 
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.TestInstance;
@@ -25,6 +25,7 @@ import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler.ActionInvalidSchemaVersionHandler;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler.ActionInvalidSignatureHandler;
+import com.fortify.cli.common.action.model.Action.ActionProperties;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor;
 
 // TODO Move this class to a common test utility module; currently
@@ -55,7 +56,7 @@ public abstract class AbstractActionTest {
                 .toArray(String[]::new);
     }
 
-    private static final Consumer<SignedTextDescriptor> invalidSignatureHandler() {
+    private static final BiConsumer<ActionProperties, SignedTextDescriptor> invalidSignatureHandler() {
         return "true".equalsIgnoreCase((System.getProperty("test.action.requireValidSignature")))
                 ? ActionInvalidSignatureHandler.fail
                 : ActionInvalidSignatureHandler.warn;

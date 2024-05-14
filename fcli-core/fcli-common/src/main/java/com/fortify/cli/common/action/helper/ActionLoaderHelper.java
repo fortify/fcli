@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -82,13 +83,14 @@ public class ActionLoaderHelper {
                 .sorted((a,b)->a.get("name").asText().compareTo(b.get("name").asText()));
     }
     
-    public static final String getSignatureStatusMessage(SignatureStatus signatureStatus) {
+    public static final String getSignatureStatusMessage(ActionProperties properties, SignatureStatus signatureStatus) {
+        var name = properties.getName();
         switch (signatureStatus) {
-        case INVALID_SIGNATURE: return "Action signature is invalid.";
-        case NO_PUBLIC_KEY: return "No trusted public key found to verify action signature.";
-        case NO_SIGNATURE: return "Action is not signed.";
-        case NOT_VERIFIED: return "Action signature verification skipped.";
-        case VALID_SIGNATURE: return "Action has a valid signature.";
+        case INVALID_SIGNATURE: return "Signature for action "+name+" is invalid.";
+        case NO_PUBLIC_KEY: return "No trusted public key found to verify "+name+" action signature.";
+        case NO_SIGNATURE: return "Action "+name+" is not signed.";
+        case NOT_VERIFIED: return "Signature verification skipped for action "+name+".";
+        case VALID_SIGNATURE: return "Action "+name+" has a valid signature.";
         default: throw new RuntimeException("Unknown signature status: "+signatureStatus);
         }
     }
@@ -173,16 +175,16 @@ public class ActionLoaderHelper {
         }
         
         final ActionLoadResult load(InputStream is, ActionProperties properties) {
-            return new ActionLoadResult(actionValidationHandler, loadSignedTextDescriptor(is, properties.isCustom()), properties);
+            return new ActionLoadResult(actionValidationHandler, loadSignedTextDescriptor(properties, is), properties);
         }
             
-        private final SignedTextDescriptor loadSignedTextDescriptor(InputStream is, boolean isCustom) {
+        private final SignedTextDescriptor loadSignedTextDescriptor(ActionProperties properties, InputStream is) {
             return signedTextReader.load(is, StandardCharsets.UTF_8, 
                     // TODO For now, we only evaluate/check signatures for custom actions,
                     // until we've figured out how to sign internal actions during (or 
                     // potentially after) Gradle build.
-                    isCustom 
-                        ? actionValidationHandler.getSignatureValidator()
+                    properties.isCustom() 
+                        ? actionValidationHandler.getSignatureValidator(properties)
                         : null);
         }
         
@@ -265,7 +267,7 @@ public class ActionLoaderHelper {
             }
             var schemaVersion = ActionSchemaHelper.getSchemaVersion(schemaUri);
             if ( !ActionSchemaHelper.isSupportedSchemaVersion(schemaVersion) ) {
-                actionValidationHandler.onUnsupportedSchemaVersion(schemaVersion);
+                actionValidationHandler.onUnsupportedSchemaVersion(properties, schemaVersion);
             }
             return result;
         }
@@ -399,55 +401,55 @@ public class ActionLoaderHelper {
                 .onUnsupportedSchemaVersion(ActionInvalidSchemaVersionHandler.ignore)
                 .build();
         @Singular private final List<String> extraPublicKeys;
-        @Singular private final Map<SignatureStatus, Consumer<SignedTextDescriptor>> onSignatureStatuses;
-        @Builder.Default private final Consumer<SignedTextDescriptor> onSignatureStatusDefault = ActionInvalidSignatureHandler.prompt;
-        @Builder.Default private final Consumer<String> onUnsupportedSchemaVersion = ActionInvalidSchemaVersionHandler.prompt;
+        @Singular private final Map<SignatureStatus, BiConsumer<ActionProperties, SignedTextDescriptor>> onSignatureStatuses;
+        @Builder.Default private final BiConsumer<ActionProperties, SignedTextDescriptor> onSignatureStatusDefault = ActionInvalidSignatureHandler.prompt;
+        @Builder.Default private final BiConsumer<ActionProperties, String> onUnsupportedSchemaVersion = ActionInvalidSchemaVersionHandler.prompt;
         
-        public final SignatureValidator getSignatureValidator() {
-            return new SignatureValidator(this::handleInvalidSignature, extraPublicKeys.toArray(String[]::new));
+        public final SignatureValidator getSignatureValidator(ActionProperties properties) {
+            return new SignatureValidator(d->handleInvalidSignature(properties, d), extraPublicKeys.toArray(String[]::new));
         }
-        public final void onUnsupportedSchemaVersion(String schemaVersion) {
-            this.onUnsupportedSchemaVersion.accept(schemaVersion);
+        public final void onUnsupportedSchemaVersion(ActionProperties properties, String schemaVersion) {
+            this.onUnsupportedSchemaVersion.accept(properties, schemaVersion);
         }
-        private final void handleInvalidSignature(SignedTextDescriptor signedTextDescriptor) {
+        private final void handleInvalidSignature(ActionProperties properties, SignedTextDescriptor signedTextDescriptor) {
             var consumer = onSignatureStatuses.get(signedTextDescriptor.getSignatureStatus());
             if ( consumer==null ) { consumer = onSignatureStatusDefault; }
-            consumer.accept(signedTextDescriptor);
+            consumer.accept(properties, signedTextDescriptor);
         }
         
         @RequiredArgsConstructor
-        public static enum ActionInvalidSignatureHandler implements Consumer<SignedTextDescriptor> {
-            ignore(d->{}),
-            warn(d->_warn(signatureFailureMessage(d))),
-            fail(d->_throw(signatureFailureMessage(d))),
-            prompt(d->_prompt(signatureFailureMessage(d)));
-            private final Consumer<SignedTextDescriptor> onInvalidSignature;
+        public static enum ActionInvalidSignatureHandler implements BiConsumer<ActionProperties, SignedTextDescriptor> {
+            ignore((p,d)->{}),
+            warn((p,d)->_warn(signatureFailureMessage(p,d))),
+            fail((p,d)->_throw(signatureFailureMessage(p,d))),
+            prompt((p,d)->_prompt(signatureFailureMessage(p,d)));
+            private final BiConsumer<ActionProperties, SignedTextDescriptor> onInvalidSignature;
             
             @Override
-            public void accept(SignedTextDescriptor descriptor) {
-                onInvalidSignature.accept(descriptor);   
+            public void accept(ActionProperties properties, SignedTextDescriptor descriptor) {
+                onInvalidSignature.accept(properties, descriptor);   
             }
             
-            private static final String signatureFailureMessage(SignedTextDescriptor descriptor) {
-                return getSignatureStatusMessage(descriptor.getSignatureStatus());
+            private static final String signatureFailureMessage(ActionProperties properties, SignedTextDescriptor descriptor) {
+                return getSignatureStatusMessage(properties, descriptor.getSignatureStatus());
             }
         }
         
         @RequiredArgsConstructor
-        public static enum ActionInvalidSchemaVersionHandler implements Consumer<String> {
-            ignore(v->{}),
-            warn(v->_warn(unsupportedSchemaMessage(v))),
-            fail(v->_throw(unsupportedSchemaMessage(v))),
-            prompt(v->_prompt(unsupportedSchemaMessage(v)));
-            private final Consumer<String> onInvalidSchemaVersion;
+        public static enum ActionInvalidSchemaVersionHandler implements BiConsumer<ActionProperties, String> {
+            ignore((p,v)->{}),
+            warn((p,v)->_warn(unsupportedSchemaMessage(p,v))),
+            fail((p,v)->_throw(unsupportedSchemaMessage(p,v))),
+            prompt((p,v)->_prompt(unsupportedSchemaMessage(p,v)));
+            private final BiConsumer<ActionProperties, String> onInvalidSchemaVersion;
             
             @Override
-            public void accept(String schemaVersion) {
-                onInvalidSchemaVersion.accept(schemaVersion);   
+            public void accept(ActionProperties properties, String schemaVersion) {
+                onInvalidSchemaVersion.accept(properties, schemaVersion);   
             }
             
-            public static final String unsupportedSchemaMessage(String unsupportedVersion) {
-                return String.format("Action uses unsupported schema version %s and may fail.", unsupportedVersion);
+            public static final String unsupportedSchemaMessage(ActionProperties properties, String unsupportedVersion) {
+                return String.format("Action "+properties.getName()+" uses unsupported schema version %s and may fail.", unsupportedVersion);
             }
         }
         
