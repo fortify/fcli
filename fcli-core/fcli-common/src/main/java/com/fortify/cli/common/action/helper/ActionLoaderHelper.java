@@ -42,7 +42,6 @@ import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.Action.ActionProperties;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.RequireConfirmation.AbortedByUserException;
 import com.fortify.cli.common.crypto.helper.SignatureHelper;
-import com.fortify.cli.common.crypto.helper.SignatureHelper.InvalidSignatureHandler;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureStatus;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
 import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor;
@@ -54,25 +53,27 @@ import com.fortify.cli.common.util.ZipHelper;
 import com.fortify.cli.common.util.ZipHelper.IZipEntryWithContextProcessor;
 
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.Singular;
 import lombok.SneakyThrows;
 
 public class ActionLoaderHelper {
     private static final Logger LOG = LoggerFactory.getLogger(ActionLoaderHelper.class);
     private ActionLoaderHelper() {}
     
-    public static final ActionLoadResult load(List<ActionSource> sources, String name, SignatureValidator signatureValidator) {
-        return new ActionLoader(sources, signatureValidator).load(name);
+    public static final ActionLoadResult load(List<ActionSource> sources, String name, ActionValidationHandler actionValidationHandler) {
+        return new ActionLoader(sources, actionValidationHandler).load(name);
     }
     
-    public static final Stream<ObjectNode> streamAsJson(List<ActionSource> sources, SignatureValidator signatureValidator) {
-        return _streamAsJson(sources, signatureValidator);
+    public static final Stream<ObjectNode> streamAsJson(List<ActionSource> sources, ActionValidationHandler actionValidationHandler) {
+        return _streamAsJson(sources, actionValidationHandler);
     }
     
-    private static final Stream<ObjectNode> _streamAsJson(List<ActionSource> sources, SignatureValidator signatureValidator) {
+    private static final Stream<ObjectNode> _streamAsJson(List<ActionSource> sources, ActionValidationHandler actionValidationHandler) {
         Map<String, ObjectNode> result = new HashMap<>();
-        new ActionLoader(sources, signatureValidator)
+        new ActionLoader(sources, actionValidationHandler)
             .processActions(loadResult->{
                 result.putIfAbsent(loadResult.getProperties().getName(), loadResult.asJson());
                 return Break.FALSE;
@@ -96,7 +97,7 @@ public class ActionLoaderHelper {
     static final class ActionLoader {
         private static final SignedTextReader signedTextReader = SignatureHelper.signedTextReader();
         private final List<ActionSource> sources;
-        private final SignatureValidator signatureValidator;
+        private final ActionValidationHandler actionValidationHandler;
         
         public final ActionLoadResult load(String source) {
             // We first load from zips, in case a file happens to exist with
@@ -172,7 +173,7 @@ public class ActionLoaderHelper {
         }
         
         final ActionLoadResult load(InputStream is, ActionProperties properties) {
-            return new ActionLoadResult(loadSignedTextDescriptor(is, properties.isCustom()), properties);
+            return new ActionLoadResult(actionValidationHandler, loadSignedTextDescriptor(is, properties.isCustom()), properties);
         }
             
         private final SignedTextDescriptor loadSignedTextDescriptor(InputStream is, boolean isCustom) {
@@ -181,7 +182,7 @@ public class ActionLoaderHelper {
                     // until we've figured out how to sign internal actions during (or 
                     // potentially after) Gradle build.
                     isCustom 
-                        ? signatureValidator
+                        ? actionValidationHandler.getSignatureValidator()
                         : null);
         }
         
@@ -194,6 +195,7 @@ public class ActionLoaderHelper {
     public static final class ActionLoadResult {
         private static final ObjectMapper yamlObjectMapper = new ObjectMapper(new YAMLFactory());
         private static final Pattern schemaPattern = Pattern.compile("(?m)(^\\$schema:\\s+(?<schemaPropertyValue>\\S+)\\s*$)|(^#\\s+yaml-language-server:\\s+\\$schema=(?<schemaCommentValue>\\S+)\\s*$)");
+        private final ActionValidationHandler actionValidationHandler;
         private final SignedTextDescriptor signedTextDescriptor;
         private final ActionProperties properties;
         
@@ -263,7 +265,7 @@ public class ActionLoaderHelper {
             }
             var schemaVersion = ActionSchemaHelper.getSchemaVersion(schemaUri);
             if ( !ActionSchemaHelper.isSupportedSchemaVersion(schemaVersion) ) {
-                LOG.warn("WARN: Action uses unsupported schema version "+schemaVersion+" and may fail");
+                actionValidationHandler.onUnsupportedSchemaVersion(schemaVersion);
             }
             return result;
         }
@@ -382,21 +384,81 @@ public class ActionLoaderHelper {
         }
     }
     
-    @RequiredArgsConstructor
-    public static final class ActionInvalidSignatureHandlers {
-        public static final InvalidSignatureHandler IGNORE   = InvalidSignatureHandler.IGNORE;
-        public static final InvalidSignatureHandler EVALUATE = InvalidSignatureHandler.EVALUATE;
-        public static final InvalidSignatureHandler WARN     = ActionInvalidSignatureHandlers::warn;
-        public static final InvalidSignatureHandler FAIL     = ActionInvalidSignatureHandlers::fail;
+    @Data @Builder(toBuilder = true)
+    public static final class ActionValidationHandler {
+        public static final ActionValidationHandler PROMPT = ActionValidationHandler.builder()
+                .onSignatureStatusDefault(ActionInvalidSignatureHandler.prompt)
+                .onUnsupportedSchemaVersion(ActionInvalidSchemaVersionHandler.prompt)
+                .build();
+        public static final ActionValidationHandler WARN = ActionValidationHandler.builder()
+                .onSignatureStatusDefault(ActionInvalidSignatureHandler.warn)
+                .onUnsupportedSchemaVersion(ActionInvalidSchemaVersionHandler.warn)
+                .build();
+        public static final ActionValidationHandler IGNORE = ActionValidationHandler.builder()
+                .onSignatureStatusDefault(ActionInvalidSignatureHandler.ignore)
+                .onUnsupportedSchemaVersion(ActionInvalidSchemaVersionHandler.ignore)
+                .build();
+        @Singular private final List<String> extraPublicKeys;
+        @Singular private final Map<SignatureStatus, Consumer<SignedTextDescriptor>> onSignatureStatuses;
+        @Builder.Default private final Consumer<SignedTextDescriptor> onSignatureStatusDefault = ActionInvalidSignatureHandler.prompt;
+        @Builder.Default private final Consumer<String> onUnsupportedSchemaVersion = ActionInvalidSchemaVersionHandler.prompt;
         
-        private static final void warn(SignedTextDescriptor descriptor) {
-            LOG.warn("WARN: "+failedMessage(descriptor));
+        public final SignatureValidator getSignatureValidator() {
+            return new SignatureValidator(this::handleInvalidSignature, extraPublicKeys.toArray(String[]::new));
         }
-        private static final void fail(SignedTextDescriptor descriptor) {
-            throw new IllegalStateException(failedMessage(descriptor));
+        public final void onUnsupportedSchemaVersion(String schemaVersion) {
+            this.onUnsupportedSchemaVersion.accept(schemaVersion);
         }
-        private static final String failedMessage(SignedTextDescriptor descriptor) {
-            return getSignatureStatusMessage(descriptor.getSignatureStatus());
+        private final void handleInvalidSignature(SignedTextDescriptor signedTextDescriptor) {
+            var consumer = onSignatureStatuses.get(signedTextDescriptor.getSignatureStatus());
+            if ( consumer==null ) { consumer = onSignatureStatusDefault; }
+            consumer.accept(signedTextDescriptor);
+        }
+        
+        @RequiredArgsConstructor
+        public static enum ActionInvalidSignatureHandler implements Consumer<SignedTextDescriptor> {
+            ignore(d->{}),
+            warn(d->_warn(signatureFailureMessage(d))),
+            fail(d->_throw(signatureFailureMessage(d))),
+            prompt(d->_prompt(signatureFailureMessage(d)));
+            private final Consumer<SignedTextDescriptor> onInvalidSignature;
+            
+            @Override
+            public void accept(SignedTextDescriptor descriptor) {
+                onInvalidSignature.accept(descriptor);   
+            }
+            
+            private static final String signatureFailureMessage(SignedTextDescriptor descriptor) {
+                return getSignatureStatusMessage(descriptor.getSignatureStatus());
+            }
+        }
+        
+        @RequiredArgsConstructor
+        public static enum ActionInvalidSchemaVersionHandler implements Consumer<String> {
+            ignore(v->{}),
+            warn(v->_warn(unsupportedSchemaMessage(v))),
+            fail(v->_throw(unsupportedSchemaMessage(v))),
+            prompt(v->_prompt(unsupportedSchemaMessage(v)));
+            private final Consumer<String> onInvalidSchemaVersion;
+            
+            @Override
+            public void accept(String schemaVersion) {
+                onInvalidSchemaVersion.accept(schemaVersion);   
+            }
+            
+            public static final String unsupportedSchemaMessage(String unsupportedVersion) {
+                return String.format("Action uses unsupported schema version %s and may fail.", unsupportedVersion);
+            }
+        }
+        
+        private static final void _warn(String msg) { LOG.warn("WARN: "+msg); }
+        private static final void _throw(String msg) { throw new IllegalStateException(msg); }
+        private static final void _prompt(String msg) {
+            if ( System.console()==null ) {
+                _throw(msg);
+            } else if (!"Y".equalsIgnoreCase(System.console().readLine(String.format("WARN: %s\n  Do you want to continue? (Y/N) ", msg))) ) {
+                throw new AbortedByUserException("Aborting: operation aborted by user");
+            }
         }
     }
     

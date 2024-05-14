@@ -13,7 +13,7 @@
 package com.fortify.cli.common.action.cli.cmd;
 
 import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
-import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionInvalidSignatureHandlers;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.runner.ActionParameterHelper;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
@@ -29,7 +29,7 @@ public abstract class AbstractActionHelpCommand extends AbstractRunnableCommand 
     @Override
     public final Integer call() {
         initMixins();
-        var action = actionResolver.loadAction(getType(), ActionInvalidSignatureHandlers.WARN);
+        var action = actionResolver.loadAction(getType(), ActionValidationHandler.WARN);
         System.out.println(getActionHelp(action));
         return 0;
     }

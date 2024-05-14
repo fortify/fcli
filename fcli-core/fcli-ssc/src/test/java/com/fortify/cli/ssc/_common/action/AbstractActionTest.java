@@ -12,6 +12,8 @@
  */
 package com.fortify.cli.ssc._common.action;
 
+import java.util.function.Consumer;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -19,10 +21,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
-import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionInvalidSignatureHandlers;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
-import com.fortify.cli.common.crypto.helper.SignatureHelper.InvalidSignatureHandler;
-import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler.ActionInvalidSchemaVersionHandler;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler.ActionInvalidSignatureHandler;
+import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor;
 
 // TODO Move this class to a common test utility module; currently
 //      exact copies of this class are available in every module 
@@ -33,9 +36,13 @@ public abstract class AbstractActionTest {
     @MethodSource("getActions")
     public void testLoadAction(String name) {
         try {
+            var actionValidationHandler = ActionValidationHandler.builder()
+                    .onSignatureStatusDefault(invalidSignatureHandler())
+                    .onUnsupportedSchemaVersion(ActionInvalidSchemaVersionHandler.fail)
+                    .build();
             ActionLoaderHelper
-            .load(ActionSource.builtinActionSources(getType()), name, new SignatureValidator(invalidSignatureHandler()))
-            .asAction();
+                .load(ActionSource.builtinActionSources(getType()), name, actionValidationHandler)
+                .asAction();
         } catch ( Exception e ) {
             System.err.println(String.format("Error loading %s action %s:\n%s", getType(), name, e));
             Assertions.fail(String.format("Error loading %s action %s", getType(), name), e);
@@ -43,15 +50,15 @@ public abstract class AbstractActionTest {
     }
 
     public final String[] getActions() {
-        return ActionLoaderHelper.streamAsJson(ActionSource.builtinActionSources(getType()), new SignatureValidator(ActionInvalidSignatureHandlers.IGNORE))
+        return ActionLoaderHelper.streamAsJson(ActionSource.builtinActionSources(getType()), ActionValidationHandler.IGNORE)
                 .map(a->a.get("name").asText())
                 .toArray(String[]::new);
     }
 
-    private static final InvalidSignatureHandler invalidSignatureHandler() {
+    private static final Consumer<SignedTextDescriptor> invalidSignatureHandler() {
         return "true".equalsIgnoreCase((System.getProperty("test.action.requireValidSignature")))
-                ? ActionInvalidSignatureHandlers.FAIL
-                : ActionInvalidSignatureHandlers.WARN;
+                ? ActionInvalidSignatureHandler.fail
+                : ActionInvalidSignatureHandler.warn;
     }
     
     protected abstract String getType();

@@ -29,13 +29,12 @@ import java.util.zip.ZipInputStream;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionInvalidSignatureHandlers;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoadResult;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoader;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionSource;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.action.model.Action.ActionProperties;
-import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.IActionCommandResultSupplier;
 import com.fortify.cli.common.util.Break;
@@ -45,10 +44,10 @@ import lombok.SneakyThrows;
 
 public class ActionImportHelper {
     @SneakyThrows
-    public static ArrayNode importAction(String type, String externalSource, String action) {
+    public static ArrayNode importAction(String type, String externalSource, String action, ActionValidationHandler actionValidationHandler) {
         var result = JsonHelper.getObjectMapper().createArrayNode();
         try ( var fs = createOutputZipFileSystem(type) ) {
-            var actionLoadResult = new ActionLoader(ActionSource.externalActionSources(externalSource), new SignatureValidator(ActionInvalidSignatureHandlers.EVALUATE))
+            var actionLoadResult = new ActionLoader(ActionSource.externalActionSources(externalSource), actionValidationHandler)
                     .load(action);
             result.add(importAction(fs, actionLoadResult));
         }
@@ -56,9 +55,9 @@ public class ActionImportHelper {
     }
 
     @SneakyThrows
-    public static ArrayNode importZip(String type, String zip) {
+    public static ArrayNode importZip(String type, String zip, ActionValidationHandler actionValidationHandler) {
         var result = JsonHelper.getObjectMapper().createArrayNode();
-        var loader = new ActionLoader(null, new SignatureValidator(ActionInvalidSignatureHandlers.EVALUATE));
+        var loader = new ActionLoader(null, actionValidationHandler);
         try ( var fs = createOutputZipFileSystem(type); var is = createZipFileInputStream(zip) ) {
             ZipHelper.processZipEntries(is, (zis, entry)->
                 importAction(fs, result, loader, zis, entry));
@@ -130,7 +129,7 @@ public class ActionImportHelper {
             return JsonHelper.getObjectMapper().createArrayNode();
         } else {
             var result = ActionLoaderHelper
-                    .streamAsJson(ActionSource.importedActionSources(type), new SignatureValidator(ActionInvalidSignatureHandlers.EVALUATE))
+                    .streamAsJson(ActionSource.importedActionSources(type), ActionValidationHandler.IGNORE)
                     .collect(JsonHelper.arrayNodeCollector());
             Files.delete(zipPath);
             return result;

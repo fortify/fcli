@@ -18,14 +18,12 @@ import java.util.concurrent.Callable;
 import org.springframework.expression.spel.support.SimpleEvaluationContext;
 
 import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
-import com.fortify.cli.common.action.helper.ActionLoaderHelper;
+import com.fortify.cli.common.action.cli.mixin.ActionValidationMixin;
 import com.fortify.cli.common.action.runner.ActionParameterHelper;
 import com.fortify.cli.common.action.runner.ActionRunner;
 import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.cli.mixin.CommandHelperMixin;
-import com.fortify.cli.common.cli.mixin.CommonOptionMixins;
 import com.fortify.cli.common.cli.util.SimpleOptionsParser.OptionsParseResult;
-import com.fortify.cli.common.crypto.helper.SignatureHelper.SignedTextDescriptor;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.progress.helper.IProgressWriterI18n;
 import com.fortify.cli.common.util.DisableTest;
@@ -43,14 +41,14 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
     @Option(names="--<action-parameter>", paramLabel="<value>", descriptionKey="fcli.action.run.action-parameter") 
     private List<String> dummyForSynopsis;
     @Mixin private ProgressWriterFactoryMixin progressWriterFactory;
-    @Mixin CommandHelperMixin commandHelper;
-    @Mixin CommonOptionMixins.RequireConfirmation confirm;
+    @Mixin private CommandHelperMixin commandHelper;
+    @Mixin private ActionValidationMixin actionValidationMixin;
     @Unmatched private String[] actionArgs;
     
     @Override @SneakyThrows
     public final Integer call() {
         initMixins();
-        var action = actionResolver.loadAction(getType(), this::confirmInvalidSignature);
+        var action = actionResolver.loadAction(getType(), actionValidationMixin.getActionValidationHandler());
         Callable<Integer> delayedConsoleWriter = null;
         try ( var progressWriter = progressWriterFactory.create() ) {
             try ( var actionRunner = ActionRunner.builder()
@@ -66,10 +64,6 @@ public abstract class AbstractActionRunCommand extends AbstractRunnableCommand {
         return delayedConsoleWriter.call();
     }
     
-    private void confirmInvalidSignature(SignedTextDescriptor descriptor) {
-        confirm.checkConfirmed("WARN: "+ActionLoaderHelper.getSignatureStatusMessage(descriptor.getSignatureStatus()));
-    }
-
     private Callable<Integer> run(ActionRunner actionRunner, IProgressWriterI18n progressWriter) {
         actionRunner.getSpelEvaluator().configure(context->configure(actionRunner, context));
         progressWriter.writeProgress("Executing action %s", actionRunner.getAction().getName());

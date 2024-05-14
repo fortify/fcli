@@ -14,10 +14,9 @@ package com.fortify.cli.common.action.cli.mixin;
 
 import com.fortify.cli.common.action.helper.ActionLoaderHelper;
 import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionLoadResult;
+import com.fortify.cli.common.action.helper.ActionLoaderHelper.ActionValidationHandler;
 import com.fortify.cli.common.action.model.Action;
 import com.fortify.cli.common.cli.mixin.CommonOptionMixins.AbstractTextResolverMixin;
-import com.fortify.cli.common.crypto.helper.SignatureHelper.InvalidSignatureHandler;
-import com.fortify.cli.common.crypto.helper.SignatureHelper.SignatureValidator;
 
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
@@ -30,19 +29,20 @@ public class ActionResolverMixin {
         @Mixin private PublicKeyResolverMixin publicKeyResolver;
         public abstract String getAction();
         
-        public ActionLoadResult load(String type, InvalidSignatureHandler invalidSignatureHandler) {
+        public ActionLoadResult load(String type, ActionValidationHandler actionValidationHandler) {
             var action = getAction();
             return action==null 
                 ? null 
-                : ActionLoaderHelper.load(actionSourceResolver.getActionSources(type), action, new SignatureValidator(invalidSignatureHandler, publicKeyResolver.getText()));
+                : ActionLoaderHelper.load(actionSourceResolver.getActionSources(type), 
+                        action, actionValidationHandler.toBuilder().extraPublicKey(publicKeyResolver.getText()).build());
         }
         
-        public Action loadAction(String type, InvalidSignatureHandler invalidSignatureHandler) {
-            return load(type, invalidSignatureHandler).asAction();
+        public Action loadAction(String type, ActionValidationHandler actionValidationHandler) {
+            return load(type, actionValidationHandler).asAction();
         }
         
-        public String loadActionContents(String type, InvalidSignatureHandler invalidSignatureHandler) {
-            return load(type, invalidSignatureHandler).asText();
+        public String loadActionContents(String type, ActionValidationHandler actionValidationHandler) {
+            return load(type, actionValidationHandler).asText();
         }
     }
     

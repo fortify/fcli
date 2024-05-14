@@ -14,6 +14,7 @@ package com.fortify.cli.common.action.cli.cmd;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.action.cli.mixin.ActionResolverMixin;
+import com.fortify.cli.common.action.cli.mixin.ActionValidationMixin;
 import com.fortify.cli.common.action.helper.ActionImportHelper;
 import com.fortify.cli.common.output.cli.cmd.AbstractOutputCommand;
 import com.fortify.cli.common.output.cli.cmd.IJsonNodeSupplier;
@@ -23,17 +24,19 @@ import picocli.CommandLine.Mixin;
 
 public abstract class AbstractActionImportCommand extends AbstractOutputCommand implements IJsonNodeSupplier, IActionCommandResultSupplier {
     @Mixin private ActionResolverMixin.OptionalParameter actionResolver;
+    @Mixin private ActionValidationMixin actionValidationMixin;
     
     @Override
     public final JsonNode getJsonNode() {
         var source = actionResolver.getActionSourceResolver().getSource();
         var action = actionResolver.getAction();
+        var actionValidationHandler = actionValidationMixin.getActionValidationHandler();
         if ( action!=null) {
-            return ActionImportHelper.importAction(getType(), source, action);
+            return ActionImportHelper.importAction(getType(), source, action, actionValidationHandler);
         } else {
             var zip = actionResolver.getActionSourceResolver().getSource();
             if ( zip!=null ) {
-                return ActionImportHelper.importZip(getType(), zip);
+                return ActionImportHelper.importZip(getType(), zip, actionValidationHandler);
             } else {
                 throw new IllegalArgumentException("Either action and/or --from-zip option must be specified");
             }
