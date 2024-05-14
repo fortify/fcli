@@ -261,8 +261,8 @@ public class ActionLoaderHelper {
             } else {
                 schemaUri = propertyValue;
             }
-            var schemaVersion = ActionSchemaVersionHelper.getSchemaVersion(schemaUri);
-            if ( !ActionSchemaVersionHelper.isSupportedSchemaVersion(schemaVersion) ) {
+            var schemaVersion = ActionSchemaHelper.getSchemaVersion(schemaUri);
+            if ( !ActionSchemaHelper.isSupportedSchemaVersion(schemaVersion) ) {
                 LOG.warn("WARN: Action was designed for fcli version "+schemaVersion+" and may fail");
             }
             return result;

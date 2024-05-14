@@ -21,7 +21,7 @@ import org.junit.jupiter.params.provider.CsvSource;
  *
  * @author Ruud Senden
  */
-public class SemVerHelperTest {
+public class SemVerTest {
     @ParameterizedTest
     @CsvSource({
         ",,0",
@@ -43,6 +43,35 @@ public class SemVerHelperTest {
         "1.2.0-alpha1,1.2.0,-1"
     })
     public void testSemVerCompare(String semver1, String semver2, int expectedResult) throws Exception {
-        assertEquals(expectedResult, SemVerHelper.compare(semver1, semver2));
+        assertEquals(expectedResult, new SemVer(semver1).compareTo(semver2));
+    }
+    
+    @ParameterizedTest
+    @CsvSource({
+        ",unknown",
+        "a,unknown",
+        "1.2.3,1.0.0-1.2.*",        
+        "1.2.3-alpha1,1.0.0-1.2.*",
+        "2.0.0,2.0.*"
+    })
+    public void testSemVerCompatibleVersionsString(String semver, String expectedResult) throws Exception {
+        assertEquals(expectedResult, new SemVer(semver).getCompatibleVersionsString().orElse("unknown"));
+    }
+    
+    @ParameterizedTest
+    @CsvSource({
+        ",,false",
+        "1.2.3,,false",
+        ",1.2.3,false",
+        "1.2.3,1.2.3,true",
+        "1.2.3,1.2.0,true",
+        "1.2.3,1.2.5,true",
+        "2.0.0,1.2.3,false",        
+        "1.2.3,2.0.0,false",
+        "1.2.3,1.4.0,false",
+        "1.4.0,1.2.3,true"
+    })
+    public void testSemVerIsCompatibleWith(String semver1, String semver2, boolean expectedResult) throws Exception {
+        assertEquals(expectedResult, new SemVer(semver1).isCompatibleWith(semver2));
     }
 }

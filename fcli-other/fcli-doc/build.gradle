@@ -29,7 +29,8 @@ task generateActionSchema(type: JavaExec) {
     dependsOn('build')
     classpath = sourceSets.main.runtimeClasspath
     main 'com.fortify.cli.common.action.schema.generator.GenerateActionSchema'
-    args project.version, actionSchemaOutputDir
+    // Pass whether this is an (fcli) development release, schema version and output dir
+    args project.version.startsWith("0."), fcliActionSchemaVersion, actionSchemaOutputDir
 }
 
 task generateManpageAsciiDoc(type: JavaExec) {

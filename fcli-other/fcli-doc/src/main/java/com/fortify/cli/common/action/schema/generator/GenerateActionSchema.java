@@ -12,15 +12,17 @@
  */
 package com.fortify.cli.common.action.schema.generator;
 
-import java.net.HttpURLConnection;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fortify.cli.common.action.helper.ActionSchemaVersionHelper;
+import com.fortify.cli.common.action.helper.ActionSchemaHelper;
 import com.fortify.cli.common.action.model.Action;
+import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.spring.expression.wrapper.TemplateExpression;
 import com.github.victools.jsonschema.generator.CustomDefinition;
 import com.github.victools.jsonschema.generator.Option;
@@ -36,30 +38,48 @@ import com.github.victools.jsonschema.module.jackson.JacksonOption;
 public class GenerateActionSchema {
     private static final String DEV_VERSION = "dev";
     public static void main(String[] args) throws Exception {
-        if ( args.length!=2 ) { throw new IllegalArgumentException("This command must be run as GenerateActionSchema <fcli version> <schema output file location>"); }
-        var version = args[0];
-        var outputPath = Path.of(args[1]);
-        if ( version.startsWith("0.") ) { version = DEV_VERSION; }
-        checkSchemaNotExists(version);
+        if ( args.length!=3 ) { throw new IllegalArgumentException("This command must be run as GenerateActionSchema <fcli version> <action schema version> <schema output file location>"); }
+        var isDevelopmentRelease = args[0];
+        var actionSchemaVersion = args[1];
+        var outputPath = Path.of(args[2]);
+        
         var newSchema = generateSchema();
-        Files.createDirectories(outputPath);
-        var outputFile = outputPath.resolve(String.format("fcli-action-schema-%s.json", version));
-        Files.writeString(outputFile, newSchema.toPrettyString(), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-        System.out.println("Fortify CLI action schema written to "+outputFile.toString());
+        var existingSchema = loadExistingSchema(actionSchemaVersion);
+        checkSchemaCompatibility(actionSchemaVersion, existingSchema, newSchema);
+
+        // If this is an fcli development release, we output the schema as a development release.
+        // Note that the same output file name will be used for any branch.
+        var outputVersion = isDevelopmentRelease.equals("true") ? DEV_VERSION : actionSchemaVersion;
+        // Only write schema if this is a development release or schema doesn't exist yet.
+        if ( existingSchema!=null && !DEV_VERSION.equals(outputVersion) ) {
+            System.out.println("Fortify CLI action schema not being generated as "+outputVersion+" schema already exists");
+        } else {
+            Files.createDirectories(outputPath);
+            var outputFile = outputPath.resolve(String.format("fcli-action-schema-%s.json", outputVersion));
+            Files.writeString(outputFile, newSchema.toPrettyString(), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+            System.out.println("Fortify CLI action schema written to "+outputFile.toString());
+        }
     }
     
-    private static final void checkSchemaNotExists(String version) throws Exception {
-        if ( !DEV_VERSION.equals(version) ) {
-            try {
-                var url = new URL(ActionSchemaVersionHelper.toURI(version));
-                var conn = (HttpURLConnection)url.openConnection();
-                conn.setRequestMethod("HEAD");
-                if ( conn.getResponseCode()!=404) {
-                    throw new IllegalStateException("Schema version "+version+" has already been published");
-                }
-            } catch ( Exception e ) {
-                throw e;
-            }
+    private static final void checkSchemaCompatibility(String actionSchemaVersion, JsonNode existingSchema, JsonNode newSchema) throws Exception {
+        if ( existingSchema!=null && !existingSchema.equals(newSchema) ) {
+            throw new IllegalStateException(String.format("""
+                \n\tSchema generated from current source code is different from existing schema 
+                \tversion %s. If this is incorrect (action model hasn't changed), please update 
+                \tthe schema compatibility check in .../fcli-doc/src/.../GenerateActionSchema.java.
+                \tIf the schema has indeed changed, please update the schema version number in
+                \tgradle.properties in the root fcli project.
+                """, actionSchemaVersion));
+        }
+    }
+    
+    private static final JsonNode loadExistingSchema(String actionSchemaVersion) throws IOException {
+        try {
+            return JsonHelper.getObjectMapper().readTree(new URL(ActionSchemaHelper.toURI(actionSchemaVersion)));
+        } catch ( FileNotFoundException fnfe ) {
+            return null; // Schema doesn't exist yet
+        } catch ( IOException e ) {
+            throw e;
         }
     }
 

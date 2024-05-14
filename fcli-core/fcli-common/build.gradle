@@ -5,7 +5,7 @@ task zipResources_templates(type: Zip) {
         // TODO We should also sign file; how do we invoke a sign operation from Gradle?
         filter(line->project.version.startsWith('0.')
             ? line 
-            : line.replaceAll("https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json", "https://fortify.github.io/fcli/schemas/action/fcli-action-schema-${project.version}.json"))
+            : line.replaceAll("https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json", "https://fortify.github.io/fcli/schemas/action/fcli-action-schema-${fcliActionSchemaVersion}.json"))
     }
 }
 
@@ -21,6 +21,7 @@ task generateFcliBuildProperties {
             entry(key: "projectName", value: "fcli")
             entry(key: "projectVersion", value: project.version)
             entry(key: "buildDate", value: buildTime.format('yyyy-MM-dd HH:mm:ss'))
+            entry(key: "actionSchemaVersion", value: fcliActionSchemaVersion)
         }
         def resourceConfigOutputDir = "${buildPropertiesDir}/META-INF/native-image/fcli-build-properties"
         mkdir "${resourceConfigOutputDir}"

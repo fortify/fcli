@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.util.FcliDataHelper;
 import com.fortify.cli.common.util.FileUtils;
-import com.fortify.cli.common.util.SemVerHelper;
+import com.fortify.cli.common.util.SemVer;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 import lombok.Data;
@@ -44,7 +44,7 @@ public class ToolUninstaller {
         var action = "UNINSTALLED";
         if ( !FileUtils.isDirPathInUse(installPath) ) {
             FileUtils.deleteRecursive(installPath);
-        } else if (replacementVersion==null || SemVerHelper.compare(replacementVersion.getVersion(), "2.2.0")<0 ) {
+        } else if (replacementVersion==null || new SemVer(replacementVersion.getVersion()).compareTo("2.2.0")<0 ) {
             action = "MANUAL_DELETE_REQUIRED";
         } else {
             action = "PENDING_FCLI_RESTART";
