@@ -50,8 +50,14 @@ public class GenerateActionSchema {
         // If this is an fcli development release, we output the schema as a development release.
         // Note that the same output file name will be used for any branch.
         var outputVersion = isDevelopmentRelease.equals("true") ? DEV_VERSION : actionSchemaVersion;
-        // Only write schema if this is a development release or schema doesn't exist yet.
-        if ( existingSchema!=null && !DEV_VERSION.equals(outputVersion) ) {
+        if ( existingSchema==null ) {
+            System.out.println("::warning ::New fcli action schema version "+actionSchemaVersion+
+                    " will be published upon fcli release. Please ensure that this version number" +
+                    " properly represents schema changes (patch increase for non-structural changes" +
+                    " like description changes, minor increase for backward-compatible structural" +
+                    " changes like new optional properties, major increase for non-backward-compatible" +
+                    " structural changes like new required properties or removed properties).");
+        } else if ( !DEV_VERSION.equals(outputVersion) ) {
             System.out.println("Fortify CLI action schema not being generated as "+outputVersion+" schema already exists");
         } else {
             Files.createDirectories(outputPath);
