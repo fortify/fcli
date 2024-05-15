@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20240515.124106-dev_develop
+fcli_version: 0.20240515.125118-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20240515.124106-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240515.124106-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240515.125118-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20240515.124106-dev_develop</span>
+<span id="revnumber">version 0.20240515.125118-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -70,7 +70,7 @@ fcli_version: 0.20240515.124106-dev_develop
 <li><a href="#_actions_in_cicd_pipelines">Actions in CI/CD pipelines</a></li>
 </ul>
 </li>
-<li><a href="#_manual_pagess">Manual Pagess</a></li>
+<li><a href="#_manual_pages">Manual Pages</a></li>
 <li><a href="#_troubleshooting">Troubleshooting</a>
 <ul class="sectlevel2">
 <li><a href="#_native_binaries">Native Binaries</a></li>
@@ -1099,7 +1099,7 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <div class="ulist">
 <ul>
 <li>
-<p>Vulnerability export to various third-party formats like SARIF or GitHub/GitLab/BitBucket/SonarQube reports, as a replacement for <a href="https://github.com/fortify/FortifyVulnerabilityExporter">FortifyVulnerabilityExporter</a>.</p>
+<p>Vulnerability export to various third-party formats like SARIF or GitHub, GitLab, BitBucket, and SonarQube reports, as a replacement for <a href="https://github.com/fortify/FortifyVulnerabilityExporter">FortifyVulnerabilityExporter</a>.</p>
 </li>
 <li>
 <p>Generating GitHub Pull Request comments, listing (re-)introduced and removed vulnerabilities.</p>
@@ -1141,11 +1141,23 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>Apart from built-in actions, users can also develop and run custom actions, which could be customized versions of built-in actions or completely new actions. Note that the ability to run custom actions is currently considered PREVIEW functionality; as fcli actions are a new functionality, we are collecting user feedback regarding action syntax, which could potentially result in breaking action syntax changes across minor fcli releases (although we&#8217;ll try to avoid this as much as possible).</p>
 </div>
 <div class="paragraph">
-<p>As such, custom actions that run fine on the current fcli version may fail to run on any other fcli version. Fcli does perform action version checks based on action schema version (see below), but supported schema versions may change between minor or patch releases of fcli. Once we are comfortable with moving custom actions out of PREVIEW status, breaking schema/action syntax changes will be allowed only on major fcli releases, for example when moving from fcli 2.x to fcli 3.x. .
-Custom actions can be loaded from various sources, like a local or remote YAML file, optionally embedded in a zip-file that contains multiple actions. Each of the fcli commands listed in the previous section also support custom actions:
-* <code>fcli * action list --from-zip &lt;file|url&gt;</code>: List available actions from the given zip-file.
-* <code>fcli * action help|get|run &lt;file|url&gt;</code>: Load the action from the given file or URL.
-* <code>fcli * action help|get|run &lt;action&gt; --from-zip &lt;file|url&gt;</code>: Load the given action from the given zip-file.</p>
+<p>As such, custom actions that run fine on the current fcli version may fail to run on any other fcli version. Fcli does perform action version checks based on action schema version (see below), but supported schema versions may change between minor or patch releases of fcli. Once we are comfortable with moving custom actions out of PREVIEW status, breaking schema/action syntax changes will be allowed only on major fcli releases, for example when moving from fcli 2.x to fcli 3.x.</p>
+</div>
+<div class="paragraph">
+<p>Custom actions can be loaded from various sources, like a local or remote YAML file, optionally embedded in a zip-file that contains multiple actions. Each of the fcli commands listed in the previous section also support custom actions:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>fcli * action list --from-zip &lt;file|url&gt;</code>: List available actions from the given zip-file.</p>
+</li>
+<li>
+<p><code>fcli * action help|get|run &lt;file|url&gt;</code>: Load the action from the given file or URL.</p>
+</li>
+<li>
+<p><code>fcli * action help|get|run &lt;action&gt; --from-zip &lt;file|url&gt;</code>: Load the given action from the given zip-file.</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
 <p>To allow for easy access, custom actions can also be imported into fcli using the <code>fcli * action import</code> command, which allows for importing either a single action YAML file or all action YAML files from a local or remote zip-file. Once imported, these actions can be accessed in the same way as built-in actions. Note that imported custom actions will override built-in actions if they have the same name. You can use the <code>fcli * action reset</code> command to remove all previously imported custom actions.</p>
@@ -1157,7 +1169,7 @@ Custom actions can be loaded from various sources, like a local or remote YAML f
 <p>There are several resources available to help you developing custom actions. To start with, you can use the <code>fcli * action get &lt;action&gt;</code> command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli provides a built-in <code>__sample__</code> action that explains various concepts and lists many of the supported action YAML elements together with a description.</p>
 </div>
 <div class="paragraph">
-<p>Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. The current fcli version 0.20240515.124106-dev_develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json">1.0.0</a>. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
+<p>Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. The current fcli version 0.20240515.125118-dev_develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json">1.0.0</a>. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
 </div>
 <div class="paragraph">
 <p>For optimal compatibility with various IDEs and YAML compatibility, fcli allows the schema to be declared in two ways:</p>
@@ -1195,7 +1207,7 @@ Custom actions can be loaded from various sources, like a local or remote YAML f
 <p>However, this won&#8217;t be sufficient for actions that are dynamically loaded from a remote location, as action contents could change at any time. For example, a legitimate action can easily be replaced by some malicious action.</p>
 </div>
 <div class="paragraph">
-<p>As such, fcli by default requires custom actions to be signed. Organizations, teams or individuals can sign actions with their own private key using the <code>fcli * action sign</code> command, the corresponding public key can either be imported into fcli using the <code>fcli config public-key import</code> command. Most <code>action</code> commands also allow for explicitly passing a public key through the <code>--pubkey</code> option.</p>
+<p>As such, fcli by default requires custom actions to be signed. Organizations, teams or individuals can sign actions with their own private key using the <code>fcli * action sign</code> command, the corresponding public key can be imported into fcli using the <code>fcli config public-key import</code> command. Most <code>action</code> commands also allow for explicitly passing a public key through the <code>--pubkey</code> option.</p>
 </div>
 <div class="paragraph">
 <p>Public keys can be loaded from a local file, URL, string or environment variable. Obviously, you should only use trusted public keys; loading a public key from a third-party URL may be dangerous for the same reasons as explained above.</p>
@@ -1232,11 +1244,23 @@ Custom actions can be loaded from various sources, like a local or remote YAML f
 </ul>
 </div>
 <div class="paragraph">
-<p>With each of these approaches, the public key can be be loaded from:
-* Local file, for example public key stored in current source code repository.
-* URL, for example pointing to public key stored in same shared source code repository as the actions themselves.
-* Environment variable, for example defined as system environment variable on self-hosted CI/CD nodes, or configured through (global) CI/CD secrets/variables.
-* Plain string, for example having the environment variable <code>FCLI_DEFAULT_PUBKEY</code> set to <code>string:&lt;public key contents&gt;</code>. You can use CI/CD secrets/variables to set the <code>FCLI_DEFAULT_PUBKEY</code> to a value like this. For testing, you can use a <code>bash</code> command like the following: <code>export FCLI_DEFAULT_PUBKEY=string:$(cat my-public.key)</code>.</p>
+<p>With each of these approaches, the public key can be be loaded from:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Local file, for example public key stored in current source code repository.</p>
+</li>
+<li>
+<p>URL, for example pointing to public key stored in same shared source code repository as the actions themselves.</p>
+</li>
+<li>
+<p>Environment variable, for example defined as system environment variable on self-hosted CI/CD nodes, or configured through (global) CI/CD secrets/variables.</p>
+</li>
+<li>
+<p>Plain string, for example having the environment variable <code>FCLI_DEFAULT_PUBKEY</code> set to <code>string:&lt;public key contents&gt;</code>. You can use CI/CD secrets/variables to set the <code>FCLI_DEFAULT_PUBKEY</code> to a value like this. For testing, you can use a <code>bash</code> command like the following: <code>export FCLI_DEFAULT_PUBKEY=string:$(cat my-public.key)</code>.</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
 <p><strong>Design considerations</strong></p>
@@ -1270,7 +1294,7 @@ Custom actions can be loaded from various sources, like a local or remote YAML f
 </div>
 </div>
 <div class="sect1">
-<h2 id="_manual_pagess"><a class="anchor" href="#_manual_pagess"></a>Manual Pagess</h2>
+<h2 id="_manual_pages"><a class="anchor" href="#_manual_pages"></a>Manual Pages</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Manual pages are automatically generated and contain the same information as fcli help output. Manual pages in HTML and Linux man-page formats can be downloaded for offline use from the fcli releases page at <a href="https://github.com/fortify/fcli/releases" class="bare">https://github.com/fortify/fcli/releases</a>, or can be viewed online at <a href="https://fortify.github.io/fcli" class="bare">https://fortify.github.io/fcli</a>.</p>
@@ -1358,8 +1382,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20240515.124106-dev_develop<br>
-Last updated 2024-05-15 12:42:47 UTC
+Version 0.20240515.125118-dev_develop<br>
+Last updated 2024-05-15 12:53:00 UTC
 </div>
 </div>
 </body>
