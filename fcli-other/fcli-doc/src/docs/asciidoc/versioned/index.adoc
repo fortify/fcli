@@ -510,7 +510,7 @@ There are several resources available to help you developing custom actions. To 
 
 Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. The current fcli version {docversion} supports schema version link:{actionSchemaUrl}[{actionSchemaVersion}]. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.
 
-For optimal compatibility with various IDEs and YAML compatibility, fcli allows the schema to be declared in two ways:
+For optimal compatibility with various IDEs and YAML editors, fcli allows the schema to be declared in two ways:
 
 * YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:
 +
@@ -533,9 +533,9 @@ As actions can potentially perform dangerous operations, like sending confidenti
 
 However, this won't be sufficient for actions that are dynamically loaded from a remote location, as action contents could change at any time. For example, a legitimate action can easily be replaced by some malicious action.
 
-As such, fcli by default requires custom actions to be signed. Organizations, teams or individuals can sign actions with their own private key using the `fcli * action sign` command, the corresponding public key can be imported into fcli using the `fcli config public-key import` command. Most `action` commands also allow for explicitly passing a public key through the `--pubkey` option.
+For this reason, fcli by default requires custom actions to be signed. Organizations, teams or individuals can sign actions with their own private key using the `fcli * action sign` command, the corresponding public key can be imported into fcli using the `fcli config public-key import` command. Most `action` commands also allow for explicitly passing a public key through the `--pubkey` option.
 
-Public keys can be loaded from a local file, URL, string or environment variable. Obviously, you should only use trusted public keys; loading a public key from a third-party URL may be dangerous for the same reasons as explained above.
+Public keys can be loaded from a local file, URL, string or environment variable, see command help or next section for details. Obviously, you should only use trusted public keys; loading a public key from a third-party URL may be dangerous for the same reasons as explained above.
 
 === Actions in CI/CD pipelines
 
