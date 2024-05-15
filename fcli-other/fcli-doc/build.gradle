@@ -79,12 +79,14 @@ task asciiDoctorVersionedHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) 
         backends = ['html5']
     }
     attributes = [
-            'toc'         : 'left',
-            'sectanchors' : 'true',
-            'docinfo'     : 'shared',
-            'jekyll'      : false,
-            'bannertitle' : 'FCLI: The Universal Fortify CLI',
-            'docversion'  : "${project.version}"
+            'toc'                 : 'left',
+            'sectanchors'         : 'true',
+            'docinfo'             : 'shared',
+            'jekyll'              : false,
+            'bannertitle'         : 'FCLI: The Universal Fortify CLI',
+            'docversion'          : "${project.version}",
+            'actionSchemaVersion' : "${fcliActionSchemaVersion}",
+            'actionSchemaUrl'     : "${fcliActionSchemaUrl}"
     ]
     options = [
     	'template_dirs': [new File("${asciiDocTemplatesSrcDir}").absolutePath]
@@ -105,13 +107,15 @@ task asciiDoctorVersionedJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask
         backends = ['html5']
     }
     attributes = [
-            'toc'         : 'left',
-            'sectanchors' : 'true',
-            'docinfo'     : 'shared',
-            'jekyll'      : true,
-            'stylesheet'  : false,
-            'bannertitle' : 'FCLI: The Universal Fortify CLI',
-            'docversion'  : "${project.version}"
+            'toc'                 : 'left',
+            'sectanchors'         : 'true',
+            'docinfo'             : 'shared',
+            'jekyll'              : true,
+            'stylesheet'          : false,
+            'bannertitle'         : 'FCLI: The Universal Fortify CLI',
+            'docversion'          : "${project.version}",
+            'actionSchemaVersion' : "${fcliActionSchemaVersion}",
+            'actionSchemaUrl'     : "${fcliActionSchemaUrl}"
     ]
     options = [
     	'template_dirs': [new File("${asciiDocTemplatesSrcDir}").absolutePath]

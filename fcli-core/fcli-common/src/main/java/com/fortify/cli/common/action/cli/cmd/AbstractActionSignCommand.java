@@ -72,7 +72,7 @@ public class AbstractActionSignCommand extends AbstractOutputCommand implements 
     }
 
     private void writePublicKey(TextSigner signer, boolean doWritePublicKey) {
-        if ( doWritePublicKey ) {
+        if ( doWritePublicKey && publicKeyPath!=null ) {
             if ( Files.exists(publicKeyPath) ) {
                 LOG.warn("WARN: Not writing public key as file already exists");
             } else {

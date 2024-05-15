@@ -14,6 +14,7 @@ ext {
     	def result = project.findProperty('version');
     	return !result || result=='unspecified' ? buildTime.format('0.yyyyMMdd.HHmmss') : result;
 	}
+    fcliActionSchemaUrl = "https://fortify.github.io/fcli/schemas/action/fcli-action-schema-${fcliActionSchemaVersion}.json"
 }
 
 allprojects {
