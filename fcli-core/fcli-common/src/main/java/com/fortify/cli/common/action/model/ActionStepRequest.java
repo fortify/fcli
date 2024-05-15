@@ -44,7 +44,7 @@ public final class ActionStepRequest extends AbstractActionStep {
     @JsonPropertyDescription("Required string if no default target has been configured through defaults.requestTarget: Target on which to execute the REST request. This may be 'fod' (for actions in FoD module), 'ssc' (for actions in SSC module), or a custom request target as configured through 'addRequestTargets'.")
     @JsonProperty(required = false) private String target;
     
-    @JsonPropertyDescription("Optional map<string,SpEL template expression>: Map of query parameters and corresponding values, for example 'someParam: ${name.property}'.")
+    @JsonPropertyDescription("Optional map(string,SpEL template expression): Map of query parameters and corresponding values, for example 'someParam: ${name.property}'.")
     @JsonProperty(required = false) private Map<String,TemplateExpression> query;
     
     @JsonPropertyDescription("Optional SpEL template expression: Request body to send with the REST request.")

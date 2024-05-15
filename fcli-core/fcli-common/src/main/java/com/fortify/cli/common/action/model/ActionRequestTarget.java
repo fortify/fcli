@@ -34,7 +34,7 @@ public final class ActionRequestTarget implements IActionElement {
     @JsonPropertyDescription("Required SpEL template expression: Base URL to use for REST requests to this request target.")
     @JsonProperty(required = true) private TemplateExpression baseUrl;
     
-    @JsonPropertyDescription("Optional map<string,SpEL template expression>: Headers to be sent to this request target on every request.")
+    @JsonPropertyDescription("Optional map(string,SpEL template expression): Headers to be sent to this request target on every request.")
     @JsonProperty(required = false) private Map<String, TemplateExpression> headers;
     
     // TODO Add support for next page URL producer
