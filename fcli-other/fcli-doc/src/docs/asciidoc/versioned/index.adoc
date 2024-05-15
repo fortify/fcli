@@ -476,7 +476,7 @@ Fcli actions are a powerful feature that allows for rich integration and automat
 
 Fci comes with various built-in actions, currently focused on providing the following functionality:
 
-* Vulnerability export to various third-party formats like SARIF or GitHub/GitLab/BitBucket/SonarQube reports, as a replacement for link:https://github.com/fortify/FortifyVulnerabilityExporter[FortifyVulnerabilityExporter].
+* Vulnerability export to various third-party formats like SARIF or GitHub, GitLab, BitBucket, and SonarQube reports, as a replacement for link:https://github.com/fortify/FortifyVulnerabilityExporter[FortifyVulnerabilityExporter].
 * Generating GitHub Pull Request comments, listing (re-)introduced and removed vulnerabilities.
 * Generating application version/release summaries in Markdown format, for example for use as pipeline summaries.
 * Evaluating security policy criteria, for example allowing to break a build if one or more checks are failing.
@@ -494,8 +494,10 @@ Action support is centralized into the `action` entity of the various product mo
 
 Apart from built-in actions, users can also develop and run custom actions, which could be customized versions of built-in actions or completely new actions. Note that the ability to run custom actions is currently considered PREVIEW functionality; as fcli actions are a new functionality, we are collecting user feedback regarding action syntax, which could potentially result in breaking action syntax changes across minor fcli releases (although we'll try to avoid this as much as possible). 
 
-As such, custom actions that run fine on the current fcli version may fail to run on any other fcli version. Fcli does perform action version checks based on action schema version (see below), but supported schema versions may change between minor or patch releases of fcli. Once we are comfortable with moving custom actions out of PREVIEW status, breaking schema/action syntax changes will be allowed only on major fcli releases, for example when moving from fcli 2.x to fcli 3.x. .
+As such, custom actions that run fine on the current fcli version may fail to run on any other fcli version. Fcli does perform action version checks based on action schema version (see below), but supported schema versions may change between minor or patch releases of fcli. Once we are comfortable with moving custom actions out of PREVIEW status, breaking schema/action syntax changes will be allowed only on major fcli releases, for example when moving from fcli 2.x to fcli 3.x.
+
 Custom actions can be loaded from various sources, like a local or remote YAML file, optionally embedded in a zip-file that contains multiple actions. Each of the fcli commands listed in the previous section also support custom actions:
+
 * `fcli * action list --from-zip <file|url>`: List available actions from the given zip-file.
 * `fcli * action help|get|run <file|url>`: Load the action from the given file or URL.
 * `fcli * action help|get|run <action> --from-zip <file|url>`: Load the given action from the given zip-file.
@@ -531,7 +533,7 @@ As actions can potentially perform dangerous operations, like sending confidenti
 
 However, this won't be sufficient for actions that are dynamically loaded from a remote location, as action contents could change at any time. For example, a legitimate action can easily be replaced by some malicious action.
 
-As such, fcli by default requires custom actions to be signed. Organizations, teams or individuals can sign actions with their own private key using the `fcli * action sign` command, the corresponding public key can either be imported into fcli using the `fcli config public-key import` command. Most `action` commands also allow for explicitly passing a public key through the `--pubkey` option.
+As such, fcli by default requires custom actions to be signed. Organizations, teams or individuals can sign actions with their own private key using the `fcli * action sign` command, the corresponding public key can be imported into fcli using the `fcli config public-key import` command. Most `action` commands also allow for explicitly passing a public key through the `--pubkey` option.
 
 Public keys can be loaded from a local file, URL, string or environment variable. Obviously, you should only use trusted public keys; loading a public key from a third-party URL may be dangerous for the same reasons as explained above.
 
@@ -552,6 +554,7 @@ Of course, those actions should be signed using an organization-specific private
 * Set the `FCLI_DEFAULT_PUBKEY` environment variable to configure a default value for the `--pubkey` option.
 
 With each of these approaches, the public key can be be loaded from:
+
 * Local file, for example public key stored in current source code repository.
 * URL, for example pointing to public key stored in same shared source code repository as the actions themselves.
 * Environment variable, for example defined as system environment variable on self-hosted CI/CD nodes, or configured through (global) CI/CD secrets/variables.
@@ -571,8 +574,7 @@ This is exactly the reason why we don't provide a highly configurable `check-pol
 
 The examples above or based on actions that perform policy checks, but the same principles and considerations (may) apply to other types of actions.
 
-
-== Manual Pagess
+== Manual Pages
 
 Manual pages are automatically generated and contain the same information as fcli help output. Manual pages in HTML and Linux man-page formats can be downloaded for offline use from the fcli releases page at https://github.com/fortify/fcli/releases, or can be viewed online at https://fortify.github.io/fcli.
 
