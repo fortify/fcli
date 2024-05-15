@@ -470,7 +470,7 @@
         "properties" : {
           "cliAliases" : {
             "type" : "string",
-            "description" : "Optional string: Comma-separated CLI option aliases. This will allow the action to accept CLI options named `--<alias>` or `-<alias>` for single-letter aliases. Aliases cannot be referenced in SpEL expressions."
+            "description" : "Optional string: Comma-separated CLI option aliases. This will allow the action to accept CLI options named `--[alias]` or `-[alias]` for single-letter aliases. Aliases cannot be referenced in SpEL expressions."
           },
           "defaultValue" : {
             "format" : "spelTemplateExpression",
@@ -483,7 +483,7 @@
           },
           "name" : {
             "type" : "string",
-            "description" : "Required string: Action parameter name. This will allow the action to accept CLI options named `--<name>` or `-<name>` for single-letter names. Parameter value can be referenced through ${parameters.name} in SpEL template expressions."
+            "description" : "Required string: Action parameter name. This will allow the action to accept CLI options named `--[name]` or `-[name]` for single-letter names. Parameter value can be referenced through ${parameters.name} in SpEL template expressions."
           },
           "required" : {
             "type" : "boolean",
