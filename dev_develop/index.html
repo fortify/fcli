@@ -1,6 +1,6 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20240515.125118-dev_develop
+fcli_version: 0.20240515.130114-dev_develop
 ---
 
 <!DOCTYPE html>
@@ -16,13 +16,13 @@ fcli_version: 0.20240515.125118-dev_develop
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240515.125118-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240515.130114-dev_develop" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20240515.125118-dev_develop</span>
+<span id="revnumber">version 0.20240515.130114-dev_develop</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -1169,10 +1169,10 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>There are several resources available to help you developing custom actions. To start with, you can use the <code>fcli * action get &lt;action&gt;</code> command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli provides a built-in <code>__sample__</code> action that explains various concepts and lists many of the supported action YAML elements together with a description.</p>
 </div>
 <div class="paragraph">
-<p>Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. The current fcli version 0.20240515.125118-dev_develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json">1.0.0</a>. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
+<p>Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. The current fcli version 0.20240515.130114-dev_develop supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json">1.0.0</a>. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
 </div>
 <div class="paragraph">
-<p>For optimal compatibility with various IDEs and YAML compatibility, fcli allows the schema to be declared in two ways:</p>
+<p>For optimal compatibility with various IDEs and YAML editors, fcli allows the schema to be declared in two ways:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1207,10 +1207,10 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 <p>However, this won&#8217;t be sufficient for actions that are dynamically loaded from a remote location, as action contents could change at any time. For example, a legitimate action can easily be replaced by some malicious action.</p>
 </div>
 <div class="paragraph">
-<p>As such, fcli by default requires custom actions to be signed. Organizations, teams or individuals can sign actions with their own private key using the <code>fcli * action sign</code> command, the corresponding public key can be imported into fcli using the <code>fcli config public-key import</code> command. Most <code>action</code> commands also allow for explicitly passing a public key through the <code>--pubkey</code> option.</p>
+<p>For this reason, fcli by default requires custom actions to be signed. Organizations, teams or individuals can sign actions with their own private key using the <code>fcli * action sign</code> command, the corresponding public key can be imported into fcli using the <code>fcli config public-key import</code> command. Most <code>action</code> commands also allow for explicitly passing a public key through the <code>--pubkey</code> option.</p>
 </div>
 <div class="paragraph">
-<p>Public keys can be loaded from a local file, URL, string or environment variable. Obviously, you should only use trusted public keys; loading a public key from a third-party URL may be dangerous for the same reasons as explained above.</p>
+<p>Public keys can be loaded from a local file, URL, string or environment variable, see command help or next section for details. Obviously, you should only use trusted public keys; loading a public key from a third-party URL may be dangerous for the same reasons as explained above.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1382,8 +1382,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20240515.125118-dev_develop<br>
-Last updated 2024-05-15 12:53:00 UTC
+Version 0.20240515.130114-dev_develop<br>
+Last updated 2024-05-15 13:03:08 UTC
 </div>
 </div>
 </body>
