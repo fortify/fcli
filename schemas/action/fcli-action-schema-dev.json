@@ -383,7 +383,7 @@
         },
         "query" : {
           "$ref" : "#/$defs/Map(String,TemplateExpression)",
-          "description" : "Optional map<string,SpEL template expression>: Map of query parameters and corresponding values, for example 'someParam: ${name.property}'."
+          "description" : "Optional map(string,SpEL template expression): Map of query parameters and corresponding values, for example 'someParam: ${name.property}'."
         },
         "target" : {
           "type" : "string",
@@ -430,7 +430,7 @@
           },
           "headers" : {
             "$ref" : "#/$defs/Map(String,TemplateExpression)",
-            "description" : "Optional map<string,SpEL template expression>: Headers to be sent to this request target on every request."
+            "description" : "Optional map(string,SpEL template expression): Headers to be sent to this request target on every request."
           },
           "name" : {
             "type" : "string",
@@ -470,7 +470,7 @@
         "properties" : {
           "cliAliases" : {
             "type" : "string",
-            "description" : "Optional string: Comma-separated CLI option aliases. This will allow the action to accept CLI options named '--alias' or '-alias' for single-letter aliases. Aliases cannot be referenced in SpEL expressions."
+            "description" : "Optional string: Comma-separated CLI option aliases. This will allow the action to accept CLI options named `--<alias>` or `-<alias>` for single-letter aliases. Aliases cannot be referenced in SpEL expressions."
           },
           "defaultValue" : {
             "format" : "spelTemplateExpression",
@@ -483,7 +483,7 @@
           },
           "name" : {
             "type" : "string",
-            "description" : "Required string: Action parameter name. This will allow the action to accept CLI options named '--<name>' or '-<name>' for single-letter names. Parameter value can be referenced through ${parameters.name} in SpEL template expressions."
+            "description" : "Required string: Action parameter name. This will allow the action to accept CLI options named `--<name>` or `-<name>` for single-letter names. Parameter value can be referenced through ${parameters.name} in SpEL template expressions."
           },
           "required" : {
             "type" : "boolean",
@@ -495,7 +495,7 @@
           },
           "typeParameters" : {
             "$ref" : "#/$defs/Map(String,TemplateExpression)",
-            "description" : "Optional map<string,SpEL template expression>: Action parameter type parameters to allow for additional configuration of the type converter configured through 'type'."
+            "description" : "Optional map(string,SpEL template expression): Action parameter type parameters to allow for additional configuration of the type converter configured through 'type'."
           }
         },
         "required" : [ "description", "name" ],
