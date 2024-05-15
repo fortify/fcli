@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240515.130114-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240515.135952-dev_develop" %}
 
 
 <div id="header">
@@ -54,7 +54,7 @@ fcli_version:
 <p>This command allows for listing the YAML contents of built-in or custom actions. This allows for reviewing the operations performed by an action, or for using the action contents as a basis for developing custom actions.</p>
 </div>
 <div class="paragraph">
-<p>The action can be specified as either a simple name or a local or remote action YAML file location. If specified as a simple name, the action will be loaded from the list of built-in and imported custom actions unless the <code>--from-zip</code> option is specified, in which case the action will be loaded from the given local or remote zip file. The <code>--from-zip</code> option will be ignored if the action is specified as a local or remote action YAML file location.</p>
+<p>The action can be specified as either a simple name or a local or remote action YAML file location. If specified as a simple name, the action will be loaded from the list of built-in and imported custom actions unless the <code>--from-zip</code> option is specified, in which case the action will be loaded from the given local or remote zip file. The <code>--from-zip</code> option will only be used if action is specified as a simple name, it will be ignored if the action is specified as a local or remote action YAML file location.</p>
 </div>
 </div>
 </div>
@@ -88,7 +88,7 @@ fcli_version:
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>If no prefix is given, &lt;local file&gt; is assumed. For security reasons, you should only use trusted public keys from a trusted source. Independent of source, contents must be in PEM (base64-encoded) format. For convenience with string: or env: inputs, the 'BEGIN/END PUBLIC KEY' statements and any whitespace (including newline characters) may be omitted. If no (matching) public key is provided, action signature will be verified against public keys previously imported through the 'fcli config public-key import' command.</pre>
+<pre>If no prefix is given, &lt;local file&gt; is assumed. For security reasons, you should only use trusted public keys from a trusted source. Independent of source, contents must be in PEM (base64-encoded) format. For convenience with string: or env: inputs, the 'BEGIN/END PUBLIC KEY' statements and any whitespace (including newline characters) may be omitted, allowing for having a single-line string:&lt;base64 public key contents&gt; for example. Note that the given public key will be ignored if its fingerprint doesn't match the public key fingerprint stored in the action signature. If no (matching) public key is provided, action signature will be verified against public keys previously imported through the 'fcli config public-key import' command.</pre>
 </div>
 </div>
 </dd>
@@ -142,7 +142,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-05-15 13:03:08 UTC
+Last updated 2024-05-15 14:01:43 UTC
 </div>
 </div>
 </body>

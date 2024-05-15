@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240515.130114-dev_develop" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240515.135952-dev_develop" %}
 
 
 <div id="header">
@@ -51,10 +51,13 @@ fcli_version:
 <p>Fcli supports workflow-style actions defined in YAML files. Many built-in actions are provided, focusing on data export and CI/CD integration. Users can also develop their own custom actions, either from scratch or by customizing built-in actions.</p>
 </div>
 <div class="paragraph">
-<p>Note that the ability to run custom actions is currently considered PREVIEW functionality; custom actions developed for this fcli version may fail on other fcli versions, even between minor fcli releases. We will stabilize action syntax over the next couple of fcli versions, after which any major action schema changes will be considered a major fcli version change. This fcli version supports the following action schema versions: null.</p>
+<p>Note that the ability to load and run custom actions is currently considered PREVIEW functionality; custom actions developed for this fcli version may fail on other fcli versions, even between minor fcli releases. Based on user feedback, we will stabilize action syntax over the next couple of fcli releases, after which any breaking action syntax changes will be considered a major fcli version change.</p>
 </div>
 <div class="paragraph">
-<p>Actions can potentially perform dangerous operations like deleting data or posting data to 3rd-party systems, so it is recommended to only run trusted actions. Action authors can sign their actions using the <code>action sign</code> command; actions without a (valid) signature will require confirmation when trying to run them. Trusted public keys can be configured through the <code>fcli config public-key</code> commands.</p>
+<p>This fcli version supports the following action schema versions: null.</p>
+</div>
+<div class="paragraph">
+<p>Actions can potentially perform dangerous operations like deleting data or posting data to 3rd-party systems, so it is recommended to only run trusted actions. Action authors can sign their actions using the <code>action sign</code> command; actions without a (valid) signature will require confirmation when trying to run them. Trusted public keys can be configured through the <code>fcli config public-key</code> commands, or passed directly using the <code>--pubkey</code> option on various action-related commands.</p>
 </div>
 </div>
 </div>
@@ -86,7 +89,7 @@ fcli_version:
 </dd>
 <dt class="hdlist1"><a href="fcli-ssc-action-import.html"><strong>import</strong></a></dt>
 <dd>
-<p>(PREVIEW) Import one or more actions.</p>
+<p>Import custom actions.</p>
 </dd>
 <dt class="hdlist1"><a href="fcli-ssc-action-list.html"><strong>list</strong>, <strong>ls</strong></a></dt>
 <dd>
@@ -112,7 +115,7 @@ fcli_version:
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-05-15 13:03:08 UTC
+Last updated 2024-05-15 14:01:43 UTC
 </div>
 </div>
 </body>
