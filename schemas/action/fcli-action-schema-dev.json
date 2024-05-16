@@ -17,7 +17,7 @@
               },
               "name" : {
                 "type" : "string",
-                "description" : "Required string: Name to assign to the outcome of this operation. Can be referenced in subsequent steps using ${name}."
+                "description" : "Required string: Name to assign to the outcome of this operation. Can be referenced in subsequent steps using ${[name]}."
               },
               "property" : {
                 "format" : "spelTemplateExpression",
@@ -116,7 +116,7 @@
                   },
                   "name" : {
                     "type" : "string",
-                    "description" : "Required string: Name to assign to each individual record being processed. Can be referenced in other forEach properties and nested steps using ${name}."
+                    "description" : "Required string: Name to assign to each individual record being processed. Can be referenced in other forEach properties and nested steps using ${[name]}."
                   }
                 },
                 "required" : [ "do", "name" ],
@@ -130,7 +130,7 @@
               },
               "name" : {
                 "type" : "string",
-                "description" : "Optional string: Name to assign to the outcome of this fcli invocation. Can be referenced in subsequent steps using ${name}."
+                "description" : "Optional string: Name to assign to the outcome of this fcli invocation. Can be referenced in subsequent steps using ${[name]}."
               }
             },
             "required" : [ "args" ],
@@ -159,7 +159,7 @@
             },
             "name" : {
               "type" : "string",
-              "description" : "Required string: Name to assign to each individual record being processed. Can be referenced in other forEach properties and nested steps using ${name}."
+              "description" : "Required string: Name to assign to each individual record being processed. Can be referenced in other forEach properties and nested steps using ${[name]}."
             },
             "processor" : {
               "format" : "spelTemplateExpression",
@@ -206,7 +206,7 @@
               },
               "name" : {
                 "type" : "string",
-                "description" : "Required string: Name to assign to the outcome of this operation. Can be referenced in subsequent steps using ${name}."
+                "description" : "Required string: Name to assign to the outcome of this operation. Can be referenced in subsequent steps using ${[name]}."
               },
               "value" : {
                 "format" : "spelTemplateExpression",
@@ -328,7 +328,7 @@
             },
             "name" : {
               "type" : "string",
-              "description" : "Required string: Name to assign to each individual record being processed. Can be referenced in other forEach properties and nested steps using ${name}."
+              "description" : "Required string: Name to assign to each individual record being processed. Can be referenced in other forEach properties and nested steps using ${[name]}."
             }
           },
           "required" : [ "do", "name" ],
@@ -346,7 +346,7 @@
         },
         "name" : {
           "type" : "string",
-          "description" : "Required string: Name to assign to the JSON response for this REST request. Can be referenced in subsequent steps using ${name} to access transformed data (if applicable) or ${name_raw} to access raw, untransformed data."
+          "description" : "Required string: Name to assign to the JSON response for this REST request. Can be referenced in subsequent steps using ${[name]} to access transformed data (if applicable) or ${[name]_raw} to access raw, untransformed data."
         },
         "onFail" : {
           "description" : "Optional list: Steps to be executed on request failure. If not specified, an exception will be thrown on request failure.",
@@ -383,7 +383,7 @@
         },
         "query" : {
           "$ref" : "#/$defs/Map(String,TemplateExpression)",
-          "description" : "Optional map(string,SpEL template expression): Map of query parameters and corresponding values, for example 'someParam: ${name.property}'."
+          "description" : "Optional map(string,SpEL template expression): Map of query parameters and corresponding values, for example 'someParam: ${[name].[property]}'."
         },
         "target" : {
           "type" : "string",
@@ -397,7 +397,7 @@
         "uri" : {
           "format" : "spelTemplateExpression",
           "type" : [ "boolean", "integer", "string", "number" ],
-          "description" : "Required SpEL template expression: Unqualified REST URI, like '/api/v3/some/api/${parameters.name.id}' to be appended to the base URL as configured for the given 'target'."
+          "description" : "Required SpEL template expression: Unqualified REST URI, like '/api/v3/some/api/${parameters.[name].id}' to be appended to the base URL as configured for the given 'target'."
         }
       },
       "required" : [ "name", "uri" ],
@@ -483,7 +483,7 @@
           },
           "name" : {
             "type" : "string",
-            "description" : "Required string: Action parameter name. This will allow the action to accept CLI options named `--[name]` or `-[name]` for single-letter names. Parameter value can be referenced through ${parameters.name} in SpEL template expressions."
+            "description" : "Required string: Action parameter name. This will allow the action to accept CLI options named `--[name]` or `-[name]` for single-letter names. Parameter value can be referenced through ${parameters.[name]} in SpEL template expressions."
           },
           "required" : {
             "type" : "boolean",
