@@ -27,12 +27,19 @@ fcli_version: none
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_conventional_commits_versioning">Conventional Commits &amp; Versioning</a></li>
+<li><a href="#_branches">Branches</a></li>
+<li><a href="#_conventional_commits_versioning">Conventional Commits &amp; Versioning</a>
+<ul class="sectlevel2">
+<li><a href="#_main_develop_branches"><code>main</code> &amp; <code>develop</code> branches</a></li>
+<li><a href="#_feature_other_branches">Feature &amp; other branches</a></li>
+</ul>
+</li>
 <li><a href="#_technologies_frameworks">Technologies &amp; Frameworks</a></li>
 <li><a href="#_prerequisites_considerations">Prerequisites &amp; Considerations</a>
 <ul class="sectlevel2">
 <li><a href="#_ide_setup">IDE Setup</a></li>
-<li><a href="#_incremental_compilation">Incremental Compilation</a></li>
+<li><a href="#_incremental_compilation_java">Incremental Compilation (Java)</a></li>
+<li><a href="#_incremental_compilation_resources">Incremental Compilation (Resources)</a></li>
 <li><a href="#_reflection">Reflection</a></li>
 </ul>
 </li>
@@ -60,6 +67,12 @@ fcli_version: none
 <li><a href="#_message_keys">Message Keys</a></li>
 </ul>
 </li>
+<li><a href="#_fcli_action_related_development">Fcli action-related development</a>
+<ul class="sectlevel2">
+<li><a href="#_implementing_fcli_built_in_actions">Implementing fcli built-in actions</a></li>
+<li><a href="#_action_schema">Action schema</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -67,15 +80,37 @@ fcli_version: none
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>The following sections provide information that may be useful for developers of this utility.</p>
+<p>The following sections provide information that may be useful for developers of this utility. Note that this documentation is not always properly updated, so some details may be out of date and no longer apply. However, general concepts won&#8217;t change very often, so even with some outdated details, it&#8217;s still useful to review this documentation if you&#8217;re contributing to fcli. If you notice anything that&#8217;s incorrect or outdated, please let us know or update yourself.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_branches"><a class="anchor" href="#_branches"></a>Branches</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>develop</code> branch is our primary branch for active fcli development. In general, new features/fixes/&#8230;&#8203; should be developed in a dedicated branch or fcli fork, and eventually merged into the <code>develop</code> branch by raising a Pull Request.</p>
+</div>
+<div class="paragraph">
+<p>Once we are ready for releasing a new fcli version, the <code>develop</code> branch will be merged into the <code>main</code> branch, which, based on conventional commit messages (see next section) will result in a release PR to be automatically raised; merging this PR will automatically build the fcli release version and publish the various release artifacts. Once release, the <code>main</code> branch needs to be merged back into the <code>develop</code> branch to apply changelog and version updates.</p>
+</div>
+<div class="paragraph">
+<p>In some cases, the process above may require a rewrite of the commit history on the <code>develop</code> branch, as we may have a need to rewrite some commit messages to generate proper release notes. So, after an fcli release, you should always update/replace any branches/forks/local copies to apply the new commit history to avoid issues when merging new changes.</p>
+</div>
+<div class="paragraph">
+<p>In general, the <code>main</code> branch shouldn&#8217;t be touched (other than as described above), except if we need to apply some (relatively urgent) bug fix at a time when the <code>develop</code> branch is not yet ready for release. In general, this is only applicable if we&#8217;ve already merged some features to the <code>develop</code> branch that still need more work before final release.</p>
+</div>
+<div class="paragraph">
+<p>Apart from the branches listed above, there&#8217;s also a <code>gh-pages</code> branch that is used to publish documentation to <a href="https://fortify.github.io/fcli" class="bare">https://fortify.github.io/fcli</a>. Most of the files in this branch are either static or automatically generated during fcli builds, so other than changing documentation structure or performing cleanup (like removing documentation for outdated fcli versions), in general this branch shouldn&#8217;t be touched.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_conventional_commits_versioning"><a class="anchor" href="#_conventional_commits_versioning"></a>Conventional Commits &amp; Versioning</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_main_develop_branches"><a class="anchor" href="#_main_develop_branches"></a><code>main</code> &amp; <code>develop</code> branches</h3>
 <div class="paragraph">
-<p>Versioning is handled automatically by <a href="https://github.com/google-github-actions/release-please-action">release-please-action</a> based on <a href="https://www.conventionalcommits.org/">Conventional Commits</a>. Every commit to the <code>main</code> branch should follow the Conventional Commits convention. Following are some examples; these can be combined in a single commit message (separated by empty lines), or you can have commit messages describing just a single fix or feature.</p>
+<p>Versioning is handled automatically by <a href="https://github.com/google-github-actions/release-please-action">release-please-action</a> based on <a href="https://www.conventionalcommits.org/">Conventional Commits</a>. Every commit to the <code>main</code> or <code>develop</code> branch should follow the Conventional Commits convention. Following are some examples; these can be combined in a single commit message (separated by empty lines), or you can have commit messages describing just a single fix or feature.</p>
 </div>
 <div class="literalblock">
 <div class="content">
@@ -96,10 +131,20 @@ feat: Some feature
 </div>
 </div>
 <div class="paragraph">
-<p>See the output of <code>git log</code> to view some sample commit messages.</p>
+<p>See the output of <code>git log</code> to view some sample commit messages. Note that such commit messages should only describe changes since the last fcli release, not changes within the current development release. For example, suppose you&#8217;ve developed a new feature that hasn&#8217;t been released yet, and then implement some fix for this unreleased feature, you shouldn&#8217;t use a <code>fix:</code> commit message but instead use a <code>chore:</code> or similar message. Otherwise, the changelog would contain entries for both the new feature and fixes to that feature, which doesn&#8217;t make sense.</p>
 </div>
 <div class="paragraph">
 <p><code>release-please-action</code> invoked from the GitHub CI workflow generates pull requests containing updated <code>CHANGELOG.md</code> and <code>version.txt</code> files based on these commit messages. Merging the pull request will result in a new release version being published by creating a GitHub release describing the changes.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_feature_other_branches"><a class="anchor" href="#_feature_other_branches"></a>Feature &amp; other branches</h3>
+<div class="paragraph">
+<p>In general, you can use the same commit messages as described above. However, especially when implementing a larger feature that may undergo some changes before being released, it maybe be better to use <code>proposed-feat:</code> instead, to avoid having to fix commit messages if the initial feature description no longer matches the feature that&#8217;s eventually being released.</p>
+</div>
+<div class="paragraph">
+<p>As an example, we&#8217;ve had several occasions where we initially wrote a commit message like <code>feat: Add 'fcli ssc new-entity' commands to &#8230;&#8203;</code>, but before release decided to rename this entity or combine with another entity, causing the previous commit message to be outdated as instead we now should have a commit message <code>feat: Add 'fcli ssc renamed-entity' commands to &#8230;&#8203;</code>.</p>
+</div>
 </div>
 </div>
 </div>
@@ -147,7 +192,7 @@ feat: Some feature
 </div>
 </div>
 <div class="sect2">
-<h3 id="_incremental_compilation"><a class="anchor" href="#_incremental_compilation"></a>Incremental Compilation</h3>
+<h3 id="_incremental_compilation_java"><a class="anchor" href="#_incremental_compilation_java"></a>Incremental Compilation (Java)</h3>
 <div class="paragraph">
 <p>Incremental compilation (for example in IDE or when doing a <code>gradle build</code> without <code>clean</code>) may leave behind old AOT artifacts causing exceptions when trying to run <code>fcli</code>. This is especially the case when renaming or moving classes, which may result in exceptions like the below:</p>
 </div>
@@ -161,6 +206,12 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 </div>
 <div class="paragraph">
 <p>In this example, the AbstractUnirestRunner class was moved to a different package, but the now obsolete AOT-generated classes were still present. So, if at any time you see unexpected exceptions, please try to do a full clean/rebuild and run <code>fcli</code> again.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_incremental_compilation_resources"><a class="anchor" href="#_incremental_compilation_resources"></a>Incremental Compilation (Resources)</h3>
+<div class="paragraph">
+<p>Incremental compilation may sometimes result in incorrect resource file handling. For example, action zip files are being updated with updated action YAML files, rather than being fully replaced. This can sometimes cause incorrect behavior, like removed actions still being available, or updated actions not being properly replaced.</p>
 </div>
 </div>
 <div class="sect2">
@@ -760,11 +811,59 @@ public class &lt;Module&gt;&lt;Entity&gt;&lt;Action&gt;Command extends &lt;Super
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_fcli_action_related_development"><a class="anchor" href="#_fcli_action_related_development"></a>Fcli action-related development</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_implementing_fcli_built_in_actions"><a class="anchor" href="#_implementing_fcli_built_in_actions"></a>Implementing fcli built-in actions</h3>
+<div class="paragraph">
+<p>We have fairly extensive user documentation regarding fcli action development, including an action schema for IDE code assistance, and many existing actions that may be used as an example. Virtually all of this documentation also applies to internal actions, except for one exception: built-in actions should always use the <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json">dev schema</a>.</p>
+</div>
+<div class="paragraph">
+<p>With every GitHub workflow run (for any branch), the dev schema will be automatically updated to reflect any changes in the action model (syntax), allowing IDE code assistance to take these changes into account (you may need to restart your IDE to apply any schema changes). This allows for utilizing any new/updated action syntax while developing built-in actions.</p>
+</div>
+<div class="paragraph">
+<p>Upon fcli release, the dev schema referenced from built-in actions will be automatically updated to reflect current action schema release version.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_action_schema"><a class="anchor" href="#_action_schema"></a>Action schema</h3>
+<div class="paragraph">
+<p>Fcli action schemas are versioned independently from fcli; as not every fcli release will have schema changes, it doesn&#8217;t make much sense to republish an already existing schema with a new (fcli) version number. Having schema&#8217;s versioned independently allows for easily identifying when there have been any schema changes, and avoids users having to update the schema version used by their custom actions upon every fcli release.</p>
+</div>
+<div class="paragraph">
+<p>The schema is automatically generated from the <code>&#8230;&#8203;action.model.Action</code> class structure located in <code>fcli-common</code>, and current action schema version is defined in the <code>fcliActionSchemaVersion</code> property in <code>gradle.properties</code> in the fcli root project. Upon each fcli release, the configured schema version will be published if it hasn&#8217;t been published yet upon earlier fcli releases.</p>
+</div>
+<div class="paragraph">
+<p>If any changes are made to the action model source code, the <code>fcliActionSchemaVersion</code> property must be updated accordingly, taking into account proper major, minor, or patch version increase based on the type of changes; see comments in <code>gradle.properties</code> for details. If a given <code>fcliActionSchemaVersion</code> has been previously released, and any changes in action model are detected, the Gradle <code>generateActionSchema</code> task will fail as we won&#8217;t allow updating any previously released schema.</p>
+</div>
+<div class="paragraph">
+<p>If the currently configured <code>fcliActionSchemaVersion</code> hasn&#8217;t been published yet, GitHub workflows will produce a warning stating that a new schema version will be released upon the next fcli release. This is to try to avoid situations like the following:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Someone updates a property description and increases <code>fcliActionSchemaVersion</code> to the next patch release to avoid the <code>generateActionSchema</code> task from failing.</p>
+</li>
+<li>
+<p>Later on, someone makes a structural change to the action model, but forgets to update the <code>fcliActionSchemaVersion</code> property.</p>
+</li>
+<li>
+<p>Upon fcli release, we now release a schema patch version, whereas it should have been a minor or major version change.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Any suggestions on better ways to avoid such situations are welcome.</p>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
 Version none<br>
-Last updated 2024-05-16 07:11:32 UTC
+Last updated 2024-05-16 10:46:41 UTC
 </div>
 </div>
 </body>
