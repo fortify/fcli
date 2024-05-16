@@ -31,14 +31,35 @@ import com.fortify.cli.common.crypto.helper.impl.InternalSignatureUtil.ISignatur
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
+// TODO Refactor to make PublicKeyDescriptor available to callers, to allow
+//      callers to identify where the public key was loaded from, and the 
+//      public key name and other properties if loaded from trust store:
+//      - Instead of publicKey, store publicKeyDescriptor
+//      - In PublicKeyDescriptor, make the parsed public key byte[] available
+//        to avoid having to do that in this and other classes
+//      - In PublicKeyDescriptor, add a loadedFrom enum field with TRUSTSTORE/EXTRAKEYS;
+//        in action loader we can convert this to something like 'public key loaded from
+//        trust store', or 'public key loaded from --pubkey option'
+//      - In PublicKeyDescriptor, allow name to be optional (probably already is)
+//      - In SignedTextDescriptor, add a new PublicKeyDescriptor field
+//      - In SignedTextReader::buildSignedDescriptor, get the public key descriptor from
+//        the verifier, and store it in SignedTextDescriptor.
+//      Ultimate goal is the ability to display public key information in fcli action
+//      outputs (action list/help command), for example for displaying something like
+//      "Certified by: <public key name|'--pubkey option'>"
 @RequiredArgsConstructor
 public final class Verifier {
+    // Based on comments above, change to 'private final PublicKeyDescriptor publicKeyDescriptor',
+    // and provide a getter method.
     private final byte[] publicKey;
     
     public Verifier(String pemOrBase64Key) {
         this(InternalSignatureUtil.parseKey(pemOrBase64Key));
     }
     
+    // TODO Based on comments above, for public key loaded from extraPublicKeys,
+    //      instantiate a new PublicKeyDescriptor instance and pass it to the constructor.
+    //      For trusted public keys, simply pass the loaded descriptor to our constructor.
     public static final Verifier forFingerprint(String fingerprint, String... extraPublicKeys) {
         // Try to locate public key for fingerprint from given extra public keys
         if ( extraPublicKeys!=null ) {
