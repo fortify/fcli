@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data
 public final class ActionParameter implements IActionElement {
-    @JsonPropertyDescription("Required string: Action parameter name. This will allow the action to accept CLI options named `--[name]` or `-[name]` for single-letter names. Parameter value can be referenced through ${parameters.name} in SpEL template expressions.")
+    @JsonPropertyDescription("Required string: Action parameter name. This will allow the action to accept CLI options named `--[name]` or `-[name]` for single-letter names. Parameter value can be referenced through ${parameters.[name]} in SpEL template expressions.")
     @JsonProperty(required = true) private String name;
     
     @JsonPropertyDescription("Required string: Action parameter description to be shown in action usage help.")

@@ -32,19 +32,19 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public final class ActionStepRequest extends AbstractActionStep {
-    @JsonPropertyDescription("Required string: Name to assign to the JSON response for this REST request. Can be referenced in subsequent steps using ${name} to access transformed data (if applicable) or ${name_raw} to access raw, untransformed data.")
+    @JsonPropertyDescription("Required string: Name to assign to the JSON response for this REST request. Can be referenced in subsequent steps using ${[name]} to access transformed data (if applicable) or ${[name]_raw} to access raw, untransformed data.")
     @JsonProperty(required = true) private String name;
     
     @JsonPropertyDescription("Optional string: HTTP method like GET or POST to use for this REST request. Defaults to 'GET'.")
     @JsonProperty(required = false, defaultValue = "GET") private String method = HttpMethod.GET.name();
     
-    @JsonPropertyDescription("Required SpEL template expression: Unqualified REST URI, like '/api/v3/some/api/${parameters.name.id}' to be appended to the base URL as configured for the given 'target'.")
+    @JsonPropertyDescription("Required SpEL template expression: Unqualified REST URI, like '/api/v3/some/api/${parameters.[name].id}' to be appended to the base URL as configured for the given 'target'.")
     @JsonProperty(required = true) private TemplateExpression uri;
     
     @JsonPropertyDescription("Required string if no default target has been configured through defaults.requestTarget: Target on which to execute the REST request. This may be 'fod' (for actions in FoD module), 'ssc' (for actions in SSC module), or a custom request target as configured through 'addRequestTargets'.")
     @JsonProperty(required = false) private String target;
     
-    @JsonPropertyDescription("Optional map(string,SpEL template expression): Map of query parameters and corresponding values, for example 'someParam: ${name.property}'.")
+    @JsonPropertyDescription("Optional map(string,SpEL template expression): Map of query parameters and corresponding values, for example 'someParam: ${[name].[property]}'.")
     @JsonProperty(required = false) private Map<String,TemplateExpression> query;
     
     @JsonPropertyDescription("Optional SpEL template expression: Request body to send with the REST request.")

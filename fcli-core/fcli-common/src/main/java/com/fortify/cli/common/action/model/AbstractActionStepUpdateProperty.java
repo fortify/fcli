@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 @Reflectable @NoArgsConstructor
 @Data @EqualsAndHashCode(callSuper = true)
 public abstract class AbstractActionStepUpdateProperty extends AbstractActionStep implements IActionStepValueSupplier {
-    @JsonPropertyDescription("Required string: Name to assign to the outcome of this operation. Can be referenced in subsequent steps using ${name}.")
+    @JsonPropertyDescription("Required string: Name to assign to the outcome of this operation. Can be referenced in subsequent steps using ${[name]}.")
     @JsonProperty(required = true) private String name;
     
     @JsonPropertyDescription("Required SpEL template expression if 'valueTemplate' is not specified: Value to be assigned or appended to the given name.")

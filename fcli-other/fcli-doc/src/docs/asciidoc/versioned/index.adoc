@@ -506,9 +506,12 @@ To allow for easy access, custom actions can also be imported into fcli using th
 
 === Custom Action Development
 
-There are several resources available to help you developing custom actions. To start with, you can use the `fcli * action get <action>` command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli provides a built-in `+__sample__+` action that explains various concepts and lists many of the supported action YAML elements together with a description.
+There are several resources available to help you developing custom actions. To start with, you can use the `fcli * action get <action>` command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli provides a built-in `+__sample__+` action that explains various concepts and lists many of the supported action YAML elements together with a description. To view the sample action, use the `+fcli ssc action get __sample__+` or `+fcli fod action get __sample__+` command.
 
-Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. The current fcli version {docversion} supports schema version link:{actionSchemaUrl}[{actionSchemaVersion}]. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.
+Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used IDE plugins that are known to work with one of the schema associations listed below:
+
+* Visual Studio Code: link:https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml[Red Hat YAML plugin]
+* Eclipse: link:https://marketplace.eclipse.org/content/wild-web-developer-html-css-javascript-typescript-nodejs-angular-json-yaml-kubernetes-xml[Wild Web Developer]
 
 For optimal compatibility with various IDEs and YAML editors, fcli allows the schema to be declared in two ways:
 
@@ -525,7 +528,9 @@ For optimal compatibility with various IDEs and YAML editors, fcli allows the sc
 $schema: {actionSchemaUrl}
 ----
 
-Fcli requires at least one of these statements to be provided in action YAML files. You may also provide both, in which case the schema URL must be identical in both statements. Once you've added one of these statements to your action YAML file, your IDE or YAML editor should automatically provide support for editing and validating action YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.
+Fcli requires at least one of these statements to be provided in action YAML files. You may also provide both, in which case the schema URL must be identical in both statements. Once you've added one of these statements to your action YAML file, your IDE or YAML editor may automatically provide support for editing and validating action YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.
+
+As shown in the sample schema statements above, the current fcli version {docversion} supports schema version link:{actionSchemaUrl}[{actionSchemaVersion}]. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range. 
 
 === Security Considerations
 
