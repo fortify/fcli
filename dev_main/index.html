@@ -1,13 +1,13 @@
 ---
 title: Fortify CLI (fcli) Installation &amp; Usage
-fcli_version: 0.20240305.093705-dev_main
+fcli_version: 0.20240517.165906-dev_main
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=">
-<meta name="generator" content="Asciidoctor 2.0.10">
+<meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fortify CLI (fcli) Installation &amp; Usage</title>
 
@@ -16,13 +16,13 @@ fcli_version: 0.20240305.093705-dev_main
 </head>
 <body class="article toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240305.093705-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240517.165906-dev_main" %}
 
 
 <div id="header">
 <h1>Fortify CLI (fcli) Installation &amp; Usage</h1>
 <div class="details">
-<span id="revnumber">version 0.20240305.093705-dev_main</span>
+<span id="revnumber">version 0.20240517.165906-dev_main</span>
 </div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
@@ -61,6 +61,15 @@ fcli_version: 0.20240305.093705-dev_main
 <li><a href="#_fcli_data_folder">Fcli Data Folder</a></li>
 <li><a href="#_environment_variables">Environment Variables</a></li>
 <li><a href="#_fcli_variables">Fcli Variables</a></li>
+<li><a href="#_actions">Actions</a>
+<ul class="sectlevel2">
+<li><a href="#_built_in_actions">Built-in Actions</a></li>
+<li><a href="#_custom_actions">Custom Actions</a></li>
+<li><a href="#_custom_action_development">Custom Action Development</a></li>
+<li><a href="#_security_considerations">Security Considerations</a></li>
+<li><a href="#_actions_in_cicd_pipelines">Actions in CI/CD pipelines</a></li>
+</ul>
+</li>
 <li><a href="#_manual_pages">Manual Pages</a></li>
 <li><a href="#_troubleshooting">Troubleshooting</a>
 <ul class="sectlevel2">
@@ -107,6 +116,9 @@ man-pages as listed in the <a href="#_manual_pages">Manual Pages</a> section.</p
 </li>
 <li>
 <p>Support for installing other Fortify-related tools</p>
+</li>
+<li>
+<p>Support for running multi-purpose YAML-based <a href="#_actions">actions</a></p>
 </li>
 </ul>
 </div>
@@ -243,6 +255,12 @@ found, please try with the Java version as it may be an issue specific to the na
 <li>
 <p><code>LICENSE.TXT</code> &amp; <code>README.md</code>: Some generic information and license for fcli</p>
 </li>
+<li>
+<p><code>*.sha256</code>: SHA256 checksum for each asset</p>
+</li>
+<li>
+<p><code>*.rsa_sha256</code>: RSA SHA256 signature for each asset, to be verified using this <a href="https://raw.githubusercontent.com/fortify/tool-definitions/main/id_rsa.pub">public key</a></p>
+</li>
 </ul>
 </div>
 <div class="paragraph">
@@ -257,7 +275,31 @@ found, please try with the Java version as it may be an issue specific to the na
 <p>To install fcli, start by visiting the fcli <a href="https://github.com/fortify/fcli/releases">Releases</a> page as described in the previous section, and downloading the <code>fcli.jar</code> file or appropriate native binary archive for your platform. Native binary archives will need to be extracted to a temporary directory, the <code>fcli.jar</code> file can be used as-is.</p>
 </div>
 <div class="paragraph">
-<p>Once downloaded and extracted (if applicable), you can either perform a manual or managed installation. Managed installation is recommended, but only available on internet-connected systems. Please see the sections below for more information.</p>
+<p>As a best practice, you should verify the integrity of the downloaded file. Release assets include <code>*.sha256</code> and <code>*.rsa_sha256</code> for this purpose, with the latter being preferred for better security. For example, after downloading both <code>fcli-linux.tgz</code> and <code>fcli-linux.tgz.rsa_sha256</code>, you can verify integrity by running the following OpenSSL command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>  openssl dgst -sha256 -verify &lt;(echo "-----BEGIN PUBLIC KEY-----
+  MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArij9U9yJVNc53oEMFWYp
+  NrXUG1UoRZseDh/p34q1uywD70RGKKWZvXIcUAZZwbZtCu4i0UzsrKRJeUwqanbc
+  woJvYanp6lc3DccXUN1w1Y0WOHOaBxiiK3B1TtEIH1cK/X+ZzazPG5nX7TSGh8Tp
+  /uxQzUFli2mDVLqaP62/fB9uJ2joX9Gtw8sZfuPGNMRoc8IdhjagbFkhFT7WCZnk
+  FH/4Co007lmXLAe12lQQqR/pOTeHJv1sfda1xaHtj4/Tcrq04Kx0ZmGAd5D9lA92
+  8pdBbzoe/mI5/Sk+nIY3AHkLXB9YAaKJf//Wb1yiP1/hchtVkfXyIaGM+cVyn7AN
+  VQIDAQAB
+  -----END PUBLIC KEY-----") -signature "fcli-linux.tgz.rsa_sha256" "fcli-linux.tgz"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If your shell doesn&#8217;t support <code>&lt;(...)</code> syntax, you&#8217;ll need to save the <a href="https://raw.githubusercontent.com/fortify/tool-definitions/main/id_rsa.pub">public key</a> to a file and pass the file name to the <code>-verify</code> command line option, for example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>  openssl dgst -sha256 -verify pubkey.pem -signature "fcli-linux.tgz.rsa_sha256" "fcli-linux.tgz"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once downloaded, verified and extracted (if applicable), you can either perform a manual or managed installation. Managed installation is recommended, but only available on internet-connected systems. Please see the sections below for more information.</p>
 </div>
 <div class="sect2">
 <h3 id="_managed_installation"><a class="anchor" href="#_managed_installation"></a>Managed Installation</h3>
@@ -1044,6 +1086,227 @@ fcli util variable contents myVersions -o 'expr={id}\n' --output-to-file myVersi
 </div>
 </div>
 <div class="sect1">
+<h2 id="_actions"><a class="anchor" href="#_actions"></a>Actions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Fcli actions are a powerful feature that allows for rich integration and automation by running a customizable set of instructions defined in YAML files. These instructions allow for processing data collected from Fortify or third-party products, updating data in those products, and writing output to files or console.</p>
+</div>
+<div class="sect2">
+<h3 id="_built_in_actions"><a class="anchor" href="#_built_in_actions"></a>Built-in Actions</h3>
+<div class="paragraph">
+<p>Fci comes with various built-in actions, currently focused on providing the following functionality:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Vulnerability export to various third-party formats like SARIF or GitHub, GitLab, BitBucket, and SonarQube reports, as a replacement for <a href="https://github.com/fortify/FortifyVulnerabilityExporter">FortifyVulnerabilityExporter</a>.</p>
+</li>
+<li>
+<p>Generating GitHub Pull Request comments, listing (re-)introduced and removed vulnerabilities.</p>
+</li>
+<li>
+<p>Generating application version/release summaries in Markdown format, for example for use as pipeline summaries.</p>
+</li>
+<li>
+<p>Evaluating security policy criteria, for example allowing to break a build if one or more checks are failing.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Future fcli versions may introduce new built-in actions, enhance existing built-in actions, or provide enhanced action syntax, for example to allow for running pipeline-style actions that run a set of commands to package source code, submit a scan request, wait for scan completion, and perform post-scan activities like data export or policy checks.</p>
+</div>
+<div class="paragraph">
+<p>Action support is centralized into the <code>action</code> entity of the various product modules. For now, fcli supports <code>fcli fod action *</code> and <code>fcli ssc action *</code> commands. Based on user feedback, we may consider adding action support on other modules like <code>sc-sast</code> or <code>sc-dast</code> as well. The following commands may be used to manage and run built-in actions:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>fcli * action list</code>: List available built-in actions (and imported custom actions, see next section).</p>
+</li>
+<li>
+<p><code>fcli * action help &lt;action&gt;</code>: Display action usage information like description and list of action-specific command-line options.</p>
+</li>
+<li>
+<p><code>fcli * action get &lt;action&gt;</code>: Display action YAML contents.</p>
+</li>
+<li>
+<p><code>fcli * action run &lt;action&gt;</code>: Run a given action.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_custom_actions"><a class="anchor" href="#_custom_actions"></a>Custom Actions</h3>
+<div class="paragraph">
+<p>Apart from built-in actions, users can also develop and run custom actions, which could be customized versions of built-in actions or completely new actions. Note that the ability to run custom actions is currently considered PREVIEW functionality; as fcli actions are a new functionality, we are collecting user feedback regarding action syntax, which could potentially result in breaking action syntax changes across minor fcli releases (although we&#8217;ll try to avoid this as much as possible).</p>
+</div>
+<div class="paragraph">
+<p>As such, custom actions that run fine on the current fcli version may fail to run on any other fcli version. Fcli does perform action version checks based on action schema version (see below), but supported schema versions may change between minor or patch releases of fcli. Once we are comfortable with moving custom actions out of PREVIEW status, breaking schema/action syntax changes will be allowed only on major fcli releases, for example when moving from fcli 2.x to fcli 3.x.</p>
+</div>
+<div class="paragraph">
+<p>Custom actions can be loaded from various sources, like a local or remote YAML file, optionally embedded in a zip-file that contains multiple actions. Each of the fcli commands listed in the previous section also support custom actions:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>fcli * action list --from-zip &lt;file|url&gt;</code>: List available actions from the given zip-file.</p>
+</li>
+<li>
+<p><code>fcli * action help|get|run &lt;file|url&gt;</code>: Load the action from the given file or URL.</p>
+</li>
+<li>
+<p><code>fcli * action help|get|run &lt;action&gt; --from-zip &lt;file|url&gt;</code>: Load the given action from the given zip-file.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>To allow for easy access, custom actions can also be imported into fcli using the <code>fcli * action import</code> command, which allows for importing either a single action YAML file or all action YAML files from a local or remote zip-file. Once imported, these actions can be accessed in the same way as built-in actions. Note that imported custom actions will override built-in actions if they have the same name. You can use the <code>fcli * action reset</code> command to remove all previously imported custom actions.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_custom_action_development"><a class="anchor" href="#_custom_action_development"></a>Custom Action Development</h3>
+<div class="paragraph">
+<p>There are several resources available to help you developing custom actions. To start with, you can use the <code>fcli * action get &lt;action&gt;</code> command to view the contents of any built-in action as a basis for developing your own custom actions. Fcli provides a built-in <code>__sample__</code> action that explains various concepts and lists many of the supported action YAML elements together with a description. To view the sample action, use the <code>fcli ssc action get __sample__</code> or <code>fcli fod action get __sample__</code> command.</p>
+</div>
+<div class="paragraph">
+<p>Fcli also provides an action schema, which allows YAML editors and IDEs to provide code completion, documentation and validation for fcli action YAML documents. You may need to install a plugin to enable proper YAML editing and schema support. Following are some commonly used IDE plugins that are known to work with one of the schema associations listed below:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Visual Studio Code: <a href="https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml">Red Hat YAML plugin</a></p>
+</li>
+<li>
+<p>Eclipse: <a href="https://marketplace.eclipse.org/content/wild-web-developer-html-css-javascript-typescript-nodejs-angular-json-yaml-kubernetes-xml">Wild Web Developer</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For optimal compatibility with various IDEs and YAML editors, fcli allows the schema to be declared in two ways:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>YAML comment, supported by IDEs like Visual Studio Code, Eclipse and IntelliJ:</p>
+<div class="listingblock">
+<div class="content">
+<pre># yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json</pre>
+</div>
+</div>
+</li>
+<li>
+<p>YAML property, supported by Eclipse and some other YAML editors:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json</pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Fcli requires at least one of these statements to be provided in action YAML files. You may also provide both, in which case the schema URL must be identical in both statements. Once you&#8217;ve added one of these statements to your action YAML file, your IDE or YAML editor may automatically provide support for editing and validating action YAML files. If not, try closing and re-opening the YAML file, or consult the documentation of your IDE or YAML editor.</p>
+</div>
+<div class="paragraph">
+<p>As shown in the sample schema statements above, the current fcli version 0.20240517.165906-dev_main supports schema version <a href="https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.0.json">1.0.0</a>. Other fcli versions may support different schema versions. In general, fcli also provides backward compatibility for earlier schema versions with the same schema major version range, and forward compatibility for later schema patch versions within the same schema minor version range.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_security_considerations"><a class="anchor" href="#_security_considerations"></a>Security Considerations</h3>
+<div class="paragraph">
+<p>As actions can potentially perform dangerous operations, like sending confidential data to third-party systems, or updating or deleting data in Fortify or third-party systems, you should only run trusted actions. If you wish to run any actions provided by a third party, you could potentially review action contents, and potentially in the future we may provide functionality for performing a security analysis on action contents (either as a new fcli command or through Fortify rules).</p>
+</div>
+<div class="paragraph">
+<p>However, this won&#8217;t be sufficient for actions that are dynamically loaded from a remote location, as action contents could change at any time. For example, a legitimate action can easily be replaced by some malicious action.</p>
+</div>
+<div class="paragraph">
+<p>For this reason, fcli by default requires custom actions to be signed. Organizations, teams or individuals can sign actions with their own private key using the <code>fcli * action sign</code> command, the corresponding public key can be imported into fcli using the <code>fcli config public-key import</code> command. Most <code>action</code> commands also allow for explicitly passing a public key through the <code>--pubkey</code> option.</p>
+</div>
+<div class="paragraph">
+<p>Public keys can be loaded from a local file, URL, string or environment variable, see command help or next section for details. Obviously, you should only use trusted public keys; loading a public key from a third-party URL may be dangerous for the same reasons as explained above.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_actions_in_cicd_pipelines"><a class="anchor" href="#_actions_in_cicd_pipelines"></a>Actions in CI/CD pipelines</h3>
+<div class="paragraph">
+<p>Fcli is commonly used in CI/CD pipelines to perform all sorts of Fortify-related operations, and fcli actions allow for even more advanced use cases. This section provides some hints as to how to integrate actions into CI/CD pipelines, considering deployment and security aspects.</p>
+</div>
+<div class="paragraph">
+<p><strong>Publishing</strong></p>
+</div>
+<div class="paragraph">
+<p>Fcli actions can be loaded from any URL, but for CI/CD integration you could consider hosting fcli actions in a shared source code repository like <code><a href="https://some-scm.our.org/repositories/shared-ci-tools/fcli/actions" class="bare">https://some-scm.our.org/repositories/shared-ci-tools/fcli/actions</a></code>. This allows for easy sharing and maintainance of fcli actions that are used across many CI/CD pipelines. This even allows for automatically signing those action using CI/CD pipelines on this shared repository.</p>
+</div>
+<div class="paragraph">
+<p><strong>Public &amp; private key management</strong></p>
+</div>
+<div class="paragraph">
+<p>Of course, those actions should be signed using an organization-specific private key. For example, this could be either an existing private key that&#8217;s used throughout the organization, or a private key that&#8217;s managed by the CI/CD team. There are several ways to pass the corresponding public key to fcli from within CI/CD pipelines:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Explicitly run <code>fcli config public-key import</code> command from each pipeline before running any actions.</p>
+</li>
+<li>
+<p>Explicitly pass the <code>--pubkey</code> option on any <code>fcli * action run</code> commands.</p>
+</li>
+<li>
+<p>Set the <code>FCLI_DEFAULT_PUBKEY</code> environment variable to configure a default value for the <code>--pubkey</code> option.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>With each of these approaches, the public key can be be loaded from:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Local file, for example public key stored in current source code repository.</p>
+</li>
+<li>
+<p>URL, for example pointing to public key stored in same shared source code repository as the actions themselves.</p>
+</li>
+<li>
+<p>Environment variable, for example defined as system environment variable on self-hosted CI/CD nodes, or configured through (global) CI/CD secrets/variables.</p>
+</li>
+<li>
+<p>Plain string, for example having the environment variable <code>FCLI_DEFAULT_PUBKEY</code> set to <code>string:&lt;public key contents&gt;</code>. You can use CI/CD secrets/variables to set the <code>FCLI_DEFAULT_PUBKEY</code> to a value like this. For testing, you can use a <code>bash</code> command like the following: <code>export FCLI_DEFAULT_PUBKEY=string:$(cat my-public.key)</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Design considerations</strong></p>
+</div>
+<div class="paragraph">
+<p>Given that actions can define and process arbitrary parameters, it may be tempting to implement generic, highly configurable actions. For example, you could implement a highly configurable action for checking all kinds of security policy criteria, with the actual criteria to be checked being passed as action parameters.</p>
+</div>
+<div class="paragraph">
+<p>However, from a CI/CD perspective, this means that every pipeline must properly set these action parameters. Pipeline authors may copy existing pipelines or use pipeline templates to have these action parameters set to predefined values, but what if those parameters need to updated globally? Potentially, this means that you&#8217;d need to update thousands of pipelines to adjust action parameters.</p>
+</div>
+<div class="paragraph">
+<p>This is exactly the reason why we don&#8217;t provide a highly configurable <code>check-policy</code> action, but instead just provide an example that can be customized according to organization requirements. Instead of passing fine-grained pass/fail criteria as action parameters, those criteria are hard-coded into the action. If there is a need to apply different criteria for different types of applications, for example based on business risk, multiple approaches are possible:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Use SSC/FoD application version/release attributes like <code>Business Risk</code> or other characteristics to identify what criteria to apply. This is the preferred approach, to allow the criteria to be applied to automatically match the centrally maintained attributes/characteristics.</p>
+</li>
+<li>
+<p>Have the action take one or more parameters that identify what criteria to apply. This could be a policy name, or a functional identifier like <code>--business-risk</code>.</p>
+</li>
+<li>
+<p>Publish separate actions that implement different policy criteria, like <code>check-high-risk-policy</code> and <code>check-low-risk-policy</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The examples above or based on actions that perform policy checks, but the same principles and considerations (may) apply to other types of actions.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_manual_pages"><a class="anchor" href="#_manual_pages"></a>Manual Pages</h2>
 <div class="sectionbody">
 <div class="paragraph">
@@ -1132,8 +1395,8 @@ may experience any of the following behavior:</p>
 </div>
 <div id="footer">
 <div id="footer-text">
-Version 0.20240305.093705-dev_main<br>
-Last updated 2024-03-05 09:38:33 UTC
+Version 0.20240517.165906-dev_main<br>
+Last updated 2024-05-17 17:00:55 UTC
 </div>
 </div>
 </body>

@@ -4,10 +4,10 @@ fcli_version:
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=">
-<meta name="generator" content="Asciidoctor 2.0.10">
+<meta name="generator" content="Asciidoctor 2.0.18">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>fcli-fod-oss-scan-wait-for(1)</title>
 
@@ -16,7 +16,7 @@ fcli_version:
 </head>
 <body class="manpage toc2 toc-left">
 
-{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240305.093705-dev_main" %}
+{% include banner.html bannerTitle="FCLI: The Universal Fortify CLI" currentVersion="0.20240517.165906-dev_main" %}
 
 
 <div id="header">
@@ -43,7 +43,7 @@ fcli_version:
 <h2 id="_synopsis"><a class="anchor" href="#_synopsis"></a>Synopsis</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><strong>fcli fod oss-scan wait-for</strong> [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
+<p><strong>fcli fod oss-scan wait-for</strong> [<strong>--delim</strong>=<em>&lt;delimiter&gt;</em>] [<strong>-i</strong>=<em>&lt;intervalPeriod&gt;</em>]
                            [<strong>--on-failure-state</strong>=<em>&lt;onFailureState&gt;</em>]
                            [<strong>--on-timeout</strong>=<em>&lt;onTimeout&gt;</em>]
                            [<strong>--on-unknown-state</strong>=<em>&lt;onUnknownState&gt;</em>]
@@ -76,6 +76,10 @@ See fcli help output</p>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1"><strong>--delim</strong>=<em>&lt;delimiter&gt;</em></dt>
+<dd>
+<p>Change the default delimiter character when using options that accept "application[:microservice]:release" as an argument or parameter.</p>
+</dd>
 <dt class="hdlist1"><strong>-i</strong>, <strong>--interval</strong>=<em>&lt;intervalPeriod&gt;</em></dt>
 <dd>
 <p>Polling interval, for example 5s (5 seconds) or 1m (1 minute).</p>
@@ -98,7 +102,7 @@ See fcli help output</p>
 </dd>
 <dt class="hdlist1"><strong>--progress</strong>=<em>&lt;type&gt;</em></dt>
 <dd>
-<p>Configure progress output. Allowed values: auto, none, simple, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
+<p>Configure progress output. Allowed values: auto, none, simple, stderr, single-line, ansi. Default value: auto. Proper output of single-line and ansi depends on console capabilities.</p>
 </dd>
 <dt class="hdlist1"><strong>-s</strong>, <strong>--any-state</strong>=<em>&lt;states&gt;</em>[,<em>&lt;states&gt;</em>&#8230;&#8203;]</dt>
 <dd>
@@ -196,7 +200,7 @@ See fcli help output</p>
 <div id="footer">
 <div id="footer-text">
 Version <br>
-Last updated 2024-03-05 09:38:33 UTC
+Last updated 2024-05-17 17:00:55 UTC
 </div>
 </div>
 </body>
