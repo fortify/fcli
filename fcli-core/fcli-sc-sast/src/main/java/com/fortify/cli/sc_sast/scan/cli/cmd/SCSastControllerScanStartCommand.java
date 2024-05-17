@@ -110,7 +110,7 @@ public final class SCSastControllerScanStartCommand extends AbstractSCSastContro
                 // passed through --ssc-ci-token, and arbitrary token passed through --ssc-token on the 
                 // login command; we should only reuse a token passed through the --ssc-ci-token login 
                 // option.
-                char[] ciTokenFromSession = getProductHelper().getSessionDescriptor().getPredefinedSscToken();
+                char[] ciTokenFromSession = getUnirestInstanceSupplier().getSessionDescriptor().getPredefinedSscToken();
                 uploadToken = ciTokenFromSession==null ? null : SSCTokenConverter.toApplicationToken(String.valueOf(ciTokenFromSession));
             }
             if ( StringUtils.isBlank(uploadToken) ) { throw new IllegalArgumentException("--ssc-ci-token is required if --publish-to is specified and --ssc-ci-token was not passed to the 'sc-sast session login' command"); }

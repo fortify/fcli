@@ -28,7 +28,7 @@ public class SSCPluginListCommand extends AbstractSSCBaseRequestOutputCommand  {
 
     @Override
     public HttpRequest<?> getBaseRequest(UnirestInstance unirest) {
-        return unirest.get("/api/v1/plugins?orderBy=pluginType,pluginName,pluginVersion&limit=-1");
+        return unirest.get("/api/v1/plugins?orderBy=pluginType,pluginName,pluginVersion&limit=100");
     }
     
     @Override

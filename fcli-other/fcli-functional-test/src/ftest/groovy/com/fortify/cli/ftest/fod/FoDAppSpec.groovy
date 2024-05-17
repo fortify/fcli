@@ -1,6 +1,6 @@
 package com.fortify.cli.ftest.fod;
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.FOD
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.FOD
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
@@ -79,7 +79,7 @@ class FoDAppSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[2].equals("applicationName: \"" + webApp.get().appName + "\"")
+                it[2].equals("applicationName: " + webApp.get().appName)
             }
     }
     
@@ -90,7 +90,7 @@ class FoDAppSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[2].equals("applicationName: \"" + mobileApp.get().appName + "\"")
+                it[2].equals("applicationName: " + mobileApp.get().appName)
             }
     }
     
@@ -101,7 +101,7 @@ class FoDAppSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[2].equals("applicationName: \"" + microservicesApp.get().appName + "\"")
+                it[2].equals("applicationName: " + microservicesApp.get().appName)
             }
     }
     
@@ -155,7 +155,7 @@ class FoDAppSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it[6].equals("businessCriticalityType: \"High\"")
+                it[6].equals("businessCriticalityType: High")
             }
     }
     

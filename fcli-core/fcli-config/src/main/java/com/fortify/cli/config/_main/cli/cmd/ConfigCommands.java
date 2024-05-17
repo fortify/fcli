@@ -15,6 +15,7 @@ package com.fortify.cli.config._main.cli.cmd;
 import com.fortify.cli.common.cli.cmd.AbstractContainerCommand;
 import com.fortify.cli.config.language.cli.cmd.LanguageCommands;
 import com.fortify.cli.config.proxy.cli.cmd.ProxyCommands;
+import com.fortify.cli.config.publickey.cli.cmd.PublicKeyCommands;
 import com.fortify.cli.config.truststore.cli.cmd.TrustStoreCommands;
 
 import picocli.CommandLine.Command;
@@ -27,6 +28,7 @@ import picocli.CommandLine.Command;
                 ConfigClearCommand.class,
                 LanguageCommands.class,
                 ProxyCommands.class,
+                PublicKeyCommands.class,
                 TrustStoreCommands.class
         }
 )

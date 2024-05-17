@@ -1,6 +1,6 @@
 package com.fortify.cli.ftest.fod;
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.FOD
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.FOD
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
@@ -20,6 +20,8 @@ class FoDAccessControlUserSpec extends FcliBaseSpec {
     @Shared @AutoCleanup FoDUserSupplier user = new FoDUserSupplier()
     @Shared @AutoCleanup FoDUserGroupSupplier group = new FoDUserGroupSupplier()
     @Shared @AutoCleanup FoDWebAppSupplier app = new FoDWebAppSupplier()
+    private final String random = System.currentTimeMillis()
+    final String randomEmail = "u${random}@test.test"
     
     def "list"() {
         def args = "fod ac list-users"
@@ -96,12 +98,12 @@ class FoDAccessControlUserSpec extends FcliBaseSpec {
     }
     
     def "updateAddApps"() {
-        def args = "fod ac update-user ${user.get().userName} --add-apps=${app.get().appName} --email test2@test.test"
+        def args = "fod ac update-user ${user.get().userName} --add-apps=${app.get().appName} --email ${randomEmail}"
         when:
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.contains("${user.get().userName}") && it.contains("test2@test.test") }
+                it.any { it.contains("${user.get().userName}") && it.contains(randomEmail) }
             }
     }
     

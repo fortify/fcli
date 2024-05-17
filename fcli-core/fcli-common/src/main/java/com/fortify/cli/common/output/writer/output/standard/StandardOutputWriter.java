@@ -18,6 +18,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +62,8 @@ public class StandardOutputWriter implements IOutputWriter {
     private final CommandSpec commandSpec;
     private final IOutputOptions outputOptions;
     private final IMessageResolver messageResolver;
+    private static IRecordWriter recordCollector;
+    private static boolean suppressOutput;
     
     public StandardOutputWriter(CommandSpec commandSpec, IOutputOptions outputOptions, StandardOutputConfig defaultOutputConfig) {
         // Make sure that we get the CommandSpec for the actual command being invoked,
@@ -70,6 +73,24 @@ public class StandardOutputWriter implements IOutputWriter {
         this.outputConfig = getOutputConfigOrDefault(commandSpec, defaultOutputConfig);
         this.outputFormat = getOutputFormatOrDefault(outputConfig, outputOptions);
         this.messageResolver = new CommandSpecMessageResolver(this.commandSpec);
+    }
+    
+    public static final void collectRecords(Consumer<ObjectNode> consumer, boolean suppressOutput) {
+        final var oldRecordCollector = StandardOutputWriter.recordCollector;
+        final var oldSuppressOutput = StandardOutputWriter.suppressOutput;
+        StandardOutputWriter.suppressOutput = suppressOutput;
+        StandardOutputWriter.recordCollector = new IRecordWriter() {  
+            @Override
+            public void writeRecord(ObjectNode record) {
+                consumer.accept(record);
+            }
+            
+            @Override
+            public void close() {
+                StandardOutputWriter.recordCollector = oldRecordCollector;
+                StandardOutputWriter.suppressOutput = oldSuppressOutput;
+            }
+        };
     }
     
     /**
@@ -168,13 +189,8 @@ public class StandardOutputWriter implements IOutputWriter {
      * @param httpRequest
      * @param nextPageRequestProducer
      */
-    private final void writeRecords(IRecordWriter recordWriter, HttpRequest<?> originalRequest, INextPageRequestProducer nextPageRequestProducer) {
-        var currentRequest = originalRequest;
-        while ( currentRequest!=null ) {
-            HttpResponse<JsonNode> response = currentRequest.asObject(JsonNode.class);
-            writeRecords(recordWriter, response); 
-            currentRequest = nextPageRequestProducer.getNextPageRequest(originalRequest, response);
-        }
+    private final void writeRecords(IRecordWriter recordWriter, HttpRequest<?> initialRequest, INextPageRequestProducer nextPageRequestProducer) {
+        PagingHelper.processPages(initialRequest, nextPageRequestProducer, r->writeRecords(recordWriter, r));
     }
 
     /**
@@ -290,7 +306,8 @@ public class StandardOutputWriter implements IOutputWriter {
      *
      */
     private final class OutputAndVariableRecordWriter implements IRecordWriter {
-        private final OutputRecordWriter ouputRecordWriter = new OutputRecordWriter();
+        private final IRecordWriter outputRecordWriter = createOutputRecordWriter();
+        private final IRecordWriter recordCollector = StandardOutputWriter.recordCollector;
         private final VariableRecordWriter variableRecordWriter = new VariableRecordWriter();
         
         /**
@@ -299,7 +316,8 @@ public class StandardOutputWriter implements IOutputWriter {
          */
         @Override
         public void writeRecord(ObjectNode record) {
-            ouputRecordWriter.writeRecord(record);
+            if ( outputRecordWriter!=null ) {outputRecordWriter.writeRecord(record);}
+            if ( recordCollector!=null ) {recordCollector.writeRecord(record);}
             if ( variableRecordWriter.isEnabled() ) {
                 variableRecordWriter.writeRecord(record);
             }
@@ -311,10 +329,15 @@ public class StandardOutputWriter implements IOutputWriter {
          */
         @Override
         public void close() {
-            ouputRecordWriter.close();
+            if ( outputRecordWriter!=null ) {outputRecordWriter.close();}
+            if ( recordCollector!=null ) {recordCollector.close();}
             if ( variableRecordWriter.isEnabled() ) {
                 variableRecordWriter.close();
             }
+        }
+        
+        private final IRecordWriter createOutputRecordWriter() {
+            return StandardOutputWriter.suppressOutput ? null : new OutputRecordWriter();
         }
     }
     

@@ -17,7 +17,11 @@ import com.formkiq.graalvm.annotations.Reflectable;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastLegacyDescriptor;
 import com.fortify.cli.fod.sast_scan.helper.FoDScanConfigSastDescriptor;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Reflectable @NoArgsConstructor @AllArgsConstructor
 @Data @ToString

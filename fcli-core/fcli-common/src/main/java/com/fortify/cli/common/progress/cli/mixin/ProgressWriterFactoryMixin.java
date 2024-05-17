@@ -28,6 +28,17 @@ public class ProgressWriterFactoryMixin {
     private ProgressWriterType type;
     
     public final IProgressWriterI18n create() {
-        return new ProgressWriterI18n(type, commandHelper.getMessageResolver());
+        return create(this.type);
+    }
+    
+    public final IProgressWriterI18n overrideAutoIfNoConsole(ProgressWriterType overrideType) {
+        var newType = System.console()==null && type==ProgressWriterType.auto
+                ? overrideType
+                : this.type;
+        return create(newType);
+    }
+
+    private IProgressWriterI18n create(ProgressWriterType progressWriterType) {
+        return new ProgressWriterI18n(progressWriterType, commandHelper.getMessageResolver());
     }
 }

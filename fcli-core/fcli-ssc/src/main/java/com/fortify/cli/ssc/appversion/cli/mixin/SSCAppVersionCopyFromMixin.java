@@ -14,9 +14,9 @@ package com.fortify.cli.ssc.appversion.cli.mixin;
 
 import com.fortify.cli.common.util.DisableTest;
 import com.fortify.cli.common.util.DisableTest.TestType;
+import com.fortify.cli.ssc.appversion.helper.SSCAppVersionCopyType;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionDescriptor;
 import com.fortify.cli.ssc.appversion.helper.SSCAppVersionHelper;
-import com.fortify.cli.ssc.appversion.helper.SSCAppVersionCopyType;
 
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

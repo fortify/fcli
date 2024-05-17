@@ -12,6 +12,9 @@
  *******************************************************************************/
 package com.fortify.cli.fod.report.helper;
 
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -20,11 +23,9 @@ import com.fortify.cli.common.json.JsonHelper;
 import com.fortify.cli.common.output.transform.fields.RenameFieldsTransformer;
 import com.fortify.cli.common.util.StringUtils;
 import com.fortify.cli.fod._common.rest.FoDUrls;
+
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
-
-import java.util.Optional;
-import java.util.stream.Stream;
 
 
 public class FoDReportTemplateHelper {

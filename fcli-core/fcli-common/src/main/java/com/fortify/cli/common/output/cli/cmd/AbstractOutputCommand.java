@@ -19,12 +19,12 @@ import com.fortify.cli.common.cli.cmd.AbstractRunnableCommand;
 import com.fortify.cli.common.output.cli.mixin.IOutputHelper;
 import com.fortify.cli.common.output.writer.ISingularSupplier;
 
-public abstract class AbstractOutputCommand extends AbstractRunnableCommand implements Runnable, ISingularSupplier {
+public abstract class AbstractOutputCommand extends AbstractRunnableCommand implements ISingularSupplier, IOutputHelperSupplier {
     private static final List<Class<?>> supportedInterfaces = Arrays.asList(
             IBaseRequestSupplier.class, 
             IJsonNodeSupplier.class);
     @Override
-    public final void run() {
+    public final Integer call() {
         initMixins();
         IOutputHelper outputHelper = getOutputHelper();
         if ( isInstance(IBaseRequestSupplier.class) ) {
@@ -34,6 +34,7 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand impl
         } else {
             throw new IllegalStateException(this.getClass().getName()+" must implement exactly one of "+supportedInterfaces);
         }
+        return 0;
     }
     
     private boolean isInstance(Class<?> clazz) {
@@ -43,5 +44,5 @@ public abstract class AbstractOutputCommand extends AbstractRunnableCommand impl
                 .noneMatch(c->c.isAssignableFrom(this.getClass()));
     }
     
-    protected abstract IOutputHelper getOutputHelper();
+    public abstract IOutputHelper getOutputHelper();
 }

@@ -1,0 +1,162 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-1.0.json
+
+# This template would ideally get the list of new, removed and re-introduced issues
+# based on a given artifact id/scan id/commit# (in scan label)/pr# (in scan label).
+# However, although current implementation works for new and removed issues by matching
+# scan date against issue foundDate/removedDate, it's impossible to identify re-introduced
+# issues due to SSC REST API limitatations. For re-introduced issues, SSC keeps the
+# original foundDate and resets removedDate to null (so neither of these dates match
+# current scan date), and there's no issue reintroducedDate or similar field.
+# As such, for now we provide a separate template that's based on current application 
+# state, rather than trying to identify issues for a particular scan. Based on the
+# '.bak' extension of this file, it won't be included in fcli artifacts. 
+
+author: Fortify
+usage:
+  header: Generate GitHub Pull Request decoration.  
+  description: |
+    This action generates GitHub Pull Request review comments.
+  
+parameters:
+  - name: appversion
+    cliAliases: av
+    description: "Required application version id or <appName>:<versionName>"
+    type: appversion_single
+  - name: filterset
+    cliAliases: fs
+    description: "Filter set name or guid from which to load issue data. Default value: Default filter set for given application version"
+    required: false
+    type: filterset
+  - name: artifact-id
+    description: "Required artifact id for which to generate PR decorations"
+    required: true
+  - name: github-token
+    description: 'Required GitHub Token. Default value: GITHUB_TOKEN environment variable.'
+    required: true
+    defaultValue: ${#env('GITHUB_TOKEN')}
+  - name: github-owner
+    description: 'Required GitHub repository owner. Default value: GITHUB_REPOSITORY_OWNER environment variable.'
+    required: true
+    defaultValue: ${#env('GITHUB_REPOSITORY_OWNER')}
+  - name: github-repo
+    description: 'Required GitHub repository. Default value: Taken from GITHUB_REPOSITORY environment variable.'
+    required: true
+    defaultValue: ${#substringAfter(#env('GITHUB_REPOSITORY'),'/')}
+  - name: pr
+    description: 'Required PR number. Default value: Taken from GITHUB_REF_NAME environment variable.'
+    required: true
+    defaultValue: ${#substringBefore(#env('GITHUB_REF_NAME'),'/')}
+  - name: commit
+    description: 'Required commit hash. Default value: GITHUB_SHA environment variable.'
+    required: true
+    defaultValue: ${#env('GITHUB_SHA')}
+  - name: dryrun
+    description: "Set to true to just output PR decoration JSON; don't actually update any PR"
+    type: boolean
+    required: false
+    defaultValue: false
+    
+addRequestTargets:
+  - name: github
+    baseUrl: https://api.github.com
+    headers:
+      Authorization: Bearer ${parameters['github-token']}
+      'X-GitHub-Api-Version': '2022-11-28'
+    
+defaults:
+  requestTarget: ssc
+    
+steps:
+  - progress: Loading artifact
+  - requests:
+    - if:   ${parameters['artifact-id']!=null}
+      name: artifact
+      uri:  /api/v1/artifacts/${parameters['artifact-id']}?embed=scans
+  - set:
+    - name: scanDates
+      value: ${artifact._embed.scans.![uploadDate]}
+  - progress: 'ScanDates: ${scanDates.toString()}'
+  - progress: Processing issue data
+  - requests:
+    - name: issues
+      uri: /api/v1/projectVersions/${parameters.appversion.id}/issues?limit=200
+      query:
+        showremoved: true
+        filterset: ${parameters.filterset.guid}
+      pagingProgress:
+        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.count} issues
+      forEach:
+        name: issue
+        if: ${scanDates.contains(issue.removedDate) || scanDates.contains(issue.foundDate)}
+        embed:
+          - name: details
+            uri: /api/v1/issueDetails/${issue.id}
+        do:
+          - append:
+            - if: ${scanDates.contains(issue.removedDate)}
+              name: removedIssues
+              valueTemplate: removedIssues
+            - if: ${scanDates.contains(issue.foundDate) && issue.engineType=='SCA'}
+              name: newStaticIssues
+              valueTemplate: newStaticIssues
+            - if: ${scanDates.contains(issue.foundDate) && issue.engineType!='SCA'}
+              name: newOtherIssues
+              valueTemplate: newOtherIssues
+  - progress: Generating GitHub request
+  - set:
+      - name: reviewBody
+        valueTemplate: reviewBody
+      - name: reviewRequestBody
+        valueTemplate: reviewRequestBody
+  - if: ${parameters.dryrun}
+    write:
+      - to: stdout
+        value: ${reviewRequestBody}
+  - if: ${!parameters.dryrun}
+    requests:
+      - name:   GitHub PR review
+        method: POST
+        uri:    /repos/${parameters['github-owner']}/${parameters['github-repo']}/pulls/${parameters['pr']}/reviews
+        target: github
+        body:   ${reviewRequestBody}       
+
+valueTemplates:
+  - name: reviewBody
+    contents: |
+      ${newStaticIssues==null && newOtherIssues==null 
+        ? "Fortify didn't detect any new potential vulnerabilities" 
+        : "Fortify detected potential vulnerabilities"}
+      ${newStaticIssues==null
+        ? ''
+        : '### New Issues (SAST)\n\nSee file comments below.'}
+      ${newOtherIssues==null 
+        ? '' 
+        : ('### New Issues (non-SAST)\n\n* '+#join('\n* ',newOtherIssues))}
+      ${removedIssues==null 
+        ? '' 
+        : ('### Removed Issues\n\n* '+#join('\n* ',removedIssues))}
+  - name: reviewRequestBody
+    contents:
+      owner: ${parameters['github-owner']}
+      repo: ${parameters['github-repo']}
+      pull_number: ${parameters['pr']}
+      commit_id: ${parameters['commit']}
+      body: ${reviewBody}
+      event: COMMENT
+      comments: ${newStaticIssues}
+  - name: newStaticIssues
+    contents:
+      path: ${issue.fullFileName}
+      line: ${issue.lineNumber==0?1:issue.lineNumber}
+      body: |
+        <p><b>Security Scanning</b> / Fortify SAST</p>
+        <h3>${issue.details.friority} - ${issue.details.issueName} </h3>
+        <p>${issue.details.brief}</p>
+        <br>
+        <p><a href=${#ssc.issueBrowserUrl(issue,parameters.filterset)} target="_blank" rel="noopener noreferrer">More detailed information</a></p>
+  - name: newOtherIssues
+    contents: >
+      [${issue.fullFileName}${issue.lineNumber==null?'':':'+issue.lineNumber} - ${issue.issueName}](${#ssc.issueBrowserUrl(issue,parameters.filterset)})
+  - name: removedIssues
+    contents: >
+      [${issue.fullFileName}${issue.lineNumber==null?'':':'+issue.lineNumber} - ${issue.issueName}](${#ssc.issueBrowserUrl(issue,parameters.filterset)})

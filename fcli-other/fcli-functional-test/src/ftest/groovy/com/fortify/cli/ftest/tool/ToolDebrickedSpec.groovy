@@ -31,7 +31,7 @@ class ToolDebrickedSpec extends FcliBaseSpec {
     @Shared Path binScript = Path.of(baseDir).resolve("debricked-cli/${version}/bin/debricked.exe");
     
     def "install"() {
-        def args = "tool debricked-cli install -y -v=${version} --progress=none -b ${baseDir} --platform windows/x64"
+        def args = "tool debricked-cli install -y -v=${version} -b ${baseDir} --platform windows/x64 --progress none"
         when:
             def result = Fcli.run(args, {it.expectZeroExitCode()})
         then:
@@ -57,7 +57,7 @@ class ToolDebrickedSpec extends FcliBaseSpec {
     }
     
     def "uninstall"() {
-        def args = "tool debricked-cli uninstall -y --progress=none -v=${version}"
+        def args = "tool debricked-cli uninstall -y -v=${version} --progress none"
         when:
             def result = Fcli.run(args)
         then:

@@ -1,6 +1,6 @@
 package com.fortify.cli.ftest.fod;
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.FOD
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.FOD
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
@@ -50,7 +50,7 @@ class FoDAccessControlRoleSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[9].equals("roleName: \"Developer\"")
+                it[9].equals("roleName: Developer")
             }
     }
     

@@ -9,25 +9,25 @@ javaPlatform {
 }
 
 dependencies {
-	api platform('com.fasterxml.jackson:jackson-bom:2.15.2')
-	api platform('org.springframework:spring-framework-bom:6.0.11')
+	api platform('com.fasterxml.jackson:jackson-bom:2.17.0')
+	api platform('org.springframework:spring-framework-bom:6.1.5')
 		
 	constraints {
 		// Picocli
-		api("info.picocli:picocli:4.7.4")
-		api("info.picocli:picocli-codegen:4.7.4")
+		api("info.picocli:picocli:4.7.5")
+		api("info.picocli:picocli-codegen:4.7.5")
 		
 		// Annotation-based reflect-config.json generation
 		api('com.formkiq:graalvm-annotations:1.2.0')
-        api('com.formkiq:graalvm-annotations-processor:1.4.1')
+        api('com.formkiq:graalvm-annotations-processor:1.4.2')
         
         // ANSI support
-        api("org.fusesource.jansi:jansi:2.4.0")
+        api("org.fusesource.jansi:jansi:2.4.1")
 		
 		// Logging
-		api('org.slf4j:slf4j-api:2.0.7')
-		api('org.slf4j:jcl-over-slf4j:2.0.7')
-        api("ch.qos.logback:logback-classic:1.4.8")
+		api('org.slf4j:slf4j-api:2.0.12')
+		api('org.slf4j:jcl-over-slf4j:2.0.12')
+        api("ch.qos.logback:logback-classic:1.5.3")
 		
 		// REST client
         api('com.konghq:unirest-java:3.14.5')
@@ -39,7 +39,7 @@ dependencies {
         //api('org.springframework.integration:spring-integration-core:6.1.1')
 		
 		// Output formatting
-        api('hu.webarticum:tree-printer:3.1.0')
+        api('hu.webarticum:tree-printer:3.2.0')
         api('com.github.freva:ascii-table:1.8.0')
         
 		// Remove annotation processor warning.
@@ -49,11 +49,14 @@ dependencies {
         api('org.jasypt:jasypt:1.9.3:lite')
         
         // Test dependencies
-        api 'org.junit.jupiter:junit-jupiter-api:5.9.3'
-        api 'org.junit.jupiter:junit-jupiter-params:5.9.3'
-    	api 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
+        api 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+        api 'org.junit.jupiter:junit-jupiter-params:5.10.2'
+    	api 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
 
-        //required for unpacking tar.gz (debricked cli)
-        api('org.apache.commons:commons-compress:1.25.0')
+        // Required for unpacking tar.gz (debricked cli)
+        api('org.apache.commons:commons-compress:1.26.1')
+        
+        // Used for processing HTML text returned by SSC/FoD endpoints like issue summaries/details/...
+        api('org.jsoup:jsoup:1.17.2')
 	}
 }

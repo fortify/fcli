@@ -1,10 +1,24 @@
 = Fortify CLI (fcli) Developer Information
 
-The following sections provide information that may be useful for developers of this utility.
+The following sections provide information that may be useful for developers of this utility. Note that this documentation is not always properly updated, so some details may be out of date and no longer apply. However, general concepts won't change very often, so even with some outdated details, it's still useful to review this documentation if you're contributing to fcli. If you notice anything that's incorrect or outdated, please let us know or update yourself.
+
+== Branches
+
+The `develop` branch is our primary branch for active fcli development. In general, new features/fixes/... should be developed in a dedicated branch or fcli fork, and eventually merged into the `develop` branch by raising a Pull Request. 
+
+Once we are ready for releasing a new fcli version, the `develop` branch will be merged into the `main` branch, which, based on conventional commit messages (see next section) will result in a release PR to be automatically raised; merging this PR will automatically build the fcli release version and publish the various release artifacts. Once release, the `main` branch needs to be merged back into the `develop` branch to apply changelog and version updates. 
+
+In some cases, the process above may require a rewrite of the commit history on the `develop` branch, as we may have a need to rewrite some commit messages to generate proper release notes. So, after an fcli release, you should always update/replace any branches/forks/local copies to apply the new commit history to avoid issues when merging new changes.
+
+In general, the `main` branch shouldn't be touched (other than as described above), except if we need to apply some (relatively urgent) bug fix at a time when the `develop` branch is not yet ready for release. In general, this is only applicable if we've already merged some features to the `develop` branch that still need more work before final release.
+
+Apart from the branches listed above, there's also a `gh-pages` branch that is used to publish documentation to https://fortify.github.io/fcli. Most of the files in this branch are either static or automatically generated during fcli builds, so other than changing documentation structure or performing cleanup (like removing documentation for outdated fcli versions), in general this branch shouldn't be touched.
 
 == Conventional Commits & Versioning
 
-Versioning is handled automatically by https://github.com/google-github-actions/release-please-action[release-please-action] based on https://www.conventionalcommits.org/[Conventional Commits]. Every commit to the `+main+` branch should follow the Conventional Commits convention. Following are some examples; these can be combined in a single commit message (separated by empty lines), or you can have commit messages describing just a single fix or feature.
+=== `main` & `develop` branches
+
+Versioning is handled automatically by https://github.com/google-github-actions/release-please-action[release-please-action] based on https://www.conventionalcommits.org/[Conventional Commits]. Every commit to the `+main+` or `+develop+` branch should follow the Conventional Commits convention. Following are some examples; these can be combined in a single commit message (separated by empty lines), or you can have commit messages describing just a single fix or feature.
 
 ....
 chore: Won't show up in changelog
@@ -23,9 +37,16 @@ feat: Some feature
   BREAKING-CHANGE: No longer supports xyz
 ....
 
-See the output of `+git log+` to view some sample commit messages.
+See the output of `+git log+` to view some sample commit messages. Note that such commit messages should only describe changes since the last fcli release, not changes within the current development release. For example, suppose you've developed a new feature that hasn't been released yet, and then implement some fix for this unreleased feature, you shouldn't use a `fix:` commit message but instead use a `chore:` or similar message. Otherwise, the changelog would contain entries for both the new feature and fixes to that feature, which doesn't make sense.
 
 `+release-please-action+` invoked from the GitHub CI workflow generates pull requests containing updated `+CHANGELOG.md+` and `+version.txt+` files based on these commit messages. Merging the pull request will result in a new release version being published by creating a GitHub release describing the changes.
+
+=== Feature & other branches
+
+In general, you can use the same commit messages as described above. However, especially when implementing a larger feature that may undergo some changes before being released, it maybe be better to use `proposed-feat:` instead, to avoid having to fix commit messages if the initial feature description no longer matches the feature that's eventually being released.
+
+As an example, we've had several occasions where we initially wrote a commit message like `feat: Add 'fcli ssc new-entity' commands to ...`, but before release decided to rename this entity or combine with another entity, causing the previous commit message to be outdated as instead we now should have a commit message `feat: Add 'fcli ssc renamed-entity' commands to ...`.
+
 
 == Technologies & Frameworks
 
@@ -46,7 +67,7 @@ This project uses the following frameworks that may require some special setup i
 * Lombok: Please see https://projectlombok.org/setup/overview for more information on how to add Lombok support to your IDE
 * Annotation processors: This project requires various annotation processors to be run, like the picocli annotation processor. Please see your IDE documentation on how to enable annotation processing
 
-=== Incremental Compilation
+=== Incremental Compilation (Java)
 
 Incremental compilation (for example in IDE or when doing a `+gradle build+` without `+clean+`) may leave behind old AOT artifacts causing exceptions when trying to run `+fcli+`. This is especially the case when renaming or moving classes, which may result in exceptions like the below:
 
@@ -58,6 +79,10 @@ Caused by: java.lang.NoClassDefFoundError: com/fortify/cli/rest/unirest/Abstract
 ....
 
 In this example, the AbstractUnirestRunner class was moved to a different package, but the now obsolete AOT-generated classes were still present. So, if at any time you see unexpected exceptions, please try to do a full clean/rebuild and run `+fcli+` again.
+
+=== Incremental Compilation (Resources)
+
+Incremental compilation may sometimes result in incorrect resource file handling. For example, action zip files are being updated with updated action YAML files, rather than being fully replaced. This can sometimes cause incorrect behavior, like removed actions still being available, or updated actions not being properly replaced.
 
 === Reflection
 
@@ -104,7 +129,6 @@ Most or all of the `+*.md+` and `LICENSE.txt` files located in the repository ro
 User documentation is generated automatically by the `+buildRoot/app/fcli-doc+` project. Part of the documentation consists of manual pages in various formats, generated using picocli. Other user documentation is generated from the `+src/docs/asciidoc+` directory in the before-mentioned project. This consists of static AsciiDoc files, used to generate the top-level contents of the fcli GitHub Pages site, and 'versioned' AsciiDoc files that describe the functionality provided by a particular fcli version.
 
 Documentation can be generated using the Gradle `distDocs` task, ending up in the `dist` directory of the aforementioned project. The global `dist` task includes the `distDocs` task.
-
 
 The GitHub Actions workflow defined in `+.github/workflows/ci.yml+` is responsible for publishing the documentation:
 
@@ -298,3 +322,29 @@ Ideally, all commands, options and positional parameters should have a proper de
 Where applicable, option and positional parameter descriptions should include references to other related fcli commands, in particular when these related commands are in a separate command tree. For example, available attribute names and values that can be specified on the `fcli ssc appversion-attribute set` command can be found through the `fcli ssc attribute-definition *` commands. Being in a separate command tree, this may not be obvious to users and as such should be documented on the `fcli ssc appversion-attribute set` command.
 
 Comparing this to the 'application name or id' to be passed to the `fcli ssc app get` command; available application id's can be found through the `fcli ssc app list` command under the same `app` parent command, so this doesn't need to be documented as it should be obvious to users.
+
+== Fcli action-related development
+
+=== Implementing fcli built-in actions
+
+We have fairly extensive user documentation regarding fcli action development, including an action schema for IDE code assistance, and many existing actions that may be used as an example. Virtually all of this documentation also applies to internal actions, except for one exception: built-in actions should always use the link:https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json[dev schema].
+
+With every GitHub workflow run (for any branch), the dev schema will be automatically updated to reflect any changes in the action model (syntax), allowing IDE code assistance to take these changes into account (you may need to restart your IDE to apply any schema changes). This allows for utilizing any new/updated action syntax while developing built-in actions.
+
+Upon fcli release, the dev schema referenced from built-in actions will be automatically updated to reflect current action schema release version.
+
+=== Action schema
+
+Fcli action schemas are versioned independently from fcli; as not every fcli release will have schema changes, it doesn't make much sense to republish an already existing schema with a new (fcli) version number. Having schema's versioned independently allows for easily identifying when there have been any schema changes, and avoids users having to update the schema version used by their custom actions upon every fcli release.
+
+The schema is automatically generated from the `...action.model.Action` class structure located in `fcli-common`, and current action schema version is defined in the `fcliActionSchemaVersion` property in `gradle.properties` in the fcli root project. Upon each fcli release, the configured schema version will be published if it hasn't been published yet upon earlier fcli releases.
+
+If any changes are made to the action model source code, the `fcliActionSchemaVersion` property must be updated accordingly, taking into account proper major, minor, or patch version increase based on the type of changes; see comments in `gradle.properties` for details. If a given `fcliActionSchemaVersion` has been previously released, and any changes in action model are detected, the Gradle `generateActionSchema` task will fail as we won't allow updating any previously released schema.
+
+If the currently configured `fcliActionSchemaVersion` hasn't been published yet, GitHub workflows will produce a warning stating that a new schema version will be released upon the next fcli release. This is to try to avoid situations like the following:
+
+1. Someone updates a property description and increases `fcliActionSchemaVersion` to the next patch release to avoid the `generateActionSchema` task from failing.
+2. Later on, someone makes a structural change to the action model, but forgets to update the `fcliActionSchemaVersion` property.
+3. Upon fcli release, we now release a schema patch version, whereas it should have been a minor or major version change.
+
+Any suggestions on better ways to avoid such situations are welcome.

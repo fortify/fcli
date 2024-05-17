@@ -1,1 +1,12 @@
+task zipResources_actions(type: Zip) {
+    destinationDirectory = file("${buildDir}/generated-zip-resources/com/fortify/cli/ssc")
+    archiveFileName = "actions.zip"
+    from("${projectDir}/src/main/resources/com/fortify/cli/ssc/actions/zip") {
+        // TODO We should also sign file; how do we invoke a sign operation from Gradle?
+        filter(line->project.version.startsWith('0.')
+            ? line 
+            : line.replaceAll("https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json", "https://fortify.github.io/fcli/schemas/action/fcli-action-schema-${fcliActionSchemaVersion}.json"))
+    }
+    include '*.yaml'
+}
 apply from: "${sharedGradleScriptsDir}/fcli-module.gradle"

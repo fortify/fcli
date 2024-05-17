@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.util.Set;
 
 import com.fortify.cli.common.util.FcliDataHelper;
-import com.fortify.cli.common.util.SemVerHelper;
+import com.fortify.cli.common.util.SemVer;
 import com.fortify.cli.tool.definitions.helper.ToolDefinitionVersionDescriptor;
 
 public final class ToolInstallationHelper {
@@ -42,10 +42,11 @@ public final class ToolInstallationHelper {
      */
     public static final boolean isCandidateForUninstall(String toolName, Set<String> versionsToUninstall, ToolDefinitionVersionDescriptor versionDescriptor) {
         var version = versionDescriptor.getVersion();
+        var semver = new SemVer(version);
         return (versionsToUninstall.contains("all") 
                 || containsCandidateForUninstall(versionsToUninstall, version)
-                || containsCandidateForUninstall(versionsToUninstall, SemVerHelper.getMajor(version).orElse("N/A"))
-                || containsCandidateForUninstall(versionsToUninstall, SemVerHelper.getMajorMinor(version).orElse("N/A")))
+                || containsCandidateForUninstall(versionsToUninstall, semver.getMajor().orElse("N/A"))
+                || containsCandidateForUninstall(versionsToUninstall, semver.getMajorMinor().orElse("N/A")))
                && ToolInstallationDescriptor.load(toolName, versionDescriptor)!=null; 
     }
     

@@ -38,14 +38,16 @@ public class JsonNodeHolder implements IJsonNodeHolder {
     
     @Override @JsonIgnore
     public ObjectNode asObjectNode() {
-        if ( !(jsonNode instanceof ObjectNode) ) { throw new IllegalStateException("JsonNode is not an instance of ObjectNode"); }
-        return (ObjectNode)jsonNode;
+        var node = asJsonNode();
+        if ( !(node instanceof ObjectNode) ) { throw new IllegalStateException("JsonNode is not an instance of ObjectNode"); }
+        return (ObjectNode)node;
     }
     
     @Override @JsonIgnore
     public ArrayNode asArrayNode() {
-        if ( !(jsonNode instanceof ArrayNode) ) { throw new IllegalStateException("JsonNode is not an instance of ArrayNode"); }
-        return (ArrayNode)jsonNode;
+        var node = asJsonNode();
+        if ( !(node instanceof ArrayNode) ) { throw new IllegalStateException("JsonNode is not an instance of ArrayNode"); }
+        return (ArrayNode)node;
     }
     
     

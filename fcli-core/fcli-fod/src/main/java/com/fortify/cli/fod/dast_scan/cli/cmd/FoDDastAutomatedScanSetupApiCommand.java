@@ -12,24 +12,24 @@
  */
 package com.fortify.cli.fod.dast_scan.cli.cmd;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 import com.fortify.cli.common.cli.util.CommandGroup;
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanSetupCommand;
 import com.fortify.cli.fod._common.scan.helper.FoDScanAssessmentTypeDescriptor;
 import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastAutomatedSetupBaseRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
+
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 
 @Command(name = FoDOutputHelperMixins.SetupApi.CMD_NAME) @CommandGroup("*-scan-setup")
 public class FoDDastAutomatedScanSetupApiCommand extends AbstractFoDScanSetupCommand {

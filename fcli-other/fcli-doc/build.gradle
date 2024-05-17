@@ -2,8 +2,11 @@ apply plugin: 'java'
 apply plugin: 'org.asciidoctor.jvm.convert'
 
 dependencies {
-	runtimeOnly project("${fcliAppRef}")
+    implementation project("${fcliCommonRef}")
+	implementation project("${fcliAppRef}")
 	runtimeOnly 'info.picocli:picocli-codegen'
+    implementation 'com.github.victools:jsonschema-generator:4.35.0'
+    implementation 'com.github.victools:jsonschema-module-jackson:4.35.0'
 }
 
 ext {
@@ -17,7 +20,17 @@ ext {
 	htmlAsciiDocDir           = "${docsBuildDir}/html/asciidoc"
 	htmlOutputDir             = "${docsBuildDir}/html/output"
 	ghPagesStaticOutputDir    = "${docsBuildDir}/gh-pages/static/output"
+    schemaOutputDir           = "${ghPagesStaticOutputDir}/schemas"
+    actionSchemaOutputDir     = "${schemaOutputDir}/action"
 	ghPagesVersionedOutputDir = "${docsBuildDir}/gh-pages/versioned/output"
+}
+
+task generateActionSchema(type: JavaExec) {
+    dependsOn('build')
+    classpath = sourceSets.main.runtimeClasspath
+    main 'com.fortify.cli.common.action.schema.generator.GenerateActionSchema'
+    // Pass whether this is an (fcli) development release, schema version and output dir
+    args project.version.startsWith("0."), fcliActionSchemaVersion, actionSchemaOutputDir
 }
 
 task generateManpageAsciiDoc(type: JavaExec) {
@@ -30,7 +43,6 @@ task generateManpageAsciiDoc(type: JavaExec) {
 
 task generateManpageOutput(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
 	dependsOn(generateManpageAsciiDoc)
-	inProcess = JAVA_EXEC
 	forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
@@ -57,8 +69,7 @@ task prepareAsciiDocForVersionedHtml(type: Copy) {
 // Generate HTML documentation from AsciiDoc prepared by prepareAsciiDocForVersionedHtml
 task asciiDoctorVersionedHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
     dependsOn(prepareAsciiDocForVersionedHtml)
-    inProcess = JAVA_EXEC
-	forkOptions {
+    forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
     sourceDir = file("${htmlAsciiDocDir}")
@@ -68,12 +79,14 @@ task asciiDoctorVersionedHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) 
         backends = ['html5']
     }
     attributes = [
-            'toc'         : 'left',
-            'sectanchors' : 'true',
-            'docinfo'     : 'shared',
-            'jekyll'      : false,
-            'bannertitle' : 'FCLI: The Universal Fortify CLI',
-            'docversion'  : "${project.version}"
+            'toc'                 : 'left',
+            'sectanchors'         : 'true',
+            'docinfo'             : 'shared',
+            'jekyll'              : false,
+            'bannertitle'         : 'FCLI: The Universal Fortify CLI',
+            'docversion'          : "${project.version}",
+            'actionSchemaVersion' : "${fcliActionSchemaVersion}",
+            'actionSchemaUrl'     : "${fcliActionSchemaUrl}"
     ]
     options = [
     	'template_dirs': [new File("${asciiDocTemplatesSrcDir}").absolutePath]
@@ -84,7 +97,6 @@ task asciiDoctorVersionedHtml(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) 
 // to be deployed to a version-specific directory on the fcli gh-pages site
 task asciiDoctorVersionedJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
 	dependsOn(prepareAsciiDocForVersionedHtml)
-	inProcess = JAVA_EXEC
 	forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
@@ -95,13 +107,15 @@ task asciiDoctorVersionedJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask
         backends = ['html5']
     }
     attributes = [
-            'toc'         : 'left',
-            'sectanchors' : 'true',
-            'docinfo'     : 'shared',
-            'jekyll'      : true,
-            'stylesheet'  : false,
-            'bannertitle' : 'FCLI: The Universal Fortify CLI',
-            'docversion'  : "${project.version}"
+            'toc'                 : 'left',
+            'sectanchors'         : 'true',
+            'docinfo'             : 'shared',
+            'jekyll'              : true,
+            'stylesheet'          : false,
+            'bannertitle'         : 'FCLI: The Universal Fortify CLI',
+            'docversion'          : "${project.version}",
+            'actionSchemaVersion' : "${fcliActionSchemaVersion}",
+            'actionSchemaUrl'     : "${fcliActionSchemaUrl}"
     ]
     options = [
     	'template_dirs': [new File("${asciiDocTemplatesSrcDir}").absolutePath]
@@ -111,7 +125,6 @@ task asciiDoctorVersionedJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask
 // Generate Jekyll HTML documentation from AsciiDoc files in ${staticAsciiDocSrcDir}
 // to be deployed to the root directory on the fcli gh-pages site
 task asciiDoctorStaticJekyll(type: org.asciidoctor.gradle.jvm.AsciidoctorTask) {
-	inProcess = JAVA_EXEC
 	forkOptions {
         jvmArgs("--add-opens","java.base/sun.nio.ch=ALL-UNNAMED","--add-opens","java.base/java.io=ALL-UNNAMED")
     }
@@ -162,7 +175,7 @@ task distDocsVersionedJekyll(type: Zip) {
 
 // Zip the output of the asciiDoctorStaticJekyl task into ${releaseAssetsDir}
 task distDocsStaticJekyll(type: Zip) {
-    dependsOn 'asciiDoctorStaticJekyll'
+    dependsOn 'asciiDoctorStaticJekyll', 'generateActionSchema'
     archiveFileName = "docs-gh-pages.zip"
     destinationDirectory = file("$distDir")
     from layout.buildDirectory.dir("${ghPagesStaticOutputDir}")

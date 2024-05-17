@@ -20,14 +20,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 
-import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastLegacyHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fortify.cli.common.output.cli.mixin.OutputHelperMixins;
 import com.fortify.cli.common.progress.cli.mixin.ProgressWriterFactoryMixin;
 import com.fortify.cli.common.util.FcliBuildPropertiesHelper;
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.scan.cli.cmd.AbstractFoDScanStartCommand;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDEntitlementFrequencyTypeMixins;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDInProgressScanActionTypeMixins;
@@ -38,6 +37,7 @@ import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastLegacyHelper;
 import com.fortify.cli.fod._common.scan.helper.dast.FoDScanDastLegacyStartRequest;
 import com.fortify.cli.fod._common.util.FoDEnums;
 import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastLegacyDescriptor;
+import com.fortify.cli.fod.dast_scan.helper.FoDScanConfigDastLegacyHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeDescriptor;
 import com.fortify.cli.fod.release.helper.FoDReleaseAssessmentTypeHelper;
 import com.fortify.cli.fod.release.helper.FoDReleaseDescriptor;

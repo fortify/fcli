@@ -13,25 +13,30 @@
 
 package com.fortify.cli.fod._common.scan.cli.cmd;
 
-import java.util.Set;
-
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
+import com.fortify.cli.common.output.transform.IRecordTransformer;
 import com.fortify.cli.common.rest.cli.cmd.AbstractWaitForCommand;
 import com.fortify.cli.common.rest.wait.WaitHelper.WaitHelperBuilder;
-import com.fortify.cli.fod._common.output.mixin.FoDProductHelperStandardMixin;
+import com.fortify.cli.fod._common.cli.mixin.FoDDelimiterMixin;
 import com.fortify.cli.fod._common.scan.cli.mixin.FoDScanResolverMixin;
+import com.fortify.cli.fod._common.scan.helper.FoDScanHelper;
 import com.fortify.cli.fod._common.scan.helper.FoDScanStatus;
 import com.fortify.cli.fod._common.scan.helper.FoDScanStatus.FoDScanStatusIterable;
 import com.fortify.cli.fod._common.scan.helper.FoDScanType;
-
+import com.fortify.cli.fod._common.session.cli.mixin.FoDUnirestInstanceSupplierMixin;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-@CommandGroup("*-scan")
-public abstract class AbstractFoDScanWaitForCommand extends AbstractWaitForCommand {
-    @Getter @Mixin FoDProductHelperStandardMixin productHelper;
+import java.util.Arrays;
+import java.util.Set;
+
+@CommandGroup("*-scan-wait-for")
+public abstract class AbstractFoDScanWaitForCommand extends AbstractWaitForCommand implements IRecordTransformer {
+    @Getter @Mixin private FoDUnirestInstanceSupplierMixin unirestInstanceSupplier;
+    @Mixin private FoDDelimiterMixin delimiterMixin; // Is automatically injected in resolver mixins
     @Mixin private FoDScanResolverMixin.PositionalParameterMulti scansResolver;
     @Option(names={"-s", "--any-state"}, required=true, split=",", defaultValue="Completed", completionCandidates = FoDScanStatusIterable.class)
     private Set<String> states;
@@ -40,6 +45,7 @@ public abstract class AbstractFoDScanWaitForCommand extends AbstractWaitForComma
     protected final WaitHelperBuilder configure(UnirestInstance unirest, WaitHelperBuilder builder) {
         return builder
                 .recordsSupplier(scansResolver::getScanDescriptorJsonNodes)
+                .recordTransformer(this::transformRecord)
                 .currentStateProperty("analysisStatusType")
                 .knownStates(FoDScanStatus.getKnownStateNames())
                 .failureStates(FoDScanStatus.getFailureStateNames())
@@ -48,5 +54,10 @@ public abstract class AbstractFoDScanWaitForCommand extends AbstractWaitForComma
     
     // TODO Verify that all given scan id's are of given scan type
     protected abstract FoDScanType getScanType();
+
+    @Override
+    public JsonNode transformRecord(JsonNode record) {
+        return FoDScanHelper.renameFields(record, getScanType());
+    }
 
 }

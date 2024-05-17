@@ -75,7 +75,12 @@ public class OutputHelperMixins {
         @Getter @Mixin private OutputWriterWithQueryFactoryMixin outputWriterFactory;
         @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.details();
     }
-
+    
+    public static class Check extends Other {
+        public static final String CMD_NAME = "check";
+        @Getter @Mixin private StandardOutputWriterFactoryMixin outputWriterFactory;
+        @Getter private StandardOutputConfig basicOutputConfig = StandardOutputConfig.table_plain();
+    }
 
     public static class Add extends TableNoQuery {
         public static final String CMD_NAME = "add";

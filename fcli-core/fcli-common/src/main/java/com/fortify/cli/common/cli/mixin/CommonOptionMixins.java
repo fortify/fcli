@@ -13,11 +13,20 @@
 package com.fortify.cli.common.cli.mixin;
 
 import java.io.File;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.function.Function;
+
+import org.apache.commons.io.IOUtils;
 
 import com.fortify.cli.common.util.PicocliSpecHelper;
 import com.fortify.cli.common.util.StringUtils;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -54,7 +63,7 @@ public class CommonOptionMixins {
                     if ( response.equalsIgnoreCase(expectedResponse) ) {
                         return;
                     } else {
-                        throw new IllegalStateException("Aborting: operation aborted by user");
+                        throw new AbortedByUserException("Aborting: operation aborted by user");
                     }
                 }
             }
@@ -76,6 +85,61 @@ public class CommonOptionMixins {
                 prompt = spec.optionsMap().get("-y").description()[0].replaceAll("[. ]+$", "")+"?";
             }
             return prompt;
+        }
+        
+        public static final class AbortedByUserException extends IllegalStateException {
+            private static final long serialVersionUID = 1L;
+            public AbortedByUserException(String msg) { super(msg); }
+        }
+    }
+    
+    public static abstract class AbstractTextResolverMixin {
+        public abstract String getTextSource();
+        
+        @RequiredArgsConstructor
+        private static enum TextSources {
+            file(TextSources::resolveFile), 
+            url(TextSources::resolveUrl), 
+            string(TextSources::resolveString), 
+            env(TextSources::resolveEnv);
+            
+            private final Function<String, String> resolver;
+            
+            public static final String resolve(String source) {
+                if ( source==null ) { return null; }
+                for ( var type : values() ) {
+                    var prefix = type.name()+":";
+                    if ( source.startsWith(prefix) ) {
+                        return type.resolver.apply(source.replaceFirst(prefix, ""));
+                    }
+                }
+                return resolveFile(source);
+            }
+            
+            @SneakyThrows
+            private static final String resolveFile(String file) {
+                // As '~' will not be resolved by the shell due to the 'file:'
+                // prefix, we resolve this manually to user home directory.
+                file = file.replaceFirst("^~", System.getProperty("user.home"));
+                return Files.readString(Path.of(file));
+            }
+            
+            @SneakyThrows
+            private static final String resolveUrl(String url) {
+                return IOUtils.toString(new URL(url), StandardCharsets.US_ASCII);
+            }
+            
+            private static final String resolveString(String string) {
+                return string;
+            }
+            
+            private static final String resolveEnv(String envName) {
+                return System.getenv(envName);
+            }
+        }
+        
+        public final String getText() {
+            return TextSources.resolve(getTextSource());
         }
     }
 }

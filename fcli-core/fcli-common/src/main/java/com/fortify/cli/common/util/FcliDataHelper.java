@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fortify.cli.common.crypto.helper.EncryptionHelper;
 import com.fortify.cli.common.json.JsonHelper;
 
 public class FcliDataHelper {

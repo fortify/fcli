@@ -1,6 +1,6 @@
 package com.fortify.cli.ftest.ssc;
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.Fcli.UnexpectedFcliResultException
@@ -45,8 +45,8 @@ class SSCAppVersionSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it[4].equals("  name: \"" + versionSupplier.version.appName + "\"");
-                it[9].equals("name: \"" + versionSupplier.version.versionName + "\"");
+                it[4].equals("  name: " + versionSupplier.version.appName);
+                it[9].equals("name: " + versionSupplier.version.versionName);
             }
     }
     

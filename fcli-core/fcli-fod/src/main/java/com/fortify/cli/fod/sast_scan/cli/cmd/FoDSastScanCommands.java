@@ -32,6 +32,6 @@ import picocli.CommandLine;
                 FoDSastScanWaitForCommand.class,
         }
 )
-@DefaultVariablePropertyName("scanId")
+@DefaultVariablePropertyName("releaseAndScanId")
 public class FoDSastScanCommands extends AbstractContainerCommand {
 }

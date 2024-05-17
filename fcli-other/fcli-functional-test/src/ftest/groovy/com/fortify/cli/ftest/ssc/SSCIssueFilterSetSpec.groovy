@@ -1,11 +1,12 @@
 package com.fortify.cli.ftest.ssc;
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.Fcli.UnexpectedFcliResultException
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
+import com.fortify.cli.ftest._common.spec.Global
 import com.fortify.cli.ftest._common.spec.Prefix
 import com.fortify.cli.ftest.ssc._common.SSCAppVersionSupplier
 
@@ -15,7 +16,7 @@ import spock.lang.Stepwise
 
 @Prefix("ssc.appversion-filterset") @FcliSession(SSC) @Stepwise
 class SSCIssueFilterSetSpec extends FcliBaseSpec {
-    @Shared @AutoCleanup SSCAppVersionSupplier versionSupplier = new SSCAppVersionSupplier()
+    @Global(SSCAppVersionSupplier.Empty.class) SSCAppVersionSupplier versionSupplier;
     
     def "list"() {
         def args = "ssc issue list-filtersets --appversion " + versionSupplier.version.appName + ":" + versionSupplier.version.versionName + " --store filtersets"
@@ -36,7 +37,7 @@ class SSCIssueFilterSetSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[2].equals("title: \"Security Auditor View\"")
+                it[2].equals("title: Security Auditor View")
             }
     }
     
@@ -47,7 +48,7 @@ class SSCIssueFilterSetSpec extends FcliBaseSpec {
         then:
             verifyAll(result.stdout) {
                 size()>2
-                it[2].equals("title: \"Security Auditor View\"")
+                it[2].equals("title: Security Auditor View")
             }
     }
 }

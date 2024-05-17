@@ -12,12 +12,12 @@
  *******************************************************************************/
 package com.fortify.cli.fod._common.session.cli.mixin;
 
-import java.net.URI;
 import java.util.Optional;
 
 import com.fortify.cli.common.rest.cli.mixin.UrlConfigOptions;
 import com.fortify.cli.common.session.cli.mixin.UserCredentialOptions;
 import com.fortify.cli.common.util.StringUtils;
+import com.fortify.cli.fod._common.rest.helper.FoDProductHelper;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDClientCredentials;
 import com.fortify.cli.fod._common.session.helper.oauth.IFoDUserCredentials;
 
@@ -87,13 +87,7 @@ public class FoDSessionLoginOptions {
     public static final class FoDUrlConfigOptions extends UrlConfigOptions {
         @Override @SneakyThrows
         public String getUrl() {
-            var baseUrl = super.getUrl();
-            var uri = new URI(baseUrl);
-            if ( !uri.getHost().startsWith("api.") ) {
-                uri = new URI(uri.getScheme(), uri.getUserInfo(), "api."+uri.getHost(), uri.getPort(), 
-                        uri.getPath(), uri.getQuery(), uri.getFragment());
-            }
-            return uri.toString();
+            return FoDProductHelper.INSTANCE.getApiUrl(super.getUrl());
         }
         
         @Override

@@ -1,11 +1,12 @@
 package com.fortify.cli.ftest.ssc;
 
-import static com.fortify.cli.ftest._common.spec.FcliSessionType.SSC
+import static com.fortify.cli.ftest._common.spec.FcliSession.FcliSessionType.SSC
 
 import com.fortify.cli.ftest._common.Fcli
 import com.fortify.cli.ftest._common.spec.FcliBaseSpec
 import com.fortify.cli.ftest._common.spec.FcliSession
 import com.fortify.cli.ftest._common.spec.Prefix
+import com.fortify.cli.ftest._common.spec.TempFile
 import com.fortify.cli.ftest._common.spec.TestResource
 import com.fortify.cli.ftest.ssc._common.SSCAppVersionSupplier
 
@@ -21,6 +22,7 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
     @Shared @TestResource("runtime/shared/LoginProject.fpr") String diffpr
     @Shared String uploadVariableName = versionSupplier.version.fcliVariableName+"_artifact"
     @Shared String uploadVariableRef = "::$uploadVariableName::"
+    @Shared @TempFile("artifactUploadSpec/download.fpr") String downloadedFpr;
     
     def "upload"() {
         def args = "ssc artifact upload -f $fpr --appversion "+ 
@@ -120,16 +122,17 @@ class SSCArtifactUploadSpec extends FcliBaseSpec {
             def result = Fcli.run(args)
         then:
             verifyAll(result.stdout) {
-                it.any { it.equals("originalFileName: \"EightBall-22.1.0.fpr\"") }
+                it.any { it.equals("originalFileName: EightBall-22.1.0.fpr") }
             }
     }
     
     def "download"() {
-        def args = "ssc artifact download ::upload::id -f download.fpr --no-include-sources"
+        def args = "ssc artifact download ::upload::id -f ${downloadedFpr} --no-include-sources"
         when:
             def result = Fcli.run(args)
         then:
             noExceptionThrown()
+            new File(downloadedFpr).exists()
             verifyAll(result.stdout) {
                 it.last().contains("ARTIFACT_DOWNLOADED");
             }

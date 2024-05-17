@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+
+author: Fortify
+usage:
+  header: (SAMPLE) Check security policy. 
+  description: |
+    This sample action demonstrates how to implement a security policy using
+    fcli actions, returning a non-zero exit code if any of the checks fail.
+
+defaults:
+  requestTarget: ssc
+  
+parameters:
+  - name: appversion
+    cliAliases: av
+    description: "Required application version id or <appName>:<versionName>"
+    type: appversion_single
+  
+steps:
+  - fcli:
+    - name: countsByFolder
+      args: ssc issue count --av ${parameters.appversion.id} --by FOLDER
+  - fcli:
+    - name: countsByNewIssue
+      args: ssc issue count --av ${parameters.appversion.id} --by "New Issue"
+  - check:
+    - displayName: No critical issues allowed
+      failIf:      ${countsByFolder.^[cleanName=='Critical']?.visibleCount>0}
+    - displayName: No new issues allowed
+      failIf:      ${countsByNewIssue.^[cleanName=='NEW']?.visibleCount>0}
+  - fcli:
+    - args: ssc issue ls --av ${parameters.appversion.id}
+      forEach:
+        name: issue
+        do:
+          - check:
+            - displayName: No new critical issues allowed
+              failIf:      ${issue.scanStatus=='NEW' && issue.friority=='Critical'}
+              ifSkipped:   PASS # If no issues
+      

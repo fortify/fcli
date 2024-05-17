@@ -1,0 +1,111 @@
+# yaml-language-server: $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-dev.json
+
+author: Fortify
+usage:
+  header: Generate a GitLab SAST report listing FoD SAST vulnerabilities. 
+  description: |
+    For information on how to import this report into GitLab, see 
+    https://docs.gitlab.com/ee/ci/yaml/artifacts_reports.html#artifactsreportssast
+
+defaults:
+  requestTarget: fod
+  
+parameters:
+  - name: file
+    cliAliases: f
+    description: "Optional output file name (or 'stdout' / 'stderr'). Default value: gl-fortify-sast.json"
+    required: false
+    defaultValue: gl-fortify-sast.json
+  - name: release
+    cliAliases: rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+    type: release_single
+  
+steps:
+  - progress: Loading static scan summary
+  - requests:
+      - name: staticScanSummary
+        uri:  /api/v3/scans/${parameters.release.currentStaticScanId}/summary
+        if:   ${parameters.release.currentStaticScanId!=null}
+  - progress: Processing issue data
+  - requests:
+    - name: issues
+      uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities?limit=50
+      query:
+        filters: scantype:Static
+      pagingProgress:
+        postPageProcess: Processed ${totalIssueCount?:0} of ${issues_raw.totalCount} issues
+      forEach:
+        name: issue
+        embed:
+          - name: details
+            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/details
+          - name: recommendations
+            uri: /api/v3/releases/${parameters.release.releaseId}/vulnerabilities/${issue.vulnId}/recommendations
+        do:
+          - append:
+            - name: vulnerabilities
+              valueTemplate: vulnerabilities
+  - write:
+    - to: ${parameters.file}
+      valueTemplate: gitlab-sast-report
+    - if: ${parameters.file!='stdout'}
+      to: stdout
+      value: |
+        Output written to ${parameters.file}
+
+valueTemplates:
+  - name: gitlab-sast-report
+    contents:
+      schema: https://gitlab.com/gitlab-org/security-products/security-report-schemas/-/raw/v15.0.0/dist/sast-report-format.json
+      version: 15.0.0
+      scan:
+        start_time: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss", staticScanSummary?.startedDateTime?:'1970-01-01T00:00:00')}
+        end_time: ${#formatDateTime("yyyy-MM-dd'T'HH:mm:ss", staticScanSummary?.completedDateTime?:'1970-01-01T00:00:00')}
+        status: ${parameters.release.staticAnalysisStatusTypeId==2?'success':'failure'}
+        type: sast
+        analyzer:
+          id: FoD-SAST
+          name: Fortify on Demand
+          url: https://www.microfocus.com/en-us/products/application-security-testing/overview
+          version: SCA ${staticScanSummary?.staticScanSummaryDetails?.engineVersion?:'version unknown'}; Rulepack ${staticScanSummary?.staticScanSummaryDetails?.rulePackVersion?:'version unknown'}
+          vendor:
+            name: Fortify
+        scanner:
+          id: FoD-SAST
+          name: Fortify on Demand
+          url: https://www.microfocus.com/en-us/products/application-security-testing/overview
+          version: SCA ${staticScanSummary?.staticScanSummaryDetails?.engineVersion?:'version unknown'}; Rulepack ${staticScanSummary?.staticScanSummaryDetails?.rulePackVersion?:'version unknown'}
+          vendor: 
+            name: Fortify
+      vulnerabilities: ${vulnerabilities?:{}} 
+     
+  - name: vulnerabilities
+    contents:
+      category: sast
+      confidence: ${(issue.severityString matches "(Critical|Medium)") ? "High":"Low" }
+      description: ${#abbreviate(#htmlToText(issue.details?.summary), 15000)}
+      id: ${issue.vulnId}
+      cve: 'N/A'
+      identifiers: |-
+        ${{
+            {
+              name:  "Instance id: "+issue.instanceId,
+              url:   #fod.issueBrowserUrl(issue),
+              type:  "issueInstanceId",
+              value: issue.instanceId
+            }
+        }}
+      location:
+        file:       ${issue.primaryLocationFull}
+        start_line: ${issue.lineNumber}
+      links:
+        - name: Additional issue details, including analysis trace, in Fortify on Demand
+          url:  ${#fod.issueBrowserUrl(issue)}
+      message: ${issue.category}
+      name: ${issue.category}
+      scanner:
+        id: FoD-SAST
+        name: Fortify on Demand
+      severity: ${issue.severityString}
+      solution: ${#abbreviate(#htmlToText(issue.details?.explanation)+'\n\n'+#htmlToText(issue.recommendations?.recommendations), 7000)}

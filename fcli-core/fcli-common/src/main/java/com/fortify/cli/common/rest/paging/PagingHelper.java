@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.fortify.cli.common.rest.paging;
 
+import java.util.function.Consumer;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import kong.unirest.Header;
@@ -59,6 +61,23 @@ public class PagingHelper {
      */
     public static final INextPageRequestProducer asNextPageRequestProducer(UnirestInstance unirest, INextPageUrlProducer nextPageUrlProducer) {
         return unirest==null || nextPageUrlProducer==null ? null : new NextPageRequestProducer(unirest, nextPageUrlProducer);
+    }
+    
+    public static final void processPages(UnirestInstance unirest, HttpRequest<?> initialRequest, INextPageUrlProducer nextPageUrlProducer, Consumer<HttpResponse<JsonNode>> consumer) {
+        var nextPageRequestProducer = asNextPageRequestProducer(unirest, nextPageUrlProducer);
+        if ( nextPageRequestProducer==null ) {
+            throw new IllegalStateException("Cannot process pages without a valid NextPageRequestProducer");
+        }
+        processPages(initialRequest, nextPageRequestProducer, consumer);
+    }
+
+    public static final void processPages(HttpRequest<?> initialRequest, INextPageRequestProducer nextPageRequestProducer, Consumer<HttpResponse<JsonNode>> consumer) {
+        var currentRequest = initialRequest;
+        while ( currentRequest!=null ) {
+           HttpResponse<JsonNode> response = currentRequest.asObject(JsonNode.class);
+           consumer.accept(response);
+           currentRequest = nextPageRequestProducer.getNextPageRequest(initialRequest, response);
+        }
     }
     
     @RequiredArgsConstructor

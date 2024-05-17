@@ -15,11 +15,12 @@ package com.fortify.cli.fod.report.cli.cmd;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fortify.cli.common.cli.util.CommandGroup;
 import com.fortify.cli.common.output.transform.IRecordTransformer;
-import com.fortify.cli.fod._common.output.cli.AbstractFoDBaseRequestOutputCommand;
-import com.fortify.cli.fod._common.output.mixin.FoDOutputHelperMixins;
+import com.fortify.cli.fod._common.output.cli.cmd.AbstractFoDBaseRequestOutputCommand;
+import com.fortify.cli.fod._common.output.cli.mixin.FoDOutputHelperMixins;
 import com.fortify.cli.fod._common.rest.FoDUrls;
 import com.fortify.cli.fod.report.helper.FoDReportTemplateGroupType;
 import com.fortify.cli.fod.report.helper.FoDReportTemplateHelper;
+
 import kong.unirest.HttpRequest;
 import kong.unirest.UnirestInstance;
 import lombok.Getter;

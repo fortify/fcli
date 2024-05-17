@@ -16,6 +16,8 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.expression.spel.SpelEvaluationException;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -90,8 +92,12 @@ public abstract class AbstractFormattedRecordWriter extends AbstractRecordWriter
     }
 
     private static final JsonNode evaluateValue(ObjectNode record, String path) {
-        JsonNode result = JsonHelper.evaluateSpelExpression(record, path, JsonNode.class);
-        return result!=null ? result : NA_NODE;
+        try {
+            JsonNode result = JsonHelper.evaluateSpelExpression(record, path, JsonNode.class);
+            return result!=null ? result : NA_NODE;
+        } catch ( SpelEvaluationException e ) {
+            return NA_NODE;
+        }
     }
     
     private static final List<String> getFieldPaths(String options) {
